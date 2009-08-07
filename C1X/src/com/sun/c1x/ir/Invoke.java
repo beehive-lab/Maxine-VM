@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -49,7 +48,7 @@ public class Invoke extends StateSplit {
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      */
-    public Invoke(int opcode, ValueType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target) {
+    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target) {
         super(result);
         this.opcode = opcode;
         this.arguments = args;

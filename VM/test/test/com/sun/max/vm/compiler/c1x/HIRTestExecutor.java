@@ -24,10 +24,10 @@ import java.io.*;
 import java.lang.reflect.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.value.*;
 import com.sun.max.program.option.*;
 import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
@@ -108,14 +108,14 @@ public class HIRTestExecutor implements Executor {
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
-        final ConstType[] args = new ConstType[vals.length];
+        final CiConstant[] args = new CiConstant[vals.length];
         for (int i = 0; i < args.length; i++) {
-            args[i] = ConstType.fromBoxedJavaValue(vals[i]);
+            args[i] = CiConstant.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final IR method = generator.makeHirMethod(runtime.getCiMethod(classMethodActor));
         final IRInterpreter interpreter = new IRInterpreter(runtime, interpreterInterface);
-        final ConstType result = interpreter.execute(method, args);
+        final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();
     }
 }

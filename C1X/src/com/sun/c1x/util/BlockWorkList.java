@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.util;
 
-import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.*;
 
 /**
  * This class implements a worklist for dealing with blocks. The worklist can

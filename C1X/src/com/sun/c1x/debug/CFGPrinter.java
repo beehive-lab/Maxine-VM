@@ -20,24 +20,18 @@
  */
 package com.sun.c1x.debug;
 
-import com.sun.c1x.alloc.Interval;
-import com.sun.c1x.alloc.LinearScan;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.graph.BlockMap;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.BlockClosure;
-import com.sun.c1x.ir.Instruction;
-import static com.sun.c1x.ir.Instruction.valueString;
-import com.sun.c1x.lir.LIRList;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
+import static com.sun.c1x.ir.Instruction.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+
+import com.sun.c1x.alloc.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * Utility for printing the control flow graph of a method being compiled by C1X at various compilation phases.
@@ -219,7 +213,7 @@ public class CFGPrinter {
               printLirOperand(value);
               out.println();
               out.enableIndentation();
-              i += value.type().size();
+              i += value.type().sizeInSlots();
           }
           end("stack");
         }
@@ -253,7 +247,7 @@ public class CFGPrinter {
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
-                    i += value.type().isIllegal() ? 1 : value.type().size();
+                    i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
                 } else {
                     i++;
                 }

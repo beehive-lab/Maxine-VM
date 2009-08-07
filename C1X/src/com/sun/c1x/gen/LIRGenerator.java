@@ -20,28 +20,19 @@
  */
 package com.sun.c1x.gen;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.Label;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiMethodData;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.graph.IR;
+import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.ArrayMap;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.BitMap2D;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-
-import java.util.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -289,7 +280,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             } else {
                 LIROperand res = x.operand();
                 if (!res.isValid()) {
-                    res = LIROperandFactory.valueType(x.type());
+                    res = LIROperandFactory.basicType(x);
                 }
                 if (res.isConstant()) {
                     LIROperand reg = rlockResult(x);
@@ -299,7 +290,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 }
             }
         } else {
-            setResult(x, LIROperandFactory.valueType(x.type()));
+            setResult(x, LIROperandFactory.basicType(x));
         }
     }
 
@@ -334,7 +325,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             // need to free up storage used for OSR entry point
             LIROperand osrBuffer = currentBlock.next().operand();
             BasicType[] signature = new BasicType[] {BasicType.Int};
-            this.callRuntime(signature, Arrays.asList(osrBuffer), CiRuntimeCall.OSRMigrationEnd, ValueType.VOID_TYPE, null);
+            this.callRuntime(signature, Arrays.asList(osrBuffer), CiRuntimeCall.OSRMigrationEnd, BasicType.Void, null);
 
             ValueStack state = (x.stateBefore() != null) ? x.stateBefore() : x.state();
 
@@ -361,8 +352,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitIfOp(IfOp x) {
 
-        ValueType xtype = x.x().type();
-        ValueType ttype = x.trueValue().type();
+        BasicType xtype = x.x().type();
+        BasicType ttype = x.trueValue().type();
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";
         assert ttype.isInt() || ttype.isObject() || ttype.isLong() : "cannot handle others";
         assert ttype.equals(x.falseValue().type()) : "cannot handle others";
@@ -443,13 +434,13 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 break;
 
             case sun_misc_Unsafe$compareAndSwapObject:
-                visitCompareAndSwap(x, ValueType.OBJECT_TYPE);
+                visitCompareAndSwap(x, BasicType.Object);
                 break;
             case sun_misc_Unsafe$compareAndSwapInt:
-                visitCompareAndSwap(x, ValueType.INT_TYPE);
+                visitCompareAndSwap(x, BasicType.Int);
                 break;
             case sun_misc_Unsafe$compareAndSwapLong:
-                visitCompareAndSwap(x, ValueType.LONG_TYPE);
+                visitCompareAndSwap(x, BasicType.Long);
                 break;
 
             // sun.misc.AtomicLongCSImpl.attemptUpdate
@@ -1131,7 +1122,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     private LIROperand loadConstant(Constant x) {
         assert !x.isPinned() : "only for unpinned constants";
         unpinnedConstants.add(x);
-        return loadConstant(LIROperandFactory.valueType(x.type()).asConstantPtr());
+        return loadConstant(LIROperandFactory.basicType(x).asConstantPtr());
     }
 
     protected LIROperand loadConstant(LIRConstant c) {
@@ -1296,7 +1287,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
         CodeEmitInfo info = stateFor(x, x.state());
-        callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, ValueType.VOID_TYPE, info);
+        callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, BasicType.Void, info);
 
         setNoResult(x);
     }
@@ -1671,7 +1662,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected final LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, CiRuntimeCall l, ValueType resultType, CodeEmitInfo info) {
+    protected final LIROperand callRuntime(BasicType[] signature, List<LIROperand> args, CiRuntimeCall l, BasicType resultType, CodeEmitInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.IllegalOperand;
         LIROperand result = LIROperandFactory.IllegalOperand;
@@ -1986,7 +1977,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
-                x.setOperand(LIROperandFactory.valueType(x.type()));
+                x.setOperand(LIROperandFactory.basicType(x));
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
@@ -2202,7 +2193,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     protected abstract void visitAttemptUpdate(Intrinsic x);
 
-    protected abstract void visitCompareAndSwap(Intrinsic x, ValueType type);
+    protected abstract void visitCompareAndSwap(Intrinsic x, BasicType type);
 
     protected abstract void visitMathIntrinsic(Intrinsic x);
 
@@ -2222,9 +2213,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     private static boolean isConstantZero(Instruction x) {
         if (x instanceof Constant) {
             final Constant c = (Constant) x;
-            assert c.type().isConstant();
             // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.type().asConstant().asInt() == 0) {
+            if (c.type().isInt() && c.asConstant().asInt() == 0) {
                 return true;
             }
         }
@@ -2234,9 +2224,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     private static boolean positiveConstant(Instruction x) {
         if (x instanceof Constant) {
             final Constant c = (Constant) x;
-            assert c.type().isConstant();
             // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.type().asConstant().asInt() >= 0) {
+            if (c.type().isInt() && c.asConstant().asInt() >= 0) {
                 return true;
             }
         }

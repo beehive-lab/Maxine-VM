@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.ir.Base;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 /**
  *

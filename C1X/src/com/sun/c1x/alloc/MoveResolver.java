@@ -20,16 +20,12 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.lir.LIRList;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.lir.LIROperandFactory;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
 
 /**
  *

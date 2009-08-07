@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>Architecture</code> class represents a CPU architecture that is supported by

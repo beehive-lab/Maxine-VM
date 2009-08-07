@@ -20,21 +20,16 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.alloc.Interval.IntervalKind;
-import com.sun.c1x.alloc.Interval.IntervalSpillState;
-import com.sun.c1x.alloc.Interval.IntervalState;
-import com.sun.c1x.alloc.Interval.IntervalUseKind;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *
@@ -447,9 +442,6 @@ public class LinearScanWalker extends IntervalWalker {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
 
-            if (it.regNum == 253) {
-                final int x = 0;
-            }
             it.print(TTY.out, allocator);
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
@@ -467,9 +459,6 @@ public class LinearScanWalker extends IntervalWalker {
 
             allocator().assignSpillSlot(it);
             allocator().changeSpillState(it, minSplitPos);
-            if (it.state == Interval.IntervalState.activeState && it.regNum == 253) {
-                final int x = 0;
-            }
 
             // Also kick parent intervals out of register to memory when they have no use
             // position. This avoids short interval in register surrounded by intervals in
@@ -787,9 +776,6 @@ public class LinearScanWalker extends IntervalWalker {
 
         for (int i = 0; i < spillIntervals[reg].size(); i++) {
             Interval it = spillIntervals[reg].get(i);
-            if (it.regNum == 253) {
-                final int x = 0;
-            }
             removeFromList(it);
             splitAndSpillInterval(it);
         }

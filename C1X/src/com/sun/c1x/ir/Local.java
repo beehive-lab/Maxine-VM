@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Local</code> instruction is a placeholder for an incoming argument
@@ -34,7 +34,7 @@ public class Local extends Instruction {
     private final int javaIndex;
     private CiType declaredType;
 
-    public Local(ValueType type, int javaIndex) {
+    public Local(BasicType type, int javaIndex) {
         super(type);
         this.javaIndex = javaIndex;
     }

@@ -20,28 +20,21 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.alloc.Interval.IntervalKind;
-import com.sun.c1x.alloc.Interval.IntervalSpillState;
-import com.sun.c1x.alloc.Interval.IntervalUseKind;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiLocation;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.BlockBegin.BlockFlag;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.BitMap2D;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
-
 import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *
@@ -2053,7 +2046,7 @@ public class LinearScan extends RegisterAllocator {
             }
             if (con != null && !con.isPinned()) {
                 // unpinned constants may have no register, so add mapping from constant to interval
-                moveResolver.addMapping(LIROperandFactory.valueType(con.type()), toInterval);
+                moveResolver.addMapping(LIROperandFactory.basicType(con), toInterval);
             } else {
                 // search split child at the throwing opId
                 Interval fromInterval = intervalAtOpId(fromValue.operand().vregNumber(), throwingOpId);
@@ -2810,7 +2803,7 @@ public class LinearScan extends RegisterAllocator {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand
-                opr = LIROperandFactory.valueType(con.type());
+                opr = LIROperandFactory.basicType(con);
             }
             assert opr.isVirtual() || opr.isConstant() : "other cases not allowed here";
 

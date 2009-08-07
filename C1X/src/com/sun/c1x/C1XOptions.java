@@ -57,9 +57,9 @@ public class C1XOptions {
     public static boolean TestSlowPath                       = ____;
     public static boolean PrintInitialBlockList              = ____;
     public static boolean PrintIR                            = ____;
-    public static boolean PrintCFGToFile                     = TRUE;
+    public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
-    public static boolean PrintCFG                           = TRUE;
+    public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
     public static boolean TypeChecking                       = ____;

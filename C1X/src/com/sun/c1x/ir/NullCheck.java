@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>NullCheck</code> class represents an explicit null check instruction.
@@ -40,7 +40,7 @@ public class NullCheck extends Instruction {
      * @param lockStack the lock stack
      */
     public NullCheck(Instruction obj, ValueStack lockStack) {
-        super(obj.type().base());
+        super(obj.type());
         this.object = obj;
         this.lockStack = lockStack;
         setFlag(Flag.NonNull);

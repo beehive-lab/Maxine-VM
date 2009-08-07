@@ -21,24 +21,19 @@
 
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.gen.LIRItem;
+import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueType;
-
-import java.util.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *
@@ -106,7 +101,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (v.type().basicType == BasicType.Long) {
             return false;
         }
-        return v.type().basicType != BasicType.Object || (v.type().isConstant() && ((ConstType) v.type()).asObject() == null);
+        return v.type().basicType != BasicType.Object || (v.isConstant() && v.asConstant().asObject() == null);
     }
 
     @Override
@@ -219,7 +214,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         assert isRoot(x) : "";
         boolean needsRangeCheck = true;
         boolean objStore = x.elementType() == BasicType.Jsr || x.elementType() == BasicType.Object;
-        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().type().asConstant().asObject() != null);
+        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().asConstant().asObject() != null);
 
         LIRItem array = new LIRItem(x.array(), this);
         LIRItem index = new LIRItem(x.index(), this);
@@ -351,7 +346,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem right = new LIRItem(x.y(), this);
         assert !left.isStack() || !right.isStack() : "can't both be memory operands";
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
-        if (left.isRegister() || x.x().type().isConstant() || mustLoadBoth) {
+        if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
         } else {
             left.dontLoadItem();
@@ -372,9 +367,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg;
 
         if (x.opcode() == Bytecodes.FREM) {
-            reg = callRuntime(new BasicType[]{BasicType.Float, BasicType.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticFrem, ValueType.FLOAT_TYPE, null);
+            reg = callRuntime(new BasicType[]{BasicType.Float, BasicType.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticFrem, BasicType.Float, null);
         } else if (x.opcode() == Bytecodes.DREM) {
-            reg = callRuntime(new BasicType[]{BasicType.Double, BasicType.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, ValueType.DOUBLE_TYPE, null);
+            reg = callRuntime(new BasicType[]{BasicType.Double, BasicType.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, BasicType.Double, null);
         } else {
             reg = rlock(x);
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalOperand);
@@ -667,7 +662,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void visitCompareAndSwap(Intrinsic x, ValueType type) {
+    protected void visitCompareAndSwap(Intrinsic x, BasicType type) {
 
         assert x.numberOfArguments() == 4 : "wrong type";
         LIRItem obj = new LIRItem(x.argumentAt(0), this); // object
@@ -675,13 +670,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem cmp = new LIRItem(x.argumentAt(2), this); // value to compare with field
         LIRItem val = new LIRItem(x.argumentAt(3), this); // replace field with val if matches cmp
 
-        assert obj.type().isObject() : "invalid type";
+        assert obj.value().type().isObject() : "invalid type";
 
         // In 64bit the type can be long, sparc doesn't have this assert // assert(offset.type().tag() == intTag,
         // "invalid type");
 
-        assert cmp.type().basicType == type.basicType : "invalid type";
-        assert val.type().basicType == type.basicType : "invalid type";
+        assert cmp.value().type().basicType == type.basicType : "invalid type";
+        assert val.value().type().basicType == type.basicType : "invalid type";
 
         // get address of field
         obj.loadItem();
@@ -747,19 +742,19 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir().sqrt(calcInput, calcResult, LIROperandFactory.IllegalOperand);
                 break;
             case java_lang_Math$sin:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticSin, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticSin, BasicType.Float, null);
                 break;
             case java_lang_Math$cos:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticCos, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticCos, BasicType.Float, null);
                 break;
             case java_lang_Math$tan:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticTan, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticTan, BasicType.Float, null);
                 break;
             case java_lang_Math$log:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog, BasicType.Float, null);
                 break;
             case java_lang_Math$log10:
-                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog10, ValueType.FLOAT_TYPE, null);
+                callRuntime(new BasicType[]{BasicType.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog10, BasicType.Float, null);
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -1024,7 +1019,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitIf(If x) {
 
         assert x.successors().size() == 2 : "inconsistency";
-        ValueType tag = x.x().type();
+        BasicType tag = x.x().type();
 
         Condition cond = x.condition();
 
@@ -1090,7 +1085,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void traceBlockEntry(BlockBegin block) {
-        callRuntime(new BasicType[]{BasicType.Int}, Arrays.asList(LIROperandFactory.intConst(block.id())), CiRuntimeCall.TraceBlockEntry, ValueType.VOID_TYPE, null);
+        callRuntime(new BasicType[]{BasicType.Int}, Arrays.asList(LIROperandFactory.intConst(block.id())), CiRuntimeCall.TraceBlockEntry, BasicType.Void, null);
     }
 
     @Override

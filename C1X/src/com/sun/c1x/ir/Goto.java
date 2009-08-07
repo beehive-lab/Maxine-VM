@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Goto</code> instruction represents the end of a block with an unconditional jump to another block.
@@ -37,7 +36,7 @@ public class Goto extends BlockEnd {
      * @param isSafepoint <code>true</code> if the goto should be considered a safepoint (e.g. backward branch)
      */
     public Goto(BlockBegin succ, ValueStack stateBefore, boolean isSafepoint) {
-        super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
+        super(BasicType.Illegal, stateBefore, isSafepoint);
         successors.add(succ);
     }
 

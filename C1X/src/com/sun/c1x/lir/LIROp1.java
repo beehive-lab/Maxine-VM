@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.

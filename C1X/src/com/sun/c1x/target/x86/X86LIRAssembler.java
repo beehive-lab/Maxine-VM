@@ -20,30 +20,21 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.Address.ScaleFactor;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiMethodData;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.CodeStub;
-import com.sun.c1x.stub.MonitorAccessStub;
-import com.sun.c1x.stub.MonitorExitStub;
-import com.sun.c1x.stub.PatchingStub;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.target.x86.X86Assembler.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.asm.Address.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.X86Assembler.Condition;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 public class X86LIRAssembler extends LIRAssembler {
 

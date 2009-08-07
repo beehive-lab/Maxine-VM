@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target;
 
-import com.sun.c1x.target.x86.X86;
+import com.sun.c1x.target.x86.*;
 
 
 /**

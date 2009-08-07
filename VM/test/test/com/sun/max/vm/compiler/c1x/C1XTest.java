@@ -185,19 +185,26 @@ public class C1XTest {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
-            CiTargetMethod result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod(method));
-            long timeNs = System.nanoTime() - startNs;
-            if (result == null) {
+
+            CiTargetMethod result = null;
+            try {
+                result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod(method));
+            } catch (Bailout bailout) {
                 if (printBailout) {
-                    out.println("bailout");
+                    bailout.printStackTrace();
                 }
                 return false;
             }
 
-            if (!warmup && result != null) {
-                // record the time for successful compilations
-                recordTime(method, result.totalInstructions(), timeNs);
+            if (result != null) {
+                long timeNs = System.nanoTime() - startNs;
+
+                if (!warmup) {
+                    // record the time for successful compilations
+                    recordTime(method, result.totalInstructions(), timeNs);
+                }
             }
+
             return true;
         }
         return true;

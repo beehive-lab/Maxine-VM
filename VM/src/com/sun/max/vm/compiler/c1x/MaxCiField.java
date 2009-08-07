@@ -25,6 +25,7 @@ import com.sun.c1x.value.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.value.*;
 
 /**
  * The <code>MaxCiField</code> implements a compiler interface field. A field can
@@ -164,7 +165,8 @@ public class MaxCiField implements CiField {
      */
     public CiConstant constantValue() {
         if (fieldActor != null && fieldActor.isConstant()) {
-            return new MaxCiConstant(HostTupleAccess.readValue(null, fieldActor));
+            Value v = HostTupleAccess.readValue(null, fieldActor);
+            return new CiConstant(MaxCiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
         }
         return null;
     }

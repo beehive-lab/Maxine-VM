@@ -20,18 +20,14 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.ci.CiLocation;
-import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.lir.LIROperandFactory;
-import com.sun.c1x.lir.LIRVisitState;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *

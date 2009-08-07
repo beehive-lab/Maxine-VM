@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.debug;
 
-import com.sun.c1x.ir.Instruction;
+import java.io.*;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
+import com.sun.c1x.ir.*;
 
 /**
  * A utility for printing compiler debug and informational output to an output stream.
