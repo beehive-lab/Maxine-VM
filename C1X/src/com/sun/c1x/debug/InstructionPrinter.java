@@ -65,7 +65,7 @@ public class InstructionPrinter extends InstructionVisitor {
                 sb.append("] ");
             }
         }
-        if (value != value.subst()) {
+        if (value != null && value != value.subst()) {
             sb.append("alias ").append(Instruction.valueString(value.subst()));
         }
         return sb.toString();

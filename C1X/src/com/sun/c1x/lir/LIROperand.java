@@ -306,6 +306,11 @@ public abstract class LIROperand {
 
     public BasicType typeRegister() {
         assert this.isRegister();
+
+        if (type() == BasicType.Boolean || type() == BasicType.Char || type() == BasicType.Byte) {
+            return BasicType.Int;
+        }
+
         return type();
     }
 

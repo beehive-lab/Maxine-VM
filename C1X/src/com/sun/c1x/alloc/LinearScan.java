@@ -724,7 +724,7 @@ public class LinearScan extends RegisterAllocator {
                 // Phi functions at the begin of an exception handler are
                 // implicitly defined (= killed) at the beginning of the block.
 
-                for (Phi phi : block.phis()) {
+                for (Phi phi : block.state().allPhis(block)) {
                     liveKill.set(phi.operand().vregNumber());
                 }
             }
@@ -1520,6 +1520,9 @@ public class LinearScan extends RegisterAllocator {
                 addRegisterHints(op);
 
             } // end of instruction iteration
+
+
+
         } // end of block iteration
 
         // add the range [0, 1[ to all fixed intervals
@@ -2011,7 +2014,7 @@ public class LinearScan extends RegisterAllocator {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.phis()) {
+        for (Phi phi : block.state().allPhis(block)) {
             resolveExceptionEntry(block, phi.operand().vregNumber(), moveResolver);
         }
 
@@ -2087,7 +2090,7 @@ public class LinearScan extends RegisterAllocator {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.phis()) {
+        for (Phi phi : block.state().allPhis(block)) {
             resolveExceptionEdge(handler, throwingOpId, phi.operand().vregNumber(), phi, moveResolver);
         }
         if (moveResolver.hasMappings()) {
@@ -2276,7 +2279,7 @@ public class LinearScan extends RegisterAllocator {
 
     LIROperand canonicalSpillOpr(Interval interval) {
         assert interval.canonicalSpillSlot() >= nofRegs : "canonical spill slot not set";
-        return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs, interval.type());
+        return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs + 1, interval.type());
     }
 
     LIROperand colorLirOpr(LIROperand opr, int opId, LIRVisitState.OperandMode mode) {

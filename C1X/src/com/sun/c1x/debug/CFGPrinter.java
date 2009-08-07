@@ -299,7 +299,7 @@ public class CFGPrinter {
     }
 
     private void printLirOperand(Instruction i) {
-        if (i.operand().isVirtual()) {
+        if (i != null && i.operand().isVirtual()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }
     }

@@ -205,6 +205,9 @@ public class LIRVisitState {
                 if (op1.opr.isValid()) {
                     op1.opr = doInput(op1.opr);
                 }
+
+
+
                 if (op1.result.isValid()) {
                     op1.result = doOutput(op1.result);
                 }

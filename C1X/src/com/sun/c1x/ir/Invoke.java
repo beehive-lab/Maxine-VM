@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiMethod;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.value.ValueType;
 import com.sun.c1x.util.Util;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.*;
 
 /**
  * The <code>Invoke</code> instruction represents all kinds of method calls.
@@ -60,6 +60,13 @@ public class Invoke extends StateSplit {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
+
+        // TODO: Active this when there is no longer 2-slot concept (for long and doubles) in HIR
+        //        if (C1XOptions.DetailedAsserts) {
+        //            for (int i = 0; i < args.length; i++) {
+        //                assert args[i] != null;
+        //            }
+        //        }
     }
 
     /**
@@ -140,6 +147,7 @@ public class Invoke extends StateSplit {
             Instruction arg = arguments[i];
             if (arg != null) {
                 arguments[i] = closure.apply(arg);
+                assert arguments[i] != null;
             }
         }
     }

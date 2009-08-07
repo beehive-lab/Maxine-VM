@@ -107,7 +107,7 @@ public class ComputeLinearScanOrder {
         return linearScanOrder;
     }
 
-    int numLoops() {
+    public int numLoops() {
         return numLoops;
     }
 

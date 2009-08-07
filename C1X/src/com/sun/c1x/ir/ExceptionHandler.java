@@ -49,6 +49,7 @@ public class ExceptionHandler {
         this.entryPCO = -1;
         this.phiOperand = -1;
         this.scopeCount = -1;
+        this.lirOpId = -1;
     }
 
     public ExceptionHandler(ExceptionHandler other) {

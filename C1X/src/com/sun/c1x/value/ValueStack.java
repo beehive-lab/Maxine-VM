@@ -761,14 +761,16 @@ public class ValueStack {
      * This is a helper method for iterating over all phis in this value stack.
      * @return an iterator over all phis
      */
-    public Iterable<Phi> allPhis() {
+    public Iterable<Phi> allPhis(BlockBegin block) {
         final List<Phi> phis = new ArrayList<Phi>();
 
         int max = this.valuesSize();
         for (int i = 0; i < max; i++) {
             Instruction instr = values[i];
             if (instr instanceof Phi) {
-                phis.add((Phi) instr);
+                if (block == null || ((Phi) instr).block() == block) {
+                    phis.add((Phi) instr);
+                }
             }
         }
 

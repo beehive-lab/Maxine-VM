@@ -29,8 +29,8 @@ import java.util.Arrays;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.target.Target;
-import com.sun.c1x.target.Architecture;
+import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -491,6 +491,16 @@ public class C1XTest {
     private static Target createTarget() {
         // TODO: configure architecture according to host platform
         final Architecture arch = Architecture.findArchitecture("amd64");
-        return new Target(arch, arch.registers, arch.registers, 1024, true);
+
+
+        // configure the allocatable registers
+        List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
+        for (Register r : arch.registers) {
+            if (r != X86.rsp && r != MaxCiRuntime.globalRuntime.exceptionOopRegister()) {
+                allocatable.add(r);
+            }
+        }
+        Register[] allocRegs = allocatable.toArray(new Register[allocatable.size()]);
+        return new Target(arch, allocRegs, arch.registers, 1024, true);
     }
 }
