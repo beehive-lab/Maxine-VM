@@ -94,9 +94,14 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
      */
     public static int numberOfFrameBuilderInstructions(int frameSize) {
         final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
-        int count = 2;
-        if (!SPARCAssembler.isSimm13(stackBangOffset)) {
-            count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
+        int count;
+        if (Trap.STACK_BANGING) {
+            count = 2;
+            if (!SPARCAssembler.isSimm13(stackBangOffset)) {
+                count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
+            }
+        } else {
+            count = 1;
         }
         if (!SPARCAssembler.isSimm13(-frameSize)) {
             count += ASM.setswNumberOfInstructions(-frameSize);
@@ -114,17 +119,19 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
      * @param scratchRegister a scratch register (may not necessarily be used)
      */
     public static void emitFrameBuilder(SPARCAssembler asm, int frameSize, GPR stackPointer, GPR scratchRegister) {
-        // We must make sure we will not be in a situation where we will not be able to flush the register window for the
-        // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
-        // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
-        // we know the current register window can take the trap.
-        final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
         try {
-            if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                asm.ldub(stackPointer, stackBangOffset, GPR.G0);
-            } else {
-                asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
-                asm.ldub(stackPointer, scratchRegister, GPR.G0);
+            if (Trap.STACK_BANGING) {
+                // We must make sure we will not be in a situation where we will not be able to flush the register window for the
+                // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
+                // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
+                // we know the current register window can take the trap.
+                final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
+                if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                    asm.ldub(stackPointer, stackBangOffset, GPR.G0);
+                } else {
+                    asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
+                    asm.ldub(stackPointer, scratchRegister, GPR.G0);
+                }
             }
             if (SPARCAssembler.isSimm13(-frameSize)) {
                 asm.save(stackPointer, -frameSize, stackPointer);
