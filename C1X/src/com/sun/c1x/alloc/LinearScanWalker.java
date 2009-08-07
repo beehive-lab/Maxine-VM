@@ -446,6 +446,10 @@ public class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
+
+            if (it.regNum == 253) {
+                final int x = 0;
+            }
             it.print(TTY.out, allocator);
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
@@ -463,6 +467,9 @@ public class LinearScanWalker extends IntervalWalker {
 
             allocator().assignSpillSlot(it);
             allocator().changeSpillState(it, minSplitPos);
+            if (it.state == Interval.IntervalState.activeState && it.regNum == 253) {
+                final int x = 0;
+            }
 
             // Also kick parent intervals out of register to memory when they have no use
             // position. This avoids short interval in register surrounded by intervals in
@@ -780,6 +787,9 @@ public class LinearScanWalker extends IntervalWalker {
 
         for (int i = 0; i < spillIntervals[reg].size(); i++) {
             Interval it = spillIntervals[reg].get(i);
+            if (it.regNum == 253) {
+                final int x = 0;
+            }
             removeFromList(it);
             splitAndSpillInterval(it);
         }

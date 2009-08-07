@@ -158,6 +158,7 @@ public class Interval {
 
     void setType(BasicType type) {
         assert regNum < Register.vregBase || this.type == BasicType.Illegal || this.type == type : "overwriting existing type";
+        assert type != BasicType.Boolean && type != BasicType.Byte && type != BasicType.Char : "these basic types should have int type registers";
         this.type = type;
     }
 

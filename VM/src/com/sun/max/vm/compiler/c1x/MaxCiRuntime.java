@@ -592,7 +592,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public Register exceptionOopRegister() {
-        return X86.rax;
+        return X86.r14;
     }
 
     public Register returnRegister(BasicType object) {

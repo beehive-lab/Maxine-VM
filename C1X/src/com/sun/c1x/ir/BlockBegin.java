@@ -669,10 +669,6 @@ public class BlockBegin extends StateSplit {
         lirBlock.lastLirInstructionID = lastLirInstructionId;
     }
 
-    public Iterable<Phi> phis() {
-        throw Util.unimplemented();
-    }
-
     public void setLiveGen(BitMap liveGen) {
         lirBlock.liveGen = liveGen;
     }

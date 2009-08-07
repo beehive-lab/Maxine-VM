@@ -1360,6 +1360,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         LIROpcode code = op.code();
         if (code == LIROpcode.StoreCheck) {
+
             Register value = op.object().asRegister();
             Register array = op.array().asRegister();
             Register kRInfo = op.tmp1().asRegister();
@@ -1372,6 +1373,8 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().cmpptr(value, (int) NULLWORD);
             masm().jcc(X86Assembler.Condition.equal, done);
             addDebugInfoForNullCheckHere(op.infoForException());
+
+
             masm().movptr(kRInfo, new Address(array, compilation.runtime.klassOffsetInBytes()));
             masm().movptr(klassRInfo, new Address(value, compilation.runtime.klassOffsetInBytes()));
 

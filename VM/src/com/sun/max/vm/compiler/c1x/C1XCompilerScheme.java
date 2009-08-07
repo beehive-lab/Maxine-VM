@@ -48,6 +48,7 @@ import com.sun.max.unsafe.Pointer;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.target.Architecture;
 import com.sun.c1x.target.Register;
+import com.sun.c1x.target.x86.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 
@@ -94,10 +95,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             markUnallocatable(unallocatable, roles, VMRegister.Role.ABI_SCRATCH);
             markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
 
+            // create the CiRuntime object passed to C1X
+            c1xRuntime = MaxCiRuntime.globalRuntime;
+
             // configure the allocatable registers
             List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
             for (Register r : arch.registers) {
-                if (!unallocatable.contains(r.name.toLowerCase())) {
+                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.exceptionOopRegister()) {
                     allocatable.add(r);
                 }
             }
@@ -107,8 +111,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             c1xTarget = new Target(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
-            // create the CiRuntime object passed to C1X
-            c1xRuntime = MaxCiRuntime.globalRuntime;
 
             compiler = new C1XCompiler(c1xTarget, c1xRuntime);
         }

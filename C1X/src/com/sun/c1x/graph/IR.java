@@ -22,7 +22,6 @@ package com.sun.c1x.graph;
 
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.BlockBegin;
 import com.sun.c1x.ir.ComputeLinearScanOrder;
@@ -72,6 +71,7 @@ public class IR {
 
     int totalBlocks = 1;
     int totalInstructions;
+    int numLoops = -1;
 
     /**
      * Creates a new IR instance for the specified compilation.
@@ -132,6 +132,7 @@ public class IR {
         if (orderedBlocks == null) {
             ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
             orderedBlocks = computeLinearScanOrder.linearScanOrder();
+            numLoops = computeLinearScanOrder.numLoops();
             computeLinearScanOrder.printBlocks();
         }
     }
@@ -264,6 +265,6 @@ public class IR {
     }
 
     public int numLoops() {
-        return Util.nonFatalUnimplemented(0);
+        return numLoops;
     }
 }

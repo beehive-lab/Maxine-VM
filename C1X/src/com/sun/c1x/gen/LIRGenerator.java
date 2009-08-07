@@ -310,16 +310,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.state().allPhis()) {
+        for (Phi phi : currentBlock.state().allPhis(currentBlock)) {
             operandForInstruction(phi);
         }
 
         // XXX: in Maxine's runtime, the exception object is passed in a physical register
-        LIROperand threadReg = getThreadPointer();
+//        LIROperand threadReg = getThreadPointer();
         LIROperand exceptionOopOpr = LIROperandFactory.singleLocation(BasicType.Object, compilation.runtime.exceptionOopRegister());
-        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), exceptionOopOpr);
-        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object));
-        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionPcOffset(), BasicType.Object));
+//        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), exceptionOopOpr);
+//        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object));
+//        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionPcOffset(), BasicType.Object));
 
         LIROperand result = newRegister(BasicType.Object);
         lir.move(exceptionOopOpr, result);
@@ -479,6 +479,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         CodeEmitInfo info = stateFor(x, x.state());
 
+        assert args.size() == argList.size();
         loadInvokeArguments(x, args, argList);
 
         if (x.hasReceiver()) {
@@ -2074,7 +2075,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
             if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {
                 if (x instanceof ExceptionObject || x instanceof Throw) {
                     // all locals are dead on exit from the synthetic unlocker
-                    liveness.clearAll();
+                    if (liveness != null) {
+                        liveness.clearAll();
+                    }
                 } else {
                     assert x instanceof MonitorEnter : "only other case is MonitorEnter";
                 }
@@ -2107,8 +2110,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // for each argument, create a new LIRItem
         final List<LIRItem> argumentItems = new ArrayList<LIRItem>();
         for (int i = 0; i < x.arguments().length; i++) {
-            LIRItem param = new LIRItem(x.arguments()[i], this);
-            argumentItems.add(param);
+            if (x.arguments()[i] != null) {
+                LIRItem param = new LIRItem(x.arguments()[i], this);
+                argumentItems.add(param);
+            }
         }
         return argumentItems;
     }
