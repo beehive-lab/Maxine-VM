@@ -316,7 +316,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
         if (instructionPointer.greaterEqual(endOfFrameBuilder)) {
             final int currentInstruction = stackFrameWalker.readInt(instructionPointer, 0);
-            final int prevInstruction = stackFrameWalker.readInt(instructionPointer.minus(SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH), 0);
+            final int prevInstruction = stackFrameWalker.readInt(instructionPointer.minus(InstructionSet.SPARC.instructionWidth), 0);
             if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction ==  BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
                 return FRAME_STATE.EXITING_CALLEE;
             }
@@ -327,7 +327,7 @@ public class SPARCJitCompiler extends JitCompiler {
         // So we're still in IN_CALLER_FRAME state if we haven't passed the first two instructions of the frame builder.
         if (!SPARCAssembler.isSimm13(targetMethod.frameSize())) {
             if (instructionPointer.equals(startOfFrameBuilder) ||
-                            instructionPointer.equals(startOfFrameBuilder.plus(SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH))) {
+                            instructionPointer.equals(startOfFrameBuilder.plus(InstructionSet.SPARC.instructionWidth))) {
                 return FRAME_STATE.IN_CALLER_FRAME;
             }
         }
@@ -475,7 +475,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
         StackUnwindStub(VMConfiguration vmConfiguration) {
             super(createStubCode(vmConfiguration));
-            jumpAddress = start().plus(4 * SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH);
+            jumpAddress = start().plus(4 * InstructionSet.SPARC.instructionWidth);
             callerTargetABI = vmConfiguration.targetABIsScheme().jitABI();
         }
 

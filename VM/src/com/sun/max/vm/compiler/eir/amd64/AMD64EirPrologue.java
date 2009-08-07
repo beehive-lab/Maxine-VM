@@ -40,8 +40,6 @@ import com.sun.max.vm.thread.*;
  */
 public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisitor, AMD64EirTargetEmitter> implements AMD64EirInstruction {
 
-    private static final boolean STACK_BANGING = true;
-
     public AMD64EirPrologue(EirBlock block, EirMethod eirMethod,
                             EirValue[] calleeSavedValues, EirLocation[] calleeSavedRegisters,
                             BitSet isCalleeSavedParameter,
@@ -63,7 +61,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
                 if (frameSize != 0) {
                     asm.subq(framePointer, frameSize);
                 }
-                if (STACK_BANGING) {
+                if (Trap.STACK_BANGING) {
                     // emit a read of the stack stackGuardSize bytes down to trigger a stack overflow earlier than would otherwise occur.
                     asm.mov(emitter.scratchRegister(), -Trap.stackGuardSize, emitter.stackPointer().indirect());
                 }

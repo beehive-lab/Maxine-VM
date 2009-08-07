@@ -194,9 +194,9 @@ public abstract class Prototype {
             processorModel = ProcessorModel.defaultForInstructionSet(instructionSet);
         } else {
             processorModel = ProcessorModel.valueOf(processorModelName);
-            assert processorModel.instructionSet() == instructionSet;
+            assert processorModel.instructionSet == instructionSet;
         }
-        final int cacheAlignment = processorModel.defaultDataModel().cacheAlignment;
+        final int cacheAlignment = processorModel.defaultDataModel.cacheAlignment;
         final DataModel dataModel = new DataModel(wordWidth, endianness, cacheAlignment);
         final ProcessorKind processorKind = new ProcessorKind(processorModel, instructionSet, dataModel);
 
