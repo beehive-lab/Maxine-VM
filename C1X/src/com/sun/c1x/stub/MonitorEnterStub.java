@@ -50,8 +50,8 @@ public class MonitorEnterStub extends MonitorAccessStub {
 
     @Override
     public void visit(LIRVisitState visitor) {
-        visitor.doInput(objReg);
-        visitor.doInput(lockReg);
+        objReg = visitor.doInput(objReg);
+        lockReg = visitor.doInput(lockReg);
         visitor.doSlowCase(info);
     }
 }

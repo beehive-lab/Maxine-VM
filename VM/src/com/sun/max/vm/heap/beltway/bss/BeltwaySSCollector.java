@@ -29,6 +29,7 @@ import com.sun.max.vm.tele.*;
  * Semi-space Collector based on Beltways.
  * Uses two belts (to and from spaces) with one increment each.
  *
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
@@ -42,33 +43,44 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         super(name);
     }
 
-    @Override
-    public void run() {
-        final BeltwayHeapSchemeBSS heapScheme = (BeltwayHeapSchemeBSS) getBeltwayHeapScheme();
-        final Belt fromSpace = heapScheme.getFromSpace();
-        final Belt toSpace = heapScheme.getToSpace();
-        prologue();
+    private void verifyHeap(String when,  BeltwayHeapSchemeBSS ssHeapScheme, Belt fromSpace) {
         if (Heap.verbose()) {
             Log.println("Verify Heap");
-            verifyBelt(fromSpace);
+            Log.println(when);
+        }
+
+        ssHeapScheme.bssHeapBoundChecker.reset();
+        verifyBelt(fromSpace);
+    }
+
+    public void run() {
+        final BeltwayHeapSchemeBSS ssHeapScheme = (BeltwayHeapSchemeBSS) heapScheme;
+        final Belt fromSpace = ssHeapScheme.getFromSpace();
+        final Belt toSpace = ssHeapScheme.getToSpace();
+        prologue();
+
+        if (ssHeapScheme.verifyBeforeGC()) {
+            verifyHeap("Before GC", ssHeapScheme, fromSpace);
         }
 
         monitorScheme.beforeGarbageCollection();
-
         // Start scanning the reachable objects from roots.
-        heapScheme.scavengeRoot(fromSpace, toSpace);
+        ssHeapScheme.scavengeRoot(fromSpace, toSpace);
 
         // Evacuate all remaining objects reachable
         evacuateFollowers(fromSpace, toSpace);
 
         monitorScheme.afterGarbageCollection();
 
-        verifyBelt(toSpace);
+        // Swap semi-spaces. From--> To and To-->From
+        ssHeapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
+        ssHeapScheme.getToSpace().resetAllocationMark();
+
+        if (ssHeapScheme.verifyAfterGC()) {
+            verifyHeap("After GC", ssHeapScheme, fromSpace);
+        }
         InspectableHeapInfo.afterGarbageCollection();
 
-        // Swap semi-spaces. From--> To and To-->From
-        heapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
-        heapScheme.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
             Log.println(numCollections);

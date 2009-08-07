@@ -31,7 +31,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
@@ -210,7 +209,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
-        return javaPrototype().vmConfiguration().compilerScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
+        return javaPrototype().vmConfiguration().compilerScheme().compile(classMethodActor);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {

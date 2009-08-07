@@ -46,7 +46,6 @@ public class StackViewPreferences extends AbstractInspectionHolder {
 
     private static final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(STACK_INSPECTION_SETTINGS_NAME) {
 
-        @Override
         public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             saveSettingsEvent.save(SLOT_NAME_DISPLAY_MODE_PREFERENCE, slotNameDisplayMode.name());
         }

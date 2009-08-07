@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.jit.*;
@@ -69,8 +68,9 @@ public class JitTracer extends Tracer {
         final boolean begin = begin(anchor);
         if (begin) {
             // Return the address of the traced bytecodes.
-            final JitTargetMethod targetMethod = (JitTargetMethod) CompilationScheme.Static.compile(anchor.method(), CompilationDirective.TRACE_JIT);
-            return targetMethod.codeStart().plus(targetMethod.targetCodePositionFor(anchor.position()));
+            // TODO: trace jit
+            // final JitTargetMethod targetMethod = (JitTargetMethod) CompilationScheme.Static.compile(anchor.method());
+            // return targetMethod.codeStart().plus(targetMethod.targetCodePositionFor(anchor.position()));
         }
         return Address.zero();
     }
@@ -152,8 +152,7 @@ public class JitTracer extends Tracer {
 
     @UNSAFE
     private Address getOriginalBytecodeAddress(JitTargetMethod tracedMethod, int bytecodePosition) {
-        final MethodState methodState = tracedMethod.classMethodActor().methodState();
-        final JitTargetMethod originalMethod = (JitTargetMethod) methodState.currentTargetMethod(CompilationDirective.DEFAULT);
+        final JitTargetMethod originalMethod = (JitTargetMethod) tracedMethod.classMethodActor().currentTargetMethod();
         return originalMethod.codeStart().plus(originalMethod.targetCodePositionFor(bytecodePosition));
     }
 

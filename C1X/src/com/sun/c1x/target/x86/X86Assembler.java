@@ -200,6 +200,8 @@ public abstract class X86Assembler extends AbstractAssembler {
 
         // Encode the registers as needed in the fields they are used in
 
+        assert reg != Register.noreg;
+
         int regenc = encode(reg) << 3;
         int indexenc = index.isValid() ? encode(index) << 3 : 0;
         int baseenc = base.isValid() ? encode(base) : 0;
@@ -546,6 +548,19 @@ public abstract class X86Assembler extends AbstractAssembler {
      */
     public void callRuntime(CiRuntimeCall runtimeCall, CiMethod method) {
         recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[0]);
+        emitByte(0xE8);
+        emitInt(0);
+    }
+
+    /**
+     * Emits a direct call to a method. It generates the bytes for the call, fills in 0 for the destination address and
+     * records the position as a relocation to the runtime.
+     *
+     * @param runtimeCall
+     *            the destination of the call
+     */
+    public void callMethodDirect(CiMethod method, boolean[] stackRefMap) {
+        recordDirectCall(codeBuffer.position(), method, stackRefMap);
         emitByte(0xE8);
         emitInt(0);
     }
@@ -2603,6 +2618,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int regEnc, boolean byteinst) {
+      //  assert target.arch.is32bit();
         if (regEnc >= 8) {
             emitByte(Prefix.REXB);
             regEnc -= 8;
@@ -2627,6 +2643,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int dstEnc, int srcEnc, boolean byteinst) {
+//        assert target.arch.is32bit();
         if (dstEnc < 8) {
             if (srcEnc >= 8) {
                 emitByte(Prefix.REXB);
@@ -2713,6 +2730,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void prefix(Address adr, Register reg) {
+
         if (reg.encoding < 8) {
             if (needsRex(adr.base)) {
                 if (needsRex(adr.index)) {

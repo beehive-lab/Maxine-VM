@@ -43,6 +43,7 @@ import java.util.List;
  * @author Thomas Wuerthinger
  */
 public class C1XTargetMethodGenerator {
+    private final C1XCompilerScheme compilerScheme;
     private final ClassMethodActor classMethodActor;
     private final CiTargetMethod ciTargetMethod;
     private int directCalls;
@@ -54,10 +55,11 @@ public class C1XTargetMethodGenerator {
     /**
      * Creates a new compiler interface target method for the specified class method actor.
      *
+     * @param compilerScheme the compiler scheme that generated the method
      * @param classMethodActor the class method actor
      */
-    public C1XTargetMethodGenerator(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
-
+    public C1XTargetMethodGenerator(C1XCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+        this.compilerScheme = compilerScheme;
         this.classMethodActor = classMethodActor;
         this.ciTargetMethod = ciTargetMethod;
 
@@ -75,11 +77,11 @@ public class C1XTargetMethodGenerator {
 
         final int numberOfStopPositions = directCalls + indirectCalls + safepoints;
         final int[] stopPositions = new int[numberOfStopPositions];
-        final byte[] refMaps = new byte[TargetMethod.computeReferenceMapsSize(directCalls, indirectCalls, safepoints, stackRefMapSize(), registerRefMapSize())];
+        byte[] refMaps = new byte[TargetMethod.computeReferenceMapsSize(directCalls, indirectCalls, safepoints, stackRefMapSize(), registerRefMapSize())];
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps);
         final Object[] refLiterals = new Object[refSize];
 
-        targetMethod = new C1XTargetMethod(classMethodActor);
+        targetMethod = new C1XTargetMethod(classMethodActor, compilerScheme);
         Code.allocate(targetBundleLayout, targetMethod);
 
         Object[] directCallees = processCallSites(stopPositions, bitMap);
@@ -94,6 +96,10 @@ public class C1XTargetMethodGenerator {
         TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI();
 
         assert ciTargetMethod.targetCode != null;
+
+        if (refMaps.length == 0) {
+            refMaps = null;
+        }
 
         targetMethod.setGenerated(
             catchRangePositions,
@@ -126,9 +132,10 @@ public class C1XTargetMethodGenerator {
             Offset diff = dataStart.minus(codeStart).asOffset();
             int refPatchPos = 0;
             for (CiTargetMethod.RefPatchSite refPatch : ciTargetMethod.refPatchSites) {
-                refLiterals[refPatchPos++] = refPatch.referrent;
+                refLiterals[refPatchPos] = refPatch.referrent;
                 int refSize = Word.size(); // TODO: Use C1X target object
-                X86InstructionDecoder.patchRelativeInstruction(targetMethod.code(), refPatch.codePos, diff.plus(refPatch.index * refSize - refPatch.codePos).toInt());
+                X86InstructionDecoder.patchRelativeInstruction(targetMethod.code(), refPatch.codePos, diff.plus(refPatchPos * refSize - refPatch.codePos).toInt());
+                refPatchPos++;
             }
         }
     }

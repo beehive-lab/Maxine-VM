@@ -47,7 +47,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * Directs and manages the creation of the prototype components, including the
- * compiled prototype (code), graph protototype (object graph), and data prototype
+ * compiled prototype (code), graph prototype (object graph), and data prototype
  * (raw data). This class also constructs the VM configuration from a number
  * of command line options.
  *

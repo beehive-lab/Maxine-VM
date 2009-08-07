@@ -20,9 +20,10 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.C1XOptions;
+import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.value.BasicType;
@@ -35,9 +36,11 @@ public class X86MacroAssembler extends X86Assembler {
 
     private Register rscratch1;
     private final int wordSize;
+    private final C1XCompiler compiler;
 
-    public X86MacroAssembler(Target target) {
-        super(target);
+    public X86MacroAssembler(C1XCompiler compiler) {
+        super(compiler.target);
+        this.compiler = compiler;
 
         rscratch1 = X86FrameMap.rscratch1(target.arch);
         wordSize = target.arch.wordSize;
@@ -51,6 +54,59 @@ public class X86MacroAssembler extends X86Assembler {
         } else {
             throw Util.shouldNotReachHere();
         }
+    }
+
+
+    void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+        int index = 0;
+        for (Register op : args) {
+            storeParameter(op, index++);
+        }
+
+        assert args.length == stub.arguments.length;
+
+        callGlobalStub(compiler.lookupGlobalStub(stub));
+
+        if (result != Register.noreg) {
+
+            this.loadResult(result, 0);
+        }
+
+        // Clear out parameters
+        if (C1XOptions.GenerateAssertionCode) {
+
+            for (index = 0; index < args.length; index++) {
+                storeParameter(0, index++);
+            }
+        }
+    }
+
+    void loadResult(Register r, int offsetFromRspInWords) {
+        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
+        int offsetFromRspInBytes = offsetFromRspInWords * target.arch.wordSize;
+        //assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
+        movptr(r, new Address(X86.rsp, offsetFromRspInBytes));
+    }
+
+    void storeParameter(Register r, int offsetFromRspInWords) {
+        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
+        int offsetFromRspInBytes = offsetFromRspInWords * target.arch.wordSize;
+        //assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
+        movptr(new Address(X86.rsp, offsetFromRspInBytes), r);
+    }
+
+    void storeParameter(int c, int offsetFromRspInWords) {
+        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
+        int offsetFromRspInBytes = offsetFromRspInWords * target.arch.wordSize;
+        //assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
+        movptr(new Address(X86.rsp, offsetFromRspInBytes), c);
+    }
+
+    void storeParameter(Object o, int offsetFromRspInWords) {
+        assert offsetFromRspInWords >= 0 : "invalid offset from rsp";
+        int offsetFromRspInBytes = offsetFromRspInWords * target.arch.wordSize;
+        //assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
+        movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
     }
 
     int biasedLockingEnter32(Register lockReg, Register objReg, Register swapReg, Register tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, BiasedLockingCounters counters) {
@@ -2604,7 +2660,11 @@ public class X86MacroAssembler extends X86Assembler {
     protected void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
-        movl(new Address(X86.rsp, (-offset)), X86.rax);
+        if (target.arch.is64bit()) {
+            movq(new Address(X86.rsp, (-offset)), X86.rax);
+        } else {
+            movl(new Address(X86.rsp, (-offset)), X86.rax);
+        }
     }
 
     @Override

@@ -54,8 +54,8 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         targetGenerator().initialize();
     }
 
-    public JitTargetMethod compile(ClassMethodActor classMethodActor, CompilationDirective compilationDirective) {
-        return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor, compilationDirective);
+    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
+        return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
     }
 
     @PROTOTYPE_ONLY

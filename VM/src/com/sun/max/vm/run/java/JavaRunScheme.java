@@ -39,7 +39,6 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
@@ -105,8 +104,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         for (StaticMethodActor method : initIDMethods) {
             try {
-                final MethodState methodState = method.methodState();
-                if (methodState == null || methodState.currentTargetMethod() == null) {
+                if (method.currentTargetMethod() == null) {
                     FatalError.unexpected("Native initialization method must be compiled in boot image: " + method);
                 }
                 method.invoke();

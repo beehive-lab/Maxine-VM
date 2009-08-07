@@ -39,17 +39,11 @@ import com.sun.max.vm.runtime.*;
 
 public class CopyActionImpl implements Action {
 
-    final Verify verifyAction;
-
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayHeapScheme heapScheme;
 
     protected Belt from;
     protected Belt to;
-
-    public CopyActionImpl(Verify verifyAction) {
-        this.verifyAction = verifyAction;
-    }
 
     /**
      * Initialize the heap scheme this closure is being used by.
@@ -72,13 +66,16 @@ public class CopyActionImpl implements Action {
 
     @INLINE
     final void verify(Grip origin) {
+        if (origin.isZero()) {
+            return;
+        }
         final Pointer fromOrigin = origin.toOrigin();
         if (!heapScheme.contains(fromOrigin)) {
             Log.print("invalid grip: ");
             Log.println(fromOrigin.asAddress());
             FatalError.unexpected("invalid grip");
         }
-        verifyAction.checkGripTag(origin);
+        DebugHeap.checkNonNullGripTag(origin);
     }
 
     public Grip doAction(Grip origin) {
@@ -98,6 +95,7 @@ public class CopyActionImpl implements Action {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
+
             DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);

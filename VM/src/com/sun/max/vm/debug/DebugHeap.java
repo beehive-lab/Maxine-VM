@@ -144,6 +144,14 @@ public final class DebugHeap {
         }
     }
 
+    public static void checkNonNullGripTag(Grip grip) {
+        if (MaxineVM.isDebug()) {
+            final Pointer origin = grip.toOrigin();
+            final Pointer cell = Layout.originToCell(origin);
+            checkCellTag(cell, cell.minusWords(1).getWord(0));
+        }
+    }
+
     /**
      * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
      *
@@ -163,7 +171,7 @@ public final class DebugHeap {
             return;
         }
         if (MaxineVM.isDebug()) {
-            checkGripTag(grip);
+            checkNonNullGripTag(grip);
         }
         final Pointer origin = grip.toOrigin();
         if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin)) {
@@ -190,7 +198,7 @@ public final class DebugHeap {
     private static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
-        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
+        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() / Word.size();
         verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
         final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
 

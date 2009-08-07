@@ -60,7 +60,7 @@ public class C1XCompiler {
     }
 
     private void init() {
-        final GlobalStubEmitter emitter = target.backend.newGlobalStubEmitter(runtime);
+        final GlobalStubEmitter emitter = target.backend.newGlobalStubEmitter(this);
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);
             Object result = runtime.registerTargetMethod(targetMethod);

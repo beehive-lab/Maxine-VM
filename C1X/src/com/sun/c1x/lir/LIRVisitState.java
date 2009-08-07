@@ -49,6 +49,7 @@ public class LIRVisitState {
     // optimization: the operands and infos are not stored in a variable-length
     // list, but in a fixed-size array to save time of size checks and resizing
     private int[] oprsLen;
+    private int[] oprsReplaced;
     LIROperand[][] oprsNew;
     CodeEmitInfo[] infoNew;
     int infoLen;
@@ -57,6 +58,7 @@ public class LIRVisitState {
 
     public LIRVisitState() {
         oprsLen = new int[OperandMode.values().length];
+        oprsReplaced = new int[OperandMode.values().length];
         oprsNew = new LIROperand[OperandMode.values().length][MAXNUMBEROFOPERANDS];
         infoNew = new CodeEmitInfo[MAXNUMBEROFINFOS];
         reset();
@@ -124,9 +126,27 @@ public class LIRVisitState {
         // TODO to be completed later
     }
 
+    private boolean replaceMode;
+
+    public void visitReplace(LIRInstruction op) {
+
+        assert this.operand == op;
+        assert !replaceMode;
+        Arrays.fill(oprsReplaced, 0);
+        replaceMode = true;
+        visitHelper(op);
+        replaceMode = false;
+    }
+
     public void visit(LIRInstruction op) {
         // copy information from the LIRInstruction
         reset();
+        visitHelper(op);
+    }
+
+
+    public void visitHelper(LIRInstruction op) {
+        // copy information from the LIRInstruction
         setOp(op);
 
         switch (op.code()) {
@@ -153,7 +173,7 @@ public class LIRVisitState {
                     doInfo(op.info);
                 }
                 if (op.result.isValid()) {
-                    doOutput(op.result);
+                    op.result = doOutput(op.result);
                 }
                 break;
             }
@@ -183,10 +203,10 @@ public class LIRVisitState {
                     doInfo(op1.info);
                 }
                 if (op1.opr.isValid()) {
-                    doInput(op1.opr);
+                    op1.opr = doInput(op1.opr);
                 }
                 if (op1.result.isValid()) {
-                    doOutput(op1.result);
+                    op1.result = doOutput(op1.result);
                 }
 
                 break;
@@ -198,7 +218,7 @@ public class LIRVisitState {
                 assert op1.info != null : "";
                 doInfo(op1.info);
                 if (op1.opr.isValid()) {
-                    doTemp(op1.opr); // safepoints on SPARC need temporary register
+                    op1.opr = doTemp(op1.opr); // safepoints on SPARC need temporary register
                 }
                 assert op1.result.isIllegal() : "safepoint does not produce value";
 
@@ -212,10 +232,10 @@ public class LIRVisitState {
 
                 assert opConvert.info == null : "must be";
                 if (opConvert.opr.isValid()) {
-                    doInput(opConvert.opr);
+                    opConvert.opr = doInput(opConvert.opr);
                 }
                 if (opConvert.result.isValid()) {
-                    doOutput(opConvert.result);
+                    opConvert.result = doOutput(opConvert.result);
                 }
 
                 break;
@@ -246,22 +266,22 @@ public class LIRVisitState {
                     doInfo(opAllocObj.info);
                 }
                 if (opAllocObj.opr.isValid()) {
-                    doInput(opAllocObj.opr);
+                    opAllocObj.opr = doInput(opAllocObj.opr);
                 }
                 if (opAllocObj.tmp1.isValid()) {
-                    doTemp(opAllocObj.tmp1);
+                    opAllocObj.tmp1 = doTemp(opAllocObj.tmp1);
                 }
                 if (opAllocObj.tmp2.isValid()) {
-                    doTemp(opAllocObj.tmp2);
+                    opAllocObj.tmp2 = doTemp(opAllocObj.tmp2);
                 }
                 if (opAllocObj.tmp3.isValid()) {
-                    doTemp(opAllocObj.tmp3);
+                    opAllocObj.tmp3 = doTemp(opAllocObj.tmp3);
                 }
                 if (opAllocObj.tmp4.isValid()) {
-                    doTemp(opAllocObj.tmp4);
+                    opAllocObj.tmp4 = doTemp(opAllocObj.tmp4);
                 }
                 if (opAllocObj.result.isValid()) {
-                    doOutput(opAllocObj.result);
+                    opAllocObj.result = doOutput(opAllocObj.result);
                 }
                 doStub(opAllocObj.stub);
                 break;
@@ -293,16 +313,16 @@ public class LIRVisitState {
                     doInfo(op2.info);
                 }
                 if (op2.opr1.isValid()) {
-                    doInput(op2.opr1);
+                    op2.opr1 = doInput(op2.opr1);
                 }
                 if (op2.opr2.isValid()) {
-                    doInput(op2.opr2);
+                    op2.opr2 = doInput(op2.opr2);
                 }
                 if (op2.tmp.isValid()) {
-                    doTemp(op2.tmp);
+                    op2.tmp = doTemp(op2.tmp);
                 }
                 if (op2.result.isValid()) {
-                    doOutput(op2.result);
+                    op2.result = doOutput(op2.result);
                 }
 
                 break;
@@ -316,10 +336,10 @@ public class LIRVisitState {
                 assert op2.info == null && op2.tmp.isIllegal() : "not used";
                 assert op2.opr1.isValid() && op2.opr2.isValid() && op2.result.isValid() : "used";
 
-                doInput(op2.opr1);
-                doInput(op2.opr2);
-                doTemp(op2.opr2);
-                doOutput(op2.result);
+                op2.opr1 = doInput(op2.opr1);
+                op2.opr2 = doInput(op2.opr2);
+                op2.opr2 = doTemp(op2.opr2);
+                op2.result = doOutput(op2.result);
 
                 break;
             }
@@ -332,10 +352,10 @@ public class LIRVisitState {
                     doInfo(op2.info);
                 }
                 if (op2.opr1.isValid()) {
-                    doTemp(op2.opr1);
+                    op2.opr1 = doTemp(op2.opr1);
                 }
                 if (op2.opr2.isValid()) {
-                    doInput(op2.opr2); // exception object is input parameter
+                    op2.opr2 = doInput(op2.opr2); // exception object is input parameter
                 }
                 assert op2.result.isIllegal() : "no result";
 
@@ -352,17 +372,17 @@ public class LIRVisitState {
                 // guarantee that they do not overlap
                 assert op2.info == null : "not used";
                 assert op2.opr1.isValid() : "used";
-                doInput(op2.opr1);
-                doTemp(op2.opr1);
+                op2.opr1 = doInput(op2.opr1);
+                op2.opr1 = doTemp(op2.opr1);
 
                 if (op2.opr2.isValid()) {
-                    doTemp(op2.opr2);
+                    op2.opr2 = doTemp(op2.opr2);
                 }
                 if (op2.tmp.isValid()) {
-                    doTemp(op2.tmp);
+                    op2.tmp = doTemp(op2.tmp);
                 }
                 if (op2.result.isValid()) {
-                    doOutput(op2.result);
+                    op2.result = doOutput(op2.result);
                 }
 
                 break;
@@ -377,23 +397,23 @@ public class LIRVisitState {
                     doInfo(op3.info);
                 }
                 if (op3.opr1.isValid()) {
-                    doInput(op3.opr1);
+                    op3.opr1 = doInput(op3.opr1);
                 }
 
                 // second operand is input and temp, so ensure that second operand
                 // and third operand get not the same register
                 if (op3.opr2.isValid()) {
-                    doInput(op3.opr2);
+                    op3.opr2 = doInput(op3.opr2);
                 }
                 if (op3.opr2.isValid()) {
-                    doTemp(op3.opr2);
+                    op3.opr2 = doTemp(op3.opr2);
                 }
                 if (op3.opr3.isValid()) {
-                    doTemp(op3.opr3);
+                    op3.opr3 = doTemp(op3.opr3);
                 }
 
                 if (op3.result.isValid()) {
-                    doOutput(op3.result);
+                    op3.result = doOutput(op3.result);
                 }
 
                 break;
@@ -403,18 +423,19 @@ public class LIRVisitState {
             case StaticCall:
             case OptVirtualCall:
             case IcVirtualCall:
+            case InterfaceCall:
             case VirtualCall: {
                 LIRJavaCall opJavaCall = (LIRJavaCall) op;
 
                 if (opJavaCall.receiver.isValid()) {
-                    doInput(opJavaCall.receiver);
+                    opJavaCall.receiver = doInput(opJavaCall.receiver);
                 }
 
                 // only visit register parameters
                 int n = opJavaCall.arguments.size();
                 for (int i = 0; i < n; i++) {
                     if (!opJavaCall.arguments.get(i).isPointer()) {
-                        doInput(opJavaCall.arguments.get(i));
+                        opJavaCall.arguments.set(i, doInput(opJavaCall.arguments.get(i)));
                     }
                 }
 
@@ -423,7 +444,7 @@ public class LIRVisitState {
                 }
                 doCall();
                 if (opJavaCall.result.isValid()) {
-                    doOutput(opJavaCall.result);
+                    opJavaCall.result = doOutput(opJavaCall.result);
                 }
 
                 break;
@@ -437,18 +458,18 @@ public class LIRVisitState {
                 int n = opRTCall.arguments.size();
                 for (int i = 0; i < n; i++) {
                     if (!opRTCall.arguments.get(i).isPointer()) {
-                        doInput(opRTCall.arguments.get(i));
+                        opRTCall.arguments.set(i, doInput(opRTCall.arguments.get(i)));
                     }
                 }
                 if (opRTCall.info != null) {
                     doInfo(opRTCall.info);
                 }
                 if (opRTCall.tmp.isValid()) {
-                    doTemp(opRTCall.tmp);
+                    opRTCall.tmp = doTemp(opRTCall.tmp);
                 }
                 doCall();
                 if (opRTCall.result.isValid()) {
-                    doOutput(opRTCall.result);
+                    opRTCall.result = doOutput(opRTCall.result);
                 }
 
                 break;
@@ -460,22 +481,22 @@ public class LIRVisitState {
 
                 assert opArrayCopy.result.isIllegal() : "unused";
                 assert opArrayCopy.src.isValid() : "used";
-                doInput(opArrayCopy.src);
-                doTemp(opArrayCopy.src);
+                opArrayCopy.src = doInput(opArrayCopy.src);
+                opArrayCopy.src = doTemp(opArrayCopy.src);
                 assert opArrayCopy.srcPos.isValid() : "used";
-                doInput(opArrayCopy.srcPos);
-                doTemp(opArrayCopy.srcPos);
+                opArrayCopy.srcPos = doInput(opArrayCopy.srcPos);
+                opArrayCopy.srcPos = doTemp(opArrayCopy.srcPos);
                 assert opArrayCopy.dst.isValid() : "used";
-                doInput(opArrayCopy.dst);
-                doTemp(opArrayCopy.dst);
+                opArrayCopy.dst = doInput(opArrayCopy.dst);
+                opArrayCopy.dstPos = doTemp(opArrayCopy.dst);
                 assert opArrayCopy.dstPos.isValid() : "used";
-                doInput(opArrayCopy.dstPos);
-                doTemp(opArrayCopy.dstPos);
+                opArrayCopy.dstPos = doInput(opArrayCopy.dstPos);
+                opArrayCopy.dstPos = doTemp(opArrayCopy.dstPos);
                 assert opArrayCopy.length.isValid() : "used";
-                doInput(opArrayCopy.length);
-                doTemp(opArrayCopy.length);
+                opArrayCopy.length = doInput(opArrayCopy.length);
+                opArrayCopy.length = doTemp(opArrayCopy.length);
                 assert opArrayCopy.tmp.isValid() : "used";
-                doTemp(opArrayCopy.tmp);
+                opArrayCopy.tmp = doTemp(opArrayCopy.tmp);
                 if (opArrayCopy.info != null) {
                     doInfo(opArrayCopy.info);
                 }
@@ -498,14 +519,14 @@ public class LIRVisitState {
                 // TODO: check if these operands really have to be temp
                 // (or if input is sufficient). This may have influence on the oop map!
                 assert opLock.lock.isValid() : "used";
-                doTemp(opLock.lock);
+                opLock.lock = doTemp(opLock.lock);
                 assert opLock.hdr.isValid() : "used";
-                doTemp(opLock.hdr);
+                opLock.hdr = doTemp(opLock.hdr);
                 assert opLock.obj.isValid() : "used";
-                doTemp(opLock.obj);
+                opLock.obj = doTemp(opLock.obj);
 
                 if (opLock.scratch.isValid()) {
-                    doTemp(opLock.scratch);
+                    opLock.scratch = doTemp(opLock.scratch);
                 }
                 assert opLock.result.isIllegal() : "unused";
 
@@ -535,22 +556,22 @@ public class LIRVisitState {
                     doInfo(opTypeCheck.infoForPatch);
                 }
                 if (opTypeCheck.object.isValid()) {
-                    doInput(opTypeCheck.object);
+                    opTypeCheck.object = doInput(opTypeCheck.object);
                 }
                 if (opTypeCheck.array.isValid()) {
-                    doInput(opTypeCheck.array);
+                    opTypeCheck.array = doInput(opTypeCheck.array);
                 }
                 if (opTypeCheck.tmp1.isValid()) {
-                    doTemp(opTypeCheck.tmp1);
+                    opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
                 }
                 if (opTypeCheck.tmp2.isValid()) {
-                    doTemp(opTypeCheck.tmp2);
+                    opTypeCheck.tmp2 = doTemp(opTypeCheck.tmp2);
                 }
                 if (opTypeCheck.tmp3.isValid()) {
-                    doTemp(opTypeCheck.tmp3);
+                    opTypeCheck.tmp3 = doTemp(opTypeCheck.tmp3);
                 }
                 if (opTypeCheck.result.isValid()) {
-                    doOutput(opTypeCheck.result);
+                    opTypeCheck.result = doOutput(opTypeCheck.result);
                 }
                 doStub(opTypeCheck.stub);
                 break;
@@ -567,22 +588,22 @@ public class LIRVisitState {
                     doInfo(opCompareAndSwap.info);
                 }
                 if (opCompareAndSwap.addr.isValid()) {
-                    doInput(opCompareAndSwap.addr);
+                    opCompareAndSwap.addr = doInput(opCompareAndSwap.addr);
                 }
                 if (opCompareAndSwap.cmpValue.isValid()) {
-                    doInput(opCompareAndSwap.cmpValue);
+                    opCompareAndSwap.cmpValue = doInput(opCompareAndSwap.cmpValue);
                 }
                 if (opCompareAndSwap.newValue.isValid()) {
-                    doInput(opCompareAndSwap.newValue);
+                    opCompareAndSwap.newValue = doInput(opCompareAndSwap.newValue);
                 }
                 if (opCompareAndSwap.tmp1.isValid()) {
-                    doTemp(opCompareAndSwap.tmp1);
+                    opCompareAndSwap.tmp1 = doTemp(opCompareAndSwap.tmp1);
                 }
                 if (opCompareAndSwap.tmp2.isValid()) {
-                    doTemp(opCompareAndSwap.tmp2);
+                    opCompareAndSwap.tmp2 = doTemp(opCompareAndSwap.tmp2);
                 }
                 if (opCompareAndSwap.result.isValid()) {
-                    doOutput(opCompareAndSwap.result);
+                    opCompareAndSwap.result = doOutput(opCompareAndSwap.result);
                 }
 
                 break;
@@ -597,27 +618,27 @@ public class LIRVisitState {
                     doInfo(opAllocArray.info);
                 }
                 if (opAllocArray.klass.isValid()) {
-                    doInput(opAllocArray.klass);
+                    opAllocArray.klass = doInput(opAllocArray.klass);
                 }
-                doTemp(opAllocArray.klass);
+                opAllocArray.klass = doTemp(opAllocArray.klass);
                 if (opAllocArray.len.isValid()) {
-                    doInput(opAllocArray.len);
+                    opAllocArray.len = doInput(opAllocArray.len);
                 }
-                doTemp(opAllocArray.len);
+                opAllocArray.len = doTemp(opAllocArray.len);
                 if (opAllocArray.tmp1.isValid()) {
-                    doTemp(opAllocArray.tmp1);
+                    opAllocArray.tmp1 = doTemp(opAllocArray.tmp1);
                 }
                 if (opAllocArray.tmp2.isValid()) {
-                    doTemp(opAllocArray.tmp2);
+                    opAllocArray.tmp2 = doTemp(opAllocArray.tmp2);
                 }
                 if (opAllocArray.tmp3.isValid()) {
-                    doTemp(opAllocArray.tmp3);
+                    opAllocArray.tmp3 = doTemp(opAllocArray.tmp3);
                 }
                 if (opAllocArray.tmp4.isValid()) {
-                    doTemp(opAllocArray.tmp4);
+                    opAllocArray.tmp4 = doTemp(opAllocArray.tmp4);
                 }
                 if (opAllocArray.result.isValid()) {
-                    doOutput(opAllocArray.result);
+                    opAllocArray.result = doOutput(opAllocArray.result);
                 }
                 doStub(opAllocArray.stub);
                 break;
@@ -629,12 +650,12 @@ public class LIRVisitState {
                 LIRProfileCall opProfileCall = (LIRProfileCall) op;
 
                 if (opProfileCall.recv.isValid()) {
-                    doTemp(opProfileCall.recv);
+                    opProfileCall.recv = doTemp(opProfileCall.recv);
                 }
                 assert opProfileCall.mdo.isValid() : "used";
-                doTemp(opProfileCall.mdo);
+                opProfileCall.mdo = doTemp(opProfileCall.mdo);
                 assert opProfileCall.tmp1.isValid() : "used";
-                doTemp(opProfileCall.tmp1);
+                opProfileCall.tmp1 = doTemp(opProfileCall.tmp1);
                 break;
             }
 
@@ -654,16 +675,16 @@ public class LIRVisitState {
     }
 
     // LIRInstruction visitor functions use these to fill in the state
-    public void doInput(LIROperand opr) {
-        append(opr, LIRVisitState.OperandMode.InputMode);
+    public LIROperand doInput(LIROperand opr) {
+        return append(opr, LIRVisitState.OperandMode.InputMode);
     }
 
-    public void doOutput(LIROperand opr) {
-        append(opr, LIRVisitState.OperandMode.OutputMode);
+    public LIROperand doOutput(LIROperand opr) {
+        return append(opr, LIRVisitState.OperandMode.OutputMode);
     }
 
-    public void doTemp(LIROperand opr) {
-        append(opr, LIRVisitState.OperandMode.TempMode);
+    public LIROperand doTemp(LIROperand opr) {
+        return append(opr, LIRVisitState.OperandMode.TempMode);
     }
 
     void doInfo(CodeEmitInfo info) {
@@ -673,27 +694,54 @@ public class LIRVisitState {
     // only include register operands
     // addresses are decomposed to the base and index registers
     // constants and stack operands are ignored
-    void append(LIROperand opr, OperandMode mode) {
+    LIROperand append(LIROperand opr, OperandMode mode) {
+
         assert opr.isValid() : "should not call this otherwise";
+
 
         if (opr.isRegister()) {
             assert oprsLen[mode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+
+            if (replaceMode) {
+                return oprsNew[mode.ordinal()][oprsReplaced[mode.ordinal()]++];
+            }
+
             oprsNew[mode.ordinal()][oprsLen[mode.ordinal()]++] = opr;
 
         } else if (opr.isPointer()) {
             final LIRAddress pointer = opr.asAddressPtr();
             if (pointer != null) {
+
+                LIROperand newBase = LIROperand.ILLEGAL;
+                LIROperand newIndex = LIROperand.ILLEGAL;
+
                 // special handling for addresses: add base and index register of the Pointer
                 // both are always input operands!
                 if (pointer.base.isValid()) {
                     assert pointer.base.isRegister() : "must be";
                     assert oprsLen[OperandMode.InputMode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+
+                    if (replaceMode) {
+                        newBase = oprsNew[OperandMode.InputMode.ordinal()][oprsReplaced[OperandMode.InputMode.ordinal()]++];
+                    }
+
                     oprsNew[OperandMode.InputMode.ordinal()][oprsLen[OperandMode.InputMode.ordinal()]++] = pointer.base;
                 }
                 if (pointer.index.isValid()) {
                     assert pointer.index.isRegister() : "must be";
                     assert oprsLen[OperandMode.InputMode.ordinal()] < MAXNUMBEROFOPERANDS : "array overflow";
+
+                    if (replaceMode) {
+                        newIndex = oprsNew[OperandMode.InputMode.ordinal()][oprsReplaced[OperandMode.InputMode.ordinal()]++];
+                    }
+
                     oprsNew[OperandMode.InputMode.ordinal()][oprsLen[OperandMode.InputMode.ordinal()]++] = pointer.index;
+                }
+
+                if (replaceMode && (newBase != pointer.base || newIndex != pointer.index)) {
+                    return new LIRAddress(newBase, newIndex, pointer.scale, pointer.displacement, pointer.basicType);
+                } else {
+                    return pointer;
                 }
 
             } else {
@@ -702,6 +750,8 @@ public class LIRVisitState {
         } else {
             assert opr.isStack() : "stack operands are not processed";
         }
+
+        return opr;
     }
 
     void append(CodeEmitInfo info) {
@@ -717,6 +767,11 @@ public class LIRVisitState {
     public LIROperand oprAt(OperandMode mode, int index) {
         assert index >= 0 && index < oprsLen[mode.ordinal()] : "index out of bound";
         return oprsNew[mode.ordinal()][index];
+    }
+
+    public void setOprAt(OperandMode mode, int index, LIROperand operand) {
+        assert index >= 0 && index < oprsLen[mode.ordinal()] : "index out of bound";
+        oprsNew[mode.ordinal()][index] = operand;
     }
 
     public int infoCount() {
@@ -758,12 +813,7 @@ public class LIRVisitState {
     public boolean noOperands(LIRInstruction op) {
         visit(op);
 
-        return oprCount(OperandMode.InputMode) == 0 &&
-               oprCount(OperandMode.OutputMode) == 0 &&
-               oprCount(OperandMode.TempMode) == 0 &&
-               infoCount() == 0 &&
-               !hasCall() &&
-               !hasSlowCase();
+        return oprCount(OperandMode.InputMode) == 0 && oprCount(OperandMode.OutputMode) == 0 && oprCount(OperandMode.TempMode) == 0 && infoCount() == 0 && !hasCall() && !hasSlowCase();
     }
 
 }

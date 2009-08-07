@@ -33,9 +33,7 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.GraphPrototype.*;
 
 /**
- * A mechanism for {@linkplain #saveTree(DataOutputStream, Set) saving},
- * {@linkplain #loadTree(DataInputStream) loading} and
- * {@linkplain #printTree(com.sun.max.vm.prototype.BinaryImageObjectTree.Node, PrintWriter, boolean) printing} the
+ * A mechanism for saving, loading and printing the
  * causality spanning-tree of the object graph in an {@linkplain BinaryImageGenerator image}.
  *
  * @author Doug Simon

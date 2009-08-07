@@ -559,7 +559,7 @@ public class InstructionPrinter extends InstructionVisitor {
           }
           out.print(dimensions[i]);
         }
-        out.print("] ").print(newMultiArray.elementType().name());
+        out.print("] ").print(newMultiArray.elementType.name());
     }
 
     @Override

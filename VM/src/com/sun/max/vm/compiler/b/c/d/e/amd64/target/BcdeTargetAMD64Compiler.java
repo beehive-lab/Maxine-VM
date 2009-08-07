@@ -102,7 +102,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
 
         // Use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint(), CompilationDirective.DEFAULT);
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint());
         patchRipCallSite(callSite, calleeEntryPoint);
 
         // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:

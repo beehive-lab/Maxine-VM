@@ -35,10 +35,8 @@ import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.type.*;
-import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
@@ -88,25 +86,36 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     }
 
     /**
-     * @return  local surrogates for all {@link TargetMethod}s in the {@link TeleVM} that match the specified key.
+     * Gets all target methods that encapsulate code compiled for a given method, either as a top level compilation or
+     * as a result of inlining.
+     *
+     * TODO: Once inlining dependencies are tracked, this method needs to use them.
+     *
+     * @param teleVM the VM to search
+     * @param methodKey the key denoting a method for which the target methods are being requested
+     * @return local surrogates for all {@link TargetMethod}s in the {@link TeleVM} that include code compiled for the
+     *         method matching {@code methodKey}
      */
     public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
-        final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
-        final DefaultMethodKey defaultMethodKey = new DefaultMethodKey(methodKey.holder(), methodKey.name(), methodKey.signature());
-        // The interpreter will be unhappy passing in arguments whose dynamic types are alien (non-VM) classes, so create one for the key.
-        try {
-            final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(defaultMethodKey)).asReference();
-            final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) teleVM.makeTeleObject(targetMethodArrayReference);
-            if (teleTargetMethodArrayObject != null) {
-                for (Reference targetMethodReference : (Reference []) teleTargetMethodArrayObject.shallowCopy()) {
-                    final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);
-                    result.append(teleTargetMethod);
+        TeleClassActor teleClassActor = teleVM.findTeleClassActor(methodKey.holder());
+        if (teleClassActor != null) {
+            final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
+            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
+                if (teleClassMethodActor.hasTargetMethod()) {
+                    ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+                    if (classMethodActor.name.equals(methodKey.name()) && classMethodActor.descriptor.equals(methodKey.signature())) {
+                        for (int i = 0; i < teleClassMethodActor.numberOfCompilations(); ++i) {
+                            TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(i);
+                            if (teleTargetMethod != null) {
+                                result.append(teleTargetMethod);
+                            }
+                        }
+                    }
                 }
             }
             return result;
-        } catch (TeleInterpreterException e) {
-            throw ProgramError.unexpected(e);
         }
+        return Sequence.Static.empty(TeleTargetMethod.class);
     }
 
     private final TargetCodeRegion targetCodeRegion;

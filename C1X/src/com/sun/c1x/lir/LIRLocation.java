@@ -250,13 +250,4 @@ public class LIRLocation extends LIROperand {
     public static int virtualRegisterBase() {
         return Register.vregBase;
     }
-
-    public void changeTo(LIROperand newValues) {
-        assert newValues instanceof LIRLocation;
-        final LIRLocation otherLocation = (LIRLocation) newValues;
-        this.location1 = otherLocation.location1;
-        this.location2 = otherLocation.location2;
-        this.index = otherLocation.index;
-        assert this.equals(otherLocation);
-    }
 }

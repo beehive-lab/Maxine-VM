@@ -50,9 +50,9 @@ public class MonitorExitStub extends MonitorAccessStub {
     public void visit(LIRVisitState visitor) {
         assert objReg.isIllegal() : "unused";
         if (computeLock) {
-            visitor.doTemp(lockReg);
+            lockReg = visitor.doTemp(lockReg);
         } else {
-            visitor.doInput(lockReg);
+            lockReg = visitor.doInput(lockReg);
         }
     }
 }

@@ -25,6 +25,8 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 
 /**
+ *  Implementation of a three generations collector using beltway.
+ *
  * @author Laurent Daynes
  * @author Christos Kotselidis
  */
@@ -35,8 +37,21 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         super(name);
     }
 
+    protected void verifyHeap(String when) {
+        final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
+
+        if (Heap.verbose()) {
+            Log.print("Verify Heap");
+            Log.println(when);
+        }
+
+        genHeapScheme.genHeapBoundChecker.reset();
+        verifyBelt(genHeapScheme.getEdenSpace());
+        verifyBelt(genHeapScheme.getToSpace());
+        verifyBelt(genHeapScheme.getMatureSpace());
+    }
+
     protected void parEvacuateFollowers(Belt from, Belt to) {
-        BeltwayHeapScheme heapScheme = getBeltwayHeapScheme();
         /*               heapScheme.fillLastTLAB();
                 heapScheme.markSideTableLastTLAB();
          */
@@ -64,17 +79,16 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
 
         public void run() {
-            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = heapScheme.getMatureSpace();
-            final Belt toSpace = heapScheme.getToSpace();
-            final Belt edenSpace = heapScheme.getEdenSpace();
+            final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
+            final Belt matureSpace = genHeapScheme.getMatureSpace();
+            final Belt toSpace = genHeapScheme.getToSpace();
+            final Belt edenSpace = genHeapScheme.getEdenSpace();
             prologue();
 
-            if (Heap.verbose()) {
-                printBeltInfo("Mature Space", matureSpace);
-                Log.println("Verify Mature Space ");
+            if (heapScheme.verifyBeforeGC()) {
+                verifyHeap("Before Major Space GC");
             }
-            verifyBelt(matureSpace);
+
             monitorScheme.beforeGarbageCollection();
 
             if (Heap.verbose()) {
@@ -82,7 +96,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             }
             edenSpace.setExpandable(true);
 
-            heapScheme.scavengeRoot(matureSpace, edenSpace);
+            genHeapScheme.scavengeRoot(matureSpace, edenSpace);
 
             evacuateFollowers(matureSpace, edenSpace);
 
@@ -90,6 +104,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Mature Reset Allocation Mark");
             }
             matureSpace.resetAllocationMark();
+
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After Major Space GC");
+            }
 
             if (Heap.verbose()) {
                 Log.println("Compaction ");
@@ -103,7 +121,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
             edenSpace.setEnd(edenSpace.getAllocationMark());
-            heapScheme.scavengeRoot(edenSpace, matureSpace);
+            genHeapScheme.scavengeRoot(edenSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Move Reachable");
@@ -117,6 +135,10 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             edenSpace.resetAllocationMark();
             edenSpace.setEnd(toSpace.start());
             edenSpace.setExpandable(false);
+
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After Compaction");
+            }
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
@@ -131,35 +153,38 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             super("To");
         }
         public void run() {
-            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = heapScheme.getMatureSpace();
-            final Belt toSpace = heapScheme.getToSpace();
+            final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
+            final Belt matureSpace = genHeapScheme.getMatureSpace();
+            final Belt toSpace = genHeapScheme.getToSpace();
             prologue();
 
-            if (Heap.verbose()) {
-                printBeltInfo("To Space", toSpace);
-                Log.println("Verify To Space: ");
+            if (heapScheme.verifyBeforeGC()) {
+                verifyHeap("Before To Space GC");
             }
-            verifyBelt(toSpace);
+
             if (Heap.verbose()) {
                 Log.println(" Mature Snapshot ");
             }
 
             matureSpace.setAllocationMarkSnapshot();
             monitorScheme.beforeGarbageCollection();
-            heapScheme.scavengeRoot(toSpace, matureSpace);
+            genHeapScheme.scavengeRoot(toSpace, matureSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            heapScheme.scanCardAndEvacuate(matureSpace, toSpace);
+            genHeapScheme.scanCardAndEvacuate(matureSpace, toSpace);
 
             evacuateFollowers(toSpace, matureSpace);
 
-            heapScheme.sideTable.restoreAllChunkSlots();
+            genHeapScheme.sideTable.restoreAllChunkSlots();
 
             toSpace.resetAllocationMark();
+
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After To Space GC");
+            }
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {
@@ -178,17 +203,15 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         }
 
         public void run() {
-            final BeltwayHeapSchemeGenerational heapScheme = (BeltwayHeapSchemeGenerational) getBeltwayHeapScheme();
-            final Belt matureSpace = heapScheme.getMatureSpace();
-            final Belt toSpace = heapScheme.getToSpace();
-            final Belt edenSpace = heapScheme.getEdenSpace();
+            final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
+            final Belt matureSpace = genHeapScheme.getMatureSpace();
+            final Belt toSpace = genHeapScheme.getToSpace();
+            final Belt edenSpace = genHeapScheme.getEdenSpace();
             prologue();
 
-            if (Heap.verbose()) {
-                printBeltInfo("Eden Space", edenSpace);
-                Log.println("Verify Eden: ");
+            if (heapScheme.verifyBeforeGC()) {
+                verifyHeap("Before Eden Space GC");
             }
-            verifyBelt(edenSpace);
 
             if (Heap.verbose()) {
                 Log.println("To Space Snapshot");
@@ -196,24 +219,29 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             toSpace.setAllocationMarkSnapshot();
 
             monitorScheme.beforeGarbageCollection();
-            heapScheme.scavengeRoot(edenSpace, toSpace);
+            genHeapScheme.scavengeRoot(edenSpace, toSpace);
 
             if (Heap.verbose()) {
                 Log.println("Scan cards");
             }
 
-            heapScheme.scanCardAndEvacuate(toSpace, edenSpace);
-            heapScheme.scanCardAndEvacuate(matureSpace, edenSpace);
+            genHeapScheme.scanCardAndEvacuate(toSpace, edenSpace);
+            genHeapScheme.scanCardAndEvacuate(matureSpace, edenSpace);
 
             evacuateFollowers(edenSpace, toSpace);
 
-            heapScheme.sideTable.restoreAllChunkSlots();
+            genHeapScheme.sideTable.restoreAllChunkSlots();
 
             if (Heap.verbose()) {
                 Log.println("Reset Nursery Space Allocation Mark");
             }
 
             edenSpace.resetAllocationMark();
+
+            if (heapScheme.verifyAfterGC()) {
+                verifyHeap("After Eden Space GC");
+            }
+
             monitorScheme.afterGarbageCollection();
 
             if (Heap.verbose()) {

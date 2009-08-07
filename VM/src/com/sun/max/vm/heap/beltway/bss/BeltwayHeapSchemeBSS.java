@@ -24,14 +24,20 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
 
 /**
- * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space.
+ * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space. The heap
+ * scheme can use two collectors, a single-threaded one and a parallel one. An instance of each of these collectors is
+ * created at prototyping time and their reference stored in static variable. Which of the two collector to use is
+ * decided at runtime. The rationale for doing this is that the collector objects are allocated in the boot region and
+ * out of reach of the copying mechanism. This allows the collector objects to use their instance fields (including
+ * references field, if they point to boot regions objects) at any time (included GC time).
+ *
  * @author Christos Kotselidis
  * @author Laurent Daynes
  */
@@ -41,11 +47,43 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {50, 50};
     private final String [] BELT_DESCRIPTIONS = new String[] {"From Belt", "To Belt"};
 
+    /**
+     * Single threaded version of the beltway collector.
+     */
+    private static final BeltwaySSCollector singleThreadedCollector = new BeltwaySSCollector();
 
-    private BeltwaySSCollector beltCollectorBSS;
+    /**
+     * Single threaded version of the beltway collector.
+     */
+    private static final SemiSpaceParCollector parallelCollector = new SemiSpaceParCollector();
+
+    final class BSSHeapBoundChecker extends HeapBoundChecker {
+        private Address start;
+        private Address end;
+
+        void reset() {
+            start = getFromSpace().start();
+            end = getFromSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inFromSpace(Pointer origin) {
+            return origin.greaterEqual(start) && origin.lessThan(end);
+        }
+
+        @INLINE
+        @Override
+        public boolean contains(Pointer origin) {
+            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+        }
+    }
+
+    final BSSHeapBoundChecker bssHeapBoundChecker;
+    private BeltwaySSCollector bssCollector;
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        bssHeapBoundChecker = new BSSHeapBoundChecker();
     }
 
     @Override
@@ -59,16 +97,22 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     }
 
     @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return bssHeapBoundChecker;
+    }
+
+    @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (MaxineVM.isPrototyping()) {
+            singleThreadedCollector.initialize(this);
+            parallelCollector.initialize(this);
+        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getFromSpace();
-            // Watch out: the following create a MemoryRegion array
-            InspectableHeapInfo.init(getToSpace(), getFromSpace());
-            beltCollectorBSS = parallelScavenging ? new SemiSpaceParCollector() : new BeltwaySSCollector();
+            bssCollector = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
             }
@@ -87,7 +131,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        collectorThread.execute(beltCollectorBSS);
+        collectorThread.execute(bssCollector);
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             return true;
         }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -33,6 +35,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -48,11 +51,9 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
-    private static final Verify verifyAction = new VerifyActionImpl();
-
     /**
-     * Alignment requirement for Belt. Must be aligned on a card for now.
-     * Since the heap is made of Belts, it must also enforce belt alignment.
+     * Alignment requirement for belts. Must be aligned on a card for now.
+     * Since the heap is made of belts, it must also enforce belt alignment.
      */
     public static final int BELT_ALIGNMENT = BeltwayCardRegion.CARD_SIZE.toInt();
 
@@ -68,13 +69,20 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      *  Cell visitor for evacuating object from a belt to another belt in a single-threaded GC.
      * The source and destination belt should be properly initialized before using the cell visitor.
      */
-    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new CopyActionImpl(verifyAction)));
+    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new GripUpdaterPointerVisitor(new CopyActionImpl()));
 
     /**
      * Cell visitor for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
      * Although the visitor can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
-    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new ParallelCopyActionImpl(verifyAction)));
+    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new GripUpdaterPointerVisitor(new ParallelCopyActionImpl()));
+
+    /**
+     * A VM option for specifying if GC should used multiple-threads to scavenge Belts.
+     */
+    private static final VMBooleanXXOption useParallelGCOption = register(new VMBooleanXXOption("-XX:-UseParallelGC", "Use parallel GC."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption verifyBeforeGCOption = register(new VMBooleanXXOption("-XX:-VerifyBeforeGC", "Verify Heap before GC."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption verifyAfterGCOption = register(new VMBooleanXXOption("-XX:-VerifyAfterGC", "Verify Heap after GC."), MaxineVM.Phase.PRISTINE);
 
     /**
      * The cell visitor used by the heap scheme. It's either one of singleThreadedCellVisitor parallelCellVisitor depending on
@@ -116,6 +124,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected BeltManager beltManager;
 
+    protected boolean verifyBeforeGC = false;
+    protected boolean verifyAfterGC = false;
+
     /**
      * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
      */
@@ -124,9 +135,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
 
-    // Support for parallel collections
+    // Support for parallel collections. FIXME: this needs to be completely revisited.
 
-    public static final int numberOfGCThreads = 1;
+    public static final int numberOfGCThreads = 0;
 
     public static boolean useGCTlabs = false;
     public static boolean parallelScavenging = false;
@@ -157,6 +168,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected abstract int [] beltHeapPercentage();
     protected abstract String [] beltDescriptions();
+    protected abstract HeapBoundChecker heapBoundChecker();
 
     public Size getMaxHeapSize() {
         return dynamicHeapMaxSize;
@@ -170,6 +182,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         return dynamicHeapStart.plus(dynamicHeapMaxSize);
     }
 
+    @INLINE
+    public final boolean verifyBeforeGC() {
+        return verifyBeforeGC;
+    }
+
+    @INLINE
+    public final boolean verifyAfterGC() {
+        return verifyAfterGC;
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
@@ -177,20 +199,34 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
             beltManager = new BeltManager(this);
 
+            // Parallel GC support. FIXME: Should this be here at all ?
+            // the number of GC threads to use should be a VM startup decision, not  a prototyping one.
             for (int i = 0; i < numberOfGCThreads; i++) {
                 JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
+            parallelScavenging = useParallelGCOption.getValue();
+            verifyBeforeGC = verifyBeforeGCOption.getValue();
+            verifyAfterGC = verifyAfterGCOption.getValue();
+            if (MaxineVM.isDebug()) {
+                // For now, always override
+                verifyBeforeGC = true;
+                verifyAfterGC = true;
+            }
             cellVisitor = parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
+            ((CopyActionImpl) cellVisitor.pointerVisitorGripUpdater.action).initialize(this);
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts();
+            InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
                 beltManager.printBeltsInfo();
             }
+
+            // FIXME: the following should be conditional to using a card table. Factor out in a method used by subclasses ?
             final Size coveredRegionSize = beltManager.getEnd().minus(Heap.bootHeapRegion.start()).asSize();
             cardRegion.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize));
             sideTable.initialize(Heap.bootHeapRegion.start(), coveredRegionSize, Heap.bootHeapRegion.start().plus(coveredRegionSize).plus(cardRegion.cardTableSize()).roundedUpBy(
@@ -449,7 +485,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
-    private void allocateAndRefillTLABl(Pointer enabledVmThreadLocals, Size tlabSize) {
+    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = tlabAllocationBelt.allocateTLAB(tlabSize);
         // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
         if (MaxineVM.isDebug()) {
@@ -489,7 +525,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            allocateAndRefillTLABl(enabledVmThreadLocals, tlabSize);
+            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
             // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the tlab allocation is going to succeed here
             TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
@@ -507,7 +543,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (cell.plus(size).equals(hardLimit)) {
             // Can actually fit the object in the TLAB.
             setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
-            allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
+            allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
             return cell;
         }
 
@@ -516,7 +552,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             return tlabAllocationBelt.allocate(size);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-        allocateAndRefillTLABl(enabledVmThreadLocals, nextTLABSize);
+        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
         return tlabAllocate(size);
     }
 

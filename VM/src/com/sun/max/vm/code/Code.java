@@ -28,7 +28,6 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
@@ -199,17 +198,5 @@ public final class Code {
      */
     public static void registerMemoryRegion(CodeRegion codeRegion) {
         memoryRegions = Arrays.append(memoryRegions, codeRegion);
-    }
-
-    /**
-     * Looks up any target method(s) that correspond to methods matching the specified
-     * method key.
-     *
-     * @param methodKey the method key specifying a method
-     * @return an array of all target methods that match the specified method key
-     */
-    @INSPECTED
-    public static TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
-        return codeManager.methodKeyToTargetMethods(methodKey);
     }
 }

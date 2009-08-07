@@ -42,7 +42,7 @@ public class VTableTrampoline extends DynamicTrampoline {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        final Address vtableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT, CompilationDirective.DEFAULT);
+        final Address vtableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT);
         hub.setWord(dispatchTableIndex, vtableEntryPoint);
         return vtableEntryPoint;
     }
