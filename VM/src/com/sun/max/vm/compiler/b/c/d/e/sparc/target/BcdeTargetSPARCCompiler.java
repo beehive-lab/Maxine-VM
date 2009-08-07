@@ -180,7 +180,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     @NEVER_INLINE
     private static Throwable unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
         SpecialBuiltin.flushRegisterWindows();
-        VMRegister.setCallAddressRegister(catchAddress.minus(SPARCStackFrameLayout.OFFSET_TO_RETURN_PC));
+        VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));
         VMRegister.setAbiFramePointer(stackPointer);
         return throwable;
     }
@@ -255,7 +255,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     }
 
     public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize) {
-        final int frameBuilderSize = SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH * (SPARCEirPrologue.numberOfFrameBuilderInstructions(frameSize));
+        final int frameBuilderSize = InstructionSet.SPARC.instructionWidth * (SPARCEirPrologue.numberOfFrameBuilderInstructions(frameSize));
         return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
     }
 

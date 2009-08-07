@@ -260,7 +260,7 @@ public abstract class Pointer extends Address implements Accessor {
     @UNSAFE
     @FOLD
     private static boolean risc() {
-        return Platform.hostOrTarget().processorKind.instructionSet.category() == InstructionSet.Category.RISC;
+        return Platform.hostOrTarget().processorKind.instructionSet.category == InstructionSet.Category.RISC;
     }
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadByteAtLongOffset.class)
