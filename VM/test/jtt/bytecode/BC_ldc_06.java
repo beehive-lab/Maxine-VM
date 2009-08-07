@@ -25,7 +25,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0 = "test.bytecode.BC_ldc_06"
+ * @Runs: 0 = "jtt.bytecode.BC_ldc_06"
  */
 public class BC_ldc_06 {
 

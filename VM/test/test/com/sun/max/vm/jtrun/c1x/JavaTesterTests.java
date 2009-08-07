@@ -59,7 +59,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -87,7 +87,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -259,7 +259,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // ("") ==
+        // ("") == 
             runString = "(\"\")";
             if (!"".equals(jtt.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -574,6 +574,28 @@ public class JavaTesterTests {
         // (-156.82743) == -156
             runString = "(-156.82743)";
             if (-156 != jtt.bytecode.BC_d2i.test(-156.82743)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_bytecode_BC_d2i_nan() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_d2i_nan");
+        String runString = null;
+        try {
+        // (1.0) == 1
+            runString = "(1.0)";
+            if (1 != jtt.bytecode.BC_d2i_nan.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (0.0) == 0
+            runString = "(0.0)";
+            if (0 != jtt.bytecode.BC_d2i_nan.test(0.0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -4691,9 +4713,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("jtt.bytecode.BC_ldc_06");
         String runString = null;
         try {
-        // (0) == test.bytecode.BC_ldc_06
+        // (0) == jtt.bytecode.BC_ldc_06
             runString = "(0)";
-            if (!"test.bytecode.BC_ldc_06".equals(jtt.bytecode.BC_ldc_06.test(0))) {
+            if (!"jtt.bytecode.BC_ldc_06".equals(jtt.bytecode.BC_ldc_06.test(0))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
