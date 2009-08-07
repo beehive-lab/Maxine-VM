@@ -144,6 +144,14 @@ public final class DebugHeap {
         }
     }
 
+    public static void checkNonNullGripTag(Grip grip) {
+        if (MaxineVM.isDebug()) {
+            final Pointer origin = grip.toOrigin();
+            final Pointer cell = Layout.originToCell(origin);
+            checkCellTag(cell, cell.minusWords(1).getWord(0));
+        }
+    }
+
     /**
      * Verifies that a reference value denoted by a given base pointer and index points into a known object address space.
      *
@@ -163,7 +171,7 @@ public final class DebugHeap {
             return;
         }
         if (MaxineVM.isDebug()) {
-            checkGripTag(grip);
+            checkNonNullGripTag(grip);
         }
         final Pointer origin = grip.toOrigin();
         if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin)) {

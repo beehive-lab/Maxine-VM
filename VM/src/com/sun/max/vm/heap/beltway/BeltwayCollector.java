@@ -69,7 +69,7 @@ public class BeltwayCollector {
      * @param belt
      */
     protected void verifyBelt(Belt belt) {
-        heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.getBeltManager().getApplicationHeap());
+        heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.heapBoundChecker());
     }
 
     protected void prologue() {

@@ -51,8 +51,6 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
-    private static final Verify verifyAction = new VerifyActionImpl();
-
     /**
      * Alignment requirement for belts. Must be aligned on a card for now.
      * Since the heap is made of belts, it must also enforce belt alignment.
@@ -71,19 +69,20 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      *  Cell visitor for evacuating object from a belt to another belt in a single-threaded GC.
      * The source and destination belt should be properly initialized before using the cell visitor.
      */
-    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new CopyActionImpl(verifyAction)));
+    private static final BeltwayCellVisitorImpl singleThreadedCellVisitor = new BeltwayCellVisitorImpl(new GripUpdaterPointerVisitor(new CopyActionImpl()));
 
     /**
      * Cell visitor for evacuating object from a belt to another belt in a parallel GC (i.e., with potentially multiple thread evacuating objects).
      * Although the visitor can be used by multiple thread simultaneously, all the threads must operate on the same source and destination belts.
      */
-    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new PointerVisitor(new ParallelCopyActionImpl(verifyAction)));
+    private static final BeltwayCellVisitorImpl parallelCellVisitor = new BeltwayCellVisitorImpl(new GripUpdaterPointerVisitor(new ParallelCopyActionImpl()));
 
     /**
      * A VM option for specifying if GC should used multiple-threads to scavenge Belts.
      */
-    private static VMBooleanXXOption useParallelGCOption = register(new VMBooleanXXOption("-XX:-UseParallelGC", "Use parallel GC."), MaxineVM.Phase.PRISTINE);
-
+    private static final VMBooleanXXOption useParallelGCOption = register(new VMBooleanXXOption("-XX:-UseParallelGC", "Use parallel GC."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption verifyBeforeGCOption = register(new VMBooleanXXOption("-XX:-VerifyBeforeGC", "Verify Heap before GC."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption verifyAfterGCOption = register(new VMBooleanXXOption("-XX:-VerifyAfterGC", "Verify Heap after GC."), MaxineVM.Phase.PRISTINE);
 
     /**
      * The cell visitor used by the heap scheme. It's either one of singleThreadedCellVisitor parallelCellVisitor depending on
@@ -124,6 +123,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected Address adjustedCardTableAddress = Address.zero();
 
     protected BeltManager beltManager;
+
+    protected boolean verifyBeforeGC = false;
+    protected boolean verifyAfterGC = false;
 
     /**
      * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
@@ -166,6 +168,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     protected abstract int [] beltHeapPercentage();
     protected abstract String [] beltDescriptions();
+    protected abstract HeapBoundChecker heapBoundChecker();
 
     public Size getMaxHeapSize() {
         return dynamicHeapMaxSize;
@@ -177,6 +180,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
 
     public Address getHeapEnd() {
         return dynamicHeapStart.plus(dynamicHeapMaxSize);
+    }
+
+    @INLINE
+    public final boolean verifyBeforeGC() {
+        return verifyBeforeGC;
+    }
+
+    @INLINE
+    public final boolean verifyAfterGC() {
+        return verifyAfterGC;
     }
 
     @Override
@@ -194,6 +207,13 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.callerToken, new StandardJavaMonitor());
         } else if (phase == MaxineVM.Phase.PRISTINE) {
             parallelScavenging = useParallelGCOption.getValue();
+            verifyBeforeGC = verifyBeforeGCOption.getValue();
+            verifyAfterGC = verifyAfterGCOption.getValue();
+            if (MaxineVM.isDebug()) {
+                // For now, always override
+                verifyBeforeGC = true;
+                verifyAfterGC = true;
+            }
             cellVisitor = parallelScavenging ? parallelCellVisitor : singleThreadedCellVisitor;
             ((CopyActionImpl) cellVisitor.pointerVisitorGripUpdater.action).initialize(this);
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);

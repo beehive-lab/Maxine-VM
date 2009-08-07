@@ -20,21 +20,37 @@
  */
 package com.sun.max.vm.heap.beltway;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * @author Christos Kotselidis
+ * A generic bound checker for heap reference.
+ * Convenience to factor out verification code across different beltway collectors which all verifies
+ * identically but for the definition of the heap bound.
+ *
+ * @author Laurent Daynes
  */
+public class HeapBoundChecker {
+    /**
+     * Returns true if the grip is within the bounds defined by this checker.
+     * @param grip
+     * @return
+     */
+    @INLINE
+    public final boolean contains(Grip grip) {
+        return contains(grip.toOrigin());
+    }
 
-public interface Verify extends Action {
-
-    void checkCellTag(Pointer cell);
-
-    void checkGripTag(Grip grip);
-
-    Grip verifyGrip(Belt from, Grip grip);
-
-    void checkHub(Hub hub);
+    /**
+     * Returns true if the pointer is within the bounds defined by this checker.
+     * @param grip
+     * @return
+     */
+    @INLINE(override = true)
+    public boolean contains(Pointer origin) {
+        return Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+    }
 }

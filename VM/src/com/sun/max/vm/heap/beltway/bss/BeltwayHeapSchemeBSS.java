@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
@@ -56,10 +57,33 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
      */
     private static final SemiSpaceParCollector parallelCollector = new SemiSpaceParCollector();
 
-    private BeltwaySSCollector beltCollectorBSS;
+    final class BSSHeapBoundChecker extends HeapBoundChecker {
+        private Address start;
+        private Address end;
+
+        void reset() {
+            start = getFromSpace().start();
+            end = getFromSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inFromSpace(Pointer origin) {
+            return origin.greaterEqual(start) && origin.lessThan(end);
+        }
+
+        @INLINE
+        @Override
+        public boolean contains(Pointer origin) {
+            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+        }
+    }
+
+    final BSSHeapBoundChecker bssHeapBoundChecker;
+    private BeltwaySSCollector bssCollector;
 
     public BeltwayHeapSchemeBSS(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        bssHeapBoundChecker = new BSSHeapBoundChecker();
     }
 
     @Override
@@ -73,6 +97,11 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     }
 
     @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return bssHeapBoundChecker;
+    }
+
+    @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
@@ -82,9 +111,8 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (phase == MaxineVM.Phase.PRISTINE) {
             // The following line enables allocation to take place.
             tlabAllocationBelt = getFromSpace();
-            beltCollectorBSS = parallelScavenging ? parallelCollector : singleThreadedCollector;
+            bssCollector = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getToSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
             }
@@ -103,7 +131,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         if (outOfMemory) {
             return false;
         }
-        collectorThread.execute(beltCollectorBSS);
+        collectorThread.execute(bssCollector);
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
             return true;
         }
