@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockRevocationHeuristics.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
@@ -241,8 +242,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         delegate().delegateMonitorWait(object, timeout, lockWord);
     }
 
-    private final boolean[] threadHoldsMonitorResult = new boolean[1];
-
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final int lockwordThreadID = encodeCurrentThreadIDForLockword();
@@ -251,8 +250,8 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(lockWord);
             return !biasedLockWord.countUnderflow() && biasedLockWord.getBiasOwnerID() == lockwordThreadID;
         }
-        delegate().delegateThreadHoldsMonitor(object, lockWord, thread, lockwordThreadID, threadHoldsMonitorResult);
-        return threadHoldsMonitorResult[0];
+        final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockWord, thread, lockwordThreadID);
+        return result == DelegatedThreadHoldsMonitorResult.TRUE;
     }
 
     static final class FastPathNoEpoch extends BiasedLockModeHandler {

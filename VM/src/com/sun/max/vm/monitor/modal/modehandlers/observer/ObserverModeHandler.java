@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
@@ -153,13 +154,11 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         delegate().delegateMonitorWait(object, timeout, ModalLockWord64.from(ObjectAccess.readMisc(object)));
     }
 
-    private final boolean[] threadHoldsMonitorResult = new boolean[1];
-
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final ModalLockWord64 lockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
-        delegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword(), threadHoldsMonitorResult);
-        return threadHoldsMonitorResult[0];
+        final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword());
+        return result == DelegatedThreadHoldsMonitorResult.TRUE;
     }
 
 
