@@ -46,6 +46,9 @@
 #include "teleProcess.h"
 #include "teleNativeThread.h"
 
+void teleProcess_initialize(void) {
+}
+
 extern jboolean task_disable_single_stepping(jlong task);
 
 #if 0
@@ -225,8 +228,6 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
     if (Task_threads(POS, (task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
         return;
     }
-
-    c_ASSERT(threadLocalsList != 0);
 
     for (i = 0; i < numberOfThreads; i++) {
         ThreadState_t state = TS_SUSPENDED;
