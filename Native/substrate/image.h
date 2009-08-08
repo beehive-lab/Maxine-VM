@@ -46,9 +46,6 @@ typedef struct image_Header {
 
     jint pageSize;           /* multiple of 1024 */
 
-    jint vmThreadLocalsSize;
-    jint vmThreadLocalsTrapNumberOffset;
-
     jint vmRunMethodOffset;
     jint vmThreadRunMethodOffset;
     jint runSchemeRunMethodOffset;
@@ -69,11 +66,13 @@ typedef struct image_Header {
      * Used e.g. for the primordial card table. */
     jint auxiliarySpaceSize;
 
-    /* See the comment for the '_info' static field in the MaxineMessenger class. */
+    /* See the comment for the 'info' static field in the MaxineMessenger class. */
     jint messengerInfoOffset;
 
-    /* See the comment for the '_threadSpecificsList' static field in the VmThread class. */
-    jint threadSpecificsListOffset;
+    /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class. */
+    jint threadLocalsListHeadOffset;
+
+    jint primordialThreadLocalsOffset;
 } *image_Header;
 
 /**

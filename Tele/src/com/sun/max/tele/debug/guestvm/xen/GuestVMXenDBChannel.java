@@ -105,8 +105,8 @@ public final class GuestVMXenDBChannel {
     }
 
 
-    public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList) {
-        nativeGatherThreads(teleDomain, threads, domainId, threadSpecificsList);
+    public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadLocalsList, long primordialThreadLocals) {
+        nativeGatherThreads(teleDomain, threads, domainId, threadLocalsList, primordialThreadLocals);
     }
 
     public static synchronized int resume(int domainId) {
@@ -170,7 +170,7 @@ public final class GuestVMXenDBChannel {
     private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
     private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList);
+    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, int domainId, long threadLocalsList, long primordialThreadLocals);
     private static native int nativeResume(int domainId);
     private static native int nativeReadByte(long domainId, long address);
     private static native long nativeReadInt(int domainId, long address);

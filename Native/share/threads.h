@@ -24,12 +24,7 @@
 #include "os.h"
 #include "jni.h"
 #include "word.h"
-#include "threadSpecifics.h"
-
-/*
- * This file should have been called "thread.c" and its header file "thread.h".
- * Alas, we did not manage to have every C compiler properly distinguish "thread.h" from <thread.h>.
- */
+#include "threadLocals.h"
 
 /**
  * Global symbol that the Inspector can look up to check whether a thread's start function is this one.
@@ -57,9 +52,13 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSize);
+extern void threads_initialize(ThreadLocals primordial_tl);
 
-extern ThreadSpecifics thread_currentSpecifics(void);
+/**
+ * Gets a ThreadLocals object associated with the current thread.
+ * This is the safepoints-enabled copy of thread locals.
+ */
+extern ThreadLocals thread_currentThreadLocals(void);
 
 /**
  * For debugging purposes:

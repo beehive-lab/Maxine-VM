@@ -90,7 +90,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
+    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
 
     @Override
     protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize) {
@@ -102,8 +102,9 @@ public final class LinuxTeleProcess extends TeleProcess {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
-                    final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
-                    nativeGatherThreads(task.tgid(), threads, threadSpecificsList.asAddress().toLong());
+                    final Word primordialThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().primordialThreadLocalsOffset));
+                    final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadLocalsListHeadOffset));
+                    nativeGatherThreads(task.tgid(), threads, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
                     return null;
                 }
             });

@@ -31,7 +31,7 @@
 
 #include "proc.h"
 
-#include "threadSpecifics.h"
+#include "threadLocals.h"
 #include "teleNativeThread.h"
 #include "threads.h"
 #include "teleProcess.h"
@@ -201,7 +201,8 @@ typedef struct Argument {
     JNIEnv *env;
     jobject teleProcess;
     jobject threadSequence;
-    Address threadSpecificsListAddress;
+    Address threadLocalsList;
+    Address primordialThreadLocals;
 } *Argument;
 
 static long getRegister(struct ps_prochandle *ph, jlong lwpId, int registerIndex) {
@@ -230,17 +231,18 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    ThreadSpecificsStruct threadSpecificsStruct;
+    ThreadLocalsStruct threadLocalsStruct;
+    NativeThreadLocalsStruct nativeThreadLocalsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
     Address instructionPointer = getRegister(a->ph, lwpId, R_PC);
-    ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, threadSpecifics);
+    ThreadLocals tl = teleProcess_findThreadLocals(a->ph, a->threadLocalsList, a->primordialThreadLocals, stackPointer, &threadLocalsStruct, &nativeThreadLocalsStruct);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, tl);
 
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadSequence, long threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadSequence, long threadLocalsList, long primordialThreadLocals) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     if (Pcreate_agent(ph) != 0) {
@@ -252,7 +254,8 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
     a.env = env;
     a.teleProcess = teleProcess;
     a.threadSequence = threadSequence;
-    a.threadSpecificsListAddress = threadSpecificsListAddress;
+    a.threadLocalsList = threadLocalsList;
+    a.primordialThreadLocals = primordialThreadLocals;
 
     int error = Plwp_iter(ph, gatherThread, &a);
     if (error != 0) {

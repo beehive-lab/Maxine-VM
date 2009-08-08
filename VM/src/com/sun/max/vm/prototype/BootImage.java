@@ -171,9 +171,6 @@ public class BootImage {
 
         public final int pageSize;
 
-        public final int vmThreadLocalsSize;
-        public final int vmThreadLocalsTrapNumberOffset;
-
         public final int vmRunMethodOffset;
         public final int vmThreadRunMethodOffset;
         public final int runSchemeRunMethodOffset;
@@ -193,14 +190,19 @@ public class BootImage {
         public final int auxiliarySpaceSize;
 
         /**
-         * @see MaxineMessenger#_info
+         * @see MaxineMessenger#info
          */
         public final int messengerInfoOffset;
 
         /**
-         * @see VmThread#threadSpecificsList
+         * @see VmThreadMap#ACTIVE
          */
-        public final int threadSpecificsListOffset;
+        public final int threadLocalsListHeadOffset;
+
+        /**
+         * @see MaxineVM#primordialVmThreadLocals()
+         */
+        public final int primordialThreadLocalsOffset;
 
         public WordWidth wordWidth() {
             return WordWidth.fromInt(wordSize * 8);
@@ -221,9 +223,6 @@ public class BootImage {
 
             pageSize = endian.readInt(dataInputStream);
 
-            vmThreadLocalsSize = endian.readInt(dataInputStream);
-            vmThreadLocalsTrapNumberOffset = endian.readInt(dataInputStream);
-
             vmRunMethodOffset = endian.readInt(dataInputStream);
             vmThreadRunMethodOffset = endian.readInt(dataInputStream);
             runSchemeRunMethodOffset = endian.readInt(dataInputStream);
@@ -242,7 +241,8 @@ public class BootImage {
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
             messengerInfoOffset = endian.readInt(dataInputStream);
-            threadSpecificsListOffset = endian.readInt(dataInputStream);
+            threadLocalsListHeadOffset = endian.readInt(dataInputStream);
+            primordialThreadLocalsOffset = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -262,8 +262,6 @@ public class BootImage {
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             relocationScheme = RelocationScheme.DEFAULT.ordinal();
             pageSize = vmConfiguration.platform().pageSize;
-            vmThreadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
-            vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset;
             vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
@@ -280,7 +278,8 @@ public class BootImage {
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
 
             messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
-            threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "threadSpecificsList");
+            threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
+            primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
         }
 
         public void check() throws BootImageException {

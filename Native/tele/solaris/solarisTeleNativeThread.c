@@ -23,7 +23,7 @@
 #include "isa.h"
 #include "jni.h"
 #include "os.h"
-#include "threadSpecifics.h"
+#include "threadLocals.h"
 #include "solarisTeleProcess.h"
 #include <sys/siginfo.h>
 
