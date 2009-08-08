@@ -20,24 +20,13 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeSwitch;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiExceptionHandler;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.util.ArrayMap;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.util.Bytes;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks

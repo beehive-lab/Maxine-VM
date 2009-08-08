@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
@@ -67,6 +68,46 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      */
     private static final BeltwayGenerationalCollector [] parallelCollectors = new BeltwayGenerationalCollector[] {new ParEdenCollector(), new ParToSpaceCollector(), new ParMajorCollector() };
 
+    final class GenHeapBoundChecker extends HeapBoundChecker {
+        private Address edenStart;
+        private Address edenEnd;
+        private Address toStart;
+        private Address toEnd;
+        private Address matureStart;
+        private Address matureEnd;
+
+        void reset() {
+            edenStart = getEdenSpace().start();
+            edenEnd = getEdenSpace().getAllocationMark();
+            toStart = getToSpace().start();
+            toEnd = getToSpace().getAllocationMark();
+            matureStart = getMatureSpace().start();
+            matureEnd = getMatureSpace().getAllocationMark();
+        }
+
+        @INLINE
+        private boolean inEdenSpace(Pointer origin) {
+            return origin.greaterEqual(edenStart) && origin.lessThan(edenEnd);
+        }
+
+        @INLINE
+        private boolean inToSpace(Pointer origin) {
+            return origin.greaterEqual(toStart) && origin.lessThan(toEnd);
+        }
+        @INLINE
+        private boolean inMatureSpace(Pointer origin) {
+            return origin.greaterEqual(matureStart) && origin.lessThan(matureEnd);
+        }
+
+        @INLINE(override = true)
+        @Override
+        public boolean contains(Pointer origin) {
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+        }
+    }
+
+    final GenHeapBoundChecker genHeapBoundChecker;
+
     private Runnable edenGC;
     private Runnable toGC;
     private Runnable majorGC;
@@ -85,6 +126,12 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
 
     public BeltwayHeapSchemeGenerational(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        genHeapBoundChecker = new GenHeapBoundChecker();
+    }
+
+    @Override
+    protected HeapBoundChecker heapBoundChecker() {
+        return genHeapBoundChecker;
     }
 
     @Override
@@ -119,7 +166,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             majorGC = (Runnable) collectors[2];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
-            heapVerifier.initialize(beltManager.getApplicationHeap(), getMatureSpace());
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }

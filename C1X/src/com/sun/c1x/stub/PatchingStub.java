@@ -21,11 +21,9 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.lir.CodeEmitInfo;
-import com.sun.c1x.lir.LIRPatchCode;
-import com.sun.c1x.lir.LIRVisitState;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 
 
 /**

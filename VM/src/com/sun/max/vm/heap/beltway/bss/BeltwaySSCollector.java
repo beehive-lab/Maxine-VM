@@ -29,6 +29,7 @@ import com.sun.max.vm.tele.*;
  * Semi-space Collector based on Beltways.
  * Uses two belts (to and from spaces) with one increment each.
  *
+ * @author Laurent Daynes
  * @author Christos Kotselidis
  */
 
@@ -42,18 +43,27 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         super(name);
     }
 
+    private void verifyHeap(String when,  BeltwayHeapSchemeBSS ssHeapScheme, Belt fromSpace) {
+        if (Heap.verbose()) {
+            Log.println("Verify Heap");
+            Log.println(when);
+        }
+
+        ssHeapScheme.bssHeapBoundChecker.reset();
+        verifyBelt(fromSpace);
+    }
+
     public void run() {
         final BeltwayHeapSchemeBSS ssHeapScheme = (BeltwayHeapSchemeBSS) heapScheme;
         final Belt fromSpace = ssHeapScheme.getFromSpace();
         final Belt toSpace = ssHeapScheme.getToSpace();
         prologue();
-        if (Heap.verbose()) {
-            Log.println("Verify Heap");
-            verifyBelt(fromSpace);
+
+        if (ssHeapScheme.verifyBeforeGC()) {
+            verifyHeap("Before GC", ssHeapScheme, fromSpace);
         }
 
         monitorScheme.beforeGarbageCollection();
-
         // Start scanning the reachable objects from roots.
         ssHeapScheme.scavengeRoot(fromSpace, toSpace);
 
@@ -62,12 +72,15 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
 
         monitorScheme.afterGarbageCollection();
 
-        verifyBelt(toSpace);
-        InspectableHeapInfo.afterGarbageCollection();
-
         // Swap semi-spaces. From--> To and To-->From
         ssHeapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
         ssHeapScheme.getToSpace().resetAllocationMark();
+
+        if (ssHeapScheme.verifyAfterGC()) {
+            verifyHeap("After GC", ssHeapScheme, fromSpace);
+        }
+        InspectableHeapInfo.afterGarbageCollection();
+
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
             Log.println(numCollections);

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.util;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * The <code>BitMap</code> class implements a bitmap that stores a single bit for

@@ -293,13 +293,12 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             monitorWait(object, timeout, inflatedLockWord);
         }
 
-        public boolean delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int lockwordThreadID, boolean[] result) {
+        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int lockwordThreadID) {
             final InflatedMonitorLockWord64 inflatedlockWord = readMiscAndProtectBinding(object);
             if (!inflatedlockWord.isBound()) {
-                return false;
+                return DelegatedThreadHoldsMonitorResult.NOT_THIS_MODE;
             }
-            result[0] = super.threadHoldsMonitor(inflatedlockWord, thread);
-            return true;
+            return super.threadHoldsMonitor(inflatedlockWord, thread) ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
         }
 
         public void delegateAfterGarbageCollection() {

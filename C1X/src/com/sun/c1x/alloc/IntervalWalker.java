@@ -20,13 +20,9 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.alloc.Interval.IntervalKind;
-import com.sun.c1x.alloc.Interval.IntervalState;
-import com.sun.c1x.alloc.Interval.IntervalUseKind;
-import com.sun.c1x.debug.TTY;
+import com.sun.c1x.*;
+import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.debug.*;
 
 /**
  *
@@ -166,40 +162,32 @@ public class IntervalWalker {
 
     Interval removeFromList(Interval list, Interval i) {
         Interval prev = null;
-        while (list != Interval.end() && list != i) {
-            prev = list;
-            list = list.next;
+        Interval cur = list;
+        while (cur != Interval.end() && cur != i) {
+            prev = cur;
+            cur = cur.next;
         }
-        if (list != Interval.end()) {
-            assert list == i : "check";
+        if (cur != Interval.end()) {
+            assert cur == i : "check";
             if (prev == null) {
-                return list.next;
+                return cur.next;
             } else {
-                prev.next = list.next;
+                prev.next = cur.next;
                 return list;
             }
-        } else {
-            return null;
         }
+
+        assert false : "interval has not been found in list";
+        return null;
     }
 
     void removeFromList(Interval i) {
-
-        Interval result = null;
         if (i.state() == IntervalState.activeState) {
-            result = removeFromList(activeFirst(IntervalKind.anyKind), i);
-            if (result != null) {
-                activeFirst[IntervalKind.anyKind.ordinal()] = result;
-            }
+            activeFirst[IntervalKind.anyKind.ordinal()] = removeFromList(activeFirst(IntervalKind.anyKind), i);
         } else {
             assert i.state() == IntervalState.inactiveState : "invalid state";
-            result = removeFromList(inactiveFirst(IntervalKind.anyKind), i);
-            if (result != null) {
-                inactiveFirst[IntervalKind.anyKind.ordinal()] = result;
-            }
+            inactiveFirst[IntervalKind.anyKind.ordinal()] = removeFromList(inactiveFirst(IntervalKind.anyKind), i);
         }
-
-        assert result != null : "interval has not been found in list";
     }
 
     void walkTo(IntervalState state, int from) {

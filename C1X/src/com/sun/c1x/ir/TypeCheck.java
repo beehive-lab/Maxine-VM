@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>TypeCheck</code> instruction is the base class of casts and instanceof tests.
@@ -42,7 +41,7 @@ public abstract class TypeCheck extends StateSplit {
      * @param type the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(CiType targetClass, Instruction object, ValueType type, ValueStack stateBefore) {
+    public TypeCheck(CiType targetClass, Instruction object, BasicType type, ValueStack stateBefore) {
         super(type);
         this.targetClass = targetClass;
         this.object = object;

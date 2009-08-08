@@ -20,12 +20,10 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.graph.BlockUtil;
+import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.value.*;
 
 /**
  * This class implements conditional-expression elimination, which replaces some
@@ -71,7 +69,7 @@ public class CEEliminator implements BlockClosure {
         If curIf = (If) block.end();
 
         // check that the if's operands are of int or object type
-        ValueType ifType = curIf.x().type();
+        BasicType ifType = curIf.x().type();
         if (!ifType.isInt() && !ifType.isObject()) {
             return;
         }
@@ -118,7 +116,7 @@ public class CEEliminator implements BlockClosure {
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
-        if (suxPhi.type().size() != suxState.stackSize() - curIf.state().stackSize()) {
+        if (suxPhi.type().sizeInSlots() != suxState.stackSize() - curIf.state().stackSize()) {
             return;
         }
 
@@ -126,7 +124,7 @@ public class CEEliminator implements BlockClosure {
         Instruction tValue = tGoto.state().stackAt(curIf.state().stackSize());
         Instruction fValue = fGoto.state().stackAt(curIf.state().stackSize());
 
-        assert tValue.type().base() == fValue.type().base() : "incompatible types";
+        assert tValue.type() == fValue.type() : "incompatible types";
 
         if (tValue.type().isFloat() || tValue.type().isDouble()) {
             // backend does not support conditional moves on floats
@@ -137,7 +135,7 @@ public class CEEliminator implements BlockClosure {
         // this can happen when tBlock or fBlock contained additional stores to local variables
         // that are no longer represented by explicit instructions
 
-        for (Instruction i : sux.state().allPhis()) {
+        for (Instruction i : sux.state().allPhis(sux)) {
             if (i != suxPhi) {
                 return;
             }
@@ -156,11 +154,11 @@ public class CEEliminator implements BlockClosure {
         // clone constants because original block must not be destroyed
         assert (tValue != fConst && fValue != tConst) || tConst == fConst : "mismatch";
         if (tValue == tConst) {
-            tValue = new Constant(tConst.type().asConstant());
+            tValue = new Constant(tConst.asConstant());
             ifPrev = ifPrev.setNext(tValue, bci);
         }
         if (fValue == fConst) {
-            fValue = new Constant(fConst.type().asConstant());
+            fValue = new Constant(fConst.asConstant());
             ifPrev = ifPrev.setNext(fValue, bci);
         }
 

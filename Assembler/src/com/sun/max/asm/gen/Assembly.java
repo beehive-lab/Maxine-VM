@@ -39,7 +39,7 @@ public abstract class Assembly<Template_Type extends Template> {
 
     private static MaxPackage instructionSetPackage(InstructionSet instructionSet) {
         final MaxPackage thisPackage = MaxPackage.fromClass(Assembly.class);
-        return thisPackage.subPackage(instructionSet.category().name().toLowerCase(), instructionSet.name().toLowerCase());
+        return thisPackage.subPackage(instructionSet.category.name().toLowerCase(), instructionSet.name().toLowerCase());
     }
 
     private final InstructionSet instructionSet;

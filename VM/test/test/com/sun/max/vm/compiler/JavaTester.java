@@ -23,7 +23,8 @@ package test.com.sun.max.vm.compiler;
 import java.io.*;
 import java.util.*;
 
-import test.com.sun.max.vm.testrun.*;
+import test.com.sun.max.vm.compiler.c1x.*;
+import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
@@ -104,6 +105,7 @@ public final class JavaTester {
         executors.registerClass("cir", CIRTestExecutor.class);
         executors.registerClass("dir", DIRTestExecutor.class);
         executors.registerClass("eir", EIRTestExecutor.class);
+        executors.registerClass("hir", HIRTestExecutor.class);
 
         // run each executor.
         for (String alias : EXECS.getValue()) {

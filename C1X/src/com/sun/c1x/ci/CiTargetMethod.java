@@ -22,6 +22,8 @@ package com.sun.c1x.ci;
 
 import java.util.*;
 
+import com.sun.c1x.*;
+
 /**
  * This interface represents the consumer of compiler output. When a client
  * of C1X requests a {@link com.sun.c1x.C1XCompilation compilation}, it must supply
@@ -114,6 +116,7 @@ public class CiTargetMethod {
     CiDeoptimizer deoptimizer;
     int directCalls;
     int indirectCalls;
+    public Bailout bailout;
 
     // For statistics
     public int totalInstructions;

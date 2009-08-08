@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.bytecode.*;
 
 /**
  * The <code>LogicOp</code> class definition.
@@ -36,7 +36,7 @@ public class LogicOp extends Op2 {
      * @param s the second input into this instruction
      */
     public LogicOp(int opcode, Instruction x, Instruction s) {
-        super(x.type().base(), opcode, x, s);
+        super(x.type(), opcode, x, s);
     }
 
     /**

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.asm.Label;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>LIRBlock</code> class definition.

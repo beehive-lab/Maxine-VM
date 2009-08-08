@@ -340,6 +340,12 @@ public class C1XRuntimeCalls {
         return Math.log10(v);
     }
 
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveClass)
+    public static Object resolveClass(int index, MaxCiConstantPool constantPool) {
+        final ClassActor classActor = constantPool.constantPool.classAt(index).resolve(constantPool.constantPool, index);
+        return classActor.dynamicHub();
+    }
+
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticSin)
     public static double runtimeArithmeticSin(double v) {
