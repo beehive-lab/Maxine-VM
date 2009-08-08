@@ -60,7 +60,7 @@ Java_jtt_jvmni_JVM_1GetClassContext02_downCall1(JNIEnv *env, jclass c)
 {
     jclass jClass;
     jmethodID jMethod;
-    char *className = "test/jvmni/JVM_GetClassContext02";
+    char *className = "jtt/jvmni/JVM_GetClassContext02";
     char *methodName = "upCall1";
     char *signature = "()[Ljava/lang/Class;";
     jClass = (*env)->FindClass(env, className);

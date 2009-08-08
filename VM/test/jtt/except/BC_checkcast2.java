@@ -27,7 +27,7 @@ package jtt.except;
 public class BC_checkcast2 {
     static Object object2 = new Object();
     static Object object3 = "";
-    static Object object4 = new jtt.bytecode.BC_checkcast();
+    static Object object4 = new jtt.except.BC_checkcast2();
 
     public static int test(int arg) {
         Object obj;
@@ -40,7 +40,7 @@ public class BC_checkcast2 {
         } else {
             obj = null;
         }
-        final BC_checkcast bc = (BC_checkcast) obj;
+        final jtt.except.BC_checkcast2 bc = (jtt.except.BC_checkcast2) obj;
         if (bc != null) {
             return arg;
         }
