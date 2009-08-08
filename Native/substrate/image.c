@@ -33,6 +33,7 @@
 #include "relocation.h"
 #include "word.h"
 #include "virtualMemory.h"
+#include "threadLocals.h"
 
 #include "image.h"
 #include "log.h"
@@ -58,11 +59,12 @@ extern void *maxvm_image_start;
 extern void *maxvm_image_end;
 #endif
 
-static struct image_Header _headerStruct;
-static image_Header _header = &_headerStruct;
+static struct image_Header theImageHeaderStruct;
+static image_Header theImageHeader = &theImageHeaderStruct;
 
 image_Header image_header(void) {
-    return _header;
+    c_ASSERT(theImageHeader != NULL);
+    return theImageHeader;
 }
 
 static jint getLittleEndianInt(jint *pInt) {
@@ -103,7 +105,7 @@ static void readHeader(int fd) {
     log_println("image.readHeader @ 0x%x,", &maxvm_image_start);
 #endif
 #endif
-    to = (jint *) _header;
+    to = (jint *) theImageHeader;
     isBigEndian = *from;
     for (i = 0; i < sizeof(struct image_Header) / sizeof(jint); i++) {
         if (isBigEndian == 0) {
@@ -116,11 +118,11 @@ static void readHeader(int fd) {
     }
 }
 
-static struct image_StringInfo _stringInfoStruct;
-static image_StringInfo _stringInfo = &_stringInfoStruct;
+static struct image_StringInfo theStringInfoStruct;
+static image_StringInfo theStringInfo = &theStringInfoStruct;
 
 image_StringInfo image_stringInfo(void) {
-    return _stringInfo;
+    return theStringInfo;
 }
 
 static char *nextString(char *p) {
@@ -129,31 +131,31 @@ static char *nextString(char *p) {
     return p;
 }
 
-static char *_stringInfoData;
+static char *theStringInfoData;
 
 static void readStringInfo(int fd) {
     char **p;
     char *s;
 #if !MEMORY_IMAGE
     int n;
-    _stringInfoData = malloc(_header->stringDataSize);
-    if (_stringInfoData == NULL) {
+    theStringInfoData = malloc(theImageHeader->stringDataSize);
+    if (theStringInfoData == NULL) {
         log_exit(1, "could not allocate string info");
     }
 
-    n = read(fd, _stringInfoData, _header->stringDataSize);
-    if (n != _header->stringDataSize) {
+    n = read(fd, theStringInfoData, theImageHeader->stringDataSize);
+    if (n != theImageHeader->stringDataSize) {
         log_exit(2, "could not read string info");
     }
 #else
-    _stringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
+    theStringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
 #endif
 #if log_LOADER
-    log_println("image.readStringInfo @ 0x%x", _stringInfoData);
+    log_println("image.readStringInfo @ 0x%x", theStringInfoData);
 #endif
-    p = (char **) _stringInfo;
-    s = _stringInfoData;
-    while (p < (char **) &_stringInfo[1]) {
+    p = (char **) theStringInfo;
+    s = theStringInfoData;
+    while (p < (char **) &theStringInfo[1]) {
         *p++ = s;
         s = nextString(s);
     }
@@ -173,28 +175,48 @@ static char *endiannessToString(jint isBigEndian) {
     }
 }
 
+#define checkThreadLocalIndex(name) do { \
+    if (theImageHeader->name != name) { \
+        log_exit(2, "value of %s in image [%d] conflicts with value declared in threadLocals.h [%d]", \
+                        STRINGIZE(name), theImageHeader->name, name); \
+    } \
+} while(0)
+
+
 static void checkImage(void) {
 #if log_LOADER
     log_println("image.checkImage");
 #endif
-    if ((_header->isBigEndian != 0) != word_BIG_ENDIAN) {
-        log_exit(3, "image has wrong endianess - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(_header->isBigEndian));
+    if ((theImageHeader->isBigEndian != 0) != word_BIG_ENDIAN) {
+        log_exit(3, "image has wrong endianess - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theImageHeader->isBigEndian));
     }
-    if (_header->identification != (jint) IMAGE_IDENTIFICATION) {
+    if (theImageHeader->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
     }
-    if (_header->version != IMAGE_VERSION) {
-        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, _header->version);
+    if (theImageHeader->version != IMAGE_VERSION) {
+        log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, theImageHeader->version);
     }
-    if ((_header->wordSize == 8) != word_64_BITS) {
-        log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits", word_64_BITS ? 64 : 32, _header->wordSize * 8);
+    if ((theImageHeader->wordSize == 8) != word_64_BITS) {
+        log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits", word_64_BITS ? 64 : 32, theImageHeader->wordSize * 8);
     }
-    if (_header->cacheAlignment < MIN_CACHE_ALIGNMENT) {
-        log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_CACHE_ALIGNMENT, _header->cacheAlignment);
+    if (theImageHeader->cacheAlignment < MIN_CACHE_ALIGNMENT) {
+        log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_CACHE_ALIGNMENT, theImageHeader->cacheAlignment);
     }
-    if (_header->pageSize != getpagesize()) {
-        log_exit(2, "image has wrong page size - expected: %d, found: %d", getpagesize(), _header->pageSize);
+    if (theImageHeader->pageSize != getpagesize()) {
+        log_exit(2, "image has wrong page size - expected: %d, found: %d", getpagesize(), theImageHeader->pageSize);
     }
+    checkThreadLocalIndex(SAFEPOINT_LATCH);
+    checkThreadLocalIndex(SAFEPOINTS_ENABLED_THREAD_LOCALS);
+    checkThreadLocalIndex(SAFEPOINTS_DISABLED_THREAD_LOCALS);
+    checkThreadLocalIndex(SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
+    checkThreadLocalIndex(NATIVE_THREAD_LOCALS);
+    checkThreadLocalIndex(FORWARD_LINK);
+    checkThreadLocalIndex(BACKWARD_LINK);
+    checkThreadLocalIndex(ID);
+    checkThreadLocalIndex(TRAP_NUMBER);
+    checkThreadLocalIndex(TRAP_INSTRUCTION_POINTER);
+    checkThreadLocalIndex(TRAP_FAULT_ADDRESS);
+    checkThreadLocalIndex(TRAP_LATCH_REGISTER);
 }
 
 static off_t pageAligned(off_t offset) {
@@ -216,7 +238,7 @@ static void checkTrailer(int fd) {
     struct image_Trailer trailerStruct;
     image_Trailer trailerStructPtr = &trailerStruct;
 
-    trailerOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize) + _header->bootCodeSize + _header->bootHeapSize;
+    trailerOffset = pageAligned(sizeof(struct image_Header) + theImageHeader->stringDataSize + theImageHeader->relocationDataSize) + theImageHeader->bootCodeSize + theImageHeader->bootHeapSize;
 
 #if !MEMORY_IMAGE
     fileSize = lseek(fd, 0, SEEK_END);
@@ -244,7 +266,7 @@ static void checkTrailer(int fd) {
     trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
 #endif
 
-    if (trailerStructPtr->identification != _header->identification || trailerStructPtr->version != _header->version || trailerStructPtr->randomID != _header->randomID) {
+    if (trailerStructPtr->identification != theImageHeader->identification || trailerStructPtr->version != theImageHeader->version || trailerStructPtr->randomID != theImageHeader->randomID) {
         fprintf(stderr, "inconsistent trailer\n");
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
@@ -258,55 +280,55 @@ static void checkTrailer(int fd) {
 #else
         trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_end) - sizeof(trailerStruct));
 #endif
-        if (trailerStructPtr->identification == _header->identification && trailerStructPtr->version == _header->version && trailerStructPtr->randomID == _header->randomID) {
+        if (trailerStructPtr->identification == theImageHeader->identification && trailerStructPtr->version == theImageHeader->version && trailerStructPtr->randomID == theImageHeader->randomID) {
             fprintf(stderr, "FYI, found valid trailer at end of file\n");
         }
         exit(2);
     }
 }
 
-static Address _heap = 0;
+static Address theHeap = 0;
 
 Address image_heap(void) {
-    return _heap;
+    return theHeap;
 }
 
-static Address _code = 0;
-static Address _codeEnd = 0;
+static Address theCode = 0;
+static Address theCodeEnd = 0;
 
 Address image_code(void) {
-    return _code;
+    return theCode;
 }
 
 Address image_code_end(void) {
-    return _codeEnd;
+    return theCodeEnd;
 }
 
 static void mapHeapAndCode(int fd) {
-    int heapOffsetInImage = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
+    int heapOffsetInImage = pageAligned(sizeof(struct image_Header) + theImageHeader->stringDataSize + theImageHeader->relocationDataSize);
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
-    _heap = (Address) &maxvm_image_start + heapOffsetInImage;
+    theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_LINUX
-    _heap = virtualMemory_mapFileIn31BitSpace(_header->bootHeapSize + _header->bootCodeSize, fd, heapOffsetInImage);
-    if (_heap == ALLOC_FAILED) {
+    theHeap = virtualMemory_mapFileIn31BitSpace(theImageHeader->bootHeapSize + theImageHeader->bootCodeSize, fd, heapOffsetInImage);
+    if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
     // Reserve more than -Xmx should ever demand.
     // Most of this will be released again once in Java code by the heap scheme
-    _heap = virtualMemory_allocateNoSwap(TERA_BYTE, HEAP_VM);
-    if (_heap == ALLOC_FAILED) {
+    theHeap = virtualMemory_allocateNoSwap(TERA_BYTE, HEAP_VM);
+    if (theHeap == ALLOC_FAILED) {
         log_exit(4, "could not reserve boot image");
     }
 #if log_LOADER
-    log_println("reserved 1 TB at %p", _heap);
-    log_println("reserved address space ends at %p", _heap + TERA_BYTE);
+    log_println("reserved 1 TB at %p", theHeap);
+    log_println("reserved address space ends at %p", theHeap + TERA_BYTE);
 #endif
 
-    if (virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
+    if (virtualMemory_mapFileAtFixedAddress(theHeap, theImageHeader->bootHeapSize + theImageHeader->bootCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
 #else
@@ -314,10 +336,10 @@ static void mapHeapAndCode(int fd) {
 #endif
 #if os_GUESTVMXEN
     // heap and code must be mapped together (the method offsets in boot image are relative to heap base)
-    _heap = guestvmXen_remap_boot_code_region(_heap, _header->bootHeapSize + _header->bootCodeSize);
+    theHeap = guestvmXen_remap_boot_code_region(theHeap, theImageHeader->bootHeapSize + theImageHeader->bootCodeSize);
 #endif
-    _code = _heap + _header->bootHeapSize;
-    _codeEnd = _code + _header->bootCodeSize;
+    theCode = theHeap + theImageHeader->bootHeapSize;
+    theCodeEnd = theCode + theImageHeader->bootCodeSize;
 }
 
 static void relocate(int fd) {
@@ -331,9 +353,9 @@ static void relocate(int fd) {
     int n;
 #endif
 
-    wantedFileOffset = sizeof(struct image_Header) + _header->stringDataSize;
+    wantedFileOffset = sizeof(struct image_Header) + theImageHeader->stringDataSize;
 #if !MEMORY_IMAGE
-    relocationData = (Byte *) malloc(_header->relocationDataSize);
+    relocationData = (Byte *) malloc(theImageHeader->relocationDataSize);
     if (relocationData == NULL) {
         log_exit(1, "could not allocate memory for relocation data");
     }
@@ -342,15 +364,15 @@ static void relocate(int fd) {
     if (actualFileOffset != wantedFileOffset) {
         log_exit(1, "could not set relocation data position in file");
     }
-    n = read(fd, relocationData, _header->relocationDataSize);
-    if (n != _header->relocationDataSize) {
+    n = read(fd, relocationData, theImageHeader->relocationDataSize);
+    if (n != theImageHeader->relocationDataSize) {
         log_exit(1, "could not read relocation data");
     }
 #else
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
 #endif
 
-    relocation_apply((void *) _heap, _header->relocationScheme, relocationData, _header->relocationDataSize, _header->cacheAlignment, word_BIG_ENDIAN, _header->wordSize);
+    relocation_apply((void *) theHeap, theImageHeader->relocationScheme, relocationData, theImageHeader->relocationDataSize, theImageHeader->cacheAlignment, word_BIG_ENDIAN, theImageHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);
@@ -358,7 +380,7 @@ static void relocate(int fd) {
 }
 
 int image_load(char *imageFileName) {
-    if (_heap != 0) {
+    if (theHeap != 0) {
         // loaded already (via inspector)
         return 0;
     }
@@ -379,19 +401,19 @@ int image_load(char *imageFileName) {
     checkTrailer(fd);
     mapHeapAndCode(fd);
 #if log_LOADER
-    log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
+    log_println("code @%p codeEnd @%p heap @%p", theCode,theCodeEnd, theHeap);
 #endif
     relocate(fd);
 #if log_LOADER
-    log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
+    log_println("code @%p codeEnd @%p heap @%p", theCode,theCodeEnd, theHeap);
 #endif
     return fd;
 }
 
 Address nativeGetEndOfCodeRegion() {
-    Address addr = _codeEnd + _header->codeCacheSize;
+    Address addr = theCodeEnd + theImageHeader->codeCacheSize;
 #if log_LOADER
-    log_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, _header->codeCacheSize, _codeEnd);
+    log_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, theImageHeader->codeCacheSize, theCodeEnd);
 #endif
     return addr;
 }
@@ -402,9 +424,9 @@ void image_printAddress(Address address) {
 #else
     log_print("0x%08lx", address);
 #endif
-    if (address >= _heap && address < _code) {
-        log_print("(heap + %d)", (int) (address - _heap));
-    } else if (address >= _code && address < _codeEnd) {
-        log_print("(code + %d)", (int) (address - _code));
+    if (address >= theHeap && address < theCode) {
+        log_print("(heap + %d)", (int) (address - theHeap));
+    } else if (address >= theCode && address < theCodeEnd) {
+        log_print("(code + %d)", (int) (address - theCode));
     }
 }

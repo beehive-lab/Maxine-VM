@@ -20,6 +20,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <alloca.h>
 
 #include "c.h"
 #include "log.h"
@@ -37,13 +38,13 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
         c_ASSERT(_jniGatherThreadID != NULL);
     }
 
-    ThreadLocalsStruct noThreadLocals;
-    NativeThreadLocalsStruct noNativeThreadLocals;
+    ThreadLocals noThreadLocals = (ThreadLocals) alloca(threadLocalsSize());
+    NativeThreadLocalsStruct noNativeThreadLocalsStruct;
     NativeThreadLocals ntl;
-    if (tl == NULL) {
-        tl = &noThreadLocals;
-        ntl = &noNativeThreadLocals;
-        memset(tl, 0, sizeof(ThreadLocalsStruct));
+    if (tl == 0) {
+        tl = noThreadLocals;
+        ntl = &noNativeThreadLocalsStruct;
+        memset((void *) tl, 0, threadLocalsSize());
         memset(ntl, 0, sizeof(NativeThreadLocalsStruct));
         jint id = handle;
         // Made id negative to indicate no thread locals were available for the thread
@@ -79,7 +80,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
 static Boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
-    READ_PROCESS_MEMORY(tl, tlCopy, sizeof(ThreadLocalsStruct));
+    READ_PROCESS_MEMORY(tl, tlCopy, threadLocalsSize());
     ntl = getThreadLocal(Address, tlCopy, NATIVE_THREAD_LOCALS);
     READ_PROCESS_MEMORY(ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
     setThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
@@ -94,7 +95,7 @@ static Boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stack
 
 ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
 
-    memset((void *) tlCopy, 0, sizeof(ThreadLocalsStruct));
+    memset((void *) tlCopy, 0, threadLocalsSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
 
     if (threadLocalsList != 0) {
@@ -111,7 +112,7 @@ ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLo
             return tlCopy;
         }
     }
-    return NULL;
+    return 0;
 }
 
 int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint offset, jint length) {

@@ -29,13 +29,16 @@
 #include "os.h"
 #include "word.h"
 
+extern void threadLocals_initialize(int threadLocalsSize);
+
 /**
- * The indexes of the VM thread locals exposed to native code.
- * See generateThreadLocalsStruct() in VmThreadLocal.java.
+ * The indexes of the VM thread locals accessed by native code.
+ *
+ * These values must be kept in sync with those declared in VmThreadLocals.java.
+ * The boot image includes a copy of these values so that they can be checked at image load time.
  *
  * All reads/write to these thread locals should use the 'getThreadLocal()' and 'setThreadLocal()' macros below.
  */
-/* START GENERATED CODE - DO NOT MODIFY */
 typedef enum ThreadLocal {
     SAFEPOINT_LATCH = 0,
     SAFEPOINTS_ENABLED_THREAD_LOCALS = 1,
@@ -48,18 +51,15 @@ typedef enum ThreadLocal {
     TRAP_NUMBER = 20,
     TRAP_INSTRUCTION_POINTER = 21,
     TRAP_FAULT_ADDRESS = 22,
-    TRAP_LATCH_REGISTER = 23 
+    TRAP_LATCH_REGISTER = 23
 } ThreadLocal_t;
 
+typedef Address ThreadLocals;
+
 /**
- * A struct for viewing VM thread locals as a fixed size array.
- * This also serves the purpose of communicating the size of the
- * memory chunk holding a set of VM thread locals.
+ * Gets the size of the storage required for a set of thread locals.
  */
-typedef struct {
-    Address values[40];
-} ThreadLocalsStruct, *ThreadLocals;
-/* END GENERATED CODE - DO NOT MODIFY */
+extern int threadLocalsSize();
 
 /**
  * Sets the value of a specified thread local.
@@ -68,7 +68,7 @@ typedef struct {
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @param value the value to which the named thread local should be set
  */
-#define setThreadLocal(tl, name, value) do { ((ThreadLocals) tl)->values[name] = (Address) (value); } while (0)
+#define setThreadLocal(tl, name, value) do { *((Address *) tl + name) = (Address) (value); } while (0)
 
 /**
  * Gets the value of a specified thread local.
@@ -78,7 +78,7 @@ typedef struct {
  * @param name the name of the thread local to access (a ThreadLocal_t value)
  * @return value the value of the named thread local, cast to 'type'
  */
-#define getThreadLocal(type, tl, name) ((type) ((ThreadLocals) tl)->values[name])
+#define getThreadLocal(type, tl, name) ((type) *((Address *) tl + name))
 
 typedef struct {
     jint id; //  0: denotes the primordial thread

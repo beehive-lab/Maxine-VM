@@ -20,16 +20,12 @@
  */
 package com.sun.max.vm.thread;
 
-import java.io.*;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.ide.*;
-import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.Log.*;
 import com.sun.max.vm.heap.*;
@@ -97,52 +93,45 @@ public class VmThreadLocal {
      */
     public final StackTraceElement declaration;
 
-    /**
-     * Determines if this value is directly accessible in the C substrate.
-     *
-     * @see VmThreadLocal#generateThreadLocalsStruct()
-     */
-    public final boolean isNativeVisible;
-
     private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
 
     /**
      * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
      */
-    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "memory location loaded by safepoint instruction", true);
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "memory location loaded by safepoint instruction");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#enable() enabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints enabled", true);
+        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints enabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints disabled", true);
+        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints disabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered", true);
+        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
 
-    public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", Kind.WORD, "pointer to a NativeThreadLocalsStruct", true);
+    public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", Kind.WORD, "pointer to a NativeThreadLocalsStruct");
 
     /**
      * Next link for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active", true);
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
 
     /**
      * Previous link for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active", true);
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
 
     /**
      * The procedure to run when a safepoint has been triggered.
@@ -161,7 +150,7 @@ public class VmThreadLocal {
      *
      * @see VmThread#id()
      */
-    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD, "Native ID of VM thread holding these locals", true);
+    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD, "Native ID of VM thread holding these locals");
 
     /**
      * Reference to the {@link VmThread} associated with a set of thread locals.
@@ -227,7 +216,7 @@ public class VmThreadLocal {
     /**
      * The number of the trap (i.e. signal) that occurred.
      */
-    public static final VmThreadLocal TRAP_NUMBER = new VmThreadLocal("TRAP_NUMBER", Kind.WORD, "Number of the trap (signal) that occurred", true);
+    public static final VmThreadLocal TRAP_NUMBER = new VmThreadLocal("TRAP_NUMBER", Kind.WORD, "Number of the trap (signal) that occurred");
 
     /**
      * The value of the instruction pointer when the last trap occurred.
@@ -235,19 +224,19 @@ public class VmThreadLocal {
      * used by the C trap handler and the prologue of the trap stub to pass information.
      */
     public static final VmThreadLocal TRAP_INSTRUCTION_POINTER
-        = new VmThreadLocal("TRAP_INSTRUCTION_POINTER", Kind.WORD, "IP when last trap occurred; short-lived", true);
+        = new VmThreadLocal("TRAP_INSTRUCTION_POINTER", Kind.WORD, "IP when last trap occurred; short-lived");
 
     /**
      * The fault address causing the trap.
      */
     public static final VmThreadLocal TRAP_FAULT_ADDRESS
-        = new VmThreadLocal("TRAP_FAULT_ADDRESS", Kind.WORD, "Fault address causing last trap; short-lived", true);
+        = new VmThreadLocal("TRAP_FAULT_ADDRESS", Kind.WORD, "Fault address causing last trap; short-lived");
 
     /**
      * The value of the latch register when the last trap occurred.
      */
     public static final VmThreadLocal TRAP_LATCH_REGISTER
-        = new VmThreadLocal("TRAP_LATCH_REGISTER", Kind.WORD, "Value of latch register at last trap; short-lived", true);
+        = new VmThreadLocal("TRAP_LATCH_REGISTER", Kind.WORD, "Value of latch register at last trap; short-lived");
 
     /**
      * The address of the stack slot with the highest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
@@ -346,58 +335,6 @@ public class VmThreadLocal {
             throw ProgramError.unexpected(e);
         }
         StackReferenceMapPreparer.setVmThreadLocalGCRoots(Sequence.Static.toArray(referenceVmThreadLocals, VmThreadLocal.class));
-
-        generateThreadLocalsStruct();
-    }
-
-    /**
-     * The C header file containing the declarations produced by {@link #generateThreadLocalsStruct()} for directly accessing
-     * certain VM thread locals in the C substrate.
-     */
-    @PROTOTYPE_ONLY
-    private static final File THREAD_LOCALS_HEADER_FILE = new File(JavaProject.findVcsProjectDirectory(), "../Native/share/threadLocals.h").getAbsoluteFile();
-
-    /**
-     * Generates a couple of C declarations in {@link #THREAD_LOCALS_HEADER_FILE}.
-     *
-     * These declarations allow C code to directly access {@linkplain #isNativeVisible some} of the VM thread locals,
-     * obviating the need for maintaining parallel data structures in the C code.
-     */
-    @PROTOTYPE_ONLY
-    public static void generateThreadLocalsStruct() {
-        final File headerFile = THREAD_LOCALS_HEADER_FILE;
-        StringWriter stringWriter = new StringWriter();
-        final PrintWriter writer = new PrintWriter(stringWriter);
-
-        writer.println("typedef enum ThreadLocal {");
-        Sequence<VmThreadLocal> nativeVisibleValues = Sequence.Static.filter(values, new Predicate<VmThreadLocal>() {
-            public boolean evaluate(VmThreadLocal value) {
-                return value.isNativeVisible;
-            }
-        });
-        for (VmThreadLocal value : nativeVisibleValues) {
-            boolean isLast = value == nativeVisibleValues.last();
-            writer.printf("    %s = %d%s%n", value.name, value.index, isLast ? " " : ",");
-        }
-        writer.println("} ThreadLocal_t;");
-        writer.println();
-        writer.println("/**");
-        writer.println(" * A struct for viewing VM thread locals as a fixed size array.");
-        writer.println(" * This also serves the purpose of communicating the size of the");
-        writer.println(" * memory chunk holding a set of VM thread locals.");
-        writer.println(" */");
-        writer.println("typedef struct {");
-        writer.println("    Address values[" + values.length() + "];");
-        writer.println("} ThreadLocalsStruct, *ThreadLocals;");
-
-        writer.close();
-        try {
-            if (Files.updateGeneratedContent(headerFile, ReadableSource.Static.fromString(stringWriter.toString()), "/* START GENERATED CODE - DO NOT MODIFY */", "/* END GENERATED CODE - DO NOT MODIFY */")) {
-                throw ProgramError.unexpected("**** Must re-build native code as " + THREAD_LOCALS_HEADER_FILE.getPath() + " was updated ****");
-            }
-        } catch (IOException e) {
-            throw ProgramError.unexpected(e);
-        }
     }
 
     @PROTOTYPE_ONLY
@@ -420,11 +357,6 @@ public class VmThreadLocal {
      */
     @PROTOTYPE_ONLY
     public VmThreadLocal(String name, Kind kind, String description) {
-        this(name, kind, description, false);
-    }
-
-    @PROTOTYPE_ONLY
-    public VmThreadLocal(String name, Kind kind, String description, boolean isNativeVisible) {
         this.kind = kind;
         this.name = name;
         this.index = values.length();
@@ -432,7 +364,6 @@ public class VmThreadLocal {
         values.append(this);
         this.description = description;
         this.declaration = findDeclaration(name, new Throwable().getStackTrace());
-        this.isNativeVisible = isNativeVisible;
     }
 
     /**

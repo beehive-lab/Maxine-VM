@@ -68,7 +68,7 @@ extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n)
  * @param threadLocalsList the head of the thread locals list in the VM's address space
  * @param primordialThreadLocals the primordial thread locals in the VM's address space
  * @param stackPointer the stack pointer to search with
- * @param tlCopy pointer to storage for a ThreadLocalsStruct into which the found entry
+ * @param tlCopy pointer to storage for a set of thread locals into which the found entry
  *        (if any) will be copied from the VM's address space
  * @param ntlCopy pointer to storage for a NativeThreadLocalsStruct into which the native thread locals of the found entry
  *        (if any) will be copied from the VM's address space

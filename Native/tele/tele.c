@@ -34,3 +34,9 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
     log_initialize(getenv("TELE_LOG_FILE"));
     return JNI_VERSION_1_2;
 }
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
+    threadLocals_initialize(threadLocalsSize);
+}
+

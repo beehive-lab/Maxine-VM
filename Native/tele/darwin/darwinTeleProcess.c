@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <alloca.h>
 
 #include <mach/mach.h>
 #include <mach/mach_types.h>
@@ -240,9 +241,9 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             return;
         }
 
-        ThreadLocalsStruct threadLocalsStruct;
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
-        ThreadLocals tl = teleProcess_findThreadLocals(task, threadLocalsList, primordialThreadLocals, threadState.__rsp, &threadLocalsStruct, &nativeThreadLocalsStruct);
+        ThreadLocals tl = teleProcess_findThreadLocals(task, threadLocalsList, primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, tl);
     }
 

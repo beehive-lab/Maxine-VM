@@ -50,16 +50,19 @@
 #   include <errno.h>
     typedef pthread_t Thread;
     typedef pthread_key_t ThreadLocalsKey;
+    typedef void (*ThreadLocalsDestructor)(void *);
 #   define thread_setThreadLocals pthread_setspecific
 #elif os_SOLARIS
 #   include <thread.h>
     typedef thread_t Thread;
     typedef thread_key_t ThreadLocalsKey;
+    typedef void (*ThreadLocalsDestructor)(void *);
 #   define thread_setThreadLocals thr_setspecific
 #elif os_GUESTVMXEN
 #   include "guestvmXen.h"
     typedef guestvmXen_Thread Thread;
     typedef guestvmXen_SpecificsKey ThreadLocalsKey;
+    typedef void (*ThreadLocalsDestructor)(void *);
 #   define thread_setThreadLocals guestvmXen_thread_setSpecific
 #endif
 
@@ -71,25 +74,23 @@ static ThreadLocalsKey theThreadLocalsKey;
 /**
  * De-allocates the NativeThreadLocals object associated with a ThreadLocals object.
  *
- * @param data an opaque pointer to a ThreadLocalsStruct
+ * @param tl a pointer to the thread locals whose native thread locals are to be freed
  */
-void ThreadLocalsDestructor(void *data) {
-    if (data != NULL) {
-        ThreadLocals tl = (ThreadLocals) data;
-        NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
-        if (ntl != NULL) {
-            free(ntl);
-        }
+void freeThreadLocals(ThreadLocals tl) {
+    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+    if (ntl != NULL) {
+        free(ntl);
+        setThreadLocal(tl, NATIVE_THREAD_LOCALS, 0);
     }
 }
 
 void threads_initialize(ThreadLocals primordial_tl) {
 #if os_DARWIN || os_LINUX
-    pthread_key_create(&theThreadLocalsKey, ThreadLocalsDestructor);
+    pthread_key_create(&theThreadLocalsKey, (ThreadLocalsDestructor) freeThreadLocals);
 #elif os_SOLARIS
-    thr_keycreate(&theThreadLocalsKey, ThreadLocalsDestructor);
+    thr_keycreate(&theThreadLocalsKey, (ThreadLocalsDestructor) freeThreadLocals);
 #elif os_GUESTVMXEN
-    guestvmXen_thread_initializeSpecificsKey(&theThreadLocalsKey, ThreadLocalsDestructor);
+    guestvmXen_thread_initializeSpecificsKey(&theThreadLocalsKey, (ThreadLocalsDestructor) freeThreadLocals);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -126,7 +127,7 @@ void threads_initialize(ThreadLocals primordial_tl) {
     size_t stackSize;
     pthread_attr_init(&attr);
     pthread_attr_getstacksize (&attr, &stackSize);
-    Address stackEnd = (Address) primordial_tl + sizeof(ThreadLocalsStruct);
+    Address stackEnd = (Address) primordial_tl + threadLocalsSize();
     primordial_ntl->stackBase = stackEnd - stackSize;
     primordial_ntl->stackSize = stackSize;
     pthread_attr_destroy(&attr);
@@ -225,18 +226,18 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     /* N.B. do not read or write the contents of the stack until initStackProtection returns. */
     stackBottom = virtualMemory_pageAlign(ntl->stackBase) + virtualMemory_getPageSize();
 #endif
-    const int threadLocalsSize = sizeof(ThreadLocalsStruct);
+    const int tlSize = threadLocalsSize();
     Address current = stackBottom - sizeof(Address);
     Size refMapAreaSize = 1 + ntl->stackSize / sizeof(Address) / 8;
 
-    ThreadLocals triggered_tl = (ThreadLocals) (current + (threadLocalsSize * 0));
-    ThreadLocals enabled_tl   = (ThreadLocals) (current + (threadLocalsSize * 1));
-    ThreadLocals disabled_tl  = (ThreadLocals) (current + (threadLocalsSize * 2));
+    ThreadLocals triggered_tl = (ThreadLocals) (current + (tlSize * 0));
+    ThreadLocals enabled_tl   = (ThreadLocals) (current + (tlSize * 1));
+    ThreadLocals disabled_tl  = (ThreadLocals) (current + (tlSize * 2));
 
     /* Clear each of the thread local spaces: */
-    memset((void *) ((Address) triggered_tl + sizeof(Address)), 0, threadLocalsSize - sizeof(Address));
-    memset((void *) enabled_tl, 0, threadLocalsSize);
-    memset((void *) disabled_tl, 0, threadLocalsSize);
+    memset((void *) ((Address) triggered_tl + sizeof(Address)), 0, tlSize - sizeof(Address));
+    memset((void *) enabled_tl, 0, tlSize);
+    memset((void *) disabled_tl, 0, tlSize);
 
     setThreadLocal(enabled_tl, SAFEPOINTS_ENABLED_THREAD_LOCALS, enabled_tl);
     setThreadLocal(enabled_tl, SAFEPOINTS_DISABLED_THREAD_LOCALS, disabled_tl);
@@ -261,7 +262,7 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     setThreadLocal(disabled_tl, ID, ntl->id);
     setThreadLocal(triggered_tl, ID, ntl->id);
 
-    current = (Address) disabled_tl + threadLocalsSize;
+    current = (Address) disabled_tl + tlSize;
     ntl->refMapArea = current;
     current = virtualMemory_pageAlign(current + refMapAreaSize);
     ntl->stackRedZone = current;
