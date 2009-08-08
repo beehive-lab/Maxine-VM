@@ -23,7 +23,7 @@
  * @Runs: 0 = "class java.lang.Object";
  * @Runs: 1 = "class java.lang.String";
  * @Runs: 2 = "class java.lang.Class";
- * @Runs: 3 = "class test.lang.Class_Literal01";
+ * @Runs: 3 = "class jtt.lang.Class_Literal01";
  * @Runs: 4 = null
  */
 package jtt.lang;

@@ -21,7 +21,7 @@
 /*
  * @Harness: java
  * @Runs: 0 = "class java.lang.Object"; 1 = "class java.lang.String";
- * @Runs: 2 = "class test.lang.Class_forName02"; 3 = !java.lang.ClassNotFoundException
+ * @Runs: 2 = "class jtt.lang.Class_forName02"; 3 = !java.lang.ClassNotFoundException
  * @Runs: 4 = null
  */
 package jtt.lang;
@@ -41,7 +41,7 @@ public final class Class_forName02 {
             clname = "java.lang.String";
             cl = String.class;
         } else if (i == 2) {
-            clname = "test.lang.Class_forName02";
+            clname = "jtt.lang.Class_forName02";
             cl = Class_forName02.class;
         } else if (i == 3) {
             clname = "xyzz.zyxy.XYXY";

@@ -22,7 +22,7 @@
  * @Harness: java
  * @Runs: 0 = "java.lang.Object";
  * @Runs: 1 = "java.lang.Class";
- * @Runs: 2 = "test.lang.Class_getName01";
+ * @Runs: 2 = "jtt.lang.Class_getName01";
  * @Runs: 3 = "true";
  * @Runs: 4 = null
  */
