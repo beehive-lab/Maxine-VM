@@ -112,11 +112,10 @@ public class IR {
     }
 
     private void computeLinearScanOrder() {
-        CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
-        startBlock.iteratePreOrder(finder);
-        finder.splitCriticalEdges();
-
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
+            CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
+            startBlock.iteratePreOrder(finder);
+            finder.splitCriticalEdges();
             makeLinearScanOrder();
         }
     }

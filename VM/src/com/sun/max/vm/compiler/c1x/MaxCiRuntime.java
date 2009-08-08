@@ -663,7 +663,6 @@ public class MaxCiRuntime implements CiRuntime {
 //            }});
     }
 
-    @Override
     public CiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 
