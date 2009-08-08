@@ -412,7 +412,18 @@ function run_build() {
         if [ "$project_dir" = "VM" ]; then
             # Regenerate javatester files
             pushd $maxine_dir/VM/test >/dev/null
-            run ${jvm_exe} -cp ../../Base/bin:../bin test.com.sun.max.vm.compiler.JavaTester -scenario=target -run-scheme-package=all -native-tests test/bytecode test/except test/optimize test/lang test/hotpath test/reflect test/jdk test/threads test/micro test/jvmni test/jni > /dev/null 
+            jtt_tests="jtt/bytecode"
+            jtt_tests="$jtt_tests jtt/except"
+            jtt_tests="$jtt_tests jtt/optimize"
+            jtt_tests="$jtt_tests jtt/lang"
+            jtt_tests="$jtt_tests jtt/hotpath"
+            jtt_tests="$jtt_tests jtt/reflect"
+            jtt_tests="$jtt_tests jtt/jdk"
+            jtt_tests="$jtt_tests jtt/threads"
+            jtt_tests="$jtt_tests jtt/micro"
+            jtt_tests="$jtt_tests jtt/jvmni"
+            jtt_tests="$jtt_tests jtt/jni"
+            run ${jvm_exe} -cp ../../Base/bin:../bin test.com.sun.max.vm.compiler.JavaTester -scenario=target -run-scheme-package=all -native-tests $jtt_tests > /dev/null 
             result=$?
             popd >/dev/null
             if [ $result -ne 0 ]; then
