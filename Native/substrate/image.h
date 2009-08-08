@@ -73,6 +73,24 @@ typedef struct image_Header {
     jint threadLocalsListHeadOffset;
 
     jint primordialThreadLocalsOffset;
+
+    /* The storage size of one set of VM thread locals. */
+    jint threadLocalsSize;
+
+    /* The indexes of the VM thread locals accessed directly by C code. */
+    jint SAFEPOINT_LATCH;
+    jint SAFEPOINTS_ENABLED_THREAD_LOCALS;
+    jint SAFEPOINTS_DISABLED_THREAD_LOCALS;
+    jint SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
+    jint NATIVE_THREAD_LOCALS;
+    jint FORWARD_LINK;
+    jint BACKWARD_LINK;
+    jint ID;
+    jint TRAP_NUMBER;
+    jint TRAP_INSTRUCTION_POINTER;
+    jint TRAP_FAULT_ADDRESS;
+    jint TRAP_LATCH_REGISTER;
+
 } *image_Header;
 
 /**

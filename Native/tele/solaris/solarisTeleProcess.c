@@ -25,6 +25,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <alloca.h>
+
 #include "log.h"
 #include "jni.h"
 #include "errno.h"
@@ -231,11 +233,11 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    ThreadLocalsStruct threadLocalsStruct;
+    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
     Address instructionPointer = getRegister(a->ph, lwpId, R_PC);
-    ThreadLocals tl = teleProcess_findThreadLocals(a->ph, a->threadLocalsList, a->primordialThreadLocals, stackPointer, &threadLocalsStruct, &nativeThreadLocalsStruct);
+    ThreadLocals tl = teleProcess_findThreadLocals(a->ph, a->threadLocalsList, a->primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, tl);
 
     return 0;

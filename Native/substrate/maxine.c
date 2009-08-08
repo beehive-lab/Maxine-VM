@@ -348,6 +348,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
+    threadLocals_initialize(image_header()->threadLocalsSize);
+
     debugger_initialize();
 
     messenger_initialize();
@@ -355,13 +357,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
-    ThreadLocals primordial_tl = (ThreadLocals) alloca(sizeof(ThreadLocalsStruct) + sizeof(Address));
+    ThreadLocals primordial_tl = (ThreadLocals) alloca(threadLocalsSize() + sizeof(Address));
 
     // Align primordial VM thread locals to Word boundary:
     primordial_tl = (ThreadLocals) wordAlign(primordial_tl);
 
     // Initialize all primordial VM thread locals to 0/null:
-    memset((char *) primordial_tl, 0, sizeof(ThreadLocalsStruct));
+    memset((char *) primordial_tl, 0, threadLocalsSize());
 
     image_write_value(ThreadLocals, primordialThreadLocalsOffset, primordial_tl);
 

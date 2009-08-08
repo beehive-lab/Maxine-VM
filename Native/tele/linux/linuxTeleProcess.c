@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/user.h>
+#include <alloca.h>
 
 #include "log.h"
 #include "jni.h"
@@ -60,12 +61,12 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
             break;
     }
 
-    ThreadLocals tl = NULL;
+    ThreadLocals tl = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-        ThreadLocalsStruct threadLocalsStruct;
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
-        tl = teleProcess_findThreadLocals(tgid, tid, threadLocalsList, primordialThreadLocals, stackPointer, &threadLocalsStruct, &nativeThreadLocalsStruct);
+        tl = teleProcess_findThreadLocals(tgid, tid, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
     teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, (jlong) canonicalStateRegisters.rip, tl);
 }

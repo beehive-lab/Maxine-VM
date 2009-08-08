@@ -29,8 +29,20 @@
 #include "log.h"
 #include "jni.h"
 #include "word.h"
+#include "image.h"
 
 #include "threadLocals.h"
+
+int theThreadLocalsSize = -1;
+
+void threadLocals_initialize(int threadLocalsSize) {
+    theThreadLocalsSize = threadLocalsSize;
+}
+
+int threadLocalsSize() {
+    c_ASSERT(theThreadLocalsSize > 0);
+    return theThreadLocalsSize;
+}
 
 void threadLocals_println(ThreadLocals tl) {
     NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
@@ -42,7 +54,7 @@ void threadLocals_println(ThreadLocals tl) {
 }
 
 void threadLocals_printList(ThreadLocals tl) {
-    while (tl != NULL) {
+    while (tl != 0) {
         threadLocals_println(tl);
         tl = getThreadLocal(ThreadLocals, tl, FORWARD_LINK);
     };

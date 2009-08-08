@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <alloca.h>
 
 #include "isa.h"
 #include "log.h"
@@ -212,10 +213,10 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
     struct db_thread *threads;
     threads = gather_threads(&num_threads);
     for (i=0; i<num_threads; i++) {
-        ThreadLocalsStruct threadLocalsStruct;
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        ThreadLocals threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, threads[i].stack, &threadLocalsStruct, &nativeThreadLocalsStruct);
+        threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, threads[i].stack, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);
