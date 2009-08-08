@@ -20,14 +20,10 @@
  */
 package com.sun.c1x.gen;
 
-import com.sun.c1x.ir.Constant;
-import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.lir.LIRList;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.lir.LIROperandFactory;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra
@@ -67,12 +63,8 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    Instruction value() {
+    public Instruction value() {
         return value;
-    }
-
-    public ValueType type() {
-        return value().type();
     }
 
     public void loadItemForce(LIROperand reg) {
@@ -93,7 +85,7 @@ public class LIRItem {
         if (gen.canStoreAsConstant(value(), type)) {
             result = value().operand();
             if (!result.isConstant()) {
-                result = LIROperandFactory.valueType(value().type());
+                result = LIROperandFactory.basicType(value());
             }
         } else if (type == BasicType.Byte || type == BasicType.Boolean) {
             loadByteItem();
@@ -106,7 +98,7 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(type().basicType);
+                newResult = gen.newRegister(value().type().basicType);
                 gen().lir().move(result, newResult);
             }
             return newResult;
@@ -170,7 +162,7 @@ public class LIRItem {
             LIROperand r = value().operand();
             if (gen.canInlineAsConstant(value())) {
                 if (!r.isConstant()) {
-                    r = LIROperandFactory.valueType(value().type());
+                    r = LIROperandFactory.basicType(value());
                 }
                 result = r;
             } else {
@@ -209,34 +201,34 @@ public class LIRItem {
     }
 
     public Object getJobjectConstant() {
-        assert type().isConstant();
-        if (type().isObject()) {
-            return type().asConstant().asObject();
+        assert value().isConstant();
+        if (value().type().isObject()) {
+            return value().asConstant().asObject();
         }
         return null;
     }
 
     public int getJintConstant() {
         assert isConstant() && value() != null : "";
-        assert type().isInt() : "type check";
-        return type().asConstant().asInt();
+        assert value().type().isInt() : "type check";
+        return value().asConstant().asInt();
     }
 
     public float getJfloatConstant() {
         assert isConstant() && value() != null : "";
-        assert type().isFloat() : "type check";
-        return type().asConstant().asFloat();
+        assert value().type().isFloat() : "type check";
+        return value().asConstant().asFloat();
     }
 
     public double getJdoubleConstant() {
         assert isConstant() && value() != null : "";
-        assert type().isDouble() : "type check";
-        return type().asConstant().asDouble();
+        assert value().type().isDouble() : "type check";
+        return value().asConstant().asDouble();
     }
 
     public long getJlongConstant() {
         assert isConstant() && value() != null : "";
-        assert type().isLong() : "type check";
-        return type().asConstant().asLong();
+        assert value().type().isLong() : "type check";
+        return value().asConstant().asLong();
     }
 }

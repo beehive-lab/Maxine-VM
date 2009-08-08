@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack.sparc;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -30,11 +31,6 @@ import com.sun.max.vm.stack.*;
  * @author Laurent Daynes
  */
 public class SPARCStackFrameLayout {
-
-    /**
-     * Width of SPARC instruction (all instructions have the same size).
-     */
-    public static final int SPARC_INSTRUCTION_WIDTH = 4;
 
     /**
      * Stack frame alignment requirement. 16 bytes on Solaris SPARC 64-bit.
@@ -107,13 +103,6 @@ public class SPARCStackFrameLayout {
     }
 
     /**
-     * Offset to the return address of the caller from the caller's saved PC.
-     * A SPARC call instruction saves its address in %o7. The return address is typically 2 instructions after
-     * (to account for the call instruction itself, and the delayed instruction).
-     */
-    public static final int OFFSET_TO_RETURN_PC = 2 * SPARC_INSTRUCTION_WIDTH;
-
-    /**
      * Returns the offset in bytes to the location in the saved area of the stack frame where the specified general register is saved.
      * Only IN and LOCAL registers are saved in the window.
      * The offset is positive relative to the top of the stack frame associated with the window.
@@ -146,7 +135,7 @@ public class SPARCStackFrameLayout {
     }
 
     public static Pointer getReturnAddress(StackFrameWalker stackFrameWalker) {
-        return getCallerPC(stackFrameWalker).plus(OFFSET_TO_RETURN_PC);
+        return getCallerPC(stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
     }
 
     public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker) {
@@ -157,7 +146,7 @@ public class SPARCStackFrameLayout {
         return stackFrameWalker.readWord(registerWindow, offset_in_saved_window(GPR.I6)).asPointer();
     }
 
-    public static void  setRegisterInSavedWindow(Pointer framePointer, GPR register, Word data) {
+    public static void setRegisterInSavedWindow(Pointer framePointer, GPR register, Word data) {
         unbias(framePointer).writeWord(offset_in_saved_window(register), data);
     }
 

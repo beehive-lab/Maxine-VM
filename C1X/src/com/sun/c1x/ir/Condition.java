@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ConstType;
+import com.sun.c1x.ci.*;
 
 /**
  * Condition codes used in conditionals.
@@ -87,7 +87,7 @@ public enum Condition {
      * @return <code>Boolean.TRUE</code> if the comparison is known to be true,
      * <code>Boolean.FALSE</code> if the comparison is known to be false, <code>null</code> otherwise.
      */
-    public Boolean foldCondition(ConstType lt, ConstType rt) {
+    public Boolean foldCondition(CiConstant lt, CiConstant rt) {
         switch (lt.basicType) {
             case Int: {
                 int x = lt.asInt();

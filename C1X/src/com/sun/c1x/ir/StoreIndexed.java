@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>StoreIndexed</code> instruction represents a write to an array element.
@@ -45,7 +43,7 @@ public class StoreIndexed extends AccessIndexed {
     public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack lockStack) {
         super(array, index, length, elementType, lockStack);
         this.value = value;
-        if (ValueType.fromBasicType(elementType).isObject()) {
+        if (elementType.stackType().isObject()) {
             setFlag(Flag.NoWriteBarrier);
             setFlag(Flag.NoStoreCheck);
         }

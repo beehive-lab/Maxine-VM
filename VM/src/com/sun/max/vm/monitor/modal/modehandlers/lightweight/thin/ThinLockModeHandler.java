@@ -23,6 +23,7 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
@@ -217,8 +218,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         delegate().delegateMonitorWait(object, timeout, lockWord);
     }
 
-    private final boolean[] threadHoldsMonitorResult = new boolean[1];
-
     protected boolean threadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID) {
         ModalLockWord64 newLockWord = lockWord;
         while (true) {
@@ -226,9 +225,16 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 final ThinLockWord64 thinLockWord = ThinLockWord64.from(newLockWord);
                 return !thinLockWord.countUnderflow() && thinLockWord.getLockOwnerID() == threadID;
             }
-            if (delegate().delegateThreadHoldsMonitor(object, lockWord, thread, threadID, threadHoldsMonitorResult)) {
-                return threadHoldsMonitorResult[0];
+            final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockWord, thread, threadID);
+            switch (result) {
+                case TRUE:
+                    return true;
+                case FALSE:
+                    return false;
+                case NOT_THIS_MODE:
+                    break;
             }
+
             // Deflation. Try again.
             newLockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
         }
@@ -289,9 +295,8 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             monitorWait(object, timeout, ThinLockWord64.from(lockWord));
         }
 
-        public boolean delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID, boolean[] result) {
-            result[0] = threadHoldsMonitor(object, ThinLockWord64.from(lockWord), thread, threadID);
-            return true;
+        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID) {
+            return threadHoldsMonitor(object, ThinLockWord64.from(lockWord), thread, threadID) ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
         }
 
         public int delegateMakeHashcode(Object object, ModalLockWord64 lockWord) {

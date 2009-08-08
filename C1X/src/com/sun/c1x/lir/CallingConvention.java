@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * This class represents a calling convention instance for a particular method invocation and describes

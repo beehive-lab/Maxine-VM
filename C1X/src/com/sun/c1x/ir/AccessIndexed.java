@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>AccessIndexed</code> class is the base class of instructions that read or write
@@ -45,7 +43,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param lockStack the lock stack
      */
     AccessIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack lockStack) {
-        super(ValueType.fromBasicType(elementType), array, lockStack);
+        super(elementType.stackType(), array, lockStack);
         this.index = index;
         this.length = length;
         this.elementType = elementType;

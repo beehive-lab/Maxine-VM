@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -29,10 +29,7 @@ import com.sun.c1x.target.x86.X86Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
-
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
-
-
 
     private X86MacroAssembler asm;
     private final Target target;
@@ -45,7 +42,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private final Register convertResult = X86.rax;
     private final Register negateArgument = X86.xmm0;
     private final Register negateTemp = X86.xmm1;
-
 
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
@@ -60,8 +56,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm = new X86MacroAssembler(compiler);
         this.frameSize = 0;
 
-
-        switch(stub) {
+        switch (stub) {
             case SlowSubtypeCheck:
                 emitStandardForward(stub, CiRuntimeCall.SlowSubtypeCheck);
                 break;
@@ -98,6 +93,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
                 break;
 
+            case ResolveClass:
+                emitStandardForward(stub, CiRuntimeCall.ResolveClass);
+                break;
+
             case RetrieveInterfaceIndex:
                 emitStandardForward(stub, CiRuntimeCall.RetrieveInterfaceIndex);
                 break;
@@ -125,7 +124,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             case dneg:
                 emitDNEG();
                 break;
-
 
             default:
                 throw Util.shouldNotReachHere();
@@ -172,10 +170,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private void emitD2L() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-//        asm.ucomisd(convertArgument, asm.doubleConstant(Long.MAX_VALUE));
-//        asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
-//        asm.ucomisd(convertArgument, asm.doubleConstant(Long.MIN_VALUE));
-//        asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
+// asm.ucomisd(convertArgument, asm.doubleConstant(Long.MAX_VALUE));
+// asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
+// asm.ucomisd(convertArgument, asm.doubleConstant(Long.MIN_VALUE));
+// asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
         asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
         convertEpilogue();
@@ -184,10 +182,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private void emitD2I() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-//        asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MAX_VALUE));
-//        asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
-//        asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MIN_VALUE));
-//        asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
+// asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MAX_VALUE));
+// asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
+// asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MIN_VALUE));
+// asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
         asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
         convertEpilogue();
@@ -195,11 +193,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitF2L() {
         convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE); //asm.floatConstant(Integer.MIN_VALUE));
-//        asm.ucomiss(convertArgument, asm.floatConstant(Long.MAX_VALUE));
-//        asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
-//        asm.ucomiss(convertArgument, asm.floatConstant(Long.MIN_VALUE));
-//        asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
+        asm.movl(convertResult, Integer.MIN_VALUE); // asm.floatConstant(Integer.MIN_VALUE));
+// asm.ucomiss(convertArgument, asm.floatConstant(Long.MAX_VALUE));
+// asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
+// asm.ucomiss(convertArgument, asm.floatConstant(Long.MIN_VALUE));
+// asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
         asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
         convertEpilogue();
@@ -207,11 +205,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitF2I() {
         convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE); //, asm.floatConstant(Integer.MIN_VALUE));
-//        asm.ucomiss(convertArgument, asm.floatConstant(Integer.MAX_VALUE));
-//        asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
-//        asm.ucomiss(convertArgument, asm.floatConstant(Integer.MIN_VALUE));
-//        asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
+        asm.movl(convertResult, Integer.MIN_VALUE); // , asm.floatConstant(Integer.MIN_VALUE));
+// asm.ucomiss(convertArgument, asm.floatConstant(Integer.MAX_VALUE));
+// asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
+// asm.ucomiss(convertArgument, asm.floatConstant(Integer.MIN_VALUE));
+// asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
         asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
         convertEpilogue();
@@ -282,13 +280,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
             asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
 
-
             index++;
         }
     }
 
     private void partialSavePrologue(Register... registersToSave) {
-
 
         this.registersSaved = registersToSave;
 

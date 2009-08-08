@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>UnsafeOp</code> class is the base of all unsafe operations.
@@ -37,7 +36,7 @@ public abstract class UnsafeOp extends Instruction {
      * @param isStore <code>true</code> if this is a store operation
      */
     public UnsafeOp(BasicType basicType, boolean isStore) {
-        super(isStore ? ValueType.VOID_TYPE : ValueType.fromBasicType(basicType));
+        super(isStore ? BasicType.Void : basicType.stackType());
         this.basicType = basicType;
         pin();
     }

@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Phi</code> instruction represents the merging of dataflow
@@ -40,7 +39,7 @@ public class Phi extends Instruction {
      * @param block the join point
      * @param index the index into the stack (if < 0) or local variables
      */
-    public Phi(ValueType type, BlockBegin block, int index) {
+    public Phi(BasicType type, BlockBegin block, int index) {
         super(type);
         this.block = block;
         this.index = index;
@@ -144,6 +143,6 @@ public class Phi extends Instruction {
      */
     public void makeIllegal() {
         setFlag(Flag.PhiCannotSimplify);
-        valueType = ValueType.ILLEGAL_TYPE;
+        valueType = BasicType.Illegal;
     }
 }

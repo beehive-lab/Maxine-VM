@@ -573,12 +573,7 @@ public abstract class Assembler {
      * @throws AssemblyException
      */
     public final int offsetInstructionRelative(Label label, AssemblyObject assembledObject) throws AssemblyException {
-        switch (instructionSet().relativeAddressing()) {
-            case FROM_INSTRUCTION_START:
-                return labelOffsetRelative(label, assembledObject.startPosition());
-            case FROM_INSTRUCTION_END:
-                return labelOffsetRelative(label, assembledObject.endPosition());
-        }
-        throw ProgramError.unknownCase();
+        final int position = (instructionSet().relativeBranchFromStart) ? assembledObject.startPosition() : assembledObject.endPosition();
+        return labelOffsetRelative(label, position);
     }
 }

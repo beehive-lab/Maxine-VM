@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.Register;
+import com.sun.c1x.target.*;
 
 /**
  *

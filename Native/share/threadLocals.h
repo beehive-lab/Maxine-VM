@@ -44,11 +44,11 @@ typedef enum ThreadLocal {
     NATIVE_THREAD_LOCALS = 4,
     FORWARD_LINK = 5,
     BACKWARD_LINK = 6,
-    ID = 8,
-    TRAP_NUMBER = 19,
-    TRAP_INSTRUCTION_POINTER = 20,
-    TRAP_FAULT_ADDRESS = 21,
-    TRAP_LATCH_REGISTER = 22 
+    ID = 9,
+    TRAP_NUMBER = 20,
+    TRAP_INSTRUCTION_POINTER = 21,
+    TRAP_FAULT_ADDRESS = 22,
+    TRAP_LATCH_REGISTER = 23 
 } ThreadLocal_t;
 
 /**
@@ -57,7 +57,7 @@ typedef enum ThreadLocal {
  * memory chunk holding a set of VM thread locals.
  */
 typedef struct {
-    Address values[39];
+    Address values[40];
 } ThreadLocalsStruct, *ThreadLocals;
 /* END GENERATED CODE - DO NOT MODIFY */
 

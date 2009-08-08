@@ -151,6 +151,12 @@ public class VmThreadLocal {
         = new VmThreadLocal("SAFEPOINT_PROCEDURE", Kind.REFERENCE, "Procedure to run when a safepoint is triggered");
 
     /**
+     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
+     */
+    public static final VmThreadLocal EXCEPTION_OBJECT
+        = new VmThreadLocal("EXCEPTION_OBJECT", Kind.REFERENCE, "The exception being raised");
+
+    /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
      *
      * @see VmThread#id()

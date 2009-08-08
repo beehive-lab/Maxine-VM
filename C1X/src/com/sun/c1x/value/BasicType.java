@@ -48,6 +48,8 @@ public enum BasicType {
         this.size = size;
     }
 
+    public final BasicType basicType = this;
+
     /**
      * The name of the basic type as a single character.
      */
@@ -55,7 +57,7 @@ public enum BasicType {
 
     /**
      * The name of this basic type which will also be it Java programming language name if
-     * it is {@linkplain #isPrimitiveType() primitive} or {@code void}.
+     * it is {@linkplain #isPrimitive() primitive} or {@code void}.
      */
     public final String javaName;
 
@@ -90,7 +92,7 @@ public enum BasicType {
      * Checks whether this type is valid as an <code>int</code> on the Java operand stack.
      * @return <code>true</code> if this type is represented by an <code>int</code> on the operand stack
      */
-    public boolean isIntType() {
+    public boolean isInt() {
         return ordinal() <= Int.ordinal();
     }
 
@@ -99,7 +101,7 @@ public enum BasicType {
      * @return {@code true} if this is {@link #Boolean}, {@link #Byte}, {@link #Char}, {@link #Short},
      *                                 {@link #Int}, {@link #Long}, {@link #Float} or {@link #Double}.
      */
-    public boolean isPrimitiveType() {
+    public boolean isPrimitive() {
         return ordinal() <= Long.ordinal();
     }
 
@@ -211,5 +213,106 @@ public enum BasicType {
             case Long:    return long[].class;
         }
         throw new IllegalArgumentException("not a primitive basic type");
+    }
+
+
+    /**
+     * Checks whether this value type is void.
+     * @return <code>true</code> if this type is void
+     */
+    public final boolean isVoid() {
+        return this == BasicType.Void;
+    }
+
+    /**
+     * Checks whether this value type is long.
+     * @return <code>true</code> if this type is long
+     */
+    public final boolean isLong() {
+        return this == BasicType.Long;
+    }
+
+    /**
+     * Checks whether this value type is float.
+     * @return <code>true</code> if this type is float
+     */
+    public final boolean isFloat() {
+        return this == BasicType.Float;
+    }
+
+    /**
+     * Checks whether this value type is double.
+     * @return <code>true</code> if this type is double
+     */
+    public final boolean isDouble() {
+        return this == BasicType.Double;
+    }
+
+    /**
+     * Checks whether this value type is an object type.
+     * @return <code>true</code> if this type is an object
+     */
+    public final boolean isObject() {
+        return this == BasicType.Object;
+    }
+
+    /**
+     * Checks whether this value type is an address type.
+     * @return <code>true</code> if this type is an address
+     */
+    public boolean isJsr() {
+        return this == BasicType.Jsr;
+    }
+
+    /**
+     * Checks whether this value type is illegal.
+     * @return <code>true</code> if this type is illegal
+     */
+    public final boolean isIllegal() {
+        return this == BasicType.Illegal;
+    }
+
+    /**
+     * Checks whether this type is represented by a single word.
+     * @return true if this type is represented by a single word
+     */
+    public boolean isSingleWord() {
+        return sizeInSlots() == 1;
+    }
+
+    /**
+     * Checks whether this type is represented by a double word (two words).
+     * @return <code>true</code> if this type is represented by two words
+     */
+    public boolean isDoubleWord() {
+        return sizeInSlots() == 2;
+    }
+
+    /**
+     * Returns a single character for this type, e.g. int = 'i'.
+     * @return the type character for this type
+     */
+    public char tchar() {
+        return basicChar;
+    }
+
+    /**
+     * Performs the meet operation on this type and another type.
+     * @param other the other value type
+     * @return the result of the meet operation for these two types
+     */
+    public final BasicType meet(BasicType other) {
+        if (other.stackType() == this.stackType()) {
+            return this.stackType();
+        }
+        return BasicType.Illegal;
+    }
+
+    /**
+     * Converts this value type to a string.
+     */
+    @Override
+    public String toString() {
+        return javaName;
     }
 }

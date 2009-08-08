@@ -42,7 +42,7 @@ public class ProcessorKind {
 
     public static ProcessorKind defaultForInstructionSet(InstructionSet instructionSet) {
         final ProcessorModel processorModel = ProcessorModel.defaultForInstructionSet(instructionSet);
-        return new ProcessorKind(processorModel, instructionSet, processorModel.defaultDataModel());
+        return new ProcessorKind(processorModel, instructionSet, processorModel.defaultDataModel);
     }
 
     @Override

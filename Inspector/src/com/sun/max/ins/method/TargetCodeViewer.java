@@ -121,7 +121,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent);
 
-        this.offsetToReturnPC = maxVM().vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC();
+        this.offsetToReturnPC = maxVM().vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC;
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();

@@ -63,7 +63,6 @@ public final class BeltManager {
         to.setStart(oldFromSpaceStart);
         to.setEnd(oldFromSpaceStop);
         to.setAllocationMark(oldAllocationMark);
-
     }
 
     public Belt [] belts() {

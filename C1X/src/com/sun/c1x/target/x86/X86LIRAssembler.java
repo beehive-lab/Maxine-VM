@@ -20,30 +20,21 @@
  */
 package com.sun.c1x.target.x86;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.Address.ScaleFactor;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiMethodData;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.CodeStub;
-import com.sun.c1x.stub.MonitorAccessStub;
-import com.sun.c1x.stub.MonitorExitStub;
-import com.sun.c1x.stub.PatchingStub;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.target.x86.X86Assembler.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ValueStack;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.asm.Address.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.X86Assembler.Condition;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 public class X86LIRAssembler extends LIRAssembler {
 
@@ -645,6 +636,8 @@ public class X86LIRAssembler extends LIRAssembler {
             throw Util.shouldNotReachHere();
         }
     }
+
+
 
     @Override
     protected void reg2stack(LIROperand src, LIROperand dest, BasicType type) {
@@ -1360,6 +1353,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         LIROpcode code = op.code();
         if (code == LIROpcode.StoreCheck) {
+
             Register value = op.object().asRegister();
             Register array = op.array().asRegister();
             Register kRInfo = op.tmp1().asRegister();
@@ -1372,6 +1366,8 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().cmpptr(value, (int) NULLWORD);
             masm().jcc(X86Assembler.Condition.equal, done);
             addDebugInfoForNullCheckHere(op.infoForException());
+
+
             masm().movptr(kRInfo, new Address(array, compilation.runtime.klassOffsetInBytes()));
             masm().movptr(klassRInfo, new Address(value, compilation.runtime.klassOffsetInBytes()));
 
@@ -3237,5 +3233,12 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitCode(CodeStub s) {
         s.accept(new X86CodeStubVisitor(this));
+    }
+
+    @Override
+    protected void resolve(LIROperand dest, LIROperand index, LIROperand cp) {
+
+        // TODO:
+       // masm.callGlobalStub(GlobalStub.ResolveClass, dest, new RegisterOrConstant(index), cp);
     }
 }

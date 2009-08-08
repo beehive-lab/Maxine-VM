@@ -20,16 +20,13 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.util.BlockWorkList;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.util.BitMap;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-
 import java.util.*;
+
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
 
 /**
  * This class implements a data-flow analysis to remove redundant null checks
