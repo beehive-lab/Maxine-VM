@@ -18,19 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
+/**
+ * @author Doug Simon
+ */
+#include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "c.h"
-#include "jni.h"
 #include "log.h"
-#include "threadLocals.h"
-#include "teleProcess.h"
+#include "jni.h"
+#include "word.h"
 
-JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    c_initialize();
-    teleProcess_initialize();
-    log_initialize(getenv("TELE_LOG_FILE"));
-    return JNI_VERSION_1_2;
+#include "threadLocals.h"
+
+void threadLocals_println(ThreadLocals tl) {
+    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+    log_println("ThreadLocals[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
+                    ntl->id, ntl->stackBase, ntl->stackBase + ntl->stackSize, ntl->stackSize,
+                    getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
+                    getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
+                    getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
+}
+
+void threadLocals_printList(ThreadLocals tl) {
+    while (tl != NULL) {
+        threadLocals_println(tl);
+        tl = getThreadLocal(ThreadLocals, tl, FORWARD_LINK);
+    };
 }

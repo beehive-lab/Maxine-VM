@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.prototype.BootImage.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -82,8 +83,17 @@ public final class VmThreadMap {
     }
 
     private final IDMap idMap = new IDMap(64);
-    private Pointer vmThreadLocalsListHead = Pointer.zero();
     private volatile int vmThreadStartCount;
+
+    /**
+     * The head of the VM thread locals list.
+     *
+     * The address of this field in {@link #ACTIVE} is exposed to native code via
+     * {@link Header#threadLocalsListHeadOffset}.
+     * This allows a debugger attached to the VM to discover all Java threads without using
+     * platform specific mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin).
+     */
+    private Pointer threadLocalsListHead = Pointer.zero();
 
     private VmThreadMap() {
     }
@@ -105,10 +115,10 @@ public final class VmThreadMap {
         VmThreadLocal.ID.setConstantWord(vmThreadLocals, Address.fromInt(id));
         VmThreadLocal.VM_THREAD.setConstantReference(vmThreadLocals, Reference.fromJava(vmThread));
         // insert this thread locals into the list
-        setNext(vmThreadLocals, vmThreadLocalsListHead);
-        setPrev(vmThreadLocalsListHead, vmThreadLocals);
+        setNext(vmThreadLocals, threadLocalsListHead);
+        setPrev(threadLocalsListHead, vmThreadLocals);
         // at the head
-        vmThreadLocalsListHead = vmThreadLocals;
+        threadLocalsListHead = vmThreadLocals;
         // and signal that this thread has started up and joined the list
         vmThreadStartCount++;
         return vmThread;
@@ -121,9 +131,9 @@ public final class VmThreadMap {
     public void removeVmThreadLocals(Pointer vmThreadLocals) {
         synchronized (this) {
             final int id = VmThreadLocal.ID.getConstantWord(vmThreadLocals).asAddress().toInt();
-            if (vmThreadLocalsListHead == vmThreadLocals) {
+            if (threadLocalsListHead == vmThreadLocals) {
                 // this vm thread locals is at the head of list
-                vmThreadLocalsListHead = getNext(vmThreadLocalsListHead);
+                threadLocalsListHead = getNext(threadLocalsListHead);
             } else {
                 // this vm thread locals is somewhere in the middle
                 final Pointer prev = getPrev(vmThreadLocals);
@@ -218,7 +228,7 @@ public final class VmThreadMap {
     }
 
     private VmThread findNonDaemon() {
-        Pointer vmThreadLocals = vmThreadLocalsListHead;
+        Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
             final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
             if (!vmThread.javaThread().isDaemon()) {
@@ -254,7 +264,7 @@ public final class VmThreadMap {
      * @param procedure the procedure to apply to each VM thread
      */
     public void forAllVmThreads(Predicate<VmThread> predicate, Procedure<VmThread> procedure) {
-        Pointer vmThreadLocals = vmThreadLocalsListHead;
+        Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
             final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
             if (predicate == null || predicate.evaluate(vmThread)) {
@@ -271,7 +281,7 @@ public final class VmThreadMap {
      * @param procedure the procedure to apply to each VM thread locals
      */
     public void forAllVmThreadLocals(Pointer.Predicate predicate, Pointer.Procedure procedure) {
-        Pointer vmThreadLocals = vmThreadLocalsListHead;
+        Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
             if (predicate == null || predicate.evaluate(vmThreadLocals)) {
                 procedure.run(vmThreadLocals);

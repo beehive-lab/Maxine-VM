@@ -30,6 +30,7 @@ extern void teleProcess_initialize(void);
 size_t task_read(pid_t tgid, pid_t tid, const void *src, void *dst, size_t size);
 size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size);
 #define PROCESS_MEMORY_PARAMS pid_t tgid, pid_t tid,
+#define PROCESS_MEMORY_ARGS tgid, tid,
 #define READ_PROCESS_MEMORY(src, dst, size) task_read(tgid, tid, (const void *) src, (void *) dst, (size_t) size)
 #define WRITE_PROCESS_MEMORY(dst, src, size) task_write(tgid, tid, (void *) dst, (const void *) src, (size_t) size)
 #elif os_DARWIN
@@ -37,17 +38,20 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
 int task_read(task_t task, vm_address_t src, void *dst, size_t size);
 int task_write(task_t task, vm_address_t dst, void *src, size_t size);
 #define PROCESS_MEMORY_PARAMS task_t task,
+#define PROCESS_MEMORY_ARGS task,
 #define READ_PROCESS_MEMORY(src, dst, size) task_read(task, (vm_address_t) src, (void *) dst, (size_t) size)
 #define WRITE_PROCESS_MEMORY(dst, src, size) task_write(task, (vm_address_t) dst, (void *) src, (size_t) size)
 #elif os_SOLARIS
 #include "proc.h"
 #define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
+#define PROCESS_MEMORY_ARGS ph,
 #define READ_PROCESS_MEMORY(src, dst, size) proc_Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #define WRITE_PROCESS_MEMORY(dst, src, size) proc_Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
 extern unsigned short readbytes(unsigned long src, char *dst, unsigned short n);
 extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n);
 #define PROCESS_MEMORY_PARAMS
+#define PROCESS_MEMORY_ARGS
 #define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
 #define WRITE_PROCESS_MEMORY(dst, src, size) writebytes((unsigned long) dst, (char *) src, (unsigned short) size);
 #else
@@ -55,20 +59,22 @@ extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n)
 #endif
 
 /**
- * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for a ThreadSpecifics
- * entry 'ts' such that:
+ * Searches the thread locals list in the VM's address space for an entry 'tl' such that:
  *
- *   ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
+ *   tl.stackBase <= stackPointer && stackPointer < (tl.stackBase + tl.stackSize)
  *
- * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
+ * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
  *
- * @param threadSpecificsListAddress the address of the ThreadSpecificsList in the VM's address space
+ * @param threadLocalsList the head of the thread locals list in the VM's address space
+ * @param primordialThreadLocals the primordial thread locals in the VM's address space
  * @param stackPointer the stack pointer to search with
- * @param threadSpecifics pointer to storage for a ThreadSpecificsStruct into which the found entry
+ * @param tlCopy pointer to storage for a ThreadLocalsStruct into which the found entry
+ *        (if any) will be copied from the VM's address space
+ * @param ntlCopy pointer to storage for a NativeThreadLocalsStruct into which the native thread locals of the found entry
  *        (if any) will be copied from the VM's address space
  * @return the entry that was found, NULL otherwise
  */
-extern ThreadSpecifics teleProcess_findThreadSpecifics(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
+extern ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy);
 
 /**
  * Makes the upcall to TeleProcess.jniGatherThread
@@ -78,9 +84,9 @@ extern ThreadSpecifics teleProcess_findThreadSpecifics(PROCESS_MEMORY_PARAMS Add
  * @param handle the native thread library handle to a thread (e.g. the LWP of a Solaris thread)
  * @param state the execution state of the thread
  * @param instructionPointer
- * @param threadSpecifics the thread specifics found based on the stack pointer of the thread or NULL if no such thread specifics were found
+ * @param tl the thread locals found based on the stack pointer of the thread or NULL if no such thread locals were found
  */
-extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadSpecifics threadSpecifics);
+extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl);
 
 /**
  * Copies bytes from the tele process into a given direct ByteBuffer or byte array.
