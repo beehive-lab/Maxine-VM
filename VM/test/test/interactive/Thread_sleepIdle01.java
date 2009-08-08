@@ -34,10 +34,10 @@ public final class Thread_sleepIdle01 {
 
     public static boolean test(int i) throws InterruptedException {
         new Thread(new IdleThread()).start();
-        for (int t = 0; t< 10; t++) {
-                Log.println("sleeping");
-                Thread.sleep(i);
-                Log.println("waking");
+        for (int t = 0; t < 10; t++) {
+            Log.println("sleeping");
+            Thread.sleep(i);
+            Log.println("waking");
         }
         running = false;
         return true;

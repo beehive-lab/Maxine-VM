@@ -11642,9 +11642,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (3) == class test.lang.Class_Literal01
+        // (3) == class jtt.lang.Class_Literal01
             runString = "(3)";
-            if (!"class test.lang.Class_Literal01".equals(jtt.lang.Class_Literal01.test(3))) {
+            if (!"class jtt.lang.Class_Literal01".equals(jtt.lang.Class_Literal01.test(3))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -11820,9 +11820,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == class test.lang.Class_forName01
+        // (2) == class jtt.lang.Class_forName01
             runString = "(2)";
-            if (!"class test.lang.Class_forName01".equals(jtt.lang.Class_forName01.test(2))) {
+            if (!"class jtt.lang.Class_forName01".equals(jtt.lang.Class_forName01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -11860,9 +11860,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == class test.lang.Class_forName02
+        // (2) == class jtt.lang.Class_forName02
             runString = "(2)";
-            if (!"class test.lang.Class_forName02".equals(jtt.lang.Class_forName02.test(2))) {
+            if (!"class jtt.lang.Class_forName02".equals(jtt.lang.Class_forName02.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -12120,9 +12120,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == test.lang.Class_getName01
+        // (2) == jtt.lang.Class_getName01
             runString = "(2)";
-            if (!"test.lang.Class_getName01".equals(jtt.lang.Class_getName01.test(2))) {
+            if (!"jtt.lang.Class_getName01".equals(jtt.lang.Class_getName01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -14526,9 +14526,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == class test.lang.Object_getClass01
+        // (2) == class jtt.lang.Object_getClass01
             runString = "(2)";
-            if (!"class test.lang.Object_getClass01".equals(jtt.lang.Object_getClass01.test(2))) {
+            if (!"class jtt.lang.Object_getClass01".equals(jtt.lang.Object_getClass01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -17578,15 +17578,15 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (1) == test.reflect.Reflection_getCallerClass01$Caller1
+        // (1) == jtt.reflect.Reflection_getCallerClass01$Caller1
             runString = "(1)";
-            if (!"test.reflect.Reflection_getCallerClass01$Caller1".equals(jtt.reflect.Reflection_getCallerClass01.test(1))) {
+            if (!"jtt.reflect.Reflection_getCallerClass01$Caller1".equals(jtt.reflect.Reflection_getCallerClass01.test(1))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == test.reflect.Reflection_getCallerClass01$Caller2
+        // (2) == jtt.reflect.Reflection_getCallerClass01$Caller2
             runString = "(2)";
-            if (!"test.reflect.Reflection_getCallerClass01$Caller2".equals(jtt.reflect.Reflection_getCallerClass01.test(2))) {
+            if (!"jtt.reflect.Reflection_getCallerClass01$Caller2".equals(jtt.reflect.Reflection_getCallerClass01.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

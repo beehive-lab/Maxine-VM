@@ -24,8 +24,8 @@ import sun.reflect.*;
 
 /**
  * @Harness: java
- * @Runs: 0 = "sun.reflect.Reflection"; 1 = "test.reflect.Reflection_getCallerClass01$Caller1"; 2 = "test.reflect.Reflection_getCallerClass01$Caller2"
- * 
+ * @Runs: 0 = "sun.reflect.Reflection"; 1 = "jtt.reflect.Reflection_getCallerClass01$Caller1"; 2 = "jtt.reflect.Reflection_getCallerClass01$Caller2"
+ *
  * @author Bernd Mathiske
  */
 public final class Reflection_getCallerClass01 {

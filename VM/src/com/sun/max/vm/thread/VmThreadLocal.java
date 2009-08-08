@@ -123,6 +123,12 @@ public class VmThreadLocal {
         = new VmThreadLocal("SAFEPOINT_PROCEDURE", Kind.REFERENCE, "Procedure to run when a safepoint is triggered");
 
     /**
+     * The last exception object.
+     */
+    public static final VmThreadLocal EXCEPTION_OBJECT
+        = new VmThreadLocal("EXCEPTION_OBJECT", Kind.REFERENCE, "Procedure to run when a safepoint is triggered");
+
+    /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
      *
      * @see VmThread#id()
