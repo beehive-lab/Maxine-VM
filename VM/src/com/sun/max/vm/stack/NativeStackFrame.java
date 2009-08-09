@@ -55,4 +55,9 @@ public final class NativeStackFrame extends StackFrame {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "<native@" + instructionPointer.toHexString() + ">";
+    }
 }
