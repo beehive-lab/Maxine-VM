@@ -873,6 +873,11 @@ function run_inspect() {
                 vm_args="$vm_args $1"
                 inspector_args="$inspector_args -cp=$1"
                 ;;
+            -jar )
+                shift
+                vm_args="$vm_args -jar $1"
+                inspector_args="$inspector_args -cp=$1"
+                ;;
             --* )
                 inspector_args="$inspector_args ${1/-/}"
                 ;;
