@@ -37,12 +37,12 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An HeapScheme adaptor with support for thread local allocation buffer.
- * The adaptor factors out methods for allocating from a tlab, enabling / disabling allocations,
- * and replacing the tlab when refill is needed. Choosing when to refill a TLAB and how to refill it is up to the
+ * A HeapScheme adaptor with support for thread local allocation buffers (TLABs).
+ * The adaptor factors out methods for allocating from a TLAB, enabling / disabling allocations,
+ * and replacing the TLAB when refill is needed. Choosing when to refill a TLAB and how to refill it is up to the
  * HeapScheme concrete implementation.
  *
- * Do not support fancy features to enable adaptive per-thread TLAB sizing and refill policy.
+ * Does not support fancy features to enable adaptive per-thread TLAB sizing and refill policy.
  *
  * @author Laurent Daynes
  */
@@ -51,7 +51,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     /**
      * A VM option for disabling use of TLABs.
      */
+<<<<<<< /net/glop/export/maxine/workspaces/gc-dev/maxine/VM/src/com/sun/max/vm/heap/HeapSchemeWithTLAB.java
     protected static VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB2", // FIXME: this conflict with SemiHeap's space UseTLAB option
+=======
+    private static VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB2", // FIXME: this conflicts with SemiHeap's space UseTLAB option
+>>>>>>> /tmp/HeapSchemeWithTLAB.java~other.mjEvzn
         "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
 
     /**
@@ -65,21 +69,21 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
+    private static VmThreadLocal TLAB_TOP
+        = new VmThreadLocal("_TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
-    private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
+    private static VmThreadLocal TLAB_MARK
+        = new VmThreadLocal("_TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
      */
-    private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
+    private static VmThreadLocal ALLOCATION_DISABLED
+        = new VmThreadLocal("_TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
 
     /**
      * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.
@@ -99,13 +103,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @CONSTANT_WHEN_NOT_ZERO
     protected static Size MIN_OBJECT_SIZE;
     /**
-     * Size of byte array header.
+     * Size of a byte array header.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private static Size BYTE_ARRAY_HEADER_SIZE;
 
     /**
-     * Plant a dead instance of java.lang.Object at the specified pointer.
+     * Plants a dead instance of java.lang.Object at the specified pointer.
      */
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
@@ -116,7 +120,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
 
     /**
-     * Plant a dead byte array at the specified cell.
+     * Plants a dead byte array at the specified cell.
      */
     private static void plantDeadByteArray(Pointer cell, Size size) {
         DebugHeap.writeCellTag(cell);

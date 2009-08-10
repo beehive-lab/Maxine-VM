@@ -35,7 +35,7 @@ public interface VerificationRegistry {
     /**
      * Gets the canonical object type for a TypeDescriptor.
      * 
-     * @return null if {@code typeDescriptor} denotes a {@linkplain TypeDescriptor#isPrimitiveType() primitive type}
+     * @return null if {@code typeDescriptor} denotes a {@linkplain TypeDescriptor#isPrimitive() primitive type}
      */
     ObjectType getObjectType(TypeDescriptor typeDescriptor);
 

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.lir.ScopeValue.ScopeValueCode;
+import com.sun.c1x.lir.ScopeValue.*;
 
 /**
  * The <code>DebugInfoReadStream</code> class definition.

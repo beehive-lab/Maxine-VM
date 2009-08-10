@@ -49,6 +49,7 @@ public class MaxCiType implements CiType {
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
     final BasicType basicType;
+    final ClassConstant classRef;
 
     /**
      * Creates a new resolved compiler interface type for the specified class actor.
@@ -60,6 +61,9 @@ public class MaxCiType implements CiType {
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.classRef = null;
+
+        assert classActor != null;
     }
 
     /**
@@ -70,6 +74,7 @@ public class MaxCiType implements CiType {
     public MaxCiType(MaxCiConstantPool constantPool, ClassConstant classRef) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
+        this.classRef = classRef;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
 
@@ -84,6 +89,10 @@ public class MaxCiType implements CiType {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
             this.classActor = ClassActor.fromJava(atom.javaClass);
         }
+
+        assert this.classActor != null;
+
+        this.classRef = null;
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
     }
@@ -403,7 +412,7 @@ public class MaxCiType implements CiType {
     }
 
     public Object encoding() {
-        return new MaxCiConstant(ReferenceValue.from(asClassActor("encoding()").dynamicHub())).asObject();
+        return ReferenceValue.from(asClassActor("encoding()").dynamicHub());
     }
 
     public int superCheckOffset() {
@@ -411,7 +420,12 @@ public class MaxCiType implements CiType {
     }
 
     public CiConstant getStaticContainer() {
-        return new MaxCiConstant(ReferenceValue.from(asClassActor("getStaticContainer()").staticTuple()));
+        return CiConstant.forObject(asClassActor("getStaticContainer()").staticTuple());
+    }
+
+    @Override
+    public Object resolveObject() {
+        return classRef;
     }
 
 }

@@ -48,13 +48,6 @@ void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
 #if !os_GUESTVMXEN
     if (path == NULL) {
-#if TELE
-        path = getenv("TELE_LOG_FILE");
-#else
-        path = getenv("MAXINE_LOG_FILE");
-#endif
-    }
-    if (path == NULL) {
         path = "stdout";
     }
     if (strncmp(path, "stdout\0", 7) == 0) {

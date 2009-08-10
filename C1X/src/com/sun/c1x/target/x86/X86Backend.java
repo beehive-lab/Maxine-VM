@@ -21,14 +21,12 @@
 package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
-import com.sun.c1x.asm.AbstractAssembler;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.FrameMap;
-import com.sun.c1x.lir.LIRAssembler;
-import com.sun.c1x.target.Backend;
-import com.sun.c1x.target.Target;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.target.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,

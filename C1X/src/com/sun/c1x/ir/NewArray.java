@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>NewArray</code> class is the base of all instructions that allocate arrays.
@@ -39,7 +38,7 @@ public abstract class NewArray extends StateSplit {
      * @param stateBefore the state before the allocation
      */
     NewArray(Instruction length, ValueStack stateBefore) {
-        super(ValueType.OBJECT_TYPE);
+        super(BasicType.Object);
         this.length = length;
         this.stateBefore = stateBefore;
         setFlag(Flag.NonNull);

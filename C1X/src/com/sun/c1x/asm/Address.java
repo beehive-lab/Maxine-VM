@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.Architecture;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>Address</code> class definition.

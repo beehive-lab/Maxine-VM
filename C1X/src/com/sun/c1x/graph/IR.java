@@ -20,21 +20,13 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.util.Util;
+import java.util.*;
+
+import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.ComputeLinearScanOrder;
-import com.sun.c1x.ir.Goto;
-import com.sun.c1x.ir.IRScope;
-import com.sun.c1x.opt.CEEliminator;
-import com.sun.c1x.opt.GlobalValueNumberer;
-import com.sun.c1x.opt.NullCheckEliminator;
-import com.sun.c1x.opt.BlockMerger;
-import com.sun.c1x.value.ValueStack;
-import java.util.Iterator;
-import java.util.List;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.opt.*;
+import com.sun.c1x.value.*;
 
 /**
  * This class implements the overall container for the HIR (high-level IR) graph
@@ -72,6 +64,7 @@ public class IR {
 
     int totalBlocks = 1;
     int totalInstructions;
+    int numLoops = -1;
 
     /**
      * Creates a new IR instance for the specified compilation.
@@ -132,6 +125,7 @@ public class IR {
         if (orderedBlocks == null) {
             ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
             orderedBlocks = computeLinearScanOrder.linearScanOrder();
+            numLoops = computeLinearScanOrder.numLoops();
             computeLinearScanOrder.printBlocks();
         }
     }
@@ -264,6 +258,6 @@ public class IR {
     }
 
     public int numLoops() {
-        return Util.nonFatalUnimplemented(0);
+        return numLoops;
     }
 }

@@ -20,11 +20,11 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 
 /**
@@ -59,70 +59,53 @@ public class LIROperandFactory {
     }
 
     public static LIROperand intConst(int i) {
-        return new LIRConstant(ConstType.forInt(i));
+        return new LIRConstant(CiConstant.forInt(i));
     }
 
     public static LIROperand longConst(long l) {
-        return new LIRConstant(ConstType.forLong(l));
+        return new LIRConstant(CiConstant.forLong(l));
     }
 
     public static LIROperand floatConst(float f) {
-        return new LIRConstant(ConstType.forFloat(f));
+        return new LIRConstant(CiConstant.forFloat(f));
     }
 
     public static LIROperand doubleConst(double d) {
-        return new LIRConstant(ConstType.forDouble(d));
+        return new LIRConstant(CiConstant.forDouble(d));
     }
 
     public static LIROperand oopConst(Object o) {
-        return new LIRConstant(ConstType.forObject(o));
+        return new LIRConstant(CiConstant.forObject(o));
     }
 
     public static LIROperand intPtrConst(long p) {
         // TODO: address constants in ConstType
-        return new LIRConstant(ConstType.forLong(p));
+        return new LIRConstant(CiConstant.forLong(p));
     }
 
     public static LIROperand illegal() {
         return LIROperand.ILLEGAL;
     }
 
-    public static LIROperand valueType(ValueType type) {
+    public static LIROperand basicType(Instruction type) {
 
-        if (type.isObject()) {
+        if (type.type().isObject()) {
             return oopConst(type.asConstant().asObject());
         } else {
-            assert type instanceof ConstType : "ValueType must be an instance of ConstType";
-            ConstType c = (ConstType) type;
-            if (c.isJsr() || c.isInt()) {
-                return intConst(c.asInt());
-            } else if (c.isFloat()) {
-                return floatConst(c.asFloat());
-            } else if (c.isLong()) {
-                return longConst(c.asLong());
-            } else if (c.isDouble()) {
-                return doubleConst(c.asDouble());
+            Constant c = (Constant) type;
+            CiConstant ct = c.value;
+            if (ct.basicType.isJsr() || ct.basicType.isInt()) {
+                return intConst(ct.asInt());
+            } else if (ct.basicType.isFloat()) {
+                return floatConst(ct.asFloat());
+            } else if (ct.basicType.isLong()) {
+                return longConst(ct.asLong());
+            } else if (ct.basicType.isDouble()) {
+                return doubleConst(ct.asDouble());
             } else {
                 Util.shouldNotReachHere();
                 return LIROperandFactory.intConst(-1);
             }
-        }
-    }
-
-    public static LIROperand dummyValueType(ValueType type) {
-        if (type.isObject()) {
-            return oopConst(null);
-        } else if (type.isInt() | type.isJsr()) {
-            return intConst(0);
-        } else if (type.isFloat()) {
-            return floatConst(type.asConstant().asFloat());
-        } else if (type.isLong()) {
-            return longConst(type.asConstant().asLong());
-        } else if (type.isDouble()) {
-            return doubleConst(type.asConstant().asDouble());
-        } else {
-            Util.shouldNotReachHere();
-            return intConst(-1);
         }
     }
 }

@@ -40,6 +40,7 @@ import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
@@ -389,6 +390,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             unwindFrameSize = getUnwindFrameSize();
         }
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
+
+        // Save the exception object in a thread local
+        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
         // put the throwable in the return slot
         // NOTE: this is potentially dangerous, since this value must not be spilled onto the stack,

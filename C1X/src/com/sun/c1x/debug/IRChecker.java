@@ -390,9 +390,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitConstant(Constant i) {
-        if (!i.type().isConstant()) {
-            fail("Constant instruction should return .isConstant() == true");
-        }
     }
 
     /**
@@ -901,7 +898,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
 
     private void assertInstanceType(CiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
-            if (ciType.isArrayKlass() || ciType.isInterface() || ciType.basicType().isPrimitiveType()) {
+            if (ciType.isArrayKlass() || ciType.isInterface() || ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must be an instance class");
             }
         }
@@ -917,14 +914,14 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
 
     private void assertNotPrimitive(CiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
-            if (ciType.basicType().isPrimitiveType()) {
+            if (ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must not be a primitive");
             }
         }
     }
 
     private void assertPrimitive(BasicType basicType) {
-        if (!basicType.isPrimitiveType()) {
+        if (!basicType.isPrimitive()) {
             fail("CiType " + basicType + " must be a primitive");
         }
     }

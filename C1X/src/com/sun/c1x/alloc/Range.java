@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.*;
 
 /**
  *

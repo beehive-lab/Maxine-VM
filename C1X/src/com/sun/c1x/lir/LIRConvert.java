@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.debug.*;
 
 /**
  * The <code>LIRConvert</code> class definition.

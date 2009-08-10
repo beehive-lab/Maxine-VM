@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.debug;
 
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.BlockClosure;
-import com.sun.c1x.ir.Instruction;
-import static com.sun.c1x.ir.Instruction.valueString;
-import com.sun.c1x.ir.Phi;
-import com.sun.c1x.value.ValueStack;
+import static com.sun.c1x.ir.Instruction.*;
+
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
@@ -90,7 +88,7 @@ public class BlockPrinter implements BlockClosure {
             }
             Instruction value = stack.stackAt(i);
             out.print(i + ":" + valueString(value));
-            i += value.type().size();
+            i += value.type().sizeInSlots();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
                 if (phi.operand() != null) {

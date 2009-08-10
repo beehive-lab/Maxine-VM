@@ -47,7 +47,8 @@ public enum GlobalStub {
     ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
     ArithmeticDrem(Double, Double),
-    RetrieveInterfaceIndex(Int, Object, Int);
+    RetrieveInterfaceIndex(Int, Object, Int),
+    ResolveClass(Object, Int, Object);
 
     /**
      * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.
