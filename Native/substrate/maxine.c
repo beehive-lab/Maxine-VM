@@ -295,7 +295,6 @@ void debugger_initialize() {
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
-                Address primordialVmThreadLocals,
                 Address bootHeapRegionStart,
                 Address auxiliarySpace,
                 void *openDynamicLibrary(char *),
@@ -311,7 +310,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     int i;
 
     /* Extract the '-XX:LogFile' argument and pass the rest through to MaxineVM.run(). */
-    const char *logFilePath = NULL;
+    const char *logFilePath = getenv("MAXINE_LOG_FILE");
     for (i = 1; i < argc; i++) {
         const char *arg = argv[i];
         if (strncmp(arg, "-XX:LogFile=", 12) == 0) {
@@ -338,11 +337,18 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
     log_println("Arguments: argc %d, argv %lx", argc, argv);
     for (i = 0; i < argc; i++) {
-        log_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
+        const char *arg = argv[i];
+        if (arg != NULL) {
+            log_println("arg[%d]: %p, \"%s\"", i, arg, arg);
+        } else {
+            log_println("arg[%d]: %p", i, arg);
+        }
     }
 #endif
 
     fd = loadImage();
+
+    threadLocals_initialize(image_header()->threadLocalsSize);
 
     debugger_initialize();
 
@@ -351,19 +357,20 @@ int maxine(int argc, char *argv[], char *executablePath) {
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
-    Size vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
-    Address primordialVmThreadLocals = (Address) alloca(vmThreadLocalsSize + sizeof(Address));
+    ThreadLocals primordial_tl = (ThreadLocals) alloca(threadLocalsSize() + sizeof(Address));
 
     // Align primordial VM thread locals to Word boundary:
-    primordialVmThreadLocals = wordAlign(primordialVmThreadLocals);
+    primordial_tl = (ThreadLocals) wordAlign(primordial_tl);
 
     // Initialize all primordial VM thread locals to 0/null:
-    memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
+    memset((char *) primordial_tl, 0, threadLocalsSize());
 
-    threads_initialize(primordialVmThreadLocals, vmThreadLocalsSize);
+    image_write_value(ThreadLocals, primordialThreadLocalsOffset, primordial_tl);
+
+    threads_initialize(primordial_tl);
 
 #if log_LOADER
-    log_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
+    log_println("primordial VM thread locals allocated at: %p", primordial_tl);
 #endif
 
     Address auxiliarySpace = 0;
@@ -380,10 +387,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=%p, bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, argc=%d, argv=%p)",
-                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
+    log_println("entering Java by calling MaxineVM::run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, argc=%d, argv=%p)",
+                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 #endif
-    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
+    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

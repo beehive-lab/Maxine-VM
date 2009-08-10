@@ -195,7 +195,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return the {@code CiConstant} instance representing the constant
      */
-    CiConstant lookupConstant(char cpi);
+    Object lookupConstant(char cpi);
 
     /**
      * Creates an exception handler with the specified properties.

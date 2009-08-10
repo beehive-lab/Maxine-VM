@@ -20,11 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>AccessField</code> class is the base class of all instructions that access
@@ -52,7 +50,7 @@ public abstract class AccessField extends Instruction {
      */
     public AccessField(Instruction object, CiField field, boolean isStatic,
                        ValueStack exceptionState, ValueStack stateBefore, boolean isLoaded) {
-        super(ValueType.fromBasicType(field.basicType()));
+        super(field.basicType().stackType());
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;

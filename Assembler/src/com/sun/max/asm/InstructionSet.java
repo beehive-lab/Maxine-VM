@@ -24,47 +24,42 @@ package com.sun.max.asm;
  * Instruction Set Architecture monikers.
  *
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public enum InstructionSet {
 
-    AMD64(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
-    ARM(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
-    IA32(Category.CISC, RelativeAddressing.FROM_INSTRUCTION_END, 0),
-    PPC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START, 0),
-    SPARC(Category.RISC, RelativeAddressing.FROM_INSTRUCTION_START, 8);
+    AMD64(Category.CISC, 0, false, 0),
+    ARM(Category.RISC, 4, false, 0),
+    IA32(Category.CISC, 0, false, 0),
+    PPC(Category.RISC, 4, true, 0),
+    SPARC(Category.RISC, 4, true, 8);
 
     public enum Category {
         CISC, RISC;
     }
 
-    private final Category category;
+    public final Category category;
 
-    public Category category() {
-        return category;
-    }
-
-    public enum RelativeAddressing {
-        FROM_INSTRUCTION_START, FROM_INSTRUCTION_END;
-    }
-
-    private final RelativeAddressing relativeAddressing;
-
-    public RelativeAddressing relativeAddressing() {
-        return relativeAddressing;
-    }
-
-    private final int offsetToReturnPC;
-
-    /**
-     * @return offset to the return address of the caller from the caller's saved PC.
+    /** True if PC-relative control transfer instructions contain an offset relative to the start of the instruction.
+     *  False if PC-relative control transfer instructions contain an offset relative to the end of the instruction.
      */
-    public int offsetToReturnPC() {
-        return offsetToReturnPC;
-    }
+    public final boolean relativeBranchFromStart;
 
-    private InstructionSet(Category category, RelativeAddressing relativeAddressing, int offsetToReturnPC) {
+    /** Offset to the return address of the caller from the caller's saved PC.
+     *  For example, a SPARC call instruction saves its address in %o7. The return address is typically 2 instructions after
+     *  (to account for the call instruction itself and the delay slot).
+     */
+    public final int offsetToReturnPC;
+
+    /** Width of an instruction (in bytes).
+     *  If instructions are of variable width, this field is zero.
+     */
+    public final int instructionWidth;
+
+    private InstructionSet(Category category, int instructionWidth, boolean relativeAddressing, int offsetToReturnPC) {
         this.category = category;
-        this.relativeAddressing = relativeAddressing;
+        this.instructionWidth = instructionWidth;
+        this.relativeBranchFromStart = relativeAddressing;
         this.offsetToReturnPC = offsetToReturnPC;
     }
 

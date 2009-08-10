@@ -20,13 +20,12 @@
  */
 package com.sun.max.vm.compiler.adaptive;
 
-import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.VMOptions.*;
 
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -34,6 +33,7 @@ import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
@@ -215,7 +215,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 try {
                     return compilation.get();
                 } catch (InterruptedException e) {
-                    return null;
+                    FatalError.unexpected(null, e);
                 }
             } else {
                 // this method has already been compiled

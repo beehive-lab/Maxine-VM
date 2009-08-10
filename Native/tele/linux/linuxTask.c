@@ -37,7 +37,7 @@
 
 #include "log.h"
 #include "ptrace.h"
-#include "threadSpecifics.h"
+#include "threadLocals.h"
 #include "teleProcess.h"
 #include "linuxTask.h"
 

@@ -25,8 +25,8 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * @author Thomas Wuerthinger
@@ -58,8 +58,16 @@ public class X86MacroAssembler extends X86Assembler {
 
 
     void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+        RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
+        for (int i = 0; i < args.length; i++) {
+            rc[i] = new RegisterOrConstant(args[i]);
+        }
+        callGlobalStub(stub, result, rc);
+    }
+
+    void callGlobalStub(GlobalStub stub, Register result, RegisterOrConstant... args) {
         int index = 0;
-        for (Register op : args) {
+        for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
         }
 
@@ -100,6 +108,15 @@ public class X86MacroAssembler extends X86Assembler {
         int offsetFromRspInBytes = offsetFromRspInWords * target.arch.wordSize;
         //assert offsetFromRspInBytes < frameMap().reservedArgumentAreaSize() : "invalid offset";
         movptr(new Address(X86.rsp, offsetFromRspInBytes), c);
+    }
+
+    void storeParameter(RegisterOrConstant rc, int offsetFromRspInWords) {
+        if (rc.isConstant()) {
+            storeParameter(rc.asConstant(), offsetFromRspInWords);
+        } else {
+            assert rc.isRegister();
+            storeParameter(rc.asRegister(), offsetFromRspInWords);
+        }
     }
 
     void storeParameter(Object o, int offsetFromRspInWords) {

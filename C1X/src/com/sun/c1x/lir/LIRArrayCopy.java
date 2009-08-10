@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.stub.ArrayCopyStub;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.stub.*;
 
 /**
  * The <code>LIRArrayCopy</code> class definition.

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.target.Register;
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.target.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiRuntime</code> class provides the major interface between the compiler and the

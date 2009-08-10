@@ -20,15 +20,10 @@
  */
 package com.sun.c1x.graph;
 
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ir.LoadField;
-import com.sun.c1x.ir.NewInstance;
-import com.sun.c1x.ir.StoreField;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.IdentityHashMap;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
 
 /**
  * The <code>MemoryBuffer</code> is an abstract representation of memory that is used redundant load and
@@ -143,8 +138,7 @@ public class MemoryMap {
         } else {
             if (newObjects.containsKey(store.object())) {
                 // this is a store to a new object's field
-                ValueType vt = value.type();
-                if (fieldHasNoStores(field) && vt.isConstant() && vt.asConstant().isDefaultValue()) {
+                if (fieldHasNoStores(field) && value.isConstant() && value.asConstant().isDefaultValue()) {
                     // this is a redundant initialization of a new object's field that has not been assigned to
                     return null;
                 }

@@ -46,9 +46,6 @@ typedef struct image_Header {
 
     jint pageSize;           /* multiple of 1024 */
 
-    jint vmThreadLocalsSize;
-    jint vmThreadLocalsTrapNumberOffset;
-
     jint vmRunMethodOffset;
     jint vmThreadRunMethodOffset;
     jint runSchemeRunMethodOffset;
@@ -69,11 +66,31 @@ typedef struct image_Header {
      * Used e.g. for the primordial card table. */
     jint auxiliarySpaceSize;
 
-    /* See the comment for the '_info' static field in the MaxineMessenger class. */
+    /* See the comment for the 'info' static field in the MaxineMessenger class. */
     jint messengerInfoOffset;
 
-    /* See the comment for the '_threadSpecificsList' static field in the VmThread class. */
-    jint threadSpecificsListOffset;
+    /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class. */
+    jint threadLocalsListHeadOffset;
+
+    jint primordialThreadLocalsOffset;
+
+    /* The storage size of one set of VM thread locals. */
+    jint threadLocalsSize;
+
+    /* The indexes of the VM thread locals accessed directly by C code. */
+    jint SAFEPOINT_LATCH;
+    jint SAFEPOINTS_ENABLED_THREAD_LOCALS;
+    jint SAFEPOINTS_DISABLED_THREAD_LOCALS;
+    jint SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
+    jint NATIVE_THREAD_LOCALS;
+    jint FORWARD_LINK;
+    jint BACKWARD_LINK;
+    jint ID;
+    jint TRAP_NUMBER;
+    jint TRAP_INSTRUCTION_POINTER;
+    jint TRAP_FAULT_ADDRESS;
+    jint TRAP_LATCH_REGISTER;
+
 } *image_Header;
 
 /**

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.debug;
 
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * A collection of static methods for printing debug and informational output to a global {@link LogStream}.

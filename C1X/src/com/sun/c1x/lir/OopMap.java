@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.CiLocation;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>OopMap</code> class definition.

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>RoundFP</code> class instruction is used for rounding on Intel.

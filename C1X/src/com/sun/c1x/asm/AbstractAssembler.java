@@ -22,11 +22,11 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-import com.sun.c1x.C1XOptions;
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.TTY;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.target.*;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.util.*;
 
 /**
  * @author Marcelo Cintra

@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -31,13 +32,13 @@ import com.sun.c1x.value.*;
  */
 public class LIRConstant extends LIROperand {
 
-    public final ConstType value;
+    public final CiConstant value;
 
     /**
      * Create a LIRConstant from a ConstType object.
      * @param value the value
      */
-    LIRConstant(ConstType value) {
+    LIRConstant(CiConstant value) {
         super(value.basicType);
         this.value = value;
     }
@@ -146,7 +147,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntLoBits() {
         // TODO: floats, longs
-        if (value.isDouble()) {
+        if (value.basicType.isDouble()) {
             return (int) Double.doubleToLongBits(value.asDouble());
         } else {
             return value.asInt();
@@ -160,7 +161,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntHiBits() {
         // TODO: floats, longs
-        if (value.isDouble()) {
+        if (value.basicType.isDouble()) {
             return (int) (Double.doubleToLongBits(value.asDouble()) >> 32);
         } else {
             return asIntHi();
@@ -174,7 +175,7 @@ public class LIRConstant extends LIROperand {
      */
     public long asLongBits() {
         // TODO: floats, longs
-      if (value.isDouble()) {
+      if (value.basicType.isDouble()) {
         return Double.doubleToLongBits(value.asDouble());
       } else {
         return asLong();

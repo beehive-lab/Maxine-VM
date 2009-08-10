@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>StateSplit</code> class is the abstract base class of all instructions
@@ -37,7 +36,7 @@ public abstract class StateSplit extends Instruction {
      * Creates a new state split with the specified value type.
      * @param type the type of the value that this instruction produces
      */
-    public StateSplit(ValueType type) {
+    public StateSplit(BasicType type) {
         super(type);
         pin();
     }

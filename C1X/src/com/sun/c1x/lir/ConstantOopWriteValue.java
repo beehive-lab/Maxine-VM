@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.LogStream;
+import com.sun.c1x.debug.*;
 
 /**
  * The <code>ConstantOopWriteValue</code> class definition.

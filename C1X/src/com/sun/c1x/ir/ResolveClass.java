@@ -37,7 +37,7 @@ public class ResolveClass extends Instruction {
     private final ValueStack state;
 
     public ResolveClass(CiType type, ValueStack stack) {
-        super(ValueType.OBJECT_TYPE);
+        super(BasicType.Object);
         this.ciType = type;
         assert stack != null;
         this.state = stack;

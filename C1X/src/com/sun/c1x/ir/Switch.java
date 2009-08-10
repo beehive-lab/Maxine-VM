@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Switch</code> class is the base of both lookup and table switches.
@@ -42,7 +41,7 @@ public abstract class Switch extends BlockEnd {
      * @param isSafepoint <code>true</code> if this switch is a safepoint
      */
     public Switch(Instruction value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
-        super(ValueType.ILLEGAL_TYPE, stateBefore, isSafepoint);
+        super(BasicType.Illegal, stateBefore, isSafepoint);
         this.successors = successors;
         this.value = value;
     }

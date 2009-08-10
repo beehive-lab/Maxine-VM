@@ -21,6 +21,7 @@
 package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -63,7 +64,11 @@ public abstract class JavaStackFrame extends StackFrame {
 
     @Override
     public String toString() {
-        return targetMethod.name();
+        ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+        if (classMethodActor != null) {
+            return classMethodActor.format("%H.%n(%p)@") + instructionPointer.toHexString();
+        }
+        return targetMethod.name() + "@" + instructionPointer.toHexString();
     }
 
 }
