@@ -98,12 +98,13 @@ public final class DarwinTeleProcess extends TeleProcess {
         nativeKill(task);
     }
 
-    private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
+    private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
-        nativeGatherThreads(task, threads, threadSpecificsList.asAddress().toLong());
+        final Word primordialThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().primordialThreadLocalsOffset));
+        final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadLocalsListHeadOffset));
+        nativeGatherThreads(task, threads, threadLocalsList.asAddress().toLong(), primordialThreadLocals.asAddress().toLong());
     }
 
     @Override
