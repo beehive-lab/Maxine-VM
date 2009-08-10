@@ -40,7 +40,7 @@ import com.sun.c1x.value.*;
  *
  * @author Thomas Wuerthinger
  */
-public class LinearScan extends RegisterAllocator {
+public class LinearScan {
 
     private int nofCpuRegs;
     private int vregBase;
@@ -2418,6 +2418,7 @@ public class LinearScan extends RegisterAllocator {
 
     boolean checkStackDepth(CodeEmitInfo info, int stackEnd) {
         if (info.bci() != Instruction.SYNCHRONIZATION_ENTRY_BCI && !info.scope().method.isNative()) {
+            // TODO: make this assertion unnecessary
             int code = info.scope().method.javaCodeAtBci(info.bci());
             switch (code) {
                 case Bytecodes.IFNULL: // fall through
@@ -3050,9 +3051,7 @@ public class LinearScan extends RegisterAllocator {
         }
     }
 
-    @Override
     public void allocate() {
-        // NOTPRODUCT(totalTimer.beginMethod());
 
         numberInstructions();
 
@@ -3100,14 +3099,10 @@ public class LinearScan extends RegisterAllocator {
         // check that cfg is still correct after optimizations
         ir().verifyAndPrint("After LIR optimization");
         printLir(1, "Before Code Generation", false);
-        // NOTPRODUCT(LinearScanStatistic.compute(this, statFinal));
-        // NOTPRODUCT(totalTimer.endMethod(this));
     }
 
-    // * Printing functions
-
     void printTimers(double total) {
-        // totalTimer.print(total);
+        // TODO: print timers
     }
 
     void printStatistics() {

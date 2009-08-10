@@ -197,8 +197,6 @@ public interface CiRuntime {
 
     long basicObjectObjOffsetInBytes();
 
-    int getSerializePageShiftCount();
-
     int basicLockDisplacedHeaderOffsetInBytes();
 
     int initStateOffsetInBytes();
@@ -215,23 +213,17 @@ public interface CiRuntime {
 
     Object universeNonOopWord();
 
-    long floatSignflipPoolAddress();
-
-    long doubleSignflipPoolAddress();
-
     int nativeMovConstRegInstructionSize();
 
-    Register getCRarg(int i);
+    Register getCRarg(int i); // TODO: appears only used for array copy intrinsic
 
-    Register getJRarg(int i);
+    Register getJRarg(int i); // TODO: appears only used for array copy intrinsic
 
     int markOffsetInBytes();
 
     int argRegSaveAreaBytes();
 
     int threadPendingExceptionOffset();
-
-    int threadVmResultOffset();
 
     boolean universeSupportsInlineContigAlloc();
 
@@ -262,6 +254,7 @@ public interface CiRuntime {
     int biasedLockMaskInPlace();
 
     int biasedLockPattern();
+
     int unlockedValue();
 
     int maxArrayAllocationLength();
