@@ -466,21 +466,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     /**
-     * A TLAB policy that never refills. Just a convenience to disable TLAB use.
-     */
-    private static final TLABRefillPolicy NEVER_REFILL_TLAB = new TLABRefillPolicy() {
-        @Override
-        public boolean shouldRefill(Size size, Pointer allocationMark) {
-            return false;
-        }
-
-        @Override
-        public Size nextTlabSize() {
-            return Size.zero();
-        }
-    };
-
-    /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
