@@ -27,7 +27,6 @@ import com.sun.c1x.lir.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class LIRInsertionBuffer {
 

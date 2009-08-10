@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ir.Instruction;
 import com.sun.c1x.util.*;
 
 /**
@@ -48,7 +49,7 @@ public class DebugInfoWriteStream extends CompressedWriteStream {
     }
 
     public void writeBci(int bci) {
-        writeInt(bci - C1XOptions.InvocationEntryBci);
+        writeInt(bci - Instruction.INVOCATION_ENTRY_BCI);
     }
 
 }

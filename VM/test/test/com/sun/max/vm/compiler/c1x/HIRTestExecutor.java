@@ -118,4 +118,32 @@ public class HIRTestExecutor implements Executor {
         final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();
     }
+
+    public static class HIRGenerator {
+        private CiRuntime runtime;
+        private Target target;
+        private C1XCompiler compiler;
+
+        /**
+         * Creates a new HIR generator.
+         * @param runtime the runtime
+         * @param target the target
+         * @param compiler the compiler
+         */
+        public HIRGenerator(CiRuntime runtime, Target target, C1XCompiler compiler) {
+            this.runtime = runtime;
+            this.target = target;
+            this.compiler = compiler;
+        }
+
+        /**
+         * @param classMethodActor the method for which to make the IR
+         * @return the IR for the method
+         */
+        public IR makeHirMethod(CiMethod classMethodActor) {
+            C1XCompilation compilation = new C1XCompilation(compiler, target, runtime, classMethodActor);
+            compilation.compile();
+            return compilation.hir();
+        }
+    }
 }

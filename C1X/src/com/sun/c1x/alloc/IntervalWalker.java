@@ -27,7 +27,6 @@ import com.sun.c1x.debug.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class IntervalWalker {
 
@@ -35,13 +34,13 @@ public class IntervalWalker {
     LinearScan allocator;
 
     Interval[] unhandledFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, not
-                                                                                        // life before the current
-                                                                                        // position
-    Interval[] activeFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, life
+                                                                                     // life before the current
+                                                                                     // position
+    Interval[] activeFirst = new Interval[Interval.IntervalKind.values().length];    // sorted list of intervals, life
                                                                                      // at the current position
-    Interval[] inactiveFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals,
-                                                                                       // intervals in a life time hole
-                                                                                       // at the current position
+    Interval[] inactiveFirst = new Interval[Interval.IntervalKind.values().length];  // sorted list of intervals,
+                                                                                     // intervals in a life time hole
+                                                                                     // at the current position
 
     Interval current; // the current interval coming from unhandled list
     int currentPosition; // the current position (intercept point through the intervals)
@@ -53,11 +52,6 @@ public class IntervalWalker {
 
     LinearScan allocator() {
         return allocator;
-    }
-
-    // unified bailout support
-    void bailout(String msg) {
-        throw new Bailout(msg);
     }
 
     Interval current() {
@@ -120,7 +114,7 @@ public class IntervalWalker {
     // append interval at top of list
     void appendUnsorted(Interval list, Interval interval) {
         interval.setNext(list);
-        list = interval;
+        list = interval; // TODO this looks like a bug
     }
 
     // append interval in order of current range from()

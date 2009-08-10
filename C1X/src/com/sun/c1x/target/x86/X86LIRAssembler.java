@@ -127,7 +127,7 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void osrEntry() {
         offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
-        BlockBegin osrEntry = compilation.osrEntry();
+        BlockBegin osrEntry = compilation.hir().osrEntryBlock;
         ValueStack entryState = osrEntry.state();
         int numberOfLocks = entryState.locksSize();
 
@@ -2935,9 +2935,10 @@ public class X86LIRAssembler extends LIRAssembler {
         }
         assert op.mdo().isSingleCpu() : "mdo must be allocated";
         Register mdo = op.mdo().asRegister();
-        masm().movoop(mdo, md.encoding());
+        masm().movoop(mdo, md.dataObject());
         Address counterAddr = new Address(mdo, md.countOffset(bci));
         masm().addl(counterAddr, 1);
+        // TODO: use the bytecode from the invoke instruction
         int bc = method.javaCodeAtBci(bci);
         // Perform additional virtual call profiling for invokevirtual and
         // invokeinterface bytecodes

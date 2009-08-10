@@ -187,7 +187,17 @@ public interface CiMethod {
      */
     List<CiExceptionHandler> exceptionHandlers();
 
-    int javaCodeAtBci(int bci);
+    /**
+     * Retrieves the Java bytecode at the specified bytecode index.
+     * @param bci the bytecode index
+     * @return the java bytecode at the specified index
+     */
+    int javaCodeAtBci(int bci); // TODO: remove
 
+    /**
+     * Gets the interface method ID for this method, if this method is an interface method.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return the interface method id
+     */
     int interfaceID();
 }
