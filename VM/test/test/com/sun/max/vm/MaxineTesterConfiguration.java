@@ -54,7 +54,7 @@ public class MaxineTesterConfiguration {
 
     static final Object[] outputTestList = {
         test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
-        test.output.JavacTest.class,                FAIL_SPARC, FAIL_LINUX, FAIL_SOLARIS,
+        test.output.JavacTest.class,                FAIL_SPARC,
         test.output.CatchOutOfMemory.class,         FAIL_SPARC,
         test.output.PrintDate.class,
         test.output.HelloWorld.class,
