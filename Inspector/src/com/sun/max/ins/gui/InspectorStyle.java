@@ -235,7 +235,20 @@ public interface InspectorStyle {
     Icon debugContinueButtonIcon();
     Icon debugPauseButtonIcon();
 
+    Icon generalAboutIcon();
+    Icon generalCopyIcon();
+    Icon generalCutIcon();
+    Icon generalDeleteIcon();
+    Icon generalEditIcon();
     Icon generalFindIcon();
+    Icon generalFindAgainIcon();
+    Icon generalHelpIcon();
+    Icon generalInformationIcon();
+    Icon generalPreferencesIcon();
+    Icon generalRedoIcon();
+    Icon generalRefreshIcon();
+    Icon generalRemoveIcon();
+    Icon generalReplaceIcon();
 
     Icon navigationUpIcon();
     Icon navigationDownIcon();
