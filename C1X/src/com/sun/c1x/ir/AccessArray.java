@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>AccessArray</code> class is the base class of all array operations.
@@ -40,7 +39,7 @@ public abstract class AccessArray extends Instruction {
      * @param array the instruction that produces the array object value
      * @param lockStack the lock stack
      */
-    public AccessArray(ValueType type, Instruction array, ValueStack lockStack) {
+    public AccessArray(BasicType type, Instruction array, ValueStack lockStack) {
         super(type);
         this.array = array;
         this.lockStack = lockStack;

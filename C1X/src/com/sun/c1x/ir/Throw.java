@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Throw</code> instruction represents a throw of an exception.
@@ -38,7 +37,7 @@ public class Throw extends BlockEnd {
      * @param stateBefore the state before the exception is thrown
      */
     public Throw(Instruction exception, ValueStack stateBefore) {
-        super(ValueType.ILLEGAL_TYPE, stateBefore, true);
+        super(BasicType.Illegal, stateBefore, true);
         this.exception = exception;
     }
 

@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>NewInstance</code> instruction represents the allocation of an instance class object.
@@ -30,15 +30,20 @@ import com.sun.c1x.value.ValueType;
  */
 public class NewInstance extends StateSplit {
 
-    CiType instanceClass;
+    final CiType instanceClass;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Constructs a NewInstance instruction.
      * @param theClass the class being allocated
+     * @param cpi
      */
-    public NewInstance(CiType theClass) {
-        super(ValueType.OBJECT_TYPE);
+    public NewInstance(CiType theClass, char cpi, CiConstantPool constantPool) {
+        super(BasicType.Object);
         instanceClass = theClass;
+        this.cpi = cpi;
+        this.constantPool = constantPool;
         setFlag(Flag.NonNull);
     }
 

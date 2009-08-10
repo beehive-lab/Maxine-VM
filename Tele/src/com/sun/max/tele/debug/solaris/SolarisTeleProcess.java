@@ -112,13 +112,13 @@ public final class SolarisTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
+    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialVmThreadLocals);
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadSpecificsListOffset));
-        assert !threadSpecificsList.isZero();
-        nativeGatherThreads(processHandle, threads, threadSpecificsList.asAddress().toLong());
+        final Word primordialVmThreadLocals = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().primordialThreadLocalsOffset));
+        final Word threadLocalsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header().threadLocalsListHeadOffset));
+        nativeGatherThreads(processHandle, threads, threadLocalsList.asAddress().toLong(), primordialVmThreadLocals.asAddress().toLong());
     }
 
     @Override

@@ -192,9 +192,9 @@ char *signalName(int signal) {
     return NULL;
 }
 
-static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
+static void blueZoneTrap(NativeThreadLocals ntl) {
 #if os_GUESTVMXEN
-	guestvmXen_blue_zone_trap(threadSpecifics);
+	guestvmXen_blue_zone_trap(ntl);
 #endif
 }
 
@@ -207,67 +207,68 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         }
         log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
-    ThreadSpecifics threadSpecifics = (ThreadSpecifics) thread_currentSpecifics();
-    if (threadSpecifics == 0) {
+    ThreadLocals tl = thread_currentThreadLocals();
+    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+    if (ntl == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }
-    if (threadSpecifics->id == 0) {
+    if (getThreadLocal(int, tl, ID) == 0) {
         log_exit(-22, "FATAL: trap taken on primordial thread!");
     }
 
-    Address disabledVmThreadLocals = threadSpecifics->disabledVmThreadLocals;
+    ThreadLocals disabled_tl = getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS);
 
-    if (disabledVmThreadLocals == 0) {
+    if (disabled_tl == 0) {
         log_exit(-21, "could not find disabled VM thread locals in trap handler");
     }
 
     int trapNumber = getTrapNumber(signal);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
-    if (faultAddress >= threadSpecifics->stackRedZone && faultAddress < threadSpecifics->stackBase + threadSpecifics->stackSize) {
-        if (faultAddress < threadSpecifics->stackYellowZone) {
+    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize) {
+        if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
-            virtualMemory_unprotectPage(threadSpecifics->stackRedZone);
+            virtualMemory_unprotectPage(ntl->stackRedZone);
             trapNumber = STACK_FATAL;
-        } else if (faultAddress < threadSpecifics->stackYellowZone + virtualMemory_getPageSize()) {
+        } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
-            virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
+            virtualMemory_unprotectPage(ntl->stackYellowZone);
             trapNumber = STACK_FAULT;
         } else {
-            blueZoneTrap(threadSpecifics);
+            blueZoneTrap(ntl);
             return;
         }
     }
 
-    /* save the trap information in the disabled vm thread locals */
-    Address *trapInfo = (Address*) (disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset);
-    trapInfo[0] = trapNumber;
-    trapInfo[1] = getInstructionPointer(ucontext);
-    trapInfo[2] = faultAddress;
+    /* save the trap information in the disabled VM thread locals */
+    setThreadLocal(disabled_tl, TRAP_NUMBER, trapNumber);
+    setThreadLocal(disabled_tl, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    setThreadLocal(disabled_tl, TRAP_FAULT_ADDRESS, faultAddress);
+
 #if os_SOLARIS && isa_SPARC
-	 /* save the value of the safepoint latch at the trapped instruction */
-	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
-	 /* set the safepoint latch register of the trapped frame to the disable state */
-	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
+	/* save the value of the safepoint latch at the trapped instruction */
+    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_G2]);
+    /* set the safepoint latch register of the trapped frame to the disabled state */
+    ucontext->uc_mcontext.gregs[REG_G2] = (Address) disabled_tl;
 #elif isa_AMD64 && (os_SOLARIS || os_LINUX)
-	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_R14];
-	 ucontext->uc_mcontext.gregs[REG_R14] = disabledVmThreadLocals;
+    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
+    ucontext->uc_mcontext.gregs[REG_R14] = (Address) disabled_tl;
 #elif isa_AMD64 && os_DARWIN
-	 trapInfo[3] = ucontext->uc_mcontext->__ss.__r14;
-	 ucontext->uc_mcontext->__ss.__r14 = disabledVmThreadLocals;
+    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
+    ucontext->uc_mcontext->__ss.__r14 = (Address) disabled_tl;
 #elif isa_AMD64 && os_GUESTVMXEN
-	 trapInfo[3] = ucontext->r14;
-	 ucontext->r14 = disabledVmThreadLocals;
+    setThreadLocal(disabled_tl, TRAP_LATCH_REGISTER, ucontext->r14);
+    ucontext->r14 = (Address) disabled_tl;
 #else
     c_UNIMPLEMENTED();
 #endif
 
     if (traceTraps || log_TRAP) {
         if (sigName != NULL) {
-            log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
-            log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
-            log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
-            log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-            log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+            log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+            log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
+            log_println("trapInfo[1] (instruction pointer) = %p", getThreadLocal(Address, disabled_tl, TRAP_INSTRUCTION_POINTER));
+            log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));
+            log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
         }
         log_println("SIGNAL: returning to Java trap stub 0x%0lx", _javaTrapStub);
     }

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.BasicType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CiSignature</code> class represents a method signature.

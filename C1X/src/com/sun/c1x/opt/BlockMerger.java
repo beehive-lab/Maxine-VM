@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.graph.BlockUtil;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.value.*;
 
 /**
  * This class implements block merging, which combines adjacent basic blocks into a larger
@@ -114,12 +112,12 @@ public class BlockMerger implements BlockClosure {
 
     private void reduceNestedIfOp(BlockBegin block, If newEnd) {
         IfOp ifOp = asIfOp(newEnd.x());
-        ConstType k1 = asConstant(newEnd.y());
+        CiConstant k1 = newEnd.y().asConstant();
         Condition cond = newEnd.condition();
 
         if (k1 == null || ifOp == null) {
             ifOp = asIfOp(newEnd.y());
-            k1 = asConstant(newEnd.x());
+            k1 = newEnd.x().asConstant();
             cond = cond.mirror();
         }
         if (k1 != null && ifOp != null) {
@@ -127,12 +125,12 @@ public class BlockMerger implements BlockClosure {
             // if (cond, ifOp(a, b, c, d), k1, tsux, fsux)   -or-
             // if (cond, k1, ifOp(a, b, c, d), tsux, fsux)
 
-            if (ifOp.trueValue().type().isConstant() && ifOp.falseValue().type().isConstant()) {
+            if (ifOp.trueValue().isConstant() && ifOp.falseValue().isConstant()) {
                 // this matches:
                 // if (cond, ifOp(a, b, kT, kF), k1, tsux, fsux)  -or-
                 // if (cond, k1, ifOp(a, b, kT, kF), tsux, fsux)
-                ConstType kT = ifOp.trueValue().type().asConstant();
-                ConstType kF = ifOp.falseValue().type().asConstant();
+                CiConstant kT = ifOp.trueValue().asConstant();
+                CiConstant kF = ifOp.falseValue().asConstant();
                 // Find the instruction before newEnd, starting with ifOp.
                 // When newEnd and ifOp are not in the same block, prev
                 // becomes null. In such (rare) cases it is not
@@ -196,9 +194,5 @@ public class BlockMerger implements BlockClosure {
 
     private IfOp asIfOp(Instruction x) {
         return x instanceof IfOp ? (IfOp) x : null;
-    }
-
-    private ConstType asConstant(Instruction x) {
-        return x.type().isConstant() ? x.type().asConstant() : null;
     }
 }

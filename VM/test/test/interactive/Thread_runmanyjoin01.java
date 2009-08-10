@@ -31,15 +31,15 @@ public final class Thread_runmanyjoin01 {
     public static final boolean debug = true;
 
     public static boolean test(int i) throws InterruptedException {
-       Thread[] runners = new Thread[i];
-        for (int  j = 0; j < i; j++) {
+        Thread[] runners = new Thread[i];
+        for (int j = 0; j < i; j++) {
             runners[j] = new Thread(new Runner(j));
             runners[j].start();
         }
-        for (int  j = 0; j < i; j++) {
+        for (int j = 0; j < i; j++) {
             runners[j].join();
         }
-       return true;
+        return true;
     }
 
     static class Runner implements Runnable {
@@ -54,7 +54,7 @@ public final class Thread_runmanyjoin01 {
             long count = 0;
             debug("Runner " + id + " starting at " + startTime);
             while (now < startTime + 10000 + id * 2000) {
-                count ++;
+                count++;
                 if (count % 10000000 == 0) {
                     now = System.currentTimeMillis();
                     debug("Runner " + id + " time now " + now);

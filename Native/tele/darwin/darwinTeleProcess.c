@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <alloca.h>
 
 #include <mach/mach.h>
 #include <mach/mach_types.h>
@@ -45,6 +46,9 @@
 
 #include "teleProcess.h"
 #include "teleNativeThread.h"
+
+void teleProcess_initialize(void) {
+}
 
 extern jboolean task_disable_single_stepping(jlong task);
 
@@ -218,15 +222,13 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jcl
 
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
     thread_act_array_t threads;
     mach_msg_type_number_t numberOfThreads, i;
 
     if (Task_threads(POS, (task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
         return;
     }
-
-    c_ASSERT(threadSpecificsListAddress != 0);
 
     for (i = 0; i < numberOfThreads; i++) {
         ThreadState_t state = TS_SUSPENDED;
@@ -239,9 +241,10 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             return;
         }
 
-        ThreadSpecificsStruct threadSpecificsStruct;
-        ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(task, threadSpecificsListAddress, threadState.__rsp, &threadSpecificsStruct);
-        teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, threadSpecifics);
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+        NativeThreadLocalsStruct nativeThreadLocalsStruct;
+        ThreadLocals tl = teleProcess_findThreadLocals(task, threadLocalsList, primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
+        teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, tl);
     }
 
     if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {

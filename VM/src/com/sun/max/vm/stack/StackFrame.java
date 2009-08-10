@@ -117,4 +117,7 @@ public abstract class StackFrame {
      * Indicates if a given stack frame denotes the same frame as this object.
      */
     public abstract boolean isSameFrame(StackFrame stackFrame);
+
+    @Override
+    public abstract String toString();
 }

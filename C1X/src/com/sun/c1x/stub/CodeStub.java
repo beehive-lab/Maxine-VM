@@ -20,12 +20,10 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.Label;
-import com.sun.c1x.debug.LogStream;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.lir.CodeEmitInfo;
-import com.sun.c1x.lir.LIRVisitState;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.lir.*;
 
 /**
  * The <code>CodeStub</code> class definition. CodeStubs are little 'out-of-line'

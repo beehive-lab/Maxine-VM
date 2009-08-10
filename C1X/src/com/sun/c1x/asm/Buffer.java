@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.Architecture.BitOrdering;
-import com.sun.c1x.util.Bytes;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.Arrays;
+import com.sun.c1x.target.Architecture.*;
+import com.sun.c1x.util.*;
 
 /**
  *

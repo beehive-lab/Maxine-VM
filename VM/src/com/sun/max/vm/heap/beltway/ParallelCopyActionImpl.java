@@ -32,10 +32,6 @@ import com.sun.max.vm.layout.*;
  */
 public class ParallelCopyActionImpl extends CopyActionImpl {
 
-    public ParallelCopyActionImpl(Verify verifyAction) {
-        super(verifyAction);
-    }
-
     // FIXME: need to devirtualize this for performance reason...
     @Override
     public Grip doAction(Grip origin) {

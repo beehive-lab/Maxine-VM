@@ -56,7 +56,7 @@ public class UncaughtException {
 
         @Override
         public void uncaughtException(Thread t, Throwable e) {
-            synchronized(this) {
+            synchronized (this) {
                 uncaught = e;
             }
             super.uncaughtException(t, e);

@@ -57,7 +57,7 @@ public final class Thread_runmany01 {
             long count = 0;
             debug("Runner " + id + " starting at " + startTime);
             while (now < startTime + 10000 + id * 2000) {
-                count ++;
+                count++;
                 if (count % 10000000 == 0) {
                     now = System.currentTimeMillis();
                     debug("Runner " + id + " time now " + now);

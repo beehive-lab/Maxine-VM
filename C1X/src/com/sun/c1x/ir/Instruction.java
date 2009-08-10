@@ -20,15 +20,13 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.debug.InstructionPrinter;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Instruction</code> class represents a node in the IR. Each instruction
@@ -83,7 +81,7 @@ public abstract class Instruction {
     private final int id;
     private int bci;
     private int flags;
-    protected ValueType valueType;
+    protected BasicType valueType;
     private Instruction next;
     private Instruction subst;
 
@@ -95,7 +93,7 @@ public abstract class Instruction {
      * Constructs a new instruction with the specified value type.
      * @param type the value type for this instruction
      */
-    public Instruction(ValueType type) {
+    public Instruction(BasicType type) {
         id = nextID++;
         bci = BCI_NOT_APPENDED;
         valueType = type;
@@ -150,7 +148,7 @@ public abstract class Instruction {
      * Gets the type of the value pushed to the stack by this instruction.
      * @return the value type of this instruction
      */
-    public final ValueType type() {
+    public final BasicType type() {
         return valueType;
     }
 
@@ -315,6 +313,17 @@ public abstract class Instruction {
      */
     public final boolean needsNullCheck() {
         return !checkFlag(Flag.NoNullCheck);
+    }
+
+    public final boolean isConstant() {
+        return this instanceof Constant;
+    }
+
+    public final CiConstant asConstant() {
+        if (this instanceof Constant) {
+            return ((Constant) this).value;
+        }
+        return null;
     }
 
     /**
@@ -483,8 +492,7 @@ public abstract class Instruction {
             return true;
         }
         if (compareConstants && x != null && y != null) {
-            ValueType xt = x.type();
-            if (xt.isConstant() && xt.asConstant().equivalent(y.type())) {
+            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
                 return true;
             }
         }
@@ -493,7 +501,7 @@ public abstract class Instruction {
 
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.ValueType#tchar() character} denoting its
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.BasicType#tchar() character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
      * "i13".
      *

@@ -242,12 +242,15 @@ public class C1XTargetMethodGenerator {
     void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         // iterate over all the calls and append them to the appropriate lists
         for (CiTargetMethod.CallSite site : ciTargetMethod.callSites) {
-            if (site.method.isLoaded()) {
+
+            if (site.runtimeCall != null) {
+                directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
+            }
+
+            if (site.method != null) {
                 MethodActor methodActor = ((MaxCiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.direct) {
-                    if (site.globalStubID == null) {
-                        directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
-                    }
+                    directCalls.append(methodActor);
                 } else {
                     if (site.method.holder().isInterface()) {
                         interfaceCalls.append(methodActor);

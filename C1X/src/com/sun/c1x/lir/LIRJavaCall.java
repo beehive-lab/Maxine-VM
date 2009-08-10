@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.debug.LogStream;
+import java.util.*;
 
-import java.util.List;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
 
 /**
  * The <code>LIRJavaCall</code> class definition.

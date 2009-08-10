@@ -8,7 +8,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.JavaTester"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-native-tests -scenario=reflect,cir,dir,eir &#10;test/bytecode &#10;test/optimize &#10;test/except &#10;test/lang &#10;test/micro &#10;test/reflect &#10;test/threads &#10;test/jdk&#10;test/jvmni"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-native-tests -scenario=reflect,cir,dir,eir &#10;jtt/bytecode &#10;jtt/optimize &#10;jtt/except &#10;jtt/lang &#10;jtt/micro &#10;jtt/reflect &#10;jtt/threads &#10;jtt/jdk&#10;jtt/jvmni"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}/test"/>
 </launchConfiguration>
