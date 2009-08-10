@@ -164,8 +164,7 @@ public class IR {
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
-
-         if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintIR) {
             TTY.println(phase);
             print(false);
         }

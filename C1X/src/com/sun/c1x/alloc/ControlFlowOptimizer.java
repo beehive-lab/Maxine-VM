@@ -27,9 +27,9 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 /**
+ * This class performs basic optimizations on the control flow graph after LIR generation.
  *
  * @author Thomas Wuerthinger
- *
  */
 public final class ControlFlowOptimizer {
 
@@ -118,7 +118,7 @@ public final class ControlFlowOptimizer {
         // block must have exactly one successor
 
         return instructions.size() == 2 && instructions.get(instructions.size() - 1).info() == null;
-        }
+    }
 
     // substitute branch targets in all branch-instructions of this blocks
     void substituteBranchTarget(BlockBegin block, BlockBegin targetFrom, BlockBegin targetTo) {

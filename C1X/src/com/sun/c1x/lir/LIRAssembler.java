@@ -101,6 +101,7 @@ public abstract class LIRAssembler {
 
     private boolean check(PatchingStub patch, CodeEmitInfo info) {
         int code = info.scope().method.javaCodeAtBci(info.bci());
+        // TODO: communication the bytecode through the patching stub another way
         if (patch.id() == PatchingStub.PatchID.AccessFieldId) {
             switch (code) {
                 case Bytecodes.PUTSTATIC:
@@ -868,7 +869,6 @@ public abstract class LIRAssembler {
     public abstract void emitExceptionHandler();
 
     public void emitDeoptHandler() {
-        // TODO Auto-generated method stub
-
+        Util.nonFatalUnimplemented();
     }
 }

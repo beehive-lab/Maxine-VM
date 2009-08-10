@@ -199,10 +199,6 @@ public class C1XOptions {
     public static boolean TraceRelocation                    = ____;
     public static boolean PrintAssembly                      = ____;
 
-    // Profiling settings
-
-    public static final int InvocationEntryBci = -1;
-
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {
             setOptimizationLevel0();
