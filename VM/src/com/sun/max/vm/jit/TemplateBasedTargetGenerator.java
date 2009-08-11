@@ -117,13 +117,8 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.codeBuffer().currentPosition());
         Code.allocate(targetBundleLayout, targetMethod);
 
-        final int[] catchRangeOffsets = codeGenerator.catchRangePositions();
-        final int[] catchBlockOffsets =  codeGenerator.catchBlockPositions();
-
         codeGenerator.setGenerated(
                         targetMethod,
-                        catchRangeOffsets,
-                        catchBlockOffsets,
                         stops,
                         null, // java frame descriptors
                         null, // no scalar literals ever
