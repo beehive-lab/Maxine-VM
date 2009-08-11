@@ -25,6 +25,8 @@ import static com.sun.max.vm.compiler.Stoppable.Static.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.jit.JitInstrumentation;
+import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -39,7 +41,6 @@ import com.sun.max.vm.compiler.cir.operator.InstanceOf;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
@@ -367,10 +368,9 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                                 callEntryPoint,
                                 arguments)),
                         ce());
-                final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(HCirOperatorLowering.this.call.javaFrameDescriptor().classMethodActor());
-                final Hub mostFrequentHub = (instrumentation == null)
-                                    ? null
-                                    : instrumentation.getMostFrequentlyUsedHub(HCirOperatorLowering.this.call.javaFrameDescriptor().bytecodePosition());
+                CirJavaFrameDescriptor jfd = HCirOperatorLowering.this.call.javaFrameDescriptor();
+                final MethodProfile methodProfile = getMethodProfile(jfd.classMethodActor());
+                final Hub mostFrequentHub = JitInstrumentation.computeMostFrequentHub(methodProfile, jfd.bytecodePosition(), 1500, 0.9f);
 
                 if (mostFrequentHub != null) {
                     final CirValue cont = arguments[arguments.length - 2];
@@ -419,6 +419,10 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             }
         };
         set(callWithResolutionAndClassInitialization(resolvable, operator));
+    }
+
+    private MethodProfile getMethodProfile(ClassMethodActor classMethodActor) {
+        return null;
     }
 
     @Override

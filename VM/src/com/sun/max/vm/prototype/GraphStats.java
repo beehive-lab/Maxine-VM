@@ -234,12 +234,6 @@ public class GraphStats {
         total += sizeOf(targetMethod.referenceMaps());
         total += sizeOf(targetMethod.scalarLiterals());
         total += sizeOf(targetMethod.stopPositions());
-        if (targetMethod instanceof JitTargetMethod) {
-            final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
-            total += sizeOf(jitTargetMethod.bytecodeInfos());
-            // total += sizeOf(jitTargetMethod._isDirectCallToRunTime);  TODO
-            // total += sizeOf(jitTargetMethod._bytecodeToTargetCodePositionMap); TODO
-        }
         return total;
     }
 

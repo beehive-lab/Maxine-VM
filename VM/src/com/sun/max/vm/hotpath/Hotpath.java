@@ -22,8 +22,8 @@ package com.sun.max.vm.hotpath;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.hotpath.compiler.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 /**
  * Provides a statically compiled interface to the rest of the Hotpath compiler. This way we don't need to recompile
