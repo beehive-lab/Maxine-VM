@@ -25,6 +25,7 @@ import com.sun.max.annotate.FOLD;
 import com.sun.max.annotate.INLINE;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class collects profiling information of various kinds into a single place.
@@ -145,7 +146,7 @@ public class MethodProfile {
         int cinfo = encodeInfo(bci, RECVR_COUNT);
         int einfo = encodeInfo(bci, RECVR_NOT_FOUND);
         if (index >= 0) {
-            ArrayList<Integer> list = new ArrayList<Integer>();
+            List<Integer> list = new ArrayList<Integer>();
             for (; index < dataLength() - 1; index += 2) {
                 if (infoAt(index + 1) == cinfo) {
                     if (infoAt(index) == tinfo) {
@@ -241,8 +242,8 @@ public class MethodProfile {
      * a {@link MethodProfile}.
      */
     public static class Builder {
-        private ArrayList<Integer> infoList = new ArrayList<Integer>();
-        private ArrayList<Integer> dataList = new ArrayList<Integer>();
+        private List<Integer> infoList = new ArrayList<Integer>();
+        private List<Integer> dataList = new ArrayList<Integer>();
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
 

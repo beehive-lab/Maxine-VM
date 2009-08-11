@@ -160,6 +160,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 setMode(Mode.OPTIMIZED);
             } else {
                 defaultRecompilationThreshold0 = thresholdOption.getValue();
+//                JitInstrumentation.enable();
                 setMode(Mode.MIXED);
             }
 
