@@ -1082,7 +1082,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir().cmp(lirCond(cond), left, right);
         profileBranch(x, cond);
         moveToPhi(x.state());
-        if (x.x().type().isFloat()) {
+        if (x.x().type().isFloat() || x.x().type().isDouble()) {
             lir().branch(lirCond(cond), right.type(), x.trueSuccessor(), x.unorderedSuccessor());
         } else {
             lir().branch(lirCond(cond), right.type(), x.trueSuccessor());

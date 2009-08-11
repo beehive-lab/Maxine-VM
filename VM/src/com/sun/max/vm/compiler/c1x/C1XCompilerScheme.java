@@ -23,15 +23,17 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.AbstractVMScheme;
-import com.sun.max.vm.runtime.VMRegister;
-import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameWalker;
 import com.sun.max.vm.stack.StackUnwindingContext;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.actor.member.VirtualMethodActor;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.compiler.ir.IrGenerator;
 import com.sun.max.vm.compiler.ir.IrMethod;
+import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.builtin.Builtin;
 import com.sun.max.vm.compiler.CompilerScheme;
 import com.sun.max.vm.compiler.target.TargetMethod;
@@ -188,27 +190,32 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         ciTargetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
     }
 
+    @PROTOTYPE_ONLY
     public void initializeForJitCompilations() {
     }
 
+    @Override
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, StackFrameWalker.Purpose purpose, Object context) {
-        throw FatalError.unimplemented();
+        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
     }
 
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        throw FatalError.unimplemented();
-    }
-
+    @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        throw FatalError.unimplemented();
+        return stackPointer;
     }
 
+    @Override
     public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        throw new UnsupportedOperationException();
+        return new StackUnwindingContext(throwable);
     }
 
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }
 
+    @Override
+    public void storeExceptionObject(Pointer trapState, Throwable throwable) {
+        // Save the exception object in a thread local
+        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+    }
 }

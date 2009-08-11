@@ -77,11 +77,16 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block) {
-        this(cond, type, block, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        this.cond = cond;
+        this.type = type;
+        this.label = block.label();
+        this.block = block;
+        this.ublock = null;
     }
 
     public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block, BlockBegin ublock) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.type = type;
         this.label = block.label();

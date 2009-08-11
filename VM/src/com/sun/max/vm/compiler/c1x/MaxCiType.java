@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.lang.Function;
 
@@ -412,7 +411,7 @@ public class MaxCiType implements CiType {
     }
 
     public Object encoding() {
-        return ReferenceValue.from(asClassActor("encoding()").dynamicHub());
+        return asClassActor("encoding()").dynamicHub();
     }
 
     public int superCheckOffset() {

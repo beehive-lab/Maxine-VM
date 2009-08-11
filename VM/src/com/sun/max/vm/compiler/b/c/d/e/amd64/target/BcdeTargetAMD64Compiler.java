@@ -209,6 +209,10 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
     @Override
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
+    }
+
+    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;

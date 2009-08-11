@@ -141,7 +141,7 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
-    public static int runtimeNewArray(Object receiver, int interfaceId) {
+    public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);

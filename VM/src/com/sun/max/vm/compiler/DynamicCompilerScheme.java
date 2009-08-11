@@ -117,4 +117,6 @@ public interface DynamicCompilerScheme extends VMScheme {
 
     StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable);
 
+    void storeExceptionObject(Pointer trapState, Throwable throwable);
+
 }

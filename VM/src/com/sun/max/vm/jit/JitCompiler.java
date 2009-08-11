@@ -30,6 +30,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -85,4 +86,8 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         return new StackUnwindingContext(throwable);
     }
 
+    @Override
+    public void storeExceptionObject(Pointer trapState, Throwable throwable) {
+        TrapStateAccess.instance().setExceptionObject(trapState, throwable);
+    }
 }

@@ -364,7 +364,8 @@ public abstract class Trap {
             if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                 trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-                trapStateAccess.setExceptionObject(trapState, throwable);
+
+                targetMethod.compilerScheme().storeExceptionObject(trapState, throwable);
             }
         } else {
             Throw.raise(throwable, stackPointer, framePointer, instructionPointer);

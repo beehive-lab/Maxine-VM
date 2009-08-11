@@ -614,53 +614,9 @@ public class MaxCiRuntime implements CiRuntime {
     int memberIndex;
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
-//        ClassMethodActor classMethodActor = null;
-//        try {
-//            classMethodActor = (ClassMethodActor) MethodActor.fromJava(MaxCiRuntime.class.getMethod("skeleton" + globalStubID.toString()));
-//        } catch (SecurityException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (NoSuchMethodException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-
-        //new StaticMethodActor(new Utf8Constant(globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
-        //classMethodActor.assignHolder(ClassActor.fromJava(MaxCiRuntime.class), memberIndex++);
-//        ClassActor classActor = ClassActor.fromJava(MaxCiRuntime.class);
-//        ClassMethodActor classMethodActor = new StaticMethodActor(new Utf8Constant("skeleton" + globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
-//        classMethodActor.assignHolder(classActor, 0);
-
-
-        // TODO: pass an appropriate compiler scheme
-        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, null, ciTargetMethod);
-        //assert !globalStubCache.containsKey(globalStubID);
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, ciTargetMethod);
         final C1XTargetMethod targetMethod = generator.finish();
-        //globalStubCache.put(globalStubID, targetMethod);
         return targetMethod;
-
-
-//        MethodState state = VMConfiguration.target().compilationScheme().makeMethodState(classMethodActor);
-//
-//        if (state.currentTargetMethod(CompilationDirective.STUB) == null) {
-//
-//            AdaptiveMethodState methodState = (AdaptiveMethodState) state;
-//            methodState.setTargetMethod(targetMethod, CompilationDirective.STUB);
-//        }
-//
-//
-//
-//        classMethodActor.setMethodState(new MethodState(classMethodActor, 1) {
-//
-//            @Override
-//            public TargetMethod currentTargetMethod() {
-//                return targetMethod;
-//            }
-//
-//            @Override
-//            public TargetMethod currentTargetMethod(CompilationDirective compilationDirective) {
-//                return targetMethod;
-//            }});
     }
 
     @Override
