@@ -30,7 +30,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.GraphPrototype.*;
 

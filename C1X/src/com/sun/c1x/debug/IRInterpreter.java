@@ -531,15 +531,15 @@ public class IRInterpreter {
             switch (i.opcode()) {
                 case Bytecodes.I2L:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, CiConstant.forLong((long) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forLong(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2F:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, CiConstant.forFloat((float) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2D:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, CiConstant.forDouble((double) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asInt()), instructionCounter);
                     break;
 
                 case Bytecodes.I2B:
@@ -561,11 +561,11 @@ public class IRInterpreter {
                     break;
                 case Bytecodes.L2F:
                     assertBasicType(value.basicType, BasicType.Long);
-                    environment.bind(i, CiConstant.forFloat((float) value.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat(value.asLong()), instructionCounter);
                     break;
                 case Bytecodes.L2D:
                     assertBasicType(value.basicType, BasicType.Long);
-                    environment.bind(i, CiConstant.forDouble((double) value.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asLong()), instructionCounter);
                     break;
 
                 case Bytecodes.F2I:
@@ -578,7 +578,7 @@ public class IRInterpreter {
                     break;
                 case Bytecodes.F2D:
                     assertBasicType(value.basicType, BasicType.Float);
-                    environment.bind(i, CiConstant.forDouble((double) value.asFloat()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asFloat()), instructionCounter);
                     break;
 
                 case Bytecodes.D2I:
