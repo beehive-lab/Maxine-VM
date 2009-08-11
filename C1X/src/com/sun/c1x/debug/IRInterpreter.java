@@ -668,7 +668,7 @@ public class IRInterpreter {
                 String methodName = method.name();
                 // no need to invoke init methods
                 if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
-                    // TODO: what!?
+                    // TODO: run the constructor with Unsafe
                     currentInstruction = currentInstruction.next();
                     return;
                 }
@@ -1164,7 +1164,7 @@ public class IRInterpreter {
 
     public CiConstant execute(IR hir, CiConstant ... arguments) {
         if (hir.compilation.method.isNative()) {
-            // TODO: invokes the native method via reflection?
+            // TODO: invoke the native method via reflection?
             return null;
         }
         final Evaluator evaluator = new Evaluator(hir, arguments);
