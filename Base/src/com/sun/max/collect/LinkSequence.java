@@ -29,13 +29,13 @@ import java.util.*;
  */
 public class LinkSequence<Element_Type> implements PrependableSequence<Element_Type>, AppendableSequence<Element_Type> {
 
-    private class Cell {
+    private static class Cell<Element_Type> {
         private Element_Type head;
-        private Cell tail;
+        private Cell<Element_Type> tail;
     }
 
-    private Cell first;
-    private Cell last;
+    private Cell<Element_Type> first;
+    private Cell<Element_Type> last;
     private int length;
 
     public LinkSequence() {
@@ -66,7 +66,7 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     }
 
     public Element_Type first() {
-        final Cell result = first;
+        final Cell<Element_Type> result = first;
         if (result == null) {
             throw new IndexOutOfBoundsException();
         }
@@ -74,7 +74,7 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     }
 
     public Element_Type last() {
-        final Cell result = last;
+        final Cell<Element_Type> result = last;
         if (result == null) {
             throw new IndexOutOfBoundsException();
         }
@@ -116,7 +116,7 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     }
 
     public void prepend(Element_Type element) {
-        final Cell cell = new Cell();
+        final Cell<Element_Type> cell = new Cell<Element_Type>();
         cell.head = element;
         if (first == null) {
             assert last == null;
@@ -130,7 +130,7 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
     }
 
     public void append(Element_Type element) {
-        final Cell cell = new Cell();
+        final Cell<Element_Type> cell = new Cell<Element_Type>();
         cell.head = element;
         if (last == null) {
             assert first == null;
@@ -167,7 +167,7 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
 
     public Iterator<Element_Type> iterator() {
         return new Iterator<Element_Type>() {
-            private Cell cell = first;
+            private Cell<Element_Type> cell = first;
 
             public void remove() {
                 throw new UnsupportedOperationException();

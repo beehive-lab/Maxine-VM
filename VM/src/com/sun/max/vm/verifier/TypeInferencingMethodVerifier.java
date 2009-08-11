@@ -98,16 +98,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         return scanner == null ? -1 : scanner.currentOpcodePosition();
     }
 
-    public Instruction instructionAt(int position) {
-        return instructionMap[position];
-    }
-
     public TypeState typeStateAt(int position) {
         return typeStateMap()[position];
     }
 
     public boolean isReturnPositionStore(Instruction astore) {
-        return returnPositionStores == null ? false : returnPositionStores.contains(astore);
+        return returnPositionStores != null && returnPositionStores.contains(astore);
     }
 
     public boolean hasUnvisitedCode() {
@@ -126,6 +122,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
      * {@linkplain TypeCheckingMethodVerifier type checking} is the implicit entry frame that can be derived from the
      * method's signature.
      *
+     * @param constantPoolEditor the constant pool editor
      * @return the StackMapTable attribute that enables this method to be verified via
      *         {@linkplain TypeCheckingMethodVerifier type checking}
      */
@@ -207,6 +204,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
+            // fall through
         }
         throw verifyError("Invalid bytecode position " + position + "(" + positionDescription + ")");
     }
@@ -219,6 +217,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     /**
      * Gets the current interpreter frame type state.
+     * @return the type state 
      */
     public TypeState typeState() {
         return (TypeState) frame;
