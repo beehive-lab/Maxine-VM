@@ -21,14 +21,13 @@
 package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.instrument.*;
 
 
 public class Anchor {
     protected final BytecodeLocation location;
 
     /**
-     * {@link BytecodeLocation} associated with this {@link TreeAnchor}.
+     * {@link BytecodeLocation} associated with this {@link com.sun.max.vm.profile.TreeAnchor}.
      */
     public BytecodeLocation location() {
         return location;

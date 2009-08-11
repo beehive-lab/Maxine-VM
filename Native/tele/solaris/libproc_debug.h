@@ -32,6 +32,7 @@
 #include "threads.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <synch.h>
 
 typedef struct P_list {
       struct P_list   *list_forw;

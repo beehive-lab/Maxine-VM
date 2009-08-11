@@ -30,7 +30,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ClassConstant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.dir.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.hotpath.*;
@@ -39,6 +38,7 @@ import com.sun.max.vm.hotpath.compiler.Tracer.*;
 import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 public class TirRecorder {
     public static OptionSet optionSet = new OptionSet();

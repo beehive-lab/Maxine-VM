@@ -29,7 +29,6 @@ import com.sun.c1x.lir.*;
  * XXX: are we sure?
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class PhiResolver {
 

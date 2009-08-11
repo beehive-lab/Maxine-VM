@@ -22,15 +22,18 @@ package com.sun.max.vm.template.source;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.profile.*;
 import com.sun.max.vm.template.*;
+import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.jit.JitInstrumentation;
 
 @TEMPLATE(instrumented = TemplateChooser.Instrumented.YES)
 public class InstrumentedBytecodeSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NOP)
-    public static void nop(Counter counter) {
-        counter.increment();
+    public static void nop(MethodProfile mpo, int index) {
+        // location and entrypoint counters count down to zero ("overflow")
+        JitInstrumentation.recordLocation(mpo, index);
     }
+
 }

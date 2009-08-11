@@ -23,14 +23,14 @@ package com.sun.max.vm.bytecode;
 
 /**
  * Byte code visitor that focuses on control flow changing opcodes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class ControlFlowAdapter extends BytecodeAdapter {
 
     /**
      * The {@linkplain #currentOpcode() current opcode} has an explicit control transfer branch to a given address.
-     * 
+     *
      * @param address
      *                the jump target address
      */
@@ -38,7 +38,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
 
     /**
      * The {@linkplain #currentOpcode() current opcode} has a fall-through flow of control to its lexical successor.
-     * 
+     *
      * @param address
      *                the address of the current opcode's lexical successor in the bytecode stream
      */
@@ -52,6 +52,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
     /**
      * Control flow is forking into two branches: one starts at the current address
      * and the other at the given offset from it.
+     * @param offset the offset of the taken branch
      */
     private void fork(int offset) {
         fallThrough(currentBytePosition());

@@ -189,20 +189,15 @@ public class C1XTest {
             CiTargetMethod result = null;
             try {
                 result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod(method));
+                if (!warmup) {
+                    long timeNs = System.nanoTime() - startNs;
+                    recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
+                }
             } catch (Bailout bailout) {
                 if (printBailout) {
                     bailout.printStackTrace();
                 }
                 return false;
-            }
-
-            if (result != null) {
-                long timeNs = System.nanoTime() - startNs;
-
-                if (!warmup) {
-                    // record the time for successful compilations
-                    recordTime(method, result.totalInstructions(), timeNs);
-                }
             }
 
             return true;
