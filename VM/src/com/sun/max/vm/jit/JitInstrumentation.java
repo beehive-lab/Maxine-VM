@@ -39,10 +39,17 @@ public class JitInstrumentation {
     public static final int DEFAULT_ENTRY_INITIAL_COUNT = 5000;
     public static final int DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES = 3;
 
+    private static boolean enabled;
+
+    public static void enable() {
+        enabled = true;
+    }
+
     public static MethodProfile.Builder createMethodProfile(ClassMethodActor classMethodActor) {
-        if (false) {
+        if (enabled) {
             MethodProfile.Builder builder = new MethodProfile.Builder();
-            builder.methodProfileObject().method = classMethodActor;
+            MethodProfile mpo = builder.methodProfileObject();
+            mpo.method = classMethodActor;
             return builder;
         }
         return null;
@@ -63,13 +70,18 @@ public class JitInstrumentation {
         int[] data = mpo.rawData();
         if (--data[mpoIndex] == 0) {
             if (!mpo.triggered) {
-                synchronized (mpo) {
-                    if (!mpo.triggered) {
-                        // location count overflowed; call into instrumentation system
-                        CompilationScheme.Static.instrumentationCounterOverflow(mpo, mpoIndex);
-                        mpo.triggered = true;
-                    }
-                }
+                triggerRecompilation(mpo, mpoIndex);
+            }
+        }
+    }
+
+    @INLINE
+    private static void triggerRecompilation(MethodProfile mpo, int mpoIndex) {
+        synchronized (mpo) {
+            if (!mpo.triggered) {
+                // location count overflowed; call into instrumentation system
+                CompilationScheme.Static.instrumentationCounterOverflow(mpo, mpoIndex);
+                mpo.triggered = true;
             }
         }
     }
