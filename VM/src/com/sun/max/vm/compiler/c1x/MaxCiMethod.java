@@ -369,7 +369,6 @@ public class MaxCiMethod implements CiMethod {
         return code()[bci] & 0xff;
     }
 
-    @Override
     public int interfaceID() {
 
         if (methodActor.holder() instanceof InterfaceActor) {

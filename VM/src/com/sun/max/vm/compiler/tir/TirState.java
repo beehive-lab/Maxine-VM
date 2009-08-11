@@ -20,10 +20,10 @@
  */
 package com.sun.max.vm.compiler.tir;
 
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.TirInstruction.*;
 import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 public class TirState extends State<TirInstruction> {
 

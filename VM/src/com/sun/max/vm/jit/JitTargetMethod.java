@@ -320,13 +320,6 @@ public abstract class JitTargetMethod extends TargetMethod {
         return translations;
     }
 
-    /**
-     * @return references to the emitted templates or to byte codes in corresponding order to the above
-     */
-    public final BytecodeInfo[] bytecodeInfos() {
-        return bytecodeInfos;
-    }
-
     public final void setGenerated(
                     int[] catchRangePositions,
                     int[] catchBlockPositions,

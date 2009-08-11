@@ -90,8 +90,6 @@ public class MaxCiType implements CiType {
             this.classActor = ClassActor.fromJava(atom.javaClass);
         }
 
-        assert this.classActor != null;
-
         this.classRef = null;
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
@@ -423,7 +421,6 @@ public class MaxCiType implements CiType {
         return CiConstant.forObject(asClassActor("getStaticContainer()").staticTuple());
     }
 
-    @Override
     public Object resolveObject() {
         return classRef;
     }
