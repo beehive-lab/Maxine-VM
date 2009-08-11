@@ -28,11 +28,12 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.jit.JitInstrumentation;
 
 
 /**
@@ -46,89 +47,88 @@ import com.sun.max.vm.type.*;
 public final class InstrumentedInvokeTemplateSource {
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.VOID)
-    public static void invokevirtual(int vTableIndex, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokevirtual(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, table);
+        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.FLOAT)
-    public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, table);
+        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.LONG)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, table);
+        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.DOUBLE)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, table);
+        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.WORD)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, table);
+        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.VOID)
-    public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, table);
+        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.FLOAT)
-    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, table);
+        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.LONG)
-    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, table);
+        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.DOUBLE)
-    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, table);
+        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.WORD)
-    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodInstrumentation.CallCounterTable table) {
+    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, table);
+        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
-    private static Address selectVirtualMethod(final Object receiver, int vTableIndex, MethodInstrumentation.CallCounterTable table) {
+    private static Address selectVirtualMethod(final Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final Address entryPoint = hub.getWord(vTableIndex).asAddress();
-        table.record(hub);
+        JitInstrumentation.recordType(mpo, hub, mpoIndex, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 
     @INLINE
-    private static Address selectInterfaceMethod(final Object receiver, InterfaceMethodActor interfaceMethodActor, MethodInstrumentation.CallCounterTable table) {
+    private static Address selectInterfaceMethod(final Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        table.record(hub);
+        JitInstrumentation.recordType(mpo, hub, mpoIndex, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 }
