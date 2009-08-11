@@ -136,7 +136,7 @@ public class MethodProfile {
      */
     @INLINE
     @FOLD
-    public int[] rawData() {
+    public final int[] rawData() {
         return data;
     }
 
@@ -287,7 +287,7 @@ public class MethodProfile {
         }
 
         @INLINE
-        public MethodProfile methodProfileObject() {
+        public final MethodProfile methodProfileObject() {
             return mpo;
         }
 
