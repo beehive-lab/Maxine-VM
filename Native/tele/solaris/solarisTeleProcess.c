@@ -32,11 +32,15 @@
 #include "errno.h"
 
 #include "proc.h"
+#include "libproc_debug.h"
 
 #include "threadLocals.h"
 #include "teleNativeThread.h"
 #include "threads.h"
 #include "teleProcess.h"
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 void teleProcess_initialize(void) {
 }
@@ -103,6 +107,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeSuspend(JNIEnv *env
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
+    _libproc_debug = 1;
 
     sysset_t syscalls;
     premptyset(&syscalls);
@@ -119,10 +124,10 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
     praddset(&faults, FLTPRIV);
     praddset(&faults, FLTBPT);
     praddset(&faults, FLTTRACE);
-    //praddset(&faults, FLTACCESS);
-    //praddset(&faults, FLTBOUNDS);
+    //    praddset(&faults, FLTACCESS);
+    //    praddset(&faults, FLTBOUNDS);
     praddset(&faults, FLTIOVF);
-    //praddset(&faults, FLTIZDIV);
+    //    praddset(&faults, FLTIZDIV);
     praddset(&faults, FLTFPE);
     praddset(&faults, FLTSTACK);
     praddset(&faults, FLTWATCH);
@@ -132,14 +137,11 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
         log_println("Pclearfault failed");
         return false;
     }
-
     if (Pclearsig(ph) != 0) {
         log_println("Pclearsig failed");
         return false;
     }
-
     proc_Psync(ph);
-
     if (proc_Psetrun(ph, 0, 0) != 0) {
         log_println("Psetrun failed, proc_Pstate %d", proc_Pstate(ph));
 #ifdef __SunOS_5_11
@@ -162,9 +164,14 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
         int rc = proc_Pstate(ph);
         log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; erroro: %d; errno: %d", rc, error, errno);
 		log_println("ERROR: %s", strerror(errno));
+
+		int statloc = 0;
+		waitpid(ph->pid, &statloc, 0);
+		statloc_eval(statloc);
+
         return false;
     }
-
+;
     if (Pclearfault(ph) != 0) {
         int rc = proc_Pstate(ph);
         log_println("Pclearfault failed, proc_Pstate %d", rc);
@@ -274,7 +281,6 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
     w.pr_vaddr = address;
     w.pr_size = size;
     w.pr_wflags = 0;
-    _libproc_debug = 1;
 
     if (read) {
         w.pr_wflags |= WA_READ;
@@ -296,7 +302,9 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
         log_println("could not set watch point - error: %d", error);
         return false;
     }
+
     proc_Psync(ph);
+
     return true;
 }
 
@@ -313,6 +321,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeDeactivateWatchpoin
         log_println("could not set watch point - error: %d", error);
         return false;
     }
+
     proc_Psync(ph);
     return true;
 }
