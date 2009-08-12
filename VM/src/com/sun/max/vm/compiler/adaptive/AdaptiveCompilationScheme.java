@@ -30,7 +30,6 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -161,6 +160,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 setMode(Mode.OPTIMIZED);
             } else {
                 defaultRecompilationThreshold0 = thresholdOption.getValue();
+//                JitInstrumentation.enable();
                 setMode(Mode.MIXED);
             }
 
@@ -171,27 +171,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compilationThread.start();
             }
         }
-    }
-
-    /**
-     * This method builds a new method instrumentation object for the specified method, if one
-     * does not already exist.
-     *
-     * @param classMethodActor the method for which to make the instrumentation
-     * @return the canonical method instrumentation object associated with the specified method
-     */
-    public MethodInstrumentation makeMethodInstrumentation(ClassMethodActor classMethodActor) {
-        return null;
-    }
-
-    /**
-     * This method gets a method instrumentation object associated with the specified method, if it exists.
-     *
-     * @param classMethodActor the method for which to get the method instrumentation
-     * @return the method instrumentation associated with the specified method if it exists; null otherwise
-     */
-    public MethodInstrumentation getMethodInstrumentation(ClassMethodActor classMethodActor) {
-        return null;
     }
 
     /**
@@ -271,7 +250,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     DynamicCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile) {
         if (classMethodActor.isUnsafe()) {
-            // for unsafe methods there is no other choice no matter what, since the JIT cannot handle unsafe features
+            // the JIT cannot handle unsafe features
             return optimizingCompiler;
         }
         if (MaxineVM.isPrototyping()) {

@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 
-package com.sun.max.vm.compiler.instrument;
+package com.sun.max.vm.profile;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;

@@ -29,12 +29,12 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.TemplateChooser.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 @TEMPLATE(traced = Traced.YES)
 public class TracedBytecodeTemplateSource {
@@ -47,7 +47,7 @@ public class TracedBytecodeTemplateSource {
     @INLINE
     public static void trace() {
         final Address resumeAddress = Hotpath.trace(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer());
-        if (resumeAddress.isZero() == false) {
+        if (!resumeAddress.isZero()) {
             SpecialBuiltin.jump(resumeAddress);
         }
     }
@@ -55,111 +55,10 @@ public class TracedBytecodeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NOP, instrumented = Instrumented.YES, traced = Traced.YES)
     public static void branchInstrumented(TreeAnchor counter) {
         final Address resumeAddress = counter.visit();
-        if (resumeAddress.isZero() == false) {
+        if (!resumeAddress.isZero()) {
             SpecialBuiltin.jump(resumeAddress);
         }
     }
-
-    /*
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.NOP, instrumented = Instrumented.YES, traced = Traced.YES)
-    public static void nopInstrumented(Counter counter) {
-        InstrumentedBytecodeSource.nop(counter);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.VOID, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokevirtual(int vTableIndex, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokevirtual(vTableIndex, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.FLOAT, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokevirtualReturnFloat(vTableIndex, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.LONG, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokevirtualLong(int vTableIndex, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokevirtualLong(vTableIndex, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.DOUBLE, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokevirtualDouble(vTableIndex, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.WORD, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokevirtualWord(int vTableIndex, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokevirtualWord(vTableIndex, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.VOID, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokeinterface(interfaceMethodActor, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.FLOAT, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokeinterfaceFloat(interfaceMethodActor, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.LONG, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokeinterfaceLong(interfaceMethodActor, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.DOUBLE, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokeinterfaceDouble(interfaceMethodActor, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.WORD, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        trace();
-        ResolvedInvokeTemplateSource.invokeinterfaceWord(interfaceMethodActor, receiverStackIndex);
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.VOID, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokespecial() {
-        trace();
-        ResolvedInvokeTemplateSource.invokespecial();
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.FLOAT, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokespecialReturnSingleSlot() {
-        trace();
-        ResolvedInvokeTemplateSource.invokespecialReturnSingleSlot();
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.LONG, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokespecialLong() {
-        trace();
-        ResolvedInvokeTemplateSource.invokespecialLong();
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.DOUBLE, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokespecialDouble() {
-        trace();
-        ResolvedInvokeTemplateSource.invokespecialDouble();
-    }
-
-    @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.WORD, resolved = Resolved.YES, traced = Traced.YES)
-    public static void invokespecialWord() {
-        trace();
-        ResolvedInvokeTemplateSource.invokespecialWord();
-    }
-    */
-
-    //
-    // Unoptimized Tracing Bytecode Templates
-    //
 
     public static void aconst_null() {
         trace();

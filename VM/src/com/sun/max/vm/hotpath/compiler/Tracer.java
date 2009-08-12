@@ -23,13 +23,13 @@ package com.sun.max.vm.hotpath.compiler;
 import com.sun.max.collect.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.AsynchronousProfiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 /**
  * This class is responsible for capturing trace events from JITed methods. Each thread has its own

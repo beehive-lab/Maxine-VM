@@ -22,9 +22,9 @@ package com.sun.max.vm.interpreter;
 
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.profile.TreeAnchor;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;

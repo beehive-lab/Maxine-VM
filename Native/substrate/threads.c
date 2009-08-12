@@ -234,6 +234,15 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     ThreadLocals enabled_tl   = (ThreadLocals) (current + (tlSize * 1));
     ThreadLocals disabled_tl  = (ThreadLocals) (current + (tlSize * 2));
 
+    current = (Address) disabled_tl + tlSize;
+    ntl->refMapArea = current;
+    current = virtualMemory_pageAlign(current + refMapAreaSize);
+    ntl->stackRedZone = current;
+    current += virtualMemory_getPageSize();
+    ntl->stackYellowZone = current;
+    current += virtualMemory_getPageSize();
+    initStackProtection(ntl);
+
     /* Clear each of the thread local spaces: */
     memset((void *) ((Address) triggered_tl + sizeof(Address)), 0, tlSize - sizeof(Address));
     memset((void *) enabled_tl, 0, tlSize);
@@ -261,15 +270,6 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     setThreadLocal(enabled_tl, ID, ntl->id);
     setThreadLocal(disabled_tl, ID, ntl->id);
     setThreadLocal(triggered_tl, ID, ntl->id);
-
-    current = (Address) disabled_tl + tlSize;
-    ntl->refMapArea = current;
-    current = virtualMemory_pageAlign(current + refMapAreaSize);
-    ntl->stackRedZone = current;
-    current += virtualMemory_getPageSize();
-    ntl->stackYellowZone = current;
-    current += virtualMemory_getPageSize();
-    initStackProtection(ntl);
 
 #if log_THREADS
     int id = ntl->id;

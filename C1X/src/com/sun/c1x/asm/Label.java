@@ -23,14 +23,12 @@ package com.sun.c1x.asm;
 import java.util.*;
 
 import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
 
 
 /**
  * The <code>Label</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public class Label {
 
@@ -69,7 +67,7 @@ public class Label {
     }
 
     public boolean isBound() {
-        return loc >=  0;
+        return loc >= 0;
     }
 
     public boolean isUnbound() {
@@ -86,16 +84,13 @@ public class Label {
       }
 
     public void printInstruction(LogStream out) {
-
     }
 
     public void printInstructions(AbstractAssembler abstractAssembler) {
-        Util.nonFatalUnimplemented();
     }
 
     public void patchInstructions(AbstractAssembler masm) {
-
-        assert isBound() : "Label is bound";
+        assert isBound() : "Label should be bound";
 
         int target = loc;
         for (int branchLoc : patchOverflow) {

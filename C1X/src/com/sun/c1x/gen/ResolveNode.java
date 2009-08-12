@@ -28,7 +28,6 @@ import com.sun.c1x.lir.*;
  * XXX: what does this really mean?
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 class ResolveNode {
 
