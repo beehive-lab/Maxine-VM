@@ -600,9 +600,10 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     public void emitEntrypointInstrumentation() {
         if (methodProfileBuilder != null) {
+            int index = methodProfileBuilder.addEntryCounter(JitInstrumentation.DEFAULT_ENTRY_INITIAL_COUNT);
             final CompiledBytecodeTemplate template = getExactTemplate(NOP, TemplateChooser.Selector.INSTRUMENTED);
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
-            assignIntTemplateArgument(1, 0);
+            assignIntTemplateArgument(1, index);
             emitAndRecordStops(template);
         }
     }

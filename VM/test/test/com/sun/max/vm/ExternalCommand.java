@@ -36,13 +36,15 @@ public class ExternalCommand {
     public final File stdoutFile;
     public final File stderrFile;
     public final String[] command;
+    public final String[] env;
 
-    public ExternalCommand(File workingDir, File stdin, File stdout, File stderr, String[] command) {
-        stdinFile = stdin;
-        stdoutFile = stdout;
-        stderrFile = stderr;
+    public ExternalCommand(File workingDir, File stdin, File stdout, File stderr, String[] command, String[] env) {
+        this.stdinFile = stdin;
+        this.stdoutFile = stdout;
+        this.stderrFile = stderr;
         this.workingDir = workingDir;
         this.command = command;
+        this.env = env;
     }
 
     public Result exec(boolean append, int timeout) {
@@ -66,7 +68,7 @@ public class ExternalCommand {
             final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
 
             start = System.currentTimeMillis();
-            final Process process = Runtime.getRuntime().exec(cmdarray, null, workingDir);
+            final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
             final ProcessTimeoutThread processThread = new ProcessTimeoutThread(process, command[0], timeout);
             final int exitValue = processThread.exitValue();
             return new Result(null, exitValue, exitValue == -333, System.currentTimeMillis() - start);
@@ -104,10 +106,10 @@ public class ExternalCommand {
         }
 
         public boolean completed() {
-            return thrown != null && !timedOut;
+            return thrown == null && !timedOut;
         }
 
-        public String checkError(Result other, String[] stdoutIgnore, String[] stderrIgnore) {
+        public String checkError(Result other, boolean compareStdout, String[] stdoutIgnore, boolean compareStderr, String[] stderrIgnore) {
             if (thrown != null) {
                 return thrown.toString();
             }
@@ -117,10 +119,10 @@ public class ExternalCommand {
             if (exitValue != other.exitValue) {
                 return "exit value = " + exitValue + ", expected " + other.exitValue;
             }
-            if (!Files.compareFiles(stdoutFile, other.command().stdoutFile, stdoutIgnore)) {
+            if (compareStdout && !Files.compareFiles(stdoutFile, other.command().stdoutFile, stdoutIgnore)) {
                 return "Standard out " + stdoutFile + " and " + other.command().stdoutFile + " do not match";
             }
-            if (!Files.compareFiles(stderrFile, other.command().stderrFile, stdoutIgnore)) {
+            if (compareStderr && !Files.compareFiles(stderrFile, other.command().stderrFile, stderrIgnore)) {
                 return "Standard error " + stderrFile + " and " + other.command().stderrFile + " do not match";
             }
             return null;

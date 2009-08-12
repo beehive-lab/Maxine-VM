@@ -988,8 +988,9 @@ test_help="run some or all of the Maxine tests
     Use \"max test -help\" to see what other options this command accepts."
 
 function run_test() {
-    rm -rf maxine-tester
-    mkdir maxine-tester
+    if [ -d maxine-tester ]; then
+	rm -f `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+    fi
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
         -java-executable="${jvm}" "-java-vm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
     result=${PIPESTATUS[0]}

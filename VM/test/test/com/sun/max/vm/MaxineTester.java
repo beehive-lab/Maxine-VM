@@ -108,8 +108,10 @@ public class MaxineTester {
                     "Location of DaCapo JAR file. If not provided, then the DACAPO_JAR environment variable is used.");
     private static final Option<File> shootoutDirOption = options.newFileOption("shootout", (File) null,
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
-    private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
-                    "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
+    private static final Option<Boolean> timingOption = options.newBooleanOption("timing", true,
+                    "Report internal and external timing for tests compared to the baseline (external) VM.");
+    private static final Option<Integer> timingRuns = options.newIntegerOption("timing-runs", 1,
+                    "The number of timing runs to collect.");
     private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", true,
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
@@ -547,38 +549,16 @@ public class MaxineTester {
         return file.getAbsolutePath();
     }
 
-    private static String left50(final String str) {
-        return Strings.padLengthWithSpaces(str, 50);
+    private static String left55(final String str) {
+        return Strings.padLengthWithSpaces(str, 55);
     }
 
     private static String left16(final String str) {
         return Strings.padLengthWithSpaces(str, 16);
     }
 
-    private static ExpectedResult printFailed(String testName, String config) {
-        final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
-        if (expectedResult == ExpectedResult.FAIL) {
-            out().print(left16(config + ": (normal)"));
-        } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
-            out().print(left16(config + ": (noluck) "));
-        } else {
-            out().print(left16(config + ": (failed)"));
-        }
-        out().flush();
-        return expectedResult;
-    }
-
-    private static ExpectedResult printSuccess(String testName, String config) {
-        final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
-        if (expectedResult == ExpectedResult.PASS) {
-            out().print(left16(config + ": OK"));
-        } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
-            out().print(left16(config + ": (lucky) "));
-        } else {
-            out().print(left16(config + ": (passed)"));
-        }
-        out().flush();
-        return expectedResult;
+    private static String right16(final String str) {
+        return Strings.padLengthWithSpaces(16, str);
     }
 
     static class JavaTesterResult {
@@ -690,46 +670,101 @@ public class MaxineTester {
         if (stopTesting()) {
             return;
         }
-        out().print(left50("Running " + testName + ": "));
+        List<String> maxvmConfigs = maxvmConfigListOption.getValue();
+        ExternalCommand[] commands = createExtAndMaxvmCommands(testName, maxvmConfigs, imageDir, command, workingDir, null);
+        printStartOfBaseline(testName);
+        ExternalCommand.Result baseResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
+        printBaselineResult(testName, baseResult);
 
-        // first run the program on the reference JVM
-        File jvmOutput = jvmStdoutFile(outputDir, testName);
-        int jvmExitValue = runJavaVM(testName, command.copy(), imageDir, workingDir, inputFile, jvmOutput, javaRunTimeOutOption.getValue());
-
-        // now run the test on each of the MaxVM configurations
-        for (String config : maxvmConfigListOption.getValue()) {
-            if (stopTesting()) {
-                out().println();
-                return;
-            }
-            JavaCommand maxvmCommand = command.copy();
-            maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
-            File maxvmOutput = maxvmStdoutFile(outputDir, testName, config);
-            int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, inputFile, maxvmOutput, maxvmOutput.getName(), javaRunTimeOutOption.getValue());
-            if (jvmExitValue != maxvmExitValue) {
-                if (maxvmExitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-                    final ExpectedResult expected = printFailed(testName, config);
-                    addTestResult(testName, String.format("timed out", maxvmExitValue, jvmExitValue), expected);
-                } else {
-                    final ExpectedResult expected = printFailed(testName, config);
-                    addTestResult(testName, String.format("bad exit value [received %d, expected %d]%n  -> see: %s%n  -> see: %s%n  -> see: %s%n  -> see: %s",
-                        maxvmExitValue,
-                            jvmExitValue,
-                        fileRef(jvmOutput),
-                        fileRef(stderrFile(jvmOutput)),
-                        fileRef(maxvmOutput),
-                        fileRef(stderrFile(maxvmOutput))),
-                        expected);
-                }
-            } else if (Files.compareFiles(jvmOutput, maxvmOutput, filteredLines)) {
-                ExpectedResult expected = printSuccess(testName, config);
-                addTestResult(testName, null, expected);
-            } else {
-                ExpectedResult expected = printFailed(testName, config);
-                addTestResult(testName, String.format("output did not match [compare %s with %s ]", fileRef(jvmOutput), fileRef(maxvmOutput)), expected);
+        if (baseResult.completed()) {
+            // baseline was ok, run the rest of the tests
+            for (int i = 1; i < commands.length; i++) {
+                String config = maxvmConfigs.get(i - 1);
+                printStartOfMaxvm(testName, config);
+                ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(baseResult));
+                printMaxvmResult(testName, config, baseResult, maxResult, filteredLines);
             }
         }
-        out().println();
+        printEndOfTest(testName);
+    }
+
+    private static void printStartOfBaseline(String testName) {
+        if (timingOption.getValue()) {
+            out().println("----------------------------------------------------------------------------------------");
+            out().print(left55("Running " + left16("baseline ") + testName + ": "));
+        } else {
+            out().print(left55("Running " + testName + ": "));
+        }
+    }
+
+    private static void printStartOfMaxvm(String testName, String config) {
+        if (timingOption.getValue()) {
+            out().print(left55("Running " + left16("maxvm (" + config + ") ")  + testName + ": "));
+        }
+    }
+
+    private static void printBaselineResult(String testName, ExternalCommand.Result result) {
+        if (timingOption.getValue()) {
+            if (result.completed()) {
+                out().println(right16(result.timeMs + " ms "));
+            } else {
+                out().println("(failed)");
+            }
+        } else {
+            if (!result.completed()) {
+                out().println(right16(" ----    ")  + right16("unexpected"));
+            }
+        }
+    }
+
+    private static void printEndOfTest(String testName) {
+        if (!timingOption.getValue()) {
+            out().println();
+        }
+    }
+
+    private static void printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
+        String error = maxResult.checkError(baseResult, true, filteredLines, false, null);
+        final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
+        if (error != null) {
+            // the test failed.
+            String errorStr = getMaxvmErrorString(expectedResult);
+            if (timingOption.getValue()) {
+                out().print(right16(" ----    ") + right16(errorStr));
+            } else {
+                out().print(left16(config + ": " + errorStr));
+            }
+        } else {
+            // the test passed.
+            if (timingOption.getValue()) {
+                float ratio = maxResult.timeMs / (float) baseResult.timeMs;
+                out().print(right16(maxResult.timeMs + " ms ") + right16(Strings.fixedDouble(ratio, 3) + "x"));
+            } else if (expectedResult == ExpectedResult.PASS) {
+                out().print(left16(config + ": OK"));
+            } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
+                out().print(left16(config + ": (lucky) "));
+            } else {
+                out().print(left16(config + ": (passed)"));
+            }
+        }
+        if (timingOption.getValue()) {
+            out().println();
+        }
+        out().flush();
+        addTestResult(testName, error, expectedResult);
+    }
+
+    private static String getMaxvmErrorString(ExpectedResult expectedResult) {
+        if (expectedResult == ExpectedResult.FAIL) {
+            return "(normal)";
+        } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
+            return "(noluck)";
+        }
+        return "(failed)";
+    }
+
+    private static int scaleTimeOut(ExternalCommand.Result baseResult) {
+        return Math.min(3 + ((8 * (int) baseResult.timeMs) / 1000), javaRunTimeOutOption.getValue());
     }
 
     private static File jvmStdoutFile(File outputDir, String testName) {
@@ -1082,13 +1117,19 @@ public class MaxineTester {
         }
     }
 
-    private static ExternalCommand[] createExtAndMaxvmCommands(String name, String config, File imageDir, JavaCommand command, File workingDir, File inputFile) {
+    private static ExternalCommand[] createExtAndMaxvmCommands(String name, List<String> configs, File imageDir, JavaCommand command, File workingDir, File inputFile) {
+        if (workingDir == null) {
+            workingDir = imageDir;
+        }
+        name = name.replace(' ', '_');
         File extvmFile = new File(workingDir, "EXTVM_" + name);
-        File maxvmFile = new File(workingDir, "MAXVM_" + name + "_" + config);
-        return new ExternalCommand[] {
-                createExtvmCommand(command, workingDir, inputFile, extvmFile),
-                createMaxvmCommand(config, imageDir, command, workingDir, inputFile, maxvmFile)
-        };
+        List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
+        commands.add(createExtvmCommand(command, workingDir, inputFile, extvmFile));
+        for (String config : configs) {
+            File maxvmFile = new File(workingDir, "MAXVM_" + name + "_" + config);
+            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, maxvmFile));
+        }
+        return commands.toArray(new ExternalCommand[commands.size()]);
     }
 
     private static ExternalCommand createExtvmCommand(JavaCommand command, File workingDir, File inputFile, File outputFile) {
@@ -1098,7 +1139,7 @@ public class MaxineTester {
             stdoutFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stdout");
             stderrFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stderr");
         }
-        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, command.getExecArgs("java"));
+        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, command.getExecArgs("java"), null);
     }
 
     private static ExternalCommand createMaxvmCommand(String config, File imageDir, JavaCommand command, File workingDir, File inputFile, File outputFile) {
@@ -1110,7 +1151,25 @@ public class MaxineTester {
             stdoutFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stdout");
             stderrFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stderr");
         }
-        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, maxvmCommand.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"));
+        String[] envp = null;
+        if (OperatingSystem.current() == OperatingSystem.LINUX) {
+            // Since the executable may not be in the default location, then the -rpath linker option used when
+            // building the executable may not point to the location of libjvm.so any more. In this case,
+            // LD_LIBRARY_PATH needs to be set appropriately.
+            final Map<String, String> env = new HashMap<String, String>(System.getenv());
+            String libraryPath = env.get("LD_LIBRARY_PATH");
+            if (libraryPath != null) {
+                libraryPath = libraryPath + ':' + imageDir.getAbsolutePath();
+            } else {
+                libraryPath = imageDir.getAbsolutePath();
+            }
+            env.put("LD_LIBRARY_PATH", libraryPath);
+
+            final String string = env.toString();
+            envp = string.substring(1, string.length() - 2).split(", ");
+        }
+
+        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, maxvmCommand.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp);
     }
 
     /**
@@ -1300,7 +1359,7 @@ public class MaxineTester {
         void reportTiming(String testName, File outputDir) {
             if (timingOption.getValue()) {
                 final long baseline = getInternalTiming(jvmStdoutFile(outputDir, testName));
-                out().print(left50("    --> " + testName + " (" + baseline + " ms)"));
+                out().print(left55("    --> " + testName + " (" + baseline + " ms)"));
                 for (String config : maxvmConfigListOption.getValue()) {
                     final long timing = getInternalTiming(maxvmStdoutFile(outputDir, testName, config));
                     if (timing > 0 && baseline > 0) {
@@ -1371,9 +1430,14 @@ public class MaxineTester {
             final JavaCommand command = new JavaCommand("SpecApplication");
             command.addClasspath(".");
             command.addArgument(test);
-            // TODO: get the specJVM ignored lines
-            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, null);
-            reportTiming(testName, outputDir);
+            String[] ignored = {
+                    "Total memory",
+                    "## IO time",
+                    "Finished in",
+                    "Decoding time:"
+                };
+            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, ignored);
+            // reportTiming(testName, outputDir);
         }
 
         @Override
@@ -1427,7 +1491,7 @@ public class MaxineTester {
             final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
             testJavaProgram(testName, command, null, outputDir, null, imageDir, null);
-            reportTiming(testName, outputDir);
+            // reportTiming(testName, outputDir);
         }
 
         @Override

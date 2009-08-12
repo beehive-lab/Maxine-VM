@@ -58,7 +58,7 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeImageConfigs = new LinkedList<String>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
-    static final Map<Object, Expectation[]> resultMap = new HashMap<Object, Expectation[]>();
+    static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
     static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
@@ -104,17 +104,17 @@ public class MaxineTesterConfiguration {
         jtt(jtt.hotpath.HP_array02.class,                 FAIL_SPARC);
 
 
-        dacapo("antlr");
-        dacapo("bloat");
-        dacapo("xalan");
-        dacapo("hsqldb");
-        dacapo("luindex");
-        dacapo("lusearch");
-        dacapo("jython");
-        dacapo("chart");
-        dacapo("eclipse");
-        dacapo("fop");
-        dacapo("pmd");
+        dacapo("antlr",              FAIL_SPARC);
+        dacapo("bloat",              FAIL_SPARC);
+        dacapo("xalan",              FAIL_SPARC);
+        dacapo("hsqldb",   FAIL_ALL, FAIL_SPARC);
+        dacapo("luindex",            FAIL_SPARC);
+        dacapo("lusearch",           FAIL_SPARC);
+        dacapo("jython",             FAIL_SPARC);
+        dacapo("chart",    FAIL_ALL, FAIL_SPARC);
+        dacapo("eclipse",  FAIL_ALL, FAIL_SPARC);
+        dacapo("fop",                FAIL_SPARC);
+        dacapo("pmd",                FAIL_SPARC);
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");
@@ -199,26 +199,26 @@ public class MaxineTesterConfiguration {
 
     private static void output(Class javaClass, Expectation... results) {
         zeeOutputTests.add(javaClass);
-        addExpectedResults(javaClass, results);
+        addExpectedResults(javaClass.getName(), results);
     }
 
     private static void jtt(Class javaClass, Expectation... results) {
-        addExpectedResults(javaClass, results);
+        addExpectedResults(javaClass.getName(), results);
     }
 
     private static void dacapo(String name, Expectation... results) {
         zeeDacapoTests.add(name);
-        addExpectedResults(name, results);
+        addExpectedResults("Dacapo " + name, results);
     }
 
     private static void specjvm98(String name, Expectation... results) {
         zeeSpecjvm98Tests.add(name);
-        addExpectedResults(name, results);
+        addExpectedResults("SpecJVM98 " + name, results);
     }
 
     private static void shootout(String name, Object... inputs) {
         zeeShootoutTests.add(name);
-        addExpectedResults(name);
+        addExpectedResults("Shootout " + name);
         inputMap.put(name, inputs);
     }
 
@@ -236,7 +236,7 @@ public class MaxineTesterConfiguration {
         maxvmParams.put(name, params);
     }
 
-    private static void addExpectedResults(Object key, Expectation... results) {
+    private static void addExpectedResults(String key, Expectation... results) {
         if (results != null && results.length > 0) {
             resultMap.put(key, results);
         }
