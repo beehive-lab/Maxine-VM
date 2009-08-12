@@ -82,8 +82,4 @@ public class IrTargetMethod extends TargetMethod {
         throw ProgramError.unexpected();
     }
 
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        throw ProgramError.unexpected();
-    }
 }

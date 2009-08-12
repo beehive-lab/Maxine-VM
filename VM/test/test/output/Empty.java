@@ -18,35 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
-public class InvokeinterfaceTest {
-
-    public static interface Clock {
-        void ccc(int x);
-    }
-
-    static class S implements Clock {
-        private int sum = 0;
-
-        public void ccc(int x) {
-            sum += x;
-        }
-    }
-
-    public static int bbb(int x) {
-        final Clock s = new S();
-        for (int i = 0; i < 2000; i++) {
-            s.ccc(i);
-        }
-        return ((S) s).sum;
-    }
-
+/**
+ * The empty program.
+ *
+ * @author Ben L. Titzer
+ */
+public class Empty {
     public static void main(String[] args) {
-        int sum = 0;
-        for (int i = 0; i < 1000; i++) {
-            sum += bbb(i);
-        }
-        System.out.println(sum);
+        // do nothing.
     }
 }
