@@ -37,11 +37,11 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A HeapScheme adaptor with support for thread local allocation buffers (TLABs).
- * The adaptor factors out methods for allocating from a TLAB, enabling / disabling allocations,
- * and replacing the TLAB when refill is needed. Choosing when to refill a TLAB and how to refill is delegated to the
- * HeapScheme concrete implementation.
- *
+ * A HeapScheme adaptor with support for thread local allocation buffers (TLABs). The adaptor factors out methods for
+ * allocating from a TLAB, enabling / disabling allocations, and replacing the TLAB when refill is needed. Choosing when
+ * to refill a TLAB, how to pad the end of the TLAB on refill, and how to refill is delegated to the HeapScheme concrete
+ * implementation which also associates a TLAB Refill policy to each thread. The TLAB refill policy is currently required
+ * if TLAB is used as it is also used to save/restore TLAB top on enabling/disabling of allocation.
  *
  * @author Laurent Daynes
  */
@@ -58,7 +58,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     private static final VMSizeOption tlabSizeOption = register(new VMSizeOption("-XX:TLABSize=", Size.K.times(64),
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
-
 
     /**
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
@@ -178,7 +177,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                     return;
                 }
                 FatalError.check(!ALLOCATION_DISABLED.getConstantWord().isZero(), "inconsistent TLAB state");
-                tlabTop = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals).getSavedTlabTop().asPointer();
+                TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+                if (refillPolicy != null) {
+                    // Go fetch the actual TLAB top in case the heap scheme needs it for its doBeforeReset handler.
+                    tlabTop = refillPolicy.getSavedTlabTop().asPointer();
+                    // Zap the TLAB top saved in the refill policy. Don't want it to be restored after GC.
+                    refillPolicy.saveTlabTop(Address.zero());
+                }
             }
             doBeforeReset(enabledVmThreadLocals, tlabMark, tlabTop);
             enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
@@ -305,7 +310,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
         enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
-        if (Heap.traceAllocation() || Heap.traceGC()) {
+        if (Heap.verbose() || Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
