@@ -50,11 +50,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean areReferenceMapsFinalized() {
-        return true;
-    }
-
-    @Override
     public InstructionSet instructionSet() {
         return InstructionSet.AMD64;
     }
