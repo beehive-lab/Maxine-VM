@@ -39,6 +39,19 @@ public abstract class TLABRefillPolicy {
     private static final VmThreadLocal TLAB_REFILL_POLICY = new VmThreadLocal("TLAB_REFILL_POLICY", Kind.REFERENCE, "Refill policy for thread's TLABs");
 
     /**
+     * Storage for saving the TLAB's allocation mark. Used when disabling / enabling allocation.
+     */
+    private Address savedTlabTop = Address.zero();
+
+    public void saveTlabTop(Address tlabTop) {
+        savedTlabTop = tlabTop;
+    }
+
+    public Address getSavedTlabTop() {
+        return savedTlabTop;
+    }
+
+    /**
      * Return policy decision regarding whether the TLAB for the current thread should be refilled.
      * @param size size of the allocation request that causes the request to refill the TLAB
      * @param allocationMark allocation mark of the TLAB

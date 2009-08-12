@@ -99,54 +99,67 @@ public class Belt extends RuntimeMemoryRegion {
         return null;
     }
 
+    /**
+     * Allocates a cell from the belt, using compare-and-swap to resolve any thread race condition.
+     * This routine reserves an extra word before the cell for a debug tag word if debugging is on.
+     *
+     * If allocation fails in this routine, the belt delegates handling of the failure to the heap scheme.
+     * If this one cannot  free up enough space (either via garbage collection or by extending the belt)
+     * a {@link OutOfMemoryError} is thrown.
+     *
+     * @param size the requested cell size to be allocated
+     * @return a pointer to the allocated cell
+     * @throws OutOfMemoryError if the heap is full.
+     */
     @NO_SAFEPOINTS("Slow path for allocation in a belt")
     @INLINE
     public final Pointer allocate(Size size) {
-        final Pointer oldAllocationMark = mark();
-        final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
-        final Pointer end = cell.plus(size);
+        do {
+            final Pointer oldAllocationMark = mark();
+            final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
+            final Pointer newMark = cell.plus(size);
 
-        if (!checkObjectInBelt(size)) {
-            if (!expandable) {
-                return Pointer.zero();
+            if (newMark.greaterThan(end().asPointer())) {
+                heapScheme().handleBeltAllocationFailure(size, this, true);
+                // If here, we've managed to make some room (otherwise we'd had a oom). So try again.
+                continue;
             }
-        }
-        if (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
-            if (Heap.verbose()) {
-                Log.println("Conflict! retry-allocate");
+            if (mark.compareAndSwap(oldAllocationMark, newMark) != oldAllocationMark) {
+                continue;
             }
-            return retryAllocate(size);
-        }
-        return cell;
+            return cell;
+        } while(true);
+
     }
 
     /**
-     * TLAB allocation. Doesn't skew the allocation with debugging information
+     * TLAB allocation. Same as allocation, but doesn't skew the allocation with debugging information
      * (complicate TLAB refill when debugging is on as it needs to adjust back
      *  the pointer, and the size is of the TLAB is skewed by one word).
-     * When debugging is off, this does the same as allocate.
+     *
      * @param size Size of the TLAB
      * @return a pointer to a raw chunk of memory from this belt.
      */
     @NO_SAFEPOINTS("TLAB allocation")
     @INLINE
     public final Pointer allocateTLAB(Size size) {
-        final Pointer oldAllocationMark = mark();
-        final Pointer end = oldAllocationMark.plus(size);
+        do {
+            final Pointer oldAllocationMark = mark();
+            final Pointer newMark = oldAllocationMark.plus(size);
 
-        if (!checkObjectInBelt(size)) {
-            if (!expandable) {
-                return Pointer.zero();
+            if (newMark.greaterThan(end().asPointer())) {
+                // If here, we've managed to make some room (otherwise we'd had a oom). So try again.
+                heapScheme().handleBeltAllocationFailure(size, this, false);
+                // Try again.
+                continue;
             }
-        }
-        if (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
-            if (Heap.verbose()) {
-                Log.println("Conflict! retry-allocate");
+            if (mark.compareAndSwap(oldAllocationMark, newMark) != oldAllocationMark) {
+                continue;
             }
-            return retryAllocate(size);
-        }
-        return oldAllocationMark;
+            return oldAllocationMark;
+        } while(true);
     }
+
     /**
      * Direct allocation to a belt, unsynchronized.
      * This is used only by single-threaded GC.
@@ -166,26 +179,6 @@ public class Belt extends RuntimeMemoryRegion {
             }
         }
         mark.set(end);
-        return cell;
-    }
-
-    @NEVER_INLINE
-    private Pointer retryAllocate(Size size) {
-        Pointer oldAllocationMark;
-        Pointer cell;
-        Address end;
-        do {
-            oldAllocationMark = mark();
-            cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
-            end = cell.plus(size);
- /*           if (checkNotExceedUsable(end.asSize())) {
-                return Pointer.zero();
-            }
-*/
-            if (end.greaterThan(end())) {
-                return Pointer.zero();
-            }
-        } while (mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
