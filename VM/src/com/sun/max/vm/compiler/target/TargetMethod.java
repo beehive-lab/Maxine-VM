@@ -257,7 +257,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Gets the {@linkplain #referenceMaps() frame reference map} for a stop position denoted by a given index into
      * {@link #stopPositions()}.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param stopIndex
@@ -276,7 +276,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Gets the {@linkplain #referenceMaps() frame reference map} for the {@code n}th stop in this target method of a
      * given type.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param stopType
@@ -301,7 +301,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the {@linkplain #referenceMaps() register reference map} for a given safepoint.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param safepointIndex a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
@@ -354,8 +354,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
-            final Iterator<JavaFrameDescriptor<TargetLocation>> inlinedFrames = targetFrameDescriptor.inlinedFrames();
-            return inlinedFrames;
+            return targetFrameDescriptor.inlinedFrames();
         }
         return null;
     }
@@ -439,7 +438,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the frame and register reference maps for this target method.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * The format of the returned byte array is described by the following pseudo C declaration:
@@ -465,12 +464,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final byte[] referenceMaps() {
         return referenceMaps;
     }
-
-    /**
-     * Determines if the {@linkplain #referenceMaps() reference maps} for this target method have been finalized. Only
-     * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
-     */
-    public abstract boolean areReferenceMapsFinalized();
 
     /**
      * @return non-object data referenced by the machine code

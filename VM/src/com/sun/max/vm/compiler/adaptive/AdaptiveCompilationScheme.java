@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.jit.JitInstrumentation;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -160,7 +161,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 setMode(Mode.OPTIMIZED);
             } else {
                 defaultRecompilationThreshold0 = thresholdOption.getValue();
-//                JitInstrumentation.enable();
+                JitInstrumentation.enable();
                 setMode(Mode.MIXED);
             }
 
