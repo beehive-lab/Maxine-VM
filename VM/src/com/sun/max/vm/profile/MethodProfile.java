@@ -313,7 +313,7 @@ public class MethodProfile {
         }
 
         private void setLastBci(int bci) {
-            if (bci <= lastBci) {
+            if (bci < lastBci) {
                 throw ProgramError.unexpected("Profiling information not added in increasing BCI order: " + bci);
             }
             lastBci = bci;
