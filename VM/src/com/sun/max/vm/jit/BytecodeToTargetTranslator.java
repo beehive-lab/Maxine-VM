@@ -461,6 +461,9 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             blockStarts,
             jitStackFrameLayout,
             abi);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.finish();
+        }
     }
 
     public int numberOfCatchRanges() {
