@@ -63,16 +63,19 @@ public class MaxineTester {
     private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 1200,
                     "The number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
-    private static final Option<String> javaExecutableOption = options.newStringOption("java-executable", "java",
-                    "The name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
-    private static final Option<String> javaVMArgsOption = options.newStringOption("java-vm-args", "-d64 -Xmx1g",
-                    "The VM options to be used when running the Java VM.");
+    private static final Option<String> javaExecutableOption = options.newStringOption("refvm", "java",
+                    "The name of or full path to the reference Java VM executable to use. This must be a JDK 6 or greater VM.");
+    private static final Option<String> javaVMArgsOption = options.newStringOption("refvm-args", "-d64 -Xmx1g",
+                    "The VM options to be used when running the reference Java VM.");
     private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
-                    "The number of seconds to wait for the in-target Java tester tests to complete before " +
+                    "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("java-run-timeout", 60,
-                    "The number of seconds to wait for the target VM to complete before " +
+    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 60,
+                    "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
+    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 8,
+                    "The scaling factor for automatically computing the timeout for running user programs " +
+                    "from how long the program took on the reference VM.");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> skipImageGenOption = options.newBooleanOption("skip-image-gen", false,
@@ -93,7 +96,7 @@ public class MaxineTester {
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
-    private static final Option<String> javaConfigAliasOption = options.newStringOption("java-config-alias", "optopt",
+    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "optopt",
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +
@@ -671,27 +674,27 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createExtAndMaxvmCommands(testName, maxvmConfigs, imageDir, command, workingDir, null);
-        printStartOfBaseline(testName);
-        ExternalCommand.Result baseResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
-        printBaselineResult(testName, baseResult);
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, workingDir, null);
+        printStartOfRefvm(testName);
+        ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
+        printRefvmResult(testName, refResult);
 
-        if (baseResult.completed()) {
-            // baseline was ok, run the rest of the tests
+        if (refResult.completed()) {
+            // reference VM was ok, run the rest of the tests
             for (int i = 1; i < commands.length; i++) {
                 String config = maxvmConfigs.get(i - 1);
                 printStartOfMaxvm(testName, config);
-                ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(baseResult));
-                printMaxvmResult(testName, config, baseResult, maxResult, filteredLines);
+                ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
+                printMaxvmResult(testName, config, refResult, maxResult, filteredLines);
             }
         }
         printEndOfTest(testName);
     }
 
-    private static void printStartOfBaseline(String testName) {
+    private static void printStartOfRefvm(String testName) {
         if (timingOption.getValue()) {
             out().println("----------------------------------------------------------------------------------------");
-            out().print(left55("Running " + left16("baseline ") + testName + ": "));
+            out().print(left55("Running " + left16("reference ") + testName + ": "));
         } else {
             out().print(left55("Running " + testName + ": "));
         }
@@ -703,7 +706,7 @@ public class MaxineTester {
         }
     }
 
-    private static void printBaselineResult(String testName, ExternalCommand.Result result) {
+    private static void printRefvmResult(String testName, ExternalCommand.Result result) {
         if (timingOption.getValue()) {
             if (result.completed()) {
                 out().println(right16(result.timeMs + " ms "));
@@ -764,7 +767,7 @@ public class MaxineTester {
     }
 
     private static int scaleTimeOut(ExternalCommand.Result baseResult) {
-        return Math.min(3 + ((8 * (int) baseResult.timeMs) / 1000), javaRunTimeOutOption.getValue());
+        return Math.min(3 + ((javaRunTimeOutScale.getValue() * (int) baseResult.timeMs) / 1000), javaRunTimeOutOption.getValue());
     }
 
     private static File jvmStdoutFile(File outputDir, String testName) {
@@ -1117,14 +1120,14 @@ public class MaxineTester {
         }
     }
 
-    private static ExternalCommand[] createExtAndMaxvmCommands(String name, List<String> configs, File imageDir, JavaCommand command, File workingDir, File inputFile) {
+    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File workingDir, File inputFile) {
         if (workingDir == null) {
             workingDir = imageDir;
         }
         name = name.replace(' ', '_');
-        File extvmFile = new File(workingDir, "EXTVM_" + name);
+        File refvmFile = new File(workingDir, "REFVM_" + name);
         List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
-        commands.add(createExtvmCommand(command, workingDir, inputFile, extvmFile));
+        commands.add(createRefvmCommand(command, workingDir, inputFile, refvmFile));
         for (String config : configs) {
             File maxvmFile = new File(workingDir, "MAXVM_" + name + "_" + config);
             commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, maxvmFile));
@@ -1132,7 +1135,7 @@ public class MaxineTester {
         return commands.toArray(new ExternalCommand[commands.size()]);
     }
 
-    private static ExternalCommand createExtvmCommand(JavaCommand command, File workingDir, File inputFile, File outputFile) {
+    private static ExternalCommand createRefvmCommand(JavaCommand command, File workingDir, File inputFile, File outputFile) {
         File stdoutFile = null;
         File stderrFile = null;
         if (outputFile != null) {

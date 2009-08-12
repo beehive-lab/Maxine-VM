@@ -71,7 +71,10 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public CiConstantPool getConstantPool(CiMethod method) {
-        final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
+        return getConstantPool(this.asClassMethodActor(method, "getConstantPool()"));
+    }
+
+    private MaxCiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
         final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = constantPools.get(cp);
@@ -103,8 +106,8 @@ public class MaxCiRuntime implements CiRuntime {
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
-    public CiMethod getCiMethod(MethodActor methodActor) {
-        return globalConstantPool.canonicalCiMethod(methodActor);
+    public CiMethod getCiMethod(ClassMethodActor methodActor) {
+        return getConstantPool(methodActor).canonicalCiMethod(methodActor);
     }
 
     /**
