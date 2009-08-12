@@ -57,7 +57,10 @@ import com.sun.max.vm.thread.*;
  */
 public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
 
+    private static final int CALL_INSTRUCTION = 0x40000000;
+
     private final SPARCEirToTargetTranslator eirToTargetTranslator;
+
     /**
      * Shortcut to the jit frame pointer. Used for walking adapter frames.
      */
@@ -94,8 +97,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     public TargetABI javaTargetABI() {
         return optimizedABI().targetABI();
     }
-
-    private static final int CALL_INSTRUCTION = 0x40000000;
 
     /**
      * This is a snippet implementation and we want to access the snippet's caller via our stack pointer.
@@ -255,7 +256,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     }
 
     public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize) {
-        final int frameBuilderSize = InstructionSet.SPARC.instructionWidth * (SPARCEirPrologue.numberOfFrameBuilderInstructions(frameSize));
+        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize);
         return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
     }
 
@@ -304,20 +305,57 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             stackPointer =  stackFrameWalker.stackPointer();
         }
 
+        final Pointer trapStateInPreviousFrame = stackFrameWalker.trapState();
         final Pointer trapState;
         if (targetMethod.classMethodActor().isTrapStub()) {
-            FatalError.check(stackFrameWalker.trapState() == Pointer.zero(), "Cannot have a trap in the trapStub");
-            stackFrameWalker.setTrapState(framePointer.plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP()));
-            trapState = Pointer.zero();
+            FatalError.check(trapStateInPreviousFrame == Pointer.zero(), "Cannot have a trap in the trapStub");
+            trapState = framePointer.plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+            stackFrameWalker.setTrapState(trapState);
         } else {
-            trapState = stackFrameWalker.trapState();
+            trapState = Pointer.zero();
         }
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                FatalError.unimplemented();
-                // FIXME: this need to be revisited
-                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                // frame pointer == stack pointer
+                final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+                if (!trapStateInPreviousFrame.isZero()) {
+                    FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
+                    final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                    if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapStateInPreviousFrame))) {
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame));
+                        if (catchAddress.isZero()) {
+                            // An implicit exception occurred but not in the scope of a local exception handler.
+                            // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+                            break;
+                        }
+                        // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+                        // the frame references based on its Java frame descriptor.
+                        FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
+                    }
+                } else {
+                    if (!trapState.isZero()) {  // Frame is a trapStub
+                        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                        if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
+                            if (catchAddress.isZero()) {
+                                // An implicit exception occurred but not in the scope of a local exception handler.
+                                // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+                            } else {
+                                // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+                                // the register references based on its Java frame descriptor.
+                                FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
+                                preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), catchAddress.asPointer());
+                            }
+                        } else {
+                            // Only scan with references in registers for a caller that did not trap due to an implicit exception.
+                            // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
+                            final Pointer callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapState);
+                            preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerInstructionPointer);
+                        }
+                    }
+                }
+                if (!preparer.prepareFrameReferenceMap(targetMethod, instructionPointer, stackPointer, stackPointer)) {
                     return false;
                 }
                 break;
@@ -362,9 +400,9 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // However, the stack frame at a trampoline call may look like it's in the caller's register window because
         // the trampoline's return address is patched into the entry point of the method invoked via the trampoline.
         // In that case, we still need to get the caller address from the stack.  Testing if we're in the top frame filters out these trampoline calls.
-        if (inCallerRegisterWindow && (isTopFrame || trapState != Pointer.zero())) {
-            if (trapState != Pointer.zero()) {
-                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapState);
+        if (inCallerRegisterWindow && (isTopFrame || trapStateInPreviousFrame != Pointer.zero())) {
+            if (trapStateInPreviousFrame != Pointer.zero()) {
+                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousFrame);
             } else if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
                 // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
                 callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
@@ -372,8 +410,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
                 // when banging the stack).
                 // We can fish for the caller's instruction pointer in the trap state.
-                final Pointer trapStateInPreviousFrame = stackFrameWalker.stackPointer().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
-                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousFrame);
+                final Pointer trapStateInPreviousUnwalkedFrame = stackFrameWalker.stackPointer().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
             }
         } else {
             callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(stackFrameWalker);
