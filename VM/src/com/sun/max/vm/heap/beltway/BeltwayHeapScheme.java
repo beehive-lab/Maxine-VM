@@ -197,7 +197,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
-            beltManager = new BeltManager(this);
+            beltManager = new BeltManager(beltDescriptions());
 
             // Parallel GC support. FIXME: Should this be here at all ?
             // the number of GC threads to use should be a VM startup decision, not  a prototyping one.
@@ -219,7 +219,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
-            beltManager.initializeBelts();
+            beltManager.initializeBelts(this);
             InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
