@@ -70,7 +70,7 @@ public class JavaCommand {
 
     /**
      * Create a java command with the specified jar file.
-     * @param jarFile
+     * @param jarFile the jar file which contains the command
      */
     public JavaCommand(File jarFile) {
         this.mainArgs = new String[] {"-jar", jarFile.getPath()};
@@ -103,9 +103,7 @@ public class JavaCommand {
      */
     public void addArguments(String[] arg) {
         if (arg != null) {
-            for (String s : arg) {
-                arguments.add(s);
-            }
+            arguments.addAll(Arrays.asList(arg));
         }
     }
 
@@ -123,9 +121,7 @@ public class JavaCommand {
      */
     public void addVMOptions(String[] option) {
         if (option != null) {
-            for (String s : option) {
-                vmOptions.add(s);
-            }
+            vmOptions.addAll(Arrays.asList(option));
         }
     }
 
@@ -144,7 +140,7 @@ public class JavaCommand {
      * @param exec the executable which, if nonnull, will be prepended to the array of arguments
      * @return an array of strings in the correct format for the "java" command
      */
-    public String[] getExecutableCommand(String exec) {
+    public String[] getExecArgs(String exec) {
         final List<String> list = new ArrayList<String>();
         if (exec != null) {
             list.add(exec);
@@ -162,9 +158,7 @@ public class JavaCommand {
             }
             list.add(builder.toString());
         }
-        for (String arg : mainArgs) {
-            list.add(arg);
-        }
+        list.addAll(Arrays.asList(mainArgs));
         list.addAll(arguments);
         return list.toArray(new String[list.size()]);
     }
