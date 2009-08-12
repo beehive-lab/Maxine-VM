@@ -597,7 +597,7 @@ public class MaxineTester {
     /**
      * @param workingDir if {@code null}, then {@code imageDir} is used
      */
-    private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, File outputFile, String name, int timeout) {
+    private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, File inputFile, File outputFile, String name, int timeout) {
         String[] envp = null;
         if (OperatingSystem.current() == OperatingSystem.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when
@@ -615,15 +615,15 @@ public class MaxineTester {
             final String string = env.toString();
             envp = string.substring(1, string.length() - 2).split(", ");
         }
-        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(imageDir.getAbsolutePath() + "/maxvm"), envp, outputFile, name, timeout);
+        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(imageDir.getAbsolutePath() + "/maxvm"), envp, inputFile, outputFile, name, timeout);
     }
 
     /**
      * @param workingDir if {@code null}, then {@code imageDir} is used
      */
-    private static int runJavaVM(String program, JavaCommand command, File imageDir, File workingDir, File outputFile, int timeout) {
+    private static int runJavaVM(String program, JavaCommand command, File imageDir, File workingDir, File inputFile, File outputFile, int timeout) {
         final String name = "JVM_" + program;
-        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(javaExecutableOption.getValue()), null, outputFile, name, timeout);
+        return exec(workingDir == null ? imageDir : workingDir, command.getExecutableCommand(javaExecutableOption.getValue()), null, inputFile, outputFile, name, timeout);
     }
 
     /**
@@ -665,7 +665,7 @@ public class MaxineTester {
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final File outputFile = stdoutFile(imageDir, "IMAGEGEN", imageConfig);
 
-        final int exitValue = exec(null, javaArgs, null, outputFile, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
+        final int exitValue = exec(null, javaArgs, null, null, outputFile, "Building " + imageDir.getName() + "/maxine.vm", imageBuildTimeOutOption.getValue());
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
@@ -676,7 +676,7 @@ public class MaxineTester {
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
                 // Darwin has funky behavior relating to the namespace for native libraries, use a workaround
-                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, outputFile, true, null, 5);
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, null, outputFile, true, null, 5);
             }
 
             generatedImages.put(imageConfig, imageDir);
@@ -689,7 +689,7 @@ public class MaxineTester {
     }
 
 
-    public static void testJavaProgram(String testName, JavaCommand command, File outputDir, File workingDir, File imageDir, String[] filteredLines) {
+    public static void testJavaProgram(String testName, JavaCommand command, File inputFile, File outputDir, File workingDir, File imageDir, String[] filteredLines) {
         if (stopTesting()) {
             return;
         }
@@ -697,7 +697,7 @@ public class MaxineTester {
 
         // first run the program on the reference JVM
         File jvmOutput = jvmStdoutFile(outputDir, testName);
-        int jvmExitValue = runJavaVM(testName, command.copy(), imageDir, workingDir, jvmOutput, javaRunTimeOutOption.getValue());
+        int jvmExitValue = runJavaVM(testName, command.copy(), imageDir, workingDir, inputFile, jvmOutput, javaRunTimeOutOption.getValue());
 
         // now run the test on each of the MaxVM configurations
         for (String config : maxvmConfigListOption.getValue()) {
@@ -708,7 +708,7 @@ public class MaxineTester {
             JavaCommand maxvmCommand = command.copy();
             maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
             File maxvmOutput = maxvmStdoutFile(outputDir, testName, config);
-            int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, maxvmOutput, maxvmOutput.getName(), javaRunTimeOutOption.getValue());
+            int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, inputFile, maxvmOutput, maxvmOutput.getName(), javaRunTimeOutOption.getValue());
             if (jvmExitValue != maxvmExitValue) {
                 if (maxvmExitValue == PROCESS_TIMEOUT) {
                     final ExpectedResult expected = printFailed(testName, config);
@@ -819,8 +819,8 @@ public class MaxineTester {
         return sb.toString();
     }
 
-    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
-        return exec(workingDir, command, env, outputFile, false, name, timeout);
+    private static int exec(File workingDir, String[] command, String[] env, File inputFile, File outputFile, String name, int timeout) {
+        return exec(workingDir, command, env, inputFile, outputFile, false, name, timeout);
     }
 
     private static final Map<String, Long> execTimes = Collections.synchronizedMap(new LinkedHashMap<String, Long>());
@@ -835,13 +835,13 @@ public class MaxineTester {
      * @param env array of strings, each element of which has environment variable settings in the format
      *            <i>name</i>=<i>value</i>, or <tt>null</tt> if the subprocess should inherit the environment of the
      *            current process
-     * @param outputFile the file to which stdout and stderr should be redirected or {@code null} if these output
+     * @param inputFile
+     *@param outputFile the file to which stdout and stderr should be redirected or {@code null} if these output
      *            streams are to be discarded
      * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
-     * @param timeout the timeout in seconds
-     * @return
+     * @param timeout the timeout in seconds    @return
      */
-    private static int exec(File workingDir, String[] command, String[] env, File outputFile, boolean append, String name, int timeout) {
+    private static int exec(File workingDir, String[] command, String[] env, File inputFile, File outputFile, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
         final long start = System.currentTimeMillis();
         try {
@@ -849,9 +849,12 @@ public class MaxineTester {
             for (String s : command) {
                 sb.append(escapeShellCharacters(s)).append(' ');
             }
+            if (inputFile != null) {
+                sb.append(" < " + inputFile.getAbsolutePath());
+            }
             if (outputFile != null) {
-                sb.append((append ? ">>" : ">") + outputFile.getAbsolutePath());
-                sb.append((append ? " 2>>" : " 2>") + stderrFile(outputFile));
+                sb.append((append ? " >>" : " > ") + outputFile.getAbsolutePath());
+                sb.append((append ? " 2>> " : " 2> ") + stderrFile(outputFile));
             } else {
                 sb.append(">/dev/null");
                 sb.append(" 2>&1");
@@ -1089,7 +1092,7 @@ public class MaxineTester {
             out.println("JUnit auto-test: Started " + junitTest);
             out.flush();
             final long start = System.currentTimeMillis();
-            final int exitValue = exec(outputDir, command, null, outputFile, junitTest, junitTestTimeOutOption.getValue());
+            final int exitValue = exec(outputDir, command, null, null, outputFile, junitTest, junitTestTimeOutOption.getValue());
             out.print("JUnit auto-test: Stopped " + junitTest);
 
             final Set<String> unexpectedResults = new HashSet<String>();
@@ -1243,7 +1246,7 @@ public class MaxineTester {
                     File outputFile = stdoutFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
                     JavaCommand command = new JavaCommand((Class) null);
                     command.addArgument(nextTestOption);
-                    int exitValue = runMaxineVM(command, imageDir, null, outputFile, outputFile.getName(), javaTesterTimeOutOption.getValue());
+                    int exitValue = runMaxineVM(command, imageDir, null, null, outputFile, outputFile.getName(), javaTesterTimeOutOption.getValue());
                     JavaTesterResult result = JavaTesterHarness.parseJavaTesterOutputFile(config, outputFile);
                     String summary = result.summary;
                     nextTestOption = result.nextTestOption;
@@ -1311,7 +1314,7 @@ public class MaxineTester {
                 command.addVMOption(option);
             }
             command.addClasspath(System.getProperty("java.class.path"));
-            testJavaProgram(mainClass.getName(), command, outputDir, null, imageDir, null);
+            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, null);
         }
     }
 
@@ -1397,7 +1400,7 @@ public class MaxineTester {
             final JavaCommand command = new JavaCommand("SpecApplication");
             command.addClasspath(".");
             command.addArgument(test);
-            testJavaProgram(testName, command, outputDir, workingDir, imageDir, MaxineTesterConfiguration.specjvm98IgnoredLinePatterns);
+            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, MaxineTesterConfiguration.specjvm98IgnoredLinePatterns);
             reportTiming(testName, outputDir);
         }
 
@@ -1451,7 +1454,7 @@ public class MaxineTester {
             final String testName = "DaCapo " + test;
             final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
-            testJavaProgram(testName, command, outputDir, null, imageDir, null);
+            testJavaProgram(testName, command, null, outputDir, null, imageDir, null);
             reportTiming(testName, outputDir);
         }
 
@@ -1510,7 +1513,9 @@ public class MaxineTester {
                 final JavaCommand c = command.copy();
                 if (input instanceof String) {
                     c.addArgument((String) input);
-                    testJavaProgram(testName + "-" + input, c, outputDir, null, imageDir, null);
+                    testJavaProgram(testName + "-" + input, c, null, outputDir, null, imageDir, null);
+                } else if (input instanceof File) {
+                    testJavaProgram(testName + "-" + input, c, new File(shootoutDir, ((File) input).getName()), outputDir, null, imageDir, null);
                 }
             }
         }
