@@ -268,7 +268,7 @@ public final class DataPrototype extends Prototype {
                     if (objectsWithMutableReferences) {
                         mutableHeapObjects.append(object);
                     }
-                    if (++count % 100000 == 0) {
+                    if (++count % 200000 == 0) {
                         Trace.line(1, ": " + count);
                     }
                 }
