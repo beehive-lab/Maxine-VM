@@ -310,7 +310,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
         enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
-        if (Heap.verbose() || Heap.traceAllocation() || Heap.traceGC()) {
+        if (Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
