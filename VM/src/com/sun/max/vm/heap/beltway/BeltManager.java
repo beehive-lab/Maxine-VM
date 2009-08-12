@@ -32,21 +32,9 @@ import com.sun.max.vm.heap.*;
  */
 
 public final class BeltManager {
-    private final BeltwayHeapScheme heapScheme;
     private final Belt [] belts;
 
-    /**
-     * A virtual belt representing the whole Heap (?).
-     */
-    private Belt applicationHeap;
-
-    private Belt tempBelt;
-
-    public BeltManager(BeltwayHeapScheme heapScheme) {
-        this.heapScheme = heapScheme;
-        applicationHeap = new Belt();
-        tempBelt = new Belt();
-        final String [] beltDescriptions = heapScheme.beltDescriptions();
+    public BeltManager(String [] beltDescriptions) {
         belts = new Belt[beltDescriptions.length];
         for (int i = 0; i < belts.length; i++) {
             belts[i] = new Belt(i, beltDescriptions[i]);
@@ -73,11 +61,10 @@ public final class BeltManager {
         return belts.length;
     }
 
-    public void initializeBelts() {
+    public void initializeBelts(BeltwayHeapScheme heapScheme) {
         final Size heapSize = heapScheme.getMaxHeapSize();
         Address nextBeltStart = heapScheme.getHeapStart();
         int [] percentagesOfHeapMemoryPerBelt = heapScheme.beltHeapPercentage();
-        tempBelt.resetAllocationMark();
         int beltIndex = 0;
         Belt belt = null;
         while (beltIndex < numberOfBelts() - 1) {
@@ -128,25 +115,9 @@ public final class BeltManager {
     }
 
     @INLINE
-    public Belt getRemainingOverlappingBelt(Belt from) {
-        tempBelt.setStart(from.getPrevAllocationMark());
-        tempBelt.setEnd(from.end());
-        tempBelt.setAllocationMark(from.getAllocationMark());
-        return tempBelt;
-    }
-
-    @INLINE
     public boolean checkOverlappingBelts(Belt from, Belt to) {
         return (from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start())) ? true : false;
     }
-
-    @INLINE
-    public Belt getApplicationHeap() {
-        applicationHeap.setStart(heapScheme.getHeapStart());
-        applicationHeap.setSize(heapScheme.getMaxHeapSize());
-        return applicationHeap;
-    }
-
 
     public void printBeltsInfo() {
         for (int i = 0; i < belts.length; i++) {

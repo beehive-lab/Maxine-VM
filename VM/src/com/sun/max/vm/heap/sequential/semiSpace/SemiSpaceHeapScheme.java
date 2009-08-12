@@ -26,6 +26,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -35,12 +36,10 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A simple semi-space scavenger heap.
@@ -49,8 +48,9 @@ import com.sun.max.vm.type.*;
  * @author Sunil Soman
  * @author Doug Simon
  * @author Hannes Payer
+ * @author Laurent Daynes
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
+public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme {
 
     /**
      * A VM option for specifying how heap memory is to be allocated.
@@ -143,17 +143,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      */
     private final AtomicWord allocationMark = new AtomicWord();
 
-    /**
-     * Flags if TLABs are being used for allocation.
-     */
-    private boolean useTLAB;
-
-    private final ResetTLAB resetTLAB = new ResetTLAB();
-
-    /**
-     * The size of a TLAB.
-     */
-    private Size tlabSize;
+    private final ResetTLAB resetTLAB = new ResetTLAB(){
+        @Override
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+            if (MaxineVM.isDebug()) {
+                padTLAB(enabledVmThreadLocals, tlabMark, tlabEnd);
+            }
+        }
+    };
 
     // Create timing facilities.
     private final TimerMetric clearTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
@@ -169,18 +166,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     /**
      * A VM option for disabling use of TLABs.
      */
-    private static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
-        "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
-
-    /**
-     * A VM option for specifying the size of a TLAB.
-     */
-    private static final VMSizeOption tlabSizeOption = register(new VMSizeOption("-XX:TLABSize=", Size.K.times(64),
-        "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
-
-    /**
-     * A VM option for disabling use of TLABs.
-     */
     private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
 
@@ -190,6 +175,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
 
@@ -200,12 +186,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
             }
 
-            useTLAB = useTLABOption.getValue();
-            tlabSize = tlabSizeOption.getValue();
-            if (tlabSize.lessThan(0)) {
-                FatalError.unexpected("Specified TLAB size is too small");
-            }
-            safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), tlabSize.toInt());
+            safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
 
             allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
@@ -756,101 +737,89 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
-    /**
-     * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
-     * {@linkplain #useTLABOption enabled}.
-     */
-    private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "SemiSpace: top of current TLAB, zero if not used");
-
-    /**
-     * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
-     * are not {@linkplain #useTLABOption enabled}.
-     */
-    private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "SemiSpace: allocation mark of current TLAB, zero if not used");
-
-    /**
-     * Thread-local used to disable allocation per thread.
-     */
-    private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "SemiSpace: disables per thread allocation if non-zero");
-
-    /**
-     * The fast, inline path for allocation.
-     *
-     * @param size the size of memory chunk to be allocated
-     * @return an allocated chunk of memory {@code size} bytes in size
-     * @throws OutOfMemoryError if the allocation request cannot be satified
-     */
-    @INLINE
-    private Pointer allocate(Size size) {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-        final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
-        final Pointer end = cell.plus(size);
-        if (end.greaterThan(enabledVmThreadLocals.getWord(TLAB_TOP.index).asAddress())) {
-            // This path will always be taken if TLAB allocation is not enabled
-            return allocateSlowPath(size);
+    @Override
+    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        if (MaxineVM.isDebug()) {
+            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            padTLAB(enabledVmThreadLocals, tlabAllocationMark, tlabEnd);
         }
-        enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
-        return cell;
     }
 
+
     /**
-     * The slow path for allocation. This will always be taken when not using TLABs which is fine as the cost of the
+     * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
+     * @param enabledVmThreadLocals the thread whose TLAB will be refilled
+     * @param tlabSize the size of the chunk of memory used to refill the TLAB
+     */
+    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
+        Pointer tlab = retryAllocate(tlabSize, false);
+        refillTLAB(enabledVmThreadLocals, tlab, tlabSize);
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": Allocated TLAB at ");
+            Log.print(tlab);
+            Log.print(" [TOP=");
+            Log.print(tlab.plus(tlabSize));
+            Log.print(", end=");
+            Log.print(tlab.plus(tlabSize));
+            Log.print(", size=");
+            Log.print(tlabSize.toInt());
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+    /**
+     * Handling of TLAB Overflow. This may refill the TLAB or allocate memory directly from the underlying heap.
+     * This will always be taken when not using TLABs which is fine as the cost of the
      * compare-and-swap on {@link #allocationMark} will dominate.
      *
-     * @param size the requested allocation size
+     * @param size the allocation size requested to the tlab
+     * @param enabledVmThreadLocals
+     * @param tlabMark allocation mark of the tlab
+     * @param tlabEnd soft limit in the tlab to trigger overflow (may equals the actual end of the TLAB, depending on implementation).
+     * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      * @return the address of the allocated cell. Space for the {@linkplain DebugHeap#writeCellTag(Pointer) debug tag}
      *         will have been reserved immediately before the allocated cell.
+     *
      */
+    @Override
     @NEVER_INLINE
-    private Pointer allocateSlowPath(Size size) {
-        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
-            Log.print("Trying to allocate ");
-            Log.print(size.toLong());
-            Log.print(" bytes on thread ");
-            Log.printVmThread(VmThread.current(), false);
-            Log.println(" while allocation is disabled");
-            FatalError.unexpected("Trying to allocate while allocation is disabled");
-        }
-        if (useTLAB) {
-            if (size.greaterEqual(tlabSize)) {
-                // Allocate large objects (i.e. those that won't fit in a TLAB) directly on the heap.
-                // This means the next allocation will also take the slow path.
+    protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+        // Should we refill the TLAB ?
+        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+        if (refillPolicy == null) {
+            // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
+            ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
+            if (!useTLAB()) {
+                // We're not using TLAB. So let's assign the never refill tlab policy.
+                TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return retryAllocate(size, true);
             }
-
-            final Size tlabSize = this.tlabSize;
-            final Pointer tlab = retryAllocate(tlabSize, false);
-            final Pointer tlabTop;
-            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            if (MaxineVM.isDebug()) {
-                padTLAB(enabledVmThreadLocals);
-            }
-            tlabTop = tlab.plus(tlabSize);
-
-            final Pointer cell = DebugHeap.adjustForDebugTag(tlab);
-            enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
-            enabledVmThreadLocals.setWord(TLAB_MARK.index, cell.plus(size));
-            if (Heap.traceAllocation()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(VmThread.current(), false);
-                Log.print(": Allocated TLAB at ");
-                Log.print(tlab);
-                Log.print(" [TOP=");
-                Log.print(tlabTop);
-                Log.print(", end=");
-                Log.print(tlab.plus(tlabSize));
-                Log.print(", size=");
-                Log.print(tlabSize.toInt());
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
-            return cell;
+            // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
+            final Size tlabSize = initialTlabSize();
+            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
+            // Let's do a bit of meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
+            // So the TLAB allocation is going to succeed here
+            TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
+            // Now, address the initial request. Note that we may recurse down to handleTLABOverflow again here if the
+            // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the TLAB.
+            return tlabAllocate(size);
         }
-        return retryAllocate(size, true);
+        final Size nextTLABSize = refillPolicy.nextTlabSize();
+        if (size.greaterThan(nextTLABSize)) {
+            // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
+            // NOTE: this is where we always go if we don't use TLABs (the "never refill" TLAB policy
+            // always return zero for the next TLAB size.
+            return retryAllocate(size, true);
+        }
+        if (!refillPolicy.shouldRefill(size, tlabMark)) {
+            // Size would fit in a new tlab, but the policy says we shouldn't refill the TLAB yet, so allocate directly in the heap.
+            return retryAllocate(size, true);
+        }
+        // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
+        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
+        return tlabAllocate(size);
     }
 
     /**
@@ -913,106 +882,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @param enabledVmThreadLocals the pointer to the safepoint-enabled VM thread locals for the thread whose TLAB is
      *            to be padded
      */
-    static void padTLAB(Pointer enabledVmThreadLocals) {
-        final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
-        if (!tlabTop.isZero()) {
-            final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-            final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
-            if (Heap.traceAllocation()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-                Log.printVmThread(vmThread, false);
-                Log.print(": Placed TLAB padding at ");
-                Log.print(tlabMark);
-                Log.print(" [words=");
-                Log.print(padWords);
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
+    static void padTLAB(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+        final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            Log.printVmThread(vmThread, false);
+            Log.print(": Placed TLAB padding at ");
+            Log.print(tlabMark);
+            Log.print(" [words=");
+            Log.print(padWords);
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
         }
-    }
-
-    /**
-     * A procedure for resetting the TLAB of a thread.
-     */
-    static class ResetTLAB implements Pointer.Procedure {
-
-        public void run(Pointer vmThreadLocals) {
-            final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            if (Heap.traceAllocation()) {
-                final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
-                final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
-                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(vmThread, false);
-                Log.print(": Resetting TLAB [TOP=");
-                Log.print(tlabTop);
-                Log.print(", MARK=");
-                Log.print(tlabMark);
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
-            if (MaxineVM.isDebug()) {
-                padTLAB(enabledVmThreadLocals);
-            }
-            enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
-            enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
-        }
-    }
-
-    @Override
-    public void disableAllocationForCurrentThread() {
-        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
-        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
-        TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
-    }
-
-    @Override
-    public void enableAllocationForCurrentThread() {
-        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
-        if (value.isZero()) {
-            FatalError.unexpected("Unbalanced calls to disable/enable allocation for current thread");
-        }
-        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.minus(1));
-    }
-
-
-    @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
-        final Pointer cell = allocate(size);
-        return Cell.plantArray(cell, size, dynamicHub, length);
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public Object createTuple(Hub hub) {
-        final Pointer cell = allocate(hub.tupleSize);
-        return Cell.plantTuple(cell, hub);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public Object createHybrid(DynamicHub hub) {
-        final Size size = hub.tupleSize;
-        final Pointer cell = allocate(size);
-        return Cell.plantHybrid(cell, size, hub);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public Hybrid expandHybrid(Hybrid hybrid, int length) {
-        final Size newSize = Layout.hybridLayout().getArraySize(length);
-        final Pointer newCell = allocate(newSize);
-        return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public Object clone(Object object) {
-        final Size size = Layout.size(Reference.fromJava(object));
-        final Pointer cell = allocate(size);
-        return Cell.plantClone(cell, size, object);
     }
 
     public boolean contains(Address address) {

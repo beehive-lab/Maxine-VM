@@ -197,7 +197,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
-            beltManager = new BeltManager(this);
+            beltManager = new BeltManager(beltDescriptions());
 
             // Parallel GC support. FIXME: Should this be here at all ?
             // the number of GC threads to use should be a VM startup decision, not  a prototyping one.
@@ -219,7 +219,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             stackAndMonitorGripUpdater.setPointerIndexVisitor(cellVisitor.pointerVisitorGripUpdater);
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
-            beltManager.initializeBelts();
+            beltManager.initializeBelts(this);
             InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
@@ -466,28 +466,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     /**
-     * A TLAB policy that never refills. Just a convenience to disable TLAB use.
-     */
-    private static final TLABRefillPolicy NEVER_REFILL_TLAB = new TLABRefillPolicy() {
-        @Override
-        public boolean shouldRefill(Size size, Pointer allocationMark) {
-            return false;
-        }
-
-        @Override
-        public Size nextTlabSize() {
-            return Size.zero();
-        }
-    };
-
-    /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled
      * @param tlabSize the size of the chunk of memory used to refill the TLAB
      */
     private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
         Pointer tlab = tlabAllocationBelt.allocateTLAB(tlabSize);
-        // FIXME: we should verify that the tlab was successfully allocated here -- we may run out of space at this stage.
         if (MaxineVM.isDebug()) {
             DebugHeap.writeCellPadding(tlab, tlab.plus(tlabSize));
         }
@@ -556,6 +540,24 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         return tlabAllocate(size);
     }
 
+    /**
+     * Called by belts when they fail to satisfy an allocation request.
+     *
+     * @param size
+     * @param belt
+     * @param adjustForDebugTag
+     */
+    @NEVER_INLINE
+    protected void handleBeltAllocationFailure(Size size, Belt belt, boolean adjustForDebugTag) {
+        Size neededSize = size;
+        if (adjustForDebugTag) {
+            neededSize = DebugHeap.adjustForDebugTag(neededSize.asPointer()).asSize();
+        }
+        if (!Heap.collectGarbage(neededSize)) {
+            throw outOfMemoryError;
+        }
+    }
+
     @INLINE
     @NO_SAFEPOINTS("TODO")
     public final Pointer heapAllocate(Belt belt, Size size) {
@@ -571,48 +573,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
         return pointer;
     }
-
-/*
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
-    public final Pointer tlabAllocate(Belt belt, Size size) {
-        final VmThread thread = VmThread.current();
-        final BeltTLAB tlab = thread.getTLAB();
-
-        if (tlab.isSet()) {
-            final Pointer pointer = tlab.allocate(size);
-            if (pointer.equals(Pointer.zero())) { // TLAB is full
-                //Debug.println("TLAB is full, try to allocate a new TLAB");
-
-                final Size newSize = calculateTLABSize(size);
-                final Size allocSize = newSize.asPointer().minusWords(1).asSize();
-                final Pointer newTLABAddress = allocateTLAB(belt, allocSize);
-
-                //Debug.print("New Tlab Address: ");
-                //Debug.println(newTLABAddress);
-
-                if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
-                    //Debug.println("Nursery is full, trigger GC");
-                    if (!Heap.collectGarbage(size)) {
-                        throw outOfMemoryError;
-
-                    }
-                    initializeFirstTLAB(belt, tlab, size);
-                    return tlab.allocate(size);
-                }
-                // new TLAB has been successfully allocated, Rest thread's TLAB to the new one and do
-                initializeTLAB(tlab, newTLABAddress, newSize);
-                return tlab.allocate(size);
-            }
-
-            return pointer;
-        }
-        // Allocate first TLAB
-        initializeFirstTLAB(belt, tlab, size);
-        return tlab.allocate(size);
-
-    }
-    */
 
     public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
         // FIXME: REVISIT this code
