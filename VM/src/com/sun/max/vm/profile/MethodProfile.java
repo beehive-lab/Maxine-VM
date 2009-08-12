@@ -135,7 +135,6 @@ public class MethodProfile {
      * @return the int array that stores the data of this profile
      */
     @INLINE
-    @FOLD
     public final int[] rawData() {
         return data;
     }
