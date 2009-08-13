@@ -75,7 +75,6 @@ public class JitInstrumentation {
         }
     }
 
-    @INLINE
     private static void triggerRecompilation(MethodProfile mpo, int mpoIndex) {
         synchronized (mpo) {
             if (!mpo.triggered) {

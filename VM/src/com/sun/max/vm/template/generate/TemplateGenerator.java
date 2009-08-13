@@ -45,9 +45,6 @@ public class TemplateGenerator {
     public TemplateGenerator() {
         targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration().compilerScheme()).targetGenerator();
 
-        // need to initialize the instrumentation class so calls to it are resolved
-        initializeClassInTarget(JitInstrumentation.class);
-
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
         initializeClassInTarget(JitStackFrameOperation.class);
@@ -55,6 +52,10 @@ public class TemplateGenerator {
         // Also, make sure the class whose field is being accessed is loaded in the target first (we want a resolved symbol at compiled time).
         // PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.loadClass(ResolvedAtCompileTime.class.getName());
         initializeClassInTarget(ResolvedAtCompileTime.class);
+
+        // need to initialize the instrumentation class so calls to it are resolved
+        initializeClassInTarget(JitInstrumentation.class);
+
         verifyInvariants();
     }
 
