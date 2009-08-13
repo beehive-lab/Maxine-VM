@@ -230,7 +230,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
      *
      * @author Doug Simon
      */
-     static class CodeTranslation {
+    static class CodeTranslation {
 
         final int bytecodePosition;
         final int bytecodeLength;
