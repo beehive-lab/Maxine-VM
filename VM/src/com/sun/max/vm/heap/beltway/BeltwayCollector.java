@@ -22,6 +22,7 @@ package com.sun.max.vm.heap.beltway;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.tele.*;
@@ -69,7 +70,19 @@ public class BeltwayCollector {
      * @param belt
      */
     protected void verifyBelt(Belt belt) {
-        heapScheme.heapVerifier.verifyHeap(belt.start(), belt.getAllocationMark(), heapScheme.heapBoundChecker());
+        heapScheme.heapVerifier.verifyHeapRange(belt.start(), belt.getAllocationMark(), heapScheme.heapBoundChecker());
+    }
+
+    /**
+     * Verify all the roots of the belts. This includes stacks. monitors, boot region, boot code region and dynamic code regions.
+     */
+    protected void verifyRoots() {
+        final BeltwayHeapVerifier verifier = heapScheme.heapVerifier;
+        final HeapBoundChecker heapBoundChecker = heapScheme.heapBoundChecker();
+        verifier.verifyThreadAndStack(heapBoundChecker);
+        verifier.verifyHeapRange(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.getAllocationMark(), heapBoundChecker);
+        verifier.verifyHeapRange(Code.bootCodeRegion.start(), Code.bootCodeRegion.getAllocationMark(), heapBoundChecker);
+        verifier.verifyCodeRegions(heapBoundChecker);
     }
 
     protected void prologue() {
