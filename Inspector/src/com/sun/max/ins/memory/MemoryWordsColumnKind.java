@@ -32,7 +32,8 @@ public enum MemoryWordsColumnKind {
     ADDRESS("Addr.", "Memory address", true, -1),
     WORD("Word", "Offset relative to origin (words)", false, 10),
     OFFSET("Offset", "Offset relative to origin (bytes)", true, 10),
-    VALUE("Value", "Word value", true, 20),
+    VALUE("Value", "Value as a word", true, 20),
+    BYTES("Bytes", "Value in bytes", false, 20),
     REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;
