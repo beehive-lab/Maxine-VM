@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.c0;
+package com.sun.c0x;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.bytecode.Bytecodes;
@@ -26,17 +26,21 @@ import com.sun.c1x.bytecode.BytecodeStream;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.Util;
-import com.sun.c1x.C1XOptions;
 
 import java.util.List;
 
 /**
- * The <code>C0Compiler</code> class is a sketch of a new baseline compiler design which borrows
- * ideas from C1X.
+ * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows
+ * ideas, basic infrastructure, and the runtime interface from C1X. The design is very simple--
+ * always compile a single method at a time, with essentially no optimizations (except register
+ * allocation) and no inlining. The result is a quick, single-pass compiler that compiles
+ * a basic block at a time in a single pass, producing a compiled method that corresponds closely
+ * enough to the original bytecodes that it can be debugged at the bytecode level and never
+ * needs to be deoptimized.
  *
  * @author Ben L. Titzer
  */
-public class C0Compiler {
+public class C0XCompiler {
 
     class Location {
 
@@ -55,29 +59,31 @@ public class C0Compiler {
         }
     }
 
+    /**
+     * The {@code FrameState} class represents an abstraction of the Java frame state for a
+     * method, including the state of all local variables and operand stack
+     * slots. Each compiled method has space in its frame for storing all Java frame
+     * state at known offsets from the stack pointer. Registers that cache Java locals and
+     * stack slots are spilled into the appropriate stack locations across calls.
+     * Exception handlers always start with nothing in registers; code to spill registers
+     * and/or shuffle the stack contents before entering an exception handler is generated
+     * at the end of the method.
+     */
     class FrameState {
-        final Location[] stack;  // stores what the current memory contents are
-        final Location[] values; // stores where the most recent values are
+        final Location[] memory;  // stores what the current memory contents are
+        final Location[] state;  // stores where the most recent values are
         int stackIndex;
 
         FrameState() {
-            this.stack = new Location[maxLocals + maxStack];
-            this.values = new Location[maxLocals + maxStack];
+            this.memory = new Location[maxLocals + maxStack];
+            this.state = new Location[maxLocals + maxStack];
             stackIndex = maxLocals;
         }
 
         FrameState(FrameState s) {
-            stack = s.stack.clone();
-            values = s.values.clone();
+            memory = s.memory.clone();
+            state = s.state.clone();
             stackIndex = s.stackIndex;
-        }
-
-        final Location[] locals() {
-            Location[] l = new Location[maxLocals];
-            for (int i = 0; i < maxLocals; i++) {
-                l[i] = values[i];
-            }
-            return l;
         }
 
         final FrameState copy() {
@@ -96,7 +102,7 @@ public class C0Compiler {
     final List<CiExceptionHandler> handlers;
     FrameState currentState;
 
-    public C0Compiler(CiRuntime runtime, CiMethod method, CiBytecodeExtension extension) {
+    public C0XCompiler(CiRuntime runtime, CiMethod method, CiBytecodeExtension extension) {
         this.runtime = runtime;
         this.method = method;
         this.extension = extension;
@@ -107,8 +113,14 @@ public class C0Compiler {
         this.hasHandler = method.isSynchronized() || handlers != null && handlers.size() > 0;
     }
 
-    void compileBlock(int bci, BytecodeStream s, Location[] state) {
-        s.setBCI(bci);
+    /**
+     * Compile a basic block from beginning to end.
+     * @param bci the bytecode index of the start of the basic block
+     * @param stream the bytecode stream
+     * @param state the frame state at the beginning of the basic block
+     */
+    void compileBlock(int bci, BytecodeStream stream, Location[] state) {
+        stream.setBCI(bci);
 
         if (isExceptionEntry(bci)) {
             emitSafepoint(bci);
@@ -121,11 +133,11 @@ public class C0Compiler {
             emitInstrumentation(bci);
         }
 
-        int endBCI = s.endBCI();
+        int endBCI = stream.endBCI();
     bytecodeLoop:
         while (bci < endBCI) {
             // read the opcode
-            int opcode = s.currentBC();
+            int opcode = stream.currentBC();
 
             // check whether the bytecode can cause an exception
             if (Bytecodes.canTrap(opcode) && hasHandler) {
@@ -149,16 +161,16 @@ public class C0Compiler {
                 case Bytecodes.FCONST_2       : push1(emitFloat(2f)); break;
                 case Bytecodes.DCONST_0       : push2(emitDouble(0d)); break;
                 case Bytecodes.DCONST_1       : push2(emitDouble(1d)); break;
-                case Bytecodes.BIPUSH         : push1(emitInt(s.readByte())); break;
-                case Bytecodes.SIPUSH         : push1(emitInt(s.readShort())); break;
+                case Bytecodes.BIPUSH         : push1(emitInt(stream.readByte())); break;
+                case Bytecodes.SIPUSH         : push1(emitInt(stream.readShort())); break;
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
                 case Bytecodes.LDC2_W         : loadConstant(bci); break;
-                case Bytecodes.ILOAD          : load1(s.readLocalIndex()); break;
-                case Bytecodes.LLOAD          : load2(s.readLocalIndex()); break;
-                case Bytecodes.FLOAD          : load1(s.readLocalIndex()); break;
-                case Bytecodes.DLOAD          : load2(s.readLocalIndex()); break;
-                case Bytecodes.ALOAD          : load1(s.readLocalIndex()); break;
+                case Bytecodes.ILOAD          : load1(stream.readLocalIndex()); break;
+                case Bytecodes.LLOAD          : load2(stream.readLocalIndex()); break;
+                case Bytecodes.FLOAD          : load1(stream.readLocalIndex()); break;
+                case Bytecodes.DLOAD          : load2(stream.readLocalIndex()); break;
+                case Bytecodes.ALOAD          : load1(stream.readLocalIndex()); break;
                 case Bytecodes.ILOAD_0        : load1(0); break;
                 case Bytecodes.ILOAD_1        : load1(1); break;
                 case Bytecodes.ILOAD_2        : load1(2); break;
@@ -187,11 +199,11 @@ public class C0Compiler {
                 case Bytecodes.BALOAD         : arrayLoad(BasicType.Byte  ); break;
                 case Bytecodes.CALOAD         : arrayLoad(BasicType.Char  ); break;
                 case Bytecodes.SALOAD         : arrayLoad(BasicType.Short ); break;
-                case Bytecodes.ISTORE         : store1(s.readLocalIndex()); break;
-                case Bytecodes.LSTORE         : store2(s.readLocalIndex()); break;
-                case Bytecodes.FSTORE         : store1(s.readLocalIndex()); break;
-                case Bytecodes.DSTORE         : store2(s.readLocalIndex()); break;
-                case Bytecodes.ASTORE         : store1(s.readLocalIndex()); break;
+                case Bytecodes.ISTORE         : store1(stream.readLocalIndex()); break;
+                case Bytecodes.LSTORE         : store2(stream.readLocalIndex()); break;
+                case Bytecodes.FSTORE         : store1(stream.readLocalIndex()); break;
+                case Bytecodes.DSTORE         : store2(stream.readLocalIndex()); break;
+                case Bytecodes.ASTORE         : store1(stream.readLocalIndex()); break;
                 case Bytecodes.ISTORE_0       : // fall through
                 case Bytecodes.FSTORE_0       : // fall through
                 case Bytecodes.ASTORE_0       : store1(0); break;
@@ -302,43 +314,43 @@ public class C0Compiler {
                 case Bytecodes.IF_ACMPNE      : doIfSame(BasicType.Object, Condition.neq); break bytecodeLoop;
                 case Bytecodes.IFNULL         : doIfNull(Condition.eql); break bytecodeLoop;
                 case Bytecodes.IFNONNULL      : doIfNull(Condition.neq); break bytecodeLoop;
-                case Bytecodes.GOTO           : doGoto(s.currentBCI(), s.readBranchDest()); break bytecodeLoop;
-                case Bytecodes.JSR            : doJsr(s.readBranchDest()); break bytecodeLoop;
-                case Bytecodes.GOTO_W         : doGoto(s.currentBCI(), s.readFarBranchDest()); break bytecodeLoop;
-                case Bytecodes.JSR_W          : doJsr(s.readFarBranchDest()); break;
-                case Bytecodes.RET            : doRet(s.readLocalIndex());  break bytecodeLoop;
+                case Bytecodes.GOTO           : doGoto(stream.currentBCI(), stream.readBranchDest()); break bytecodeLoop;
+                case Bytecodes.JSR            : doJsr(stream.readBranchDest()); break bytecodeLoop;
+                case Bytecodes.GOTO_W         : doGoto(stream.currentBCI(), stream.readFarBranchDest()); break bytecodeLoop;
+                case Bytecodes.JSR_W          : doJsr(stream.readFarBranchDest()); break;
+                case Bytecodes.RET            : doRet(stream.readLocalIndex());  break bytecodeLoop;
                 case Bytecodes.TABLESWITCH    : doTableswitch(); break bytecodeLoop;
                 case Bytecodes.LOOKUPSWITCH   : doLookupswitch(); break bytecodeLoop;
-                case Bytecodes.IRETURN        : doReturn(pop1()); break bytecodeLoop;
-                case Bytecodes.LRETURN        : doReturn(pop2()); break bytecodeLoop;
-                case Bytecodes.FRETURN        : doReturn(pop1()); break bytecodeLoop;
-                case Bytecodes.DRETURN        : doReturn(pop2()); break bytecodeLoop;
+                case Bytecodes.IRETURN        : // fall through
+                case Bytecodes.FRETURN        : // fall through
                 case Bytecodes.ARETURN        : doReturn(pop1()); break bytecodeLoop;
+                case Bytecodes.LRETURN        : // fall through
+                case Bytecodes.DRETURN        : doReturn(pop2()); break bytecodeLoop;
                 case Bytecodes.RETURN         : doReturn(null  ); break bytecodeLoop;
-                case Bytecodes.ATHROW         : doThrow(s.currentBCI()); break bytecodeLoop;
-                case Bytecodes.GETSTATIC      : getStatic(constantPool().lookupGetStatic(s.readCPI())); break;
-                case Bytecodes.PUTSTATIC      : putStatic(constantPool().lookupPutStatic(s.readCPI())); break;
-                case Bytecodes.GETFIELD       : getField(constantPool().lookupGetField(s.readCPI())); break;
-                case Bytecodes.PUTFIELD       : putField(constantPool().lookupPutField(s.readCPI())); break;
-                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(s.readCPI())); break;
-                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(s.readCPI()), null); break;
-                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(s.readCPI())); break;
-                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(s.readCPI())); break;
-                case Bytecodes.NEW            : newInstance(bci); break;
-                case Bytecodes.NEWARRAY       : newTypeArray(bci); break;
-                case Bytecodes.ANEWARRAY      : newObjectArray(bci); break;
-                case Bytecodes.ARRAYLENGTH    : arrayLength(pop1()); break;
-                case Bytecodes.CHECKCAST      : checkCast(bci); break;
-                case Bytecodes.INSTANCEOF     : instanceOf(bci); break;
+                case Bytecodes.ATHROW         : doThrow(bci); break bytecodeLoop;
+                case Bytecodes.GETSTATIC      : getStatic(constantPool().lookupGetStatic(stream.readCPI())); break;
+                case Bytecodes.PUTSTATIC      : putStatic(constantPool().lookupPutStatic(stream.readCPI())); break;
+                case Bytecodes.GETFIELD       : getField(constantPool().lookupGetField(stream.readCPI())); break;
+                case Bytecodes.PUTFIELD       : putField(constantPool().lookupPutField(stream.readCPI())); break;
+                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(stream.readCPI())); break;
+                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(stream.readCPI()), null); break;
+                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(stream.readCPI())); break;
+                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(stream.readCPI())); break;
+                case Bytecodes.NEW            : newInstance(stream.readCPI()); break;
+                case Bytecodes.NEWARRAY       : newTypeArray(stream.readLocalIndex()); break;
+                case Bytecodes.ANEWARRAY      : newObjectArray(stream.readCPI()); break;
+                case Bytecodes.ARRAYLENGTH    : arrayLength(); break;
+                case Bytecodes.CHECKCAST      : checkCast(stream.readCPI()); break;
+                case Bytecodes.INSTANCEOF     : instanceOf(stream.readCPI()); break;
                 case Bytecodes.MONITORENTER   : monitorEnter(bci); break;
                 case Bytecodes.MONITOREXIT    : monitorExit(bci); break;
-                case Bytecodes.MULTIANEWARRAY : newMultiArray(bci); break;
+                case Bytecodes.MULTIANEWARRAY : newMultiArray(stream.readCPI(), stream.readUByte(bci + 3)); break;
                 case Bytecodes.BREAKPOINT     : breakpoint(bci); break;
                 default                       : doUnknownBytecode(bci, opcode); break;
             }
 
-            bci = s.nextBCI();
-            s.next();
+            bci = stream.nextBCI();
+            stream.next();
             if (isBlockStart(bci)) {
                 // fell through to the next block
                 break;
@@ -360,73 +372,78 @@ public class C0Compiler {
     private void doExtendedBytecode(CiBytecodeExtension.Bytecode extcode) {
         Location[] args = popN(extcode.signatureType().argumentCount(false));
         pushZ(extcode.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented();
+        Util.nonFatalUnimplemented(args);
     }
 
-    void breakpoint() {
-        Util.nonFatalUnimplemented("emit breakpoint instruction");
+    void breakpoint(int bci) {
+        Util.nonFatalUnimplemented("emit breakpoint instruction @ " + bci);
     }
 
     void emitInstrumentation(int bci) {
-        Util.nonFatalUnimplemented("emit instrumentation for block");
+        Util.nonFatalUnimplemented("emit instrumentation for block @ " + bci);
     }
 
     void emitExceptionLoad(int bci) {
         currentState.stackIndex = maxLocals; // clear the Java operand stack
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit load of exception object");
+        Util.nonFatalUnimplemented("emit load of exception object @ " + bci);
     }
 
     void emitSafepoint(int bci) {
-        Util.nonFatalUnimplemented("emit safepoint code");
+        Util.nonFatalUnimplemented("emit safepoint code @ " + bci);
     }
 
-    void newMultiArray() {
+    void newMultiArray(char cpi, int rank) {
         push1(produce(BasicType.Object));
         Util.nonFatalUnimplemented("emit multianewarray");
     }
 
     void monitorExit(int bci) {
         Location object = pop1();
-        Util.nonFatalUnimplemented("emit monitor exit code");
+        Util.nonFatalUnimplemented("emit monitor exit code @ " + bci);
     }
 
     void monitorEnter(int bci) {
         Location object = pop1();
-        Util.nonFatalUnimplemented("emit monitor enter code");
+        Util.nonFatalUnimplemented("emit monitor enter code @ " + bci);
     }
 
-    void instanceOf() {
+    void instanceOf(char cpi) {
+        CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         push1(produce(BasicType.Boolean));
         Util.nonFatalUnimplemented("emit instanceof code");
     }
 
-    void checkCast() {
+    void checkCast(char cpi) {
+        CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         push1(object);
         Util.nonFatalUnimplemented("emit checkcast code");
     }
 
-    void arrayLength(Location value) {
+    void arrayLength() {
         Location object = pop1();
         push1(object);
         Util.nonFatalUnimplemented("emit array length code");
     }
 
-    void newObjectArray() {
+    void newObjectArray(char cpi) {
+        CiType type = constantPool().lookupType(cpi);
         Location length = pop1();
         push1(produce(BasicType.Object));
         Util.nonFatalUnimplemented("emit new object array");
     }
 
-    void newTypeArray(int bci) {
+    void newTypeArray(int typeCode) {
+        BasicType elemType = BasicType.fromArrayTypeCode(typeCode);
         pop1();
         push1(produce(BasicType.Object));
         Util.nonFatalUnimplemented("emit new type array");
     }
 
-    void newInstance(int bci) {
+    void newInstance(char cpi) {
+        CiType type = constantPool().lookupType(cpi);
         push1(produce(BasicType.Object));
         Util.nonFatalUnimplemented("emit new instance");
     }
@@ -502,15 +519,15 @@ public class C0Compiler {
     }
 
     void doRet(int targetBCI) {
-        Util.nonFatalUnimplemented("emit ret");
+        Util.nonFatalUnimplemented("emit ret -> " + targetBCI);
     }
 
     void doJsr(int targetBCI) {
-        Util.nonFatalUnimplemented("emit jsr");
+        Util.nonFatalUnimplemented("emit jsr -> " + targetBCI);
     }
 
-    void doGoto(int currentBCI, int targetBCI) {
-        Util.nonFatalUnimplemented("emit goto");
+    void doGoto(int bci, int targetBCI) {
+        Util.nonFatalUnimplemented("emit goto @ " + bci + " -> " + targetBCI);
     }
 
     void doIfSame(BasicType basicType, Condition condition) {
@@ -536,7 +553,7 @@ public class C0Compiler {
     }
 
     void convert(int opcode, BasicType from, BasicType to) {
-        Location v = popX(from);
+        Location value = popX(from);
         pushX(produce(to), to);
         Util.nonFatalUnimplemented("emit convert");
     }
@@ -713,25 +730,25 @@ public class C0Compiler {
     }
 
     void load1(int index) {
-        currentState.values[currentState.stackIndex++] = currentState.values[index];
+        currentState.state[currentState.stackIndex++] = currentState.state[index];
     }
 
     void store1(int index) {
-        currentState.values[index] = currentState.values[--currentState.stackIndex];
+        currentState.state[index] = currentState.state[--currentState.stackIndex];
     }
 
     void load2(int index) {
-        currentState.values[currentState.stackIndex++] = currentState.values[index];
-        currentState.values[currentState.stackIndex++] = null;
+        currentState.state[currentState.stackIndex++] = currentState.state[index];
+        currentState.state[currentState.stackIndex++] = null;
     }
 
     void store2(int index) {
-        currentState.values[index] = currentState.values[--currentState.stackIndex];
-        currentState.values[index] = currentState.values[--currentState.stackIndex];
+        currentState.state[index] = currentState.state[--currentState.stackIndex];
+        currentState.state[index] = currentState.state[--currentState.stackIndex];
     }
 
     void push1(Location val) {
-        currentState.values[currentState.stackIndex++] = val;
+        currentState.state[currentState.stackIndex++] = val;
     }
 
     void pushX(Location val, BasicType basicType) {
@@ -749,14 +766,14 @@ public class C0Compiler {
     }
 
     Location pop1() {
-        return currentState.values[--currentState.stackIndex];
+        return currentState.state[--currentState.stackIndex];
     }
 
     Location[] popN(int count) {
         // pop multiple arguments
         Location[] result = new Location[count];
         for (int i = 0; i < count; i++) {
-            result[i] = currentState.values[i + (currentState.stackIndex - count)];
+            result[i] = currentState.state[i + (currentState.stackIndex - count)];
         }
         return result;
     }
@@ -766,13 +783,13 @@ public class C0Compiler {
     }
 
     void push2(Location val) {
-        currentState.values[currentState.stackIndex++] = val;
-        currentState.values[currentState.stackIndex++] = null;
+        currentState.state[currentState.stackIndex++] = val;
+        currentState.state[currentState.stackIndex++] = null;
     }
 
     Location pop2() {
         --currentState.stackIndex;
-        return currentState.values[--currentState.stackIndex];
+        return currentState.state[--currentState.stackIndex];
     }
 
     boolean isBlockStart(int bci) {
@@ -829,8 +846,8 @@ public class C0Compiler {
 
     void spillSome(FrameState state, int max, boolean kill) {
         for (int i = 0; i < max; i++) {
-            Location cur = state.values[i];
-            if (cur != null && cur != state.stack[i]) {
+            Location cur = state.state[i];
+            if (cur != null && cur != state.memory[i]) {
                 spill(state, i, kill);
             }
         }
@@ -839,10 +856,10 @@ public class C0Compiler {
     void spill(FrameState state, int index, boolean kill) {
         // generate code to move the value from its current location into the stack
         Location spillLocation = new StackSlot(index);
-        emitMove(state.values[index], spillLocation);
+        emitMove(state.state[index], spillLocation);
         if (kill) {
             // if we are killing values, then the new current location is on the stack
-            state.stack[index] = state.values[index] = spillLocation;
+            state.memory[index] = state.state[index] = spillLocation;
         }
     }
 
@@ -874,5 +891,4 @@ public class C0Compiler {
         Util.nonFatalUnimplemented("emit code to load the object");
         return produce(BasicType.Object);
     }
-
 }
