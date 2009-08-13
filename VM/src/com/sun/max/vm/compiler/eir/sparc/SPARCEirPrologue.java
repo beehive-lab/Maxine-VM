@@ -85,28 +85,28 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
     }
 
     /**
-     * Returns the number of instructions of the frame builder for a given frame size.
+     * Returns the size (in bytes) of the instructions emitted for the frame builder for a given frame size.
      * The save instruction in the last instruction of the frame builder.
      * This information is useful for stack walkers to determine whether a method activation is in its caller
      * register window.
      * @param frameSize
-     * @return the number of instructions
+     * @return the number of bytes of code
      */
-    public static int numberOfFrameBuilderInstructions(int frameSize) {
+    public static int sizeOfFrameBuilderInstructions(int frameSize) {
         final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
         int count;
         if (Trap.STACK_BANGING) {
-            count = 2;
+            count = 2;  // The stack banging load instruction and the save instruction
             if (!SPARCAssembler.isSimm13(stackBangOffset)) {
                 count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
             }
         } else {
-            count = 1;
+            count = 1;  // The save instruction
         }
         if (!SPARCAssembler.isSimm13(-frameSize)) {
             count += ASM.setswNumberOfInstructions(-frameSize);
         }
-        return count;
+        return count * InstructionSet.SPARC.instructionWidth;
     }
 
     /**
