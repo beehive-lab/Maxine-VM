@@ -58,7 +58,7 @@ public final class BreakpointsTable extends InspectorTable {
         columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
         columnModel = new BreakpointsColumnModel(viewPreferences);
 
-        configure(tableModel, columnModel);
+        configureTable(tableModel, columnModel);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
     }
 

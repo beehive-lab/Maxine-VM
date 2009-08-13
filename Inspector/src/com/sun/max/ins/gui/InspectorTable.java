@@ -61,7 +61,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         initialize();
     }
 
-    protected void configure(DefaultTableModel tableModel, DefaultTableColumnModel columnModel) {
+    protected void configureTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
         setModel(tableModel);
         setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
