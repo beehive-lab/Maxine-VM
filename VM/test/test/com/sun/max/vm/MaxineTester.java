@@ -1434,11 +1434,11 @@ public class MaxineTester {
             command.addClasspath(".");
             command.addArgument(test);
             String[] ignored = {
-                    "Total memory",
-                    "## IO time",
-                    "Finished in",
-                    "Decoding time:"
-                };
+                "Total memory",
+                "## IO time",
+                "Finished in",
+                "Decoding time:"
+            };
             testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, ignored);
             // reportTiming(testName, outputDir);
         }
