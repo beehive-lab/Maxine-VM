@@ -69,7 +69,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     private byte[] isDirectCallToRuntime;
 
     /**
-     * An {@code int} array that encodes a mapping from bytecode positions to target code positions. A non-zero value
+     * An array that encodes a mapping from bytecode positions to target code positions. A non-zero value
      * {@code val} at index {@code i} in the array encodes that there is a bytecode instruction whose opcode is at index
      * {@code i} in the bytecode array and whose target code position is {@code val}. Unless {@code i} is equal to the
      * length of the bytecode array in which case {@code val} denotes the target code position one byte past the
@@ -81,6 +81,10 @@ public abstract class JitTargetMethod extends TargetMethod {
 
     protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
+    }
+
+    public int[] bytecodeToTargetCodePositionMap() {
+        return bytecodeToTargetCodePositionMap;
     }
 
     /**
@@ -197,129 +201,6 @@ public abstract class JitTargetMethod extends TargetMethod {
         return -1;
     }
 
-    /**
-     * Correlates a bytecode range with a target code range. The target code range is typically the template code
-     * produced by the JIT compiler for a single JVM instruction encoded in the bytecode range.
-     *
-     * @author Doug Simon
-     */
-    public static class CodeTranslation {
-
-        private final int bytecodePosition;
-        private final int bytecodeLength;
-        private final int targetCodePosition;
-        private final int targetCodeLength;
-
-        /**
-         * Creates an object that correlates a bytecode range with a target code range.
-         *
-         * @param bytecodePosition the first position in the bytecode range. This value is invalid if
-         *            {@code bytecodeLength == 0}.
-         * @param bytecodeLength the length of the bytecode range
-         * @param targetCodePosition the first position in the target code range. This value is invalid if
-         *            {@code targetCodeLength == 0}.
-         * @param targetCodeLength the length of the target code range
-         */
-        public CodeTranslation(int bytecodePosition, int bytecodeLength, int targetCodePosition, int targetCodeLength) {
-            this.bytecodeLength = bytecodeLength;
-            this.bytecodePosition = bytecodePosition;
-            this.targetCodeLength = targetCodeLength;
-            this.targetCodePosition = targetCodePosition;
-        }
-
-        /**
-         * Gets the first position in the bytecode range represented by this object. This value is only valid if
-         * {@link #bytecodeLength()} does not return 0.
-         */
-        public int bytecodePosition() {
-            return bytecodePosition;
-        }
-
-        /**
-         * Gets the position one past the last position in the bytecode range represented by this object. This value is
-         * only valid if {@link #bytecodeLength()} does not return 0.
-         */
-        public int bytecodeEndPosition() {
-            return bytecodePosition + bytecodeLength;
-        }
-
-        /**
-         * Gets the length of the bytecode range represented by this object.
-         */
-        public int bytecodeLength() {
-            return bytecodeLength;
-        }
-
-        /**
-         * Gets the first position in the target code range represented by this object. This value is only valid if
-         * {@link #targetCodeLength()} does not return 0.
-         */
-        public int targetCodePosition() {
-            return targetCodePosition;
-        }
-
-        /**
-         * Gets the position one past the last position in the target code range represented by this object. This value is only valid if
-         * {@link #targetCodeLength()} does not return 0.
-         */
-        public int targetCodeEndPosition() {
-            return targetCodePosition + targetCodeLength;
-        }
-
-        /**
-         * Gets the length of the target code range represented by this object.
-         */
-        public int targetCodeLength() {
-            return targetCodeLength;
-        }
-
-        /**
-         * Gets an object encapsulating the sub-range of a given bytecode array represented by this code translation.
-         *
-         * @param bytecode
-         * @return null if {@code bytecodeLength() == 0}
-         */
-        public BytecodeBlock toBytecodeBlock(byte[] bytecode) {
-            if (bytecodeLength() == 0) {
-                return null;
-            }
-            return new BytecodeBlock(bytecode, bytecodePosition(), bytecodeEndPosition() - 1);
-        }
-
-        @Override
-        public String toString() {
-            final String bytecode = bytecodeLength == 0 ? "[]" : "[" + bytecodePosition + " - " + (bytecodeEndPosition() - 1) + "]";
-            final String targetCode = targetCodeLength == 0 ? "[]" : "[" + targetCodePosition + " - " + (targetCodeEndPosition() - 1) + "]";
-            return bytecode + " -> " + targetCode;
-        }
-    }
-
-    /**
-     * Gets a sequence of objects correlating bytecode ranges with the ranges of target code in this target method. The
-     * returned sequence objects are exclusive of each other in terms of their target code ranges and they cover
-     * every target code position in this target method.
-     */
-    public Sequence<CodeTranslation> codeTranslations() {
-        final AppendableSequence<CodeTranslation> translations = new ArrayListSequence<CodeTranslation>();
-        int startBytecodePosition = 0;
-        int startTargetCodePosition = bytecodeToTargetCodePositionMap[0];
-        assert startTargetCodePosition != 0;
-        translations.append(new CodeTranslation(0, 0, 0, startTargetCodePosition));
-        for (int bytecodePosition = 1; bytecodePosition != bytecodeToTargetCodePositionMap.length; ++bytecodePosition) {
-            final int targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
-            if (targetCodePosition != 0) {
-                final CodeTranslation codeTranslation = new CodeTranslation(startBytecodePosition, bytecodePosition - startBytecodePosition, startTargetCodePosition, targetCodePosition - startTargetCodePosition);
-                translations.append(codeTranslation);
-                startTargetCodePosition = targetCodePosition;
-                startBytecodePosition = bytecodePosition;
-            }
-        }
-        if (startTargetCodePosition < code().length) {
-            translations.append(new CodeTranslation(0, 0, startTargetCodePosition, code().length - startTargetCodePosition));
-        }
-        return translations;
-    }
-
     public final void setGenerated(
                     int[] catchRangePositions,
                     int[] catchBlockPositions,
@@ -404,11 +285,6 @@ public abstract class JitTargetMethod extends TargetMethod {
                 this.referenceMapEditor.set(null);
             }
         }
-    }
-
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        return referenceMapEditor == null;
     }
 
     @Override

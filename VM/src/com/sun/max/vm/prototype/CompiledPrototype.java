@@ -559,7 +559,7 @@ public class CompiledPrototype extends Prototype {
                 ProgramError.unexpected(executionException.getCause());
             }
             ++totalCompilations;
-            if (totalCompilations % 100 == 0) {
+            if (totalCompilations % 200 == 0) {
                 Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
             }
         }
