@@ -24,7 +24,6 @@ import java.awt.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -51,7 +50,7 @@ public final class HubLabel extends InspectorLabel {
             public void procedure(MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
-                        MemoryInspector.create(inspection(), teleHub).highlight();
+                        actions().inspectObjectMemoryWords(teleHub, null).perform();
                     } else {
                         inspection().focus().setHeapObject(teleHub);
                     }

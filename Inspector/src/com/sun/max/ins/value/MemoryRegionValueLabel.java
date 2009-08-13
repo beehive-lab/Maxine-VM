@@ -39,6 +39,7 @@ import com.sun.max.vm.value.*;
 public class MemoryRegionValueLabel extends ValueLabel {
 
     private Address address;
+    private String regionName;
     private MemoryRegion memoryRegion = null;
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
@@ -57,9 +58,8 @@ public class MemoryRegionValueLabel extends ValueLabel {
                     }
                     case MouseEvent.BUTTON3: {
                         final InspectorMenu menu = new InspectorMenu();
+                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName, null));
                         menu.add(inspection().actions().selectMemoryRegion(memoryRegion));
-                        menu.add(inspection().actions().inspectMemory(address, "Inspect memory"));
-                        menu.add(inspection().actions().inspectMemoryWords(address, "Inspect memory words"));
                         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                     }
@@ -90,12 +90,13 @@ public class MemoryRegionValueLabel extends ValueLabel {
             memoryRegion = maxVM().memoryRegionContaining(address);
         }
         if (memoryRegion == null) {
-            setText("");
+            regionName = "";
             setToolTipText("");
         } else {
-            setText(memoryRegion.description());
+            regionName = memoryRegion.description();
             setToolTipText("0x" + address.toHexString() + " in \"" + memoryRegion.description() + "\" region");
         }
+        setText(regionName);
     }
 
     public void redisplay() {

@@ -64,6 +64,8 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         createFrame(null);
+        frame().menu().addSeparator();
+        frame().menu().add(actions().inspectSelectedMemoryRegionWords());
         Trace.end(1, tracePrefix() + "initializing");
     }
 

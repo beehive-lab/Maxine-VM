@@ -49,19 +49,30 @@ public final class MemoryWordsInspector extends Inspector {
 
     private static final int TRACE_VALUE = 1;
 
-    public static enum NavMode {
-        WORD("Word", "Grows the visible region forward and backward a word at a time"),
-        OBJECT("Obj", "Move to next/previous object origin"),
-        PAGE("Page", "Move to next/previous page origin and display entire page"),
-        CUSTOM("Custom", "Enter memory origin and word size manually");
+    public static enum ViewMode {
+        WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",
+            "Grow the visible region upward (lower address) by one word", "Grow the visible region downward (higher address) by one word"),
+        OBJECT("Obj", "Move to next/previous object origin",
+            "View memory for previous object", "View memory for next object"),
+        PAGE("Page", "Move to next/previous page origin and display entire page",
+            "View previous memory page", "View next memory page");
 
         private final String label;
         private final String description;
-        private InspectorToolBar toolBar;
+        private final String previousToolTip;
+        private final String nextToolTip;
 
-        private NavMode(String label, String description) {
+        /**
+         * @param label the label that identifies the mode
+         * @param description description of the mode
+         * @param previousToolTip description of the move backwards action in this mode
+         * @param nextToolTip description of the move forward action in this mode
+         */
+        private ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
             this.label = label;
             this.description = description;
+            this.previousToolTip = previousToolTip;
+            this.nextToolTip = nextToolTip;
         }
 
         public String label() {
@@ -72,26 +83,94 @@ public final class MemoryWordsInspector extends Inspector {
             return description;
         }
 
-        public JToolBar toolBar(Inspection inspection) {
-            if (toolBar == null) {
-                toolBar = new InspectorToolBar(inspection);
-            }
-            return toolBar;
+        public String previousToolTip() {
+            return previousToolTip;
         }
 
-        public static final IndexedSequence<NavMode> VALUES = new ArraySequence<NavMode>(values());
+        public String nextToolTip() {
+            return nextToolTip;
+        }
 
+        public static final IndexedSequence<ViewMode> VALUES = new ArraySequence<ViewMode>(values());
+
+    }
+
+    private static MemoryWordsViewPreferences globalPreferences;
+
+    /**
+     * @return the global, persistent set of user preferences for viewing these tables..
+     */
+    public static MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
+        if (globalPreferences == null) {
+            globalPreferences = new MemoryWordsViewPreferences(inspection);
+        }
+        return globalPreferences;
+    }
+
+    private static class MemoryWordsViewPreferences extends TableColumnVisibilityPreferences<MemoryWordsColumnKind> {
+
+        private final MemoryWordsInspector memoryWordsInspector;
+
+        /**
+         * Creates global preferences for this inspector.
+         */
+        private MemoryWordsViewPreferences(Inspection inspection) {
+            super(inspection, "memoryWordsViewPrefs", MemoryWordsColumnKind.class, MemoryWordsColumnKind.VALUES);
+            this.memoryWordsInspector = null;
+        }
+
+        /**
+         * A per-instance set of view preferences, initialized to the global preferences.
+         * @param defaultPreferences the global defaults for this kind of view
+         */
+        public MemoryWordsViewPreferences(MemoryWordsViewPreferences globalPreferences, MemoryWordsInspector memoryWordsInspector) {
+            super(globalPreferences);
+            this.memoryWordsInspector = memoryWordsInspector;
+        }
+
+
+        @Override
+        protected boolean canBeMadeInvisible(MemoryWordsColumnKind columnType) {
+            return columnType.canBeMadeInvisible();
+        }
+
+        @Override
+        protected boolean defaultVisibility(MemoryWordsColumnKind columnType) {
+            return columnType.defaultVisibility();
+        }
+
+        @Override
+        protected String label(MemoryWordsColumnKind columnType) {
+            return columnType.label();
+        }
+
+        @Override
+        public void setIsVisible(MemoryWordsColumnKind columnKind, boolean visible) {
+            super.setIsVisible(columnKind, visible);
+            if (memoryWordsInspector != null) {
+                memoryWordsInspector.reconstructView();
+            }
+        }
+
+        @Override
+        public MemoryWordsViewPreferences clone() {
+            return new MemoryWordsViewPreferences(this, memoryWordsInspector);
+        }
     }
 
     private final Size wordSize;
     private final Size pageSize;
     private final int wordsInPage;
 
-    // The memory region specified when the Inspector was created
-    private final MemoryWordRegion originalMemoryRegion;
+    //  View specifications from when the Inspector was created
+    private final MemoryWordRegion originalMemoryWordRegion;
+    private final ViewMode originalViewMode;
+    private final String originalRegionName;
 
-    // Memory region currently being inspected.
-    private MemoryWordRegion memoryRegion;
+    // Current view specifications.
+    private MemoryWordRegion memoryWordRegion;
+    private String regionName;  // null if current region is specially named
+    // Current view mode held in the ComboBox, which gets retained and reused across view reconstructions.
 
     // Address of word 0 for the purposes of the Offset columns.
     private Address origin;
@@ -99,173 +178,202 @@ public final class MemoryWordsInspector extends Inspector {
     private MemoryWordsTable table;
     private InspectorScrollPane scrollPane;
 
-    // Currently active toolBar;
     private JToolBar toolBar;
-
-    // Shared toolBar items
-    private PlainLabel modeLabel;
-    private InspectorComboBox modeComboBox;
-
-    // Used for the custom tool bar
-    private AddressInputField.Hex originField;
-    private AddressInputField.Decimal wordCountField;
-
+    private final AddressInputField.Hex originField;
+    private final AddressInputField.Decimal wordCountField;
+    private final InspectorComboBox viewModeComboBox;
+    private final JLabel viewModeComboBoxRenderer;  // Holds current view mode, even across view reconstructions.
+    private final InspectorButton previousButton;
+    private final InspectorButton nextButton;
+    private final InspectorButton findButton;
+    private final InspectorButton prefsButton;
+    private final InspectorButton homeButton;
+    private final InspectorButton cloneButton;
 
     private final InspectorMenuItems frameMenuItems;
 
-    public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion, Address origin) {
+    private final MemoryWordsViewPreferences instanceViewPreferences;
+
+    private MemoryWordsInspector(Inspection inspection, final MemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
         super(inspection);
+        assert viewMode != null;
+
+        Trace.line(1, tracePrefix() + " creating for region" + memoryRegion.toString());
         wordSize = inspection.maxVM().wordSize();
         pageSize = inspection.maxVM().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
+
+        if (instanceViewPreferences == null) {
+            // Clone the global preferences
+            this.instanceViewPreferences = new MemoryWordsViewPreferences(globalPreferences(inspection()), this);
+        } else {
+            // Clone another set of instance preferences
+            this.instanceViewPreferences = new MemoryWordsViewPreferences(instanceViewPreferences, this);
+        }
+
         final Address start = memoryRegion.start().aligned(wordSize.toInt());
         final int wordCount = wordsInRegion(memoryRegion);
-        this.originalMemoryRegion = new MemoryWordRegion(start, wordCount, wordSize);
-        this.memoryRegion = originalMemoryRegion;
-        this.origin = origin == null ? start : origin;
-        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
-        createFrame(null);
-        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
+        this.originalMemoryWordRegion = new MemoryWordRegion(start, wordCount, wordSize);
+        this.memoryWordRegion = originalMemoryWordRegion;
+        this.originalRegionName = regionName;
+        this.regionName = regionName;
+        this.originalViewMode = viewMode;
 
+        this.origin = (origin == null) ? start : origin;
 
         frameMenuItems = new MemoryWordsFrameMenuItems();
+
+        originField = new AddressInputField.Hex(inspection, this.origin) {
+            @Override
+            public void update(Address value) {
+                if (!value.equals(MemoryWordsInspector.this.origin)) {
+                    // User model policy:  any adjustment to the region drops into generic word mode
+                    clearViewMode();
+                    setOrigin(value.aligned(wordSize.toInt()));
+                }
+            }
+        };
+
+        wordCountField = new AddressInputField.Decimal(inspection, Address.fromInt(memoryWordRegion.wordCount)) {
+            @Override
+            public void update(Address value) {
+                final int newWordCount = value.toInt();
+                final int oldWordCount = memoryWordRegion.wordCount;
+                if (newWordCount <= 0) {
+                    // Bogus; reset to prior value
+                    wordCountField.setValue(Address.fromInt(oldWordCount));
+                } else if (newWordCount != oldWordCount) {
+                    // User model policy:  any adjustment to the region drops into generic word mode
+                    clearViewMode();
+                    setMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
+                }
+            }
+        };
+
+        // The combo box holds the current view mode
+        viewModeComboBox = new InspectorComboBox(inspection, ViewMode.values());
+        viewModeComboBox.setSelectedItem(originalViewMode);
+        // Add the listener after the initial selection is set; we're not ready for an update yet.
+        viewModeComboBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateViewMode();
+            }
+        });
+        viewModeComboBoxRenderer = new JLabel();
+        viewModeComboBox.setRenderer(new ListCellRenderer() {
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                final ViewMode viewMode = (ViewMode) value;
+                viewModeComboBoxRenderer.setText(viewMode.label());
+                return viewModeComboBoxRenderer;
+            }
+        });
+
+        previousButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                moveBack();
+            }
+        });
+        previousButton.setIcon(style().navigationBackIcon());
+
+        nextButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                moveForward();
+            }
+        });
+        nextButton.setIcon(style().navigationForwardIcon());
+
+        prefsButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                new SimpleDialog(inspection(), MemoryWordsInspector.this.instanceViewPreferences.getPanel(), "View Preferences", true);
+            }
+        });
+        prefsButton.setText(null);
+        prefsButton.setToolTipText("Column view preferences");
+        prefsButton.setIcon(style().generalPreferencesIcon());
+
+        findButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                gui().informationMessage("memory find is unimplemented");
+            }
+        });
+        findButton.setIcon(style().generalFindIcon());
+        findButton.setToolTipText("Find (UNIMPLEMENTED)");
+        findButton.setEnabled(false);
+
+        homeButton = new InspectorButton(inspection(), new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                resetToOriginal();
+            }
+        });
+        homeButton.setIcon(style().navigationHomeIcon());
+        homeButton.setToolTipText("Return displayed region to original");
+
+        cloneButton = new InspectorButton(inspection(), cloneAction);
+        cloneButton.setText(null);
+        cloneButton.setToolTipText("Create a cloned copy of this memory inspector");
+        cloneButton.setIcon(style().generalCopyIcon());
+
+        createFrame(null);
+        gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().add(frameMenuItems);
         table.scrollToOrigin();
     }
 
+    /**
+     * Create a memory inspector for a designated region of memory, with the view
+     * mode set to {@link ViewMode#WORD}.
+     */
     public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion) {
-        this(inspection, memoryRegion, null);
+        this(inspection, memoryRegion, null, memoryRegion.start(), ViewMode.WORD, null);
     }
+
+    /**
+     * Create a memory inspector for a designated, named region of memory, with the view
+     * mode set to {@link ViewMode#WORD}.
+     */
+    public MemoryWordsInspector(Inspection inspection, MemoryRegion memoryRegion, String regionName) {
+        this(inspection, memoryRegion, regionName, memoryRegion.start(), ViewMode.WORD, null);
+    }
+
+    /**
+     * Create a memory inspector for the memory holding an object, with the view
+     * mode set to {@link ViewMode#OBJECT}.
+     */
+    public MemoryWordsInspector(Inspection inspection, TeleObject teleObject) {
+        this(inspection, teleObject.getCurrentMemoryRegion(), null, teleObject.getCurrentOrigin(), ViewMode.OBJECT, null);
+    }
+
+    /**
+     * Create a memory inspector for a page of memory, with the view
+     * mode set to {@link ViewMode#PAGE}.
+     */
+    public MemoryWordsInspector(Inspection inspection, Address address) {
+        this(inspection, new FixedMemoryRegion(address, inspection.maxVM().pageSize(), ""), null, address, ViewMode.PAGE, null);
+    }
+
 
     @Override
     protected void createView() {
 
-        table = new MemoryWordsTable(inspection(), memoryRegion, origin);
+        table = new MemoryWordsTable(inspection(), memoryWordRegion, origin, instanceViewPreferences);
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 
         toolBar = new InspectorToolBar(inspection());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-
-        modeLabel = new PlainLabel(inspection(), "Navigate:", "Selecte a mode that controls how the memory navigation controls in the toolbar work");
-        toolBar.add(modeLabel);
-
-        modeComboBox = new InspectorComboBox(inspection(), NavMode.values());
-        modeComboBox.setSelectedItem(table.getInstanceViewPreferences().navigationMode());
-        modeComboBox.addItemListener(new ItemListener() {
-
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                final NavMode newNavMode = (NavMode) modeComboBox.getSelectedItem();
-                table.getInstanceViewPreferences().setNavigationMode(newNavMode);
-                refreshView(true);
-            }
-        });
-        modeComboBox.setRenderer(new ListCellRenderer() {
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                final NavMode mode = (NavMode) value;
-                final JLabel jLabel = new JLabel(mode.label);
-                jLabel.setToolTipText(mode.description);
-                return jLabel;
-            }
-        });
-        toolBar.add(modeComboBox);
-
         toolBar.add(new JLabel("Origin:"));
-        originField = new AddressInputField.Hex(inspection(), origin) {
-            @Override
-            public void update(Address value) {
-                if (!value.equals(origin)) {
-                    updateOrigin(value.aligned(wordSize.toInt()));
-                }
-            }
-        };
         toolBar.add(originField);
-
         toolBar.add(new JLabel("Words:"));
-        wordCountField = new AddressInputField.Decimal(inspection(), Address.fromInt(memoryRegion.wordCount)) {
-            @Override
-            public void update(Address value) {
-                final int newWordCount = value.toInt();
-                final int oldWordCount = memoryRegion.wordCount;
-                if (newWordCount <= 0) {
-                    // Bogus; reset to prior value
-                    wordCountField.setValue(Address.fromInt(oldWordCount));
-                } else if (newWordCount != oldWordCount) {
-                    updateMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
-                }
-
-            }
-        };
-        wordCountField.setRange(1, 1000);
         toolBar.add(wordCountField);
-
-        final InspectorButton upButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                growRegionUp(1);
-            }
-        });
-        upButton.setIcon(style().navigationUpIcon());
-        upButton.setToolTipText("Grow displayed region upward (lower address)");
-        toolBar.add(upButton);
-
-        final InspectorButton downButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                growRegionDown(1);
-            }
-        });
-        downButton.setIcon(style().navigationDownIcon());
-        downButton.setToolTipText("Grow displayed region downward (lower address)");
-        toolBar.add(downButton);
-
-        final InspectorButton homeButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                setToOriginalRegion();
-            }
-        });
-        homeButton.setIcon(style().navigationHomeIcon());
-        homeButton.setToolTipText("Return displayed region to original");
+        toolBar.add(previousButton);
+        toolBar.add(viewModeComboBox);
+        toolBar.add(nextButton);
+        toolBar.add(findButton);
         toolBar.add(homeButton);
-
-        final InspectorButton backButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                moveToPreviousObject();
-            }
-        });
-        backButton.setIcon(style().navigationBackIcon());
-        backButton.setToolTipText("View previous object");
-        toolBar.add(backButton);
-
-        final InspectorButton forwardButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                moveToNextObject();
-            }
-        });
-        forwardButton.setIcon(style().navigationForwardIcon());
-        forwardButton.setToolTipText("View next object");
-        toolBar.add(forwardButton);
-
-        final InspectorButton backPageButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                moveToPreviousPage();
-            }
-        });
-        backPageButton.setIcon(style().mediaStepBackIcon());
-        backPageButton.setToolTipText("View previous memory page");
-        toolBar.add(backPageButton);
-
-        final InspectorButton forwardPageButton = new InspectorButton(inspection(), new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                moveToNextPage();
-            }
-        });
-        forwardPageButton.setIcon(style().mediaStepForwardIcon());
-        forwardPageButton.setToolTipText("View next memory page");
-        toolBar.add(forwardPageButton);
-
+        toolBar.add(cloneButton);
+        toolBar.add(prefsButton);
         panel.add(toolBar, BorderLayout.NORTH);
-
 
         scrollPane = new InspectorScrollPane(inspection(), table);
         //table.setPreferredScrollableViewportSize(preferredTableDimension());
@@ -294,8 +402,8 @@ public final class MemoryWordsInspector extends Inspector {
                 System.out.println(bounds.toString());
                 System.out.println("Header=" + table.getTableHeader().getHeight());
                 System.out.println("Row height=" + table.getRowHeight());
-                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryRegion.wordCount * table.getRowHeight())));
-                final int rowCapacity = ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryRegion.wordCount * table.getRowHeight())) / table.getRowHeight();
+                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())));
+                final int rowCapacity = ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())) / table.getRowHeight();
                 System.out.println("Capacity =" + rowCapacity);
                 System.out.println("Preferred=" + preferredTableHeight());
                 if (rowCapacity > 0) {
@@ -303,12 +411,74 @@ public final class MemoryWordsInspector extends Inspector {
                 }
             }
         });
+        // Force everything into consistency with the current view mode.
+        updateViewMode();
+    }
 
+    /**
+     * Gets current view mode.
+     */
+    private ViewMode viewMode() {
+        return (ViewMode) viewModeComboBox.getSelectedItem();
+    }
+
+    /**
+     * Sets current view mode and updates related state.
+     */
+    private void setViewMode(ViewMode viewMode) {
+        viewModeComboBox.setSelectedItem(viewMode);
+        updateViewMode();
+    }
+
+    /**
+     * Sets the current view parameters to the default state.
+     */
+    private void clearViewMode() {
+        setViewMode(ViewMode.WORD);
+        regionName = null;
+    }
+
+    /**
+     * Updates state related to current view mode.
+     */
+    private void updateViewMode() {
+        previousButton.setToolTipText(viewMode().previousToolTip());
+        nextButton.setToolTipText(viewMode().nextToolTip());
+        switch (viewMode()) {
+            case OBJECT:
+                moveToCurrentObject();
+                break;
+            case PAGE:
+                moveToCurrentPage();
+                break;
+            case WORD:
+                break;
+            default:
+                ProgramError.unknownCase();
+        }
+        updateFrameTitle();
     }
 
     @Override
     public String getTextForTitle() {
-        return "Memory Words @ " + memoryRegion.start().toHexString();
+        switch(viewMode()) {
+            case OBJECT:
+                final TeleObject teleObject = maxVM().makeTeleObject(maxVM().originToReference(origin.asPointer()));
+                if (teleObject == null) {
+                    return "Memory object: " + memoryWordRegion.start().toHexString();
+                }
+                return "Memory: object " + memoryWordRegion.start().toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+            case PAGE:
+                return "Memory: page " + memoryWordRegion.start().toHexString();
+            case WORD:
+                if (regionName == null) {
+                    return "Memory: " +  memoryWordRegion.start().toHexString() + "--" +  memoryWordRegion.end().toHexString();
+                }
+                return "Memory: region " + regionName;
+            default:
+                ProgramError.unknownCase();
+        }
+        return null;
     }
 
     @Override
@@ -329,12 +499,15 @@ public final class MemoryWordsInspector extends Inspector {
     /**
      * Sets the view to the parameters specified when inspector was created.
      */
-    private void setToOriginalRegion() {
-        updateOrigin(originalMemoryRegion.start());
-        updateMemoryRegion(originalMemoryRegion);
+    private void resetToOriginal() {
+        setOrigin(originalMemoryWordRegion.start());
+        setMemoryRegion(originalMemoryWordRegion);
+        setViewMode(originalViewMode);
         table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
         table.scrollToBeginning();
         frame().pack();
+        regionName = originalRegionName;
+        updateFrameTitle();
     }
 
     private int preferredTableHeight() {
@@ -354,7 +527,7 @@ public final class MemoryWordsInspector extends Inspector {
     /**
      * Changes the viewing origin and updates related state; does not change the region being viewed.
      */
-    private void updateOrigin(Address origin) {
+    private void setOrigin(Address origin) {
         this.origin = origin;
         originField.setText(origin.toUnsignedString(16));
         table.setOrigin(this.origin);
@@ -363,29 +536,90 @@ public final class MemoryWordsInspector extends Inspector {
     /**
      * Changes the viewed memory region and updates related state; does not change the origin.
      */
-    private void updateMemoryRegion(MemoryWordRegion memoryWordRegion) {
-        this.memoryRegion = memoryWordRegion;
-        wordCountField.setValue(Address.fromInt(memoryRegion.wordCount));
-        table.setMemoryRegion(memoryRegion);
+    private void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
+        this.memoryWordRegion = memoryWordRegion;
+        wordCountField.setValue(Address.fromInt(memoryWordRegion.wordCount));
+        table.setMemoryRegion(memoryWordRegion);
+    }
+
+    /**
+     * Modal navigation; the kind of move depends on the currently selected view mode.
+     */
+    private void moveBack() {
+        switch (viewMode()) {
+            case OBJECT:
+                moveToPreviousObject();
+                break;
+            case PAGE:
+                moveToPreviousPage();
+                break;
+            case WORD:
+                growRegionUp(1);
+                break;
+            default:
+                ProgramError.unknownCase();
+        }
+    }
+
+    /**
+     * Modal navigation; the kind of move depends on the currently selected view mode.
+     */
+    private void moveForward() {
+        switch (viewMode()) {
+            case OBJECT:
+                moveToNextObject();
+                break;
+            case PAGE:
+                moveToNextPage();
+                break;
+            case WORD:
+                growRegionDown(1);
+                break;
+            default:
+                ProgramError.unknownCase();
+        }
     }
 
     /**
      * Grows the viewed region at the top (lowest address).
      */
     private void growRegionUp(int addedRowCount) {
-        final int newWordCount = memoryRegion.wordCount + addedRowCount;
-        final Address newStart = memoryRegion.start().minus(wordSize.times(addedRowCount));
-        updateMemoryRegion(new MemoryWordRegion(newStart, newWordCount, wordSize));
+        final int newWordCount = memoryWordRegion.wordCount + addedRowCount;
+        final Address newStart = memoryWordRegion.start().minus(wordSize.times(addedRowCount));
+        setMemoryRegion(new MemoryWordRegion(newStart, newWordCount, wordSize));
         table.scrollToBeginning();
+        // User model policy:  any adjustment to the region drops into generic word mode
+        clearViewMode();
+        updateFrameTitle();
     }
 
     /**
      * Grows the viewed region at the bottom (highest address).
      */
     private void growRegionDown(int addedRowCount) {
-        final int newWordCount = memoryRegion.wordCount + addedRowCount;
-        updateMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
+        final int newWordCount = memoryWordRegion.wordCount + addedRowCount;
+
+        setMemoryRegion(new MemoryWordRegion(memoryWordRegion.start(), newWordCount, wordSize));
         table.scrollToEnd();
+        // User model policy:  any adjustment to the region drops into generic word mode
+        clearViewMode();
+        updateFrameTitle();
+    }
+
+    private void moveToCurrentObject() {
+        TeleObject teleObject = maxVM().findObjectAt(origin);
+        if (teleObject != null) {
+            MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
+            final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
+            // User model policy, grow the size of the viewing region if needed, but never shrink it.
+            final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
+            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setOrigin(teleObject.getCurrentOrigin());
+            table.scrollToOrigin();
+            updateFrameTitle();
+        } else {
+            moveToPreviousObject();
+        }
     }
 
     private void moveToPreviousObject() {
@@ -394,10 +628,11 @@ public final class MemoryWordsInspector extends Inspector {
             MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
-            final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryRegion.wordCount);
-            updateMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
-            updateOrigin(memoryRegion.start());
+            final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
+            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setOrigin(teleObject.getCurrentOrigin());
             table.scrollToOrigin();
+            updateFrameTitle();
         }
     }
 
@@ -406,36 +641,51 @@ public final class MemoryWordsInspector extends Inspector {
         if (teleObject != null) {
             final MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
             // Start stays the same
-            final Address start = memoryRegion.start();
-            // Set origin to beginning of next object
-            final Address newOrigin = objectMemoryRegion.start().aligned(wordSize.toInt());
+            final Address start = memoryWordRegion.start();
             // Default is to leave the viewed size the same
-            int newWordCount = memoryRegion.wordCount;
-            if (!memoryRegion.contains(objectMemoryRegion.end())) {
+            int newWordCount = memoryWordRegion.wordCount;
+            if (!memoryWordRegion.contains(objectMemoryRegion.end())) {
                 // Grow the end of the viewed region if needed to include the newly found object
                 newWordCount = objectMemoryRegion.end().minus(start).dividedBy(wordSize).toInt();
             }
-            updateMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
-            updateOrigin(newOrigin);
+            setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
+            setOrigin(teleObject.getCurrentOrigin());
             // Scroll so that whole object is visible if possible
             table.scrollToRange(origin, objectMemoryRegion.end().minus(wordSize));
+            updateFrameTitle();
         }
     }
 
-    private void moveToNextPage() {
-        final Address alignedOrigin = origin.aligned(pageSize.toInt());
-        final Address nextOrigin = alignedOrigin.plus(pageSize);
-        updateOrigin(nextOrigin);
-        updateMemoryRegion(new MemoryWordRegion(nextOrigin, wordsInPage, wordSize));
+    private void moveToCurrentPage() {
+        Address newOrigin = origin.aligned(pageSize.toInt());
+        if (!newOrigin.equals(origin)) {
+            // We're not at a page boundary, so set to the beginning of the current one.
+            newOrigin = newOrigin.minus(pageSize);
+        }
+        setOrigin(newOrigin);
+        setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
+        updateFrameTitle();
+    }
+
+    private void moveToNextPage() {
+        Address nextOrigin = origin.aligned(pageSize.toInt());
+        if (origin.equals(nextOrigin)) {
+            // Already at beginning of a page; jump to next.
+            nextOrigin = nextOrigin.plus(pageSize);
+        }
+        setOrigin(nextOrigin);
+        setMemoryRegion(new MemoryWordRegion(nextOrigin, wordsInPage, wordSize));
+        table.scrollToBeginning();
+        updateFrameTitle();
     }
 
     private void moveToPreviousPage() {
-        final Address alignedOrigin = origin.aligned(pageSize.toInt());
-        final Address nextOrigin = alignedOrigin.minus(pageSize);
-        updateOrigin(nextOrigin);
-        updateMemoryRegion(new MemoryWordRegion(nextOrigin, wordsInPage, wordSize));
+        final Address newOrigin = origin.aligned(pageSize.toInt()).minus(pageSize);
+        setOrigin(newOrigin);
+        setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
+        updateFrameTitle();
     }
 
     @Override
@@ -443,8 +693,7 @@ public final class MemoryWordsInspector extends Inspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                final MemoryWordsViewPreferences globalPreferences = MemoryWordsViewPreferences.globalPreferences(inspection());
-                MemoryWordsViewPreferences instanceViewPreferences = table.getInstanceViewPreferences();
+                final MemoryWordsViewPreferences globalPreferences = globalPreferences(inspection());
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MemoryWordsColumnKind>(inspection(), "View Options", instanceViewPreferences, globalPreferences);
             }
         };
@@ -494,36 +743,44 @@ public final class MemoryWordsInspector extends Inspector {
         }
     };
 
+    private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
+        @Override
+        protected void procedure() {
+            final Inspector inspector = new MemoryWordsInspector(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
+            inspector.highlight();
+        }
+    };
+
 
     private final class MemoryWordsFrameMenuItems implements InspectorMenuItems {
 
-        private InspectorAction setOriginAction = new InspectorAction(inspection(), "Set Origin to selection") {
+        private InspectorAction setOriginAction = new InspectorAction(inspection(), "Set Origin to selected location") {
             @Override
             protected void procedure() {
-                updateOrigin(focus().address());
+                setOrigin(focus().address());
                 MemoryWordsInspector.this.refreshView(true);
             }
 
             @Override
             public void refresh(boolean force) {
-                setEnabled(MemoryWordsInspector.this.memoryRegion.contains(focus().address()));
+                setEnabled(memoryWordRegion.contains(focus().address()));
             }
         };
 
-        private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
+        private InspectorAction inspectBytesAction = new InspectorAction(inspection(), "Inspect memory at origin as bytes") {
             @Override
             protected void procedure() {
-                new MemoryWordsInspector(inspection(), MemoryWordsInspector.this.memoryRegion, MemoryWordsInspector.this.origin);
+                MemoryBytesInspector.create(inspection(), origin);
             }
         };
 
         public void addTo(InspectorMenu menu) {
             setOriginAction.refresh(true);
             menu.add(setOriginAction);
-            menu.add(cloneAction);
+            menu.add(inspectBytesAction);
             menu.addSeparator();
-            menu.add(actions().closeViews(otherMemoryWordsInspectorsPredicate, "Close other memory words inspectors"));
-            menu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory words inspectors"));
+            menu.add(actions().closeViews(otherMemoryWordsInspectorsPredicate, "Close other memory inspectors"));
+            menu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory inspectors"));
         }
 
         public void redisplay() {
@@ -532,8 +789,6 @@ public final class MemoryWordsInspector extends Inspector {
         public void refresh(boolean force) {
             setOriginAction.refresh(force);
         }
-
-
     }
 
 }

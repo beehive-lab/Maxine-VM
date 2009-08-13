@@ -52,14 +52,14 @@ public final class MemoryWordsTable extends InspectorTable {
     private MaxVMState lastRefreshedState = null;
 
 
-    public MemoryWordsTable(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin) {
+    public MemoryWordsTable(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin, TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
         super(inspection);
         model = new MemoryWordsTableModel(memoryWordRegion, origin);
         columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
-        columnModel = new MemoryWordsColumnModel();
+        columnModel = new MemoryWordsColumnModel(instanceViewPreferences);
 
         // default configuration
-        configure(model, columnModel);
+        configureTable(model, columnModel);
         setShowHorizontalLines(style().memoryTableShowHorizontalLines());
         setShowVerticalLines(style().memoryTableShowVerticalLines());
         setIntercellSpacing(style().memoryTableIntercellSpacing());
@@ -91,6 +91,7 @@ public final class MemoryWordsTable extends InspectorTable {
                             menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
                             menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
+                            menu.add(actions().inspectMemoryBytes(model.rowToAddress(hitRowIndex), "Inspect this memory as bytes"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                     }
@@ -175,33 +176,18 @@ public final class MemoryWordsTable extends InspectorTable {
         };
     }
 
-    MemoryWordsViewPreferences getInstanceViewPreferences() {
-        return columnModel.getInstanceViewPreferences();
-    }
-
     private final class MemoryWordsColumnModel extends DefaultTableColumnModel {
 
-        final MemoryWordsViewPreferences instanceViewPreferences;
+        final TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences;
 
-        private MemoryWordsColumnModel() {
-            instanceViewPreferences = new MemoryWordsViewPreferences(MemoryWordsViewPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(MemoryWordsColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(columns[col]);
-                    } else {
-                        removeColumn(columns[col]);
-                    }
-                    fireColumnPreferenceChanged();
-                }
-            };
+        private MemoryWordsColumnModel(TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
+            this.instanceViewPreferences = instanceViewPreferences;
             createColumn(MemoryWordsColumnKind.TAG, new TagRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.ADDRESS, new AddressRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.WORD, new WordOffsetRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.OFFSET, new OffsetRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.VALUE, new ValueRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.BYTES, new BytesRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.REGION, new RegionRenderer(inspection()));
         }
 
@@ -216,9 +202,6 @@ public final class MemoryWordsTable extends InspectorTable {
             columns[col].setIdentifier(columnKind);
         }
 
-        MemoryWordsViewPreferences getInstanceViewPreferences() {
-            return instanceViewPreferences;
-        }
     }
 
     /**
@@ -293,6 +276,10 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public int rowToOffset(int row) {
             return (row  + positionBias) * maxVM().wordSize().toInt();
+        }
+
+        public Address rowToAddress(int row) {
+            return memoryWordRegion.getAddressAt(row);
         }
 
         public MemoryRegion rowToMemoryRegion(int row) {
@@ -476,6 +463,23 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
+    private final class BytesRenderer extends DataLabel.ByteArrayAsHex implements TableCellRenderer {
+        BytesRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.rowToMemoryRegion(row).start();
+            final byte[] bytes = new byte[model.wordSize.toInt()];
+            maxVM().readFully(address, bytes);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            setValue(bytes);
+            return this;
+        }
+    }
+
+
     private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
         // Designed so that we only read memory lazily, for words that are visible
         // This label has no state, so we only need one.
@@ -484,9 +488,14 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(maxVM().readWord(model.rowToMemoryRegion(row).start())));
-            setBackground(getRowBackgroundColor(row));
-            return this;
+            try {
+                final Word word = maxVM().readWord(model.rowToMemoryRegion(row).start());
+                setValue(WordValue.from(word));
+                setBackground(getRowBackgroundColor(row));
+                return this;
+            } catch (DataIOError dataIOError) {
+                return gui().getUnavailableDataTableCellRenderer();
+            }
         }
     }
 }
