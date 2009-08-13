@@ -144,6 +144,7 @@ public class C0XCompiler {
                 handleException(bci);
             }
 
+            // Checkstyle: stop
             switch (opcode) {
                 case Bytecodes.NOP            : /* nothing to do */ break;
                 case Bytecodes.ACONST_NULL    : push1(emitObject(null)); break;
@@ -348,6 +349,7 @@ public class C0XCompiler {
                 case Bytecodes.BREAKPOINT     : breakpoint(bci); break;
                 default                       : doUnknownBytecode(bci, opcode); break;
             }
+            // Checkstyle: resume
 
             bci = stream.nextBCI();
             stream.next();
@@ -891,12 +893,12 @@ public class C0XCompiler {
         Util.nonFatalUnimplemented("emit code to load the object");
         return produce(BasicType.Object);
     }
-    
+
     void unimplemented(String str, Object... params) {
-    	Util.nonFatalUnimplemented(params);
+        Util.nonFatalUnimplemented(params);
     }
 
     void unimplemented(String str, int param) {
-    	Util.nonFatalUnimplemented(param);
+        Util.nonFatalUnimplemented(param);
     }
 }
