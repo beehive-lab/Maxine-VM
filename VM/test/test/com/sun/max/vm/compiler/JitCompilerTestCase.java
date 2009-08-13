@@ -38,7 +38,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.JitTargetMethod.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -159,7 +158,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
         final int level = Trace.level();
         try {
             Trace.off();
-            final Sequence<CodeTranslation> codeTranslations = jitTargetMethod.codeTranslations();
+            final Sequence<CodeTranslation> codeTranslations = codeTranslations(jitTargetMethod);
             final Disassembler disassembler = disassemblerFor(targetMethod);
             if (disassembler == null) {
                 return;
@@ -180,9 +179,9 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
                     INDENT_WRITER.println();
                     INDENT_WRITER.println(bytecode);
                 }
-                if (codeTranslation.targetCodeLength() != 0) {
-                    disassembler.setCurrentPosition(codeTranslation.targetCodePosition());
-                    disassembler.scanAndPrint(new BufferedInputStream(new ByteArrayInputStream(targetCode, codeTranslation.targetCodePosition(), codeTranslation.targetCodeLength())), buffer);
+                if (codeTranslation.targetCodeLength != 0) {
+                    disassembler.setCurrentPosition(codeTranslation.targetCodePosition);
+                    disassembler.scanAndPrint(new BufferedInputStream(new ByteArrayInputStream(targetCode, codeTranslation.targetCodePosition, codeTranslation.targetCodeLength)), buffer);
                     INDENT_WRITER.printLines(new ByteArrayInputStream(buffer.toByteArray()));
                 }
                 buffer.reset();
@@ -193,6 +192,86 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
             ProgramError.unexpected("disassembly failed for target method " + targetMethod + " :" + e.getMessage());
         } finally {
             Trace.on(level);
+        }
+    }
+
+    /**
+     * Gets a sequence of objects correlating bytecode ranges with the ranges of target code in this target method. The
+     * returned sequence objects are exclusive of each other in terms of their target code ranges and they cover
+     * every target code position in this target method.
+     * @param jitTargetMethod the JIT target method
+     * @return a sequence of code translations for each bytecode
+     */
+    public static Sequence<CodeTranslation> codeTranslations(JitTargetMethod jitTargetMethod) {
+        final AppendableSequence<CodeTranslation> translations = new ArrayListSequence<CodeTranslation>();
+        int startBytecodePosition = 0;
+        int[] positionMap = jitTargetMethod.bytecodeToTargetCodePositionMap();
+        int startTargetCodePosition = positionMap[0];
+        assert startTargetCodePosition != 0;
+        translations.append(new CodeTranslation(0, 0, 0, startTargetCodePosition));
+        for (int bytecodePosition = 1; bytecodePosition != positionMap.length; ++bytecodePosition) {
+            final int targetCodePosition = positionMap[bytecodePosition];
+            if (targetCodePosition != 0) {
+                final CodeTranslation codeTranslation = new CodeTranslation(startBytecodePosition, bytecodePosition - startBytecodePosition, startTargetCodePosition, targetCodePosition - startTargetCodePosition);
+                translations.append(codeTranslation);
+                startTargetCodePosition = targetCodePosition;
+                startBytecodePosition = bytecodePosition;
+            }
+        }
+        if (startTargetCodePosition < jitTargetMethod.code().length) {
+            translations.append(new CodeTranslation(0, 0, startTargetCodePosition, jitTargetMethod.code().length - startTargetCodePosition));
+        }
+        return translations;
+    }
+
+    /**
+     * Correlates a bytecode range with a target code range. The target code range is typically the template code
+     * produced by the JIT compiler for a single JVM instruction encoded in the bytecode range.
+     *
+     * @author Doug Simon
+     */
+    static class CodeTranslation {
+
+        final int bytecodePosition;
+        final int bytecodeLength;
+        final int targetCodePosition;
+        final int targetCodeLength;
+
+        /**
+         * Creates an object that correlates a bytecode range with a target code range.
+         *
+         * @param bytecodePosition the first position in the bytecode range. This value is invalid if
+         *            {@code bytecodeLength == 0}.
+         * @param bytecodeLength the length of the bytecode range
+         * @param targetCodePosition the first position in the target code range. This value is invalid if
+         *            {@code targetCodeLength == 0}.
+         * @param targetCodeLength the length of the target code range
+         */
+        public CodeTranslation(int bytecodePosition, int bytecodeLength, int targetCodePosition, int targetCodeLength) {
+            this.bytecodeLength = bytecodeLength;
+            this.bytecodePosition = bytecodePosition;
+            this.targetCodeLength = targetCodeLength;
+            this.targetCodePosition = targetCodePosition;
+        }
+
+        /**
+         * Gets an object encapsulating the sub-range of a given bytecode array represented by this code translation.
+         *
+         * @param bytecode
+         * @return null if {@code bytecodeLength() == 0}
+         */
+        public BytecodeBlock toBytecodeBlock(byte[] bytecode) {
+            if (bytecodeLength == 0) {
+                return null;
+            }
+            return new BytecodeBlock(bytecode, bytecodePosition, bytecodePosition + bytecodeLength - 1);
+        }
+
+        @Override
+        public String toString() {
+            final String bytecode = bytecodeLength == 0 ? "[]" : "[" + bytecodePosition + " - " + (bytecodePosition + bytecodeLength - 1) + "]";
+            final String targetCode = targetCodeLength == 0 ? "[]" : "[" + targetCodePosition + " - " + (targetCodePosition + targetCodeLength - 1) + "]";
+            return bytecode + " -> " + targetCode;
         }
     }
 }

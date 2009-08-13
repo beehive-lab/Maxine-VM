@@ -30,10 +30,10 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.b.c.d.e.sparc.target.SPARCAdapterFrameGenerator.JitToOptimizedFrameAdapterGenerator.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.type.*;
@@ -55,6 +55,7 @@ import com.sun.max.vm.type.*;
  * Both compilers embed extra code in the target method to create an "adapter frame".
  *
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<SPARCAssembler> {
 
@@ -85,7 +86,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         literalBaseRegister = (GPR) jitABI.literalBaseRegister();
     }
 
-    public static SPARCAdapterFrameGenerator  jitToOptimizedCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
+    public static SPARCAdapterFrameGenerator jitToOptimizedCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new JitToOptimizedFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);
     }
 
@@ -98,62 +99,57 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
 
     /**
-     *  Mask for SPARC instruction encoding (bits 19 to 24, 30 and 31).
+     *  Mask for SPARC instruction encoding (bits 13, 19 to 24, 30 and 31).
      */
-    private static final int OP3_MASK = 0xc1f80000;
+    private static final int OP3_IMM_MASK = 0xc1f82000;
+
+    private static final int SUB_IMM_OP   = 0x80202000;
+    private static final int SAVE_IMM_OP  = 0x81e02000;
+
+    private static final int OP3_NONLOADMEMOP_MASK = 0xc0200000;
 
     private static final int DISP19_MASK = 0x7ffff;
-    private static final int SIMM13_MASK = 0xfffff;
-    private static final int MAX_SIMM_13 = 1 << 12;
+    private static final int SIMM13_MASK = 0x1fff;
+
 
     /**
-     * Encoding of OP3 and higher two bits for the SPARC jmpl instruction
-     * (i.e., the synthetic ret and retl instructions).
+     * Indicates whether the specified instruction is a subtract immediate instruction.
+     * @param instruction
+     * @return
      */
-    private static final int JMPL_OP = 0x81C00000;
-
-    private static final int SUB_OP = 0x80200000;
-
-    private static boolean isInstruction(int instruction, int op3) {
-        return (instruction & OP3_MASK) == op3;
+    private static boolean isSubImmInstruction(int instruction) {
+        return (instruction & OP3_IMM_MASK) == SUB_IMM_OP;
     }
 
     /**
-     * Returns a boolean indicating whether the specified instruction is a ret instruction.
+     * Indicates whether the specified instruction is a save with immediate instruction.
+     * @param instruction
+     * @return
      */
-    private static boolean isJmplInstruction(int instruction) {
-        return isInstruction(instruction,  JMPL_OP);
+    private static boolean isSaveImmInstruction(int instruction) {
+        return (instruction & OP3_IMM_MASK) == SAVE_IMM_OP;
     }
 
-    private static boolean isSubInstruction(int instruction) {
-        return isInstruction(instruction,  SUB_OP);
+    private static boolean isNonLoadMemOp(int instruction) {
+        return (instruction & OP3_NONLOADMEMOP_MASK) == OP3_NONLOADMEMOP_MASK;
     }
 
     private static int extractSimm13(int instruction) {
-        final int unsignedSimm13 = instruction & SIMM13_MASK;
-        if (unsignedSimm13 < MAX_SIMM_13) {
-            return unsignedSimm13;
-        }
-        final int signedSimm13 = (unsignedSimm13 - SIMM13_MASK) - 1;
-        return signedSimm13;
+        return ((instruction & SIMM13_MASK) << 19) >> 19;
     }
 
     public static int jitToOptimizedAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
         final int instruction = stackFrameWalker.readInt(adapterFirstInstruction, 0);
-        if (isSubInstruction(instruction)) {
-            // Can't use the following. It's part of the assembler generator and is not put in the vm image.
-            // return SPARCFields._simm13.extract(instruction);
+        if (isSubImmInstruction(instruction)) {
+            // Can't use the following.  It's part of the assembler generator and is not put in the vm image.
+            // return SPARCFields.simm13.extract(instruction);
             return extractSimm13(instruction);
         }
         return 0;
     }
 
-    public static SPARCAdapterFrameGenerator  optimizedToJitCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
+    public static SPARCAdapterFrameGenerator optimizedToJitCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new OptimizedToJitFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);
-    }
-
-    public static int optimizedToJitAdapterFrameSize(TargetMethod targetMethod) {
-        return OptimizedToJitFrameAdapterGenerator.adapterFrameSize(targetMethod.classMethodActor().getParameterKinds(), targetMethod.abi());
     }
 
     public static Pointer jitEntryPointBranchTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
@@ -245,7 +241,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         @Override
         protected void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPoint, Label methodEntryPoint) {
             if (isDynamicTrampoline(classMethodActor())) {
-                // No-op for dynamic trampoline.
+                // Nop for dynamic trampoline.
                 return;
             }
             final int adapterFrameSize = optimizedABI().overflowArgumentsSize(parameterLocations);
@@ -338,174 +334,187 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 }
             }
         }
+    }
+
+    /**
+     * Frame Adapter Generator for calls from optimized code to JIT-ed code.
+     * The frame adapter store the Java parameters at the top of its frame
+     * to mimic the calling convention of the JIT.
+     * The bottom of its frame comprises a floating point temporary area
+     * used to load immediate floating point values (single and double precision).
+     * This area is shared by all JIT code with a frame between this adapter and
+     * the next optimized code frame up the call stack.
+     * Next is a saving area where the instruction pointer of the caller is saved.
+     * This simplify the job of stack walkers which don't need to track the
+     * register window for this frame. The caller's stack and frame pointer
+     * can be inferred from the adapter frame pointer.
+     *
+     *             +--------------------------------+
+     *             |  opt caller saved              |
+     *             | register window                |
+     *             +--------------------------------+ < Frame pointer of adapter frame
+     *  [FP - 16]  | floating point temp area       |
+     *             +--------------------------------+
+     *  [FP - 24]  | Opt caller's RIP               |
+     *             +--------------------------------+
+     *             | JIT frame incoming             |
+     *             | Java parameters                |
+     *             +--------------------------------+ < top of adapter frame
+     *                                                  == bottom of JIT frame.
+     *
+     */
+    static class OptimizedToJitFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
+        private Label jitEntryPoint;
+
+        OptimizedToJitFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
+            super(classMethodActor, optimizingCompilerAbi);
+        }
+
+        @Override
+        public void setJitEntryPoint(Label jitEntryPoint) {
+            this.jitEntryPoint = jitEntryPoint;
+        }
+
+        @Override
+        public void emitPrologue(SPARCAssembler assembler) {
+        }
+
+        @Override
+        public void emitEpilogue(SPARCAssembler assembler) {
+            emitFrameAdapter(assembler);
+        }
+
+        @Override
+        void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
+            if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
+                assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, longScratchRegister);
+                assembler().stx(longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
+            } else {
+                assembler().lduw(optimizedCodeFramePointer, optoCompilerStackOffset32, intScratchRegister);
+                assembler().stw(intScratchRegister, optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
+            }
+        }
+
+        @Override
+        void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
+            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
+            switch (kind.asEnum) {
+                case BYTE:
+                case BOOLEAN:
+                    assembler().stb(parameterRegister.as(), optimizedCodeStackPointer, offset);
+                    break;
+                case SHORT:
+                case CHAR:
+                    assembler().sth(parameterRegister.as(), optimizedCodeStackPointer, offset);
+                    break;
+                case INT:
+                    assembler().stw(parameterRegister.as(), optimizedCodeStackPointer, offset);
+                    break;
+                case LONG:
+                case WORD:
+                case REFERENCE:
+                    assembler().stx(parameterRegister.as(), optimizedCodeStackPointer, offset);
+                    break;
+                default: {
+                    ProgramError.unexpected();
+                }
+            }
+        }
+
+        @Override
+        void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
+            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
+            switch (kind.asEnum) {
+                case FLOAT:
+                    assembler().st(parameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
+                    break;
+                case DOUBLE:
+                    assembler().std(parameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
+                    break;
+                default: {
+                    ProgramError.unexpected();
+                }
+            }
+        }
+
+        static int adapterFrameSize(Kind[] parametersKinds, TargetABI targetABI) {
+            // The adapter frame comprises space for the arguments plus spaces for the mandatory SPARC register save area,
+            // one word for the opt caller's rip (do we need this ?), and the floating point temp area, which is a staging area
+            // to load immediate floating point value (single and double precision).
+            final int parameterSize = JitStackFrameLayout.parametersFrameSize(parametersKinds);
+            return targetABI.alignFrameSize(parameterSize +
+                Word.size() +
+                SPARCJitStackFrameLayout.FLOATING_POINT_TEMP_AREA_SIZE +
+                SPARCStackFrameLayout.minStackFrameSize());
+        }
 
         /**
-         * Frame Adapter Generator for calls from optimized code to JIT-ed code.
-         * The frame adapter store the Java parameters at the top of its frame
-         * to mimic the calling convention of the JIT.
-         * The bottom of its frame comprises a floating point temporary area
-         * used to load immediate floating point values (single and double precision).
-         * This area is shared by all JIT code with a frame between this adapter and
-         * the next optimized code frame up the call stack.
-         * Next is a saving area where the instruction pointer of the caller is saved.
-         * This simplify the job of stack walkers which don't need to track the
-         * register window for this frame. The caller's stack and frame pointer
-         * can be inferred from the adapter frame pointer.
-         *
-         *             +--------------------------------+
-         *             |  opt caller saved              |
-         *             | register window                |
-         *             +--------------------------------+ < Frame pointer of adapter frame
-         *  [FP - 16]  | floating point temp area       |
-         *             +--------------------------------+
-         *  [FP - 24]  | Opt caller's RIP               |
-         *             +--------------------------------+
-         *             | JIT frame incoming             |
-         *             | Java parameters                |
-         *             +--------------------------------+ < top of adapter frame
-         *                                                  == bottom of JIT frame.
-         *
+         * Emits instructions to adapt calls from optimized code to JIT code. A register window is provided for the subsequent sequence of JIT-compiled method.
+         * The adapter then pushes the register arguments on the stack, followed by the memory arguments building a stack of arguments as expected by the JIT.
+         * A call to the entry point is then made.
+         * On return, the register window is popped.
          */
-        static class OptimizedToJitFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
-            private Label jitEntryPoint;
+        @Override
+        protected void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPoint, Label methodEntryPoint) {
+            final int adapterFrameSize = adapterFrameSize(parametersKinds, optimizedABI().targetABI());
+            int stackOffset = SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+            final int ripSaveAreaOffset =  SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA - Word.size();
 
-            OptimizedToJitFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
-                super(classMethodActor, optimizingCompilerAbi);
+            assert SPARCAssembler.isSimm13(adapterFrameSize);
+            assert SPARCAssembler.isSimm13(stackOffset + adapterFrameSize);
+
+            SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister);
+            assembler().stx(GPR.I7, optimizedCodeFramePointer, ripSaveAreaOffset);
+
+            // emit the parameters in reverse order.
+            for (int i = parameterLocations.length - 1; i >= 0; i--) {
+                adaptParameter(parametersKinds[i], parameterLocations[i], stackOffset);
+                stackOffset += JitStackFrameLayout.stackSlotSize(parametersKinds[i]);
             }
+            // Initialized JIT frame pointer. Stack walker assumes that they have a valid frame pointer in the JIT frame pointer
+            // FIXME: we may remove this if we change the JIT abi to use %i6 as well as their frame pointer.
 
-            @Override
-            public void setJitEntryPoint(Label jitEntryPoint) {
-                this.jitEntryPoint = jitEntryPoint;
-            }
+            // We store the unbiased frame pointer in the JITed frame pointer.
+            // This allow JITed code return template to avoid checking whether the caller is an adapter frame when restoring the
+            // their literal base. Instead, they can blindly load at  FP - 8. When the caller is an adapter, this is harmless (it loads
+            // an arbitrary value off the floating point temp area).
+            assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
 
-            @Override
-            public void emitPrologue(SPARCAssembler assembler) {
-            }
-
-            @Override
-            public void emitEpilogue(SPARCAssembler assembler) {
-                emitFrameAdapter(assembler);
-            }
-
-            @Override
-            void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
-                if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                    assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, longScratchRegister);
-                    assembler().stx(longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
+            final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
+            assembler().call(methodEntryPoint);
+            if (jitedCodeFrameSize > 0) {
+                if (largeFrame) {
+                    assembler().sethi(assembler().hi(jitedCodeFrameSize), jitScratchRegister);
                 } else {
-                    assembler().lduw(optimizedCodeFramePointer, optoCompilerStackOffset32, intScratchRegister);
-                    assembler().stw(intScratchRegister, optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
+                    assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
                 }
+            } else {
+                assembler().nop();
             }
+            // Return from the adapter frame
+            assembler().bindLabel(adapterReturnPoint);
+            // The %i7 and %i6 were untouched by JIT-ed code and still comprises, respectively, the caller's PC and stack pointer.
+            // Results by the JITed code follows the JIT calling convention and are stored in  %o0 and %f0.
+            // We need to move %o0 in the %o0 of the caller's window.
+            assembler().ret();
+            assembler().restore(GPR.O0, GPR.G0, GPR.O0);
+            assembler().bindLabel(jitEntryPoint);
+            // Save the caller's literal base. It's saving area for the literal base is immediately below its frame pointer.
+            assembler().stx(literalBaseRegister, jitedCodeFramePointer, -STACK_SLOT_SIZE);
+            assembler().bindLabel(methodEntryPoint);
+        }
+    }
 
-            @Override
-            void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
-                final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-                switch (kind.asEnum) {
-                    case BYTE:
-                    case BOOLEAN:
-                        assembler().stb(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                        break;
-                    case SHORT:
-                    case CHAR:
-                        assembler().sth(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                        break;
-                    case INT:
-                        assembler().stw(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                        break;
-                    case LONG:
-                    case WORD:
-                    case REFERENCE:
-                        assembler().stx(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                        break;
-                    default: {
-                        ProgramError.unexpected();
-                    }
-                }
+    public static int optToJitAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer optimizedEntryPoint) {
+        for (int offset = SPARCEirPrologue.sizeOfFrameBuilderInstructions(0) - 4; /*empty*/; offset += 4) {
+            final int instruction = stackFrameWalker.readInt(optimizedEntryPoint, offset);
+            if (isSaveImmInstruction(instruction)) {
+                return -extractSimm13(instruction);
             }
-
-            @Override
-            void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
-                final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-                switch (kind.asEnum) {
-                    case FLOAT:
-                        assembler().st(parameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
-                        break;
-                    case DOUBLE:
-                        assembler().std(parameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
-                        break;
-                    default: {
-                        ProgramError.unexpected();
-                    }
-                }
-            }
-
-            static int adapterFrameSize(Kind[] parametersKinds, TargetABI targetABI) {
-                // The adapter frame comprises space for the arguments plus spaces for the mandatory SPARC register save area,
-                // one word for the opt caller's rip (do we need this ?), and the floating point temp area, which is a staging area
-                // to load immediate floating point value (single and double precision).
-                final int parameterSize = JitStackFrameLayout.parametersFrameSize(parametersKinds);
-                return targetABI.alignFrameSize(parameterSize +
-                                Word.size() +
-                                SPARCJitStackFrameLayout.FLOATING_POINT_TEMP_AREA_SIZE +
-                                SPARCStackFrameLayout.minStackFrameSize());
-            }
-
-            /**
-             * Emits instructions to adapt calls from optimized code to JIT code. A register window is provided for the subsequent sequence of JIT-compiled method.
-             * The adapter then pushes the register arguments on the stack, followed by the memory arguments building a stack of arguments as expected by the JIT.
-             * A call to the entry point is then made.
-             * On return, the register window is popped.
-             */
-            @Override
-            protected void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPoint, Label methodEntryPoint) {
-                final int adapterFrameSize = adapterFrameSize(parametersKinds, optimizedABI().targetABI());
-                int stackOffset = SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
-                final int ripSaveAreaOffset =  SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA - Word.size();
-
-                assert SPARCAssembler.isSimm13(adapterFrameSize);
-                assert SPARCAssembler.isSimm13(stackOffset + adapterFrameSize);
-
-                SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister);
-                assembler().stx(GPR.I7, optimizedCodeFramePointer, ripSaveAreaOffset);
-
-                // emit the parameters in reverse order.
-                for (int i = parameterLocations.length - 1; i >= 0; i--) {
-                    adaptParameter(parametersKinds[i], parameterLocations[i], stackOffset);
-                    stackOffset += JitStackFrameLayout.stackSlotSize(parametersKinds[i]);
-                }
-                // Initialized JIT frame pointer. Stack walker assumes that they have a valid frame pointer in the JIT frame pointer
-                // FIXME: we may remove this if we change the JIT abi to use %i6 as well as their frame pointer.
-
-                // We store the unbiased frame pointer in the JITed frame pointer.
-                // This allow JITed code return template to avoid checking whether the caller is an adapter frame when restoring the
-                // their literal base. Instead, they can blindly load at  FP - 8. When the caller is an adapter, this is harmless (it loads
-                // an arbitrary value off the floating point temp area).
-                assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
-
-                final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
-                assembler().call(methodEntryPoint);
-                if (jitedCodeFrameSize > 0) {
-                    if (largeFrame) {
-                        assembler().sethi(assembler().hi(jitedCodeFrameSize), jitScratchRegister);
-                    } else {
-                        assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
-                    }
-                } else {
-                    assembler().nop();
-                }
-                // Return from the adapter frame
-                assembler().bindLabel(adapterReturnPoint);
-               // The %i7 and %i6 were untouched by JIT-ed code and still comprises, respectively, the caller's PC and stack pointer.
-                // Results by the JITed code follows the JIT calling convention and are stored in  %o0 and %f0.
-                // We need to move %o0 in the %o0 of the caller's window.
-                assembler().ret();
-                assembler().restore(GPR.O0, GPR.G0, GPR.O0);
-                assembler().bindLabel(jitEntryPoint);
-                // Save the caller's literal base. It's saving area for the literal base is immediately below its frame pointer.
-                assembler().stx(literalBaseRegister, jitedCodeFramePointer, -STACK_SLOT_SIZE);
-                assembler().bindLabel(methodEntryPoint);
+            if (isNonLoadMemOp(instruction)) {
+                FatalError.unexpected("Expected SAVE instruction.");
             }
         }
     }
+
 }

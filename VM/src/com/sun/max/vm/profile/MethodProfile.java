@@ -21,7 +21,6 @@
 package com.sun.max.vm.profile;
 
 import com.sun.max.program.ProgramError;
-import com.sun.max.annotate.FOLD;
 import com.sun.max.annotate.INLINE;
 
 import java.util.ArrayList;
@@ -135,7 +134,6 @@ public class MethodProfile {
      * @return the int array that stores the data of this profile
      */
     @INLINE
-    @FOLD
     public final int[] rawData() {
         return data;
     }
@@ -314,7 +312,7 @@ public class MethodProfile {
         }
 
         private void setLastBci(int bci) {
-            if (bci <= lastBci) {
+            if (bci < lastBci) {
                 throw ProgramError.unexpected("Profiling information not added in increasing BCI order: " + bci);
             }
             lastBci = bci;
