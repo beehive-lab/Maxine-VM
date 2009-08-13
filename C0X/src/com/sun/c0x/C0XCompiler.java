@@ -277,7 +277,7 @@ public class C0XCompiler {
                 case Bytecodes.DDIV           : // fall through
                 case Bytecodes.DREM           : doubleNeg(opcode); break;
                 case Bytecodes.DNEG           : doubleOp2(opcode); break;
-                case Bytecodes.IINC           : increment(); break;
+                case Bytecodes.IINC           : increment(stream.readLocalIndex()); break;
                 case Bytecodes.I2L            : convert(opcode, BasicType.Int   , BasicType.Long  ); break;
                 case Bytecodes.I2F            : convert(opcode, BasicType.Int   , BasicType.Float ); break;
                 case Bytecodes.I2D            : convert(opcode, BasicType.Int   , BasicType.Double); break;
@@ -372,256 +372,256 @@ public class C0XCompiler {
     private void doExtendedBytecode(CiBytecodeExtension.Bytecode extcode) {
         Location[] args = popN(extcode.signatureType().argumentCount(false));
         pushZ(extcode.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented(args);
+        unimplemented("extended bytecode", (Object[]) args);
     }
 
     void breakpoint(int bci) {
-        Util.nonFatalUnimplemented("emit breakpoint instruction @ " + bci);
+        unimplemented("emit breakpoint instruction", bci);
     }
 
     void emitInstrumentation(int bci) {
-        Util.nonFatalUnimplemented("emit instrumentation for block @ " + bci);
+        unimplemented("emit instrumentation for block", bci);
     }
 
     void emitExceptionLoad(int bci) {
         currentState.stackIndex = maxLocals; // clear the Java operand stack
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit load of exception object @ " + bci);
+        unimplemented("emit load of exception object", bci);
     }
 
     void emitSafepoint(int bci) {
-        Util.nonFatalUnimplemented("emit safepoint code @ " + bci);
+        unimplemented("emit safepoint code", bci);
     }
 
     void newMultiArray(char cpi, int rank) {
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit multianewarray");
+        unimplemented("emit multianewarray");
     }
 
     void monitorExit(int bci) {
         Location object = pop1();
-        Util.nonFatalUnimplemented("emit monitor exit code @ " + bci);
+        unimplemented("emit monitor exit code @ ", bci, object);
     }
 
     void monitorEnter(int bci) {
         Location object = pop1();
-        Util.nonFatalUnimplemented("emit monitor enter code @ " + bci);
+        unimplemented("emit monitor enter code @ ", bci, object);
     }
 
     void instanceOf(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         push1(produce(BasicType.Boolean));
-        Util.nonFatalUnimplemented("emit instanceof code");
+        unimplemented("emit instanceof code ", type, object);
     }
 
     void checkCast(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         push1(object);
-        Util.nonFatalUnimplemented("emit checkcast code");
+        unimplemented("emit checkcast code ", type, object);
     }
 
     void arrayLength() {
         Location object = pop1();
         push1(object);
-        Util.nonFatalUnimplemented("emit array length code");
+        unimplemented("emit array length code ", object);
     }
 
     void newObjectArray(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location length = pop1();
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit new object array");
+        unimplemented("emit newObject code ", type, length);
     }
 
     void newTypeArray(int typeCode) {
         BasicType elemType = BasicType.fromArrayTypeCode(typeCode);
         pop1();
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit new type array");
+        unimplemented("emit new type array ", elemType);
     }
 
     void newInstance(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         push1(produce(BasicType.Object));
-        Util.nonFatalUnimplemented("emit new instance");
+        unimplemented("emit new instance ", type);
     }
 
     void invokeInterface(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentCount(true));
         pushZ(ciMethod.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented("emit invoke interface");
+        unimplemented("emit invoke", (Object[]) args);
     }
 
     void invokeStatic(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentCount(false));
         pushZ(ciMethod.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented("emit invoke static");
+        unimplemented("emit invoke", (Object[]) args);
     }
 
     void invokeSpecial(CiMethod ciMethod, Object o) {
         Location[] args = popN(ciMethod.signatureType().argumentCount(true));
         pushZ(ciMethod.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented("emit invoke special");
+        unimplemented("emit invoke", (Object[]) args);
     }
 
     void invokeVirtual(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentCount(true));
         pushZ(ciMethod.signatureType().returnBasicType());
-        Util.nonFatalUnimplemented("emit invoke virtual");
+        unimplemented("emit invoke", (Object[]) args);
     }
 
     void putField(CiField ciField) {
         Location object = pop1();
         Location value = popX(ciField.basicType());
-        Util.nonFatalUnimplemented("emit put field");
+        unimplemented("emit put field", object, value);
     }
 
     void getField(CiField ciField) {
         Location object = pop1();
         pushX(produce(ciField.basicType()), ciField.basicType());
-        Util.nonFatalUnimplemented("emit get field");
+        unimplemented("emit get field", object);
     }
 
     void putStatic(CiField ciField) {
         Location value = popX(ciField.basicType());
-        Util.nonFatalUnimplemented("emit put static");
+        unimplemented("emit put static", value);
     }
 
     void getStatic(CiField ciField) {
         pushX(produce(ciField.basicType()), ciField.basicType());
-        Util.nonFatalUnimplemented("emit get static");
+        unimplemented("emit get static");
     }
 
     void doThrow(int i) {
         Location thrown = pop1();
-        Util.nonFatalUnimplemented("emit throw");
+        unimplemented("emit throw", thrown);
     }
 
     void doIfNull(Condition cond) {
         Location obj = pop1();
-        Util.nonFatalUnimplemented("emit if null");
+        unimplemented("emit if null", obj);
     }
 
     void doReturn(Location value) {
-        Util.nonFatalUnimplemented("emit return");
+        unimplemented("emit return", value);
     }
 
     void doTableswitch() {
         Location key = pop1();
-        Util.nonFatalUnimplemented("emit table switch");
+        unimplemented("emit table switch", key);
     }
 
     void doLookupswitch() {
         Location key = pop1();
-        Util.nonFatalUnimplemented("emit lookup switch");
+        unimplemented("emit lookup switch", key);
     }
 
     void doRet(int targetBCI) {
-        Util.nonFatalUnimplemented("emit ret -> " + targetBCI);
+        unimplemented("emit ret -> ", targetBCI);
     }
 
     void doJsr(int targetBCI) {
-        Util.nonFatalUnimplemented("emit jsr -> " + targetBCI);
+        unimplemented("emit jsr -> ", targetBCI);
     }
 
     void doGoto(int bci, int targetBCI) {
-        Util.nonFatalUnimplemented("emit goto @ " + bci + " -> " + targetBCI);
+        unimplemented("emit goto @ ", bci, targetBCI);
     }
 
     void doIfSame(BasicType basicType, Condition condition) {
         Location r = pop1();
         Location l = pop1();
-        Util.nonFatalUnimplemented("emit if same");
+        unimplemented("emit if same", r, l);
     }
 
     void doIfZero(Condition condition) {
         Location r = pop1();
-        Util.nonFatalUnimplemented("emit if zero");
+        unimplemented("emit if zero", r);
     }
 
-    void increment() {
-        Util.nonFatalUnimplemented("emit increment");
+    void increment(int index) {
+        unimplemented("emit increment");
     }
 
     void compareOp(BasicType basicType, int opcode) {
         Location r = pop1();
         Location l = pop1();
         push1(produce(BasicType.Int));
-        Util.nonFatalUnimplemented("emit compare op");
+        unimplemented("emit compare op", r, l);
     }
 
     void convert(int opcode, BasicType from, BasicType to) {
         Location value = popX(from);
         pushX(produce(to), to);
-        Util.nonFatalUnimplemented("emit convert");
+        unimplemented("emit convert", value);
     }
 
     void arrayLoad(BasicType basicType) {
         Location index = pop1();
         Location array = pop1();
         push1(produce(basicType));
-        Util.nonFatalUnimplemented("emit array load");
+        unimplemented("emit array load", index, array);
     }
 
     void arrayStore(BasicType basicType) {
         Location value = popX(basicType);
         Location index = pop1();
         Location array = pop1();
-        Util.nonFatalUnimplemented("emit array store");
+        unimplemented("emit array store", value, index, array);
     }
 
     void intOp2(int opcode) {
         Location r = pop1();
         Location l = pop1();
         push1(produce(BasicType.Float));
-        Util.nonFatalUnimplemented("emit integer operation");
+        unimplemented("emit integer operation", r, l);
     }
 
     void longOp2(int opcode) {
         Location r = pop2();
         Location l = pop2();
         push2(produce(BasicType.Long));
-        Util.nonFatalUnimplemented("emit long operation");
+        unimplemented("emit long operation", r, l);
     }
 
     void floatOp2(int opcode) {
         Location r = pop1();
         Location l = pop1();
         push1(produce(BasicType.Float));
-        Util.nonFatalUnimplemented("emit float operation");
+        unimplemented("emit float operation", r, l);
     }
 
     void doubleOp2(int opcode) {
         Location r = pop2();
         Location l = pop2();
         push2(produce(BasicType.Double));
-        Util.nonFatalUnimplemented("emit double operation");
+        unimplemented("emit double operation", r, l);
     }
 
     void intNeg(int opcode) {
         Location r = pop1();
         push1(produce(BasicType.Int));
-        Util.nonFatalUnimplemented("integer negation");
+        unimplemented("integer negation", r);
     }
 
     void longNeg(int opcode) {
         Location r = pop2();
         push2(produce(BasicType.Long));
-        Util.nonFatalUnimplemented("long negation");
+        unimplemented("long negation", r);
     }
 
     void floatNeg(int opcode) {
         Location r = pop1();
         push1(produce(BasicType.Float));
-        Util.nonFatalUnimplemented("float negation");
+        unimplemented("float negation", r);
     }
 
     void doubleNeg(int opcode) {
         Location r = pop2();
         push2(produce(BasicType.Double));
-        Util.nonFatalUnimplemented("double negation");
+        unimplemented("double negation", r);
     }
 
     void loadConstant(int bci) {
@@ -890,5 +890,13 @@ public class C0XCompiler {
     Location emitObject(Object val) {
         Util.nonFatalUnimplemented("emit code to load the object");
         return produce(BasicType.Object);
+    }
+    
+    void unimplemented(String str, Object... params) {
+    	Util.nonFatalUnimplemented(params);
+    }
+
+    void unimplemented(String str, int param) {
+    	Util.nonFatalUnimplemented(param);
     }
 }

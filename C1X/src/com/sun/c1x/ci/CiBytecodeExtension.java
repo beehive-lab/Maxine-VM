@@ -41,27 +41,27 @@ public interface CiBytecodeExtension {
          * Gets the length of this bytecode.
          * @return the length of this bytecode in bytes
          */
-        public int length();
+        int length();
 
         /**
          * Gets the signature type of this bytecode, which expresses the changes to the
          * stack, including the input argument types and the output type.
          * @return a signature describing this bytecode
          */
-        public CiSignature signatureType();
+        CiSignature signatureType();
 
         /**
          * Checks whether this bytecode can trap--i.e. generate an exception.
          * @return {@code true} if this bytecode can generate an exception
          */
-        public boolean canTrap();
+        boolean canTrap();
 
         /**
          * For optimization only. Computes a value number for this bytecode, not considering its
          * inputs. If this bytecode cannot be value numbered, this method should return {@code 0}.
          * @return a non-zero value number for this bytecode if it can be value numbered; {@code 0} otherwise
          */
-        public int valueNumber();
+        int valueNumber();
     }
 
     /**
@@ -74,5 +74,5 @@ public interface CiBytecodeExtension {
      * @return an instance of {@link Bytecode} if this bytecode extension defines an extended
      * bytecode for this opcode in this code; {@code null} otherwise
      */
-    public Bytecode getBytecode(int opcode, int bci, byte[] code);
+    Bytecode getBytecode(int opcode, int bci, byte[] code);
 }
