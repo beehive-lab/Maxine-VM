@@ -21,7 +21,6 @@
 package com.sun.max.vm.profile;
 
 import com.sun.max.program.ProgramError;
-import com.sun.max.annotate.FOLD;
 import com.sun.max.annotate.INLINE;
 
 import java.util.ArrayList;
