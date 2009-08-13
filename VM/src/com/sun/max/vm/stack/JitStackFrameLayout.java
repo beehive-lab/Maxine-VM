@@ -57,6 +57,13 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     public static final int JIT_STACK_BIAS = getJitStackBias();
 
+    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
+
+    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
+
+    private static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
+    private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
+
     /**
      * The number of normal stack slots per JIT stack slot. See {@link #JIT_SLOT_SIZE} for an explanation of why
      * JIT stack slots may differ in size from normal stack slots.
@@ -66,10 +73,6 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
     static {
         assert JIT_SLOT_SIZE % STACK_SLOT_SIZE == 0 : "JIT_SLOT_SIZE must be an even multiple of STACK_SLOT_SIZE";
     }
-
-    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
-
-    private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
     /**
      * Return the offset of a value of a given kind within a word. This helps hiding endianness issues for
@@ -102,9 +105,6 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
     public static int stackSlotSize(Kind kind) {
         return kind.isCategory1() ? JIT_SLOT_SIZE : 2 * JIT_SLOT_SIZE;
     }
-
-    private static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
-    private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
         if (kind.width.equals(WordWidth.BITS_64)) {

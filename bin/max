@@ -190,6 +190,14 @@ if [ -z "${MAXINE_OS}" ]; then
     fi
 fi
 
+function get_project_cp() {
+	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
+		echo ${maxine_dir}/out/production/$1
+	else
+		echo ${maxine_dir}/$1/bin
+	fi
+}
+
 # The set of projects whose sources are to be compiled. The order of this list must
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
@@ -211,7 +219,7 @@ fi
 
 for project in ${projects[@]}; do
     project_dir=${project/:*/}
-    maxine_cp=${maxine_cp}:${maxine_dir}/${project_dir}/bin
+    maxine_cp=${maxine_cp}:$(get_project_cp ${project_dir})
 done
 
 # create the augmented classpath for the extra projects
@@ -423,7 +431,7 @@ function run_build() {
             jtt_tests="$jtt_tests jtt/micro"
             jtt_tests="$jtt_tests jtt/jvmni"
             jtt_tests="$jtt_tests jtt/jni"
-            run ${jvm_exe} -cp ../../Base/bin:../bin test.com.sun.max.vm.compiler.JavaTester -scenario=target -run-scheme-package=all -native-tests $jtt_tests > /dev/null 
+            run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) test.com.sun.max.vm.compiler.JavaTester -scenario=target -run-scheme-package=all -native-tests $jtt_tests > /dev/null 
             result=$?
             popd >/dev/null
             if [ $result -ne 0 ]; then
@@ -910,7 +918,7 @@ function run_jtest() {
             -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
                 echo "where Java Tester options include:"
-                run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester -help
+                run ${maxine_vm} -classpath $(get_project_cp Base):$(get_project_cp VM) test.com.sun.max.vm.compiler.JavaTester -help
                 return
                 ;;
             * )
@@ -919,7 +927,7 @@ function run_jtest() {
         esac
         shift
     done
-    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${maxine_vm} -classpath $(get_project_cp Base):$(get_project_cp VM) $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================
@@ -929,7 +937,7 @@ function run_jtest() {
 helloworld_help="run a basic 'hello world' program on the Maxine VM"
 
 function run_helloworld() {
-    run ${maxine_vm} -classpath ${maxine_dir}/VM/bin "$@" test.output.HelloWorld
+    run ${maxine_vm} -classpath $(get_project_cp VM) "$@" test.output.HelloWorld
 }
 
 #=======================================
@@ -980,10 +988,11 @@ test_help="run some or all of the Maxine tests
     Use \"max test -help\" to see what other options this command accepts."
 
 function run_test() {
-    rm -rf maxine-tester
-    mkdir maxine-tester
+    if [ -d maxine-tester ]; then
+	rm -f `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+    fi
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
-        -java-executable="${jvm}" "-java-vm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
+        -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
     result=${PIPESTATUS[0]}
     logs=test-logs.zip
     zip -q -r $logs maxine-tester/console `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
@@ -1010,7 +1019,7 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
     Use \"max gate -help\" to see what other options this command accepts."
 
 function run_gate() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-executable="${jvm}" "-java-vm-args=${jvm_args}" ${gate_presets} "$@"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
 }
 
 #=======================================
