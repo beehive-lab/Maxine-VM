@@ -25,7 +25,6 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -58,7 +57,7 @@ public abstract class AddressInputField extends JTextField {
 
     protected void updateView() {
         numberOfDigits = upperBound.toUnsignedString(radix).length();
-        final String unsignedString = Strings.padLengthWithZeroes(numberOfDigits, value.toUnsignedString(radix));
+        final String unsignedString = value.toUnsignedString(radix);
         setText(unsignedString);
     }
 
