@@ -48,6 +48,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * Access to an instance of the Maxine VM.
+ * <br>
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
@@ -402,22 +403,30 @@ public interface MaxVM {
     TeleObject findObjectByOID(long id);
 
     /**
-     * Scans VM memory backwards (smaller address) for an object.
+     * Finds an object whose memory cell begins at the specified address.
      *
-     * @param address search starts with word preceding this address
-     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @param cellAddress memory location in the VM
      * @return surrogate for a VM object, null if none found
      */
-    TeleObject findObjectPreceding(Address address, long maxSearchExtent);
+    TeleObject findObjectAt(Address cellAddress);
 
     /**
-     * Scans VM memory forward (larger address) for an object.
+     * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
      *
-     * @param address search starts with word following this address
+     * @param cellAddress search starts with word preceding this address
      * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
      * @return surrogate for a VM object, null if none found
      */
-    TeleObject findObjectFollowing(Address address, long maxSearchExtent);
+    TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent);
+
+    /**
+     * Scans VM memory forward (larger address) for an object whose cell begins at the specified address.
+     *
+     * @param cellAddress search starts with word following this address
+     * @param maxSearchExtent maximum number of bytes to search, unbounded if 0.
+     * @return surrogate for a VM object, null if none found
+     */
+    TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent);
 
     /**
      * @param id  Class ID of a {@link ClassActor} in the VM.
