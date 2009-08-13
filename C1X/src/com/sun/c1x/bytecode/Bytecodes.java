@@ -242,6 +242,7 @@ public class Bytecodes {
     private static final int FLAG_ASSOCIATIVE = 4;
     private static final int FLAG_LOAD = 8;
     private static final int FLAG_STORE = 16;
+    private static final int FLAG_IMPLICIT = 32;
 
     private static final String[] names = new String[NUM_JAVA_CODES];
     private static final byte[] flags = new byte[NUM_JAVA_CODES];
@@ -295,14 +296,14 @@ public class Bytecodes {
         def(ALOAD_1             , "aload_1"             , "b"    , FLAG_LOAD);
         def(ALOAD_2             , "aload_2"             , "b"    , FLAG_LOAD);
         def(ALOAD_3             , "aload_3"             , "b"    , FLAG_LOAD);
-        def(IALOAD              , "iaload"              , "b"    , FLAG_TRAP);
-        def(LALOAD              , "laload"              , "b"    , FLAG_TRAP);
-        def(FALOAD              , "faload"              , "b"    , FLAG_TRAP);
-        def(DALOAD              , "daload"              , "b"    , FLAG_TRAP);
-        def(AALOAD              , "aaload"              , "b"    , FLAG_TRAP);
-        def(BALOAD              , "baload"              , "b"    , FLAG_TRAP);
-        def(CALOAD              , "caload"              , "b"    , FLAG_TRAP);
-        def(SALOAD              , "saload"              , "b"    , FLAG_TRAP);
+        def(IALOAD              , "iaload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(LALOAD              , "laload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(FALOAD              , "faload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(DALOAD              , "daload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(AALOAD              , "aaload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(BALOAD              , "baload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(CALOAD              , "caload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(SALOAD              , "saload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
         def(ISTORE              , "istore"              , "bi"   , FLAG_STORE);
         def(LSTORE              , "lstore"              , "bi"   , FLAG_STORE);
         def(FSTORE              , "fstore"              , "bi"   , FLAG_STORE);
@@ -328,14 +329,14 @@ public class Bytecodes {
         def(ASTORE_1            , "astore_1"            , "b"    , FLAG_STORE);
         def(ASTORE_2            , "astore_2"            , "b"    , FLAG_STORE);
         def(ASTORE_3            , "astore_3"            , "b"    , FLAG_STORE);
-        def(IASTORE             , "iastore"             , "b"    , FLAG_TRAP);
-        def(LASTORE             , "lastore"             , "b"    , FLAG_TRAP);
-        def(FASTORE             , "fastore"             , "b"    , FLAG_TRAP);
-        def(DASTORE             , "dastore"             , "b"    , FLAG_TRAP);
-        def(AASTORE             , "aastore"             , "b"    , FLAG_TRAP);
-        def(BASTORE             , "bastore"             , "b"    , FLAG_TRAP);
-        def(CASTORE             , "castore"             , "b"    , FLAG_TRAP);
-        def(SASTORE             , "sastore"             , "b"    , FLAG_TRAP);
+        def(IASTORE             , "iastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(LASTORE             , "lastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(FASTORE             , "fastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(DASTORE             , "dastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(AASTORE             , "aastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(BASTORE             , "bastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(CASTORE             , "castore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(SASTORE             , "sastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
         def(POP                 , "pop"                 , "b"    );
         def(POP2                , "pop2"                , "b"    );
         def(DUP                 , "dup"                 , "b"    );
@@ -357,12 +358,12 @@ public class Bytecodes {
         def(LMUL                , "lmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
         def(FMUL                , "fmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
         def(DMUL                , "dmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(IDIV                , "idiv"                , "b"    , FLAG_TRAP);
-        def(LDIV                , "ldiv"                , "b"    , FLAG_TRAP);
+        def(IDIV                , "idiv"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(LDIV                , "ldiv"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
         def(FDIV                , "fdiv"                , "b"    );
         def(DDIV                , "ddiv"                , "b"    );
-        def(IREM                , "irem"                , "b"    , FLAG_TRAP);
-        def(LREM                , "lrem"                , "b"    , FLAG_TRAP);
+        def(IREM                , "irem"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def(LREM                , "lrem"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
         def(FREM                , "frem"                , "b"    );
         def(DREM                , "drem"                , "b"    );
         def(INEG                , "ineg"                , "b"    );
@@ -429,8 +430,8 @@ public class Bytecodes {
         def(RETURN              , "return"              , "b"    , FLAG_TRAP);
         def(GETSTATIC           , "getstatic"           , "bjj"  , FLAG_TRAP);
         def(PUTSTATIC           , "putstatic"           , "bjj"  , FLAG_TRAP);
-        def(GETFIELD            , "getfield"            , "bjj"  , FLAG_TRAP);
-        def(PUTFIELD            , "putfield"            , "bjj"  , FLAG_TRAP);
+        def(GETFIELD            , "getfield"            , "bjj"  , FLAG_TRAP | FLAG_IMPLICIT);
+        def(PUTFIELD            , "putfield"            , "bjj"  , FLAG_TRAP | FLAG_IMPLICIT);
         def(INVOKEVIRTUAL       , "invokevirtual"       , "bjj"  , FLAG_TRAP);
         def(INVOKESPECIAL       , "invokespecial"       , "bjj"  , FLAG_TRAP);
         def(INVOKESTATIC        , "invokestatic"        , "bjj"  , FLAG_TRAP);
@@ -451,7 +452,7 @@ public class Bytecodes {
         def(IFNONNULL           , "ifnonnull"           , "boo"  );
         def(GOTO_W              , "goto_w"              , "boooo");
         def(JSR_W               , "jsr_w"               , "boooo");
-        def(BREAKPOINT          , "breakpoint"          , "b"    , FLAG_TRAP);
+        def(BREAKPOINT          , "breakpoint"          , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
     }
     // Checkstyle: resume
 
