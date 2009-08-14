@@ -150,8 +150,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "value", String.class);
     public final TeleInstanceReferenceFieldAccess TargetABI_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetABI.class, "callEntryPoint", CallEntryPoint.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_abi = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "abi", TargetABI.class);
-    public final TeleInstanceReferenceFieldAccess TargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "catchBlockPositions", int[].class);
-    public final TeleInstanceReferenceFieldAccess TargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "catchRangePositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchBlockPositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchRangePositions", int[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "classMethodActor", ClassMethodActor.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");

@@ -32,6 +32,7 @@ import com.sun.c1x.value.*;
  * The <code>CodeEmitInfo</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
 public class CodeEmitInfo {
@@ -42,8 +43,6 @@ public class CodeEmitInfo {
     public OopMap oopMap;
     private ValueStack stack; // used by deoptimization (contains also monitors
     private int bci;
-    private CodeEmitInfo next;
-    private int id;
 
     public CodeEmitInfo(CodeEmitInfo info) {
         this(info, false);
@@ -57,8 +56,6 @@ public class CodeEmitInfo {
         this.oopMap = null;
         this.stack = stack;
         this.exceptionHandlers = exceptionHandlers;
-        this.next = null;
-        this.id = -1;
         assert this.stack != null : "must be non null";
         assert bci == C1XOptions.InvocationEntryBci || Bytecodes.isDefined(scope().method.javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
     }
@@ -71,8 +68,6 @@ public class CodeEmitInfo {
         this.scopeDebugInfo = null;
         this.stack = null;
         this.exceptionHandlers = null;
-        this.next = null;
-        this.id = -1;
     }
 
     // make a copy
@@ -163,22 +158,5 @@ public class CodeEmitInfo {
             scopeDebugInfo.recordDebugInfo(recorder, pcOffset);
         }
         recorder.endSafepoint(pcOffset);
-    }
-
-    public CodeEmitInfo next() {
-        return next;
-    }
-
-    public void setNext(CodeEmitInfo next) {
-        this.next = next;
-    }
-
-    public int id() {
-        return id;
-    }
-
-    // TODO nothing for now
-    public void setId(int id) {
-        this.id = id;
     }
 }

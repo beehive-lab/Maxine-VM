@@ -162,8 +162,8 @@ public abstract class FrameMap {
         return reservedArgumentAreaSize;
     }
 
-    public Address addressForMonitorLock(int monitorNo) {
-        return Util.nonFatalUnimplemented(null);
+    public int addressForMonitorLock(int monitorNo) {
+        return Util.nonFatalUnimplemented(0);
     }
 
     public Address addressForMonitorObject(int i) {
@@ -204,7 +204,7 @@ public abstract class FrameMap {
     }
 
     private int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundTo(compilation.target.firstAvailableSpInFrame + reservedArgumentAreaSize, Util.sizeofDouble()) +
+        int endOfSpills = Util.roundTo(compilation.target.firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) +
         numSpills * spillSlotSizeInBytes;
       int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
       return offset;

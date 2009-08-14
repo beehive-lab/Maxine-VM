@@ -194,7 +194,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case EXCEPTION_HANDLING: {
                 assert !isTopFrame;
                 // Record this JIT -> OPT adapter frame.
-                final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 unwindingContext.record(stackPointer, stackFrameWalker.framePointer());
                 break;
             }
@@ -323,10 +323,10 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
+                final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+                final Throwable throwable = stackUnwindingContext.throwable;
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                    final Throwable throwable = stackUnwindingContext.throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();
@@ -337,7 +337,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         unwind(throwable, catchAddress, stackPointer);
                     }
                 }
-                final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 unwindingContext.record(stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 break;
             }
@@ -414,10 +414,5 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return framePointer;
-    }
-
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new SPARCStackUnwindingContext(stackPointer, framePointer, throwable);
     }
 }

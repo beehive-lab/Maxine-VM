@@ -18,12 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.except;
+
 /*
  * @Harness: java
  * @Runs: 0 = 0; 2 = !java.lang.ClassCastException; 3 = !java.lang.ClassCastException; 4 = 4
  */
-package jtt.except;
-
 public class BC_checkcast {
     static Object object2 = new Object();
     static Object object3 = "";

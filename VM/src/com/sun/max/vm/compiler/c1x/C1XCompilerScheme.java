@@ -26,7 +26,6 @@ import com.sun.max.vm.AbstractVMScheme;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameWalker;
-import com.sun.max.vm.stack.StackUnwindingContext;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.actor.member.VirtualMethodActor;
 import com.sun.max.vm.actor.member.ClassMethodActor;
@@ -102,7 +101,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             // configure the allocatable registers
             List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
             for (Register r : arch.registers) {
-                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.exceptionOopRegister()) {
+                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.threadRegister()) {
                     allocatable.add(r);
                 }
             }
@@ -166,7 +165,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         CiTargetMethod compiledMethod = compiler.compileMethod(method);
         if (compiledMethod != null) {
 
-            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, compiledMethod);
+            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);
             C1XTargetMethod targetMethod = generator.finish();
 
             if (MaxineVM.isPrototyping()) {
@@ -202,11 +201,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return stackPointer;
-    }
-
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new StackUnwindingContext(throwable);
     }
 
     public boolean isBuiltinImplemented(Builtin builtin) {

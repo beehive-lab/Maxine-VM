@@ -371,7 +371,7 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            return assembler.finishTargetMethod(runtime, frameMap().framesize());
+            return assembler.finishTargetMethod(runtime, frameMap().framesize(), exceptionInfoList);
         }
 
         return null;

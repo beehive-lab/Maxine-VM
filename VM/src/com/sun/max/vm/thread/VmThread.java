@@ -36,7 +36,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
@@ -906,18 +905,6 @@ public class VmThread {
 
     public static int guardPageSize() {
         return VMConfiguration.target().platform().pageSize;
-    }
-
-    /**
-     * Determines if a given exception is a {@link StackOverflowError} and resets the protection access of the guard page
-     * used to detect stack overflow. This method is called by each {@linkplain ExceptionDispatcher exception dispatcher}.
-     *
-     * @param throwable the exception being dispatched
-     */
-    private static void reprotectGuardPage(Throwable throwable) {
-        if (throwable instanceof StackOverflowError) {
-            VirtualMemory.protectPage(current().guardPage());
-        }
     }
 
     /**

@@ -8,7 +8,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.ins.MaxineInspector"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -d -a=&quot;-XX:TesterStart=0&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -d -a=&quot;-XX:TesterStart=43 -XX:TesterEnd=44&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Inspector"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea"/>
 </launchConfiguration>

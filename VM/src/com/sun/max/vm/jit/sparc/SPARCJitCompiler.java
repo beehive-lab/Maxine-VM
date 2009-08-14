@@ -97,7 +97,7 @@ public class SPARCJitCompiler extends JitCompiler {
      * @param framePointer the frame pointer for exception handler
      */
     @NEVER_INLINE
-    private static Address unwind(SPARCStackUnwindingContext context, Address catchAddress, Pointer stackPointer, Pointer framePointer, Pointer literalBase) {
+    private static Address unwind(StackUnwindingContext context, Address catchAddress, Pointer stackPointer, Pointer framePointer, Pointer literalBase) {
         SpecialBuiltin.flushRegisterWindows();
         final Address returnAddress = stackUnwindStub.start();
         final Pointer unwindStubFramePointer = context.isTopFrame() ? context.stackPointer() : context.framePointer();
@@ -242,9 +242,9 @@ public class SPARCJitCompiler extends JitCompiler {
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
+                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                     final Pointer stackPointer = stackFrameWalker.stackPointer();
                     if (!(unwindingContext.throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // The Java operand stack of the method that handles the exception is always cleared before pushing the
@@ -439,11 +439,6 @@ public class SPARCJitCompiler extends JitCompiler {
             final int unalignedSize = targetMethod.stackFrameLayout().sizeOfTemplateSlots() + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
             return targetMethod.abi().alignFrameSize(unalignedSize);
         }
-    }
-
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new SPARCStackUnwindingContext(stackPointer, framePointer, throwable);
     }
 
     static class StackUnwindStub extends RuntimeStub {

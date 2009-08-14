@@ -181,11 +181,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info) {
-        lir().cmpRegMem(condition, reg, new LIRAddress(base, disp, type), info);
-    }
-
-    @Override
     protected boolean strengthReduceMultiply(LIROperand left, int c, LIROperand result, LIROperand tmp) {
         if (tmp.isValid()) {
             if (Util.isPowerOf2(c + 1)) {
@@ -323,11 +318,15 @@ public final class X86LIRGenerator extends LIRGenerator {
         assert isRoot(x) : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
-        obj.dontLoadItem();
+        //obj.dontLoadItem();
 
         LIROperand lock = newRegister(BasicType.Int);
-        LIROperand objTemp = newRegister(BasicType.Int);
+        //LIROperand objTemp = newRegister(BasicType.Int);
         setNoResult(x);
+
+        obj.loadItem();
+        LIROperand objTemp = obj.result();
+        assert objTemp.isRegister();
         monitorExit(objTemp, lock, syncTempOpr(), x.lockNumber());
     }
 
@@ -485,7 +484,9 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             if (!C1XOptions.UseImplicitDiv0Checks) {
                 lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
-                lir().branch(LIRCondition.Equal, BasicType.Int, new DivByZeroStub(info));
+
+                // Create copy of code emit info as they must not be shared!
+                lir().branch(LIRCondition.Equal, BasicType.Int, new DivByZeroStub(stateFor(x)));
             }
             LIROperand tmp = X86FrameMap.rdxOpr; // idiv and irem use rdx in their implementation
             if (x.opcode() == Bytecodes.IREM) {
@@ -843,7 +844,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         CiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {
-            lir.oop2reg(klass.encoding(), klassReg);
+            lir.oop2reg(klass.encoding().asObject(), klassReg);
         } else {
             lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), info);
         }
@@ -886,7 +887,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
         BasicType elemType = elementType;
 
-        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding(), klassReg);
+        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding().asObject(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -919,10 +920,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
         CiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
-            Object obj = elementType.encoding();
+            Object obj = elementType.encoding().asObject();
             lir.oop2reg(obj, klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), patchingInfo);
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
         }
 
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
@@ -968,13 +969,15 @@ public final class X86LIRGenerator extends LIRGenerator {
 
 
         if (x.elementType.isLoaded()) {
-            lir.oop2reg(x.elementType.encoding(), cc.args().get(0));
+            lir.oop2reg(x.elementType.encoding().asObject(), cc.args().get(0));
         } else {
-            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), patchingInfo);
+            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
         }
 
+        // Create a new code emit info as they must not be shared!
+        CodeEmitInfo info2 = stateFor(x, x.state());
         LIROperand reg = resultRegisterFor(x.type().basicType);
-        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info2);
 
         // Save result
         LIROperand result = rlockResult(x);

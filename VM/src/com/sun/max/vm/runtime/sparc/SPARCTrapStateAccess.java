@@ -175,4 +175,9 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     public void logTrapState(Pointer trapState) {
         Log.println("<logging of SPARC trap state is yet to be implemented>");
     }
+
+    @Override
+    public void setStackPointer(Pointer trapState, Pointer value) {
+        trapState.writeWord(TRAP_SP_OFFSET, value);
+    }
 }

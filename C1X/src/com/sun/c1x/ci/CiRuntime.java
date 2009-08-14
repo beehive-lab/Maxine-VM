@@ -292,14 +292,14 @@ public interface CiRuntime {
 
     int initThreadOffsetInBytes();
 
-    Register exceptionOopRegister();
-
     Register returnRegister(BasicType object);
 
     int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs);
 
-    Object registerTargetMethod(CiTargetMethod targetMethod);
+    Object registerTargetMethod(CiTargetMethod targetMethod, String name);
 
     CiType primitiveArrayType(BasicType elemType);
+
+    Register threadRegister();
 
 }

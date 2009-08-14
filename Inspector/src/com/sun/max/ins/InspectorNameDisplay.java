@@ -244,14 +244,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "Element.foo()[0]"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor() == null ? "<nma>" : teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.description() : teleTargetMethod.classMethodActor().format("%h.%n()" + methodCompilationID(teleTargetMethod));
     }
 
     /**
      * E.g. "foo(Pointer, Word, int[])[0]"
      */
     public String shortName(TeleTargetMethod teleTargetMethod) {
-        return teleTargetMethod.classMethodActor() == null ? "<nma>" : teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
+        return teleTargetMethod.classMethodActor() == null ? teleTargetMethod.description() : teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
     }
 
     /**
@@ -263,7 +263,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final ClassMethodActor classMethodActor = teleTargetMethod.classMethodActor();
 
         if (classMethodActor == null) {
-            return "<nma>";
+            return teleTargetMethod.description();
         }
 
         switch (returnTypeSpecification) {
@@ -323,10 +323,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "int foo(Pointer, Word, int[])"
      */
     public String shortName(TeleClassMethodActor teleClassMethodActor, ReturnTypeSpecification returnTypeSpecification) {
-
-        if (teleClassMethodActor == null) {
-            return "<nma>";
-        }
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
 

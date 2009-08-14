@@ -24,17 +24,21 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 
 /**
  * The <code>LIRJavaCall</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  *
  */
 public class LIRJavaCall extends LIRCall {
 
     private CiMethod method;
     LIROperand receiver;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Creates a new LIRJavaCall instruction.
@@ -47,10 +51,12 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
+        this.cpi = cpi;
+        this.constantPool = constantPool;
     }
 
     /**
@@ -64,10 +70,12 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
         super(opcode, null, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
+        this.cpi = cpi;
+        this.constantPool = constantPool;
     }
 
     /**

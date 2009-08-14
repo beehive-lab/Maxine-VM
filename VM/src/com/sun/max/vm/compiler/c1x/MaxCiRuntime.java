@@ -42,6 +42,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -71,7 +72,10 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public CiConstantPool getConstantPool(CiMethod method) {
-        final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
+        return getConstantPool(this.asClassMethodActor(method, "getConstantPool()"));
+    }
+
+    private MaxCiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
         final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = constantPools.get(cp);
@@ -103,8 +107,8 @@ public class MaxCiRuntime implements CiRuntime {
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
-    public CiMethod getCiMethod(MethodActor methodActor) {
-        return globalConstantPool.canonicalCiMethod(methodActor);
+    public CiMethod getCiMethod(ClassMethodActor methodActor) {
+        return getConstantPool(methodActor).canonicalCiMethod(methodActor);
     }
 
     /**
@@ -230,7 +234,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int threadExceptionOopOffset() {
-        throw Util.unimplemented();
+        return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
     public int threadExceptionPcOffset() {
@@ -591,10 +595,6 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    public Register exceptionOopRegister() {
-        return X86.r14;
-    }
-
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -613,8 +613,8 @@ public class MaxCiRuntime implements CiRuntime {
 
     int memberIndex;
 
-    public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
-        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, ciTargetMethod);
+    public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod);
         final C1XTargetMethod targetMethod = generator.finish();
         return targetMethod;
     }
@@ -623,5 +623,10 @@ public class MaxCiRuntime implements CiRuntime {
     public CiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 
+    }
+
+    @Override
+    public Register threadRegister() {
+        return X86.r14;
     }
 }

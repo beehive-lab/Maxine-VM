@@ -213,6 +213,16 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     }
 
     public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+
+        if (StackFrameWalker.traceStackWalk.getValue()) {
+            Log.print("Walk frame helper called: ");
+            Log.print("isTopFrame=");
+            Log.print(isTopFrame);
+            Log.print(", targetMethod=");
+            Log.print(targetMethod.description());
+            Log.println();
+        }
+
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;
@@ -257,7 +267,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
+                        Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -273,7 +284,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
+                            Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -297,19 +309,44 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                // if not at the top frame, subtract 1 to get an address that is _inside_ the call instruction of the caller
-                final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
+                final Address throwAddress = instructionPointer;
+                final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
+
+                if (StackFrameWalker.traceStackWalk.getValue()) {
+                    Log.print("Catch address for ");
+                    Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
+                    Log.print(" in ");
+                    Log.print(targetMethod.description());
+                    Log.print(" is ");
+                    Log.println((catchAddress.isZero()) ? -1 : catchAddress.minus(targetMethod.codeStart()).toInt());
+                }
+
                 if (!catchAddress.isZero()) {
-                    final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
                     final Throwable throwable = stackUnwindingContext.throwable;
-                    if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                        // Reset the stack walker
-                        stackFrameWalker.reset();
-                        // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
-                        Safepoint.enable();
-                        unwind(throwable, catchAddress, stackPointer);
+                    // Reset the stack walker
+                    stackFrameWalker.reset();
+                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
+                    Safepoint.enable();
+
+                    // Save the exception object in a thread local
+                    VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+
+                    // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
+                    // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
+                    // and the stack will be in the correct state for the handler.
+                    final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+                    returnAddressPointer.setWord(catchAddress);
+
+                    Pointer trapState = stackUnwindingContext.implicitExceptionTrapState;
+                    if (throwable instanceof StackOverflowError && !trapState.isZero()) {
+                        TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                        trapStateAccess.setExceptionObject(trapState, throwable);
+                        trapStateAccess.setStackPointer(trapState, returnAddressPointer.minus(Trap.trapStubFrameSize()));
+                        return false;
                     }
+                    unwind(throwable, returnAddressPointer, stackPointer);
+                    ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
                 }
                 break;
             }
@@ -384,19 +421,12 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
      *            returning from this method
      */
     @NEVER_INLINE
-    private static Throwable unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
-        // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
-        // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
-        // and the stack will be in the correct state for the handler.
-        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
-        returnAddressPointer.setWord(catchAddress);
+    private static Throwable unwind(Throwable throwable, Address returnAddressPointer, Pointer stackPointer) {
+
         if (unwindFrameSize == -1) {
             unwindFrameSize = getUnwindFrameSize();
         }
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
-
-        // Save the exception object in a thread local
-        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
         // put the throwable in the return slot
         // NOTE: this is potentially dangerous, since this value must not be spilled onto the stack,
@@ -407,10 +437,5 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return stackPointer;
-    }
-
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new StackUnwindingContext(throwable);
     }
 }

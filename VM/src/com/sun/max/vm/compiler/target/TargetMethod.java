@@ -67,17 +67,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @INSPECTED
     private final ClassMethodActor classMethodActor;
     @INSPECTED
-    private int[] catchRangePositions;
-    @INSPECTED
-    private int[] catchBlockPositions;
-    @INSPECTED
-    private byte[] compressedJavaFrameDescriptors;
+    protected byte[] compressedJavaFrameDescriptors;
 
     /**
      * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
      */
     @INSPECTED
-    private byte[] encodedInlineDataDescriptors;
+    protected byte[] encodedInlineDataDescriptors;
 
     /**
      * The stop positions are encoded in the lower 31 bits of each element.
@@ -86,7 +82,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @see #stopPositions()
      */
     @INSPECTED
-    private int[] stopPositions;
+    protected int[] stopPositions;
 
     @INSPECTED
     private Object[] directCallees;
@@ -104,10 +100,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     private Object[] referenceLiterals;
 
     @INSPECTED
-    private byte[] code;
+    protected byte[] code;
 
     @INSPECTED
-    private Pointer codeStart = Pointer.zero();
+    protected Pointer codeStart = Pointer.zero();
 
     private int frameSize;
 
@@ -118,6 +114,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     @INSPECTED
     private TargetABI abi;
+
+    public TargetMethod(String description, DynamicCompilerScheme compilerScheme) {
+        this.compilerScheme = compilerScheme;
+        this.classMethodActor = null;
+        setDescription(description);
+    }
 
     public TargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
         this.classMethodActor = classMethodActor;
@@ -132,7 +134,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public abstract InstructionSet instructionSet();
 
     public final String name() {
-        return (classMethodActor == null) ? "<no method actor>" : classMethodActor.name.toString();
+        return (classMethodActor == null) ? description() : classMethodActor.name.toString();
     }
 
     public final boolean isNative() {
@@ -142,54 +144,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final void cleanup() {
     }
 
-    /**
-     * Gets the array of positions denoting which ranges of code are covered by an
-     * exception dispatcher. The {@code n}th range includes positions
-     * {@code [catchRangePositions()[n] .. catchRangePositions()[n + 1])} unless {@code n == catchRangePositions().length - 1}
-     * in which case it includes positions {@code [catchRangePositions()[n] .. codeLength())}. Note that these range
-     * specifications exclude the last position.
-     * <p>
-     * The address of the dispatcher for range {@code n} is {@code catchBlockPositions()[n]}. If
-     * {@code catchBlockPositions()[n] == 0}, then {@code n} denotes a code range not covered by an exception dispatcher.
-     * <p>
-     * In the example below, any exception that occurs while the instruction pointer corresponds to position 3, 4, 5 or 6 will
-     * be handled by the dispatch code at position 7. An exception that occurs at any other position will be propagated to
-     * the caller.
-     * <pre>{@code
-     *
-     * catch range positions: [0, 3, 7]
-     * catch block positions: [0, 7, 0]
-     *
-     *             caller          +------+      caller
-     *                ^            |      |        ^
-     *                |            |      V        |
-     *          +-----|-----+------|------+--------|---------+
-     *     code | exception |  exception  |    exception     |
-     *          +-----------+-------------+------------------+
-     *           0        2  3           6 7               12
-     * }</pre>
-     *
-     *
-     * @return positions of exception dispatcher ranges in the machine code, matched with the
-     *         {@linkplain #catchBlockPositions() catch block positions}
-     */
-    public final int[] catchRangePositions() {
-        return catchRangePositions;
-    }
-
-    /**
-     * @see #catchRangePositions()
-     */
-    public final int numberOfCatchRanges() {
-        return (catchRangePositions == null) ? 0 : catchRangePositions.length;
-    }
-
-    /**
-     * @see #catchRangePositions()
-     */
-    public final int[] catchBlockPositions() {
-        return catchBlockPositions;
-    }
 
 
     /**
@@ -638,9 +592,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *
      * TODO: move ABI initialization to constructor
      */
-    public final void setGenerated(int[] catchRangePositions,
-                                   int[] catchBlockPositions,
-                                   int[] stopPositions,
+    protected final void setGenerated(int[] stopPositions,
                                    byte[] compressedJavaFrameDescriptors,
                                    Object[] directCallees,
                                    int numberOfIndirectCalls,
@@ -667,8 +619,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         assert checkReferenceMapSize(stopPositions, numberOfSafepoints, referenceMaps, frameReferenceMapSize);
 
         // copy the arrays into the target bundle
-        this.catchRangePositions = catchRangePositions;
-        this.catchBlockPositions = catchBlockPositions;
         this.stopPositions = stopPositions;
         this.directCallees = directCallees;
         this.referenceMaps = referenceMaps;
@@ -711,21 +661,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public final Address throwAddressToCatchAddress(Address throwAddress) {
-        if (catchRangePositions != null) {
-            final int throwOffset = throwAddress.minus(codeStart).toInt();
-            for (int i = catchRangePositions.length - 1; i >= 0; i--) {
-                if (throwOffset >= catchRangePositions[i]) {
-                    final int catchBlockPosition = catchBlockPositions[i];
-                    if (catchBlockPosition <= 0) {
-                        return Address.zero();
-                    }
-                    return codeStart.plus(catchBlockPosition);
-                }
-            }
-        }
-        return Address.zero();
-    }
+    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
     /**
      * Traces the metadata of the compiled code represented by this object. In particular, the
@@ -749,26 +685,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
     }
 
-    /**
-     * Traces the exception handlers of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceExceptionHandlers(IndentWriter writer) {
-        if (catchRangePositions != null) {
-            assert catchBlockPositions != null;
-            writer.println("Catches:");
-            writer.indent();
-            for (int i = 0; i < catchRangePositions.length; i++) {
-                if (catchBlockPositions[i] != 0) {
-                    final int catchRangeEnd = (i == catchRangePositions.length - 1) ? code.length : catchRangePositions[i + 1];
-                    final int catchRangeStart = catchRangePositions[i];
-                    writer.println("[" + catchRangeStart + " .. " + catchRangeEnd + ") -> " + catchBlockPositions[i]);
-                }
-            }
-            writer.outdent();
-        }
-    }
+    public abstract void traceExceptionHandlers(IndentWriter writer);
 
     /**
      * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
@@ -855,7 +772,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     @Override
     public final String toString() {
-        return (classMethodActor == null) ? "<no method actor>" : classMethodActor.format("%H.%n(%p)");
+        return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
     public final void trace(int level) {
@@ -916,31 +833,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final DynamicCompilerScheme compilerScheme() {
         return compilerScheme;
-    }
-
-    public final TargetMethod duplicate() {
-        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme();
-        final TargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
-        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        Code.allocate(targetBundleLayout, duplicate);
-        duplicate.setGenerated(
-            catchRangePositions(),
-            catchBlockPositions(),
-            stopPositions,
-            compressedJavaFrameDescriptors,
-            directCallees(),
-            numberOfIndirectCalls(),
-            numberOfSafepoints(),
-            referenceMaps(),
-            scalarLiterals(),
-            referenceLiterals(),
-            code(),
-            encodedInlineDataDescriptors,
-            frameSize(),
-            frameReferenceMapSize(),
-            abi()
-        );
-        return duplicate;
     }
 
     /**

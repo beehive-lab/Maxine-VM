@@ -40,7 +40,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
     private static final Register ICKlass = X86.rax;
-    private static final Register SYNCHeader = X86.rax;
+    //private static final Register SYNCHeader = X86.rax;
     private static final Register SHIFTCount = X86.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
@@ -48,7 +48,6 @@ public class X86LIRAssembler extends LIRAssembler {
     X86MacroAssembler masm;
 
     final int callStubSize;
-    private final int exceptionHandlerSize;
     final int deoptHandlerSize;
     private final int wordSize;
     private final int referenceSize;
@@ -62,7 +61,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
         wordSize = compilation.target.arch.wordSize;
         referenceSize = compilation.target.referenceSize;
-        exceptionHandlerSize = 175;
         rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
         if (compilation.target.arch.is64bit()) {
             callStubSize = 28;
@@ -126,6 +124,9 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void osrEntry() {
+
+        Util.unimplemented();
+
         offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
         BlockBegin osrEntry = compilation.osrEntry();
         ValueStack entryState = osrEntry.state();
@@ -176,10 +177,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().stop("locked object is null");
                 masm().bind(l);
             }
-            masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectLockOffsetInBytes()));
-            masm().movptr(frameMap().addressForMonitorLock(i), X86.rbx);
-            masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectObjOffsetInBytes()));
-            masm().movptr(frameMap().addressForMonitorObject(i), X86.rbx);
+            //masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectLockOffsetInBytes()));
+            //masm().movptr(frameMap().addressForMonitorLock(i), X86.rbx);
+            //masm().movptr(X86.rbx, new Address(osrBuf, slotOffset + compilation.runtime.basicObjectObjOffsetInBytes()));
+            //masm().movptr(frameMap().addressForMonitorObject(i), X86.rbx);
         }
     }
 
@@ -211,6 +212,9 @@ public class X86LIRAssembler extends LIRAssembler {
         return offset;
     }
 
+
+    // TODO: Check why this is not used!
+    /*
     private void monitorexit(LIROperand objOpr, LIROperand lockOpr, Register newHdr, int monitorNo, Register exception) {
         if (exception.isValid()) {
             // preserve exception
@@ -230,8 +234,8 @@ public class X86LIRAssembler extends LIRAssembler {
         assert newHdr == SYNCHeader : "wrong register";
         lockReg = newHdr;
         // compute pointer to BasicLock
-        Address lockAddr = frameMap().addressForMonitorLock(monitorNo);
-        masm().lea(lockReg, lockAddr);
+        int lockAddr = frameMap().addressForMonitorLock(monitorNo);
+        masm().movl(lockReg, lockAddr);
         // unlock object
         MonitorAccessStub slowCase = new MonitorExitStub(lockOpr, true, monitorNo);
         // slowCaseStubs.append(slowCase);
@@ -258,7 +262,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // restore exception
             masm().movptr(exception, new Address(X86.rsp, 2 * compilation.target.arch.wordSize));
         }
-    }
+    }*/
 
     @Override
     protected int initialFrameSizeInBytes() {
@@ -269,7 +273,7 @@ public class X86LIRAssembler extends LIRAssembler {
         // subtract two words to account for return address and link
         return frameMap().framesize();
     }
-
+/*
     @Override
     public void emitExceptionHandler() {
         // if the last instruction is a call (typically to do a throw which
@@ -330,7 +334,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert codeOffset() - offset <= exceptionHandlerSize : "overflow";
 
         // masm().endAStub();
-    }
+    }*/
 
     // TODO: Check if emit_string_compare is used somewhere?
 
@@ -1423,7 +1427,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-                masm().movoop(kRInfo, k.encoding());
+                masm().movoop(kRInfo, k.encoding().asObject());
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -1532,7 +1536,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
                 if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.encoding());
+                    masm().movoop(kRInfo, k.encoding().asObject());
                 }
             }
             assert obj != kRInfo : "must be different";
@@ -2447,50 +2451,73 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap) {
+    protected void call(CiMethod method, GlobalStub entry, CodeEmitInfo info, boolean[] stackRefMap, char cpi, CiConstantPool constantPool) {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
-        masm().callMethodDirect(method, stackRefMap);
-        addCallInfo(codeOffset(), info);
+
+        assert entry != null;
+        masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
+
+        masm().call(rscratch1);
+        addCallInfoHere(info);
     }
 
     @Override
-    protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
+    protected void icCall(CiMethod method, GlobalStub entry, CodeEmitInfo info) {
 //        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
-        masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
-        masm().callRuntime(entry, method);
-        addCallInfo(codeOffset(), info);
+//        masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
+//        masm().callRuntime(entry, method);
+//        addCallInfo(codeOffset(), info);
+
+        throw Util.unimplemented();
     }
 
     /**
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void vtableCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
-        int vtableOffset = compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
-        vtableOffset += compilation.runtime.vtableEntryMethodOffsetInBytes();
-        assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
-        assert receiver.isRegister() : "Receiver must be in a register";
-        masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
-        masm.call(new Address(rscratch1, Util.safeToInt(vtableOffset)));
+    protected void vtableCall(CiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+
+        Address callAddress;
+        if (method.vtableIndex() >= 0) {
+            int vtableOffset = compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
+            assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
+            assert receiver.isRegister() : "Receiver must be in a register";
+            addCallInfoHere(info);
+
+            assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes());
+
+            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
+            callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
+        } else {
+            assert method.vtableIndex() == -1 && !method.isLoaded();
+            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
+            addCallInfoHere(info);
+            callAddress = new Address(rscratch1);
+        }
+
+        masm.call(callAddress);
+        addCallInfoHere(info);
     }
 
     /**
      * (tw) Tentative implementation of an interface call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void interfaceCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
+    protected void interfaceCall(CiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
         assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movl(rscratch1, method.interfaceID());
         masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+        addCallInfoHere(info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
         masm.call(new Address(rscratch1, method.vtableIndex() * compilation.target.arch.wordSize));
+        addCallInfoHere(info);
     }
 
     @Override
     protected void emitRTCall(LIRRTCall op) {
-        rtCall(op.result(), op.address(), op.arguments(), op.tmp(), op.info());
+        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info());
     }
 
     @Override
@@ -2535,9 +2562,9 @@ public class X86LIRAssembler extends LIRAssembler {
         if (!unwind) {
             // get current pc information
             // pc is only needed if the method has an exception handler, the unwind code does not need it.
-            int pcForAthrowOffset = masm().codeBuffer.position();
+            //int pcForAthrowOffset = masm().codeBuffer.position();
+
             masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
-            addCallInfo(pcForAthrowOffset, info); // for exception handler
 
             masm().verifyNotNullOop(X86.rax);
             // search an exception handler (rax: exception oop, rdx: throwing pc)
@@ -2546,6 +2573,10 @@ public class X86LIRAssembler extends LIRAssembler {
             unwindId = CiRuntimeCall.UnwindException;
         }
         masm().callRuntime(unwindId);
+
+        if (!unwind) {
+            addCallInfoHere(info);
+        }
 
         // enough room for two byte trap
         masm().nop();
@@ -2848,7 +2879,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // but not necessarily exactly of type defaultType.
                 Label knownOk = new Label();
                 Label halt = new Label();
-                masm().movoop(tmp, defaultType.encoding());
+                masm().movoop(tmp, defaultType.encoding().asObject());
                 if (basicType != BasicType.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
@@ -2971,7 +3002,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     CiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.encoding());
+                        masm().movoop(recvAddr, knownKlass.encoding().asObject());
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
                         return;
@@ -3017,7 +3048,9 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void monitorAddress(int monitorNo, LIROperand dst) {
-        masm().lea(dst.asRegister(), frameMap().addressForMonitorLock(monitorNo));
+
+        // TODO: Check what to do here for correct behaviour (lea in original code)
+        masm().movl(dst.asRegister(), frameMap().addressForMonitorLock(monitorNo));
     }
 
     @Override
@@ -3239,6 +3272,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void resolve(LIROperand dest, LIROperand index, LIROperand cp) {
 
         // TODO:
-       // masm.callGlobalStub(GlobalStub.ResolveClass, dest, new RegisterOrConstant(index), cp);
+        masm.callGlobalStub(GlobalStub.ResolveClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
     }
 }

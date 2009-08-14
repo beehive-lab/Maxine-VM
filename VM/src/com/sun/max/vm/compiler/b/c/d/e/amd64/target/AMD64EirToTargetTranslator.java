@@ -41,7 +41,7 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
     }
 
     @Override
-    public TargetMethod createIrMethod(ClassMethodActor classMethodActor) {
+    public ExceptionRangeTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
         final AMD64OptimizedTargetMethod targetMethod = new AMD64OptimizedTargetMethod(classMethodActor, compilerScheme());
         notifyAllocation(targetMethod);
         return targetMethod;

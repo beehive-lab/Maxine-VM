@@ -2128,6 +2128,9 @@ public class LinearScan extends RegisterAllocator {
                     List<ExceptionHandler> xhandlers = visitor.allXhandler();
                     int n = xhandlers.size();
                     for (int k = 0; k < n; k++) {
+                        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
+                            TTY.println("resolving exception edge for handler " + xhandlers.get(k) + ", opId=" + opId);
+                        }
                         resolveExceptionEdge(xhandlers.get(k), opId, moveResolver);
                     }
 

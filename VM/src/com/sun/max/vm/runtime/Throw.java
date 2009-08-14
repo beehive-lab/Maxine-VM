@@ -63,10 +63,15 @@ public final class Throw {
             if (targetMethod != null) {
                 if (!isAdapter(flags)) {
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                    Log.print(classMethodActor.holder().name);
-                    Log.print(".");
-                    Log.print(classMethodActor.name);
-                    Log.print(classMethodActor.descriptor());
+
+                    if (classMethodActor == null) {
+                        Log.print(targetMethod.description());
+                    } else {
+                        Log.print(classMethodActor.holder().name);
+                        Log.print(".");
+                        Log.print(classMethodActor.name);
+                        Log.print(classMethodActor.descriptor());
+                    }
                 } else {
                     Log.print("<adapter>");
                 }
@@ -108,7 +113,7 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
-        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable, Pointer.zero());
         FatalError.unexpected("could not find top-level exception handler");
     }
 

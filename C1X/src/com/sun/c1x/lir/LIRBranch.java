@@ -63,7 +63,9 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, BasicType type, CodeStub stub) {
-        this(cond, stub.entry);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        this.cond = cond;
+        this.label = stub.entry;
         this.type = type;
         this.stub = stub;
     }
