@@ -794,23 +794,6 @@ public interface MaxVM {
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
-     * Creates an invisible Watchpoint.
-     * @param description
-     * @param memoryRegion
-     * @param after
-     * @param read
-     * @param write
-     * @param exec
-     * @param gc
-     *
-     * @return a invisible watchpoint, if successful
-     * @throws TooManyWatchpointsException
-     * @throws DuplicateWatchpointException
-     */
-    MaxWatchpoint createInvisibleWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
-
-    /**
      * @param memoryRegion an area of memory in the VM
      * @return the watchpoint whose memory region overlaps, null if none.
      */
