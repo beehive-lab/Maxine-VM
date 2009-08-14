@@ -44,6 +44,11 @@ public class BytecodeTableSwitch extends BytecodeSwitch {
     }
 
     @Override
+    public int keyAt(int i) {
+        return lowKey() + i;
+    }
+
+    @Override
     public int defaultOffset() {
         return readWord(aligned);
     }

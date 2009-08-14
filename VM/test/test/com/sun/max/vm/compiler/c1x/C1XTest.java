@@ -43,6 +43,7 @@ import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
+import com.sun.c0x.C0XCompiler;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
@@ -66,8 +67,8 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> targetOption = options.newBooleanOption("target", false,
-        "Compile the method(s) all the way to target code.");
+    private static final Option<Boolean> c1xOption = options.newBooleanOption("c1x", true,
+        "Select the C1X compiler if true, C0X if false.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", false,
         "Report compilation time for each successful compile.");
     private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
@@ -100,6 +101,11 @@ public class C1XTest {
     private static final List<Timing> timings = new ArrayList<Timing>();
 
     private static PrintStream out = System.out;
+    private static int totalBytes;
+    private static int totalInstrs;
+    private static long totalNs;
+    private static long lastRunNs;
+    private static final double ONE_BILLION = 1000000000;
 
     public static void main(String[] args) {
         options.parseArguments(args);
@@ -137,7 +143,7 @@ public class C1XTest {
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final Target target = createTarget();
-        final C1XCompiler compiler = new C1XCompiler(target, runtime);
+        final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
 
         doWarmup(compiler, methods);
         doCompile(compiler, methods, progress);
@@ -147,8 +153,9 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static void doCompile(C1XCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(CiCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         // compile all the methods and report progress
+        long start = System.nanoTime();
         for (MethodActor methodActor : methods) {
             progress.begin(methodActor.toString());
             final boolean result = compile(compiler, methodActor, printBailoutOption.getValue(), false);
@@ -162,9 +169,10 @@ public class C1XTest {
                 }
             }
         }
+        lastRunNs = System.nanoTime() - start;
     }
 
-    private static void doWarmup(C1XCompiler compiler, List<MethodActor> methods) {
+    private static void doWarmup(CiCompiler compiler, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the C1X code in the host VM
         for (int i = 0; i < warmupOption.getValue(); i++) {
             if (i == 0) {
@@ -181,12 +189,12 @@ public class C1XTest {
         }
     }
 
-    private static boolean compile(C1XCompiler compiler, MethodActor method, boolean printBailout, boolean warmup) {
+    private static boolean compile(CiCompiler compiler, MethodActor method, boolean printBailout, boolean warmup) {
         // compile a single method
         if (isCompilable(method)) {
             final long startNs = System.nanoTime();
 
-            CiTargetMethod result = null;
+            CiTargetMethod result;
             try {
                 result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
                 if (!warmup) {
@@ -391,14 +399,17 @@ public class C1XTest {
 
     private static void recordTime(MethodActor method, int instructions, long ns) {
         if (timingOption.getValue()) {
-            timings.add(new Timing((ClassMethodActor) method, instructions, ns));
+            if (!averageOption.getValue()) {
+                timings.add(new Timing((ClassMethodActor) method, instructions, ns));
+            }
+            totalBytes += ((ClassMethodActor) method).rawCodeAttribute().code().length;
+            totalInstrs += instructions;
+            totalNs += ns;
         }
     }
 
     private static void reportTiming() {
         if (timingOption.getValue()) {
-            double totalBcps = 0d;
-            double totalIps = 0d;
             int count = 0;
             long longerThan = longerThanOption.getValue();
             long slowerThan = slowerThanOption.getValue();
@@ -419,14 +430,15 @@ public class C1XTest {
                     out.print(Strings.padLengthWithSpaces(20, Strings.fixedDouble(ips, 2) + " insts/s"));
                     out.println();
                 }
-                totalBcps += bcps;
-                totalIps += ips;
                 count++;
             }
             out.print("Average: ");
-            out.print(Strings.fixedDouble(totalBcps / count, 2) + " bytes/s   ");
-            out.print(Strings.fixedDouble(totalIps / count, 2) + " insts/s");
+            double totalBcps = ONE_BILLION * (totalBytes / (double) totalNs);
+            double totalIps = ONE_BILLION * (totalInstrs / (double) totalNs);
+            out.print(Strings.fixedDouble(totalBcps, 2) + " bytes/s   ");
+            out.print(Strings.fixedDouble(totalIps, 2) + " insts/s");
             out.println();
+            out.println("Last run: " + Strings.fixedDouble(lastRunNs / ONE_BILLION, 6) + " seconds");
         }
     }
 
@@ -478,7 +490,7 @@ public class C1XTest {
         }
 
         public double bytecodesPerSecond() {
-            return 1000000000 * (bytecodes() / (double) nanoSeconds);
+            return ONE_BILLION * (bytecodes() / (double) nanoSeconds);
         }
 
         public int bytecodes() {
@@ -486,7 +498,7 @@ public class C1XTest {
         }
 
         public double instructionsPerSecond() {
-            return 1000000000 * (instructions / (double) nanoSeconds);
+            return ONE_BILLION * (instructions / (double) nanoSeconds);
         }
     }
 

@@ -359,9 +359,9 @@ public class BlockMap {
         int max = tswitch.numberOfCases();
         ArrayList<BlockBegin> list = new ArrayList<BlockBegin>(max + 1);
         for (int i = 0; i < max; i++) {
-            list.add(make(bci + tswitch.offsetAt(i)));
+            list.add(make(tswitch.targetAt(i)));
         }
-        list.add(make(bci + tswitch.defaultOffset()));
+        list.add(make(tswitch.defaultTarget()));
         successorMap[bci] = list.toArray(new BlockBegin[list.size()]);
     }
 

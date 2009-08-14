@@ -18,45 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package com.sun.c1x.ci;
+
+import com.sun.c1x.target.Target;
 
 /**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
+ * The <code>CiCompiler</code> class represents a compiler instance which has been
+ * configured for a particular runtime system and target machine.
  *
  * @author Ben L. Titzer
  */
-public class BytecodeLookupSwitch extends BytecodeSwitch {
+public abstract class CiCompiler {
+    /**
+     * The target that this compiler has been configured for.
+     */
+    public final Target target;
 
-    public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
-        super(stream, bci);
+    /**
+     * The runtime that this compiler has been configured for.
+     */
+    public final CiRuntime runtime;
+
+    protected CiCompiler(CiRuntime runtime, Target target) {
+        this.runtime = runtime;
+        this.target = target;
     }
 
-    public BytecodeLookupSwitch(byte[] code, int bci) {
-        super(code, bci);
-    }
+    /**
+     * Compile the specified method.
+     * @param method the method to compile
+     * @return a {@link CiTargetMethod target method} representing the compiled method
+     */
+    public abstract CiTargetMethod compileMethod(CiMethod method);
 
-    @Override
-    public int defaultOffset() {
-        return readWord(aligned);
-    }
-
-    @Override
-    public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
-    }
-
-    @Override
-    public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
-    }
-
-    @Override
-    public int numberOfCases() {
-        return readWord(aligned + 4);
-    }
-
-    @Override
-    public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
-    }
+    /**
+     * Compile the specified method.
+     * @param method the method to compile
+     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
+     * @return a {@link CiTargetMethod target method} representing the compiled method
+     */
+    public abstract CiTargetMethod compileMethod(CiMethod method, int osrBCI);
 }
