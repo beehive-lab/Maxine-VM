@@ -299,7 +299,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             Log.println("Scan Boot Heap");
         }
         Heap.bootHeapRegion.visitReferences(cellVisitor.pointerVisitorGripUpdater);
-
         if (Heap.verbose()) {
             Log.println("Scan Code");
         }

@@ -68,7 +68,7 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         // Start scanning the reachable objects from roots.
         ssHeapScheme.scavengeRoot(fromSpace, toSpace);
 
-        // Evacuate all remaining objects reachable
+        // Evacuate all remaining  "from" object reachable from the "to" space in the to space.
         evacuateFollowers(fromSpace, toSpace);
 
         monitorScheme.afterGarbageCollection();
@@ -79,7 +79,11 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
 
         if (ssHeapScheme.verifyAfterGC()) {
             verifyHeap("After GC", ssHeapScheme, fromSpace);
+            if (MaxineVM.isDebug()) {
+                heapScheme.zapRegion(toSpace);
+            }
         }
+
         InspectableHeapInfo.afterGarbageCollection();
 
         if (Heap.verbose()) {
