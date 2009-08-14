@@ -99,9 +99,10 @@ public class CopyActionImpl implements Action {
                 DebugHeap.writeCellTag(toCell);
             }
             Memory.copyBytes(fromCell, toCell, size);
-            // heapScheme.relocateWatchpoint(fromCell, toCell);
+            //heapScheme.relocateWatchpoint(fromCell, toCell);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
+
             Layout.writeForwardGrip(fromOrigin, toGrip);
             return toGrip;
         }
