@@ -40,6 +40,8 @@ import com.sun.max.tele.*;
  */
 public abstract class InspectorTable extends JTable implements Prober, InspectionHolder {
 
+    public static final int MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS = 100;
+
     /**
      *   Notification service for table based views that allow columns to be turned on and off.
      */
@@ -53,6 +55,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     private final Inspection inspection;
 
+    private boolean paintSelectionBox = false;
+
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
      */
@@ -60,8 +64,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         this.inspection = inspection;
         initialize();
     }
-
-    protected void configureTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
+    /**
+     * Sets up default view configuration for tables.
+     */
+    protected void configureDefaultTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
         setModel(tableModel);
         setColumnModel(columnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
@@ -71,11 +77,31 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
         refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
+        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
         updateFocusSelection();
     }
+
+    /**
+     * Sets up standard view configuration for tables used to show memory in one way or another.
+     */
+    protected void configureMemoryTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
+        paintSelectionBox = true;
+        setModel(tableModel);
+        setColumnModel(columnModel);
+        setFillsViewportHeight(true);
+        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
+        setShowVerticalLines(style().memoryTableShowVerticalLines());
+        setIntercellSpacing(style().memoryTableIntercellSpacing());
+        setRowHeight(style().memoryTableRowHeight());
+        setRowSelectionAllowed(true);
+        setColumnSelectionAllowed(false);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        refresh(true);
+        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
+        updateFocusSelection();
+    }
+
 
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
@@ -101,6 +127,19 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             clearSelection();
         } else  if (row != getSelectedRow()) {
             setRowSelectionInterval(row, row);
+        }
+    }
+
+    @Override
+    public void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (paintSelectionBox) {
+            // Draw a box around the selected row in the table
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                g.setColor(style().memorySelectedAddressBorderColor());
+                g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
+            }
         }
     }
 

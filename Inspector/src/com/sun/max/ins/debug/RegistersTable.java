@@ -55,18 +55,9 @@ public final class RegistersTable extends InspectorTable {
         model = new RegistersTableModel(thread);
         columns = new TableColumn[RegistersColumnKind.VALUES.length()];
         columnModel = new RegistersColumnModel(viewPreferences);
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
+        configureMemoryTable(model, columnModel);
         setRowSelectionAllowed(false);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection, this));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
 

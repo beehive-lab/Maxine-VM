@@ -73,7 +73,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
 
-        configureTable(model, columnModel);
+        configureDefaultTable(model, columnModel);
 
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
             @Override
@@ -94,9 +94,6 @@ public final class MemoryRegionsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
     }
 
     /**

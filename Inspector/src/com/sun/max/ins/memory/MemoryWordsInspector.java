@@ -297,7 +297,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         findButton = new InspectorButton(inspection(), new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                gui().informationMessage("memory find is unimplemented");
+                gui().informationMessage("memory \"Find\" is unimplemented");
             }
         });
         findButton.setIcon(style().generalFindIcon());
@@ -320,8 +320,11 @@ public final class MemoryWordsInspector extends Inspector {
         createFrame(null);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().add(frameMenuItems);
+
         table.scrollToOrigin();
+        table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
     }
+
 
     /**
      * Create a memory inspector for a designated region of memory, with the view
@@ -384,11 +387,15 @@ public final class MemoryWordsInspector extends Inspector {
 
         //setBounds(preferredTableDimension());
 
+
         panel.add(scrollPane, BorderLayout.CENTER);
         frame().setContentPane(panel);
 
         final JViewport viewport = scrollPane.getViewport();
-        viewport.setPreferredSize(new Dimension(viewport.getWidth(), preferredTableHeight()));
+        // viewport.setPreferredSize(new Dimension(viewport.getWidth(), preferredTableHeight()));
+
+
+
 
         viewport.addComponentListener(new ComponentAdapter() {
             @Override
@@ -417,6 +424,20 @@ public final class MemoryWordsInspector extends Inspector {
         });
         // Force everything into consistency with the current view mode.
         updateViewMode();
+
+    }
+
+    private int preferredTableHeight() {
+        // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
+        // this is empirical, based only the fuzziest notion of how these dimensions work
+        final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), table.getRowCount());
+        final int rowHeight = table.getRowHeight();
+        final int rowMargin = table.getRowMargin();
+        final int headerHeight = table.getTableHeader().getHeight();
+        final int preferredHeight = displayRows * (rowHeight + rowMargin) + rowMargin  + headerHeight;
+        Trace.line(TRACE_VALUE, tracePrefix() + "preferredHeight=" + preferredHeight + "[ rows=" + displayRows + ", rowHeight=" + rowHeight
+                + ", rowMargin=" + rowMargin + ", headerHeight=" + headerHeight + "]");
+        return preferredHeight;
     }
 
     /**
@@ -512,20 +533,6 @@ public final class MemoryWordsInspector extends Inspector {
         frame().pack();
         regionName = originalRegionName;
         updateFrameTitle();
-    }
-
-    private int preferredTableHeight() {
-        // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
-        // this is empirical, based only the fuzziest notion of how these dimensions work
-        final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), table.getRowCount());
-        final int rowHeight = table.getRowHeight();
-        final int rowMargin = table.getRowMargin();
-        final int headerHeight = table.getTableHeader().getHeight();
-        Trace.line(TRACE_VALUE, tracePrefix() + "rows=" + displayRows + ", rowHeight=" + rowHeight
-                + ", rowMargin" + rowMargin + ", headerHeight=" + headerHeight);
-        final int preferredHeight = displayRows * (rowHeight + rowMargin) + rowMargin  + headerHeight;
-        Trace.line(TRACE_VALUE, tracePrefix() + "preferrerdHeight=" + preferredHeight);
-        return preferredHeight;
     }
 
     /**

@@ -75,15 +75,8 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.model = new ObjectHeaderTableModel();
         this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         this.columnModel = new ObjectHeaderTableColumnModel(objectInspector);
-        setModel(model);
-        setColumnModel(columnModel);
-        setFillsViewportHeight(true);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
-        setRowSelectionAllowed(true);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        configureMemoryTable(model, columnModel);
+
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, inspection.style().defaultBorderColor()));
         addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
 
@@ -119,8 +112,6 @@ public final class ObjectHeaderTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
     public void refresh(boolean force) {
@@ -153,17 +144,6 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
         invalidate();
         repaint();
-    }
-
-    @Override
-    public void paintChildren(Graphics g) {
-        // Draw a box around the selected row in the table
-        super.paintChildren(g);
-        final int row = getSelectedRow();
-        if (row >= 0) {
-            g.setColor(style().memorySelectedAddressBorderColor());
-            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-        }
     }
 
     /**
