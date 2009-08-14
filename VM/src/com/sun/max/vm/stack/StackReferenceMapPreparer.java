@@ -380,7 +380,7 @@ public final class StackReferenceMapPreparer {
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer) {
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         if (targetMethod != null) {
-            tracePrepareReferenceMap(targetMethod, targetMethod.findClosestStopIndex(instructionPointer), Pointer.zero(), "registers");
+            tracePrepareReferenceMap(targetMethod, targetMethod.findClosestStopIndex(instructionPointer, true), Pointer.zero(), "registers");
             final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
             if (safepointIndex < 0) {
                 Log.print("Could not find safepoint index for instruction at position ");
@@ -723,7 +723,7 @@ public final class StackReferenceMapPreparer {
             trampolineTargetMethod = targetMethod;
             trampolineFramePointer = refmapFramePointer;
         } else {
-            final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
+            final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer, true);
             if (stopIndex < 0) {
                 Log.print("Could not find stop postion for instruction at position ");
                 Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());

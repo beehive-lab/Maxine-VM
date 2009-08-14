@@ -517,7 +517,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 boolean useConstant = false;
                 boolean useTmp = false;
                 if (rightArg.isConstant()) {
-                    int iconst = rightArg.getJintConstant();
+                    int iconst = rightArg.asInt();
                     if (iconst > 0) {
                         if (Util.isPowerOf2(iconst)) {
                             useConstant = true;
@@ -1058,7 +1058,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             xin.setDestroysRegister();
         }
         xin.loadItem();
-        if (tag.isLong() && yin.isConstant() && yin.getJlongConstant() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
+        if (tag.isLong() && yin.isConstant() && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
             // inline long zero
             yin.dontLoadItem();
         } else if (tag.isLong() || tag.isFloat() || tag.isDouble()) {

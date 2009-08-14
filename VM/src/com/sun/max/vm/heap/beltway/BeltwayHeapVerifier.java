@@ -21,8 +21,8 @@
 package com.sun.max.vm.heap.beltway;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
@@ -45,22 +45,26 @@ public class BeltwayHeapVerifier {
         stackAndMonitorVerifier = new SequentialHeapRootsScanner(cellVerifier);
     }
 
+    public void verifyCodeRegions(HeapBoundChecker heapBoundChecker) {
+        cellVerifier.init(heapBoundChecker);
+        Code.visitReferences(cellVerifier);
+    }
+
+    public void verifyThreadAndStack(HeapBoundChecker heapBoundChecker) {
+        cellVerifier.init(heapBoundChecker);
+        stackAndMonitorVerifier.run();
+    }
+
     /**
      * Verifies that references within the specified region are within bounds and refers to properly formated objects.
      * @param start start of the region to be verified
      * @param end end of the region to be verified
      * @param heapBoundChecker checker that specifies the bounds for valid references.
      */
-    public void verifyHeap(Address start, Address end, HeapBoundChecker heapBoundChecker) {
-        cellVerifier.init(heapBoundChecker);
-        stackAndMonitorVerifier.run();
-        // FIXME: should this verify boot heap and code region ?
-        if (Heap.verbose()) {
-            Log.println("Finished Roots Verification");
-        }
+    public void verifyHeapRange(Address start, Address end, HeapBoundChecker heapBoundChecker) {
         Pointer cell = start.asPointer();
         while (cell.lessThan(end)) {
-            cell = DebugHeap.checkDebugCellTag(Address.zero(), cell);
+            cell = DebugHeap.checkDebugCellTag(start, cell);
             final Pointer origin = Layout.cellToOrigin(cell);
             final Grip hubGrip = Layout.readHubGrip(origin);
             FatalError.check(!hubGrip.isZero(), "null hub");

@@ -26,7 +26,6 @@ package com.sun.c1x.asm;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class OopDesc {
 

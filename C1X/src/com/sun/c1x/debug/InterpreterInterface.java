@@ -27,7 +27,6 @@ import com.sun.c1x.ci.*;
  * The <code>InterpreterInterface</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public interface InterpreterInterface {
 

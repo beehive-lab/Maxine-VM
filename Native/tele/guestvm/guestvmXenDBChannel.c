@@ -211,7 +211,9 @@ static ThreadState_t toThreadState(int state) {
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jint domainId, jlong threadLocalsList, jlong primordialThreadLocals) {
     struct db_thread *threads;
+    int num_threads;
     threads = gather_threads(&num_threads);
+    int i;
     for (i=0; i<num_threads; i++) {
         ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;

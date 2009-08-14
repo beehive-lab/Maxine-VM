@@ -25,7 +25,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.max.vm.compiler.c1x.*;
 
-public class MaxInterpreterInterface implements InterpreterInterface{
+public class MaxInterpreterInterface implements InterpreterInterface {
 
     private MaxCiRuntime runtime;
 
@@ -33,7 +33,6 @@ public class MaxInterpreterInterface implements InterpreterInterface{
         this.runtime = runtime;
     }
 
-    @Override
     public Object loadField(CiField field, Object objectRef) {
         return null;
     }

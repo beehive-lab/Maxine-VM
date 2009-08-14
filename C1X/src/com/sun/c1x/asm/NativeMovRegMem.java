@@ -27,7 +27,6 @@ import com.sun.c1x.util.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class NativeMovRegMem {
 

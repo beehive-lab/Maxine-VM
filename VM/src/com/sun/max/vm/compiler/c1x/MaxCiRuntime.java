@@ -71,7 +71,10 @@ public class MaxCiRuntime implements CiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public CiConstantPool getConstantPool(CiMethod method) {
-        final ClassMethodActor classMethodActor = this.asClassMethodActor(method, "getConstantPool()");
+        return getConstantPool(this.asClassMethodActor(method, "getConstantPool()"));
+    }
+
+    private MaxCiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
         final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
             MaxCiConstantPool constantPool = constantPools.get(cp);
@@ -103,8 +106,8 @@ public class MaxCiRuntime implements CiRuntime {
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
-    public CiMethod getCiMethod(MethodActor methodActor) {
-        return globalConstantPool.canonicalCiMethod(methodActor);
+    public CiMethod getCiMethod(ClassMethodActor methodActor) {
+        return getConstantPool(methodActor).canonicalCiMethod(methodActor);
     }
 
     /**
@@ -307,10 +310,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public long doubleSignflipPoolAddress() {
-        throw Util.unimplemented();
-    }
-
     public long doubleSignmaskPoolAddress() {
         throw Util.unimplemented();
     }
@@ -319,15 +318,7 @@ public class MaxCiRuntime implements CiRuntime {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
     }
 
-    public long floatSignflipPoolAddress() {
-        throw Util.unimplemented();
-    }
-
     public long getPollingPage() {
-        throw Util.unimplemented();
-    }
-
-    public int getSerializePageShiftCount() {
         throw Util.unimplemented();
     }
 
@@ -388,10 +379,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int threadTlabTopOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadVmResultOffset() {
         throw Util.unimplemented();
     }
 
@@ -663,7 +650,6 @@ public class MaxCiRuntime implements CiRuntime {
 //            }});
     }
 
-    @Override
     public CiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 
