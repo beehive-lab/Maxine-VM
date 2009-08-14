@@ -136,6 +136,15 @@ public class PreferenceDialog extends SimpleDialog {
         memoryRegionsInspectorPanel.setBorder(border);
         prefPanel.add(memoryRegionsInspectorPanel);
 
+        final JPanel memoryWordsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        memoryWordsLabelPanel.setBorder(border);
+        memoryWordsLabelPanel.add(new TextLabel(inspection, "Memory"), BorderLayout.WEST);
+        prefPanel.add(memoryWordsLabelPanel);
+
+        final JPanel memoryWordsInspectorPanel = MemoryWordsInspector.globalPreferencesPanel(inspection);
+        memoryWordsInspectorPanel.setBorder(border);
+        prefPanel.add(memoryWordsInspectorPanel);
+
         final JPanel registersLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         registersLabelPanel.setBorder(border);
         registersLabelPanel.add(new TextLabel(inspection, "Registers"), BorderLayout.WEST);

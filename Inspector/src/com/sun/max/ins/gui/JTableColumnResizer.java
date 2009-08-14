@@ -36,7 +36,7 @@ import javax.swing.table.*;
 public class JTableColumnResizer {
 
     public static void adjustColumnPreferredWidths(JTable table) {
-        adjustColumnPreferredWidths(table, Integer.MAX_VALUE);
+        adjustColumnPreferredWidths(table, 100);
     }
 
     public static void adjustColumnPreferredWidths(JTable table, int maxRows) {

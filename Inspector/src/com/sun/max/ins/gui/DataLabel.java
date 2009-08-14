@@ -123,7 +123,7 @@ public abstract class DataLabel extends InspectorLabel {
         }
 
         private void updateText() {
-            if (bytes != null) {
+            if (bytes != null && bytes.length > 0) {
                 final StringBuilder result = new StringBuilder(100);
                 String prefix = "[";
                 for (byte b : bytes) {
@@ -337,7 +337,6 @@ public abstract class DataLabel extends InspectorLabel {
                         case MouseEvent.BUTTON3: {
                             final InspectorMenu menu = new InspectorMenu();
                             menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));
-                            menu.add(inspection().actions().inspectMemory(address, null));
                             menu.add(inspection().actions().inspectMemoryWords(address, null));
                             if (maxVM().watchpointsEnabled()) {
                                 menu.add(inspection().actions().setWordWatchpoint(address, null));

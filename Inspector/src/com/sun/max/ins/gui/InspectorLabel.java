@@ -40,14 +40,31 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
 
     private final Inspection inspection;
 
-    public InspectorLabel(Inspection inspection, String text) {
+    /**
+     * A label for use in the inspector: can be selected and copied.
+     * @param text label text
+     * @param toolTipText text for ToolTips
+     */
+    public InspectorLabel(Inspection inspection, String text, String toolTipText) {
         super(text);
         this.inspection = inspection;
+        setToolTipText(toolTipText);
         setEditable(false);
     }
 
+    /**
+     * A label for use in the inspector: can be selected and copied.
+     * @param text label text
+     */
+    public InspectorLabel(Inspection inspection, String text) {
+        this(inspection, text, null);
+    }
+
+    /**
+     * A label for use in the inspector: can be selected and copied.
+     */
     public InspectorLabel(Inspection inspection) {
-        this(inspection, null);
+        this(inspection, null, null);
     }
 
     public final Inspection inspection() {

@@ -595,21 +595,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    /**
-     * Tells the inspector that a watchpoint on this object has to be relocated.
-     * @param oldAddress
-     * @param newAddress
-     */
-    private void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
-        if (MaxineMessenger.isVmInspected()) {
-            //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
-            //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
-            InspectableHeapInfo.oldAddress = oldAddress;
-            InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
-        }
-    }
-
     private void scanBootHeap() {
         Heap.bootHeapRegion.visitReferences(gripUpdater);
     }
@@ -985,7 +970,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             Log.print(' ');
             Log.println(when);
         }
-        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
+        zapRegion(region);
     }
 
     private void logSpaces() {

@@ -143,6 +143,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
         });
         viewOptionsButton.setToolTipText("Target code view options");
+        viewOptionsButton.setText(null);
+        viewOptionsButton.setIcon(style().generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());

@@ -360,9 +360,9 @@ public class Belt extends RuntimeMemoryRegion {
      */
     public final void evacuate(BeltCellVisitor cellVisitor, Belt from) {
         cellVisitor.init(from, this);
-        Pointer cell = start().asPointer();
+        Pointer cell = start.asPointer();
         while (cell.lessThan(getAllocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(from.start(), cell);
+            cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = cellVisitor.visitCell(cell);
         }
     }
