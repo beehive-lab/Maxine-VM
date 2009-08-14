@@ -24,7 +24,9 @@ import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.compiler.CompilationScheme;
+import com.sun.max.vm.object.ArrayAccess;
 import com.sun.max.unsafe.Word;
+import com.sun.max.unsafe.Pointer;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.INLINE;
 
@@ -68,18 +70,34 @@ public class JitInstrumentation {
     @NEVER_INLINE
     public static void recordLocation(MethodProfile mpo, int mpoIndex) {
         int[] data = mpo.rawData();
-        if (--data[mpoIndex] == 0) {
-            if (!mpo.triggered) {
-                triggerRecompilation(mpo, mpoIndex);
+        if (false) {
+            // use checked array access
+            if (--data[mpoIndex] == 0) {
+                triggerRecompilation(mpo);
             }
+        } else {
+            // use unchecked array access
+            Pointer ptr = ArrayAccess.elementPointer(data, mpoIndex);
+            int nval = ptr.getInt() - 1;
+            if (nval == 0) {
+                triggerRecompilation(mpo);
+            }
+            ptr.setInt(nval);
         }
     }
 
-    private static void triggerRecompilation(MethodProfile mpo, int mpoIndex) {
+    @INLINE
+    public static void recordEntrypoint(MethodProfile mpo) {
+        if (--mpo.entryCount == 0) {
+            triggerRecompilation(mpo);
+        }
+    }
+
+    private static void triggerRecompilation(MethodProfile mpo) {
         synchronized (mpo) {
             if (!mpo.triggered) {
                 // location count overflowed; call into instrumentation system
-                CompilationScheme.Static.instrumentationCounterOverflow(mpo, mpoIndex);
+                CompilationScheme.Static.instrumentationCounterOverflow(mpo, 0);
                 mpo.triggered = true;
             }
         }
