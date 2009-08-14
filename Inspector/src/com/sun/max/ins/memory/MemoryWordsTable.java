@@ -68,7 +68,11 @@ public final class MemoryWordsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection().focus().setAddress(model.rowToMemoryRegion(selectedRow).start());
+                        final MemoryRegion memoryRegion = model.rowToMemoryRegion(selectedRow);
+                        inspection().focus().setAddress(memoryRegion.start());
+                        if (mouseEvent.getClickCount() > 1) {
+                            actions().toggleWatchpointAtLocation(memoryRegion, null).perform();
+                        }
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
