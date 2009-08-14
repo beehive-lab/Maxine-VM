@@ -107,6 +107,10 @@ public final class MemoryWordsInspector extends Inspector {
         return globalPreferences;
     }
 
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
+    }
+
     private static class MemoryWordsViewPreferences extends TableColumnVisibilityPreferences<MemoryWordsColumnKind> {
 
         private final MemoryWordsInspector memoryWordsInspector;
