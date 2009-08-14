@@ -190,7 +190,7 @@ public final class MemoryWordsTable extends InspectorTable {
      * A base address may also be specified, from which offsets are computed.
      * There is no requirement that the base address be in the memory region displayed.
      */
-    private final class MemoryWordsTableModel extends DefaultTableModel {
+    private final class MemoryWordsTableModel extends AbstractTableModel {
 
         final Size wordSize;
         MemoryWordRegion memoryWordRegion;
