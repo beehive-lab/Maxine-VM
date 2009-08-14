@@ -103,7 +103,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeSuspend(JNIEnv *env
     return true;
 }
 
-
+#ifdef false
 int
 Psetrun_dbg(struct ps_prochandle *P,
     int sig,    /* signal to pass to process */
@@ -199,6 +199,8 @@ Psetrun_dbg(struct ps_prochandle *P,
     P->state = PS_RUN;
     return (0);
 }
+#endif
+
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong processHandle) {
@@ -240,7 +242,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
 
     proc_Psync(ph);
 
-    if (Psetrun_dbg(ph, 0, 0) != 0) {
+    if (Psetrun(ph, 0, 0) != 0) {
         log_println("Psetrun failed, proc_Pstate %d", proc_Pstate(ph));
 #ifdef __SunOS_5_11
         /* For some unknown reason, Psetrun can return a non-zero result on OpenSolaris
