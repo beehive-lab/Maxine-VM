@@ -31,21 +31,32 @@ public class RegisterOrConstant {
 
     public final Register register;
     public final int constant;
+    public final Object object;
 
 
     public RegisterOrConstant(int i) {
         this.constant = i;
         this.register = Register.noreg;
+        object = null;
     }
 
     public RegisterOrConstant(Register r) {
         assert r != Register.noreg;
         this.constant = 0;
         this.register = r;
+        object = null;
+    }
+
+    public RegisterOrConstant(Object o) {
+        assert o != null;
+        this.constant = 0;
+        this.register = Register.noreg;
+        object = o;
+
     }
 
     public boolean isConstant() {
-        return register == Register.noreg;
+        return register == Register.noreg && object == null;
     }
 
     public Register asRegister() {
@@ -69,4 +80,11 @@ public class RegisterOrConstant {
         return register;
     }
 
+    public Object asOop() {
+        return object;
+    }
+
+    public boolean isOopConstant() {
+        return object != null;
+    }
 }

@@ -34,6 +34,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
     private final int endBCI;
     private final int handlerBCI;
     private final int classCPI;
+    private final CiType classType;
 
     /**
      * Creates a new exception handler with the specified ranges.
@@ -41,12 +42,14 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @param endBCI the end index of the protected range
      * @param catchBCI the index of the handler
      * @param classCPI the index of the throwable class in the constant pool
+     * @param maxCiType
      */
-    public MaxCiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
+    public MaxCiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, CiType classType) {
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;
         this.classCPI = classCPI;
+        this.classType = classType;
     }
 
     /**
@@ -87,5 +90,10 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      */
     public boolean isCatchAll() {
         return classCPI == 0;
+    }
+
+    @Override
+    public CiType catchKlass() {
+        return classType;
     }
 }

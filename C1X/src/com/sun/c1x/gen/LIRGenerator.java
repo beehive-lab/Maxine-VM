@@ -27,6 +27,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -305,15 +306,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
             operandForInstruction(phi);
         }
 
-        // XXX: in Maxine's runtime, the exception object is passed in a physical register
-//        LIROperand threadReg = getThreadPointer();
-        LIROperand exceptionOopOpr = LIROperandFactory.singleLocation(BasicType.Object, compilation.runtime.exceptionOopRegister());
-//        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), exceptionOopOpr);
-//        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object));
-//        lir.move(LIROperandFactory.oopConst(null), new LIRAddress(threadReg, compilation.runtime.threadExceptionPcOffset(), BasicType.Object));
-
         LIROperand result = newRegister(BasicType.Object);
-        lir.move(exceptionOopOpr, result);
+        LIROperand threadReg = LIROperandFactory.singleLocation(BasicType.Object, compilation.runtime.threadRegister());
+        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), BasicType.Object), result);
         setResult(x, result);
     }
 
@@ -484,7 +479,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
-                lir.callStatic(x.target(), resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info);
+                lir.callStatic(x.target(), resultRegister, GlobalStub.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
                 break;
             case Bytecodes.INVOKESPECIAL:
             case Bytecodes.INVOKEVIRTUAL:
@@ -492,18 +487,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 // for final target we still produce an inline cache, in order
                 // to be able to call mixed mode
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
-                    lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info);
-                } else if (x.vtableIndex() < 0) {
-                    Util.shouldNotReachHere();
-                    //lir.callIcvirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveVirtualCall, argList, info);
+                    lir.callOptVirtual(x.target(), receiver, resultRegister, GlobalStub.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                 } else {
 
                     if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
                         assert x.vtableIndex() >= 0;
-                        lir.callInterface(x.target(), receiver, resultRegister, argList, info);
+                        lir.callInterface(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     } else {
                         assert x.vtableIndex() >= 0;
-                        lir.callVirtual(x.target(), receiver, resultRegister, argList, info);
+                        lir.callVirtual(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     }
                 }
                 break;
@@ -615,9 +607,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 lir.cmp(LIRCondition.BelowEqual, length.result(), index.result());
                 lir.branch(LIRCondition.BelowEqual, BasicType.Int, new RangeCheckStub(rangeCheckInfo, index.result()));
             } else {
-                arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo);
                 // The range check performs the null check, so clear it out for the load
                 nullCheckInfo = null;
+                arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo);
             }
         }
 
@@ -886,12 +878,13 @@ public abstract class LIRGenerator extends InstructionVisitor {
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
-        lir.move(exceptionOpr, compilation.frameMap().runtimeCallingConvention(new BasicType[]{BasicType.Object}).at(0));
+        LIROperand argumentOperand = compilation.frameMap().runtimeCallingConvention(new BasicType[]{BasicType.Object}).at(0);
+        lir.move(exceptionOpr, argumentOperand);
 
         if (unwind) {
             lir.unwindException(LIROperandFactory.IllegalOperand, exceptionOpr, info);
         } else {
-            lir.throwException(exceptionPcOpr(), exceptionOpr, info);
+            lir.throwException(exceptionPcOpr(), argumentOperand, info);
         }
     }
 
@@ -1652,6 +1645,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     protected void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
+        assert nullCheckInfo != rangeCheckInfo;
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
             cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asInt(), nullCheckInfo);
@@ -1882,14 +1876,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected void monitorExit(LIROperand object, LIROperand lock, LIROperand newHdr, int monitorNo) {
+    protected void monitorExit(LIROperand objReg, LIROperand lock, LIROperand newHdr, int monitorNo) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // setup registers
             LIROperand hdr = lock;
             lock = newHdr;
-            CodeStub slowPath = new MonitorExitStub(lock, C1XOptions.UseFastLocking, monitorNo);
+            CodeStub slowPath = new MonitorExitStub(objReg, lock, C1XOptions.UseFastLocking, monitorNo);
             lir.loadStackAddressMonitor(monitorNo, lock);
-            lir.unlockObject(hdr, object, lock, slowPath);
+            lir.unlockObject(hdr, objReg, lock, slowPath);
         }
     }
 
@@ -2128,8 +2122,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     protected abstract void cmpMemInt(LIRCondition condition, LIROperand base, int disp, int c, CodeEmitInfo info);
 
     protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, int disp, BasicType type, CodeEmitInfo info);
-
-    protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, LIROperand disp, BasicType type, CodeEmitInfo info);
 
     protected abstract LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark);
 

@@ -31,20 +31,11 @@ import com.sun.c1x.ir.*;
  */
 public class ExceptionInfo {
 
-    private int pco;
-    private List<ExceptionHandler> exceptionHandlers;
+    public final int codeOffset;
+    public final List<ExceptionHandler> exceptionHandlers;
 
     public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        this.pco = pcOffset;
+        this.codeOffset = pcOffset;
         this.exceptionHandlers = exceptionHandlers;
     }
-
-    public int pco() {
-        return pco;
-    }
-
-    public List<ExceptionHandler> exceptionHandlers() {
-        return exceptionHandlers;
-    }
-
 }

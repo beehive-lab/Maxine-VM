@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.target;
 
 import com.sun.max.asm.*;
+import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
@@ -84,6 +85,16 @@ public class IrTargetMethod extends TargetMethod {
 
     @Override
     public boolean areReferenceMapsFinalized() {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public void traceExceptionHandlers(IndentWriter writer) {
         throw ProgramError.unexpected();
     }
 }

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.jni.JniFunctionWrapper.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -48,6 +49,12 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public abstract class StackFrameWalker {
+
+
+    /**
+     * A VM option for specifying how heap memory is to be allocated.
+     */
+    public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
     private final CompilerScheme compilerScheme;
 
@@ -127,6 +134,11 @@ public abstract class StackFrameWalker {
      */
     private void walk(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Purpose purpose, Object context) {
 
+        if (traceStackWalk.getValue()) {
+            Log.print("Walking the stack for purpose ");
+            Log.println(purpose);
+        }
+
         checkPurpose(purpose, context);
 
         this.trapState = Pointer.zero();
@@ -143,6 +155,14 @@ public abstract class StackFrameWalker {
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
+
+                if (traceStackWalk.getValue()) {
+                    Log.print("Found target method at ");
+                    Log.print(this.instructionPointer.toLong());
+                    Log.print(": ");
+                    Log.println(targetMethod.description());
+                }
+
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
@@ -154,28 +174,39 @@ public abstract class StackFrameWalker {
                 lastJavaCallee = targetMethod;
 
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
-                    return;
+                    break;
                 }
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
                     trapState = Pointer.zero();
                 }
             } else {
                 final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
+                if (traceStackWalk.getValue()) {
+                    Log.print("No target method found at ");
+                    Log.print(this.instructionPointer.toLong());
+
+                    if (stub != null) {
+                        Log.print(", but found stub ");
+                        Log.print(stub.description());
+                    }
+
+                    Log.println();
+                }
                 if (stub != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
                     if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
-                        return;
+                        break;
                     }
                 } else {
                     if (purpose == INSPECTING) {
                         final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                         if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
-                            return;
+                            break;
                         }
                     } else if (purpose == RAW_INSPECTING) {
                         final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                         final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
                         if (!stackFrameVisitor.visitFrame(null, this.instructionPointer, this.framePointer, this.stackPointer, flags)) {
-                            return;
+                            break;
                         }
                     }
 
@@ -185,12 +216,12 @@ public abstract class StackFrameWalker {
                     } else {
                         if (stub != null) {
                             if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
-                                return;
+                                break;
                             }
                         } else {
                             if (lastJavaCallee == null) {
                                 // This is the native thread start routine (i.e. VmThread.run())
-                                return;
+                                break;
                             }
 
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
@@ -200,10 +231,10 @@ public abstract class StackFrameWalker {
                                     // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
                                     // particular, the return instruction pointer slot has not been updated with the instruction
                                     // pointer at which the fault occurred.
-                                    return;
+                                    break;
                                 }
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                                    return;
+                                    break;
                                 }
                             } else if (lastJavaCalleeMethodActor == null) {
                                 FatalError.unexpected("Unrecognized target method without a class method actor!");
@@ -221,6 +252,10 @@ public abstract class StackFrameWalker {
                 lastJavaCallee = null;
             }
             isTopFrame = false;
+        }
+
+        if (traceStackWalk.getValue()) {
+            Log.println("Finished walking the stack, returning! ");
         }
     }
 
@@ -405,8 +440,8 @@ public abstract class StackFrameWalker {
     /**
      * Walks a thread's stack for the purpose of raising an exception.
      */
-    public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, compilerScheme.makeStackUnwindingContext(stackPointer, framePointer, throwable));
+    public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable, Pointer implicitExceptionTrapState) {
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable, implicitExceptionTrapState));
     }
 
     /**

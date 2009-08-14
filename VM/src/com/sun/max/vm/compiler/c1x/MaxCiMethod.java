@@ -294,7 +294,7 @@ public class MaxCiMethod implements CiMethod {
             exceptionHandlers.add(new MaxCiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),
-                                                             (char) entry.catchTypeIndex()));
+                                                             (char) entry.catchTypeIndex(), (entry.catchTypeIndex() == 0) ? null : constantPool.resolveType((char) entry.catchTypeIndex())));
         }
         return exceptionHandlers;
     }

@@ -65,6 +65,7 @@ import com.sun.max.vm.runtime.*;
 public final class AMD64TrapStateAccess extends TrapStateAccess {
 
     private static final AMD64GeneralRegister64 RETURN_VALUE_REGISTER = RAX;
+    private static final AMD64GeneralRegister64 STACK_POINTER_REGISTER = RSP;
 
     public static final int TRAP_STATE_SIZE_WITH_RIP;
     public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
@@ -243,5 +244,10 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
             }
         }
         Log.print('}');
+    }
+
+    @Override
+    public void setStackPointer(Pointer trapState, Pointer value) {
+        trapState.writeWord(STACK_POINTER_REGISTER.value() * Word.size(), value);
     }
 }

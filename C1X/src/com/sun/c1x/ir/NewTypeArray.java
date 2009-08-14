@@ -32,7 +32,7 @@ public class NewTypeArray extends NewArray {
     final BasicType elementType;
 
     public NewTypeArray(Instruction length, BasicType elementType) {
-        super(length, null);
+        super(length, null, null);
         this.elementType = elementType;
     }
 

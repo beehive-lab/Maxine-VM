@@ -27,9 +27,9 @@ import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -90,20 +90,20 @@ public class LIRList {
         return block;
     }
 
-    public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info));
+    public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info, cpi, constantPool));
     }
 
-    public void callStatic(CiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info));
+    public void callStatic(CiMethod method, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info, cpi, constantPool));
     }
 
-    public void callInterface(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info));
+    public void callInterface(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info, cpi, constantPool));
     }
 
-    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info));
+    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info, cpi, constantPool));
     }
 
     public void getThread(LIROperand result) {
@@ -636,6 +636,6 @@ public class LIRList {
     }
 
     public void insertBefore(int i, LIRInstruction op) {
-        Util.nonFatalUnimplemented();
+        operations.add(i, op);
     }
 }

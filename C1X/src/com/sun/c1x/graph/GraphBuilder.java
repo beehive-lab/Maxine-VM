@@ -431,7 +431,7 @@ public class GraphBuilder {
         if (entry == curBlock) {
             throw new Bailout("Exception handler covers itself");
         }
-        assert entry.bci() == h.handlerBCI();
+        assert entry.bci() == h.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
         assert entry.state() == null || s.locksSize() == entry.state().locksSize() : "locks do not match";
 
@@ -820,26 +820,26 @@ public class GraphBuilder {
         push(basicType.stackType(), optimized);
     }
 
-    void invokeStatic(CiMethod target) {
+    void invokeStatic(CiMethod target, char cpi, CiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null)) {
                 profileInvocation(target);
-                appendInvoke(Bytecodes.INVOKESTATIC, target, args, true);
+                appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool);
             }
         }
     }
 
-    void invokeInterface(CiMethod target) {
+    void invokeInterface(CiMethod target, char cpi, CiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
             profileCall(args[0], null);
-            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false);
+            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool);
         }
     }
 
-    void invokeVirtual(CiMethod target) {
+    void invokeVirtual(CiMethod target, char cpi, CiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             Instruction receiver = args[0];
@@ -849,33 +849,33 @@ public class GraphBuilder {
                 // 0. check for trivial cases
                 if (target.canBeStaticallyBound() && !target.isAbstract()) {
                     // check for trivial cases (e.g. final methods, nonvirtual methods)
-                    invokeDirect(target, args, target.holder());
+                    invokeDirect(target, args, target.holder(), cpi, constantPool);
                     return;
                 }
                 // 1. check if the exact type of the receiver can be determined
                 CiType exact = getExactType(klass, receiver);
                 if (exact != null && exact.isLoaded()) {
                     // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact);
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
                     return;
                 }
                 // 2. check if an assumed leaf method can be found
                 CiMethod leaf = getAssumedLeafMethod(target, receiver);
                 if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
-                    invokeDirect(leaf, args, null);
+                    invokeDirect(leaf, args, null, cpi, constantPool);
                     return;
                 }
                 // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
                 exact = getAssumedLeafType(klass, receiver);
                 if (exact != null && exact.isLoaded()) {
                     // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact);
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
                     return;
                 }
             }
             // devirtualization failed, produce an actual invokevirtual
             profileCall(args[0], null);
-            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false);
+            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool);
         }
     }
 
@@ -883,24 +883,24 @@ public class GraphBuilder {
         return target.signatureType().returnBasicType();
     }
 
-    void invokeSpecial(CiMethod target, CiType knownHolder) {
-        invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder);
+    void invokeSpecial(CiMethod target, CiType knownHolder, char cpi, CiConstantPool constantPool) {
+        invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder, cpi, constantPool);
     }
 
-    private void invokeDirect(CiMethod target, Instruction[] args, CiType knownHolder) {
+    private void invokeDirect(CiMethod target, Instruction[] args, CiType knownHolder, char cpi, CiConstantPool constantPool) {
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder)) {
                 // could not optimize or inline the method call
                 profileInvocation(target);
                 profileCall(args[0], target.holder());
-                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false);
+                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool);
             }
         }
     }
 
-    private void appendInvoke(int opcode, CiMethod target, Instruction[] args, boolean isStatic) {
+    private void appendInvoke(int opcode, CiMethod target, Instruction[] args, boolean isStatic, char cpi, CiConstantPool constantPool) {
         BasicType resultType = returnBasicType(target);
-        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target));
+        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -1767,6 +1767,10 @@ public class GraphBuilder {
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
+
+        // Temporary variable for constant pool index
+        char cpi;
+
         skipBlock = false;
         assert curState != null;
         BytecodeStream s = scopeData.stream;
@@ -1999,10 +2003,10 @@ public class GraphBuilder {
                 case Bytecodes.PUTSTATIC      : putStatic(); break;
                 case Bytecodes.GETFIELD       : getField(); break;
                 case Bytecodes.PUTFIELD       : putField(); break;
-                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(s.readCPI())); break;
-                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(s.readCPI()), null); break;
-                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(s.readCPI())); break;
-                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(s.readCPI())); break;
+                case Bytecodes.INVOKEVIRTUAL  : cpi = s.readCPI(); invokeVirtual(constantPool().lookupInvokeVirtual(cpi), cpi, constantPool()); break;
+                case Bytecodes.INVOKESPECIAL  : cpi = s.readCPI(); invokeSpecial(constantPool().lookupInvokeSpecial(cpi), null, cpi, constantPool()); break;
+                case Bytecodes.INVOKESTATIC   : cpi = s.readCPI(); invokeStatic(constantPool().lookupInvokeStatic(cpi), cpi, constantPool()); break;
+                case Bytecodes.INVOKEINTERFACE: cpi = s.readCPI(); invokeInterface(constantPool().lookupInvokeInterface(cpi), cpi, constantPool()); break;
                 case Bytecodes.NEW            : newInstance(); break;
                 case Bytecodes.NEWARRAY       : newTypeArray(); break;
                 case Bytecodes.ANEWARRAY      : newObjectArray(); break;

@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.DynamicCompilerScheme;
 /**
  * @author Bernd Mathiske
  */
-public abstract class OptimizedTargetMethod extends TargetMethod {
+public abstract class OptimizedTargetMethod extends ExceptionRangeTargetMethod {
 
     protected OptimizedTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
