@@ -322,7 +322,7 @@ public final class MemoryWordsInspector extends Inspector {
         frame().menu().add(frameMenuItems);
 
         table.scrollToOrigin();
-        table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
+       // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
     }
 
 
@@ -382,48 +382,64 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar.add(prefsButton);
         panel.add(toolBar, BorderLayout.NORTH);
 
-        scrollPane = new InspectorScrollPane(inspection(), table);
-        //table.setPreferredScrollableViewportSize(preferredTableDimension());
-
-        //setBounds(preferredTableDimension());
-
-
+        scrollPane = new SizedScrollPane(inspection(), table);
         panel.add(scrollPane, BorderLayout.CENTER);
         frame().setContentPane(panel);
+        // Force everything into consistency with the current view mode.
+        updateViewMode();
 
+        // When user grows window height beyond table size, expand region being viewed.
         final JViewport viewport = scrollPane.getViewport();
-        // viewport.setPreferredSize(new Dimension(viewport.getWidth(), preferredTableHeight()));
-
-
-
-
         viewport.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent componentEvent) {
                 super.componentResized(componentEvent);
-
-//                final int preferredHeight = preferredTableDimension().height;
-//                final int height = scrollPane.getViewport().getBounds().height;
-//                final int extraRows = (preferredHeight - height) / table.getRowHeight();
-//                if (extraRows > 0) {
-//                    growRegionDown(extraRows);
-//                }
-
                 final Rectangle bounds = viewport.getBounds();
-                System.out.println(bounds.toString());
-                System.out.println("Header=" + table.getTableHeader().getHeight());
-                System.out.println("Row height=" + table.getRowHeight());
-                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())));
+//                System.out.println(bounds.toString());
+//                System.out.println("Header=" + table.getTableHeader().getHeight());
+//                System.out.println("Row height=" + table.getRowHeight());
+//                System.out.println("Avail=" + ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())));
                 final int rowCapacity = ((bounds.height - table.getTableHeader().getHeight()) - (MemoryWordsInspector.this.memoryWordRegion.wordCount * table.getRowHeight())) / table.getRowHeight();
-                System.out.println("Capacity =" + rowCapacity);
-                System.out.println("Preferred=" + preferredTableHeight());
+//                System.out.println("Capacity =" + rowCapacity);
+//                System.out.println("Preferred=" + preferredTableHeight());
                 if (rowCapacity > 0) {
-                    //growRegionDown(rowCapacity );
+                    Trace.line(TRACE_VALUE, tracePrefix() + "growing viewport rows by " + rowCapacity);
+                    growRegionDown(rowCapacity);
                 }
             }
         });
-        // Force everything into consistency with the current view mode.
-        updateViewMode();
+
+    }
+
+    private final class SizedScrollPane extends InspectorScrollPane {
+
+        private final InspectorTable inspectorTable;
+
+        /**
+         * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
+         * of the table up to a specified limit.
+         */
+        public SizedScrollPane(Inspection inspection, InspectorTable inspectorTable) {
+            super(inspection, inspectorTable);
+            this.inspectorTable = inspectorTable;
+            // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
+            // this is empirical, based only the fuzziest notion of how these dimensions work
+            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 1;
+            final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
+                                                          inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
+            final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
+            inspectorTable.setPreferredScrollableViewportSize(new Dimension(preferredWidth, preferredHeight));
+        }
+
+        @Override
+        public void redisplay() {
+            inspectorTable.redisplay();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            inspectorTable.refresh(force);
+        }
 
     }
 
@@ -435,8 +451,8 @@ public final class MemoryWordsInspector extends Inspector {
         final int rowMargin = table.getRowMargin();
         final int headerHeight = table.getTableHeader().getHeight();
         final int preferredHeight = displayRows * (rowHeight + rowMargin) + rowMargin  + headerHeight;
-        Trace.line(TRACE_VALUE, tracePrefix() + "preferredHeight=" + preferredHeight + "[ rows=" + displayRows + ", rowHeight=" + rowHeight
-                + ", rowMargin=" + rowMargin + ", headerHeight=" + headerHeight + "]");
+//        Trace.line(TRACE_VALUE, tracePrefix() + "preferredHeight=" + preferredHeight + "[ rows=" + displayRows + ", rowHeight=" + rowHeight
+//                + ", rowMargin=" + rowMargin + ", headerHeight=" + headerHeight + "]");
         return preferredHeight;
     }
 
