@@ -36,7 +36,7 @@ import com.sun.max.tele.object.*;
 public final class StringInspector extends ObjectInspector {
 
     private JTabbedPane tabbedPane;
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
@@ -59,7 +59,7 @@ public final class StringInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleString);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleString);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

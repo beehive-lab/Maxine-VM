@@ -26,7 +26,6 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.io.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.object.*;
@@ -127,27 +126,16 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
     private final InspectTargetMethodObjectAction inspectTargetMethodObjectAction;
 
 
-    private final class InspectTargetCodeMemoryAction extends InspectorAction {
-        private InspectTargetCodeMemoryAction() {
-            super(inspection(), "Inspect Target Code Region Memory");
-        }
-        @Override
-        protected void procedure() {
-            MemoryInspector.create(inspection(), teleTargetMethod.targetCodeRegion().start(), teleTargetMethod.targetCodeRegion().size().toInt(), 1, 8).highlight();
-        }
-    }
-
-    private final InspectTargetCodeMemoryAction inspectTargetCodeMemoryAction;
-
     private final class InspectTargetCodeMemoryWordsAction extends InspectorAction {
         private InspectTargetCodeMemoryWordsAction() {
-            super(inspection(), "Inspect Target Code Region Memory Words");
+            super(inspection(), "Inspect Target Code memory region");
         }
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleTargetMethod.targetCodeRegion()).highlight();
+            actions().inspectRegionMemoryWords(teleTargetMethod.targetCodeRegion(), "Target Method " + inspection().nameDisplay().shortName(teleTargetMethod), null).perform();
         }
+
     }
 
     private final InspectTargetCodeMemoryWordsAction inspectTargetCodeMemoryWordsAction;
@@ -159,7 +147,6 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         targetCodeBreakOnEntryAction = new TargetCodeBreakOnEntryAction();
         copyTargetMethodCodeToClipboardAction = new CopyTargetMethodCodeToClipboardAction();
         inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
-        inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
         inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
         refresh(true);
     }
@@ -170,7 +157,6 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         menu.add(copyTargetMethodCodeToClipboardAction);
         menu.addSeparator();
         menu.add(inspectTargetMethodObjectAction);
-        menu.add(inspectTargetCodeMemoryAction);
         menu.add(inspectTargetCodeMemoryWordsAction);
     }
 

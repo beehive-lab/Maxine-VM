@@ -1100,7 +1100,15 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.lookupObject(id);
     }
 
-    public final TeleObject findObjectFollowing(Address address, long maxSearchExtent) {
+    public final TeleObject findObjectAt(Address cellAddress) {
+        try {
+            return makeTeleObject(cellToReference(cellAddress.asPointer()));
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public final TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -1109,9 +1117,9 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             for (long count = 0; count < wordSearchExtent; count++) {
-                address = address.plus(wordSize());
-                if (isValidOrigin(address.asPointer())) {
-                    return makeTeleObject(originToReference(address.asPointer()));
+                cellAddress = cellAddress.plus(wordSize());
+                if (isValidOrigin(cellAddress.asPointer())) {
+                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
                 }
             }
         } catch (Throwable throwable) {
@@ -1119,7 +1127,7 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    public final TeleObject findObjectPreceding(Address address, long maxSearchExtent) {
+    public final TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -1128,9 +1136,9 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             for (long count = 0; count < wordSearchExtent; count++) {
-                address = address.minus(wordSize());
-                if (isValidOrigin(address.asPointer())) {
-                    return makeTeleObject(originToReference(address.asPointer()));
+                cellAddress = cellAddress.minus(wordSize());
+                if (isValidOrigin(cellAddress.asPointer())) {
+                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
                 }
             }
         } catch (Throwable throwable) {
