@@ -72,21 +72,20 @@ public final class MemoryWordsTable extends InspectorTable {
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    if (maxVM().watchpointsEnabled()) {
-                        // So far, only watchpoint-related items on this popup menu.
-                        final Point p = mouseEvent.getPoint();
-                        final int hitRowIndex = rowAtPoint(p);
-                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
-                            final InspectorMenu menu = new InspectorMenu();
+                    final Point p = mouseEvent.getPoint();
+                    final int hitRowIndex = rowAtPoint(p);
+                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
+                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
+                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
+                        final InspectorMenu menu = new InspectorMenu();
+                        if (maxVM().watchpointsEnabled()) {
                             final MemoryRegion memoryRegion = model.rowToMemoryRegion(hitRowIndex);
                             menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
                             menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
-                            menu.add(actions().inspectMemoryBytes(model.rowToAddress(hitRowIndex), "Inspect this memory as bytes"));
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
+                        menu.add(actions().inspectMemoryBytes(model.rowToAddress(hitRowIndex), "Inspect this memory as bytes"));
+                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
                 super.procedure(mouseEvent);
