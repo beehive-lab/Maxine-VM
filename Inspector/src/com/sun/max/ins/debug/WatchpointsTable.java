@@ -58,8 +58,7 @@ public final class WatchpointsTable extends InspectorTable {
         model = new WatchpointsTableModel();
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
-
-        configureTable(model, columnModel);
+        configureDefaultTable(model, columnModel);
 
         //TODO: generalize this
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {

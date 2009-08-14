@@ -58,14 +58,7 @@ public final class MemoryWordsTable extends InspectorTable {
         columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
         columnModel = new MemoryWordsColumnModel(instanceViewPreferences);
 
-        // default configuration
-        configureTable(model, columnModel);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
-
-
+        configureMemoryTable(model, columnModel);
         addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -144,17 +137,6 @@ public final class MemoryWordsTable extends InspectorTable {
         }
         invalidate();
         repaint();
-    }
-
-    @Override
-    public void paintChildren(Graphics g) {
-        // Draw a box around the selected row in the table
-        super.paintChildren(g);
-        final int row = getSelectedRow();
-        if (row >= 0) {
-            g.setColor(style().memorySelectedAddressBorderColor());
-            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-        }
     }
 
     @Override
