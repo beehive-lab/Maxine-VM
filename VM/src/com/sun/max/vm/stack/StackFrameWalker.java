@@ -529,12 +529,15 @@ public abstract class StackFrameWalker {
      * @param stackFrames an iterable list of stack frames
      * @param topFrame true if this method should include the ClassMethodActor of the top frame
      * @param adapterFrames true if adapter frames should be reported
-     * @param invisibleFrames true if invisible frames should be reported
+     * @param invisibleFrames true if application invisible frames should be reported
+     * @param ignoreUntilNativeFrame TODO
+     * @param ignoreUntilNativeFrame true if all frames before the first native frame are to be ignored
      * @return
      */
-    public static Sequence<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames) {
-        final AppendableSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
+    public static Sequence<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
+        final LinkSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
         boolean top = true;
+        boolean seenNativeFrame = false;
         for (StackFrame stackFrame : stackFrames) {
             if (top) {
                 top = false;
@@ -548,6 +551,10 @@ public abstract class StackFrameWalker {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
             if (targetMethod == null) {
                 // native frame
+                if (ignoreUntilNativeFrame && !seenNativeFrame) {
+                    result.clear();
+                    seenNativeFrame = true;
+                }
                 continue;
             }
             final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);

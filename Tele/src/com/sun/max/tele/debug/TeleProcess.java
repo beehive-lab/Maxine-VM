@@ -584,7 +584,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         threads.append(thread);
     }
 
-
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();

@@ -135,6 +135,11 @@ public class StackInspector extends Inspector {
             }
             return false;
         }
+
+        @Override
+        public String toString() {
+            return "<truncated frame>" + truncatedStackFrame;
+        }
     }
 
     private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");

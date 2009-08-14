@@ -78,6 +78,10 @@ public abstract class Trap {
     private static VMBooleanXXOption dumpStackOnTrap =
         register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
+    /** Whether to bang on the stack in the method prologue.
+     */
+    public static final boolean STACK_BANGING = true;
+
     /** The number of bytes reserved in the stack as a guard area.
      *  Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
      */

@@ -20,13 +20,12 @@
  */
 package com.sun.c1x.debug;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiMethod;
 import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
+
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * An {@link com.sun.c1x.ir.InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
@@ -65,7 +64,7 @@ public class InstructionPrinter extends InstructionVisitor {
                 sb.append("] ");
             }
         }
-        if (value != value.subst()) {
+        if (value != null && value != value.subst()) {
             sb.append("alias ").append(Instruction.valueString(value.subst()));
         }
         return sb.toString();
@@ -288,7 +287,7 @@ public class InstructionPrinter extends InstructionVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Instruction value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.type().size();
+                i += value.type().sizeInSlots();
             }
 
             do {
@@ -297,7 +296,7 @@ public class InstructionPrinter extends InstructionVisitor {
                     hasPhisInLocals = isPhiAtBlock(value, block);
                     // also ignore illegal HiWords
                     if (value != null && !value.type().isIllegal()) {
-                        i += value.type().size();
+                        i += value.type().sizeInSlots();
                     } else {
                         i++;
                     }
@@ -319,7 +318,7 @@ public class InstructionPrinter extends InstructionVisitor {
                     if (value != null) {
                         out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
-                        i += value.type().isIllegal() ? 1 : value.type().size();
+                        i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
                     } else {
                         i++;
                     }
@@ -338,7 +337,7 @@ public class InstructionPrinter extends InstructionVisitor {
                 Instruction value = block.state().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value, block));
-                    i += value.type().size();
+                    i += value.type().sizeInSlots();
                 } else {
                     i++;
                 }
@@ -376,20 +375,20 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitConstant(Constant constant) {
-        ValueType type = constant.type();
-        if (type == ConstType.NULL_OBJECT) {
+        CiConstant type = constant.value;
+        if (type == CiConstant.NULL_OBJECT) {
             out.print("null");
-        } else if (type.isPrimitive()) {
-            out.print(type.asConstant().valueString());
-        } else if (type.isObject()) {
-            Object object = type.asConstant().asObject();
+        } else if (type.basicType.isPrimitive()) {
+            out.print(constant.asConstant().valueString());
+        } else if (type.basicType.isObject()) {
+            Object object = constant.asConstant().asObject();
             if (object instanceof String) {
                 out.print('"').print(object.toString()).print('"');
             } else {
                 out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
             }
-        } else if (type.isJsr()) {
-            out.print("bci:").print(type.asConstant().valueString());
+        } else if (type.basicType.isJsr()) {
+            out.print("bci:").print(constant.asConstant().valueString());
         } else {
             out.print("???");
         }

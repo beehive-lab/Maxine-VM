@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ir.ExceptionHandler;
-import com.sun.c1x.stub.CodeStub;
-import com.sun.c1x.util.Util;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>LIRVisitState</code> class definition.
@@ -205,6 +203,9 @@ public class LIRVisitState {
                 if (op1.opr.isValid()) {
                     op1.opr = doInput(op1.opr);
                 }
+
+
+
                 if (op1.result.isValid()) {
                     op1.result = doOutput(op1.result);
                 }

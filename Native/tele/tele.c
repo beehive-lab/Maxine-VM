@@ -18,14 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+#include <stdlib.h>
+
 #include "c.h"
 #include "jni.h"
-#include "threadSpecifics.h"
+#include "log.h"
+#include "threadLocals.h"
 #include "teleProcess.h"
 
-JNIEXPORT void JNICALL
-JVM_OnLoad(JavaVM *vm, char *options, void *arg)
+JNIEXPORT jint JNICALL
+JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     c_initialize();
     teleProcess_initialize();
+    log_initialize(getenv("TELE_LOG_FILE"));
+    return JNI_VERSION_1_2;
 }
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
+    threadLocals_initialize(threadLocalsSize);
+}
+

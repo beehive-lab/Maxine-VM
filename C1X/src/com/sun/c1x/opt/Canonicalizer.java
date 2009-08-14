@@ -20,25 +20,15 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueType;
+import java.lang.reflect.*;
+import java.util.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,
@@ -110,6 +100,10 @@ public class Canonicalizer extends InstructionVisitor {
         return canonical = Constant.forInt(val);
     }
 
+    private Instruction setConstant(CiConstant val) {
+        return canonical = new Constant(val);
+    }
+
     private Instruction setBooleanConstant(boolean val) {
         return canonical = Constant.forBoolean(val);
     }
@@ -133,20 +127,8 @@ public class Canonicalizer extends InstructionVisitor {
         return canonical = Constant.forDouble(val);
     }
 
-    private Instruction setByteConstant(byte val) {
-        return canonical = new Constant(ConstType.forByte(val));
-    }
-
-    private Instruction setCharConstant(char val) {
-        return canonical = new Constant(ConstType.forChar(val));
-    }
-
-    private Instruction setShortConstant(short val) {
-        return canonical = new Constant(ConstType.forShort(val));
-    }
-
     private void moveConstantToRight(Op2 x) {
-        if (x.x().type().isConstant() && Bytecodes.isCommutative(x.opcode())) {
+        if (x.x().isConstant() && Bytecodes.isCommutative(x.opcode())) {
             x.swapOperands();
         }
     }
@@ -169,13 +151,12 @@ public class Canonicalizer extends InstructionVisitor {
             }
         }
 
-        ValueType xt = x.type();
-        ValueType yt = y.type();
-        if (xt.isConstant() && yt.isConstant()) {
+        BasicType xt = x.type();
+        if (x.isConstant() && y.isConstant()) {
             // both operands are constants, try constant folding
             switch (xt.basicType) {
                 case Int: {
-                    Integer val = Bytecodes.foldIntOp2(i.opcode(), xt.asConstant().asInt(), yt.asConstant().asInt());
+                    Integer val = Bytecodes.foldIntOp2(i.opcode(), x.asConstant().asInt(), y.asConstant().asInt());
                     if (val != null) {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
@@ -183,7 +164,7 @@ public class Canonicalizer extends InstructionVisitor {
                     break;
                 }
                 case Long: {
-                    Long val = Bytecodes.foldLongOp2(i.opcode(), xt.asConstant().asLong(), yt.asConstant().asLong());
+                    Long val = Bytecodes.foldLongOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
                     if (val != null) {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
@@ -193,7 +174,7 @@ public class Canonicalizer extends InstructionVisitor {
                 case Float: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Float val = Bytecodes.foldFloatOp2(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
+                        Float val = Bytecodes.foldFloatOp2(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
                         if (val != null) {
                             setFloatConstant(val); // the operation was successfully folded to a float
                             return;
@@ -204,7 +185,7 @@ public class Canonicalizer extends InstructionVisitor {
                 case Double: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Double val = Bytecodes.foldDoubleOp2(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
+                        Double val = Bytecodes.foldDoubleOp2(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
                         if (val != null) {
                             setDoubleConstant(val); // the operation was successfully folded to a double
                             return;
@@ -218,18 +199,17 @@ public class Canonicalizer extends InstructionVisitor {
         // if there is a constant on the left and the operation is commutative, move it to the right
         moveConstantToRight(i);
 
-        yt = i.y().type();
-        if (yt.isConstant()) {
+        if (i.y().isConstant()) {
             // the right side is a constant, try strength reduction
             switch (xt.basicType) {
                 case Int: {
-                    if (reduceIntOp2(i, x, yt.asConstant().asInt()) != null) {
+                    if (reduceIntOp2(i, x, i.y().asConstant().asInt()) != null) {
                         return;
                     }
                     break;
                 }
                 case Long: {
-                    if (reduceLongOp2(i, x, yt.asConstant().asLong()) != null) {
+                    if (reduceLongOp2(i, x, i.y().asConstant().asLong()) != null) {
                         return;
                     }
                     break;
@@ -288,8 +268,8 @@ public class Canonicalizer extends InstructionVisitor {
         if (x instanceof ShiftOp) {
             // this is a chained shift operation ((e shift e) shift K)
             ShiftOp s = (ShiftOp) x;
-            if (s.y().type().isConstant()) {
-                long z = s.y().type().asConstant().asLong();
+            if (s.y().isConstant()) {
+                long z = s.y().asConstant().asLong();
                 if (s.opcode() == opcode) {
                     // this is a chained shift operation (e >> C >> K)
                     y = y + z;
@@ -399,22 +379,7 @@ public class Canonicalizer extends InstructionVisitor {
             // only try to canonicalize static field loads
             CiField field = i.field();
             if (field.isConstant()) {
-                CiConstant val = field.constantValue();
-                // XXX: this is clunky, perhaps constantValue() should return ConstType?
-                switch (val.basicType()) {
-                    case Boolean: setBooleanConstant(val.asBoolean()); break;
-                    case Char:    setCharConstant(val.asChar()); break;
-                    case Float:   setFloatConstant(val.asFloat()); break;
-                    case Double:  setDoubleConstant(val.asDouble()); break;
-                    case Byte:    setByteConstant(val.asByte()); break;
-                    case Short:   setShortConstant(val.asShort()); break;
-                    case Int:     setIntConstant(val.asInt()); break;
-                    case Long:    setLongConstant(val.asLong()); break;
-                    case Object:
-                        if (C1XOptions.SupportObjectConstants) {
-                            setObjectConstant(val.asObject()); break;
-                        }
-                }
+                setConstant(field.constantValue());
             }
         }
     }
@@ -449,7 +414,7 @@ public class Canonicalizer extends InstructionVisitor {
             if (length instanceof Constant) {
                 // note that we don't use the Constant instruction itself
                 // as that would cause problems with liveness later
-                int actualLength = length.type().asConstant().asInt();
+                int actualLength = length.asConstant().asInt();
                 setIntConstant(actualLength);
             }
         } else if (array instanceof LoadField) {
@@ -463,7 +428,7 @@ public class Canonicalizer extends InstructionVisitor {
             }
         } else if (C1XOptions.SupportObjectConstants && array instanceof Constant) {
             // the array itself is a constant object reference
-            Object obj = array.type().asConstant().asObject();
+            Object obj = array.asConstant().asObject();
             if (obj != null) {
                 setIntConstant(java.lang.reflect.Array.getLength(obj));
             }
@@ -487,13 +452,14 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitNegateOp(NegateOp i) {
-        ValueType vt = i.x().type();
-        if (vt.isConstant()) {
+        BasicType vt = i.x().type();
+        Instruction v = i.x();
+        if (i.x().isConstant()) {
             switch (vt.basicType) {
-                case Int: setIntConstant(-vt.asConstant().asInt()); break;
-                case Long: setLongConstant(-vt.asConstant().asLong()); break;
-                case Float: setFloatConstant(-vt.asConstant().asFloat()); break;
-                case Double: setDoubleConstant(-vt.asConstant().asDouble()); break;
+                case Int: setIntConstant(-v.asConstant().asInt()); break;
+                case Long: setLongConstant(-v.asConstant().asLong()); break;
+                case Float: setFloatConstant(-v.asConstant().asFloat()); break;
+                case Double: setDoubleConstant(-v.asConstant().asDouble()); break;
             }
         }
         assert vt.basicType == canonical.type().basicType;
@@ -520,15 +486,14 @@ public class Canonicalizer extends InstructionVisitor {
         // or if both are constants
         Instruction x = i.x();
         Instruction y = i.y();
-        ValueType xt = x.type();
-        ValueType yt = y.type();
+        BasicType xt = x.type();
         if (x == y) {
             // x and y are generated by the same instruction
             switch (xt.basicType) {
                 case Long: setIntConstant(0); return;
                 case Float:
-                    if (xt.isConstant()) {
-                        float xval = xt.asConstant().asFloat(); // get the actual value of x (and y since x == y)
+                    if (x.isConstant()) {
+                        float xval = x.asConstant().asFloat(); // get the actual value of x (and y since x == y)
                         Integer val = Bytecodes.foldFloatCompare(i.opcode(), xval, xval);
                         assert val != null : "invalid opcode in float compare op";
                         setIntConstant(val);
@@ -536,8 +501,8 @@ public class Canonicalizer extends InstructionVisitor {
                     }
                     break;
                 case Double:
-                    if (xt.isConstant()) {
-                        double xval = xt.asConstant().asDouble(); // get the actual value of x (and y since x == y)
+                    if (x.isConstant()) {
+                        double xval = x.asConstant().asDouble(); // get the actual value of x (and y since x == y)
                         Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xval, xval);
                         assert val != null : "invalid opcode in double compare op";
                         setIntConstant(val);
@@ -547,20 +512,20 @@ public class Canonicalizer extends InstructionVisitor {
                 // note that there are no integer CompareOps
             }
         }
-        if (xt.isConstant() && yt.isConstant()) {
+        if (x.isConstant() && y.isConstant()) {
             // both x and y are constants
             switch (xt.basicType) {
                 case Long:
-                    setIntConstant(Bytecodes.foldLongCompare(xt.asConstant().asLong(), yt.asConstant().asLong()));
+                    setIntConstant(Bytecodes.foldLongCompare(x.asConstant().asLong(), y.asConstant().asLong()));
                     break;
                 case Float: {
-                    Integer val = Bytecodes.foldFloatCompare(i.opcode(), xt.asConstant().asFloat(), yt.asConstant().asFloat());
+                    Integer val = Bytecodes.foldFloatCompare(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
                 }
                 case Double: {
-                    Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xt.asConstant().asDouble(), yt.asConstant().asDouble());
+                    Integer val = Bytecodes.foldDoubleCompare(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
@@ -578,25 +543,24 @@ public class Canonicalizer extends InstructionVisitor {
     @Override
     public void visitConvert(Convert i) {
         Instruction v = i.value();
-        ValueType xt = v.type();
-        if (xt.isConstant()) {
+        if (v.isConstant()) {
             // fold conversions between primitive types
             // Checkstyle: stop
             switch (i.opcode()) {
-                case Bytecodes.I2B: setIntConstant   ((byte)   xt.asConstant().asInt()); return;
-                case Bytecodes.I2S: setIntConstant   ((short)  xt.asConstant().asInt()); return;
-                case Bytecodes.I2C: setIntConstant   ((char)   xt.asConstant().asInt()); return;
-                case Bytecodes.I2L: setLongConstant  (         xt.asConstant().asInt()); return;
-                case Bytecodes.I2F: setFloatConstant (         xt.asConstant().asInt()); return;
-                case Bytecodes.L2I: setIntConstant   ((int)    xt.asConstant().asLong()); return;
-                case Bytecodes.L2F: setFloatConstant (         xt.asConstant().asLong()); return;
-                case Bytecodes.L2D: setDoubleConstant(         xt.asConstant().asLong()); return;
-                case Bytecodes.F2D: setDoubleConstant(         xt.asConstant().asFloat()); return;
-                case Bytecodes.F2I: setIntConstant   ((int)    xt.asConstant().asFloat()); return;
-                case Bytecodes.F2L: setLongConstant  ((long)   xt.asConstant().asFloat()); return;
-                case Bytecodes.D2F: setFloatConstant ((float)  xt.asConstant().asDouble()); return;
-                case Bytecodes.D2I: setIntConstant   ((int)    xt.asConstant().asDouble()); return;
-                case Bytecodes.D2L: setLongConstant  ((long)   xt.asConstant().asDouble()); return;
+                case Bytecodes.I2B: setIntConstant   ((byte)   v.asConstant().asInt()); return;
+                case Bytecodes.I2S: setIntConstant   ((short)  v.asConstant().asInt()); return;
+                case Bytecodes.I2C: setIntConstant   ((char)   v.asConstant().asInt()); return;
+                case Bytecodes.I2L: setLongConstant  (         v.asConstant().asInt()); return;
+                case Bytecodes.I2F: setFloatConstant (         v.asConstant().asInt()); return;
+                case Bytecodes.L2I: setIntConstant   ((int)    v.asConstant().asLong()); return;
+                case Bytecodes.L2F: setFloatConstant (         v.asConstant().asLong()); return;
+                case Bytecodes.L2D: setDoubleConstant(         v.asConstant().asLong()); return;
+                case Bytecodes.F2D: setDoubleConstant(         v.asConstant().asFloat()); return;
+                case Bytecodes.F2I: setIntConstant   ((int)    v.asConstant().asFloat()); return;
+                case Bytecodes.F2L: setLongConstant  ((long)   v.asConstant().asFloat()); return;
+                case Bytecodes.D2F: setFloatConstant ((float)  v.asConstant().asDouble()); return;
+                case Bytecodes.D2I: setIntConstant   ((int)    v.asConstant().asDouble()); return;
+                case Bytecodes.D2L: setLongConstant  ((long)   v.asConstant().asDouble()); return;
             }
             // Checkstyle: resume
         }
@@ -642,10 +606,10 @@ public class Canonicalizer extends InstructionVisitor {
         if (v instanceof Op2) {
             // check if the operation was IAND with a constant; it may have narrowed the value already
             Op2 op = (Op2) v;
-            ValueType mt = op.y().type(); // constant should be on right hand side if there is one
-            if (op.opcode() == Bytecodes.IAND && mt.isConstant()) {
+            // constant should be on right hand side if there is one
+            if (op.opcode() == Bytecodes.IAND && op.y().isConstant()) {
                 int safebits = 0;
-                int mask = mt.asConstant().asInt();
+                int mask = op.y().asConstant().asInt();
                 switch (i.opcode()) {
                     case Bytecodes.I2B: safebits = 0x7f; break;
                     case Bytecodes.I2S: safebits = 0x7fff; break;
@@ -665,10 +629,10 @@ public class Canonicalizer extends InstructionVisitor {
         if (o.isNonNull()) {
             // if the instruction producing the object was a new, no check is necessary
             setCanonical(o);
-        } else if (o.type().isConstant()) {
+        } else if (o.isConstant()) {
             // if the object is a constant, check if it is nonnull
-            ConstType c = o.type().asConstant();
-            if (c.isObject() && c.asObject() != null) {
+            CiConstant c = o.asConstant();
+            if (c.basicType.isObject() && c.asObject() != null) {
                 setCanonical(o);
             }
         }
@@ -680,11 +644,11 @@ public class Canonicalizer extends InstructionVisitor {
             CiMethod method = i.target();
             if (method.isLoaded()) {
                 // only try to fold resolved method invocations
-                ConstType result = foldInvocation(i.target(), i.arguments());
+                CiConstant result = foldInvocation(i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
                     BasicType basicType = method.signatureType().returnBasicType();
-                    setCanonical(new Constant(new ConstType(basicType, result)));
+                    setCanonical(new Constant(new CiConstant(basicType, result)));
                 }
             }
         }
@@ -703,8 +667,8 @@ public class Canonicalizer extends InstructionVisitor {
                 // cast is redundant if exact type or declared type is already a subtype of the target type
                 setCanonical(o);
             }
-            if (o.type().isConstant()) {
-                final Object obj = o.type().asConstant().asObject();
+            if (o.isConstant()) {
+                final Object obj = o.asConstant().asObject();
                 if (obj == null) {
                     // checkcast of null is null
                     setCanonical(o);
@@ -729,8 +693,8 @@ public class Canonicalizer extends InstructionVisitor {
                 // XXX: why is it necessary to check (o instanceof New)? isn't exact type sufficient?
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
-            if (o.type().isConstant()) {
-                final Object obj = o.type().asConstant().asObject();
+            if (o.isConstant()) {
+                final Object obj = o.asConstant().asObject();
                 if (obj == null) {
                     // instanceof of null is false
                     setIntConstant(0);
@@ -750,7 +714,7 @@ public class Canonicalizer extends InstructionVisitor {
         }
         Instruction[] args = i.arguments();
         for (Instruction arg : args) {
-            if (arg != null && !arg.type().isConstant()) {
+            if (arg != null && !arg.isConstant()) {
                 // one input is not constant, give up
                 return;
             }
@@ -914,7 +878,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitIf(If i) {
-        if (i.x().type().isConstant()) {
+        if (i.x().isConstant()) {
             // move constant to the right
             i.swapOperands();
         }
@@ -927,28 +891,27 @@ public class Canonicalizer extends InstructionVisitor {
             return;
         }
 
-        ValueType lt = l.type();
-        ValueType rt = r.type();
+        BasicType rt = r.type();
 
         Condition ifcond = i.condition();
-        if (lt.isConstant() && rt.isConstant()) {
+        if (l.isConstant() && r.isConstant()) {
             // fold comparisons between constants and convert to Goto
-            Boolean result = ifcond.foldCondition(lt.asConstant(), rt.asConstant());
+            Boolean result = ifcond.foldCondition(l.asConstant(), r.asConstant());
             if (result != null) {
                 setCanonical(new Goto(i.successor(result), i.stateBefore(), i.isSafepoint()));
                 return;
             }
         }
 
-        if (rt.isConstant() && rt.isInt()) {
+        if (r.isConstant() && rt.isInt()) {
             // attempt to reduce comparisons with constant on right side
             if (l instanceof CompareOp) {
                 // attempt to reduce If ((a cmp b) op const)
-                reduceIfCompareOpConstant(i, rt.asConstant());
+                reduceIfCompareOpConstant(i, r.asConstant());
             }
         }
 
-        if (isNullConstant(rt) && l.isNonNull()) {
+        if (isNullConstant(r) && l.isNonNull()) {
             // this is a comparison of null against something that is not null
             if (ifcond == Condition.eql) {
                 // new() == null is always false
@@ -960,18 +923,18 @@ public class Canonicalizer extends InstructionVisitor {
         }
     }
 
-    private boolean isNullConstant(ValueType rt) {
-        return rt.isConstant() && rt.isObject() && rt.asConstant().asObject() == null;
+    private boolean isNullConstant(Instruction r) {
+        return r.isConstant() && r.type().isObject() && r.asConstant().asObject() == null;
     }
 
-    private void reduceIfCompareOpConstant(If i, ConstType rtc) {
+    private void reduceIfCompareOpConstant(If i, CiConstant rtc) {
         Condition ifcond = i.condition();
         Instruction l = i.x();
         CompareOp cmp = (CompareOp) l;
         boolean unorderedIsLess = cmp.opcode() == Bytecodes.FCMPL || cmp.opcode() == Bytecodes.DCMPL;
-        BlockBegin lssSucc = i.successor(ifcond.foldCondition(ConstType.forInt(-1), rtc));
-        BlockBegin eqlSucc = i.successor(ifcond.foldCondition(ConstType.forInt(0), rtc));
-        BlockBegin gtrSucc = i.successor(ifcond.foldCondition(ConstType.forInt(1), rtc));
+        BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc));
+        BlockBegin eqlSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(0), rtc));
+        BlockBegin gtrSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(1), rtc));
         BlockBegin nanSucc = unorderedIsLess ? lssSucc : gtrSucc;
         // Note: At this point all successors (lssSucc, eqlSucc, gtrSucc, nanSucc) are
         //       equal to x->tsux() or x->fsux(). Furthermore, nanSucc equals either
@@ -1029,9 +992,9 @@ public class Canonicalizer extends InstructionVisitor {
     @Override
     public void visitTableSwitch(TableSwitch i) {
         Instruction v = i.value();
-        if (v.type().isConstant()) {
+        if (v.isConstant()) {
             // fold a table switch over a constant by replacing it with a goto
-            int val = v.type().asConstant().asInt();
+            int val = v.asConstant().asInt();
             BlockBegin succ = i.defaultSuccessor();
             if (val >= i.lowKey() && val <= i.highKey()) {
                 succ = i.successors().get(val - i.lowKey());
@@ -1056,9 +1019,9 @@ public class Canonicalizer extends InstructionVisitor {
     @Override
     public void visitLookupSwitch(LookupSwitch i) {
         Instruction v = i.value();
-        if (v.type().isConstant()) {
+        if (v.isConstant()) {
             // fold a lookup switch over a constant by replacing it with a goto
-            int val = v.type().asConstant().asInt();
+            int val = v.asConstant().asInt();
             BlockBegin succ = i.defaultSuccessor();
             for (int j = 0; j < i.numberOfCases(); j++) {
                 if (val == i.keyAt(j)) {
@@ -1116,9 +1079,9 @@ public class Canonicalizer extends InstructionVisitor {
         if (index instanceof ShiftOp) {
             // try to match the index as a shift by a constant
             ShiftOp shift = (ShiftOp) index;
-            ValueType st = shift.y().type();
-            if (st.isConstant() && st.isInt()) {
-                int val = st.asConstant().asInt();
+            BasicType st = shift.y().type();
+            if (shift.y().isConstant() && st.isInt()) {
+                int val = shift.y().asConstant().asInt();
                 switch (val) {
                     case 0: // fall through
                     case 1: // fall through
@@ -1131,9 +1094,9 @@ public class Canonicalizer extends InstructionVisitor {
             // try to match the index as a multiply by a constant
             // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
-            ValueType st = arith.y().type();
-            if (arith.opcode() == Bytecodes.IMUL && st.isConstant() && st.isInt()) {
-                int val = st.asConstant().asInt();
+            BasicType st = arith.y().type();
+            if (arith.opcode() == Bytecodes.IMUL && arith.y().isConstant() && st.isInt()) {
+                int val = arith.y().asConstant().asInt();
                 switch (val) {
                     case 1: return setUnsafeRawOp(i, base, arith.x(), 0);
                     case 2: return setUnsafeRawOp(i, base, arith.x(), 1);
@@ -1168,39 +1131,39 @@ public class Canonicalizer extends InstructionVisitor {
     }
 
     private Object argAsObject(Instruction[] args, int index) {
-        return args[index].type().asConstant().asObject();
+        return args[index].asConstant().asObject();
     }
 
     private Class<?> argAsClass(Instruction[] args, int index) {
-        return (Class<?>) args[index].type().asConstant().asObject();
+        return (Class<?>) args[index].asConstant().asObject();
     }
 
     private String argAsString(Instruction[] args, int index) {
-        return (String) args[index].type().asConstant().asObject();
+        return (String) args[index].asConstant().asObject();
     }
 
     private double argAsDouble(Instruction[] args, int index) {
-        return args[index].type().asConstant().asDouble();
+        return args[index].asConstant().asDouble();
     }
 
     private float argAsFloat(Instruction[] args, int index) {
-        return args[index].type().asConstant().asFloat();
+        return args[index].asConstant().asFloat();
     }
 
     private int argAsInt(Instruction[] args, int index) {
-        return args[index].type().asConstant().asInt();
+        return args[index].asConstant().asInt();
     }
 
     private long argAsLong(Instruction[] args, int index) {
-        return args[index].type().asConstant().asLong();
+        return args[index].asConstant().asLong();
     }
 
-    public static ConstType foldInvocation(CiMethod method, Instruction[] args) {
+    public static CiConstant foldInvocation(CiMethod method, Instruction[] args) {
         Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
             // the method is foldable. check that all input arguments are constants
             for (Instruction a : args) {
-                if (a != null && !a.type().isConstant()) {
+                if (a != null && !a.isConstant()) {
                     return null;
                 }
             }
@@ -1214,20 +1177,20 @@ public class Canonicalizer extends InstructionVisitor {
                     ArrayList<Object> list = new ArrayList<Object>();
                     for (Instruction a : args) {
                         if (a != null) {
-                            list.add(a.type().asConstant().boxedValue());
+                            list.add(a.asConstant().boxedValue());
                         }
                     }
                     argArray = list.toArray();
                 }
             } else {
                 // instance method invocation
-                recvr = args[0].type().asConstant().asObject();
+                recvr = args[0].asConstant().asObject();
                 if (args.length > 1) {
                     ArrayList<Object> list = new ArrayList<Object>();
                     for (int i = 1; i < args.length; i++) {
                         Instruction a = args[i];
                         if (a != null) {
-                            list.add(a.type().asConstant().boxedValue());
+                            list.add(a.asConstant().boxedValue());
                         }
                     }
                     argArray = list.toArray();
@@ -1239,7 +1202,7 @@ public class Canonicalizer extends InstructionVisitor {
                 BasicType basicType = method.signatureType().returnBasicType();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
-                return new ConstType(basicType, result);
+                return new CiConstant(basicType, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {
                 // folding failed; too bad

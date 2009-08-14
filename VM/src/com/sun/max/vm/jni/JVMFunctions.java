@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.*;
-
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -56,14 +56,13 @@ public class JVMFunctions {
         final Sequence<StackFrame> stackFrames = stackFrameWalker.frames(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
 
         // Collect method actors corresponding to frames:
-        final Sequence<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false);
+        final Sequence<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, true);
 
         // Append the class of each method to the array:
         final List<Class> result = new ArrayList<Class>();
         for (ClassMethodActor methodActor : methodActors) {
             result.add(methodActor.holder().mirror());
         }
-
         return result.toArray(new Class[result.size()]);
     }
 

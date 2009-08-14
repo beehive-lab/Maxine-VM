@@ -20,12 +20,11 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>InstanceOf</code> instruction represents an instanceof test.
@@ -41,7 +40,7 @@ public class InstanceOf extends TypeCheck {
      * @param stateBefore the state before this instruction
      */
     public InstanceOf(CiType targetClass, Instruction object, ValueStack stateBefore) {
-        super(targetClass, object, ValueType.INT_TYPE, stateBefore);
+        super(targetClass, object, BasicType.Int, stateBefore);
         if (object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;

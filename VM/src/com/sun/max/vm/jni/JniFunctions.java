@@ -30,6 +30,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -100,6 +101,15 @@ public final class JniFunctions {
 
     private static String dottify(String slashifiedName) {
         return slashifiedName.replace('/', '.');
+    }
+
+    private static void traceReflectiveInvocation(MethodActor methodActor) {
+        if (ClassMethodActor.traceJNI()) {
+            Log.print("[Thread \"");
+            Log.print(VmThread.current().getName());
+            Log.print("\" --> JNI invoke: ");
+            Log.println(methodActor.format("%H.%n(%p)"));
+        }
     }
 
     private static final Class[] defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
@@ -346,6 +356,7 @@ public final class JniFunctions {
         final SignatureDescriptor signature = dynamicMethodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
+        traceReflectiveInvocation(dynamicMethodActor);
         return JniHandles.createLocalHandle(dynamicMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
@@ -472,6 +483,7 @@ public final class JniFunctions {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
+        traceReflectiveInvocation(dynamicMethodActor);
         return dynamicMethodActor.invoke(argumentValues);
 
     }
@@ -638,6 +650,7 @@ public final class JniFunctions {
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
+        traceReflectiveInvocation(dynamicMethodActor);
         return dynamicMethodActor.invoke(argumentValues);
     }
 
@@ -1006,6 +1019,7 @@ public final class JniFunctions {
         final SignatureDescriptor signature = methodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
+        traceReflectiveInvocation(methodActor);
         return methodActor.invoke(argumentValues);
     }
 

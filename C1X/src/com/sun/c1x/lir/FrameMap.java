@@ -20,20 +20,16 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.asm.Address;
-import com.sun.c1x.ci.CiLocation;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiSignature;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.Location.LocationType;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.Location.*;
+import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *

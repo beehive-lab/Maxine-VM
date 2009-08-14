@@ -20,18 +20,12 @@
  */
 package com.sun.c1x.util;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.CiField;
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiSignature;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.value.BasicType;
+import java.util.*;
 
-import java.util.IllegalFormatException;
-import java.util.List;
-import java.util.UnknownFormatConversionException;
+import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
@@ -200,7 +194,7 @@ public class Util {
      */
     public static String toJavaName(CiType ciType, boolean qualified) {
         BasicType basicType = ciType.basicType();
-        if (basicType.isPrimitiveType() || basicType == BasicType.Void) {
+        if (basicType.isPrimitive() || basicType == BasicType.Void) {
             return basicType.javaName;
         }
         String string = internalNameToJava(ciType.name());

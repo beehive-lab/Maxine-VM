@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.target;
 
 import com.sun.max.lang.Arrays;
 import com.sun.max.program.ProgramError;
+import com.sun.max.util.*;
 
 /**
  * This class implements utility functions for transitioning a {@link com.sun.max.vm.actor.member.ClassMethodActor}
@@ -33,7 +34,7 @@ public class TargetState {
     private static final TargetMethod[] NOT_COMPILED = {};
 
     public static int targetMethodCount(Object targetState) {
-        if (targetState == null) {
+        if (targetState == null || targetState instanceof Throwable) {
             // not compiled yet
             return 0;
         } else if (targetState instanceof TargetMethod) {
@@ -62,6 +63,8 @@ public class TargetState {
         } else if (targetState instanceof Compilation) {
             // currently being compiled, return any previous target method
             return currentTargetMethod(((Compilation) targetState).previousTargetState);
+        } else if (targetState instanceof Throwable) {
+            throw Exceptions.cast(Error.class, (Throwable) targetState);
         }
         return null;
     }
@@ -79,6 +82,8 @@ public class TargetState {
         } else if (targetState instanceof Compilation) {
             // currently being compiled
             return targetMethodHistory(((Compilation) targetState).previousTargetState);
+        } else if (targetState instanceof Throwable) {
+            throw Exceptions.cast(Error.class, (Throwable) targetState);
         }
         return NOT_COMPILED;
     }

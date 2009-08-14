@@ -20,11 +20,14 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import com.sun.max.util.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.thread.*;
+
 import static com.sun.max.vm.VMOptions.verboseOption;
-import com.sun.max.vm.Log;
+import com.sun.max.vm.*;
 import com.sun.max.annotate.INSPECTED;
 
 import java.util.concurrent.Future;
@@ -135,15 +138,20 @@ public class Compilation implements Future<TargetMethod> {
         // notify any compilation observers
         observeBeforeCompilation(observers, compiler);
 
+        Throwable error = null;
         try {
             // attempt the compilation
             String methodString = logBeforeCompilation(compiler);
             targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(classMethodActor));
-            logAfterCompilation(compiler, targetMethod, methodString);
+            if (targetMethod == null) {
+                error = new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
+            } else {
+                logAfterCompilation(compiler, targetMethod, methodString);
+            }
+        } catch (Throwable t) {
+            error = t;
         } finally {
-            // compilation finished
-            done = true;
-
+            // invariant: (targetMethod != null) != (error != null)
             synchronized (classMethodActor) {
                 // update the target state of the class method actor
                 // assert classMethodActor.targetState == this;
@@ -151,35 +159,45 @@ public class Compilation implements Future<TargetMethod> {
                     // compilation succeeded and produced a target method
                     classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState);
                 } else {
-                    // compilation did not produce a target method, reset to previous state
-                    classMethodActor.targetState = previousTargetState;
+                    FatalError.check(error != null, "Target method cannot be null if no compilation error occurred");
+                    // compilation caused an exception: save it as the target state
+                    classMethodActor.targetState = error;
                 }
+                // compilation finished: this must come after the assignment to classMethodActor.targetState
+                done = true;
+
                 // notify any waiters on this compilation
                 classMethodActor.notifyAll();
             }
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);
+
+            if (error != null) {
+                throw Exceptions.cast(Error.class, error);
+            }
         }
         return targetMethod;
-    }
-
-    private void logAfterCompilation(DynamicCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
-        if (verboseOption.verboseCompilation) {
-            Log.print(compiler.name() + ": Compiled  " + methodString + " @ ");
-            Log.print(targetMethod.codeStart());
-            Log.print(" {code length=" + targetMethod.codeLength() + "}");
-            Log.println();
-        }
     }
 
     private String logBeforeCompilation(DynamicCompilerScheme compiler) {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
-            Log.println(compiler.name() + ": Compiling " + methodString);
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(": " + compiler.name() + ": Compiling " + methodString);
         }
         return methodString;
+    }
+
+    private void logAfterCompilation(DynamicCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+        if (verboseOption.verboseCompilation) {
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": " + compiler.name() + ": Compiled  " + methodString + " @ ");
+            Log.print(targetMethod.codeStart());
+            Log.print(" {code length=" + targetMethod.codeLength() + "}");
+            Log.println();
+        }
     }
 
     private void observeBeforeCompilation(List<CompilationObserver> observers, DynamicCompilerScheme compiler) {

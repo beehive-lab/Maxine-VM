@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>NewMultiArray</code> instruction represents an allocation of a multi-dimensional object
@@ -32,17 +32,23 @@ import com.sun.c1x.value.ValueStack;
 public class NewMultiArray extends NewArray {
     public final CiType elementType;
     final Instruction[] dimensions;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Constructs a new NewMultiArray instruction.
      * @param elementType the element type of the array
      * @param dimensions the instructions which produce the dimensions for this array
      * @param stateBefore the state before this instruction
+     * @param cpi
+     * @param ciConstantPool
      */
-    public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore) {
+    public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, CiConstantPool ciConstantPool) {
         super(null, stateBefore); // note that this instruction doesn't have a "length" per-se
         this.elementType = elementType;
         this.dimensions = dimensions;
+        this.cpi = cpi;
+        this.constantPool = ciConstantPool;
     }
 
     /**
@@ -78,5 +84,13 @@ public class NewMultiArray extends NewArray {
     @Override
     public void accept(InstructionVisitor v) {
         v.visitNewMultiArray(this);
+    }
+
+    /**
+     * Gets the element type of the array.
+     * @return the element type of the array
+     */
+    public CiType elementType() {
+        return elementType;
     }
 }

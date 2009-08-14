@@ -20,13 +20,9 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.BlockClosure;
-import com.sun.c1x.ir.Instruction;
-import com.sun.c1x.ir.Phi;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>PhiSimplifier</code> class is a helper class that can reduce phi instructions.
@@ -104,9 +100,9 @@ public class PhiSimplifier implements BlockClosure {
                         continue;
                     } else if (C1XOptions.MergeEquivalentConstants) {
                         // if the operand is the same constant, merge them
-                        if (phiSubst.type().isConstant()) {
+                        if (phiSubst.isConstant()) {
                             C1XMetrics.EquivalentConstantsChecked++;
-                            if (phiSubst.type().asConstant().equivalent(newInstr.type())) {
+                            if (phiSubst.asConstant().equivalent(newInstr.asConstant())) {
                                 C1XMetrics.EquivalentConstantsMerged++;
                                 continue;
                             }

@@ -171,9 +171,6 @@ public class BootImage {
 
         public final int pageSize;
 
-        public final int vmThreadLocalsSize;
-        public final int vmThreadLocalsTrapNumberOffset;
-
         public final int vmRunMethodOffset;
         public final int vmThreadRunMethodOffset;
         public final int runSchemeRunMethodOffset;
@@ -193,20 +190,46 @@ public class BootImage {
         public final int auxiliarySpaceSize;
 
         /**
-         * @see MaxineMessenger#_info
+         * @see MaxineMessenger#info
          */
         public final int messengerInfoOffset;
 
         /**
-         * @see VmThread#threadSpecificsList
+         * @see VmThreadMap#ACTIVE
          */
-        public final int threadSpecificsListOffset;
+        public final int threadLocalsListHeadOffset;
+
+        /**
+         * @see MaxineVM#primordialVmThreadLocals()
+         */
+        public final int primordialThreadLocalsOffset;
+
+        /**
+         * The storage size of one set of VM thread locals.
+         */
+        public final int threadLocalsSize;
+
+        /**
+         * The indexes of the VM thread locals accessed directly by C code.
+         */
+        public final int SAFEPOINT_LATCH;
+        public final int SAFEPOINTS_ENABLED_THREAD_LOCALS;
+        public final int SAFEPOINTS_DISABLED_THREAD_LOCALS;
+        public final int SAFEPOINTS_TRIGGERED_THREAD_LOCALS;
+        public final int NATIVE_THREAD_LOCALS;
+        public final int FORWARD_LINK;
+        public final int BACKWARD_LINK;
+        public final int ID;
+        public final int TRAP_NUMBER;
+        public final int TRAP_INSTRUCTION_POINTER;
+        public final int TRAP_FAULT_ADDRESS;
+        public final int TRAP_LATCH_REGISTER;
 
         public WordWidth wordWidth() {
             return WordWidth.fromInt(wordSize * 8);
         }
 
-        private Header(DataInputStream dataInputStream) throws IOException {
+        private Header(DataInputStream dataInputStream) throws IOException, BootImageException {
             super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
             final Endianness endian = endianness();
             isBigEndian = endian.ordinal();
@@ -220,9 +243,6 @@ public class BootImage {
             relocationScheme = endian.readInt(dataInputStream);
 
             pageSize = endian.readInt(dataInputStream);
-
-            vmThreadLocalsSize = endian.readInt(dataInputStream);
-            vmThreadLocalsTrapNumberOffset = endian.readInt(dataInputStream);
 
             vmRunMethodOffset = endian.readInt(dataInputStream);
             vmThreadRunMethodOffset = endian.readInt(dataInputStream);
@@ -242,7 +262,23 @@ public class BootImage {
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
             messengerInfoOffset = endian.readInt(dataInputStream);
-            threadSpecificsListOffset = endian.readInt(dataInputStream);
+            threadLocalsListHeadOffset = endian.readInt(dataInputStream);
+            primordialThreadLocalsOffset = endian.readInt(dataInputStream);
+
+            threadLocalsSize = endian.readInt(dataInputStream);
+
+            SAFEPOINT_LATCH = endian.readInt(dataInputStream);
+            SAFEPOINTS_ENABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
+            SAFEPOINTS_DISABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
+            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = endian.readInt(dataInputStream);
+            NATIVE_THREAD_LOCALS = endian.readInt(dataInputStream);
+            FORWARD_LINK = endian.readInt(dataInputStream);
+            BACKWARD_LINK = endian.readInt(dataInputStream);
+            ID = endian.readInt(dataInputStream);
+            TRAP_NUMBER = endian.readInt(dataInputStream);
+            TRAP_INSTRUCTION_POINTER = endian.readInt(dataInputStream);
+            TRAP_FAULT_ADDRESS = endian.readInt(dataInputStream);
+            TRAP_LATCH_REGISTER = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -262,8 +298,6 @@ public class BootImage {
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             relocationScheme = RelocationScheme.DEFAULT.ordinal();
             pageSize = vmConfiguration.platform().pageSize;
-            vmThreadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
-            vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset;
             vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
@@ -280,7 +314,24 @@ public class BootImage {
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
 
             messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
-            threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "threadSpecificsList");
+            threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
+            primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
+
+            threadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
+
+            SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
+            SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;
+            SAFEPOINTS_DISABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index;
+            SAFEPOINTS_TRIGGERED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index;
+            NATIVE_THREAD_LOCALS = VmThreadLocal.NATIVE_THREAD_LOCALS.index;
+            FORWARD_LINK = VmThreadLocal.FORWARD_LINK.index;
+            BACKWARD_LINK = VmThreadLocal.BACKWARD_LINK.index;
+            ID = VmThreadLocal.ID.index;
+            TRAP_NUMBER = VmThreadLocal.TRAP_NUMBER.index;
+            TRAP_INSTRUCTION_POINTER = VmThreadLocal.TRAP_INSTRUCTION_POINTER.index;
+            TRAP_FAULT_ADDRESS = VmThreadLocal.TRAP_FAULT_ADDRESS.index;
+            TRAP_LATCH_REGISTER = VmThreadLocal.TRAP_LATCH_REGISTER.index;
+
         }
 
         public void check() throws BootImageException {

@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>CompareOp</code> instruction represents comparisons such as equals, not equal, etc.
@@ -40,7 +39,7 @@ public class CompareOp extends Op2 {
      * @param stateBefore the state before the comparison is performed
      */
     public CompareOp(int opcode, Instruction x, Instruction y, ValueStack stateBefore) {
-        super(ValueType.INT_TYPE, opcode, x, y);
+        super(BasicType.Int, opcode, x, y);
         this.stateBefore = stateBefore;
     }
 
