@@ -78,10 +78,10 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         ssHeapScheme.getToSpace().resetAllocationMark();
 
         if (ssHeapScheme.verifyAfterGC()) {
-            verifyHeap("After GC", ssHeapScheme, fromSpace);
             if (MaxineVM.isDebug()) {
                 heapScheme.zapRegion(toSpace);
             }
+            verifyHeap("After GC", ssHeapScheme, fromSpace);
         }
 
         InspectableHeapInfo.afterGarbageCollection();
