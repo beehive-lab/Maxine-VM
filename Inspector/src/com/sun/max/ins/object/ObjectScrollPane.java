@@ -38,41 +38,41 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ObjectPane extends InspectorScrollPane {
+public final class ObjectScrollPane extends InspectorScrollPane {
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleArrayObject}; never null;
      */
-    public static ObjectPane createArrayElementsPane(ObjectInspector objectInspector, TeleArrayObject teleArrayObject) {
+    public static ObjectScrollPane createArrayElementsPane(ObjectInspector objectInspector, TeleArrayObject teleArrayObject) {
         final int length = teleArrayObject.getLength();
         final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
         final Kind kind = arrayClassActor.componentClassActor().kind;
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
         final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(objectInspector, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
-        return new ObjectPane(objectInspector.inspection(), arrayElementsTable);
+        return new ObjectScrollPane(objectInspector.inspection(), arrayElementsTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
-    public static ObjectPane createFieldsPane(ObjectInspector objectInspector, TeleTupleObject teleTupleObject) {
+    public static ObjectScrollPane createFieldsPane(ObjectInspector objectInspector, TeleTupleObject teleTupleObject) {
         final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleTupleObject.getFieldActors());
-        return new ObjectPane(objectInspector.inspection(), inspectorTable);
+        return new ObjectScrollPane(objectInspector.inspection(), inspectorTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
-    public static ObjectPane createFieldsPane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createFieldsPane(ObjectInspector objectInspector, TeleHub teleHub) {
         final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleHub.getFieldActors());
-        return new ObjectPane(objectInspector.inspection(), inspectorTable);
+        return new ObjectScrollPane(objectInspector.inspection(), inspectorTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "vTable" of a {@link TeleHub}object; null if the table is empty.
      */
-    public static ObjectPane createVTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createVTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
         if (teleHub.vTableLength() == 0) {
             return null;
         }
@@ -83,13 +83,13 @@ public final class ObjectPane extends InspectorScrollPane {
                         teleHub.vTableLength(),
                         "V",
                         WordValueLabel.ValueMode.CALL_ENTRY_POINT);
-        return new ObjectPane(objectInspector.inspection(), table);
+        return new ObjectScrollPane(objectInspector.inspection(), table);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "iTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectPane createITablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createITablePane(ObjectInspector objectInspector, TeleHub teleHub) {
         if (teleHub.iTableLength() == 0) {
             return null;
         }
@@ -100,13 +100,13 @@ public final class ObjectPane extends InspectorScrollPane {
                         teleHub.iTableLength(),
                         "I",
                         WordValueLabel.ValueMode.ITABLE_ENTRY);
-        return new ObjectPane(objectInspector.inspection(), table);
+        return new ObjectScrollPane(objectInspector.inspection(), table);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "mTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectPane createMTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createMTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
         if (teleHub.mTableLength() == 0) {
             return null;
         }
@@ -117,13 +117,13 @@ public final class ObjectPane extends InspectorScrollPane {
                         teleHub.mTableLength(),
                         "M",
                         WordValueLabel.ValueMode.WORD);
-        return new ObjectPane(objectInspector.inspection(), table);
+        return new ObjectScrollPane(objectInspector.inspection(), table);
     }
 
     /**
      * @return a new {@link JScrollPane}  displaying the reference map of the {@link TeleHub}; null if the map is empty.
      */
-    public static ObjectPane createRefMapPane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createRefMapPane(ObjectInspector objectInspector, TeleHub teleHub) {
         if (teleHub.hub().referenceMapLength == 0) {
             return null;
         }
@@ -134,7 +134,7 @@ public final class ObjectPane extends InspectorScrollPane {
                         teleHub.referenceMapLength(),
                         "R",
                         WordValueLabel.ValueMode.WORD);
-        return new ObjectPane(objectInspector.inspection(), table);
+        return new ObjectScrollPane(objectInspector.inspection(), table);
     }
 
     private final InspectorTable inspectorTable;
@@ -143,7 +143,7 @@ public final class ObjectPane extends InspectorScrollPane {
      * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
      * of the table up to a specified limit.
      */
-    private ObjectPane(Inspection inspection, InspectorTable inspectorTable) {
+    private ObjectScrollPane(Inspection inspection, InspectorTable inspectorTable) {
         super(inspection, inspectorTable);
         this.inspectorTable = inspectorTable;
         // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
