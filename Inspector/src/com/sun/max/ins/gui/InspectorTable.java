@@ -55,6 +55,9 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     private final Inspection inspection;
 
+    /**
+     * Should the table paint a box around the currently selected row(s)?
+     */
     private boolean paintSelectionBox = false;
 
     /**
