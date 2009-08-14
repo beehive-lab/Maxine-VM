@@ -36,7 +36,7 @@ import com.sun.max.tele.object.*;
 public class EnumInspector extends ObjectInspector {
 
     private JTabbedPane tabbedPane;
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
@@ -59,7 +59,7 @@ public class EnumInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleEnum);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleEnum);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

@@ -57,8 +57,7 @@ public final class BreakpointsTable extends InspectorTable {
         tableModel = new BreakpointsTableModel();
         columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
         columnModel = new BreakpointsColumnModel(viewPreferences);
-
-        configure(tableModel, columnModel);
+        configureDefaultTable(tableModel, columnModel);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
     }
 
@@ -142,7 +141,7 @@ public final class BreakpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class BreakpointsTableModel extends DefaultTableModel {
+    private final class BreakpointsTableModel extends AbstractTableModel {
 
         // Cache of information objects for each known breakpoint
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();

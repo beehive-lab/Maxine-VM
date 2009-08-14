@@ -37,7 +37,7 @@ import com.sun.max.vm.classfile.constant.*;
 class Utf8ConstantInspector extends ObjectInspector {
 
     private JTabbedPane tabbedPane;
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
@@ -60,7 +60,7 @@ class Utf8ConstantInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleUtf8Constant);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

@@ -55,18 +55,9 @@ public final class BootImageTable extends InspectorTable {
         model = new BootImageTableModel(inspection);
         columns = new TableColumn[BootImageColumnKind.VALUES.length()];
         this.columnModel = new BootImageColumnModel(viewPreferences);
-
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
+        configureMemoryTable(model, columnModel);
         setRowSelectionAllowed(false);
-        setColumnSelectionAllowed(false);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
     public void refresh(boolean force) {

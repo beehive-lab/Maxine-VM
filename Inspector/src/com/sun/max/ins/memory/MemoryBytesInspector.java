@@ -40,33 +40,33 @@ import com.sun.max.util.*;
  *
  * @author Bernd Mathiske
  */
-public final class MemoryInspector extends Inspector {
+public final class MemoryBytesInspector extends Inspector {
 
-    private static final IdentityHashSet<MemoryInspector> memoryInspectors = new IdentityHashSet<MemoryInspector>();
+    private static final IdentityHashSet<MemoryBytesInspector> memoryInspectors = new IdentityHashSet<MemoryBytesInspector>();
 
     /**
      * Displays a new inspector for a region of memory.
      */
-    public static MemoryInspector create(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        return new MemoryInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
+    public static MemoryBytesInspector create(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
+        return new MemoryBytesInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
     }
 
     /**
      * Displays a new inspector for a region of memory.
      */
-    public static MemoryInspector create(Inspection inspection, Address address) {
-        return create(inspection, address, 10, 8, 1);
+    public static MemoryBytesInspector create(Inspection inspection, Address address) {
+        return create(inspection, address, 64, 1, 8);
     }
 
     /**
      * Displays a new inspector for the currently allocated memory of a heap object in the VM.
      */
-    public static MemoryInspector create(Inspection inspection, TeleObject teleObject) {
+    public static MemoryBytesInspector create(Inspection inspection, TeleObject teleObject) {
         final MemoryRegion region = teleObject.getCurrentMemoryRegion();
         return create(inspection, region.start(), region.size().toInt(), 1, 16);
     }
 
-    private MemoryInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
+    private MemoryBytesInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
         super(inspection);
         this.address = address;
         this.numberOfGroups = numberOfGroups;
@@ -92,7 +92,7 @@ public final class MemoryInspector extends Inspector {
             public void update(Address a) {
                 if (!a.equals(address)) {
                     address = a;
-                    MemoryInspector.this.reconstructView();
+                    MemoryBytesInspector.this.reconstructView();
                 }
             }
         };
@@ -104,7 +104,7 @@ public final class MemoryInspector extends Inspector {
             public void update(Address value) {
                 if (!value.equals(numberOfBytesPerGroup)) {
                     numberOfBytesPerGroup = value.toInt();
-                    MemoryInspector.this.reconstructView();
+                    MemoryBytesInspector.this.reconstructView();
                 }
             }
         };
@@ -117,7 +117,7 @@ public final class MemoryInspector extends Inspector {
             public void update(Address value) {
                 if (!value.equals(numberOfGroups)) {
                     numberOfGroups = value.toInt();
-                    MemoryInspector.this.reconstructView();
+                    MemoryBytesInspector.this.reconstructView();
                 }
             }
         };
@@ -130,7 +130,7 @@ public final class MemoryInspector extends Inspector {
             public void update(Address value) {
                 if (!value.equals(numberOfGroupsPerLine)) {
                     numberOfGroupsPerLine = value.toInt();
-                    MemoryInspector.this.reconstructView();
+                    MemoryBytesInspector.this.reconstructView();
                 }
             }
         };
@@ -177,19 +177,19 @@ public final class MemoryInspector extends Inspector {
 
     private static final Predicate<Inspector> allMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryInspector;
+            return inspector instanceof MemoryBytesInspector;
         }
     };
 
     private final Predicate<Inspector> otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryInspector && inspector != MemoryInspector.this;
+            return inspector instanceof MemoryBytesInspector && inspector != MemoryBytesInspector.this;
         }
     };
 
     @Override
     public String getTextForTitle() {
-        return MemoryInspector.class.getSimpleName() + ": " + address.toHexString();
+        return MemoryBytesInspector.class.getSimpleName() + ": " + address.toHexString();
     }
 
     @Override
