@@ -9,16 +9,5 @@
     <filter name="FileTypesFilter" enabled="true">
         <filter-data value="java"/>
     </filter>
-    <filter name="FilesFromPackage" enabled="true">
-        <filter-data value="test/test/bytecode"/>
-        <filter-data value="test/test/except"/>
-        <filter-data value="test/test/interactive"/>
-        <filter-data value="test/test/jdk"/>
-        <filter-data value="test/test/lang"/>
-        <filter-data value="test/test/micro"/>
-        <filter-data value="test/test/optimize"/>
-        <filter-data value="test/test/reflect"/>
-        <filter-data value="test/test/threads"/>
-    </filter>
     <filter name="NonSrcDirs" enabled="true"/>
 </fileset-config>

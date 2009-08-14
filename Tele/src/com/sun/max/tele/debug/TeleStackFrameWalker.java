@@ -83,6 +83,10 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
             }
             return false;
         }
+        @Override
+        public String toString() {
+            return "<error: " + errorMessage + ">";
+        }
     }
 
     public Sequence<StackFrame> frames() {

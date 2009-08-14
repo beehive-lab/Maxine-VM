@@ -20,11 +20,9 @@
  */
 package com.sun.c1x.gen;
 
-import com.sun.c1x.lir.LIROperand;
-import com.sun.c1x.lir.LIROperandFactory;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.lir.*;
 
 /**
  * Converts the HIR program's Phi instructions into moves.

@@ -20,10 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.C1XIntrinsic;
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>Intrinsic</code> instruction represents a call to a JDK method
@@ -50,7 +48,7 @@ public class Intrinsic extends StateSplit {
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(ValueType type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
+    public Intrinsic(BasicType type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
                      ValueStack lockStack, boolean preservesState, boolean canTrap) {
         super(type);
         this.intrinsic = intrinsic;

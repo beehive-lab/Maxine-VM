@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * The <code>MaxCiConstantPool</code> class implements a constant pool for
@@ -50,7 +49,7 @@ import com.sun.max.vm.value.*;
  */
 public class MaxCiConstantPool implements CiConstantPool {
     final MaxCiRuntime runtime;
-    final ConstantPool constantPool;
+    public final ConstantPool constantPool;
     final WeakHashMap<SignatureDescriptor, MaxCiSignature> signatures = new WeakHashMap<SignatureDescriptor, MaxCiSignature>();
 
     /**
@@ -275,25 +274,29 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @param cpi the constant pool index
      * @return the compiler interface constant at that index
      */
-    public CiConstant lookupConstant(char cpi) {
+    public Object lookupConstant(char cpi) {
         switch (constantPool.tagAt(cpi)) {
             case CLASS: {
-                return new MaxCiConstant(typeFrom(constantPool.classAt(cpi), cpi));
+                MaxCiType type = typeFrom(constantPool.classAt(cpi), cpi);
+                if (type.isLoaded()) {
+                    return CiConstant.forObject(type.javaClass());
+                }
+                return type;
             }
             case INTEGER: {
-                return new MaxCiConstant(IntValue.from(constantPool.intAt(cpi)));
+                return CiConstant.forInt(constantPool.intAt(cpi));
             }
             case FLOAT: {
-                return new MaxCiConstant(FloatValue.from(constantPool.floatAt(cpi)));
+                return CiConstant.forFloat(constantPool.floatAt(cpi));
             }
             case STRING: {
-                return new MaxCiConstant(ReferenceValue.from(constantPool.stringAt(cpi)));
+                return CiConstant.forObject(constantPool.stringAt(cpi));
             }
             case LONG: {
-                return new MaxCiConstant(LongValue.from(constantPool.longAt(cpi)));
+                return CiConstant.forLong(constantPool.longAt(cpi));
             }
             case DOUBLE: {
-                return new MaxCiConstant(DoubleValue.from(constantPool.doubleAt(cpi)));
+                return CiConstant.forDouble(constantPool.doubleAt(cpi));
             }
             default:
                 throw ProgramError.unexpected("unknown constant type");

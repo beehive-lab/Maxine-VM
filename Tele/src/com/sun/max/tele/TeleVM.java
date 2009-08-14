@@ -441,6 +441,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
+        nativeInitialize(bootImage.header().threadLocalsSize);
         final MaxineVM vm = createVM(this.bootImage);
         this.vmConfiguration = vm.configuration();
 
@@ -468,12 +469,10 @@ public abstract class TeleVM implements MaxVM {
             this.teleProcess = createTeleProcess(commandLineArguments, agent);
             this.bootImageStart = loadBootImage(agent);
         }
-
         this.fields = new TeleFields(this);
         this.methods = new TeleMethods(this);
         this.teleObjectFactory = TeleObjectFactory.make(this);
         this.teleHeapManager = TeleHeapManager.make(this);
-
 
         // Provide access to JDWP server
         this.jdwpAccess = new VMAccessImpl();
@@ -486,6 +485,13 @@ public abstract class TeleVM implements MaxVM {
 
         this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
     }
+
+    /**
+     * Initializes native tele code.
+     *
+     * @param threadLocalsSize the size of thread local storage as read from the image
+     */
+    private static native void nativeInitialize(int threadLocalsSize);
 
     /**
      * Starts a new VM process and returns a handle to it.

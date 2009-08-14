@@ -20,13 +20,11 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.C1XMetrics;
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.Instruction;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
 
 /**
  * Implements global value numbering based on dominators.

@@ -36,6 +36,8 @@ import com.sun.max.unsafe.*;
  */
 public abstract class AddressInputField extends JTextField {
 
+    private static final int ADDRESSINPUTFIELDSIZE = 16;
+
     public abstract void update(Address value);
 
     private final int radix;
@@ -107,6 +109,7 @@ public abstract class AddressInputField extends JTextField {
     }
 
     protected AddressInputField(Inspection inspection, final int radix, Address initialValue) {
+        super(ADDRESSINPUTFIELDSIZE);
         this.radix = radix;
         this.value = initialValue;
         setFont(inspection.style().wordDataFont());

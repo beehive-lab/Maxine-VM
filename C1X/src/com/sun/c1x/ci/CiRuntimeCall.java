@@ -20,8 +20,9 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.value.*;
 import static com.sun.c1x.value.BasicType.*;
+
+import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra
@@ -67,7 +68,8 @@ public enum CiRuntimeCall {
     ArithmeticTan(Double, Double),
     ArithmeticLog(Double, Double),
     ArithmeticLog10(Double, Double),
-    ArithmeticSin(Double, Double);
+    ArithmeticSin(Double, Double),
+    ResolveClass(Object, Int, Object);
 
     public final BasicType resultType;
     public final BasicType[] arguments;

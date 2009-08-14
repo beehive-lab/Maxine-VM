@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.value.ValueType;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.*;
+import com.sun.c1x.bytecode.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>ArrayLength</code> instruction gets the length of an array.
@@ -39,7 +38,7 @@ public class ArrayLength extends AccessArray {
      * @param lockStack the lock stack
      */
     public ArrayLength(Instruction array, ValueStack lockStack) {
-        super(ValueType.INT_TYPE, array, lockStack);
+        super(BasicType.Int, array, lockStack);
         if (array.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;

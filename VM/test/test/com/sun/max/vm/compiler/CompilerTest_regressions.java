@@ -24,8 +24,9 @@ import java.io.*;
 import java.net.*;
 import java.util.zip.*;
 
+import jtt.micro.*;
+
 import sun.misc.*;
-import test.micro.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -89,7 +90,7 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
 
     public void test_sparcRegression() {
         compileMethod("callWithLotsOfArguments");
-        compileMethod(test.jni.JNI_OverflowArguments.class, "read1");
+        compileMethod(jtt.jni.JNI_OverflowArguments.class, "read1");
     }
 
     // Copy of java.lang.StringCode.scale

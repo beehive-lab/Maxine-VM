@@ -20,21 +20,16 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.alloc.Interval.IntervalKind;
-import com.sun.c1x.alloc.Interval.IntervalSpillState;
-import com.sun.c1x.alloc.Interval.IntervalState;
-import com.sun.c1x.alloc.Interval.IntervalUseKind;
-import com.sun.c1x.debug.TTY;
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.c1x.*;
+import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.debug.*;
+import com.sun.c1x.gen.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
 
 /**
  *
@@ -446,6 +441,7 @@ public class LinearScanWalker extends IntervalWalker {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print("----- splitting and spilling interval: ");
+
             it.print(TTY.out, allocator);
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }

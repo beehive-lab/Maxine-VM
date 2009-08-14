@@ -89,6 +89,7 @@ public enum LIROpcode {
         , Throw
         , Unwind
         , CompareTo
+        , Resolve
     , EndOp2
     , BeginOp3
         , Idiv

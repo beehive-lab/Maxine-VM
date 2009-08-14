@@ -270,7 +270,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Emit the adaptation of the first parameter in the delay slot of the call to the method entry point.
             final int adapterPosition = assembler().currentPosition();
             adaptParameter(parametersKinds[0], parameterLocations[0], jitCallerStackOffset);
-            assert assembler().currentPosition() == adapterPosition + SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
+            assert assembler().currentPosition() == adapterPosition + InstructionSet.SPARC.instructionWidth;
             jitCallerStackOffset += JitStackFrameLayout.stackSlotSize(parametersKinds[0]);
 
             // Amount to retract to the stack: the adapter frame plus the parameters of the call. The following gives exactly that.

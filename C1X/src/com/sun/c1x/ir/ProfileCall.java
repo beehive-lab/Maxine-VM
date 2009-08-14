@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.CiMethod;
-import com.sun.c1x.ci.CiType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>ProfileCall</code> instruction representings profiling instruction inserted in the
@@ -45,7 +44,7 @@ public class ProfileCall extends Instruction {
      * @param knownHolder the static type known at the call site
      */
     public ProfileCall(CiMethod method, int bci, Instruction object, CiType knownHolder) {
-        super(ValueType.VOID_TYPE);
+        super(BasicType.Void);
         this.method = method;
         this.bciOfInvoke = bci;
         this.object = object;

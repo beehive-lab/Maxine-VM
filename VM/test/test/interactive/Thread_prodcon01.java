@@ -62,14 +62,15 @@ public class Thread_prodcon01 {
             //Notify producer that status has changed.
             notifyAll();
             return message;
-            }
+        }
 
         public synchronized void put(String message) {
-           //Wait until message has been retrieved.
+            // Wait until message has been retrieved.
             while (!empty) {
                 try {
                     wait();
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
             //Toggle status.
             empty = false;
@@ -87,7 +88,7 @@ public class Thread_prodcon01 {
             this.drop = drop;
         }
 
-        static String importantInfo[] = {
+        static String[] importantInfo = {
             "Mares eat oats",
             "Does eat oats",
             "Little lambs eat ivy",
@@ -118,20 +119,17 @@ public class Thread_prodcon01 {
         }
 
         public void run() {
-            //Random random = new Random();
+            // Random random = new Random();
             int i = 0;
-            for (String message = drop.take(); ! message.equals("DONE");
-                    message = drop.take()) {
-                debug("MESSAGE RECEIVED: "+ message);
+            for (String message = drop.take(); !message.equals("DONE"); message = drop.take()) {
+                debug("MESSAGE RECEIVED: " + message);
                 if (!message.equals(Producer.importantInfo[i])) {
                     ok = false;
                 }
                 i++;
                 /**
-                try {
-                    Thread.sleep(random.nextInt(5000));
-                } catch (InterruptedException e) {}
-                */
+                 * try { Thread.sleep(random.nextInt(5000)); } catch (InterruptedException e) {}
+                 */
             }
         }
     }

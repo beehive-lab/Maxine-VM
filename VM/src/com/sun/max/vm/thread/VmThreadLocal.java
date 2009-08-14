@@ -88,12 +88,17 @@ public class VmThreadLocal {
      */
     public final String description;
 
+    /**
+     * The stack trace element describing where this thread local is declared.
+     */
+    public final StackTraceElement declaration;
+
     private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
 
     /**
      * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
      */
-    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "");
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "memory location loaded by safepoint instruction");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
@@ -116,11 +121,29 @@ public class VmThreadLocal {
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
         = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
 
+    public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", Kind.WORD, "pointer to a NativeThreadLocalsStruct");
+
+    /**
+     * Next link for a doubly-linked list of all thread locals for active threads.
+     */
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
+
+    /**
+     * Previous link for a doubly-linked list of all thread locals for active threads.
+     */
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
+
     /**
      * The procedure to run when a safepoint has been triggered.
      */
     public static final VmThreadLocal SAFEPOINT_PROCEDURE
         = new VmThreadLocal("SAFEPOINT_PROCEDURE", Kind.REFERENCE, "Procedure to run when a safepoint is triggered");
+
+    /**
+     * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
+     */
+    public static final VmThreadLocal EXCEPTION_OBJECT
+        = new VmThreadLocal("EXCEPTION_OBJECT", Kind.REFERENCE, "The exception being raised");
 
     /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
@@ -143,11 +166,6 @@ public class VmThreadLocal {
             }
         }
     };
-
-    /**
-     * Handle to the native threading library object for a thread (e.g. a pthread_t value).
-     */
-    public static final VmThreadLocal NATIVE_THREAD = new VmThreadLocal("NATIVE_THREAD", Kind.WORD, "Handle for thread object in native thread library");
 
     /**
      * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
@@ -261,19 +279,13 @@ public class VmThreadLocal {
      * This is address of the object before it got relocated by the GC.
      */
     public static final VmThreadLocal OLD_OBJECT_ADDRESS
-        = new VmThreadLocal("OLD_OBJECT_ADDRESS", Kind.WORD, "old address of an object, before compaction");
+        = new VmThreadLocal("OLD_OBJECT_ADDRESS", Kind.WORD, "Old address of an object, before compaction");
 
     /**
      * This is the new address of the object after relocation.
      */
     public static final VmThreadLocal NEW_OBJECT_ADDRESS
-        = new VmThreadLocal("NEW_OBJECT_ADDRESS", Kind.WORD, "new address of an object, after compaction");
-
-    /**
-     * Links for a doubly-linked list of all thread locals for active threads.
-     */
-    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
-    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
+        = new VmThreadLocal("NEW_OBJECT_ADDRESS", Kind.WORD, "New address of an object, after compaction");
 
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
@@ -325,6 +337,17 @@ public class VmThreadLocal {
         StackReferenceMapPreparer.setVmThreadLocalGCRoots(Sequence.Static.toArray(referenceVmThreadLocals, VmThreadLocal.class));
     }
 
+    @PROTOTYPE_ONLY
+    private static StackTraceElement findDeclaration(String name, StackTraceElement[] stackTraceElements) {
+        for (StackTraceElement stackTraceElement : stackTraceElements) {
+            if (!stackTraceElement.getMethodName().equals("<init>")) {
+                ProgramWarning.check(stackTraceElement.getMethodName().equals("<clinit>"), "VM thread local " + name + " should be created in a static field initializer, not at " + stackTraceElement);
+                return stackTraceElement;
+            }
+        }
+        throw ProgramError.unexpected("Could not find non-constructor call in stack trace of a call to VmThreadLocal constructor");
+    }
+
     /**
      * Creates a new thread local variable and adds a slot for it to the map.
      *
@@ -340,6 +363,7 @@ public class VmThreadLocal {
         this.offset = index * Word.size();
         values.append(this);
         this.description = description;
+        this.declaration = findDeclaration(name, new Throwable().getStackTrace());
     }
 
     /**

@@ -58,8 +58,12 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
         final String className = typeDescriptor.toJavaString();
         if (filter.indexOf('.') == -1) {
             final int length = filter.length();
-            final String simpleClassName = typeDescriptor.toJavaString(false);
-            if (!filter.isEmpty() &&  filter.charAt(length - 1) == ' ') {
+            String simpleClassName = typeDescriptor.toJavaString(false);
+            int lastDollar = simpleClassName.lastIndexOf('$');
+            if (lastDollar != -1) {
+                simpleClassName = simpleClassName.substring(lastDollar + 1);
+            }
+            if (!filter.isEmpty() && filter.charAt(length - 1) == ' ') {
                 if (simpleClassName.equalsIgnoreCase(Strings.chopSuffix(filter, 1))) {
                     return className;
                 }

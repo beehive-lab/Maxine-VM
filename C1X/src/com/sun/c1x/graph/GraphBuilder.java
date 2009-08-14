@@ -20,22 +20,15 @@
  */
 package com.sun.c1x.graph;
 
+import java.util.*;
+
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.BytecodeStream;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.opt.Canonicalizer;
-import com.sun.c1x.opt.PhiSimplifier;
-import com.sun.c1x.opt.ValueMap;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.opt.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The <code>GraphBuilder</code> class parses the bytecode of a method and builds the IR graph.
@@ -112,7 +105,7 @@ public class GraphBuilder {
                 }
                 if (tryInlineIntrinsic(method, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    BasicType rt = returnValueType(method);
+                    BasicType rt = returnBasicType(method);
                     Instruction result = null;
                     if (rt != BasicType.Void) {
                         result = pop(rt);
@@ -472,47 +465,24 @@ public class GraphBuilder {
         return h.isCatchAll();
     }
 
-    ConstType convertCiConstant(CiConstant con) {
-        switch (con.basicType()) {
-            case Boolean:
-                return ConstType.forBoolean(con.asBoolean());
-            case Char:
-                return ConstType.forChar(con.asChar());
-            case Float:
-                return ConstType.forFloat(con.asFloat());
-            case Double:
-                return ConstType.forDouble(con.asDouble());
-            case Byte:
-                return ConstType.forByte(con.asByte());
-            case Short:
-                return ConstType.forShort(con.asShort());
-            case Int:
-                return ConstType.forInt(con.asInt());
-            case Long:
-                return ConstType.forLong(con.asLong());
-            case Object:
-                return ConstType.forObject(con.asObject());
-            default:
-                throw new Bailout("invalid constant type on " + con);
-        }
-
-    }
-
     void loadConstant() {
-        CiConstant con = constantPool().lookupConstant(stream().readCPI());
-        if (con.isCiType()) {
+        Object con = constantPool().lookupConstant(stream().readCPI());
+
+        if (con instanceof CiType) {
             // this is a load of class constant which might be unresolved
-            CiType citype = con.asCiType();
+            CiType citype = (CiType) con;
             if (!citype.isLoaded() || C1XOptions.TestPatching) {
                 push(BasicType.Object, append(new ResolveClass(citype, curState.copy())));
             } else {
                 push(BasicType.Object, append(Constant.forObject(citype.javaClass())));
             }
             return;
+        } else if (con instanceof CiConstant) {
+            CiConstant constant = (CiConstant) con;
+            push(constant.basicType.stackType(), appendConstant(constant));
+        } else {
+            throw new Error("lookupConstant returned an object of incorrect type");
         }
-
-        ConstType constant = convertCiConstant(con);
-        push(constant.basicType.stackType(), appendConstant(constant));
     }
 
     void loadIndexed(BasicType type) {
@@ -660,7 +630,7 @@ public class GraphBuilder {
     }
 
     void convert(int opcode, BasicType from, BasicType to) {
-        ValueType tt = ValueType.fromBasicType(to);
+        BasicType tt = to.stackType();
         push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
@@ -689,14 +659,14 @@ public class GraphBuilder {
     }
 
     void ifZero(Condition cond) {
-        Instruction y = appendConstant(ConstType.INT_0);
+        Instruction y = appendConstant(CiConstant.INT_0);
         ValueStack stateBefore = curState.copy();
         Instruction x = ipop();
         ifNode(x, cond, y, stateBefore);
     }
 
     void ifNull(Condition cond) {
-        Instruction y = appendConstant(ConstType.NULL_OBJECT);
+        Instruction y = appendConstant(CiConstant.NULL_OBJECT);
         ValueStack stateBefore = curState.copy();
         Instruction x = apop();
         ifNode(x, cond, y, stateBefore);
@@ -739,9 +709,10 @@ public class GraphBuilder {
     }
 
     void newInstance() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         assert !type.isLoaded() || type.isInstanceClass();
-        NewInstance n = new NewInstance(type);
+        NewInstance n = new NewInstance(type, cpi, constantPool());
         if (memoryMap != null) {
             memoryMap.newInstance(n);
         }
@@ -753,21 +724,23 @@ public class GraphBuilder {
     }
 
     void newObjectArray() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
-        NewArray n = new NewObjectArray(type, ipop(), stateBefore);
+        NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
     void newMultiArray() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        char cpi = stream().readCPI();
+        CiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         int rank = stream().readUByte(stream().currentBCI() + 3);
         Instruction[] dims = new Instruction[rank];
         for (int i = rank - 1; i >= 0; i--) {
             dims[i] = ipop();
         }
-        NewArray n = new NewMultiArray(type, dims, stateBefore);
+        NewArray n = new NewMultiArray(type, dims, stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
@@ -813,7 +786,7 @@ public class GraphBuilder {
     private Instruction getStaticContainer(CiType holder, boolean isInitialized) {
         Instruction holderConstant = null;
         if (isInitialized) {
-            holderConstant = appendConstant(convertCiConstant(holder.getStaticContainer()));
+            holderConstant = appendConstant(holder.getStaticContainer());
         }
         return holderConstant;
     }
@@ -906,7 +879,7 @@ public class GraphBuilder {
         }
     }
 
-    private BasicType returnValueType(CiMethod target) {
+    private BasicType returnBasicType(CiMethod target) {
         return target.signatureType().returnBasicType();
     }
 
@@ -926,8 +899,8 @@ public class GraphBuilder {
     }
 
     private void appendInvoke(int opcode, CiMethod target, Instruction[] args, boolean isStatic) {
-        BasicType resultType = returnValueType(target);
-        Instruction result = append(new Invoke(opcode, ValueType.fromBasicType(resultType), args, isStatic, target.vtableIndex(), target));
+        BasicType resultType = returnBasicType(target);
+        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -1015,7 +988,7 @@ public class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(0, BasicType.Object);
-            append(new Intrinsic(ValueType.VOID_TYPE, C1XIntrinsic.java_lang_Object$init,
+            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
                                           curState.popArguments(1), false, lockStack(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
@@ -1174,7 +1147,7 @@ public class GraphBuilder {
         if (C1XOptions.AlwaysCSEArrayLength) {
             // always access the length for CSE
             return true;
-        } else if (array.type().isConstant()) {
+        } else if (array.isConstant()) {
             // the array itself is a constant
             return true;
         } else if (array instanceof AccessField && ((AccessField) array).field().isConstant()) {
@@ -1183,7 +1156,7 @@ public class GraphBuilder {
         } else  if (array instanceof NewArray) {
             // the array is derived from an allocation
             final Instruction length = ((NewArray) array).length();
-            return length != null && length.type().isConstant();
+            return length != null && length.isConstant();
         }
         return false;
     }
@@ -1222,7 +1195,7 @@ public class GraphBuilder {
         }
     }
 
-    private Instruction appendConstant(ConstType type) {
+    private Instruction appendConstant(CiConstant type) {
         return appendWithBCI(new Constant(type), bci(), false); // don't bother trying to canonicalize/lvn a constant
     }
 
@@ -1370,7 +1343,7 @@ public class GraphBuilder {
         int index = 0;
         if (!method.isStatic()) {
             // add the receiver and assume it is non null
-            Local local = new Local(ValueType.OBJECT_TYPE, index);
+            Local local = new Local(BasicType.Object, index);
             local.setFlag(Instruction.Flag.NonNull, true);
             local.setDeclaredType(method.holder());
             state.storeLocal(index, local);
@@ -1380,13 +1353,13 @@ public class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             CiType type = sig.argumentTypeAt(i);
-            ValueType vt = ValueType.fromBasicType(type.basicType());
+            BasicType vt = type.basicType().stackType();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
                 local.setDeclaredType(type);
             }
             state.storeLocal(index, local);
-            index += vt.size();
+            index += vt.sizeInSlots();
         }
 
         if (method.isSynchronized()) {
@@ -1428,19 +1401,19 @@ public class GraphBuilder {
         }
 
         // get the arguments for the intrinsic
-        BasicType resultType = returnValueType(target);
+        BasicType resultType = returnBasicType(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(ValueType.fromBasicType(resultType), intrinsic, args, isStatic, lockStack(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, lockStack(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         C1XMetrics.InlinedIntrinsics++;
         return true;
     }
 
     private boolean tryFoldable(CiMethod target, Instruction[] args) {
-        ConstType result = Canonicalizer.foldInvocation(target, args);
+        CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
-            pushReturn(returnValueType(target), new Constant(result));
+            pushReturn(returnBasicType(target), new Constant(result));
             return true;
         }
         return false;
@@ -1776,9 +1749,9 @@ public class GraphBuilder {
                 if (local.type().isObject() && !frame.isLiveObject(i)) {
                     // the compiler thinks this is live, but not the interpreter
                     // pretend that it passed null
-                    get = appendConstant(ConstType.NULL_OBJECT);
+                    get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
-                    Instruction oc = appendConstant(ConstType.forInt(offset));
+                    Instruction oc = appendConstant(CiConstant.forInt(offset));
                     get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
@@ -1835,23 +1808,23 @@ public class GraphBuilder {
             // Checkstyle: stop
             switch (opcode) {
                 case Bytecodes.NOP            : /* nothing to do */ break;
-                case Bytecodes.ACONST_NULL    : apush(appendConstant(ConstType.NULL_OBJECT)); break;
-                case Bytecodes.ICONST_M1      : ipush(appendConstant(ConstType.INT_MINUS_1)); break;
-                case Bytecodes.ICONST_0       : ipush(appendConstant(ConstType.INT_0)); break;
-                case Bytecodes.ICONST_1       : ipush(appendConstant(ConstType.INT_1)); break;
-                case Bytecodes.ICONST_2       : ipush(appendConstant(ConstType.INT_2)); break;
-                case Bytecodes.ICONST_3       : ipush(appendConstant(ConstType.INT_3)); break;
-                case Bytecodes.ICONST_4       : ipush(appendConstant(ConstType.INT_4)); break;
-                case Bytecodes.ICONST_5       : ipush(appendConstant(ConstType.INT_5)); break;
-                case Bytecodes.LCONST_0       : lpush(appendConstant(ConstType.LONG_0)); break;
-                case Bytecodes.LCONST_1       : lpush(appendConstant(ConstType.LONG_1)); break;
-                case Bytecodes.FCONST_0       : fpush(appendConstant(ConstType.FLOAT_0)); break;
-                case Bytecodes.FCONST_1       : fpush(appendConstant(ConstType.FLOAT_1)); break;
-                case Bytecodes.FCONST_2       : fpush(appendConstant(ConstType.FLOAT_2)); break;
-                case Bytecodes.DCONST_0       : dpush(appendConstant(ConstType.DOUBLE_0)); break;
-                case Bytecodes.DCONST_1       : dpush(appendConstant(ConstType.DOUBLE_1)); break;
-                case Bytecodes.BIPUSH         : ipush(appendConstant(ConstType.forInt(s.readByte()))); break;
-                case Bytecodes.SIPUSH         : ipush(appendConstant(ConstType.forInt(s.readShort()))); break;
+                case Bytecodes.ACONST_NULL    : apush(appendConstant(CiConstant.NULL_OBJECT)); break;
+                case Bytecodes.ICONST_M1      : ipush(appendConstant(CiConstant.INT_MINUS_1)); break;
+                case Bytecodes.ICONST_0       : ipush(appendConstant(CiConstant.INT_0)); break;
+                case Bytecodes.ICONST_1       : ipush(appendConstant(CiConstant.INT_1)); break;
+                case Bytecodes.ICONST_2       : ipush(appendConstant(CiConstant.INT_2)); break;
+                case Bytecodes.ICONST_3       : ipush(appendConstant(CiConstant.INT_3)); break;
+                case Bytecodes.ICONST_4       : ipush(appendConstant(CiConstant.INT_4)); break;
+                case Bytecodes.ICONST_5       : ipush(appendConstant(CiConstant.INT_5)); break;
+                case Bytecodes.LCONST_0       : lpush(appendConstant(CiConstant.LONG_0)); break;
+                case Bytecodes.LCONST_1       : lpush(appendConstant(CiConstant.LONG_1)); break;
+                case Bytecodes.FCONST_0       : fpush(appendConstant(CiConstant.FLOAT_0)); break;
+                case Bytecodes.FCONST_1       : fpush(appendConstant(CiConstant.FLOAT_1)); break;
+                case Bytecodes.FCONST_2       : fpush(appendConstant(CiConstant.FLOAT_2)); break;
+                case Bytecodes.DCONST_0       : dpush(appendConstant(CiConstant.DOUBLE_0)); break;
+                case Bytecodes.DCONST_1       : dpush(appendConstant(CiConstant.DOUBLE_1)); break;
+                case Bytecodes.BIPUSH         : ipush(appendConstant(CiConstant.forInt(s.readByte()))); break;
+                case Bytecodes.SIPUSH         : ipush(appendConstant(CiConstant.forInt(s.readShort()))); break;
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
                 case Bytecodes.LDC2_W         : loadConstant(); break;

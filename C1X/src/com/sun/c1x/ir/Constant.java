@@ -20,8 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ConstType;
-import com.sun.c1x.value.ValueType;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>Constant</code> instruction represents a constant such as an integer value,
@@ -31,13 +30,17 @@ import com.sun.c1x.value.ValueType;
  */
 public class Constant extends Instruction {
 
+
+    public final CiConstant value;
+
     /**
      * Constructs a new instruction representing the specified constant.
-     * @param type the constant
+     * @param value the constant
      */
-    public Constant(ConstType type) {
-        super(type);
-        initFlag(Instruction.Flag.NonNull, type.isNonNull());
+    public Constant(CiConstant value) {
+        super(value.basicType);
+        this.value = value;
+        initFlag(Instruction.Flag.NonNull, value.isNonNull());
     }
 
     /**
@@ -55,7 +58,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the double
      */
     public static Constant forDouble(double d) {
-        return new Constant(ConstType.forDouble(d));
+        return new Constant(CiConstant.forDouble(d));
     }
 
     /**
@@ -64,7 +67,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the float
      */
     public static Constant forFloat(float f) {
-        return new Constant(ConstType.forFloat(f));
+        return new Constant(CiConstant.forFloat(f));
     }
 
     /**
@@ -73,7 +76,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the long
      */
     public static Constant forLong(long i) {
-        return new Constant(ConstType.forLong(i));
+        return new Constant(CiConstant.forLong(i));
     }
 
     /**
@@ -82,7 +85,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the integer
      */
     public static Constant forInt(int i) {
-        return new Constant(ConstType.forInt(i));
+        return new Constant(CiConstant.forInt(i));
     }
 
     /**
@@ -91,7 +94,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the boolean
      */
     public static Constant forBoolean(boolean i) {
-        return new Constant(ConstType.forBoolean(i));
+        return new Constant(CiConstant.forBoolean(i));
     }
 
     /**
@@ -100,7 +103,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the address
      */
     public static Constant forJsr(int i) {
-        return new Constant(ConstType.forJsr(i));
+        return new Constant(CiConstant.forJsr(i));
     }
 
     /**
@@ -109,7 +112,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the object
      */
     public static Constant forObject(Object o) {
-        final Constant constant = new Constant(ConstType.forObject(o));
+        final Constant constant = new Constant(CiConstant.forObject(o));
         if (o != null) {
             constant.setFlag(Instruction.Flag.NonNull);
         }
@@ -118,8 +121,7 @@ public class Constant extends Instruction {
 
     @Override
     public int valueNumber() {
-        ValueType vt = type();
-        return vt.isConstant() ? 0x50000000 | vt.hashCode() : 0;
+        return 0x50000000 | value.hashCode();
     }
 
     @Override
