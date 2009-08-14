@@ -691,6 +691,7 @@ public interface MaxVM {
      * @param read read access
      * @param write write access
      * @param exec execution access
+     * @param gc active during GC
      *
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
@@ -708,7 +709,7 @@ public interface MaxVM {
      * @param read read access
      * @param write write access
      * @param exec execution access
-     * @param gc active during gc
+     * @param gc active during GC
      *
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
@@ -727,7 +728,7 @@ public interface MaxVM {
      * @param read read access
      * @param write write access
      * @param exec execution access
-     * @param gc active during gc
+     * @param gc active during GC
      *
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
@@ -748,7 +749,7 @@ public interface MaxVM {
      * @param read read access
      * @param write write access
      * @param exec execution access
-     * @param gc active during gc
+     * @param gc active during GC
      *
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
@@ -766,7 +767,7 @@ public interface MaxVM {
      * @param read read watchpoint
      * @param write write watchpoint
      * @param exec execute watchpoint
-     * @param gc active during gc
+     * @param gc active during GC
      *
      * @return a new watchpoint, if successful
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
