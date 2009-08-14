@@ -3131,6 +3131,63 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeSelectedWatchpoint;
     }
 
+    /**
+     * Action:  toggles watchpoint at a location in VM memory.
+     */
+    final class ToggleWatchpointAtLocationAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Toggle watchpoint at location";
+
+        private final MemoryRegion memoryRegion;
+        private final String description;
+
+        ToggleWatchpointAtLocationAction(MemoryRegion memoryRegion, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.memoryRegion = memoryRegion;
+            this.description = null;
+            refreshableActions.append(this);
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
+                @Override
+                public void watchpointSetChanged() {
+                    refresh(true);
+                }
+            });
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            MaxWatchpoint watchpoint = maxVM().findWatchpoint(memoryRegion);
+            if (watchpoint == null) {
+                final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
+                try {
+                    watchpoint
+                        = maxVM().setRegionWatchpoint(description, memoryRegion, true, prefs.read(), prefs.write(), prefs.exec(), prefs.enableDuringGC());
+                    if (watchpoint == null) {
+                        gui().errorMessage("Watchpoint creation failed");
+                    } else {
+                        inspection().focus().setWatchpoint(watchpoint);
+                    }
+                } catch (TooManyWatchpointsException tooManyWatchpointsException) {
+                    gui().errorMessage(tooManyWatchpointsException.getMessage());
+                } catch (DuplicateWatchpointException duplicateWatchpointException) {
+                    gui().errorMessage(duplicateWatchpointException.getMessage());
+                }
+            } else {
+                watchpoint.dispose();
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess()  && maxVM().watchpointsEnabled());
+        }
+    }
+
+    public InspectorAction toggleWatchpointAtLocation(MemoryRegion memoryRegion, String title) {
+        return new ToggleWatchpointAtLocationAction(memoryRegion, title);
+    }
+
 
      /**
      * Action: removes all existing watchpoints in the VM.
