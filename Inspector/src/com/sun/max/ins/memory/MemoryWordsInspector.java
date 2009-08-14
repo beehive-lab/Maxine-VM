@@ -288,7 +288,7 @@ public final class MemoryWordsInspector extends Inspector {
             }
         });
         prefsButton.setText(null);
-        prefsButton.setToolTipText("Column view preferences");
+        prefsButton.setToolTipText("Column view options");
         prefsButton.setIcon(style().generalPreferencesIcon());
 
         findButton = new InspectorButton(inspection(), new AbstractAction() {
