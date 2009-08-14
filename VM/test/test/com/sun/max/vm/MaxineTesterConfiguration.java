@@ -27,7 +27,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
@@ -40,262 +39,208 @@ import com.sun.max.program.*;
  */
 public class MaxineTesterConfiguration {
 
-    private static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
-    private static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
-    private static final Expectation FAIL_SOLARIS = new Expectation(OperatingSystem.SOLARIS, null, ExpectedResult.FAIL);
-    private static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
-    private static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    static final Expectation FAIL_SOLARIS = new Expectation(OperatingSystem.SOLARIS, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
 
-    private static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
-    private static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
-    private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
-    private static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
-    private static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
+    static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
-    static final Object[] outputTestList = {
-        test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
-        test.output.JavacTest.class,                FAIL_SPARC,
-        test.output.CatchOutOfMemory.class,         FAIL_SPARC,
-        test.output.PrintDate.class,
-        test.output.HelloWorld.class,
-        test.output.HelloWorldGC.class,             FAIL_SPARC,
-        test.output.ExitCode.class,
-        test.output.FloatNanTest.class,
-        test.output.GetResource.class,              FAIL_SPARC,
-        test.output.SafepointWhileInNative.class,   FAIL_SPARC,
-        test.output.SafepointWhileInJava.class,     FAIL_SPARC,
-        test.output.BlockingQueue.class,            FAIL_SPARC,
-        test.output.Recursion.class,
-        test.output.StaticInitializers.class,       FAIL_SPARC,
-        test.output.LocalCatch.class,               FAIL_SPARC,
-        test.output.Printf.class,
-        test.output.GCTest0.class,                  FAIL_SPARC,
-        test.output.GCTest1.class,                  FAIL_SPARC,
-        test.output.GCTest2.class,                  FAIL_SPARC,
-        test.output.GCTest3.class,                  FAIL_SPARC,
-        test.output.GCTest4.class,                  FAIL_SPARC,
-        test.output.GCTest5.class,                  FAIL_SPARC,
-        test.output.GCTest6.class,                  FAIL_SPARC,
-        test.output.HelloWorldReflect.class,        FAIL_SPARC,
-        test.output.JREJarLoadTest.class,
-        test.output.FileReader.class,
-        test.output.ZipFileReader.class,
-        test.output.WeakReferenceTest01.class,      FAIL_SPARC,
-        test.output.WeakReferenceTest02.class,      FAIL_SPARC,
-        test.output.WeakReferenceTest03.class,      FAIL_SPARC,
-        test.output.WeakReferenceTest04.class,      FAIL_SPARC,
-        test.output.MegaThreads.class,              FAIL_SPARC,
-    };
+    static final List<Class> zeeOutputTests = new LinkedList<Class>();
+    static final List<String> zeeDacapoTests = new LinkedList<String>();
+    static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
+    static final List<String> zeeShootoutTests = new LinkedList<String>();
+    static final List<String> zeeImageConfigs = new LinkedList<String>();
+    static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
-    static final Object[] javaTestList = {
-        jtt.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
-        jtt.jdk.EnumMap01.class,                                   RAND_ALL,
-        jtt.jdk.EnumMap02.class,                                   RAND_ALL,
-        jtt.hotpath.HP_series.class,                  FAIL_SPARC,
-        jtt.hotpath.HP_array02.class,                 FAIL_SPARC,
-    };
-
-    static final String[] dacapoTests = {
-        "antlr",
-        "bloat",
-        "xalan",
-        "hsqldb",
-        "luindex",
-        "lusearch",
-        "jython",
-        "chart",
-        "eclipse",
-        "fop",
-        "pmd"
-    };
-
-    static final String[] specjvm98Tests = {
-        "_201_compress",
-        "_202_jess",
-        "_205_raytrace",
-        "_209_db",
-        "_213_javac",
-        "_222_mpegaudio",
-        "_227_mtrt",
-        "_228_jack"
-    };
-
-    static final String[] specjvm98IgnoredLinePatterns = {
-        "Total memory",
-        "## IO time",
-        "Finished in",
-        "Decoding time:"
-    };
-
-    static final Object[][] shootoutBenchmarks = {
-        {"ackermann",       "10"},
-        {"ary",             "10000", "300000"},
-        {"binarytrees",     "12", "16", "18"},
-        {"chameneos",       "1000", "250000"},
-        {"chameneosredux",  "1000", "250000"},
-        {"except",          "10000", "100000", "1000000"},
-        {"fannkuch",        "8", "10", "11"},
-        {"fasta",           "1000", "250000"},
-        {"fibo",            "22", "32", "42"},
-        {"harmonic",        "1000000", "200000000"},
-        {"hash",            "100000", "1000000"},
-        {"hash2",           "100", "1000", "2000"},
-        {"heapsort",        "10000", "1000000", "3000000"},
-        {"knucleotide",     new File("knucleotide.stdin")},
-        {"lists",           "10", "100", "1000"},
-        {"magicsquares",    "3", "4"},
-        {"mandelbrot",      "100", "1000", "5000"},
-        {"matrix",          "1000", "10000", "20000"},
-        {"message",         "1000", "5000", "15000"},
-        {"meteor",          "2098"},
-        {"methcall",        "100000000", "1000000000"},
-        {"moments",         new File("moments.stdin")},
-        {"nbody",           "500000", "5000000"},
-        {"nestedloop",      "10", "20", "35"},
-        {"nsieve",          "8", "10", "11"},
-        {"nsievebits",      "8", "10", "11"},
-        {"objinst",         "100000", "1000000", "5000000"},
-        {"partialsums",     "10000", "2000000"},
-        {"pidigits",        "30", "1000"},
-        {"process",         "10", "250"},
-        {"prodcons",        "100", "100000"},
-        {"random",          "1000000", "500000000"},
-        {"raytracer",       "10", "200"},
-        {"recursive",       "10"},
-        {"regexdna",        new File("regexdna.stdin")},
-        {"regexmatch",      new File("regexmatch.stdin")},
-        {"revcomp",         new File("revcomp.stdin")},
-        {"reversefile",     new File("reversefile.stdin")},
-        {"sieve",           "100", "20000"},
-        {"spectralnorm",    "100", "3000"},
-        {"spellcheck",      new File("spellcheck.stdin")},
-        {"strcat",          "100000", "5000000"},
-        {"sumcol",          new File("sumcol.stdin")},
-        {"takfp",           "5", "11"},
-        {"threadring",      "100", "50000"},
-        {"wc",              new File("wc.stdin")},
-        {"wordfreq",         new File("wordfreq.stdin")},
-    };
-
-    static final Map<String, Object[]> shootoutInputs = buildShootoutMap();
-
-    static final Class[] outputTestClasses = buildOutputTestClassArray();
-
-    static final Map<String, Expectation[]> testExpectationMap = buildTestExpectationMap();
-
-    static Map<String, Object[]> buildShootoutMap() {
-        final Map<String, Object[]> map = new HashMap<String, Object[]>();
-        for (Object[] array : shootoutBenchmarks) {
-            map.put((String) array[0], Arrays.copyOfRange(array, 1, array.length));
-        }
-        return map;
-    }
-
-    static Class[] buildOutputTestClassArray() {
-        final List<Class> classes = new ArrayList<Class>();
-        for (Object o : outputTestList) {
-            if (o instanceof Class) {
-                classes.add((Class) o);
-            }
-        }
-        return classes.toArray(new Class[classes.size()]);
-    }
-
-    static Map<String, Expectation[]> buildTestExpectationMap() {
-        final Map<String, Expectation[]> map = new HashMap<String, Expectation[]>();
-        addTestExpectations(map, outputTestList);
-        addTestExpectations(map, javaTestList);
-        return map;
-    }
-
-    private static void addTestExpectations(final Map<String, Expectation[]> map, final Object[] testList) throws ProgramError {
-        int testListIndex = 0;
-        while (testListIndex < testList.length) {
-            final Object c = testList[testListIndex++];
-            if (c instanceof Class) {
-                final List<Expectation> list = new ArrayList<Expectation>();
-                while (testListIndex < testList.length) {
-                    final Object e = testList[testListIndex];
-                    if (e instanceof Expectation) {
-                        list.add((Expectation) e);
-                        ++testListIndex;
-                    } else if (e instanceof Class) {
-                        break;
-                    } else {
-                        throw ProgramError.unexpected("Format of output test class list is wrong");
-                    }
-                }
-                map.put(((Class) c).getName(), list.toArray(new Expectation[list.size()]));
-            } else {
-                throw ProgramError.unexpected("Format of output test class list is wrong");
-            }
-        }
-    }
-
-    static final String[] outputTests = com.sun.max.lang.Arrays.map(outputTestClasses, String.class, new MapFunction<Class, String>() {
-        public String map(Class from) {
-            return from.getSimpleName();
-        }
-    });
-
-    static void addTestName(Object object, Set<String> testNames) {
-        if (object instanceof Class) {
-            final Class c = (Class) object;
-            testNames.add(c.getName());
-        } else if (object instanceof Iterable) {
-            for (Object o : (Iterable) object) {
-                addTestName(o, testNames);
-            }
-        } else if (object instanceof Object[]) {
-            testNames.addAll(toTestNames((Object[]) object));
-        } else {
-            testNames.add(object.toString());
-        }
-    }
-
-    static Set<String> toTestNames(Object... objects) {
-        final Set<String> testNames = new HashSet<String>(objects.length);
-        for (Object object : objects) {
-            addTestName(object, testNames);
-        }
-        return testNames;
-    }
-
-    static final String[] expectedAutoTestFailures = {
-        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
-        "test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",
-        "test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",
-        "test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
-        "test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
-        "test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
-        "test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
-        "test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)"
-    };
-
-    static final Map<String, String[]> imageConfigs = new HashMap<String, String[]>();
-    static final Map<String, String[]> maxvmConfigs = new HashMap<String, String[]>();
+    static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
+    static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
+    static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
+    static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     static {
-        MaxineTesterConfiguration.imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests"});
-        MaxineTesterConfiguration.imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit"});
-        MaxineTesterConfiguration.imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit"});
-        MaxineTesterConfiguration.imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
-        MaxineTesterConfiguration.imageConfigs.put("optc1x", new String[] {"-run=test.com.sun.max.vm.jtrun.c1x", "-native-tests", "-test-callee-c1x"});
-        MaxineTesterConfiguration.imageConfigs.put("java", new String[] {"-run=com.sun.max.vm.run.java"});
+        output(test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL);
+        output(test.output.JavacTest.class,                FAIL_SPARC, RAND_LINUX);
+        output(test.output.CatchOutOfMemory.class,         FAIL_SPARC);
+        output(test.output.PrintDate.class);
+        output(test.output.HelloWorld.class);
+        output(test.output.HelloWorldGC.class,             FAIL_SPARC);
+        output(test.output.ExitCode.class);
+        output(test.output.FloatNanTest.class);
+        output(test.output.GetResource.class,              FAIL_SPARC);
+        output(test.output.SafepointWhileInNative.class,   FAIL_SPARC);
+        output(test.output.SafepointWhileInJava.class,     FAIL_SPARC);
+        output(test.output.BlockingQueue.class,            FAIL_SPARC);
+        output(test.output.Recursion.class);
+        output(test.output.StaticInitializers.class,       FAIL_SPARC);
+        output(test.output.LocalCatch.class,               FAIL_SPARC);
+        output(test.output.Printf.class);
+        output(test.output.GCTest0.class,                  FAIL_SPARC);
+        output(test.output.GCTest1.class,                  FAIL_SPARC);
+        output(test.output.GCTest2.class,                  FAIL_SPARC);
+        output(test.output.GCTest3.class,                  FAIL_SPARC);
+        output(test.output.GCTest4.class,                  FAIL_SPARC);
+        output(test.output.GCTest5.class,                  FAIL_SPARC);
+        output(test.output.GCTest6.class,                  FAIL_SPARC);
+        output(test.output.HelloWorldReflect.class,        FAIL_SPARC);
+        output(test.output.JREJarLoadTest.class);
+        output(test.output.FileReader.class);
+        output(test.output.ZipFileReader.class);
+        output(test.output.WeakReferenceTest01.class,      FAIL_SPARC);
+        output(test.output.WeakReferenceTest02.class,      FAIL_SPARC);
+        output(test.output.WeakReferenceTest03.class,      FAIL_SPARC);
+        output(test.output.WeakReferenceTest04.class,      FAIL_SPARC);
+        output(test.output.MegaThreads.class,              FAIL_SPARC);
 
-        MaxineTesterConfiguration.maxvmConfigs.put("std", new String[0]);
-        MaxineTesterConfiguration.maxvmConfigs.put("jit", new String[] {"-Xjit"});
-        MaxineTesterConfiguration.maxvmConfigs.put("pgi", new String[] {"-XX:+PGI"});
-        MaxineTesterConfiguration.maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
-        MaxineTesterConfiguration.maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
+        jtt(jtt.threads.Thread_isInterrupted02.class,                  FAIL_LINUX);
+        jtt(jtt.jdk.EnumMap01.class,                                   RAND_ALL);
+        jtt(jtt.jdk.EnumMap02.class,                                   RAND_ALL);
+        jtt(jtt.hotpath.HP_series.class,                  FAIL_SPARC);
+        jtt(jtt.hotpath.HP_array02.class,                 FAIL_SPARC);
 
-        for (String s : expectedAutoTestFailures) {
-            // add the failing autotests to the expectation map
-            testExpectationMap.put(s, new Expectation[] {FAIL_ALL});
-        }
+
+        dacapo("antlr",              FAIL_SPARC);
+        dacapo("bloat",              FAIL_SPARC);
+        dacapo("xalan",              FAIL_SPARC);
+        dacapo("hsqldb",   FAIL_ALL, FAIL_SPARC);
+        dacapo("luindex",            FAIL_SPARC);
+        dacapo("lusearch",           FAIL_SPARC);
+        dacapo("jython",             FAIL_SPARC);
+        dacapo("chart",    FAIL_ALL, FAIL_SPARC);
+        dacapo("eclipse",  FAIL_ALL, FAIL_SPARC);
+        dacapo("fop",                FAIL_SPARC);
+        dacapo("pmd",                FAIL_SPARC);
+
+        specjvm98("_201_compress");
+        specjvm98("_202_jess");
+        specjvm98("_205_raytrace");
+        specjvm98("_209_db");
+        specjvm98("_213_javac");
+        specjvm98("_222_mpegaudio");
+        specjvm98("_227_mtrt");
+        specjvm98("_228_jack");
+
+        shootout("ackermann",       "10");
+        shootout("ary",             "10000", "300000");
+        shootout("binarytrees",     "12", "16", "18");
+        shootout("chameneos",       "1000", "250000");
+        shootout("chameneosredux",  "1000", "250000");
+        shootout("except",          "10000", "100000", "1000000");
+        shootout("fannkuch",        "8", "10", "11");
+        shootout("fasta",           "1000", "250000");
+        shootout("fibo",            "22", "32", "42");
+        shootout("harmonic",        "1000000", "200000000");
+        shootout("hash",            "100000", "1000000");
+        shootout("hash2",           "100", "1000", "2000");
+        shootout("heapsort",        "10000", "1000000", "3000000");
+        shootout("knucleotide",     new File("knucleotide.stdin"));
+        shootout("lists",           "10", "100", "1000");
+        shootout("magicsquares",    "3", "4");
+        shootout("mandelbrot",      "100", "1000", "5000");
+        shootout("matrix",          "1000", "10000", "20000");
+        shootout("message",         "1000", "5000", "15000");
+        shootout("meteor",          "2098");
+        shootout("methcall",        "100000000", "1000000000");
+        shootout("moments",         new File("moments.stdin"));
+        shootout("nbody",           "500000", "5000000");
+        shootout("nestedloop",      "10", "20", "35");
+        shootout("nsieve",          "8", "10", "11");
+        shootout("nsievebits",      "8", "10", "11");
+        shootout("objinst",         "100000", "1000000", "5000000");
+        shootout("partialsums",     "10000", "2000000");
+        shootout("pidigits",        "30", "1000");
+        shootout("process",         "10", "250");
+        shootout("prodcons",        "100", "100000");
+        shootout("random",          "1000000", "500000000");
+        shootout("raytracer",       "10", "200");
+        shootout("recursive",       "10");
+        shootout("regexdna",        new File("regexdna.stdin"));
+        shootout("regexmatch",      new File("regexmatch.stdin"));
+        shootout("revcomp",         new File("revcomp.stdin"));
+        shootout("reversefile",     new File("reversefile.stdin"));
+        shootout("sieve",           "100", "20000");
+        shootout("spectralnorm",    "100", "3000");
+        shootout("spellcheck",      new File("spellcheck.stdin"));
+        shootout("strcat",          "100000", "5000000");
+        shootout("sumcol",          new File("sumcol.stdin"));
+        shootout("takfp",           "5", "11");
+        shootout("threadring",      "100", "50000");
+        shootout("wc",              new File("wc.stdin"));
+        shootout("wordfreq",        new File("wordfreq.stdin"));
+
+        auto("test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
+        auto("test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
+        auto("test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
+        auto("test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
+        auto("test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
+        auto("test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
+        auto("test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
+        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
+
+        imageConfig("optopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("optc1x", "-run=test.com.sun.max.vm.jtrun.c1x", "-native-tests", "-test-callee-c1x");
+        imageConfig("java", "-run=com.sun.max.vm.run.java");
+
+        maxvmConfig("std");
+        maxvmConfig("jit", "-Xjit");
+        maxvmConfig("pgi", "-XX:+PGI");
+        maxvmConfig("mx256m", "-Xmx256m");
+        maxvmConfig("mx512m", "-Xmx512m");
+
     }
 
-    private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
+    private static void output(Class javaClass, Expectation... results) {
+        zeeOutputTests.add(javaClass);
+        addExpectedResults(javaClass.getName(), results);
+    }
+
+    private static void jtt(Class javaClass, Expectation... results) {
+        addExpectedResults(javaClass.getName(), results);
+    }
+
+    private static void dacapo(String name, Expectation... results) {
+        zeeDacapoTests.add(name);
+        addExpectedResults("Dacapo " + name, results);
+    }
+
+    private static void specjvm98(String name, Expectation... results) {
+        zeeSpecjvm98Tests.add(name);
+        addExpectedResults("SpecJVM98 " + name, results);
+    }
+
+    private static void shootout(String name, Object... inputs) {
+        zeeShootoutTests.add(name);
+        addExpectedResults("Shootout " + name);
+        inputMap.put(name, inputs);
+    }
+
+    private static void auto(String name, Expectation... results) {
+        addExpectedResults(name, results);
+    }
+
+    private static void imageConfig(String name, String... params) {
+        zeeImageConfigs.add(name);
+        imageParams.put(name, params);
+    }
+
+    private static void maxvmConfig(String name, String... params) {
+        zeeMaxvmConfigs.add(name);
+        maxvmParams.put(name, params);
+    }
+
+    private static void addExpectedResults(String key, Expectation... results) {
+        if (results != null && results.length > 0) {
+            resultMap.put(key, results);
+        }
+    }
 
     public static String defaultMaxvmOutputConfigs() {
         return "std,jit";
@@ -309,11 +254,11 @@ public class MaxineTesterConfiguration {
                 return "optopt";
             }
         }
-        return DEFAULT_JAVA_TESTER_CONFIGS;
+        return "optopt,jitopt,optjit,jitjit";
     }
 
     public static String[] getImageConfigArgs(String imageConfig) {
-        final String[] args = imageConfigs.get(imageConfig);
+        final String[] args = imageParams.get(imageConfig);
         if (args == null) {
             ProgramError.unexpected("unknown image config: " + imageConfig);
         }
@@ -321,7 +266,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] getMaxvmConfigArgs(String maxvmConfig) {
-        final String[] args = maxvmConfigs.get(maxvmConfig);
+        final String[] args = maxvmParams.get(maxvmConfig);
         if (args == null) {
             ProgramError.unexpected("unknown maxvm config: " + maxvmConfig);
         }
@@ -355,10 +300,11 @@ public class MaxineTesterConfiguration {
      * Determines if a given test is known to fail.
      *
      * @param testName a unique identifier for the test
-     * @param config the {@linkplain #maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
+     * @param config the {@linkplain #zeeMaxvmConfigs maxvm} configuration used during the test execution.
+     * This value may be null.
      */
     public static ExpectedResult expectedResult(String testName, String config) {
-        final Expectation[] expect = testExpectationMap.get(testName);
+        final Expectation[] expect = resultMap.get(testName);
         if (expect != null) {
             final Platform platform = Platform.host();
             for (Expectation e : expect) {
@@ -394,18 +340,10 @@ public class MaxineTesterConfiguration {
     }
 
     public static String[] getVMOptions(String maxvmConfig) {
-        if (!maxvmConfigs.containsKey(maxvmConfig)) {
+        if (!maxvmParams.containsKey(maxvmConfig)) {
             ProgramError.unexpected("Unknown Maxine VM option configuration: " + maxvmConfig);
         }
-        return maxvmConfigs.get(maxvmConfig);
-    }
-
-    public static String[] shootoutTests() {
-        return shootoutInputs.keySet().toArray(new String[shootoutInputs.size()]);
-    }
-
-    public static Object[] shootoutInputs(String benchmark) {
-        return shootoutInputs.get(benchmark);
+        return maxvmParams.get(maxvmConfig);
     }
 
     private static class Expectation {

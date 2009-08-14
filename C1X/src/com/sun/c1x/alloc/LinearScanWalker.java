@@ -34,7 +34,6 @@ import com.sun.c1x.value.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class LinearScanWalker extends IntervalWalker {
 
@@ -46,8 +45,7 @@ public class LinearScanWalker extends IntervalWalker {
     int[] usePos = new int[allocator.nofRegs];
     int[] blockPos = new int[allocator.nofRegs];
 
-    @SuppressWarnings("unchecked")
-    List<Interval>[] spillIntervals = new List[allocator.nofRegs];
+    List<Interval>[] spillIntervals = Util.uncheckedCast(new List[allocator.nofRegs]);
 
     MoveResolver moveResolver; // for ordering spill moves
 

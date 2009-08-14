@@ -188,21 +188,16 @@ public class C1XTest {
 
             CiTargetMethod result = null;
             try {
-                result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod(method));
+                result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
+                if (!warmup) {
+                    long timeNs = System.nanoTime() - startNs;
+                    recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
+                }
             } catch (Bailout bailout) {
                 if (printBailout) {
                     bailout.printStackTrace();
                 }
                 return false;
-            }
-
-            if (result != null) {
-                long timeNs = System.nanoTime() - startNs;
-
-                if (!warmup) {
-                    // record the time for successful compilations
-                    recordTime(method, result.totalInstructions(), timeNs);
-                }
             }
 
             return true;
@@ -287,10 +282,10 @@ public class C1XTest {
             public boolean add(MethodActor e) {
                 final boolean result = super.add(e);
                 // register foldable methods with C1X.
-                if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags())) {
+                if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags()) && e instanceof ClassMethodActor) {
                     final Method method = e.toJava();
                     assert method != null;
-                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod(e), method);
+                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod((ClassMethodActor) e), method);
                 }
                 if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');

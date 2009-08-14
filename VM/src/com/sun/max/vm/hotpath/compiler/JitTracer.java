@@ -24,10 +24,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 public class JitTracer extends Tracer {
 

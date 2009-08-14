@@ -74,6 +74,10 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
 
     @Override
     public boolean shouldRefill(Size size, Pointer allocationMark) {
+        if (allocationMark.isZero()) {
+            // No TLAB. Refill whatsoever
+            return true;
+        }
         if (size.lessThan(refillThreshold)) {
             // space the TLAB failed to allocate is smaller than the refill threshold.
             // We should definitively refill

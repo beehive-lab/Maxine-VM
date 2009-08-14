@@ -30,7 +30,6 @@ import com.sun.c1x.util.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class MoveResolver {
 

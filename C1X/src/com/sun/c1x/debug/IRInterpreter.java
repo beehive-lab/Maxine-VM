@@ -41,8 +41,6 @@ public class IRInterpreter {
 
     /**
      * The <code>IRCheckException</code> class is thrown when the IRChecker detects a problem with the IR.
-     *
-     * @author Marcelo Cintra
      */
     public static class IRInterpreterException extends RuntimeException {
 
@@ -56,88 +54,74 @@ public class IRInterpreter {
     public CiRuntime runtime;
     public InterpreterInterface ii; // TODO: not used yet
 
-    /**
-     * Creates a new IRInterpreter for the specified IR.
-     *
-     * @param ir
-     */
     public IRInterpreter(CiRuntime runtime, InterpreterInterface ii) {
         this.runtime = runtime;
         this.ii = ii;
     }
 
+    private static class Value {
+        int counter;
+        CiConstant value;
+
+        public Value(int counter, CiConstant value) {
+            this.counter = counter;
+            this.value = value;
+        }
+    }
+
     private class Environment {
 
-        private Map<Instruction, Pair<Integer, CiConstant>> instructionTrace = new HashMap<Instruction, Pair<Integer, CiConstant>>();
-
-        private class Pair<T, V> {
-
-            T value1;
-            V value2;
-
-            public Pair(T value1, V value2) {
-                this.value1 = value1;
-                this.value2 = value2;
-            }
-        }
+        private Map<Instruction, Value> instructionTrace = new HashMap<Instruction, Value>();
 
         private class InstructionMapInitializer implements BlockClosure {
-
             public void apply(BlockBegin block) {
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
-                    instructionTrace.put(instr, new Pair<Integer, CiConstant>(new Integer(-1), null));
+                    instructionTrace.put(instr, new Value(-1, null));
                 }
             }
         }
 
         public void bind(Instruction i, CiConstant value, Integer counter) {
-            instructionTrace.put(i, new Pair<Integer, CiConstant>(counter, value));
+            instructionTrace.put(i, new Value(counter, value));
         }
 
         public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
             assert values.length <= valueStack.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new InstructionMapInitializer());
             int index = 0;
-            for (int i = 0; i < values.length; i++) {
-                bind(valueStack.localAt(index), values[i], 0);
-                index += values[i].basicType.sizeInSlots();
+            for (CiConstant value : values) {
+                bind(valueStack.localAt(index), value, 0);
+                index += value.basicType.sizeInSlots();
             }
         }
 
         CiConstant lookup(Instruction instruction) {
             if (instruction instanceof Phi) {
-                Pair<Integer, CiConstant> resultOperand = resolvePhi((Phi) instruction);
-                return resultOperand.value2;
+                Value resultOperand = resolvePhi((Phi) instruction);
+                return resultOperand.value;
             } else if (!(instruction instanceof Constant)) {
-                final Pair<Integer, CiConstant> result = instructionTrace.get(instruction);
+                final Value result = instructionTrace.get(instruction);
                 assert result != null : "Value not defined for instruction: " + instruction;
-                return result.value2;
+                return result.value;
             } else {
                 return instruction.asConstant();
             }
         }
 
-        /**
-         * @param operand
-         * @return
-         */
-        private Pair<Integer, CiConstant> resolvePhi(Phi phi) {
+        private Value resolvePhi(Phi phi) {
             Instruction operand = phi.operandAt(0);
-            Pair<Integer, CiConstant> resultOperand = resolvePair(operand);
+            Value resultOperand = resolveValue(operand);
 
             for (int j = 1; j < phi.operandCount(); j++) {
-                Pair<Integer, CiConstant> currOperand = resolvePair(phi.operandAt(j));
-                if (currOperand.value1.intValue() > resultOperand.value1.intValue()) {
+                Value currOperand = resolveValue(phi.operandAt(j));
+                if (currOperand.counter > resultOperand.counter) {
                     resultOperand = currOperand;
                 }
             }
             return resultOperand;
         }
 
-        /**
-         * @param operand
-         */
-        private Pair<Integer, CiConstant> resolvePair(Instruction operand) {
+        private Value resolveValue(Instruction operand) {
             if (operand instanceof Phi) {
                 return resolvePhi((Phi) operand);
             } else {
@@ -156,10 +140,6 @@ public class IRInterpreter {
         private int instructionCounter;
 
 
-        /**
-         * @param method
-         * @param executeArguments
-         */
         public Evaluator(IR hir, CiConstant[] arguments) {
             this.method = hir.compilation.method;
             block = hir.startBlock;
@@ -170,42 +150,27 @@ public class IRInterpreter {
 
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitPhi(Phi i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitLocal(Local i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitConstant(Constant i) {
             environment.bind(i, i.asConstant(), instructionCounter);
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitResolveClass(ResolveClass i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitLoadField(LoadField i) {
             if (i.field().isConstant()) {
@@ -219,19 +184,16 @@ public class IRInterpreter {
                     Object value = field.get(environment.lookup(i.object()).asObject());
                     environment.bind(i, CiConstant.fromBoxedJavaValue(value), instructionCounter);
                 } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 } catch (SecurityException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 }
             }
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitStoreField(StoreField i) {
             try {
@@ -240,18 +202,15 @@ public class IRInterpreter {
                 field.setAccessible(true);
                 field.set(environment.lookup(i.object()).asObject(), environment.lookup(i.value()).boxedValue());
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                unexpected(e);
             } catch (SecurityException e) {
-                e.printStackTrace();
+                unexpected(e);
             } catch (NoSuchFieldException e) {
-                e.printStackTrace();
+                unexpected(e);
             }
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitArrayLength(ArrayLength i) {
             assertBasicType(i.array().type(), BasicType.Object);
@@ -260,13 +219,10 @@ public class IRInterpreter {
             assertBasicType(i.type(), BasicType.Int);
 
             CiConstant array = environment.lookup(i.array());
-            environment.bind(i, new CiConstant(BasicType.Int, Array.getLength(array.asObject())), instructionCounter);
+            environment.bind(i, CiConstant.forInt(Array.getLength(array.asObject())), instructionCounter);
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitLoadIndexed(LoadIndexed i) {
             Object array = environment.lookup(i.array()).asObject();
@@ -275,9 +231,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitStoreIndexed(StoreIndexed i) {
             Object array = environment.lookup(i.array()).asObject();
@@ -285,9 +238,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitNegateOp(NegateOp i) {
             CiConstant xval = environment.lookup(i.x());
@@ -295,16 +245,16 @@ public class IRInterpreter {
 
             switch (i.type().basicType) {
                 case Int:
-                    environment.bind(i, new CiConstant(BasicType.Int, -xval.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(-xval.asInt()), instructionCounter);
                     break;
                 case Long:
-                    environment.bind(i, new CiConstant(BasicType.Int, -xval.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forLong(-xval.asLong()), instructionCounter);
                     break;
                 case Float:
-                    environment.bind(i, new CiConstant(BasicType.Int, -xval.asFloat()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat(-xval.asFloat()), instructionCounter);
                     break;
                 case Double:
-                    environment.bind(i, new CiConstant(BasicType.Int, -xval.asDouble()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(-xval.asDouble()), instructionCounter);
                     break;
                 default:
                     Util.shouldNotReachHere();
@@ -313,9 +263,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitArithmeticOp(ArithmeticOp i) {
             CiConstant xval = environment.lookup(i.x());
@@ -325,67 +272,67 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.IADD:
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() + yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() + yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.ISUB:
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() - yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() - yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IMUL:
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() * yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() * yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IDIV:
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() / yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() / yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IREM:
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() % yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() % yval.asInt())), instructionCounter);
                     break;
 
                 case Bytecodes.LADD:
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() + yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() + yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LSUB:
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() - yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() - yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LMUL:
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() * yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() * yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LDIV:
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() / yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() / yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LREM:
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() % yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() % yval.asLong())), instructionCounter);
                     break;
 
                 case Bytecodes.FADD:
-                    environment.bind(i, new CiConstant(BasicType.Float, (xval.asFloat() + yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((xval.asFloat() + yval.asFloat())), instructionCounter);
                     break;
                 case Bytecodes.FSUB:
-                    environment.bind(i, new CiConstant(BasicType.Float, (xval.asFloat() - yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((xval.asFloat() - yval.asFloat())), instructionCounter);
                     break;
                 case Bytecodes.FMUL:
-                    environment.bind(i, new CiConstant(BasicType.Float, (xval.asFloat() * yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((xval.asFloat() * yval.asFloat())), instructionCounter);
                     break;
                 case Bytecodes.FDIV:
-                    environment.bind(i, new CiConstant(BasicType.Float, (xval.asFloat() / yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((xval.asFloat() / yval.asFloat())), instructionCounter);
                     break;
                 case Bytecodes.FREM:
-                    environment.bind(i, new CiConstant(BasicType.Float, (xval.asFloat() % yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((xval.asFloat() % yval.asFloat())), instructionCounter);
                     break;
 
                 case Bytecodes.DADD:
-                    environment.bind(i, new CiConstant(BasicType.Double, (xval.asDouble() + yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble((xval.asDouble() + yval.asDouble())), instructionCounter);
                     break;
                 case Bytecodes.DSUB:
-                    environment.bind(i, new CiConstant(BasicType.Double, (xval.asDouble() - yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble((xval.asDouble() - yval.asDouble())), instructionCounter);
                     break;
                 case Bytecodes.DMUL:
-                    environment.bind(i, new CiConstant(BasicType.Double, (xval.asDouble() * yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble((xval.asDouble() * yval.asDouble())), instructionCounter);
                     break;
                 case Bytecodes.DDIV:
-                    environment.bind(i, new CiConstant(BasicType.Double, (xval.asDouble() / yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble((xval.asDouble() / yval.asDouble())), instructionCounter);
                     break;
                 case Bytecodes.DREM:
-                    environment.bind(i, new CiConstant(BasicType.Double, (xval.asDouble() % yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble((xval.asDouble() % yval.asDouble())), instructionCounter);
                     break;
 
                 default:
@@ -394,9 +341,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitShiftOp(ShiftOp i) {
             CiConstant xval = environment.lookup(i.x());
@@ -407,13 +351,13 @@ public class IRInterpreter {
                 case Bytecodes.ISHL:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.ISHR:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.IUSHR:
@@ -424,21 +368,21 @@ public class IRInterpreter {
                     if (xval.asInt() < 0) {
                         iresult = iresult + (2 << ~s);
                     }
-                    environment.bind(i, new CiConstant(BasicType.Int, iresult), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(iresult), instructionCounter);
                     break;
 
                 case Bytecodes.LSHL:
                     assertBasicType(xval.basicType, BasicType.Long);
                     assertBasicType(yval.basicType, BasicType.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LSHR:
                     assertBasicType(xval.basicType, BasicType.Long);
                     assertBasicType(yval.basicType, BasicType.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LUSHR:
@@ -450,7 +394,7 @@ public class IRInterpreter {
                     if (xval.asLong() < 0) {
                         lresult = lresult + (2L << ~s);
                     }
-                    environment.bind(i, new CiConstant(BasicType.Long, lresult), instructionCounter);
+                    environment.bind(i, CiConstant.forLong(lresult), instructionCounter);
                     break;
                 default:
                     fail("Illegal ShiftOp opcode");
@@ -458,9 +402,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitLogicOp(LogicOp i) {
             final CiConstant xval = environment.lookup(i.x());
@@ -469,27 +410,27 @@ public class IRInterpreter {
             switch (i.opcode()) {
                 case Bytecodes.IAND:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() & yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IOR:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() | yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() | yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IXOR:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Int, (xval.asInt() ^ yval.asInt())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((xval.asInt() ^ yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.LAND:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() & yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() & yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LOR:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() | yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() | yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LXOR:
                     assertBasicType(xval.basicType, yval.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Long, (xval.asLong() ^ yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((xval.asLong() ^ yval.asLong())), instructionCounter);
                     break;
                 default:
                     fail("Logic operation instruction has an illegal opcode");
@@ -497,9 +438,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitCompareOp(CompareOp i) {
             final CiConstant xval = environment.lookup(i.x());
@@ -507,17 +445,17 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.LCMP:
-                    environment.bind(i, new CiConstant(BasicType.Int, compareLongs(xval.asLong(), yval.asLong())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareLongs(xval.asLong(), yval.asLong())), instructionCounter);
                     break;
 
                 case Bytecodes.FCMPG:
                 case Bytecodes.FCMPL:
-                    environment.bind(i, new CiConstant(BasicType.Int, compareFloats(i.opcode(), xval.asFloat(), yval.asFloat())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareFloats(i.opcode(), xval.asFloat(), yval.asFloat())), instructionCounter);
                     break;
 
                 case Bytecodes.DCMPG:
                 case Bytecodes.DCMPL:
-                    environment.bind(i, new CiConstant(BasicType.Int, compareDoubles(i.opcode(), xval.asDouble(), yval.asDouble())), instructionCounter);
+                    environment.bind(i, CiConstant.forInt(compareDoubles(i.opcode(), xval.asDouble(), yval.asDouble())), instructionCounter);
                     break;
 
                 default:
@@ -526,9 +464,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitIfOp(IfOp i) {
             final CiConstant tval = environment.lookup(i.trueValue());
@@ -590,76 +525,73 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitConvert(Convert i) {
             final CiConstant value = environment.lookup(i.value());
             switch (i.opcode()) {
                 case Bytecodes.I2L:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Long, (long) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forLong(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2F:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Float, (float) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2D:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Double, (double) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asInt()), instructionCounter);
                     break;
 
                 case Bytecodes.I2B:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Byte, (byte) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forByte((byte) value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2C:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Char, (char) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forChar((char) value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2S:
                     assertBasicType(value.basicType, BasicType.Int);
-                    environment.bind(i, new CiConstant(BasicType.Short, (short) value.asInt()), instructionCounter);
+                    environment.bind(i, CiConstant.forShort((short) value.asInt()), instructionCounter);
                     break;
 
                 case Bytecodes.L2I:
                     assertBasicType(value.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Int, (int) value.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((int) value.asLong()), instructionCounter);
                     break;
                 case Bytecodes.L2F:
                     assertBasicType(value.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Float, (float) value.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat(value.asLong()), instructionCounter);
                     break;
                 case Bytecodes.L2D:
                     assertBasicType(value.basicType, BasicType.Long);
-                    environment.bind(i, new CiConstant(BasicType.Double, (double) value.asLong()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asLong()), instructionCounter);
                     break;
 
                 case Bytecodes.F2I:
                     assertBasicType(value.basicType, BasicType.Float);
-                    environment.bind(i, new CiConstant(BasicType.Int, (int) value.asFloat()), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((int) value.asFloat()), instructionCounter);
                     break;
                 case Bytecodes.F2L:
                     assertBasicType(value.basicType, BasicType.Float);
-                    environment.bind(i, new CiConstant(BasicType.Long, (long) value.asFloat()), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((long) value.asFloat()), instructionCounter);
                     break;
                 case Bytecodes.F2D:
                     assertBasicType(value.basicType, BasicType.Float);
-                    environment.bind(i, new CiConstant(BasicType.Double, (double) value.asFloat()), instructionCounter);
+                    environment.bind(i, CiConstant.forDouble(value.asFloat()), instructionCounter);
                     break;
 
                 case Bytecodes.D2I:
                     assertBasicType(value.basicType, BasicType.Double);
-                    environment.bind(i, new CiConstant(BasicType.Int, (int) value.asDouble()), instructionCounter);
+                    environment.bind(i, CiConstant.forInt((int) value.asDouble()), instructionCounter);
                     break;
                 case Bytecodes.D2L:
                     assertBasicType(value.basicType, BasicType.Double);
-                    environment.bind(i, new CiConstant(BasicType.Long, (long) value.asDouble()), instructionCounter);
+                    environment.bind(i, CiConstant.forLong((long) value.asDouble()), instructionCounter);
                     break;
                 case Bytecodes.D2F:
                     assertBasicType(value.basicType, BasicType.Double);
-                    environment.bind(i, new CiConstant(BasicType.Float, (float) value.asDouble()), instructionCounter);
+                    environment.bind(i, CiConstant.forFloat((float) value.asDouble()), instructionCounter);
                     break;
 
                 default:
@@ -668,108 +600,40 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitNullCheck(NullCheck i) {
             final CiConstant object = environment.lookup(i.object());
             assertBasicType(object.basicType, BasicType.Object);
-            // TODO: Not sure how to store the result
             if (object.isNonNull()) {
-                environment.bind(i, new CiConstant(BasicType.Object, true), instructionCounter);
+                environment.bind(i, new CiConstant(BasicType.Object, object), instructionCounter);
             } else {
-                environment.bind(i, new CiConstant(BasicType.Object, false), instructionCounter);
+                // TODO: throw NullPointerException
             }
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitInvoke(Invoke i) {
+            CiSignature signature = method.signatureType();
 
-            if (!i.isStatic()) {
-                CiMethod method = i.target();
-                Object objref = environment.lookup((i.arguments()[0])).boxedValue();
-
-                int nargs = method.signatureType().argumentCount(false);
-                Object[] arglist = new Object[nargs];
-                for (int j = 0; j < nargs; j++) {
-                    arglist[j] = environment.lookup((i.arguments()[j + 1])).boxedValue();
-                }
-
-                Class< ? > methodClass = objref.getClass();
-                Class< ? >[] partypes = new Class< ? >[method.signatureType().argumentCount(false)];
-                for (int j = 0; j < nargs; j++) {
-                    partypes[j] = method.signatureType().argumentTypeAt(j).javaClass();
-                }
-
-                Method m = null;
-                String methodName = method.name();
-                // no need to invoke init methods
-                if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
-                    currentInstruction = currentInstruction.next();
-                    return;
-                }
-
-                try {
-                    m = methodClass.getDeclaredMethod(method.name(), partypes);
-                } catch (SecurityException e1) {
-                    e1.printStackTrace();
-                } catch (NoSuchMethodException e1) {
-                    e1.printStackTrace();
-                }
-                Object res = null;
-                try {
-                    if (m != null) {
-                        m.setAccessible(true);
-                        res = m.invoke(objref, arglist);
-                    }
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-                environment.bind(i, new CiConstant(method.signatureType().returnBasicType(), res), instructionCounter);
-
-            } else {
+            if (i.isStatic()) {
                 CiMethod method = i.target();
 
-                int nargs = method.signatureType().argumentCount(false);
+                int nargs = signature.argumentCount(false);
                 Object[] arglist = new Object[nargs];
                 for (int j = 0; j < nargs; j++) {
                     arglist[j] = environment.lookup((i.arguments()[j])).boxedValue();
                 }
 
-                Class< ? > methodClass = method.holder().javaClass();
-                Class< ? >[] partypes = new Class< ? >[method.signatureType().argumentCount(false)];
-                for (int j = 0; j < nargs; j++) {
-                    CiType argumentType = method.signatureType().argumentTypeAt(j);
-                    if (!argumentType.isLoaded()) {
-                        try {
-                            String name = argumentType.name();
-                            name = name.replace('/', '.');
-                            name = name.substring(1, name.length() - 1);
-                            partypes[j] = Class.forName(name);
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        partypes[j] = argumentType.javaClass();
-                    }
-                }
+                Class<?> methodClass = method.holder().javaClass();
 
                 Method m = null;
                 try {
-                    m = methodClass.getDeclaredMethod(method.name(), partypes);
+                    m = methodClass.getDeclaredMethod(method.name(), toJavaSignature(signature, nargs));
                 } catch (SecurityException e1) {
-                    e1.printStackTrace();
+                    unexpected(e1);
                 } catch (NoSuchMethodException e1) {
-                    e1.printStackTrace();
+                    unexpected(e1);
                 }
 
                 Object res = null;
@@ -781,59 +645,109 @@ public class IRInterpreter {
                         throw new Error();
                     }
                 } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 } catch (InvocationTargetException e) {
-                    e.printStackTrace();
+                    unexpected(e);
                 }
 
+                environment.bind(i, new CiConstant(signature.returnBasicType(), res), instructionCounter);
+            } else {
+                CiMethod method = i.target();
+                Object objref = environment.lookup((i.arguments()[0])).boxedValue();
+
+                int nargs = method.signatureType().argumentCount(false);
+                Object[] arglist = new Object[nargs];
+                for (int j = 0; j < nargs; j++) {
+                    arglist[j] = environment.lookup((i.arguments()[j + 1])).boxedValue();
+                }
+
+                Class<?> methodClass = objref.getClass();
+                Method m = null;
+                String methodName = method.name();
+                // no need to invoke init methods
+                if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+                    // TODO: run the constructor with Unsafe
+                    currentInstruction = currentInstruction.next();
+                    return;
+                }
+
+                try {
+                    m = methodClass.getDeclaredMethod(method.name(), toJavaSignature(signature, nargs));
+                } catch (SecurityException e1) {
+                    unexpected(e1);
+                } catch (NoSuchMethodException e1) {
+                    unexpected(e1);
+                }
+                Object res = null;
+                try {
+                    if (m != null) {
+                        m.setAccessible(true);
+                        res = m.invoke(objref, arglist);
+                    }
+                } catch (IllegalArgumentException e) {
+                    unexpected(e);
+                } catch (IllegalAccessException e) {
+                    unexpected(e);
+                } catch (InvocationTargetException e) {
+                    unexpected(e);
+                }
                 environment.bind(i, new CiConstant(method.signatureType().returnBasicType(), res), instructionCounter);
+
             }
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         * @throws IllegalAccessException
-         * @throws InstantiationException
-         */
+        private Class<?>[] toJavaSignature(CiSignature signature, int nargs) {
+            Class<?>[] partypes = new Class< ? >[signature.argumentCount(false)];
+            for (int j = 0; j < nargs; j++) {
+                CiType argumentType = signature.argumentTypeAt(j);
+                partypes[j] = toJavaClass(argumentType);
+            }
+            return partypes;
+        }
+
         @Override
         public void visitNewInstance(NewInstance i) {
             CiType type = i.instanceClass();
             Class <?> javaClass = null;
             Object obj = null;
-                if (!type.isLoaded()) {
-                    try {
-                        String name = type.name();
-                        name = name.replace('/', '.');
-                        name = name.substring(1, name.length() - 1);
-                        javaClass = Class.forName(name);
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    javaClass = type.javaClass();
-                }
+            javaClass = toJavaClass(type);
 
-              try {
+            try {
                   if (javaClass != null) {
+                      // TODO: use Unsafe.newInstance()
                       obj = javaClass.newInstance();
                   } else {
                       throw new Error("Class" + type.name() + " could not be loaded");
                   }
             } catch (InstantiationException e) {
-                e.printStackTrace();
+                unexpected(e);
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                unexpected(e);
             }
              environment.bind(i, new CiConstant(BasicType.Object, obj), instructionCounter);
              currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
+        private Class<?> toJavaClass(CiType type) {
+            if (type.isLoaded()) {
+                return type.javaClass();
+            } else {
+                try {
+                    // TODO: use Util. method already exists for this purpose
+                    String name = type.name();
+                    name = name.replace('/', '.');
+                    name = name.substring(1, name.length() - 1);
+                    return Class.forName(name);
+                } catch (ClassNotFoundException e) {
+                    unexpected(e);
+                }
+                return null;
+            }
+        }
+
         @Override
         public void visitNewTypeArray(NewTypeArray i) {
             assertPrimitive(i.elementType());
@@ -844,9 +758,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitNewObjectArray(NewObjectArray i) {
             int length = environment.lookup(i.length()).asInt();
@@ -855,9 +766,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitNewMultiArray(NewMultiArray i) {
             int nDimensions = i.rank();
@@ -871,9 +779,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitCheckCast(CheckCast i) {
             CiConstant objectRef = environment.lookup(i.object());
@@ -885,9 +790,6 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitInstanceOf(InstanceOf i) {
             Instruction object = i.object();
@@ -901,49 +803,34 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitMonitorEnter(MonitorEnter i) {
+            // TODO: lock using Unsafe throw NPE if necessary
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitMonitorExit(MonitorExit i) {
+            // TODO: unlock using Unsafe throw NPE / illegal monitor state using Unsafe API
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitIntrinsic(Intrinsic i) {
+            // TODO: execute the intrinsic via reflection
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitBlockBegin(BlockBegin i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitGoto(Goto i) {
             jump(i.suxAt(0));
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitIf(If i) {
             final CiConstant x = environment.lookup(i.x());
@@ -1046,25 +933,16 @@ public class IRInterpreter {
             }
         }
 
-        /**
-         * @param successor
-         */
         private void jump(BlockBegin successor) {
             block = successor;
             currentInstruction = block;
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitIfInstanceOf(IfInstanceOf i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitTableSwitch(TableSwitch i) {
             assert i.value().type().basicType == BasicType.Int : "TableSwitch key must be of type int";
@@ -1077,9 +955,6 @@ public class IRInterpreter {
             }
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitLookupSwitch(LookupSwitch i) {
             assert i.value().type().basicType == BasicType.Int : "LookupSwitch key must be of type int";
@@ -1100,18 +975,12 @@ public class IRInterpreter {
             }
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitReturn(Return i) {
             result = environment.lookup(i.result());
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitThrow(Throw i) {
             CiConstant exception = environment.lookup(i.exception());
@@ -1131,108 +1000,73 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitBase(Base i) {
             assert block.end().successors().size() == 1 : "Base instruction must have one successor node";
             jump(block.end().successors().get(0));
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitOsrEntry(OsrEntry i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitExceptionObject(ExceptionObject i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitRoundFP(RoundFP i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafeGetRaw(UnsafeGetRaw i) {
+            // TODO: implement with the Unsafe API
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafePutRaw(UnsafePutRaw i) {
+            // TODO: implement with the Unsafe API
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafeGetObject(UnsafeGetObject i) {
+            // TODO: implement with the Unsafe API
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafePutObject(UnsafePutObject i) {
+            // TODO: implement with the Unsafe API
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitProfileCall(ProfileCall i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @param i
-         */
         @Override
         public void visitProfileCounter(ProfileCounter i) {
             currentInstruction = currentInstruction.next();
         }
 
-        /**
-         * @return
-         */
         public CiConstant run() {
-            while (hasNextInstruction()) {
+            while (currentInstruction != null) {
                 currentInstruction.accept(this);
                 instructionCounter++;
             }
@@ -1241,19 +1075,12 @@ public class IRInterpreter {
                 assert method.signatureType().returnBasicType() != BasicType.Void;
                 // TODO: Need to improve this!
                 if (method.signatureType().returnBasicType() == BasicType.Boolean) {
-                    result = new CiConstant(BasicType.Boolean, new Boolean(result.asInt() == 0 ? false : true));
+                    result = CiConstant.forBoolean(result.asInt() != 0);
                 }
                 return result;
             } else {
-                return new CiConstant(BasicType.Object, null);
+                return CiConstant.NULL_OBJECT;
             }
-        }
-
-        /**
-         * @return
-         */
-        private boolean hasNextInstruction() {
-            return currentInstruction != null;
         }
 
         private int compareLongs(long x, long y) {
@@ -1305,13 +1132,13 @@ public class IRInterpreter {
         }
 
         private void assertBasicType(BasicType xval, BasicType yval, BasicType type) {
-            if (!(xval == type && yval == type)) {
+            if (xval != type || yval != type) {
                 throw new Bailout("Type mismatch");
             }
         }
 
         private void assertBasicType(BasicType x, BasicType type) {
-            if (!(x == type)) {
+            if (x != type) {
                 throw new Bailout("Type mismatch");
             }
         }
@@ -1337,10 +1164,15 @@ public class IRInterpreter {
 
     public CiConstant execute(IR hir, CiConstant ... arguments) {
         if (hir.compilation.method.isNative()) {
-            // TODO: invokes the native method via reflection?
+            // TODO: invoke the native method via reflection?
             return null;
         }
         final Evaluator evaluator = new Evaluator(hir, arguments);
         return evaluator.run();
+    }
+
+    private void unexpected(Throwable t) {
+        // TODO: do more than print the stack trace
+        t.printStackTrace();
     }
 }

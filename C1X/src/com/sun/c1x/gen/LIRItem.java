@@ -28,7 +28,6 @@ import com.sun.c1x.value.*;
 /**
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class LIRItem {
 
@@ -200,35 +199,31 @@ public class LIRItem {
         }
     }
 
-    public Object getJobjectConstant() {
-        assert value().isConstant();
+    public Object asObject() {
+        assert value instanceof Constant : "must be a constant";
         if (value().type().isObject()) {
             return value().asConstant().asObject();
         }
         return null;
     }
 
-    public int getJintConstant() {
-        assert isConstant() && value() != null : "";
-        assert value().type().isInt() : "type check";
+    public int asInt() {
+        assert value instanceof Constant : "must be a constant";
         return value().asConstant().asInt();
     }
 
-    public float getJfloatConstant() {
-        assert isConstant() && value() != null : "";
-        assert value().type().isFloat() : "type check";
+    public float asFloat() {
+        assert value instanceof Constant : "must be a constant";
         return value().asConstant().asFloat();
     }
 
-    public double getJdoubleConstant() {
-        assert isConstant() && value() != null : "";
-        assert value().type().isDouble() : "type check";
+    public double asDouble() {
+        assert value instanceof Constant : "must be a constant";
         return value().asConstant().asDouble();
     }
 
-    public long getJlongConstant() {
-        assert isConstant() && value() != null : "";
-        assert value().type().isLong() : "type check";
+    public long asLong() {
+        assert value instanceof Constant : "must be a constant";
         return value().asConstant().asLong();
     }
 }

@@ -27,11 +27,11 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.jit.JitInstrumentation;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.profile.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -45,9 +45,6 @@ public class TemplateGenerator {
     public TemplateGenerator() {
         targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration().compilerScheme()).targetGenerator();
 
-        // TODO: this hack is to avoid an unresolved call in instrumented templates
-        ClassActor.fromJava(AlarmCounter.class);
-
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
         initializeClassInTarget(JitStackFrameOperation.class);
@@ -55,6 +52,10 @@ public class TemplateGenerator {
         // Also, make sure the class whose field is being accessed is loaded in the target first (we want a resolved symbol at compiled time).
         // PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.loadClass(ResolvedAtCompileTime.class.getName());
         initializeClassInTarget(ResolvedAtCompileTime.class);
+
+        // need to initialize the instrumentation class so calls to it are resolved
+        initializeClassInTarget(JitInstrumentation.class);
+
         verifyInvariants();
     }
 
