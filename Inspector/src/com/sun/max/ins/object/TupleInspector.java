@@ -33,7 +33,7 @@ import com.sun.max.vm.layout.*;
  */
 public class TupleInspector extends ObjectInspector {
 
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private final InspectorMenuItems classMethodInspectorMenuItems;
     private final InspectorMenuItems targetMethodInspectorMenuItems;
 
@@ -64,7 +64,7 @@ public class TupleInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
-        fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleTupleObject);
         frame().getContentPane().add(fieldsPane);
     }
 
