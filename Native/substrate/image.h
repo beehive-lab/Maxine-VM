@@ -60,7 +60,6 @@ typedef struct image_Header {
     jint codeCacheSize;    /* multiple of 'pageSize' */
 
     jint heapRegionsPointerOffset;
-    jint codeRegionsPointerOffset;
 
     /* Some extra space that the substrate allocates by malloc().
      * Used e.g. for the primordial card table. */
