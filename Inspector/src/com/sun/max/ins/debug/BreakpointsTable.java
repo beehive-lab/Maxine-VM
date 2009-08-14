@@ -141,7 +141,7 @@ public final class BreakpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class BreakpointsTableModel extends DefaultTableModel {
+    private final class BreakpointsTableModel extends AbstractTableModel {
 
         // Cache of information objects for each known breakpoint
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();

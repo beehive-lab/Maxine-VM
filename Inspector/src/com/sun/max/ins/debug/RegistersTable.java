@@ -129,7 +129,7 @@ public final class RegistersTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class RegistersTableModel extends DefaultTableModel {
+    private final class RegistersTableModel extends AbstractTableModel {
 
         private final MaxThread thread;
 

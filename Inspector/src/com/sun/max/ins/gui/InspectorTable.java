@@ -220,7 +220,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     public void updateFocusSelection() {
     }
 
-    public MaxVMState refresh(boolean force, MaxVMState lastRefreshedState, DefaultTableModel tableModel, TableColumn[] columns) {
+    public MaxVMState refresh(boolean force, MaxVMState lastRefreshedState, TableModel tableModel, TableColumn[] columns) {
         MaxVMState maxVMState = maxVMState();
         if (maxVMState.newerThan(lastRefreshedState) || force) {
             for (TableColumn column : columns) {
