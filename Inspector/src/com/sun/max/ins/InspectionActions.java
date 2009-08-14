@@ -994,19 +994,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an interactive Action that will create a Memory Inspector
      */
-    @Deprecated
     public final InspectorAction inspectMemoryBytes() {
         return inspectMemoryBytesAction;
-    }
-
-    /**
-     * @param teleObject surrogate for an object in the VM
-     * @param title a string name for the Action, uses default name if null
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    @Deprecated
-    public final InspectorAction inspectMemoryBytes(TeleObject teleObject, String title) {
-        return new InspectMemoryBytesAction(teleObject, title);
     }
 
     /**
