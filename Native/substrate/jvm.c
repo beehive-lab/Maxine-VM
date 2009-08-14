@@ -550,7 +550,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim) {
  */
 jclass
 JVM_GetCallerClass(JNIEnv *env, int n) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetCallerClass", "(I)[Ljava/lang/Class;");
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetCallerClass", "(I)Ljava/lang/Class;");
     return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, n);
 }
 
@@ -636,8 +636,8 @@ JVM_GetClassInterfaces(JNIEnv *env, jclass cls) {
 
 jobject
 JVM_GetClassLoader(JNIEnv *env, jclass cls) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;");
+    return (*env)->CallObjectMethod(env, cls, result.jMethod);
 }
 
 jboolean
@@ -648,24 +648,26 @@ JVM_IsInterface(JNIEnv *env, jclass cls) {
 
 jobjectArray
 JVM_GetClassSigners(JNIEnv *env, jclass cls) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getSigners", "()[Ljava/lang/Object;");
+    return (*env)->CallObjectMethod(env, cls, result.jMethod);
 }
 
 void
 JVM_SetClassSigners(JNIEnv *env, jclass cls, jobjectArray signers) {
-    c_UNIMPLEMENTED();
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "setSigners", "([Ljava/lang/Object;)V");
+    (*env)->CallObjectMethod(env, cls, result.jMethod, signers);
 }
 
 jobject
 JVM_GetProtectionDomain(JNIEnv *env, jclass cls) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "getProtectionDomain", "()Ljava/security/ProtectionDomain;");
+    return (*env)->CallObjectMethod(env, cls, result.jMethod);
 }
 
 void
 JVM_SetProtectionDomain(JNIEnv *env, jclass cls, jobject protection_domain) {
-    c_UNIMPLEMENTED();
+    JNIMethod result = resolveCriticalInstanceMethod(env, "java/lang/Class", "setProtectionDomain0", "(Ljava/security/ProtectionDomain;)V");
+    (*env)->CallObjectMethod(env, cls, result.jMethod, protection_domain);
 }
 
 jboolean

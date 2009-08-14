@@ -135,7 +135,6 @@ public class C1XTargetMethodGenerator {
             stackRefMapSize(),
             abi
         );
-        // TODO: patch code and data references
         processDataPatches(targetBundleLayout);
         processRefPatches(targetBundleLayout, targetMethod.referenceLiterals());
 

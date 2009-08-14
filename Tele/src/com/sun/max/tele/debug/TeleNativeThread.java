@@ -898,10 +898,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
                 int index = -1;
                 if (stackFrame.targetMethod() != null) {
-                    index = stackFrame.targetMethod().findClosestStopIndex(stackFrame.instructionPointer.minus(1));
+                    index = stackFrame.targetMethod().findClosestStopIndex(stackFrame.instructionPointer, true);
                 }
                 if (index != -1) {
-                    final int stopIndex = index; // foundMethod.getJavaStopIndex(sf.instructionPointer().minus(1));
+                    final int stopIndex = index;
                     TargetJavaFrameDescriptor descriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
 
                     if (descriptor == null) {

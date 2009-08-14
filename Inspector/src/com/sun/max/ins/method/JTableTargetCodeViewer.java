@@ -46,6 +46,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A table-based viewer for an (immutable) section of {@link TargetCode} in the VM.
@@ -585,12 +586,17 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
 
     private interface LiteralRenderer {
-        WordValueLabel render(Inspection inspection, String literalLoadText, Word literal);
+        WordValueLabel render(Inspection inspection, String literalLoadText, Address literalAddress);
     }
 
     static final LiteralRenderer AMD64_LITERAL_RENDERER = new LiteralRenderer() {
-        public WordValueLabel render(Inspection inspection, String literalLoadText, Word literal) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal, null);
+        public WordValueLabel render(Inspection inspection, String literalLoadText, final Address literalAddress) {
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
+                @Override
+                public Value fetchValue() {
+                    return new WordValue(maxVM().readWord(literalAddress, 0));
+                }
+            };
             wordValueLabel.setPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
             wordValueLabel.setToolTipSuffix(" from RIP " + literalLoadText.substring(literalLoadText.indexOf("["), literalLoadText.length()));
             wordValueLabel.updateText();
@@ -599,8 +605,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     static final LiteralRenderer SPARC_LITERAL_RENDERER = new LiteralRenderer() {
-        public WordValueLabel render(Inspection inspection, String literalLoadText, Word literal) {
-            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, literal, null);
+        public WordValueLabel render(Inspection inspection, String literalLoadText, final Address literalAddress) {
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
+                @Override
+                public Value fetchValue() {
+                    return new WordValue(maxVM().readWord(literalAddress, 0));
+                }
+            };
             wordValueLabel.setSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
             wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
             wordValueLabel.updateText();
@@ -689,12 +700,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
-        private InspectorLabel[] wordValueLabels = new InspectorLabel[instructions().length()];
+        private InspectorLabel[] inspectorLabels = new InspectorLabel[instructions().length()];
         private TargetCodeLabel targetCodeLabel = new TargetCodeLabel(inspection, "");
         private LiteralRenderer literalRenderer = getLiteralRenderer(inspection);
 
         public void refresh(boolean force) {
-            for (InspectorLabel wordValueLabel : wordValueLabels) {
+            for (InspectorLabel wordValueLabel : inspectorLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.refresh(force);
                 }
@@ -702,7 +713,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public void redisplay() {
-            for (InspectorLabel wordValueLabel : wordValueLabels) {
+            for (InspectorLabel wordValueLabel : inspectorLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.redisplay();
                 }
@@ -711,17 +722,17 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            InspectorLabel inspectorLabel = wordValueLabels[row];
+            InspectorLabel inspectorLabel = inspectorLabels[row];
             if (inspectorLabel == null) {
                 final TargetCodeInstruction targetCodeInstruction = model.rowToInstruction(row);
                 final String text = targetCodeInstruction.operands;
                 if (targetCodeInstruction.targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction.targetAddress)) {
                     inspectorLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
-                    wordValueLabels[row] = inspectorLabel;
+                    inspectorLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction.literalSourceAddress != null) {
-                    final Word word = inspection.maxVM().readWord(targetCodeInstruction.literalSourceAddress);
-                    inspectorLabel = literalRenderer.render(inspection, text, word);
-                    wordValueLabels[row] = inspectorLabel;
+                    final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
+                    inspectorLabel = literalRenderer.render(inspection, text, literalAddress);
+                    inspectorLabels[row] = inspectorLabel;
                 } else if (rowToCalleeIndex(row) >= 0) {
                     final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);

@@ -18,40 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
-import java.io.*;
-import java.util.*;
+public class SimpleList {
 
-import com.sun.max.program.*;
+    char[] charArray = new char[500];
+    int nodeNum;
+    public SimpleList next;
+    public static SimpleList end;
+    public static SimpleList start;
 
+    public static int currentNodeNum = 0;
 
-public final class PropertyInfo {
-
-    private PropertyInfo() {
-        super();
+    public static void addNode(SimpleList node) {
+        end.next = node;
+        end = node;
+        node.nodeNum = currentNodeNum++;
+        node.next = null;
     }
 
-    private static void list(PrintStream out) {
-        final Dictionary h = System.getProperties();
-        for (final Enumeration e = h.keys(); e.hasMoreElements();) {
-            final Object key = e.nextElement();
-            out.println(key + " = " + h.get(key));
+    public static void printList() {
+        SimpleList node = start;
+        while (node != null) {
+            System.out.println("node number " + node.nodeNum);
+            node = node.next;
         }
     }
 
     public static void main(String[] args) {
-        list(System.out);
-
-        final Classpath classpath = Classpath.fromSystem();
-        final File file = classpath.entries().first().file();
-        try {
-            System.out.println("vanilla: " + file.getCanonicalFile());
-            System.out.println("absolute: " + file.getAbsoluteFile());
-            System.out.println("canonical: " + file.getCanonicalFile());
-        } catch (Throwable throwable) {
-            ProgramError.unexpected();
-        }
+        start = new SimpleList();
+        start.nodeNum = currentNodeNum++;
+        end = start;
+        addNode(new SimpleList());
+        addNode(new SimpleList());
+        addNode(new SimpleList());
+        addNode(new SimpleList());
+        addNode(new SimpleList());
+        printList();
+        System.gc();
     }
 
 }

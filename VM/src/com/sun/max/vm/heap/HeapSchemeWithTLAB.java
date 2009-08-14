@@ -37,12 +37,11 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An HeapScheme adaptor with support for thread local allocation buffer.
- * The adaptor factors out methods for allocating from a tlab, enabling / disabling allocations,
- * and replacing the tlab when refill is needed. Choosing when to refill a TLAB and how to refill it is up to the
- * HeapScheme concrete implementation.
- *
- * Do not support fancy features to enable adaptive per-thread TLAB sizing and refill policy.
+ * A HeapScheme adaptor with support for thread local allocation buffers (TLABs). The adaptor factors out methods for
+ * allocating from a TLAB, enabling / disabling allocations, and replacing the TLAB when refill is needed. Choosing when
+ * to refill a TLAB, how to pad the end of the TLAB on refill, and how to refill is delegated to the HeapScheme concrete
+ * implementation which also associates a TLAB Refill policy to each thread. The TLAB refill policy is currently required
+ * if TLAB is used as it is also used to save/restore TLAB top on enabling/disabling of allocation.
  *
  * @author Laurent Daynes
  */
@@ -51,35 +50,34 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     /**
      * A VM option for disabling use of TLABs.
      */
-    private static VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB2", // FIXME: this conflict with SemiHeap's space UseTLAB option
+    protected static final VMBooleanXXOption useTLABOption = register(new VMBooleanXXOption("-XX:+UseTLAB",
         "Use thread-local object allocation."), MaxineVM.Phase.PRISTINE);
 
     /**
      * A VM option for specifying the size of a TLAB. Default is 64 K.
      */
-    private static VMSizeOption tlabSizeOption = register(new VMSizeOption("-XX:TLABSize2=", Size.K.times(64), // FIXME: same as above. See vmoption issue!
+    private static final VMSizeOption tlabSizeOption = register(new VMSizeOption("-XX:TLABSize=", Size.K.times(64),
         "The size of thread-local allocation buffers."), MaxineVM.Phase.PRISTINE);
-
 
     /**
      * The top of the current thread-local allocation buffer. This will remain zero if TLABs are not
      * {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
+        = new VmThreadLocal("_TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
 
     /**
      * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.
@@ -99,13 +97,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @CONSTANT_WHEN_NOT_ZERO
     protected static Size MIN_OBJECT_SIZE;
     /**
-     * Size of byte array header.
+     * Size of a byte array header.
      */
     @CONSTANT_WHEN_NOT_ZERO
     private static Size BYTE_ARRAY_HEADER_SIZE;
 
     /**
-     * Plant a dead instance of java.lang.Object at the specified pointer.
+     * Plants a dead instance of java.lang.Object at the specified pointer.
      */
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
@@ -116,7 +114,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
 
     /**
-     * Plant a dead byte array at the specified cell.
+     * Plants a dead byte array at the specified cell.
      */
     private static void plantDeadByteArray(Pointer cell, Size size) {
         DebugHeap.writeCellTag(cell);
@@ -157,8 +155,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         public void run(Pointer vmThreadLocals) {
             final Pointer enabledVmThreadLocals = vmThreadLocals.getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+            Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
             if (Heap.traceAllocation()) {
                 final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -171,15 +169,43 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                 Log.unlock(lockDisabledSafepoints);
             }
             if (tlabTop.equals(Address.zero())) {
-                FatalError.check(tlabMark.equals(Address.zero()), "TLAB mark must also be zero");
-                // No TLABs, so nothing to reset.
-                return;
+                // TLAB's top can be null in only two cases:
+                // (1) it has never been filled, in which case it's allocation mark is null too
+                // (2) allocation has been disabled for the thread.
+                if (tlabMark.equals(Address.zero()))  {
+                    // No TLABs, so nothing to reset.
+                    return;
+                }
+                FatalError.check(!ALLOCATION_DISABLED.getConstantWord().isZero(), "inconsistent TLAB state");
+                TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+                if (refillPolicy != null) {
+                    // Go fetch the actual TLAB top in case the heap scheme needs it for its doBeforeReset handler.
+                    tlabTop = refillPolicy.getSavedTlabTop().asPointer();
+                    // Zap the TLAB top saved in the refill policy. Don't want it to be restored after GC.
+                    refillPolicy.saveTlabTop(Address.zero());
+                }
             }
             doBeforeReset(enabledVmThreadLocals, tlabMark, tlabTop);
             enabledVmThreadLocals.setWord(TLAB_TOP.index, Address.zero());
             enabledVmThreadLocals.setWord(TLAB_MARK.index, Address.zero());
         }
     }
+
+    /**
+     * A TLAB policy that never refills. Just a convenience to disable TLAB use.
+     */
+    protected static final TLABRefillPolicy NEVER_REFILL_TLAB = new TLABRefillPolicy() {
+        @Override
+        public boolean shouldRefill(Size size, Pointer allocationMark) {
+            return false;
+        }
+
+        @Override
+        public Size nextTlabSize() {
+            return Size.zero();
+        }
+    };
+
 
     /**
      * Flags if TLABs are being used for allocation.
@@ -213,27 +239,48 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @Override
+    public void disableAllocationForCurrentThread() {
+        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
+        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
+        if (value.isZero()) {
+            // Saves TLAB's top and set it to null to force TLAB allocation to route to slow path and check if allocation is enabled.
+            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
+            final Address tlabTop = TLAB_TOP.getVariableWord(vmThreadLocals).asAddress();
+            if (refillPolicy == null) {
+                // TLAB was never refill. So TLAB's top must be null, and we'll take the slow path anyway.
+                FatalError.check(tlabTop.isZero(), "cannot have null refill policy with non-null TLAB top");
+            } else {
+                refillPolicy.saveTlabTop(tlabTop);
+                TLAB_TOP.setVariableWord(vmThreadLocals, Address.zero());
+            }
+        }
+        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
+    }
+
+    @Override
     public void enableAllocationForCurrentThread() {
         final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
         final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
         if (value.isZero()) {
             FatalError.unexpected("Unbalanced calls to disable/enable allocation for current thread");
         }
+        if (value.minus(1).isZero()) {
+            // Restore TLAB's top if needed.
+            final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(vmThreadLocals);
+            if (refillPolicy != null) {
+                final Address tlabTop = TLABRefillPolicy.getForCurrentThread(vmThreadLocals).getSavedTlabTop();
+                TLAB_TOP.setVariableWord(vmThreadLocals, tlabTop);
+            }
+        }
         ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.minus(1));
-    }
-
-    @Override
-    public void disableAllocationForCurrentThread() {
-        final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-        final Address value = ALLOCATION_DISABLED.getConstantWord(vmThreadLocals).asAddress();
-        ALLOCATION_DISABLED.setConstantWord(vmThreadLocals, value.plus(1));
     }
 
     public final boolean allocationDisabledForCurrentThread() {
         return !ALLOCATION_DISABLED.getConstantWord().isZero();
     }
 
-    public boolean useTLAB() {
+    @INLINE
+    public final boolean useTLAB() {
         return useTLAB;
     }
 
@@ -286,10 +333,10 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The handler is specified the size of the failed allocation and the allocation mark of the TLAB and must return
      * a pointer to a cell of the specified cell. The handling of the TLAB allocation failure may result in refilling the TLAB.
      *
-     * @param size size requested to the tlab
+     * @param size the allocation size requested to the TLAB
      * @param enabledVmThreadLocals
-     * @param tlabMark allocation mark of the tlab
-     * @param tlabEnd TODO
+     * @param tlabMark allocation mark of the TLAB
+     * @param tlabEnd soft limit in the TLAB to trigger overflow (may equals the actual end of the TLAB, depending on implementation).
      * @return a pointer to a cell resulting from a successful allocation of space of the specified size.
      * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
@@ -316,6 +363,16 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(tlabEnd)) {
+            // Slow path may be taken because of a genuine refill request, or because allocation was disable.
+            // Check for the second here.
+            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+                Log.print("Trying to allocate ");
+                Log.print(size.toLong());
+                Log.print(" bytes on thread ");
+                Log.printVmThread(VmThread.current(), false);
+                Log.println(" while allocation is disabled");
+                FatalError.unexpected("Trying to allocate while allocation is disabled");
+            }
             // This path will always be taken if TLAB allocation is not enabled
             return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }

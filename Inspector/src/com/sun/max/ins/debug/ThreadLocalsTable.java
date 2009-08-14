@@ -335,6 +335,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             setValue(vmThreadLocal.name);
+            setToolTipText("<html>" + (vmThreadLocal.description.length() > 0 ? vmThreadLocal.description + "<br>" : "") + "Declaration: " + vmThreadLocal.declaration);
             if (vmThreadLocal.kind == Kind.REFERENCE) {
                 setForeground(style().wordValidObjectReferenceDataColor());
             } else {

@@ -40,7 +40,6 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public abstract class LIRGenerator extends InstructionVisitor {
     private static final BasicType[] BASIC_TYPES_OBJECT = {BasicType.Object};
@@ -1065,8 +1064,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // LIROpr for unpinned constants shouldn't be referenced by other
         // blocks so clear them out after processing the block.
-        for (int i = 0; i < unpinnedConstants.size(); i++) {
-            unpinnedConstants.get(i).clearOperand();
+        for (Instruction unpinnedConstant : unpinnedConstants) {
+            unpinnedConstant.clearOperand();
         }
         unpinnedConstants.clear();
 
@@ -2130,7 +2129,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     /**
      * Returns a LIRAddress for an array location. This method may also emit some code
      * as part of the address calculation.  If
-     * {@link C1XOptions#NeedsCardMark} is true then compute the full address for use by
+     * {@link com.sun.c1x.C1XOptions#NeedsCardMark} is true then compute the full address for use by
      * both the store and the card mark.
      * XXX: NeedsCardMark is probably part of an instruction (i.e. due to write barrier elision optimization)
      *
@@ -2192,8 +2191,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
      * @return the offset of the klass part
      */
     private static int klassPartOffsetInBytes() {
-        // TODO: Find proper implementation or remove
-        return 0;
+        return Util.nonFatalUnimplemented(0);
     }
 
     private static boolean isConstantZero(Instruction x) {

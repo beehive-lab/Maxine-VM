@@ -128,7 +128,6 @@ public class BlockMap {
         blockNum = firstBlockNum;
         blockMap = new BlockBegin[code.length];
         successorMap = new BlockBegin[code.length][];
-        loopBlocks = new ArrayList<BlockBegin>();
         storesInLoops = new BitMap(method.maxLocals());
         if (method.hasExceptionHandlers()) {
             exceptionMap = new ExceptionMap(method, code);
@@ -412,7 +411,7 @@ public class BlockMap {
             if (active.get(blockIndex)) {
                 // reached block via backward branch
                 block.setParserLoopHeader(true);
-                loopBlocks.add(block);
+                addLoopBlock(block);
                 return true;
             }
             // return whether the block is already a loop header
@@ -437,13 +436,23 @@ public class BlockMap {
         active.clear(blockIndex);
         block.setDepthFirstNumber(blockNum--);
         if (inLoop) {
-            loopBlocks.add(block);
+            addLoopBlock(block);
         }
 
         return inLoop;
     }
 
+    private void addLoopBlock(BlockBegin block) {
+        if (loopBlocks == null) {
+            loopBlocks = new ArrayList<BlockBegin>();
+        }
+        loopBlocks.add(block);
+    }
+
     void processLoopBlocks() {
+        if (loopBlocks == null) {
+            return;
+        }
         for (BlockBegin block : loopBlocks) {
             // process all the stores in this block
             int bci = block.bci();
@@ -464,23 +473,6 @@ public class BlockMap {
                 }
             }
         }
-    }
-
-    void processStoresInBlock(BlockBegin block) {
-        int bci = block.bci();
-        byte[] code = this.code;
-        do {
-            // iterate over the bytecodes in this block
-            int opcode = code[bci] & 0xff;
-            if (opcode == Bytecodes.WIDE) {
-                bci += processWideStore(code[bci + 1], code, bci);
-            } else if (Bytecodes.isStore(opcode)) {
-                bci += processStore(opcode, code, bci);
-            } else {
-                bci += Bytecodes.length(code, bci);
-            }
-        } while (blockMap[bci] != null); // stop when we reach the next block
-
     }
 
     int processWideStore(int opcode, byte[] code, int bci) {

@@ -50,6 +50,7 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         }
 
         ssHeapScheme.bssHeapBoundChecker.reset();
+        verifyRoots();
         verifyBelt(fromSpace);
     }
 

@@ -23,7 +23,6 @@ package com.sun.c1x.asm;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class BiasedLockingCounters {
 

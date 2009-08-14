@@ -20,15 +20,16 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.*;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,14 +57,14 @@ public class JVMFunctions {
         final Sequence<StackFrame> stackFrames = stackFrameWalker.frames(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
 
         // Collect method actors corresponding to frames:
-        final Sequence<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false);
+        // N.B. In GuestVM there are no native frames, or JNI calls on the stack that need to be ignored, but we do not want a zero length result from the native frame at the base of the stack!
+        final Sequence<ClassMethodActor> methodActors = StackFrameWalker.extractClassMethodActors(stackFrames, false, false, false, Platform.hostOrTarget().operatingSystem != OperatingSystem.GUESTVM);
 
         // Append the class of each method to the array:
         final List<Class> result = new ArrayList<Class>();
         for (ClassMethodActor methodActor : methodActors) {
             result.add(methodActor.holder().mirror());
         }
-
         return result.toArray(new Class[result.size()]);
     }
 

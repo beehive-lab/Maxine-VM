@@ -25,7 +25,6 @@ import com.sun.c1x.target.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class RegisterOrConstant {
 

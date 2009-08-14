@@ -56,10 +56,10 @@ public enum InstructionSet {
      */
     public final int instructionWidth;
 
-    private InstructionSet(Category category, int instructionWidth, boolean relativeAddressing, int offsetToReturnPC) {
+    private InstructionSet(Category category, int instructionWidth, boolean relativeBranchFromStart, int offsetToReturnPC) {
         this.category = category;
         this.instructionWidth = instructionWidth;
-        this.relativeBranchFromStart = relativeAddressing;
+        this.relativeBranchFromStart = relativeBranchFromStart;
         this.offsetToReturnPC = offsetToReturnPC;
     }
 

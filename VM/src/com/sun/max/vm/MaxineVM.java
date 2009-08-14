@@ -39,6 +39,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.prototype.BootImage.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -419,14 +420,20 @@ public final class MaxineVM {
         exitCode = code;
     }
 
-    private static Pointer primordialVmThreadLocals;
+    /**
+     * The primordial thread locals.
+     *
+     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
+     * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
+     */
+    private static Pointer primordialThreadLocals;
 
     public static Pointer primordialVmThreadLocals() {
-        return primordialVmThreadLocals;
+        return primordialThreadLocals;
     }
 
     /**
-     * The signature of {@link #run(Pointer, Pointer, Pointer, Word, Word, Word, int, Pointer)}.
+     * The signature of {@link #run(Pointer, Pointer, Word, Word, Word, int, Pointer)}.
      */
     public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
 
@@ -471,18 +478,17 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer vmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
+    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
+        Pointer vmThreadLocals = primordialThreadLocals;
+
         Safepoint.initializePrimordial(vmThreadLocals);
 
         Heap.initializeAuxiliarySpace(vmThreadLocals, auxiliarySpace);
-
-        // As of here we can write values:
-        MaxineVM.primordialVmThreadLocals = vmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);

@@ -311,10 +311,6 @@ public class MaxCiRuntime implements CiRuntime {
         throw Util.unimplemented();
     }
 
-    public long doubleSignflipPoolAddress() {
-        throw Util.unimplemented();
-    }
-
     public long doubleSignmaskPoolAddress() {
         throw Util.unimplemented();
     }
@@ -323,15 +319,7 @@ public class MaxCiRuntime implements CiRuntime {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
     }
 
-    public long floatSignflipPoolAddress() {
-        throw Util.unimplemented();
-    }
-
     public long getPollingPage() {
-        throw Util.unimplemented();
-    }
-
-    public int getSerializePageShiftCount() {
         throw Util.unimplemented();
     }
 
@@ -392,10 +380,6 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int threadTlabTopOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadVmResultOffset() {
         throw Util.unimplemented();
     }
 
@@ -619,7 +603,6 @@ public class MaxCiRuntime implements CiRuntime {
         return targetMethod;
     }
 
-    @Override
     public CiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 

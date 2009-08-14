@@ -67,8 +67,15 @@ public class BeltwayBA2Collector extends BeltwayCollector {
     }
 
     static class FullGCCollector extends BeltwayBA2Collector implements Runnable {
+        /**
+         * A temporary virtual belt used to represent the mature space's reserve.
+         */
+        private final Belt matureSpaceReserve;
+
         FullGCCollector() {
             super("Major");
+            matureSpaceReserve = new Belt();
+            matureSpaceReserve.resetAllocationMark();
         }
 
         public void run() {
@@ -80,10 +87,14 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             monitorScheme.beforeGarbageCollection();
 
             final Pointer matureSpaceEnd = matureSpace.end().asPointer();
-            final Belt matureSpaceBeforeAllocation = heapScheme.getBeltManager().getBeltBeforeLastAllocation(matureSpace);
-            final Belt matureSpaceReserve = heapScheme.getBeltManager().getRemainingOverlappingBelt(matureSpace);
-            matureSpaceReserve.setExpandable(true);
+            final Belt matureSpaceBeforeAllocation = matureSpace;
+            matureSpaceBeforeAllocation.setEnd(matureSpaceBeforeAllocation.getAllocationMarkSnapshot().asAddress());
+
+            // Prepare the space reserve.
+            matureSpaceReserve.setStart(matureSpace.getPrevAllocationMark());
             matureSpaceReserve.setEnd(matureSpaceEnd);
+            matureSpaceReserve.setAllocationMark(matureSpace.getAllocationMark());
+            matureSpaceReserve.setExpandable(true);
 
             if (Heap.verbose()) {
                 printBeltInfo("matureSpaceBeforeAllocation", matureSpaceBeforeAllocation);

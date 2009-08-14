@@ -21,11 +21,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <alloca.h>
 
 #include "isa.h"
 #include "log.h"
 #include "jni.h"
-#include "threadSpecifics.h"
+#include "threadLocals.h"
 #include "teleProcess.h"
 #include "teleNativeThread.h"
 
@@ -208,15 +209,17 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jint domainId, jlong threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jint domainId, jlong threadLocalsList, jlong primordialThreadLocals) {
     struct db_thread *threads;
-    int num_threads, i;
+    int num_threads;
     threads = gather_threads(&num_threads);
-     for (i=0; i<num_threads; i++) {
-        ThreadSpecificsStruct threadSpecificsStruct;
+    int i;
+    for (i=0; i<num_threads; i++) {
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+        NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
-        teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadSpecifics);
+        threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, threads[i].stack, threadLocals, &nativeThreadLocalsStruct);
+        teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);
 

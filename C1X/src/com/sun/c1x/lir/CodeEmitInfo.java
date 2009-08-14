@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
@@ -32,8 +31,11 @@ import com.sun.c1x.value.*;
  * The <code>CodeEmitInfo</code> class definition.
  *
  * @author Marcelo Cintra
+<<<<<<< local
  * @author Thomas Wuerthinger
  *
+=======
+>>>>>>> other
  */
 public class CodeEmitInfo {
 
@@ -57,7 +59,8 @@ public class CodeEmitInfo {
         this.stack = stack;
         this.exceptionHandlers = exceptionHandlers;
         assert this.stack != null : "must be non null";
-        assert bci == C1XOptions.InvocationEntryBci || Bytecodes.isDefined(scope().method.javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
+        // TODO: lame assertion, bci should always point at real bytecode
+        assert bci == Instruction.INVOCATION_ENTRY_BCI || Bytecodes.isDefined(scope().method.javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
     }
 
     // used by natives

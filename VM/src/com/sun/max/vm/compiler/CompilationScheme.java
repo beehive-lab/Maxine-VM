@@ -22,8 +22,8 @@ package com.sun.max.vm.compiler;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -63,24 +63,6 @@ public interface CompilationScheme extends VMScheme {
      * @param mode the new mode
      */
     void setMode(Mode mode);
-
-    /**
-     * This method retrieves an object that encapsulates method instrumentation for the specified method. If
-     * instrumentation for the method already exists, it will be returned. If the instrumentation does not exist, then
-     * new instrumentation will be created and returned.
-     *
-     * @param classMethodActor the method for which to get the method instrumentation
-     * @return an instance of the {@code MethodInstrumentation} class for the specified method
-     */
-    MethodInstrumentation makeMethodInstrumentation(ClassMethodActor classMethodActor);
-
-    /**
-     * This method retrieves an object that encapsulates instrumentation for the specified method, if one exists.
-     *
-     * @param classMethodActor the method for which to retrieve the instrumentation
-     * @return a method instrumentation object if one exists; null otherwise
-     */
-    MethodInstrumentation getMethodInstrumentation(ClassMethodActor classMethodActor);
 
     /**
      * This method makes a target method for the specified method actor. If the method is already compiled, it will
@@ -199,6 +181,10 @@ public interface CompilationScheme extends VMScheme {
             resetMethodState(classMethodActor);
             compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
             return getCurrentTargetMethod(classMethodActor);
+        }
+
+        public static void instrumentationCounterOverflow(MethodProfile mpo, int mpoIndex) {
+            // TODO: re-implement re-compilation
         }
     }
 }

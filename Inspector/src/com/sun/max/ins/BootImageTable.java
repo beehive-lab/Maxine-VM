@@ -196,7 +196,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
             addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
-            addRow("thread local space size:", new DataLabel.IntAsHex(inspection(), header.vmThreadLocalsSize), null);
 
             final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
@@ -214,8 +213,8 @@ public final class BootImageTable extends InspectorTable {
 
             final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
-            final Pointer threadSpecificsListPointer = bootImageStart.plus(header.threadSpecificsListOffset);
-            addRow("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, threadSpecificsListPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadSpecificsListPointer));
+            final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
+            addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));
 
 
         }

@@ -49,9 +49,6 @@ public class MangleTest extends MaxTestCase {
         try {
             final String mangled = Mangle.mangleMethod(JavaTypeDescriptor.parseTypeDescriptor(className), name, signature == null ? null : SignatureDescriptor.create(signature));
             final Mangle.DemangledMethod demangled = Mangle.demangleMethod(mangled);
-//System.out.printAddress("  mangled: " + mangled);
-//System.out.printAddress("demangled: " + demangled);
-//System.out.printAddress();
             return demangled.mangle().equals(mangled);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -76,9 +73,6 @@ public class MangleTest extends MaxTestCase {
         assert Modifier.isNative(method.getModifiers());
         final String mangled = Mangle.mangleMethod(method, isOverloaded(method));
         final Mangle.DemangledMethod demangled = Mangle.demangleMethod(mangled);
-//      System.out.printAddress("  mangled: " + mangled);
-//      System.out.printAddress("demangled: " + demangled);
-//      System.out.printAddress();
         assertTrue(demangled.mangle().equals(mangled));
         if (containedByTopLevelClass(method)) {
             final Method demangledMethod = demangled.toJava(method.getDeclaringClass().getClassLoader());

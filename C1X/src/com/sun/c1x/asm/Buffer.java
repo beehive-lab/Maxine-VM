@@ -28,11 +28,10 @@ import com.sun.c1x.util.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public final class Buffer {
 
-    private static final int InitialSize = 64;
+    private static final int INITIAL_SIZE = 64;
 
     private byte[] data;
     private int position;
@@ -41,12 +40,12 @@ public final class Buffer {
 
     public Buffer(BitOrdering bitOrdering) {
         this.bitOrdering = bitOrdering;
-        this.data = new byte[InitialSize];
+        this.data = new byte[INITIAL_SIZE];
     }
 
     /**
      * After calling this method, the buffer must no longer be used!
-     * @return
+     * @return the byte array that contains the finished data
      */
     public byte[] finished() {
         byte[] result = data;

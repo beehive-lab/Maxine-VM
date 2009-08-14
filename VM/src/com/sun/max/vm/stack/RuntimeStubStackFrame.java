@@ -49,4 +49,8 @@ public class RuntimeStubStackFrame extends StackFrame {
         return stub;
     }
 
+    @Override
+    public String toString() {
+        return "<stub@" + instructionPointer.toHexString() + ">";
+    }
 }

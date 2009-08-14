@@ -30,7 +30,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.GraphPrototype.*;
 
@@ -234,12 +233,6 @@ public class GraphStats {
         total += sizeOf(targetMethod.referenceMaps());
         total += sizeOf(targetMethod.scalarLiterals());
         total += sizeOf(targetMethod.stopPositions());
-        if (targetMethod instanceof JitTargetMethod) {
-            final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
-            total += sizeOf(jitTargetMethod.bytecodeInfos());
-            // total += sizeOf(jitTargetMethod._isDirectCallToRunTime);  TODO
-            // total += sizeOf(jitTargetMethod._bytecodeToTargetCodePositionMap); TODO
-        }
         return total;
     }
 

@@ -43,6 +43,7 @@ import com.sun.max.vm.thread.*;
  * Template-based implementation of JIT compiler for AMD64.
  *
  * @author Laurent Daynes
+ * @author Ben L. Titzer
  * @see AMD64JitStackFrameLayout
  */
 public class AMD64JitCompiler extends JitCompiler {

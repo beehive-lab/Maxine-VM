@@ -172,8 +172,7 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         int stopIndex = -1;
         if (focusedInstructionPointer == null) {
             final Pointer instructionPointer = stackFrame.instructionPointer;
-            final Pointer instructionPointerForStopPosition = isTopFrame ?  instructionPointer.plus(1) :  instructionPointer;
-            targetMethod.findClosestStopIndex(instructionPointerForStopPosition);
+            stopIndex = targetMethod.findClosestStopIndex(instructionPointer, !isTopFrame);
             if (stopIndex != -1 && isTopFrame) {
                 final int stopPosition = targetMethod.stopPosition(stopIndex);
                 final int targetCodePosition = targetMethod.targetCodePositionFor(instructionPointer);
