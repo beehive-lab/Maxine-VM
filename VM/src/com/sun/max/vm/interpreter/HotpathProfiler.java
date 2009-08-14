@@ -24,12 +24,12 @@ import com.sun.max.collect.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.interpreter.BirInterpreter.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 public class HotpathProfiler implements Profiler {
 

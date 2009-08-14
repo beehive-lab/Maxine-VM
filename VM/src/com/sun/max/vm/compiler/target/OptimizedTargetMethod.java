@@ -38,8 +38,4 @@ public abstract class OptimizedTargetMethod extends ExceptionRangeTargetMethod {
         return new OptoStackFrameLayout(frameSize());
     }
 
-    @Override
-    public boolean areReferenceMapsFinalized() {
-        return true;
-    }
 }

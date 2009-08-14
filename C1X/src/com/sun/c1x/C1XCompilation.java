@@ -71,6 +71,7 @@ public class C1XCompilation {
     /**
      * Creates a new compilation for the specified method and runtime.
      *
+     * @param compiler the compiler
      * @param target the target of the compilation, including architecture information
      * @param runtime the runtime implementation
      * @param method the method to be compiled
@@ -87,10 +88,10 @@ public class C1XCompilation {
     /**
      * Creates a new compilation for the specified method and runtime.
      *
+     * @param compiler the compiler
      * @param target the target of the compilation, including architecture information
      * @param runtime the runtime implementation
      * @param method the method to be compiled
-     * @param targetMethod the target method
      */
     public C1XCompilation(C1XCompiler compiler, Target target, CiRuntime runtime, CiMethod method) {
         this(compiler, target, runtime, method, -1);
@@ -310,10 +311,6 @@ public class C1XCompilation {
         return hasExceptionHandlers;
     }
 
-    public BlockBegin osrEntry() {
-        throw Util.unimplemented();
-    }
-
     public CiTargetMethod compile() {
 
         if (C1XOptions.PrintCompilation) {
@@ -347,8 +344,7 @@ public class C1XCompilation {
                 lirGenerator.visitBlock(begin);
             }
 
-            final RegisterAllocator registerAllocator = new LinearScan(this, hir, lirGenerator, frameMap());
-            registerAllocator.allocate();
+            new LinearScan(this, hir, lirGenerator, frameMap()).allocate();
 
             CFGPrinter printer = cfgPrinter();
             if (printer != null) {

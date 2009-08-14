@@ -84,11 +84,6 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public boolean areReferenceMapsFinalized() {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         throw ProgramError.unexpected();
     }

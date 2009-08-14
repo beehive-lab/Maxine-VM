@@ -18,25 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
 
 /**
- * A simple class that echoes its arguments to the console.
- *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public class Echo {
-    public static void main(String[] args) {
-        if (args == null) {
-            System.out.println("Error: arguments are null");
-        } else {
-            for (int i = 0; i < args.length; i++) {
-                if (i > 0) {
-                    System.out.print(" ");
-                }
-                System.out.print(args[i]);
-            }
-            System.out.println("");
-        }
-    }
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "log.h"
+#include "jni.h"
+#include "word.h"
+#include "image.h"
+
+#include "threadLocals.h"
+
+int theThreadLocalsSize = -1;
+
+void threadLocals_initialize(int threadLocalsSize) {
+    theThreadLocalsSize = threadLocalsSize;
+}
+
+int threadLocalsSize() {
+    c_ASSERT(theThreadLocalsSize > 0);
+    return theThreadLocalsSize;
+}
+
+void threadLocals_println(ThreadLocals tl) {
+    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+    log_println("ThreadLocals[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
+                    ntl->id, ntl->stackBase, ntl->stackBase + ntl->stackSize, ntl->stackSize,
+                    getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
+                    getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
+                    getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
+}
+
+void threadLocals_printList(ThreadLocals tl) {
+    while (tl != 0) {
+        threadLocals_println(tl);
+        tl = getThreadLocal(ThreadLocals, tl, FORWARD_LINK);
+    };
 }

@@ -468,25 +468,8 @@ public class VmThread {
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
         // Disable safepoints:
-        disabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index, disabledVmThreadLocals);
         Safepoint.setLatchRegister(disabledVmThreadLocals);
 
-        enabledVmThreadLocals.setWord(SAFEPOINT_LATCH.index, enabledVmThreadLocals);
-
-        // set up references to all three locals in all three locals
-        enabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
-        enabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
-        enabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
-
-        disabledVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
-        disabledVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
-        disabledVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
-
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index, enabledVmThreadLocals);
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index, disabledVmThreadLocals);
-        triggeredVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index, triggeredVmThreadLocals);
-
-        NATIVE_THREAD.setConstantWord(enabledVmThreadLocals, nativeThread);
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
 
         // Add the VM thread locals to the active map
@@ -553,7 +536,7 @@ public class VmThread {
             Log.print(", name=\"");
             Log.print(name);
             Log.print("\", native id=");
-            Log.print(NATIVE_THREAD.getConstantWord(vmThreadLocals));
+            Log.print(nativeThread);
             Log.println("]:");
             Log.println("  Stack layout:");
             Address lastRegionStart = Address.zero();
@@ -683,17 +666,6 @@ public class VmThread {
     public boolean join() {
         return nativeJoin(nativeThread);
     }
-
-    // Access to native thread locals (aka "thread specifics")
-
-    /**
-     * The address of a global ThreadSpecificsListStruct (defined in threadSpecifics.h).
-     * This list is only used by a debugger attached to the VM to discover Java threads.
-     * Communicating stack details of Java threads this way obviates the need to rely on platform specific
-     * mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin) for debugging threads
-     * across process boundaries.
-     */
-    private static Pointer threadSpecificsList = Pointer.zero();
 
     // Access to thread local variables
 

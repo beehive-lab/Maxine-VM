@@ -25,7 +25,6 @@ import java.net.*;
 import java.util.zip.*;
 
 import jtt.micro.*;
-
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
@@ -40,7 +39,6 @@ import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -58,10 +56,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
 
     public CompilerTest_regressions(String name) {
         super(name);
-    }
-
-    public void test_SemiSpaceHeapScheme_allocate() {
-        compileMethod(SemiSpaceHeapScheme.class, "allocate");
     }
 
     @NEVER_INLINE

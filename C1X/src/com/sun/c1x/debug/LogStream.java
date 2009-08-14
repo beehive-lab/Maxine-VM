@@ -43,7 +43,7 @@ import com.sun.c1x.ir.*;
  * A {@code LogStream} maintains a current {@linkplain #position() position} for the current
  * line being written. This position can be advanced to a specified position by
  * {@linkplain #fillTo(int, char) filling} this stream with a given character.
-
+ *
  * @author Doug Simon
  */
 public class LogStream {

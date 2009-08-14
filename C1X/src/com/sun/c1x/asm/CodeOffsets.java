@@ -25,17 +25,17 @@ import com.sun.c1x.util.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class CodeOffsets {
-    public enum Entries { Entry,
+    public enum Entries {
+        Entry,
         VerifiedEntry,
-        FrameComplete, // Offset in the code where the frame setup is (for forte stackwalks) is complete
+        FrameComplete,  // Offset in the code where the frame setup is (for forte stackwalks) is complete
         OSREntry,
-        DtraceTrap,  // dtrace probes can never have an OSR entry so reuse it*/
+        DtraceTrap,     // dtrace probes can never have an OSR entry so reuse it*/
         Exceptions,     // Offset where exception handler lives
-        Deopt          // Offset where deopt handler lives
-         }
+        Deopt           // Offset where deopt handler lives
+    }
 
     public void setValue(Entries osrentry, int offset) {
         Util.nonFatalUnimplemented();

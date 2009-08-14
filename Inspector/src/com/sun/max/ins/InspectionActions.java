@@ -2647,10 +2647,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (memoryRegion != null) {
                 setWatchpoint(memoryRegion, "");
             } else {
-                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch word at address...", "Watch") {
+                new MemoryRegionInputDialog(inspection(), maxVM().bootImageStart(), "Watch memory starting at address...", "Watch") {
                     @Override
-                    public void entered(Address address) {
-                        setWatchpoint(new MemoryWordRegion(address, 1, maxVM().wordSize()), "User specified region");
+                    public void entered(Address address, Size size) {
+                        setWatchpoint(new MemoryWordRegion(address, size.toInt() / Word.size(), Size.fromInt(Word.size())), "User specified region");
                     }
                 };
             }

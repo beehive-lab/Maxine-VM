@@ -125,11 +125,10 @@ public class SPARCJitCompiler extends JitCompiler {
         // The frame pointer read off the JIT frame called by this adapter is unbiased.
         final Pointer framePointer;
         final Pointer stackPointer;
-        final int adapterTopFrameSize =  SPARCAdapterFrameGenerator.optimizedToJitAdapterFrameSize(targetMethod);
+        final int adapterTopFrameSize =  SPARCAdapterFrameGenerator.optToJitAdapterFrameSize(stackFrameWalker, optimizedEntryPoint);
 
         final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.minStackFrameSize();
 
-        //final boolean inCallerRegisterWindow = instructionPointer.equals(optimizedEntryPoint);
         final boolean inCallerRegisterWindow = BcdeTargetSPARCCompiler.inCallerRegisterWindow(instructionPointer, optimizedEntryPoint, adapterTopFrameSize);
 
         if (inCallerRegisterWindow) {
@@ -238,7 +237,9 @@ public class SPARCJitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                FatalError.unimplemented();
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, frameState)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {
@@ -301,6 +302,25 @@ public class SPARCJitCompiler extends JitCompiler {
         return true;
     }
 
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_STATE frameState) {
+        final Pointer trapState = stackFrameWalker.trapState();
+        if (!trapState.isZero()) {
+            FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
+            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+            if (trapStateAccess.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
+                // There's no need to deal with any references in a frame that triggered a stack overflow.
+                // The explicit stack banging code that causes a stack overflow trap is always in the
+                // prologue which is guaranteed not to be in the scope of a local exception handler.
+                // Thus, no GC roots need to be scanned in this frame.
+                return true;
+            }
+        }
+        final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, (SPARCJitTargetMethod) targetMethod);
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
+    }
+
+
+
     private FRAME_STATE stackFrameState(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
@@ -316,7 +336,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
         if (instructionPointer.greaterEqual(endOfFrameBuilder)) {
             final int currentInstruction = stackFrameWalker.readInt(instructionPointer, 0);
-            final int prevInstruction = stackFrameWalker.readInt(instructionPointer.minus(InstructionSet.SPARC.instructionWidth), 0);
+            final int prevInstruction = stackFrameWalker.readInt(instructionPointer, -InstructionSet.SPARC.instructionWidth);
             if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction ==  BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
                 return FRAME_STATE.EXITING_CALLEE;
             }

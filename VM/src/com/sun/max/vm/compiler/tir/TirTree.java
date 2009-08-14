@@ -22,10 +22,10 @@ package com.sun.max.vm.compiler.tir;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.compiler.tir.target.*;
+import com.sun.max.vm.profile.TreeAnchor;
 
 public class TirTree extends AbstractIrMethod {
     public static class Profile {

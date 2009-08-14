@@ -18,10 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package test.output;
+
 /**
- * This package implements utilties for instrumenting compiled code. This includes recompilation triggers,
- * location counters, branch counters, etc.
+ * The empty program.
  *
- * @author Ben Titzer
+ * @author Ben L. Titzer
  */
-package com.sun.max.vm.compiler.instrument;
+public class Empty {
+    public static void main(String[] args) {
+        // do nothing.
+    }
+}

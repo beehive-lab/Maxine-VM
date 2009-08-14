@@ -149,21 +149,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the array recording the positions of the {@link StopType stops} in this target method.
      * <p>
-     * This array is composed of four contiguous segments. The first segment contains the positions of the direct call
+     * This array is composed of three contiguous segments. The first segment contains the positions of the direct call
      * stops and the indexes in this segment match the entries of the {@link #directCallees} array). The second segment
-     * and third segments contain the positions of the register indirect call and safepoint stops. The fourth contains
-     * the positions of guardpoint stops.
+     * and third segments contain the positions of the register indirect call and safepoint stops.
      * <p>
      *
      * <pre>
-     *   +-----------------------------+-------------------------------+----------------------------+-----------------------------+
-     *   |          direct calls       |           indirect calls      |          safepoints        |          guardpoints        |
-     *   +-----------------------------+-------------------------------+----------------------------+-----------------------------+
-     *    <-- numberOfDirectCalls() --> <-- numberOfIndirectCalls() --> <-- numberOfSafepoints() --> <-- numberOfGuardpoints() -->
-     *
-     *   +-----------------------------+
-     *   |       directCallees()       |
-     *   +-----------------------------+
+     *   +-----------------------------+-------------------------------+----------------------------+
+     *   |          direct calls       |           indirect calls      |          safepoints        |
+     *   +-----------------------------+-------------------------------+----------------------------+
+     *    <-- numberOfDirectCalls() --> <-- numberOfIndirectCalls() --> <-- numberOfSafepoints() -->
      *
      * </pre>
      * The methods and constants defined in {@link StopPositions} should be used to decode the entries of this array.
@@ -211,7 +206,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Gets the {@linkplain #referenceMaps() frame reference map} for a stop position denoted by a given index into
      * {@link #stopPositions()}.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param stopIndex
@@ -230,7 +225,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Gets the {@linkplain #referenceMaps() frame reference map} for the {@code n}th stop in this target method of a
      * given type.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param stopType
@@ -255,7 +250,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the {@linkplain #referenceMaps() register reference map} for a given safepoint.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * @param safepointIndex a value between {@code [0 .. numberOfSafepoints())} denoting a safepoint
@@ -308,8 +303,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
-            final Iterator<JavaFrameDescriptor<TargetLocation>> inlinedFrames = targetFrameDescriptor.inlinedFrames();
-            return inlinedFrames;
+            return targetFrameDescriptor.inlinedFrames();
         }
         return null;
     }
@@ -393,7 +387,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the frame and register reference maps for this target method.
      *
-     * Note that unless {@link #areReferenceMapsFinalized()} returns true, the value returned by this method may differ
+     * Note that unless the reference maps are finalized, the value returned by this method may differ
      * from the value returned by a subsequent call to this method.
      *
      * The format of the returned byte array is described by the following pseudo C declaration:
@@ -419,12 +413,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final byte[] referenceMaps() {
         return referenceMaps;
     }
-
-    /**
-     * Determines if the {@linkplain #referenceMaps() reference maps} for this target method have been finalized. Only
-     * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
-     */
-    public abstract boolean areReferenceMapsFinalized();
 
     /**
      * @return non-object data referenced by the machine code
@@ -979,23 +967,22 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * Gets the index of a stop position within this target method derived from a given instruction pointer. If the
      * instruction pointer is equal to a safepoint position, then the index in {@link #stopPositions()} of that
-     * safepoint is returned. Otherwise, the index of the highest stop position that is less than the target code
-     * position denoted by the instruction pointer is returned. That is, if {@code instructionPointer} exactly matches a
-     * stop position 'pos' for a direct or indirect call, then the index of the highest stop position <b>less than</b>
-     * 'pos' is returned.
+     * safepoint is returned. Otherwise, the index of the highest stop position that is less than or equal to the
+     * (possibly adjusted) target code position
+     * denoted by the instruction pointer is returned.  That is, if {@code instructionPointer} does not exactly match a
+     * stop position 'p' for a direct or indirect call, then the index of the highest stop position less than
+     * 'p' is returned.
      *
      * @return -1 if no stop index can be found for {@code instructionPointer}
      * @see #stopPositions()
      */
-    public int findClosestStopIndex(Pointer instructionPointer) {
+    public int findClosestStopIndex(Pointer instructionPointer, boolean adjustPcForCall) {
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
             return -1;
         }
 
-        // Direct calls come first, followed by indirect calls and safepoints in the _stopPositions array.
-        // For direct and indirect calls, the instruction pointer will point to the instruction immediately
-        // after the call instruction (_stopPositions correspond to calls and safepoints).
+        // Direct calls come first, followed by indirect calls and safepoints in the stopPositions array.
 
         // Check for matching safepoints first
         for (int i = numberOfDirectCalls() + numberOfIndirectCalls(); i < numberOfStopPositions(); i++) {
@@ -1004,33 +991,40 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             }
         }
 
-        // Since this is not a safepoint as it seems, it must be a call.
-        // In that case, the instruction pointer is already one instruction after the call.
-        // We compare with "less than" from now on to ensure that we do not accidentally pick up the next stop instruction, which might be "equal".
+        // Since this is not a safepoint, it must be a call.
+
+        final int adjustedTargetCodePosition;
+        if (adjustPcForCall && compilerScheme.vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC == 0) {
+            // targetCodePostion is the instruction after the call (which might be another call).
+            // We need the find the call at which we actually stopped.
+            adjustedTargetCodePosition = targetCodePosition - 1;
+        } else {
+            adjustedTargetCodePosition = targetCodePosition;
+        }
 
         int stopIndexWithClosestPosition = -1;
         for (int i = numberOfDirectCalls() - 1; i >= 0; --i) {
             final int directCallPosition = stopPosition(i);
-            if (directCallPosition < targetCodePosition) {
+            if (directCallPosition <= adjustedTargetCodePosition) {
+                if (directCallPosition == adjustedTargetCodePosition) {
+                    return i; // perfect match; no further searching needed
+                }
                 stopIndexWithClosestPosition = i;
                 break;
             }
         }
 
         // It is not enough that we find the first matching position, since there might be a direct as well as an indirect call before the instruction pointer
-        // so we find the closest one. This can be avoided if we sort the _stopPositions array first, but the runtime cost of this is unknown.
+        // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
         for (int i = numberOfDirectCalls() + numberOfIndirectCalls() - 1; i >= numberOfDirectCalls(); i--) {
             final int indirectCallPosition = stopPosition(i);
-            if (indirectCallPosition < targetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition >  stopPosition(stopIndexWithClosestPosition))) {
+            if (indirectCallPosition <= adjustedTargetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPosition))) {
                 stopIndexWithClosestPosition = i;
                 break;
             }
         }
 
-        if (stopIndexWithClosestPosition >= 0) {
-            return stopIndexWithClosestPosition;
-        }
-        return -1;
+        return stopIndexWithClosestPosition;
     }
 
     /**
@@ -1050,13 +1044,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             return (numberOfStopPositions * frameReferenceMapSize) + (numberOfSafepoints * registerReferenceMapSize);
         }
         return 0;
-    }
-
-    /**
-     * Gets the index of a stop position within the target method derived from a given guardpoint index.
-     */
-    public int findGuardpointIndex(int index) {
-        return numberOfDirectCalls() + numberOfIndirectCalls() + numberOfSafepoints() + index;
     }
 
     /**

@@ -28,9 +28,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -87,27 +85,14 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     protected void generateIrMethod(ExceptionRangeTargetMethod targetMethod) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
-        if (Trace.hasLevel(3)) {
-            Trace.begin(3, "JIT: " + classMethodActor);
-        }
-
-        if (HotpathConfiguration.isEnabled()) {
-            Log.print("JIT: ");
-            Log.print(classMethodActor.toString());
-            Log.println();
-        }
-
-        final MethodInstrumentation methodInstrumentation = VMConfiguration.target().compilationScheme().makeMethodInstrumentation(classMethodActor);
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
 
         // emit prologue
         final int optimizedCallerAdapterFrameCodeSize = codeGenerator.emitPrologue();
 
-        // emit instrumentation
-        if (methodInstrumentation != null && methodInstrumentation.recompilationAlarm() != null) {
-            codeGenerator.emitAlarmCounter(methodInstrumentation.recompilationAlarm().counter());
-        }
+        // emit instrumentation for the method entry
+        codeGenerator.emitEntrypointInstrumentation();
 
         // Translate bytecode into native code
         try {
@@ -132,15 +117,10 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.codeBuffer().currentPosition());
         Code.allocate(targetBundleLayout, targetMethod);
 
-        final int[] catchRangeOffsets = codeGenerator.catchRangePositions();
-        final int[] catchBlockOffsets =  codeGenerator.catchBlockPositions();
-
         codeGenerator.setGenerated(
                         targetMethod,
-                        catchRangeOffsets,
-                        catchBlockOffsets,
                         stops,
-                        null, // java frame descriptors, TODO
+                        null, // java frame descriptors
                         null, // no scalar literals ever
                         referenceLiterals,
                         codeGenerator.codeBuffer(),
@@ -148,15 +128,9 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.adapterReturnPosition(),
                         codeGenerator.targetABI());
 
-        if (MaxineVM.isPrototyping()) {
-            // the compiled prototype links all methods in a separate phase
-        } else {
+        if (!MaxineVM.isPrototyping()) {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls();
-        }
-
-        if (Trace.hasLevel(3)) {
-            Trace.end(3, "JIT: " + classMethodActor);
         }
 
         BytecodeBreakpointMessage.makeTargetBreakpoints(targetMethod);

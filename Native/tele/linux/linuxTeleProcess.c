@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/user.h>
+#include <alloca.h>
 
 #include "log.h"
 #include "jni.h"
@@ -40,9 +41,8 @@
 void teleProcess_initialize(void) {
 }
 
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadSequence, jlong threadSpecificsListAddress) {
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadSequence, jlong threadLocalsList, long primordialThreadLocals) {
 
-    ThreadSpecifics threadSpecifics = NULL;
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
 
@@ -61,17 +61,18 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
             break;
     }
 
-
+    ThreadLocals tl = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-        ThreadSpecificsStruct threadSpecificsStruct;
-        threadSpecifics = teleProcess_findThreadSpecifics(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+        NativeThreadLocalsStruct nativeThreadLocalsStruct;
+        tl = teleProcess_findThreadLocals(tgid, tid, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
-    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, (jlong) canonicalStateRegisters.rip, threadSpecifics);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, (jlong) canonicalStateRegisters.rip, tl);
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads, long threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads, long threadLocalsList, long primordialThreadLocals) {
 
     pid_t *tasks;
     const int nTasks = scan_process_tasks(pid, &tasks);
@@ -83,7 +84,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *e
     int n = 0;
     while (n < nTasks) {
         pid_t tid = tasks[n];
-        gatherThread(env, pid, tid, linuxTeleProcess, threads, threadSpecificsListAddress);
+        gatherThread(env, pid, tid, linuxTeleProcess, threads, threadLocalsList, primordialThreadLocals);
         n++;
     }
     free(tasks);
