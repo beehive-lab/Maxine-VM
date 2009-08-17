@@ -645,6 +645,7 @@ function run_javadoc() {
 
 image_configs=( \
     java:-run=java \
+    c1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.c1x \
     optopt:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     optjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
     jitopt:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
@@ -989,7 +990,9 @@ test_help="run some or all of the Maxine tests
 
 function run_test() {
     if [ -d maxine-tester ]; then
-	rm -f `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+	    rm -f `find maxine-tester | egrep '(.stdout|.stderr|.passed|.failed|.command)'`
+	else
+	    mkdir maxine-tester
     fi
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -output-dir=maxine-tester\
         -refvm="${jvm}" "-refvm-args=${jvm_args}" "$@" 2>&1 | tee maxine-tester/console
