@@ -45,9 +45,8 @@ public final class Register {
     public enum RegisterFlag {
         CPU, Byte, XMM, MMX;
 
-        public int mask() {
-            return 1 << (ordinal() + 1);
-        }
+        public final int mask = 1 << (ordinal() + 1);
+
     }
 
     public Register(int number, int encoding, String name, RegisterFlag... flags) {
@@ -60,13 +59,13 @@ public final class Register {
     private int createMask(RegisterFlag... flags) {
         int result = 0;
         for (RegisterFlag f : flags) {
-            result |= f.mask();
+            result |= f.mask;
         }
         return result;
     }
 
     private boolean checkFlag(RegisterFlag f) {
-        return (flags & f.mask()) != 0;
+        return (flags & f.mask) != 0;
     }
 
     public boolean isValid() {
