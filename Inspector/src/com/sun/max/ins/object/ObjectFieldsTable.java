@@ -29,6 +29,7 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
@@ -111,7 +112,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.rowToMemoryRegion(selectedRow).start());
+                        inspection.focus().setAddress(model.getMemoryRegion(selectedRow).start());
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -126,7 +127,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                             final FieldActor fieldActor = model.rowToFieldActor(hitRowIndex);
                             menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
                             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-                            menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
+                            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Remove memory watchpoint"));
 
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
@@ -220,7 +221,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      * Models the fields/rows in a list of object fields;
      * the value of each cell is the {@link FieldActor} that describes the field.
      */
-    private final class ObjectFieldsTableModel extends AbstractTableModel {
+    private final class ObjectFieldsTableModel extends AbstractTableModel implements InspectorMemoryTable {
 
         public int getColumnCount() {
             return ObjectFieldColumnKind.VALUES.length();
@@ -239,39 +240,35 @@ public final class ObjectFieldsTable extends InspectorTable {
             return FieldActor.class;
         }
 
-        public int rowToOffset(int row) {
-            return fieldActors[row].offset();
+        public Address getAddress(int row) {
+            return objectOrigin.plus(getOffset(row));
         }
 
         /**
          * @return the memory region of a specified row in the fields.
          */
-        public MemoryRegion rowToMemoryRegion(int row) {
+        public MemoryRegion getMemoryRegion(int row) {
             return teleObject.getCurrentMemoryRegion(fieldActors[row]);
-        }
-
-        FieldActor rowToFieldActor(int row) {
-            return fieldActors[row];
-        }
-
-        public TypeDescriptor rowToType(int row) {
-            return fieldActors[row].descriptor();
-        }
-
-        public String rowToName(int row) {
-            return fieldActors[row].name.string;
         }
 
         /**
          * @return the memory watchpoint, if any, that is active at a row
          */
-        public MaxWatchpoint rowToWatchpoint(int row) {
+        public MaxWatchpoint getWatchpoint(int row) {
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.overlaps(rowToMemoryRegion(row))) {
+                if (watchpoint.overlaps(getMemoryRegion(row))) {
                     return watchpoint;
                 }
             }
             return null;
+        }
+
+        public Address getOrigin() {
+            return objectOrigin;
+        }
+
+        public Offset getOffset(int row) {
+            return Offset.fromInt(fieldActors[row].offset());
         }
 
         public int findRow(Address address) {
@@ -290,6 +287,18 @@ public final class ObjectFieldsTable extends InspectorTable {
             }
             return -1;
         }
+
+        FieldActor rowToFieldActor(int row) {
+            return fieldActors[row];
+        }
+
+        TypeDescriptor rowToType(int row) {
+            return fieldActors[row].descriptor();
+        }
+
+        String rowToName(int row) {
+            return fieldActors[row].name.string;
+        }
     }
 
     /**
@@ -297,7 +306,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      */
     private Color getRowTextColor(int row) {
         final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-        if (watchpointEvent != null && model.rowToMemoryRegion(row).contains(watchpointEvent.address())) {
+        if (watchpointEvent != null && model.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
         return style().defaultTextColor();
@@ -310,7 +319,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
@@ -324,7 +333,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), objectOrigin);
+            setValue(model.getOffset(row), objectOrigin);
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -337,7 +346,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row), objectOrigin);
+            setValue(model.getOffset(row), objectOrigin);
             setForeground(getRowTextColor(row));
             return this;
         }

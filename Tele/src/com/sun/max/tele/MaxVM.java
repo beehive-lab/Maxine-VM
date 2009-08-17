@@ -755,7 +755,7 @@ public interface MaxVM {
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
      */
-    MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**

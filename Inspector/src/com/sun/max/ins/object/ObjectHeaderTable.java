@@ -29,6 +29,7 @@ import javax.swing.table.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
@@ -87,7 +88,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.rowToMemoryRegion(selectedRow).start());
+                        inspection.focus().setAddress(model.getMemoryRegion(selectedRow).start());
                     }
                 }
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -103,7 +104,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
                             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
                             final MemoryRegion headerFieldRegion = teleObject.getCurrentMemoryRegion(headerField);
-                            menu.add(new WatchpointSettingsMenu(model.rowToWatchpoint(hitRowIndex)));
+                            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(hitRowIndex)));
                             menu.add(actions().removeWatchpoint(headerFieldRegion, "Remove memory watchpoint"));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
@@ -168,7 +169,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     /**
      * Models the words/rows in an object header; the value of each cell is simply the word/row number.
      */
-    private final class ObjectHeaderTableModel extends AbstractTableModel {
+    private final class ObjectHeaderTableModel extends AbstractTableModel implements InspectorMemoryTable {
 
         public int getColumnCount() {
             return ObjectFieldColumnKind.VALUES.length();
@@ -187,33 +188,30 @@ public final class ObjectHeaderTable extends InspectorTable {
             return Integer.class;
         }
 
-        public Offset rowToOffset(int row) {
-            return teleObject.getHeaderOffset(headerFields.get(row));
+        public Address getAddress(int row) {
+            return objectOrigin.plus(teleObject.getHeaderOffset(headerFields.get(row)));
         }
 
-        public MemoryRegion rowToMemoryRegion(int row) {
+        public MemoryRegion getMemoryRegion(int row) {
             return teleObject.getCurrentMemoryRegion(headerFields.get(row));
         }
 
-        public TypeDescriptor rowToType(int row) {
-            return teleObject.getHeaderType(headerFields.get(row));
-        }
-
-        public String rowToName(int row) {
-            return headerFields.get(row).toString();
-        }
-
-        /**
-         * @return the memory watchpoint, if any, that is active at a row
-         */
-        public MaxWatchpoint rowToWatchpoint(int row) {
-            final MemoryRegion memoryRegion = rowToMemoryRegion(row);
+        public MaxWatchpoint getWatchpoint(int row) {
+            final MemoryRegion memoryRegion = getMemoryRegion(row);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (watchpoint.overlaps(memoryRegion)) {
                     return watchpoint;
                 }
             }
             return null;
+        }
+
+        public Address getOrigin() {
+            return objectOrigin;
+        }
+
+        public Offset getOffset(int row) {
+            return teleObject.getHeaderOffset(headerFields.get(row));
         }
 
         public int findRow(Address address) {
@@ -223,6 +221,14 @@ public final class ObjectHeaderTable extends InspectorTable {
                 }
             }
             return -1;
+        }
+
+        public TypeDescriptor rowToType(int row) {
+            return teleObject.getHeaderType(headerFields.get(row));
+        }
+
+        public String rowToName(int row) {
+            return headerFields.get(row).toString();
         }
     }
 
@@ -259,7 +265,7 @@ public final class ObjectHeaderTable extends InspectorTable {
      */
     private Color getRowTextColor(int row) {
         final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-        if (watchpointEvent != null && model.rowToMemoryRegion(row).contains(watchpointEvent.address())) {
+        if (watchpointEvent != null && model.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
         return style().defaultTextColor();
@@ -272,7 +278,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.rowToMemoryRegion(row), focus().thread(), model.rowToWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
@@ -285,7 +291,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row).toInt(), objectOrigin);
+            setValue(model.getOffset(row), objectOrigin);
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -298,7 +304,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.rowToOffset(row).toInt(), objectOrigin);
+            setValue(model.getOffset(row), objectOrigin);
             setForeground(getRowTextColor(row));
             return this;
         }
