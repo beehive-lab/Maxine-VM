@@ -50,8 +50,6 @@ import com.sun.max.vm.value.*;
  */
 public final class ArrayElementsTable extends InspectorTable {
 
-    public static final int MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS = 1000;
-
     private final ObjectInspector objectInspector;
     private final Inspection inspection;
     private final TeleObject teleObject;
@@ -112,15 +110,9 @@ public final class ArrayElementsTable extends InspectorTable {
         this.model = new ArrayElementsTableModel();
         this.columns = new TableColumn[ArrayElementColumnKind.VALUES.length()];
         this.columnModel = new ArrayElementsTableColumnModel(objectInspector);
-        setModel(model);
-        setColumnModel(columnModel);
+        configureMemoryTable(model, columnModel);
         setFillsViewportHeight(true);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
-        setRowSelectionAllowed(true);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
         addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -153,8 +145,6 @@ public final class ArrayElementsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
     }
 
     public void refresh(boolean force) {
@@ -209,17 +199,6 @@ public final class ArrayElementsTable extends InspectorTable {
         }
         invalidate();
         repaint();
-    }
-
-    @Override
-    public void paintChildren(Graphics g) {
-        // Draw a box around the selected row in the table
-        super.paintChildren(g);
-        final int row = getSelectedRow();
-        if (row >= 0) {
-            g.setColor(style().debugSelectedCodeBorderColor());
-            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-        }
     }
 
     /**

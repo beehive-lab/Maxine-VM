@@ -326,7 +326,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 }
 
                 startTimer(copyTimer);
-                moveReachableObjects();
+                moveReachableObjects(toSpace.start().asPointer());
                 stopTimer(copyTimer);
 
                 if (Heap.traceGCPhases()) {
@@ -567,13 +567,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         return cell.plus(Layout.size(origin));
     }
 
-    private void moveReachableObjects() {
-        Pointer cell = toSpace.start().asPointer();
-        while (cell.lessThan(allocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(toSpace.start(), cell);
+    public void scanImmoralHeapRegion(Pointer cell, Address allocationMark) {
+        Pointer first = cell;
+        while (cell.lessThan(allocationMark)) {
+            cell = DebugHeap.checkDebugCellTag(first, cell);
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Visiting cell in to space ");
+                Log.print("Visiting cell in immoral heap region ");
                 Log.println(cell);
                 Log.unlock(lockDisabledSafepoints);
             }
@@ -581,18 +581,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    /**
-     * Tells the inspector that a watchpoint on this object has to be relocated.
-     * @param oldAddress
-     * @param newAddress
-     */
-    private void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
-        if (MaxineMessenger.isVmInspected()) {
-            //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
-            //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
-            InspectableHeapInfo.oldAddress = oldAddress;
-            InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
+    public void moveReachableObjects(Pointer cell) {
+        Pointer first = cell;
+        while (cell.lessThan(allocationMark())) {
+            cell = DebugHeap.checkDebugCellTag(first, cell);
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Visiting cell ");
+                Log.println(cell);
+                Log.unlock(lockDisabledSafepoints);
+            }
+            cell = visitCell(cell);
         }
     }
 
@@ -601,7 +600,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private void scanCode() {
-        Code.visitReferences(gripUpdater);
+        CodeRegion[] codeRegions = Code.getCodeManager().getCodeRegions();
+        for (CodeRegion cr : codeRegions) {
+            scanImmoralHeapRegion(cr.start().asPointer(), cr.getAllocationMark());
+        }
     }
 
     private boolean cannotGrow() {
@@ -968,7 +970,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             Log.print(' ');
             Log.println(when);
         }
-        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
+        zapRegion(region);
     }
 
     private void logSpaces() {
