@@ -1781,7 +1781,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
                 try {
                     final ClassMethodActor methodActor = (ClassMethodActor) machine.resolveMethod(cpIndex);
-
                     machine.invokeMethod(methodActor);
                 } catch (LinkageError e) {
                     machine.raiseException(e);

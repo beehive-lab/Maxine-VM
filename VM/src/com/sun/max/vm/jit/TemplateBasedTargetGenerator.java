@@ -82,7 +82,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);
 
     @Override
-    protected void generateIrMethod(TargetMethod targetMethod) {
+    protected void generateIrMethod(ExceptionRangeTargetMethod targetMethod) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);

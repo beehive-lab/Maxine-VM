@@ -498,7 +498,7 @@ public class C1XTest {
         // configure the allocatable registers
         List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
         for (Register r : arch.registers) {
-            if (r != X86.rsp && r != MaxCiRuntime.globalRuntime.exceptionOopRegister()) {
+            if (r != X86.rsp && r != MaxCiRuntime.globalRuntime.threadRegister()) {
                 allocatable.add(r);
             }
         }

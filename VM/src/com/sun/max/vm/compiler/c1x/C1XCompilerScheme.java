@@ -20,38 +20,26 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.AbstractVMScheme;
-import com.sun.max.vm.runtime.VMRegister;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.stack.StackFrameWalker;
-import com.sun.max.vm.stack.StackUnwindingContext;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.compiler.ir.IrGenerator;
-import com.sun.max.vm.compiler.ir.IrMethod;
-import com.sun.max.vm.compiler.builtin.Builtin;
-import com.sun.max.vm.compiler.CompilerScheme;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.TargetABI;
-import com.sun.max.vm.compiler.target.RegisterRoleAssignment;
-import com.sun.max.annotate.PROTOTYPE_ONLY;
-import com.sun.max.PackageLoader;
-import com.sun.max.asm.InstructionSet;
-import com.sun.max.util.Symbol;
-import com.sun.max.collect.AppendableSequence;
-import com.sun.max.collect.Sequence;
-import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.Pointer;
-import com.sun.c1x.target.Target;
-import com.sun.c1x.target.Architecture;
-import com.sun.c1x.target.Register;
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-
-import java.util.*;
+import com.sun.c1x.target.*;
+import com.sun.max.*;
+import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
+import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * @author Ben L. Titzer
@@ -100,7 +88,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             // configure the allocatable registers
             List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
             for (Register r : arch.registers) {
-                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.exceptionOopRegister()) {
+                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.threadRegister()) {
                     allocatable.add(r);
                 }
             }
@@ -164,7 +152,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         CiTargetMethod compiledMethod = compiler.compileMethod(method);
         if (compiledMethod != null) {
 
-            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, compiledMethod);
+            C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);
             C1XTargetMethod targetMethod = generator.finish();
 
             if (MaxineVM.isPrototyping()) {
@@ -188,27 +176,21 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         ciTargetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
     }
 
+    @PROTOTYPE_ONLY
     public void initializeForJitCompilations() {
     }
 
+    @Override
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, StackFrameWalker.Purpose purpose, Object context) {
-        throw FatalError.unimplemented();
+        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
     }
 
-    public void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer) {
-        throw FatalError.unimplemented();
-    }
-
+    @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        throw FatalError.unimplemented();
-    }
-
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        throw new UnsupportedOperationException();
+        return stackPointer;
     }
 
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }
-
 }

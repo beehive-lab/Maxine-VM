@@ -206,4 +206,6 @@ public interface CiConstantPool {
      * @return a new exception handler object
      */
     CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
+
+    Object encoding();
 }

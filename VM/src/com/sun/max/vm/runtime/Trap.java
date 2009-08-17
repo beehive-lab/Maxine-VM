@@ -28,6 +28,7 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -72,6 +73,18 @@ public abstract class Trap {
 
         public static boolean isImplicitException(int trapNumber) {
             return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
+        }
+
+        public static Class<? extends Throwable> getImplicitExceptionClass(int trapNumber) {
+            if (trapNumber == ARITHMETIC_EXCEPTION) {
+                return ArithmeticException.class;
+            } else if (trapNumber == NULL_POINTER_EXCEPTION) {
+                return NullPointerException.class;
+            } else if (trapNumber == STACK_FAULT || trapNumber == STACK_FATAL) {
+                return StackOverflowError.class;
+            } else {
+                throw FatalError.unexpected("Should not be called, when there is no implicit exception that throws an exception object!");
+            }
         }
     }
 
@@ -184,8 +197,8 @@ public abstract class Trap {
                     break;
                 case STACK_FAULT:
                     // stack overflow
-                    raise(trapState, targetMethod, new StackOverflowError(), stackPointer, framePointer, instructionPointer);
-                    break; // unreachable
+                    raiseImplicitException(trapState, targetMethod, new StackOverflowError(), stackPointer, framePointer, instructionPointer);
+                    break; // unreachable, except when returning to a local exception handler
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
                     // TODO: deoptimization
@@ -193,7 +206,7 @@ public abstract class Trap {
                     break;
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-                    raise(trapState, targetMethod, new ArithmeticException(), stackPointer, framePointer, instructionPointer);
+                    raiseImplicitException(trapState, targetMethod, new ArithmeticException(), stackPointer, framePointer, instructionPointer);
                     break; // unreachable
                 case STACK_FATAL:
                     // fatal stack overflow
@@ -327,7 +340,7 @@ public abstract class Trap {
         } else if (inJava(disabledVmThreadLocals)) {
             trapStateAccess.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-            raise(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
+            raiseImplicitException(trapState, targetMethod, new NullPointerException(), stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             FatalError.unexpected("Trap in native code", true, null, trapState);
@@ -354,20 +367,27 @@ public abstract class Trap {
      * @param framePointer
      * @param instructionPointer
      */
-    private static void raise(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+
         if (targetMethod instanceof JitTargetMethod) {
-            Throw.raise(throwable, stackPointer, framePointer, instructionPointer);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         }
+
         final Address throwAddress = instructionPointer;
-        final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
+        final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
         if (!catchAddress.isZero()) {
-            if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-                trapStateAccess.setExceptionObject(trapState, throwable);
+            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+            trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
+            VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
+
+            if (throwable instanceof StackOverflowError) {
+                // This complete call-chain must be inlined down to the native call
+                // so that no further stack banging instructions
+                // are executed before execution jumps to the catch handler.
+                VirtualMemory.protectPage(VmThread.current().guardPage());
             }
         } else {
-            Throw.raise(throwable, stackPointer, framePointer, instructionPointer);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         }
     }
 }

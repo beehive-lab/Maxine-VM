@@ -127,7 +127,7 @@ public class ScopeData {
             exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
             for (CiExceptionHandler ch : handlers) {
                 ExceptionHandler h = new ExceptionHandler(ch);
-                h.setEntryBlock(blockAt(h.handlerBCI()));
+                h.setEntryBlock(blockAt(h.handler.handlerBCI()));
                 exceptionHandlers.add(h);
             }
             hasHandler = true;
@@ -167,7 +167,7 @@ public class ScopeData {
             exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
             for (ExceptionHandler ph : handlers) {
                 ExceptionHandler h = new ExceptionHandler(ph);
-                int handlerBci = h.handlerBCI();
+                int handlerBci = h.handler.handlerBCI();
                 if (handlerBci >= 0) {
                     // need to duplicate the handler block because it is a "normal" handler
                     h.setEntryBlock(blockAt(handlerBci));

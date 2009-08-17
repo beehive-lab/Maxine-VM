@@ -58,6 +58,7 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @param constantPool the actual constant pool contents
      */
     MaxCiConstantPool(MaxCiRuntime runtime, ConstantPool constantPool) {
+        //assert constantPool != null && runtime != null;
         this.runtime = runtime;
         this.constantPool = constantPool;
     }
@@ -427,6 +428,11 @@ public class MaxCiConstantPool implements CiConstantPool {
      * @return a compiler interface exception handler object
      */
     public CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-        return new MaxCiExceptionHandler(startBCI, endBCI, catchBCI, classCPI);
+        return new MaxCiExceptionHandler(startBCI, endBCI, catchBCI, classCPI, (classCPI == 0) ? null : resolveType((char) classCPI));
+    }
+
+    @Override
+    public Object encoding() {
+        return this.constantPool;
     }
 }

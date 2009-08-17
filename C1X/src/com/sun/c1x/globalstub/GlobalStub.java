@@ -42,13 +42,18 @@ public enum GlobalStub {
     f2l(Long, Float),
     d2i(Int, Double),
     d2l(Long, Double),
+    MonitorEnter(Void, Object, Int),
+    MonitorExit(Void, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
     ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
     ArithmeticDrem(Double, Double),
+    ResolveOptVirtualCall(Word, Int, Object),
+    ResolveStaticCall(Word, Int, Object),
     RetrieveInterfaceIndex(Int, Object, Int),
-    ResolveClass(Object, Int, Object);
+    ResolveClass(Object, Int, Object),
+    ResolveVTableIndex(Int, Int, Object);
 
     /**
      * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.

@@ -35,8 +35,8 @@ public class MonitorExitStub extends MonitorAccessStub {
     public final boolean computeLock;
     public final int monitorIx;
 
-    public MonitorExitStub(LIROperand lockReg, boolean computeLock, int monitorIx) {
-        super(LIROperandFactory.IllegalOperand, lockReg, null);
+    public MonitorExitStub(LIROperand objReg, LIROperand lockReg, boolean computeLock, int monitorIx) {
+        super(objReg, lockReg, null);
         this.computeLock = computeLock;
         this.monitorIx = monitorIx;
     }
@@ -48,7 +48,7 @@ public class MonitorExitStub extends MonitorAccessStub {
 
     @Override
     public void visit(LIRVisitState visitor) {
-        assert objReg.isIllegal() : "unused";
+        objReg = visitor.doInput(objReg);
         if (computeLock) {
             lockReg = visitor.doTemp(lockReg);
         } else {

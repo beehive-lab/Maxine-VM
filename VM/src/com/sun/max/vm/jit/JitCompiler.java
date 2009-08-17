@@ -30,7 +30,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Template based JIT compiler.
@@ -80,9 +79,4 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
     public Word createInitialITableEntry(int iIndex, VirtualMethodActor dynamicMethodActor) {
         return vmConfiguration().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
     }
-
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new StackUnwindingContext(throwable);
-    }
-
 }

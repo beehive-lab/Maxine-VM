@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
@@ -66,30 +67,66 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    public CiTargetMethod finishTargetMethod(CiRuntime runtime, int framesize) {
+    public CiTargetMethod finishTargetMethod(CiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList) {
 
-        final Buffer codeBuffer = this.codeBuffer;
-        final Buffer dataBuffer = this.dataBuffer;
+        // Install code, data and frame size
+        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
+        targetMethod.setData(dataBuffer.finished(), dataBuffer.position());
+        targetMethod.setFrameSize(framesize);
 
-        byte[] codeArray = codeBuffer.finished();
-        int codeSize = codeBuffer.position();
-        byte[] dataArray = dataBuffer.finished();
-        int dataSize = dataBuffer.position();
+        // Record exception handlers if existant
+        if (exceptionInfoList != null) {
+            for (ExceptionInfo ei : exceptionInfoList) {
+                int codeOffset = ei.codeOffset;
+                for (ExceptionHandler handler : ei.exceptionHandlers) {
+                    int entryOffset = handler.entryCodeOffset();
+                    CiType catchedType = handler.handler.catchKlass();
+                    targetMethod.recordExceptionHandler(codeOffset, entryOffset, catchedType);
+                }
+            }
+        }
 
         if (C1XOptions.PrintAssembly) {
 
-            Util.printBytes(codeArray, codeSize);
-
-            TTY.println("Disassembled code:");
-            TTY.println(runtime.disassemble(Arrays.copyOf(codeArray, codeSize)));
-
-            Util.printBytes(dataArray, dataSize);
+            Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Frame size: %d", framesize);
+            TTY.println("Register size: %d", targetMethod.registerSize);
+
+            Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
+            Util.printBytes("Code", targetMethod.targetCode, targetMethod.targetCodeSize, C1XOptions.BytesPerLine);
+
+            Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
+            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode, targetMethod.targetCodeSize)));
+
+            Util.printSection("Data", Util.SUB_SECTION_CHARACTER);
+            Util.printBytes("Data", targetMethod.data, targetMethod.dataSize, C1XOptions.BytesPerLine);
+
+            Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.SafepointRefMap x : targetMethod.safepointRefMaps) {
+                TTY.println(x.toString());
+            }
+
+            Util.printSection("Call Sites", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.CallSite x : targetMethod.callSites) {
+                TTY.println(x.toString());
+            }
+
+            Util.printSection("Data Patches", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.DataPatchSite x : targetMethod.dataPatchSites) {
+                TTY.println(x.toString());
+            }
+
+            Util.printSection("Reference Patches", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.RefPatchSite x : targetMethod.refPatchSites) {
+                TTY.println(x.toString());
+            }
+
+            Util.printSection("Exception Handlers", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.ExceptionHandler x : targetMethod.exceptionHandlers) {
+                TTY.println(x.toString());
+            }
         }
 
-        targetMethod.setTargetCode(codeArray, codeSize);
-        targetMethod.setData(dataArray, dataSize);
-        targetMethod.setFrameSize(framesize);
         return targetMethod;
     }
 
@@ -176,16 +213,16 @@ public abstract class AbstractAssembler {
         }
     }
 
-    protected void recordDataReferenceInCode(int pos, int dataOffset, boolean relative) {
+    protected void recordDataReferenceInCode(int pos, int dataOffset) {
 
         assert pos >= 0 && dataOffset >= 0;
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Object reference in code: pos = %d, dataOffset = %d, relative = %b", pos, dataOffset, relative);
+            TTY.print("Object reference in code: pos = %d, dataOffset = %d", pos, dataOffset);
         }
 
         if (targetMethod != null) {
-            targetMethod.recordDataReferenceInCode(pos, dataOffset, relative);
+            targetMethod.recordDataReferenceInCode(pos, dataOffset);
         }
     }
 
@@ -223,7 +260,7 @@ public abstract class AbstractAssembler {
     }
 
     private Address makeInternalAddress(int disp) {
-        recordDataReferenceInCode(codeBuffer.position(), disp, true);
+        recordDataReferenceInCode(codeBuffer.position(), disp);
         return Address.InternalRelocation;
     }
 

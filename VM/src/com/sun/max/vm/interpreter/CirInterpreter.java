@@ -23,8 +23,8 @@ package com.sun.max.vm.interpreter;
 import java.lang.reflect.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
@@ -51,24 +51,22 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
     }
 
     protected CirCall foldBuiltin(CirBuiltin cirBuiltin, CirValue[] cirArguments) {
-        if (MaxineVM.isPrototyping()) {
-            final Builtin builtin = cirBuiltin.builtin();
-            if (builtin instanceof PointerBuiltin) {
-                final Value[] arguments = CirRoutine.Static.cirArgumentsToValues(cirArguments);
-                final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
-                try {
-                    if (builtin instanceof PointerLoadBuiltin) {
-                        final PointerLoadBuiltin pointerLoadBuiltin = (PointerLoadBuiltin) builtin;
-                        return new CirCall(normalContinuation, new CirConstant(pointerLoad(pointerLoadBuiltin.resultKind(), arguments)));
-                    }
-                    final PointerStoreBuiltin pointerStoreBuiltin = (PointerStoreBuiltin) builtin;
-                    pointerStore(pointerStoreBuiltin.kind(), arguments);
-                    return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
-                } catch (Throwable throwable) {
-                    //TODO: catch only those exceptions that are caused by the interpreted CIR code
-                    final CirValue exceptionContinuation = cirArguments[cirArguments.length - 1];
-                    return new CirCall(exceptionContinuation, CirConstant.fromObject(throwable));
+        final Builtin builtin = cirBuiltin.builtin();
+        if (builtin instanceof PointerBuiltin) {
+            final Value[] arguments = CirRoutine.Static.cirArgumentsToValues(cirArguments);
+            final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
+            try {
+                if (builtin instanceof PointerLoadBuiltin) {
+                    final PointerLoadBuiltin pointerLoadBuiltin = (PointerLoadBuiltin) builtin;
+                    return new CirCall(normalContinuation, new CirConstant(pointerLoad(pointerLoadBuiltin.resultKind(), arguments)));
                 }
+                final PointerStoreBuiltin pointerStoreBuiltin = (PointerStoreBuiltin) builtin;
+                pointerStore(pointerStoreBuiltin.kind(), arguments);
+                return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
+            } catch (Throwable throwable) {
+                //TODO: catch only those exceptions that are caused by the interpreted CIR code
+                final CirValue exceptionContinuation = cirArguments[cirArguments.length - 1];
+                return new CirCall(exceptionContinuation, CirConstant.fromObject(throwable));
             }
         }
         try {
@@ -87,7 +85,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             Trace.line(3, "----------------- CIR interpretation:  -----------------");
             call.trace(3);
             CirValue procedure = call.procedure();
-            final CirValue[] arguments = call.arguments();
+            CirValue[] arguments = call.arguments();
             if (procedure instanceof CirConstant) {
                 final MethodID methodID = MethodID.fromWord(procedure.value().asWord());
                 final ClassMethodActor classMethodActor = (ClassMethodActor) MethodID.toMethodActor(methodID);
@@ -98,6 +96,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 try {
                     call = method.fold(cirOptimizer, arguments);
                 } catch (CirFoldingException cirFoldingException) {
+                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(cirFoldingException.getCause());
                     call = CirRoutine.Static.createExceptionCall(cirFoldingException.getCause(), arguments);
                 }
             } else if (procedure instanceof CirBuiltin) {

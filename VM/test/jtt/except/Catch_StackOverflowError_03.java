@@ -20,7 +20,9 @@
  */
 package jtt.except;
 
-/** Some basic checking of the stack trace produced after a StackOverflowError.
+/**
+ * Some basic checking of the stack trace produced after a StackOverflowError.
+ *
  * @author Paul Caprioli
  * @Harness: java
  * @Runs: 0 = 0;

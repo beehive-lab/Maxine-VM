@@ -21,6 +21,8 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiTargetMethod.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.collect.ByteArrayBitMap;
@@ -45,6 +47,7 @@ import java.util.List;
 public class C1XTargetMethodGenerator {
     private final C1XCompilerScheme compilerScheme;
     private final ClassMethodActor classMethodActor;
+    private final String stubName;
     private final CiTargetMethod ciTargetMethod;
     private int directCalls;
     private int indirectCalls;
@@ -58,9 +61,10 @@ public class C1XTargetMethodGenerator {
      * @param compilerScheme the compiler scheme that generated the method
      * @param classMethodActor the class method actor
      */
-    public C1XTargetMethodGenerator(C1XCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethodGenerator(C1XCompilerScheme compilerScheme, ClassMethodActor classMethodActor, String stubName, CiTargetMethod ciTargetMethod) {
         this.compilerScheme = compilerScheme;
         this.classMethodActor = classMethodActor;
+        this.stubName = stubName;
         this.ciTargetMethod = ciTargetMethod;
 
         directCalls = ciTargetMethod.directCalls();
@@ -81,15 +85,28 @@ public class C1XTargetMethodGenerator {
         final ByteArrayBitMap bitMap = new ByteArrayBitMap(refMaps);
         final Object[] refLiterals = new Object[refSize];
 
-        targetMethod = new C1XTargetMethod(classMethodActor, compilerScheme);
+        if (classMethodActor == null) {
+            targetMethod = new C1XTargetMethod(stubName, compilerScheme);
+        } else {
+            targetMethod = new C1XTargetMethod(classMethodActor, compilerScheme);
+        }
+
+        int[] exceptionPositionsToCatchPositions = new int[ciTargetMethod.exceptionHandlers.size() * 2];
+        ClassActor[] exceptionClassActors = new ClassActor[ciTargetMethod.exceptionHandlers.size()];
+
+        int z = 0;
+        for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
+            exceptionPositionsToCatchPositions[z * 2] = handler.codePos;
+            exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
+            exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxCiType) handler.exceptionType).classActor;
+            z++;
+        }
+
         Code.allocate(targetBundleLayout, targetMethod);
 
         Object[] directCallees = processCallSites(stopPositions, bitMap);
         processSafepoints(stopPositions, bitMap);
 
-        // TODO: encode exception handler information
-        int[] catchRangePositions = null;
-        int[] catchBlockPositions = null;
         // TODO: encode deopt info
         byte[] compressedJavaFrameDescriptors = null;
         byte[] encodedInlineDataDescriptors = null;
@@ -102,8 +119,8 @@ public class C1XTargetMethodGenerator {
         }
 
         targetMethod.setGenerated(
-            catchRangePositions,
-            catchBlockPositions,
+            exceptionPositionsToCatchPositions,
+            exceptionClassActors,
             stopPositions,
             compressedJavaFrameDescriptors,
             directCallees,

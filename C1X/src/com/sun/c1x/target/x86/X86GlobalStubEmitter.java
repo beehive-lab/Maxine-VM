@@ -97,8 +97,28 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.ResolveClass);
                 break;
 
+            case ResolveVTableIndex:
+                emitStandardForward(stub, CiRuntimeCall.ResolveVTableIndex);
+                break;
+
             case RetrieveInterfaceIndex:
                 emitStandardForward(stub, CiRuntimeCall.RetrieveInterfaceIndex);
+                break;
+
+            case ResolveOptVirtualCall:
+                emitStandardForward(stub, CiRuntimeCall.ResolveOptVirtualCall);
+                break;
+
+            case ResolveStaticCall:
+                emitStandardForward(stub, CiRuntimeCall.ResolveStaticCall);
+                break;
+
+            case MonitorEnter:
+                emitStandardForward(stub, CiRuntimeCall.Monitorenter);
+                break;
+
+            case MonitorExit:
+                emitStandardForward(stub, CiRuntimeCall.Monitorexit);
                 break;
 
             case f2i:
@@ -129,7 +149,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 throw Util.shouldNotReachHere();
         }
 
-        return asm.finishTargetMethod(runtime, frameSize);
+        return asm.finishTargetMethod(runtime, frameSize, null);
     }
 
     private void negatePrologue() {
@@ -170,10 +190,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private void emitD2L() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-// asm.ucomisd(convertArgument, asm.doubleConstant(Long.MAX_VALUE));
-// asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
-// asm.ucomisd(convertArgument, asm.doubleConstant(Long.MIN_VALUE));
-// asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
         asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
         convertEpilogue();
@@ -182,10 +198,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private void emitD2I() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-// asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MAX_VALUE));
-// asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
-// asm.ucomisd(convertArgument, asm.doubleConstant(Integer.MIN_VALUE));
-// asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
         asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
         asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
         convertEpilogue();
@@ -193,11 +205,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitF2L() {
         convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE); // asm.floatConstant(Integer.MIN_VALUE));
-// asm.ucomiss(convertArgument, asm.floatConstant(Long.MAX_VALUE));
-// asm.cmovq(Condition.greaterEqual, convertResult, asm.longConstant(Long.MAX_VALUE));
-// asm.ucomiss(convertArgument, asm.floatConstant(Long.MIN_VALUE));
-// asm.cmovq(Condition.lessEqual, convertResult, asm.longConstant(Long.MIN_VALUE));
+        asm.movl(convertResult, Integer.MIN_VALUE);
         asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
         asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
         convertEpilogue();
@@ -205,11 +213,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitF2I() {
         convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE); // , asm.floatConstant(Integer.MIN_VALUE));
-// asm.ucomiss(convertArgument, asm.floatConstant(Integer.MAX_VALUE));
-// asm.cmovl(Condition.greaterEqual, convertResult, asm.intConstant(Integer.MAX_VALUE));
-// asm.ucomiss(convertArgument, asm.floatConstant(Integer.MIN_VALUE));
-// asm.cmovl(Condition.lessEqual, convertResult, asm.intConstant(Integer.MIN_VALUE));
+        asm.movl(convertResult, Integer.MIN_VALUE);
         asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
         asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
         convertEpilogue();
