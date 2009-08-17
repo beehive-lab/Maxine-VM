@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -39,6 +38,10 @@ public class BlockMarker {
     static final int BLOCK_BACKWARD_TARGET = 2;
     static final int BLOCK_EXCEPTION_ENTRY = 4;
     static final int BLOCK_SUBROUTINE_ENTRY = 8;
+    static final int BLOCK_SUBROUTINE_RETURN = 16;
+    static final int PREDECESSOR_SHIFT = 5;
+    static final int PREDECESSOR_MASK = 0x1f;
+    static final int ONE_PREDECESSOR = 1 << PREDECESSOR_SHIFT;
 
     final byte[] code;
     final byte[] blockMap;
@@ -71,7 +74,7 @@ public class BlockMarker {
         // iterate over the bytecodes top to bottom, discovering the starts of basic blocks
         int bci = 0;
         byte[] code = this.code;
-        setEntry(0);
+        setEntry(0, BLOCK_START);
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
@@ -91,50 +94,41 @@ public class BlockMarker {
                 case Bytecodes.IF_ACMPNE: // fall through
                 case Bytecodes.IFNULL:    // fall through
                 case Bytecodes.IFNONNULL: {
-                    succ2(bci, bci + 3, bci + Bytes.beS2(code, bci + 1));
-                    bci += 3; // these are all 3 byte opcodes
+                    bci = branch(bci, bci + Bytes.beS2(code, bci + 1), bci + 3);
                     break;
                 }
 
                 case Bytecodes.GOTO: {
-                    succ1(bci, bci + Bytes.beS2(code, bci + 1));
-                    bci += 3; // goto is 3 bytes
+                    bci = jump(bci, bci + Bytes.beS2(code, bci + 1), bci + 3);
                     break;
                 }
 
                 case Bytecodes.GOTO_W: {
-                    succ1(bci, bci + Bytes.beS4(code, bci + 1));
-                    bci += 5; // goto_w is 5 bytes
+                    bci = jump(bci, bci + Bytes.beS4(code, bci + 1), bci + 5);
                     break;
                 }
 
                 case Bytecodes.JSR: {
-                    int target = bci + Bytes.beS2(code, bci + 1);
-                    succ2(bci, bci + 3, target);
-                    setSubroutineEntry(target);
-                    bci += 3; // jsr is 3 bytes
+                    bci = setSubroutineEntry(bci + Bytes.beS2(code, bci + 1), bci + 3);
                     break;
                 }
 
                 case Bytecodes.JSR_W: {
-                    int target = bci + Bytes.beS4(code, bci + 1);
-                    succ2(bci, bci + 5, target);
-                    setSubroutineEntry(target);
-                    bci += 5; // jsr_w is 5 bytes
+                    bci = setSubroutineEntry(bci + Bytes.beS4(code, bci + 1), bci + 5);
                     break;
                 }
 
                 case Bytecodes.TABLESWITCH: {
                     BytecodeSwitch sw = new BytecodeTableSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
-                    bci += sw.size();
+                    setEntry(bci += sw.size(), BLOCK_START);
                     break;
                 }
 
                 case Bytecodes.LOOKUPSWITCH: {
                     BytecodeSwitch sw = new BytecodeLookupSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
-                    bci += sw.size();
+                    setEntry(bci += sw.size(), BLOCK_START);
                     break;
                 }
                 case Bytecodes.WIDE: {
@@ -149,58 +143,82 @@ public class BlockMarker {
         }
     }
 
-    void setEntry(int bci) {
-        if (blockMap[bci] == 0) {
+    private void setEntry(int bci, int flags) {
+        byte prev = blockMap[bci];
+        if (prev == 0) {
+            // this is the first time the block has been marked
             numBlocks++;
-        }
-        blockMap[bci] |= BLOCK_START;
-    }
-
-    void setBackwardsBranchTarget(int bci) {
-        if (blockMap[bci] == 0) {
-            numBlocks++;
-        }
-        blockMap[bci] |= BLOCK_START | BLOCK_BACKWARD_TARGET;
-    }
-
-    void setExceptionEntry(int bci) {
-        if (blockMap[bci] == 0) {
-            numBlocks++;
-        }
-        blockMap[bci] |= BLOCK_START | BLOCK_EXCEPTION_ENTRY;
-    }
-
-    void setSubroutineEntry(int bci) {
-        if (blockMap[bci] == 0) {
-            numBlocks++;
-        }
-        blockMap[bci] |= BLOCK_START | BLOCK_SUBROUTINE_ENTRY;
-    }
-
-    void branch(int fromBCI, int toBCI) {
-        if (fromBCI >= toBCI) {
-            setBackwardsBranchTarget(toBCI);
+            blockMap[bci] = (byte) (flags | ONE_PREDECESSOR);
         } else {
-            setEntry(toBCI);
+            // block previously marked; add flag and increment predecessors
+            int nflags = prev | flags;
+            int pred = nflags >> PREDECESSOR_SHIFT;
+            if (++pred == 0) {
+                pred = 7;
+            }
+            blockMap[bci] = (byte) ((pred << PREDECESSOR_SHIFT) | (nflags & PREDECESSOR_MASK));
+        }
+    }
+
+    private void setExceptionEntry(int bci) {
+        setEntry(bci, BLOCK_EXCEPTION_ENTRY | BLOCK_START);
+    }
+
+    private int setSubroutineEntry(int bci, int nextBCI) {
+        setEntry(bci, BLOCK_SUBROUTINE_ENTRY | BLOCK_START);
+        setEntry(nextBCI, BLOCK_SUBROUTINE_RETURN | BLOCK_START);
+        return nextBCI;
+    }
+
+    private void set(int fromBCI, int toBCI) {
+        if (fromBCI >= toBCI) {
+            numBackwardEdges++;
+            setEntry(toBCI, BLOCK_BACKWARD_TARGET | BLOCK_START);
+        } else {
+            setEntry(toBCI, BLOCK_START);
         }
     }
 
     private void makeSwitchSuccessors(int bci, BytecodeSwitch tswitch) {
-        // make a list of all the successors of a switch
         int max = tswitch.numberOfCases();
-        ArrayList<BlockBegin> list = new ArrayList<BlockBegin>(max + 1);
         for (int i = 0; i < max; i++) {
-            branch(bci, tswitch.targetAt(i));
+            set(bci, tswitch.targetAt(i));
         }
-        branch(bci, tswitch.defaultTarget());
+        set(bci, tswitch.defaultTarget());
     }
 
-    void succ2(int bci, int s1, int s2) {
-        branch(bci, s1);
-        branch(bci, s2);
+    private int branch(int bci, int targetBCI, int nextBCI) {
+        set(bci, targetBCI);
+        setEntry(nextBCI, BLOCK_START);
+        return nextBCI;
     }
 
-    void succ1(int bci, int s1) {
-        branch(bci, s1);
+    private int jump(int bci, int targetBCI, int nextBCI) {
+        set(bci, targetBCI);
+        return nextBCI;
+    }
+
+    static boolean isBlockStart(int bci, byte[] blockMap) {
+        return blockMap[bci] != 0;
+    }
+
+    static boolean isBackwardBranchTarget(int bci, byte[] blockMap) {
+        return (blockMap[bci] & BLOCK_BACKWARD_TARGET) != 0;
+    }
+
+    static boolean isExceptionEntry(int bci, byte[] blockMap) {
+        return (blockMap[bci] & BLOCK_EXCEPTION_ENTRY) != 0;
+    }
+
+    static boolean isSubroutineEntry(int bci, byte[] blockMap) {
+        return (blockMap[bci] & BLOCK_SUBROUTINE_ENTRY) != 0;
+    }
+
+    static boolean isSubroutineReturn(int bci, byte[] blockMap) {
+        return (blockMap[bci] & BLOCK_SUBROUTINE_RETURN) != 0;
+    }
+
+    static int getPredecessorCount(int bci, byte[] blockMap) {
+        return (blockMap[bci] & 0xff) >> PREDECESSOR_SHIFT;
     }
 }

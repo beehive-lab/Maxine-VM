@@ -25,9 +25,9 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.Bailout;
+import com.sun.c1x.C1XMetrics;
 
 import java.util.List;
-import java.io.PrintStream;
 
 /**
  * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows
@@ -41,9 +41,6 @@ import java.io.PrintStream;
  * @author Ben L. Titzer
  */
 public class C0XCompilation {
-
-    private static final PrintStream out = System.out;
-    private static final boolean print = false;
 
     enum Condition {
         eql("=="),
@@ -74,6 +71,7 @@ public class C0XCompilation {
     class Register extends Location {
         final int num;
         final BasicType type;
+
         Register(int num, BasicType type) {
             this.num = num;
             this.type = type;
@@ -81,7 +79,7 @@ public class C0XCompilation {
 
         @Override
         public String toString() {
-            return "r" + num + ":" + type;
+            return "R" + num + ":" + type;
         }
     }
 
@@ -95,7 +93,7 @@ public class C0XCompilation {
 
         @Override
         public String toString() {
-            return "s" + index;
+            return index < maxLocals ? "L" + index : "S" + (index - maxLocals);
         }
     }
 
@@ -202,8 +200,18 @@ public class C0XCompilation {
     private FrameState initialFrameState() {
         FrameState frameState = new FrameState();
         // TODO: should initialize frame state from calling convention
-        for (int i = 0; i < maxLocals; i++) {
-            frameState.state[i] = frameState.memory[i] = new StackSlot(i);
+        int index = 0;
+        if (!method.isStatic()) {
+            frameState.state[index] = produce(BasicType.Object);
+            index = 1;
+        }
+        CiSignature sig = method.signatureType();
+        int max = sig.argumentCount(false);
+        for (int i = 0; i < max; i++) {
+            CiType type = sig.argumentTypeAt(i);
+            BasicType vt = type.basicType().stackType();
+            frameState.state[index] = produce(vt);
+            index += vt.sizeInSlots();
         }
         return frameState;
     }
@@ -257,13 +265,13 @@ public class C0XCompilation {
 
         emitBlockPrologue(bci);
 
-        if (isExceptionEntry(bci)) {
+        if (BlockMarker.isExceptionEntry(bci, blockMap)) {
             emitSafepoint(bci);
             emitExceptionLoad(bci);
             emitInstrumentation(bci);
         }
 
-        if (isBackwardBranchTarget(bci)) {
+        if (BlockMarker.isBackwardBranchTarget(bci, blockMap)) {
             emitSafepoint(bci);
             emitInstrumentation(bci);
         }
@@ -397,12 +405,12 @@ public class C0XCompilation {
                 case Bytecodes.LMUL           : // fall through
                 case Bytecodes.LDIV           : // fall through
                 case Bytecodes.LREM           : // fall through
-                case Bytecodes.LSHL           : // fall through
-                case Bytecodes.LSHR           : // fall through
-                case Bytecodes.LUSHR          : // fall through
                 case Bytecodes.LAND           : // fall through
                 case Bytecodes.LOR            : // fall through
                 case Bytecodes.LXOR           : longOp2(opcode); break;
+                case Bytecodes.LSHL           : // fall through
+                case Bytecodes.LSHR           : // fall through
+                case Bytecodes.LUSHR          : longShift(opcode); break;
                 case Bytecodes.LNEG           : longNeg(opcode); break;
                 case Bytecodes.FADD           : // fall through
                 case Bytecodes.FSUB           : // fall through
@@ -491,7 +499,7 @@ public class C0XCompilation {
 
             bci = stream.nextBCI();
             stream.next();
-            if (isBlockStart(bci)) {
+            if (BlockMarker.isBlockStart(bci, blockMap)) {
                 // fell through to the next block
                 enqueue(bci, currentState);
                 break;
@@ -502,12 +510,7 @@ public class C0XCompilation {
     }
 
     void recordBytecodeStart(int bci, int opcode) {
-        if (print) {
-            out.print(CTRL_LIGHTGRAY);
-            out.print("    " + Bytecodes.name(opcode) + " @ " + bci + " depth = " + (currentState.stackIndex - maxLocals));
-            out.println("");
-            out.print(CTRL_DEFAULT);
-        }
+        // printBytecodeStart(bci, opcode);
     }
 
     private void doUnknownBytecode(int bci, int opcode) {
@@ -673,23 +676,12 @@ public class C0XCompilation {
 
     void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {
         Location key = pop1();
-        emitSwitch("tableswitch", key, bytecodeTableSwitch);
+        // printSwitch("tableswitch", key, bytecodeTableSwitch);
     }
 
     void doLookupswitch(BytecodeLookupSwitch bytecodeLookupSwitch) {
         Location key = pop1();
-        emitSwitch("lookupswitch", key, bytecodeLookupSwitch);
-    }
-
-    void emitSwitch(String op, Location key, BytecodeSwitch sw) {
-        StringBuilder b = new StringBuilder(op);
-        b.append(" ").append(key).append(" ");
-        int max = sw.numberOfCases();
-        for (int i = 0; i < max; i++) {
-            b.append(sw.keyAt(i)).append(" -> ").append(sw.targetAt(i));
-        }
-        b.append("default -> ").append(sw.defaultTarget());
-        // printString(b.toString());
+        // printSwitch("lookupswitch", key, bytecodeLookupSwitch);
     }
 
     void doRet(int index) {
@@ -756,7 +748,7 @@ public class C0XCompilation {
         Location array = pop1();
         Location r = produce(basicType);
         // printOp(r, "array_load:" + basicType, array, index);
-        push1(r);
+        pushX(r, basicType);
     }
 
     void arrayStore(BasicType basicType) {
@@ -776,6 +768,14 @@ public class C0XCompilation {
 
     void longOp2(int opcode) {
         Location y = pop2();
+        Location x = pop2();
+        Location r = produce(BasicType.Long);
+        // printOp(r, "long." + Bytecodes.operator(opcode), x, y);
+        push2(r);
+    }
+
+    void longShift(int opcode) {
+        Location y = pop1();
         Location x = pop2();
         Location r = produce(BasicType.Long);
         // printOp(r, "long." + Bytecodes.operator(opcode), x, y);
@@ -834,6 +834,7 @@ public class C0XCompilation {
             CiType citype = (CiType) con;
             if (!citype.isLoaded()) {
                 Util.nonFatalUnimplemented("load of unresolved class");
+                push1(emitResolveClass(citype));
             } else {
                 push1(emitObject(citype.javaClass()));
             }
@@ -997,18 +998,6 @@ public class C0XCompilation {
         return currentState.state[--currentState.stackIndex];
     }
 
-    boolean isBlockStart(int bci) {
-        return blockMap[bci] != 0;
-    }
-
-    boolean isBackwardBranchTarget(int bci) {
-        return (blockMap[bci] & BlockMarker.BLOCK_BACKWARD_TARGET) != 0;
-    }
-
-    boolean isExceptionEntry(int bci) {
-        return (blockMap[bci] & BlockMarker.BLOCK_EXCEPTION_ENTRY) != 0;
-    }
-
     Location produce(BasicType basicType) {
         return new Register(regNum++, basicType);
     }
@@ -1068,53 +1057,18 @@ public class C0XCompilation {
         // printString(to + " = " + from);
     }
 
-    void printOp(Location r, String op, Location... locs) {
-        if (print) {
-            StringBuilder b = new StringBuilder();
-            if (r != null) {
-                b.append(r);
-                while (b.length() < 10) b.append(" ");
-                b.append(" = ");
-            }
-            b.append(op).append("(");
-            for (int i = 0; i < locs.length; i++) {
-                if (i > 0) {
-                    b.append(", ");
-                }
-                b.append(locs[i]);
-            }
-            b.append(")");
-            // printString(b.toString());
-        }
-    }
-
     private void emitPrologue() {
-        if (print) {
-            out.print(CTRL_RED);
-            String s = "====== " + method + " ";
-            out.print(s);
-            out.print(" locals: " + maxLocals + " stack: " + method.maxStackSize() + " ");
-            for (int i = s.length(); i < 100; i++) {
-                out.print('=');
-            }
-            out.print(CTRL_DEFAULT);
-            out.println("");
-        }
+        // printPrologue(method);
     }
 
     private void emitBlockPrologue(int bci) {
-        if (print) {
-            out.print(CTRL_YELLOW);
-            String s = "  === " + bci + " ";
-            out.print(s);
-            if (isBackwardBranchTarget(bci)) out.print("[bw] ");
-            if (isExceptionEntry(bci)) out.print("[ex] ");
-            for (int i = s.length(); i < 80; i++) {
-                out.print('=');
-            }
-            out.print(CTRL_DEFAULT);
-            out.println("");
-        }
+        // printBlockPrologue(this, bci);
+    }
+
+    Location emitResolveClass(CiType citype) {
+        Location r = produce(BasicType.Object);
+        // printOp(r, "resolve_class:" + citype);
+        return r;
     }
 
     Location emitBlockEndPC(int bci) {
@@ -1152,28 +1106,4 @@ public class C0XCompilation {
         // printString(r + " = object: " + val);
         return r;
     }
-
-    void unimplemented(String str, Object... params) {
-        Util.nonFatalUnimplemented(params);
-    }
-
-    void unimplemented(String str, int param) {
-        Util.nonFatalUnimplemented(param);
-    }
-
-    void printString(String str) {
-        if (print) {
-            out.print(CTRL_GREEN);
-            out.print("    " + str);
-            out.print(CTRL_DEFAULT);
-            out.println("");
-        }
-    }
-
-    private static final String CTRL_RED = "\u001b[0;31m";
-    private static final String CTRL_GREEN = "\u001b[0;32m";
-    private static final String CTRL_DEFAULT = "\u001b[1;00m";
-    private static final String CTRL_YELLOW = "\u001b[1;33m";
-    private static final String CTRL_LIGHTGRAY = "\u001b[0;37m";
-
 }
