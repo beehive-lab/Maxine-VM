@@ -20,43 +20,10 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.target.Target;
-
 /**
- * The <code>C0XCompiler</code> class definition.
+ * The <code>X86CodeGen</code> class definition.
  *
  * @author Ben L. Titzer
  */
-public class C0XCompiler extends CiCompiler {
-
-    public C0XCompiler(CiRuntime runtime, Target target) {
-        super(runtime, target);
-    }
-    /**
-     * Compile the specified method.
-     *
-     * @param method the method to compile
-     * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
-     */
-    @Override
-    public CiTargetMethod compileMethod(CiMethod method) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
-        comp.compile();
-        return null;
-    }
-
-    /**
-     * Compile the specified method.
-     *
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
-     */
-    @Override
-    public CiTargetMethod compileMethod(CiMethod method, int osrBCI) {
-        C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
-        comp.compile();
-        return null;
-    }
+public class X86CodeGen {
 }
