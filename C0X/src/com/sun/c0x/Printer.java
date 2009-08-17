@@ -54,7 +54,9 @@ public class Printer {
             StringBuilder b = new StringBuilder();
             if (r != null) {
                 b.append(r);
-                while (b.length() < 10) b.append(" ");
+                while (b.length() < 10) {
+                    b.append(" ");
+                }
                 b.append(" = ");
             }
             b.append(op).append("(");
@@ -108,8 +110,12 @@ public class Printer {
             out.print(CTRL_YELLOW);
             String s = "  === " + bci + " ";
             out.print(s);
-            if (BlockMarker.isBackwardBranchTarget(bci, compilation.blockMap)) out.print("[bw] ");
-            if (BlockMarker.isExceptionEntry(bci, compilation.blockMap)) out.print("[ex] ");
+            if (BlockMarker.isBackwardBranchTarget(bci, compilation.blockMap)) {
+                out.print("[bw] ");
+            }
+            if (BlockMarker.isExceptionEntry(bci, compilation.blockMap)) {
+                out.print("[ex] ");
+            }
             for (int i = s.length(); i < 80; i++) {
                 out.print('=');
             }

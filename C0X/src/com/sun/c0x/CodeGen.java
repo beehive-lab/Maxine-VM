@@ -47,6 +47,7 @@ public abstract class CodeGen {
     }
 
     abstract void genBreakpoint(int bci);
+
     abstract Location genNewMultiArray(CiType type, Location[] lengths);
 
     abstract Location genExtendedBytecode(CiBytecodeExtension.Bytecode extcode, Location[] args);

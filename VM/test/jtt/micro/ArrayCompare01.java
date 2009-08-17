@@ -25,9 +25,9 @@ package jtt.micro;
  * @Runs: 0 = true; 1 = false
  */
 public class ArrayCompare01 {
-    static final long[] a1 = { 1, 2, 3, -5 };
-    static final long[] a2 = { 1, 2, 3, -5 };
-    static final long[] a3 = { 1, 2, 4, -5 };
+    static final long[] a1 = {1, 2, 3, -5};
+    static final long[] a2 = {1, 2, 3, -5};
+    static final long[] a3 = {1, 2, 4, -5};
 
     public static boolean test(int arg) {
         if (arg == 0) {
