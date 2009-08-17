@@ -20,39 +20,26 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.AbstractVMScheme;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.StackFrameWalker;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.compiler.ir.IrGenerator;
-import com.sun.max.vm.compiler.ir.IrMethod;
-import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.compiler.builtin.Builtin;
-import com.sun.max.vm.compiler.CompilerScheme;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.TargetABI;
-import com.sun.max.vm.compiler.target.RegisterRoleAssignment;
-import com.sun.max.annotate.PROTOTYPE_ONLY;
-import com.sun.max.PackageLoader;
-import com.sun.max.asm.InstructionSet;
-import com.sun.max.util.Symbol;
-import com.sun.max.collect.AppendableSequence;
-import com.sun.max.collect.Sequence;
-import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.Pointer;
-import com.sun.c1x.target.Target;
-import com.sun.c1x.target.Architecture;
-import com.sun.c1x.target.Register;
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-
-import java.util.*;
+import com.sun.c1x.target.*;
+import com.sun.max.*;
+import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
+import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * @author Ben L. Titzer
@@ -205,11 +192,5 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
 
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
-    }
-
-    @Override
-    public void storeExceptionObject(Pointer trapState, Throwable throwable) {
-        // Save the exception object in a thread local
-        VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
     }
 }

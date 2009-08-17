@@ -26,7 +26,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.type.*;
 
@@ -87,18 +86,10 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
     private void emitTrapStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
         final int originalFrameSize = frameSize - AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
         int offset = originalFrameSize;
-
-        int rspOffset = -1;
-
         // restore all the general purpose registers
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
-
-            if (register == AMD64GeneralRegister64.RSP) {
-                rspOffset = offset;
-            } else {
-                // all registers are the same as when the trap occurred (except the frame pointer)
-                asm.mov(register, offset, framePointer.indirect());
-            }
+            // all registers are the same as when the trap occurred (except the frame pointer)
+            asm.mov(register, offset, framePointer.indirect());
             offset += Word.size();
         }
         // restore all the floating point registers
@@ -106,14 +97,6 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
             asm.movdq(register, offset, framePointer.indirect());
             offset += 2 * Word.size();
         }
-
-
-        if (rspOffset == -1) {
-            FatalError.unexpected("RSP should be a member of the general register set");
-        }
-
-        asm.mov(AMD64GeneralRegister64.RSP, rspOffset, framePointer.indirect());
-
         // now pop the flags register off the stack before returning
         asm.addq(framePointer, frameSize - Word.size());
         asm.popfq();

@@ -26,6 +26,7 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.transform.*;
@@ -119,11 +120,11 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
     private class Evaluator extends DirAdapter {
         private final DirMethod dirMethod;
-        private DirValue throwable = null;
         private DirValue result = null;
         private int instructionIndex = 0;
         private DirBlock block;
         private final Environment environment;
+        private Throwable throwable;
 
         Evaluator(DirMethod dirMethod, DirValue[] arguments) {
             this.dirMethod = dirMethod;
@@ -146,15 +147,14 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                 instructionIndex++;
                 instruction.acceptVisitor(this);
                 if (throwable != null) {
-                    throwable = environment.lookup(throwable);
                     if (instruction.catchBlock() != null) {
-                        environment.bind(instruction.catchBlock().catchParameter(), throwable);
-                        throwable = null;
+                        ExceptionDispatcher.INTERPRETER_EXCEPTION.set(throwable);
                         jump(instruction.catchBlock());
-                    } else {
-                        final Throwable cause = (Throwable) throwable.value().asObject();
                         throwable = null;
-                        throw new InvocationTargetException(cause);
+                    } else {
+                        InvocationTargetException invocationTargetException = new InvocationTargetException(throwable);
+                        throwable = null;
+                        throw invocationTargetException;
                     }
                 }
             }
@@ -210,12 +210,12 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                     try {
                         result = builtin.foldingMethodActor().invoke(arguments);
                     } catch (InvocationTargetException invocationTargetException) {
-                        throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
+                        throwable = invocationTargetException.getTargetException();
                         return;
                     }
                 }
             } catch (Throwable t) {
-                throwable = new DirConstant(ReferenceValue.from(t));
+                throwable = t;
                 return;
             }
             environment.bind(dirBuiltinCall.result(), new DirConstant(result));
@@ -247,7 +247,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
                     final Value result = classMethodActor.invoke(arguments);
                     environment.bind(dirMethodCall.result(), new DirConstant(result));
                 } catch (InvocationTargetException invocationTargetException) {
-                    throwable = new DirConstant(ReferenceValue.from(invocationTargetException.getTargetException()));
+                    throwable = invocationTargetException.getTargetException();
                     return;
                 } catch (IllegalAccessException illegalAccessException) {
                     ProgramError.unexpected("could not invoke method: " + classMethodActor);
@@ -295,7 +295,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitThrow(DirThrow dirThrow) {
-            throwable = dirThrow.throwable();
+            throwable = (Throwable) dirThrow.throwable().value().asObject();
         }
     }
 

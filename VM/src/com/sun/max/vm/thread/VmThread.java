@@ -112,12 +112,6 @@ public class VmThread {
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
-    /**
-     * The amount of stack required to {@linkplain #reprotectGuardPage(Throwable) reset} the
-     * {@linkplain #guardPage() guard page} after unwinding a stack while raising a {@code StackOverflowError}.
-     */
-    private static final int MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING = 200;
-
     private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
     private static final Size DEFAULT_STACK_SIZE = Size.M;
@@ -877,18 +871,6 @@ public class VmThread {
 
     public static int guardPageSize() {
         return VMConfiguration.target().platform().pageSize;
-    }
-
-    /**
-     * Determines if there is enough space left on this thread's stack to execute the code that resets the stack guard
-     * page.
-     *
-     * @param stackPointer the stack pointer that this thread's stack will be unwound to before executing the code that
-     *            resets the stack guard page
-     */
-    public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
-        final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
-        return limit.greaterThan(guardPageEnd());
     }
 
     /**

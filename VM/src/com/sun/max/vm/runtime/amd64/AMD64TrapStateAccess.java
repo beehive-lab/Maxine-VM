@@ -245,9 +245,4 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         }
         Log.print('}');
     }
-
-    @Override
-    public void setStackPointer(Pointer trapState, Pointer value) {
-        trapState.writeWord(STACK_POINTER_REGISTER.value() * Word.size(), value);
-    }
 }

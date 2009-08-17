@@ -113,7 +113,7 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
-        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable, Pointer.zero());
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         FatalError.unexpected("could not find top-level exception handler");
     }
 

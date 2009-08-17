@@ -20,8 +20,16 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -35,8 +43,42 @@ import com.sun.max.vm.type.*;
  */
 public class ExceptionDispatcher {
 
-   // private static final ClassMethodRefConstant reprotectGuardPage = PoolConstantFactory.createClassMethodConstant(Classes.getDeclaredMethod(Trap.class, "reprotectGuardPage", Throwable.class));
+    static final ClassMethodRefConstant safepointAndLoadExceptionObject = PoolConstantFactory.createClassMethodConstant(Classes.getDeclaredMethod(ExceptionDispatcher.class, "safepointAndLoadExceptionObject"));
+
     private final int position;
+
+    /**
+     * Thread local for passing the exception when interpreting with an {@link IrInterpreter}.
+     */
+    @PROTOTYPE_ONLY
+    public static final ThreadLocal<Throwable> INTERPRETER_EXCEPTION = new ThreadLocal<Throwable>() {
+        @Override
+        public void set(Throwable value) {
+            Throwable g = get();
+            assert value == null || g == null;
+            super.set(value);
+        }
+    };
+
+    /**
+     * Executes a safepoint and then gets the Throwable object from the
+     * {@link VmThreadLocal#EXCEPTION_OBJECT} thread local.
+     *
+     * This method is only annotated to be never inlined so that it does something different
+     * if being executed by an {@link IrInterpreter}.
+     */
+    @NEVER_INLINE
+    private static Throwable safepointAndLoadExceptionObject() {
+        if (MaxineVM.isPrototyping()) {
+            Throwable throwable = INTERPRETER_EXCEPTION.get();
+            INTERPRETER_EXCEPTION.set(null);
+            return throwable;
+        }
+        Safepoint.safepoint();
+        Throwable exception = UnsafeLoophole.cast(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(null);
+        return exception;
+    }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
         try {
@@ -50,11 +92,8 @@ public class ExceptionDispatcher {
 
 
     private void assemble(BytecodeAssembler assembler, ExceptionHandler handler) {
-
-       // assembler.dup();
-        //Before dispatching the exception handler always re-protect the guard page. In case of
-        //stack-overflow exception due to an access to the guard page, it has to be protected again.
-    //    assembler.invokestatic(reprotectGuardPage, 1, 0);
+        assembler.pop();
+        assembler.invokestatic(safepointAndLoadExceptionObject, 0, 1);
         ExceptionHandler h = handler;
         while (h != null) {
 

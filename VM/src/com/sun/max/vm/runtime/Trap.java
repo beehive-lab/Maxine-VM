@@ -32,7 +32,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -51,8 +50,6 @@ import com.sun.max.vm.thread.*;
  * @author Ben L. Titzer
  */
 public abstract class Trap {
-
-    private static int trapStubFrameSize = -1;
 
     /**
      * The numeric identifiers for the traps that can be handled by the VM. Note that these do not correspond with the
@@ -165,7 +162,6 @@ public abstract class Trap {
      */
     public static void initialize() {
         nativeTraceTrapVariable = nativeInitialize(trapStub.address());
-        trapStubFrameSize = trapStub.targetMethod().frameSize();
     }
 
     /**
@@ -202,7 +198,6 @@ public abstract class Trap {
                 case STACK_FAULT:
                     // stack overflow
                     raiseImplicitException(trapState, targetMethod, new StackOverflowError(), stackPointer, framePointer, instructionPointer);
-                    Trap.reprotectGuardPage();
                     break; // unreachable, except when returning to a local exception handler
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
@@ -225,22 +220,6 @@ public abstract class Trap {
             Log.println(", exiting.");
             FatalError.unexpected("Trap in native code or a runtime stub", true, null, trapState);
         }
-    }
-
-    /**
-     * Determines if a given exception is a {@link StackOverflowError} and resets the protection access of the guard page
-     * used to detect stack overflow. This method is called by each {@linkplain ExceptionDispatcher exception dispatcher}.
-     *
-     * @param throwable the exception being dispatched
-     */
-    private static void reprotectGuardPage(Throwable throwable) {
-        if (throwable instanceof StackOverflowError) {
-            reprotectGuardPage();
-        }
-    }
-
-    public static void reprotectGuardPage() {
-        VirtualMemory.protectPage(VmThread.current().guardPage());
     }
 
     /**
@@ -391,24 +370,24 @@ public abstract class Trap {
     private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
 
         if (targetMethod instanceof JitTargetMethod) {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable, trapState);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         }
 
         final Address throwAddress = instructionPointer;
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
         if (!catchAddress.isZero()) {
-            if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
+            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+            trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
+            VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
-                targetMethod.compilerScheme().storeExceptionObject(trapState, throwable);
+            if (throwable instanceof StackOverflowError) {
+                // This complete call-chain must be inlined down to the native call
+                // so that no further stack banging instructions
+                // are executed before execution jumps to the catch handler.
+                VirtualMemory.protectPage(VmThread.current().guardPage());
             }
         } else {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable, trapState);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
         }
-    }
-
-    public static int trapStubFrameSize() {
-        return trapStubFrameSize;
     }
 }
