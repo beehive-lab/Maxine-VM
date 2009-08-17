@@ -25,9 +25,10 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.BasicType;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.Bailout;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.target.Target;
 
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows
@@ -129,34 +130,50 @@ public class C0XCompilation {
         }
     }
 
-    final CiRuntime runtime;
-    final CiMethod method;
-    final CiBytecodeExtension extension;
-    CiConstantPool constantPool;
+    abstract class RegisterAllocator {
+        abstract Register allocate(BasicType basicType);
+        abstract Register allocate(int physNum, BasicType basicType);
+        abstract void release(Register r);
+        abstract void spill();
+
+        abstract void push(Location l);
+        abstract Location pop(boolean release);
+        abstract void push2(Location l);
+        abstract Location pop2(boolean release);
+    }
+
     final byte[] bytecode;
     byte[] blockMap;
+    final List<CiExceptionHandler> handlers;
+
+    final CiRuntime runtime;
+    final CiMethod method;
+    final Target target;
+    final CiBytecodeExtension extension;
+    CodeGen codeGen;
+    CiConstantPool constantPool;
     final BlockState[] blockState;
     final int maxLocals;
     final int maxStack;
-    final boolean hasHandler;
-    final List<CiExceptionHandler> handlers;
+    StackSlot[] stackSlots;
 
     Bailout bailout;
     FrameState currentState;
-    int[] queue = new int[3];
-    int queuePos;
+    int[] blockQueue = new int[3];
+    int blockQueuePos;
     int regNum;
 
-    public C0XCompilation(CiRuntime runtime, CiMethod method, CiBytecodeExtension extension) {
+    public C0XCompilation(CiRuntime runtime, CiMethod method, Target target, CiBytecodeExtension extension) {
         this.runtime = runtime;
         this.method = method;
+        this.target = target;
         this.extension = extension;
         this.bytecode = method.code();
         this.blockState = new BlockState[this.bytecode.length];
-        this.handlers = method.exceptionHandlers();
+        List<CiExceptionHandler> hlist = method.exceptionHandlers();
+        this.handlers = hlist == null || hlist.size() == 0 ? null : hlist;
         this.maxLocals = method.maxLocals();
         this.maxStack = method.maxStackSize();
-        this.hasHandler = method.isSynchronized() || handlers != null && handlers.size() > 0;
     }
 
     void compile() {
@@ -217,10 +234,10 @@ public class C0XCompilation {
     }
 
     int dequeue() {
-        if (queuePos <= 0) {
+        if (blockQueuePos <= 0) {
             return -1;
         }
-        return queue[--queuePos];
+        return blockQueue[--blockQueuePos];
     }
 
     FrameState enqueue(int bci, FrameState state) {
@@ -242,14 +259,10 @@ public class C0XCompilation {
     }
 
     private void enqueue(int bci) {
-        if (queue.length <= queuePos) {
-            int[] nqueue = new int[queue.length * 2];
-            for (int i = 0; i < queue.length; i++) {
-                nqueue[i] = queue[i];
-            }
-            queue = nqueue;
+        if (blockQueue.length <= blockQueuePos) {
+            blockQueue = Arrays.copyOf(blockQueue, blockQueue.length * 2);
         }
-        queue[queuePos++] = bci;
+        blockQueue[blockQueuePos++] = bci;
     }
 
     /**
@@ -286,7 +299,7 @@ public class C0XCompilation {
             recordBytecodeStart(bci, opcode);
 
             // check whether the bytecode can cause an exception
-            if (Bytecodes.canTrap(opcode) && hasHandler) {
+            if (Bytecodes.canTrap(opcode) && handlers != null) {
                 handleException(bci);
             }
 
@@ -312,7 +325,7 @@ public class C0XCompilation {
                 case Bytecodes.SIPUSH         : push1(emitInt(stream.readShort())); break;
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
-                case Bytecodes.LDC2_W         : loadConstant(stream.readCPI()); break;
+                case Bytecodes.LDC2_W         : doLoadConstant(stream.readCPI()); break;
                 case Bytecodes.ILOAD          : load1(stream.readLocalIndex()); break;
                 case Bytecodes.LLOAD          : load2(stream.readLocalIndex()); break;
                 case Bytecodes.FLOAD          : load1(stream.readLocalIndex()); break;
@@ -338,14 +351,14 @@ public class C0XCompilation {
                 case Bytecodes.ALOAD_1        : load1(1); break;
                 case Bytecodes.ALOAD_2        : load1(2); break;
                 case Bytecodes.ALOAD_3        : load1(3); break;
-                case Bytecodes.IALOAD         : arrayLoad(BasicType.Int   ); break;
-                case Bytecodes.LALOAD         : arrayLoad(BasicType.Long  ); break;
-                case Bytecodes.FALOAD         : arrayLoad(BasicType.Float ); break;
-                case Bytecodes.DALOAD         : arrayLoad(BasicType.Double); break;
-                case Bytecodes.AALOAD         : arrayLoad(BasicType.Object); break;
-                case Bytecodes.BALOAD         : arrayLoad(BasicType.Byte  ); break;
-                case Bytecodes.CALOAD         : arrayLoad(BasicType.Char  ); break;
-                case Bytecodes.SALOAD         : arrayLoad(BasicType.Short ); break;
+                case Bytecodes.IALOAD         : doArrayLoad(BasicType.Int   ); break;
+                case Bytecodes.LALOAD         : doArrayLoad(BasicType.Long  ); break;
+                case Bytecodes.FALOAD         : doArrayLoad(BasicType.Float ); break;
+                case Bytecodes.DALOAD         : doArrayLoad(BasicType.Double); break;
+                case Bytecodes.AALOAD         : doArrayLoad(BasicType.Object); break;
+                case Bytecodes.BALOAD         : doArrayLoad(BasicType.Byte  ); break;
+                case Bytecodes.CALOAD         : doArrayLoad(BasicType.Char  ); break;
+                case Bytecodes.SALOAD         : doArrayLoad(BasicType.Short ); break;
                 case Bytecodes.ISTORE         : store1(stream.readLocalIndex()); break;
                 case Bytecodes.LSTORE         : store2(stream.readLocalIndex()); break;
                 case Bytecodes.FSTORE         : store1(stream.readLocalIndex()); break;
@@ -371,14 +384,14 @@ public class C0XCompilation {
                 case Bytecodes.DSTORE_2       : store2(2); break;
                 case Bytecodes.LSTORE_3       : // fall through
                 case Bytecodes.DSTORE_3       : store2(3); break;
-                case Bytecodes.IASTORE        : arrayStore(BasicType.Int   ); break;
-                case Bytecodes.LASTORE        : arrayStore(BasicType.Long  ); break;
-                case Bytecodes.FASTORE        : arrayStore(BasicType.Float ); break;
-                case Bytecodes.DASTORE        : arrayStore(BasicType.Double); break;
-                case Bytecodes.AASTORE        : arrayStore(BasicType.Object); break;
-                case Bytecodes.BASTORE        : arrayStore(BasicType.Byte  ); break;
-                case Bytecodes.CASTORE        : arrayStore(BasicType.Char  ); break;
-                case Bytecodes.SASTORE        : arrayStore(BasicType.Short ); break;
+                case Bytecodes.IASTORE        : doArrayStore(BasicType.Int   ); break;
+                case Bytecodes.LASTORE        : doArrayStore(BasicType.Long  ); break;
+                case Bytecodes.FASTORE        : doArrayStore(BasicType.Float ); break;
+                case Bytecodes.DASTORE        : doArrayStore(BasicType.Double); break;
+                case Bytecodes.AASTORE        : doArrayStore(BasicType.Object); break;
+                case Bytecodes.BASTORE        : doArrayStore(BasicType.Byte  ); break;
+                case Bytecodes.CASTORE        : doArrayStore(BasicType.Char  ); break;
+                case Bytecodes.SASTORE        : doArrayStore(BasicType.Short ); break;
                 case Bytecodes.POP            : // fall through
                 case Bytecodes.POP2           : // fall through
                 case Bytecodes.DUP            : // fall through
@@ -387,7 +400,7 @@ public class C0XCompilation {
                 case Bytecodes.DUP2           : // fall through
                 case Bytecodes.DUP2_X1        : // fall through
                 case Bytecodes.DUP2_X2        : // fall through
-                case Bytecodes.SWAP           : stackOp(opcode); break;
+                case Bytecodes.SWAP           : doStackOp(opcode); break;
                 case Bytecodes.IADD           : // fall through
                 case Bytecodes.ISUB           : // fall through
                 case Bytecodes.IMUL           : // fall through
@@ -398,8 +411,8 @@ public class C0XCompilation {
                 case Bytecodes.IUSHR          : // fall through
                 case Bytecodes.IAND           : // fall through
                 case Bytecodes.IOR            : // fall through
-                case Bytecodes.IXOR           : intOp2(opcode); break;
-                case Bytecodes.INEG           : intNeg(opcode); break;
+                case Bytecodes.IXOR           : doIntOp2(opcode); break;
+                case Bytecodes.INEG           : doIntNeg(opcode); break;
                 case Bytecodes.LADD           : // fall through
                 case Bytecodes.LSUB           : // fall through
                 case Bytecodes.LMUL           : // fall through
@@ -407,44 +420,44 @@ public class C0XCompilation {
                 case Bytecodes.LREM           : // fall through
                 case Bytecodes.LAND           : // fall through
                 case Bytecodes.LOR            : // fall through
-                case Bytecodes.LXOR           : longOp2(opcode); break;
+                case Bytecodes.LXOR           : doLongOp2(opcode); break;
                 case Bytecodes.LSHL           : // fall through
                 case Bytecodes.LSHR           : // fall through
-                case Bytecodes.LUSHR          : longShift(opcode); break;
-                case Bytecodes.LNEG           : longNeg(opcode); break;
+                case Bytecodes.LUSHR          : doLongShift(opcode); break;
+                case Bytecodes.LNEG           : doLongNeg(opcode); break;
                 case Bytecodes.FADD           : // fall through
                 case Bytecodes.FSUB           : // fall through
                 case Bytecodes.FMUL           : // fall through
                 case Bytecodes.FDIV           : // fall through
-                case Bytecodes.FREM           : floatOp2(opcode); break;
-                case Bytecodes.FNEG           : floatNeg(opcode); break;
+                case Bytecodes.FREM           : doFloatOp2(opcode); break;
+                case Bytecodes.FNEG           : doFloatNeg(opcode); break;
                 case Bytecodes.DADD           : // fall through
                 case Bytecodes.DSUB           : // fall through
                 case Bytecodes.DMUL           : // fall through
                 case Bytecodes.DDIV           : // fall through
-                case Bytecodes.DREM           : doubleOp2(opcode); break;
-                case Bytecodes.DNEG           : doubleNeg(opcode); break;
-                case Bytecodes.IINC           : increment(stream.readLocalIndex()); break;
-                case Bytecodes.I2L            : convert(opcode, BasicType.Int   , BasicType.Long  ); break;
-                case Bytecodes.I2F            : convert(opcode, BasicType.Int   , BasicType.Float ); break;
-                case Bytecodes.I2D            : convert(opcode, BasicType.Int   , BasicType.Double); break;
-                case Bytecodes.L2I            : convert(opcode, BasicType.Long  , BasicType.Int   ); break;
-                case Bytecodes.L2F            : convert(opcode, BasicType.Long  , BasicType.Float ); break;
-                case Bytecodes.L2D            : convert(opcode, BasicType.Long  , BasicType.Double); break;
-                case Bytecodes.F2I            : convert(opcode, BasicType.Float , BasicType.Int   ); break;
-                case Bytecodes.F2L            : convert(opcode, BasicType.Float , BasicType.Long  ); break;
-                case Bytecodes.F2D            : convert(opcode, BasicType.Float , BasicType.Double); break;
-                case Bytecodes.D2I            : convert(opcode, BasicType.Double, BasicType.Int   ); break;
-                case Bytecodes.D2L            : convert(opcode, BasicType.Double, BasicType.Long  ); break;
-                case Bytecodes.D2F            : convert(opcode, BasicType.Double, BasicType.Float ); break;
-                case Bytecodes.I2B            : convert(opcode, BasicType.Int   , BasicType.Byte  ); break;
-                case Bytecodes.I2C            : convert(opcode, BasicType.Int   , BasicType.Char  ); break;
-                case Bytecodes.I2S            : convert(opcode, BasicType.Int   , BasicType.Short ); break;
-                case Bytecodes.LCMP           : compareOp(BasicType.Long, opcode); break;
-                case Bytecodes.FCMPL          : compareOp(BasicType.Float, opcode); break;
-                case Bytecodes.FCMPG          : compareOp(BasicType.Float, opcode); break;
-                case Bytecodes.DCMPL          : compareOp(BasicType.Double, opcode); break;
-                case Bytecodes.DCMPG          : compareOp(BasicType.Double, opcode); break;
+                case Bytecodes.DREM           : doDoubleOp2(opcode); break;
+                case Bytecodes.DNEG           : doDoubleNeg(opcode); break;
+                case Bytecodes.IINC           : doIncrement(stream.readLocalIndex()); break;
+                case Bytecodes.I2L            : doConvert(opcode, BasicType.Int   , BasicType.Long  ); break;
+                case Bytecodes.I2F            : doConvert(opcode, BasicType.Int   , BasicType.Float ); break;
+                case Bytecodes.I2D            : doConvert(opcode, BasicType.Int   , BasicType.Double); break;
+                case Bytecodes.L2I            : doConvert(opcode, BasicType.Long  , BasicType.Int   ); break;
+                case Bytecodes.L2F            : doConvert(opcode, BasicType.Long  , BasicType.Float ); break;
+                case Bytecodes.L2D            : doConvert(opcode, BasicType.Long  , BasicType.Double); break;
+                case Bytecodes.F2I            : doConvert(opcode, BasicType.Float , BasicType.Int   ); break;
+                case Bytecodes.F2L            : doConvert(opcode, BasicType.Float , BasicType.Long  ); break;
+                case Bytecodes.F2D            : doConvert(opcode, BasicType.Float , BasicType.Double); break;
+                case Bytecodes.D2I            : doConvert(opcode, BasicType.Double, BasicType.Int   ); break;
+                case Bytecodes.D2L            : doConvert(opcode, BasicType.Double, BasicType.Long  ); break;
+                case Bytecodes.D2F            : doConvert(opcode, BasicType.Double, BasicType.Float ); break;
+                case Bytecodes.I2B            : doConvert(opcode, BasicType.Int   , BasicType.Byte  ); break;
+                case Bytecodes.I2C            : doConvert(opcode, BasicType.Int   , BasicType.Char  ); break;
+                case Bytecodes.I2S            : doConvert(opcode, BasicType.Int   , BasicType.Short ); break;
+                case Bytecodes.LCMP           : doCompareOp(BasicType.Long, opcode); break;
+                case Bytecodes.FCMPL          : doCompareOp(BasicType.Float, opcode); break;
+                case Bytecodes.FCMPG          : doCompareOp(BasicType.Float, opcode); break;
+                case Bytecodes.DCMPL          : doCompareOp(BasicType.Double, opcode); break;
+                case Bytecodes.DCMPG          : doCompareOp(BasicType.Double, opcode); break;
                 case Bytecodes.IFEQ           : doIfZero(Condition.eql, stream.nextBCI(), stream.readBranchDest()); break bytecodeLoop;
                 case Bytecodes.IFNE           : doIfZero(Condition.neq, stream.nextBCI(), stream.readBranchDest()); break bytecodeLoop;
                 case Bytecodes.IFLT           : doIfZero(Condition.lss, stream.nextBCI(), stream.readBranchDest()); break bytecodeLoop;
@@ -475,24 +488,24 @@ public class C0XCompilation {
                 case Bytecodes.DRETURN        : doReturn(pop2()); break bytecodeLoop;
                 case Bytecodes.RETURN         : doReturn(null  ); break bytecodeLoop;
                 case Bytecodes.ATHROW         : doThrow(bci); break bytecodeLoop;
-                case Bytecodes.GETSTATIC      : getStatic(constantPool().lookupGetStatic(stream.readCPI())); break;
-                case Bytecodes.PUTSTATIC      : putStatic(constantPool().lookupPutStatic(stream.readCPI())); break;
-                case Bytecodes.GETFIELD       : getField(constantPool().lookupGetField(stream.readCPI())); break;
-                case Bytecodes.PUTFIELD       : putField(constantPool().lookupPutField(stream.readCPI())); break;
-                case Bytecodes.INVOKEVIRTUAL  : invokeVirtual(constantPool().lookupInvokeVirtual(stream.readCPI())); break;
-                case Bytecodes.INVOKESPECIAL  : invokeSpecial(constantPool().lookupInvokeSpecial(stream.readCPI())); break;
-                case Bytecodes.INVOKESTATIC   : invokeStatic(constantPool().lookupInvokeStatic(stream.readCPI())); break;
-                case Bytecodes.INVOKEINTERFACE: invokeInterface(constantPool().lookupInvokeInterface(stream.readCPI())); break;
-                case Bytecodes.NEW            : newInstance(stream.readCPI()); break;
-                case Bytecodes.NEWARRAY       : newTypeArray(stream.readLocalIndex()); break;
-                case Bytecodes.ANEWARRAY      : newObjectArray(stream.readCPI()); break;
-                case Bytecodes.ARRAYLENGTH    : arrayLength(); break;
-                case Bytecodes.CHECKCAST      : checkCast(stream.readCPI()); break;
-                case Bytecodes.INSTANCEOF     : instanceOf(stream.readCPI()); break;
-                case Bytecodes.MONITORENTER   : monitorEnter(bci); break;
-                case Bytecodes.MONITOREXIT    : monitorExit(bci); break;
-                case Bytecodes.MULTIANEWARRAY : newMultiArray(stream.readCPI(), stream.readUByte(bci + 3)); break;
-                case Bytecodes.BREAKPOINT     : breakpoint(bci); break;
+                case Bytecodes.GETSTATIC      : doGetStatic(constantPool().lookupGetStatic(stream.readCPI())); break;
+                case Bytecodes.PUTSTATIC      : doPutStatic(constantPool().lookupPutStatic(stream.readCPI())); break;
+                case Bytecodes.GETFIELD       : doGetField(constantPool().lookupGetField(stream.readCPI())); break;
+                case Bytecodes.PUTFIELD       : doPutField(constantPool().lookupPutField(stream.readCPI())); break;
+                case Bytecodes.INVOKEVIRTUAL  : doInvokeVirtual(constantPool().lookupInvokeVirtual(stream.readCPI())); break;
+                case Bytecodes.INVOKESPECIAL  : doInvokeSpecial(constantPool().lookupInvokeSpecial(stream.readCPI())); break;
+                case Bytecodes.INVOKESTATIC   : doInvokeStatic(constantPool().lookupInvokeStatic(stream.readCPI())); break;
+                case Bytecodes.INVOKEINTERFACE: doInvokeInterface(constantPool().lookupInvokeInterface(stream.readCPI())); break;
+                case Bytecodes.NEW            : doNewInstance(stream.readCPI()); break;
+                case Bytecodes.NEWARRAY       : doNewTypeArray(stream.readLocalIndex()); break;
+                case Bytecodes.ANEWARRAY      : doNewObjectArray(stream.readCPI()); break;
+                case Bytecodes.ARRAYLENGTH    : doArrayLength(); break;
+                case Bytecodes.CHECKCAST      : doCheckCast(stream.readCPI()); break;
+                case Bytecodes.INSTANCEOF     : doInstanceOf(stream.readCPI()); break;
+                case Bytecodes.MONITORENTER   : doMonitorEnter(bci); break;
+                case Bytecodes.MONITOREXIT    : doMonitorExit(bci); break;
+                case Bytecodes.MULTIANEWARRAY : doNewMultiArray(stream.readCPI(), stream.readUByte(bci + 3)); break;
+                case Bytecodes.BREAKPOINT     : doBreakpoint(bci); break;
                 default                       : doUnknownBytecode(bci, opcode); break;
             }
             // Checkstyle: resume
@@ -513,28 +526,6 @@ public class C0XCompilation {
         // printBytecodeStart(bci, opcode);
     }
 
-    private void doUnknownBytecode(int bci, int opcode) {
-        if (extension != null) {
-            CiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
-            if (extcode != null) {
-                doExtendedBytecode(extcode);
-                return;
-            }
-        }
-        throw Util.shouldNotReachHere();
-    }
-
-    private void doExtendedBytecode(CiBytecodeExtension.Bytecode extcode) {
-        Location[] args = popN(extcode.signatureType().argumentSlots(false));
-        BasicType retType = extcode.signatureType().returnBasicType();
-        Location r = pushZ(retType);
-        // printOp(r, "extension:" + extcode, args);
-    }
-
-    void breakpoint(int bci) {
-        // printString("breakpoint @" + bci);
-    }
-
     void emitInstrumentation(int bci) {
         // printString("block_counter @" + bci);
     }
@@ -550,309 +541,312 @@ public class C0XCompilation {
         // printString("safepoint @" + bci);
     }
 
-    void newMultiArray(char cpi, int rank) {
+    private void doUnknownBytecode(int bci, int opcode) {
+        if (extension != null) {
+            CiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
+            if (extcode != null) {
+                doExtendedBytecode(extcode);
+                return;
+            }
+        }
+        throw Util.shouldNotReachHere();
+    }
+
+    private void doExtendedBytecode(CiBytecodeExtension.Bytecode extcode) {
+        Location[] args = popN(extcode.signatureType().argumentSlots(false));
+        BasicType retType = extcode.signatureType().returnBasicType();
+        Location r = codeGen.genExtendedBytecode(extcode, args);
+        pushZ(r, retType);
+    }
+
+    private void doBreakpoint(int bci) {
+        codeGen.genBreakpoint(bci);
+    }
+
+    private void doNewMultiArray(char cpi, int rank) {
         CiType type = constantPool().lookupType(cpi);
         Location[] lengths = popN(rank);
-        Location r = produce(BasicType.Object);
-        // printOp(r, "multianewarray:" + type + rank, lengths);
+        Location r = codeGen.genNewMultiArray(type, lengths);
         push1(r);
     }
 
-    void monitorExit(int bci) {
+    private void doMonitorExit(int bci) {
         Location object = pop1();
-        // printOp(null, "monitorexit", object);
+        codeGen.genMonitorExit(object);
     }
 
-    void monitorEnter(int bci) {
+    private void doMonitorEnter(int bci) {
         Location object = pop1();
-        // printOp(null, "monitorenter", object);
+        codeGen.genMonitorEnter(object);
     }
 
-    void instanceOf(char cpi) {
+    private void doInstanceOf(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
-        Location r = produce(BasicType.Boolean);
-        // printOp(r, "instanceof:" + type, object);
+        Location r = codeGen.genInstanceOf(type, object);
         push1(r);
     }
 
-    void checkCast(char cpi) {
+    private void doCheckCast(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location object = pop1();
-        // printOp(object, "checkcast:" + type, object);
+        Location r = codeGen.genCheckCast(type, object);
         push1(object);
     }
 
-    void arrayLength() {
+    private void doArrayLength() {
         Location object = pop1();
-        Location r = produce(BasicType.Int);
-        // printOp(r, "arraylength", object);
+        Location r = codeGen.genArrayLength(object);
         push1(r);
     }
 
-    void newObjectArray(char cpi) {
+    private void doNewObjectArray(char cpi) {
         CiType type = constantPool().lookupType(cpi);
         Location length = pop1();
-        Location r = produce(BasicType.Object);
-        // printOp(r, "anewarray:" + type, length);
+        Location r = codeGen.genNewObjectArray(type, length);
         push1(r);
     }
 
-    void newTypeArray(int typeCode) {
+    private void doNewTypeArray(int typeCode) {
         BasicType elemType = BasicType.fromArrayTypeCode(typeCode);
         Location length = pop1();
-        Location r = produce(BasicType.Object);
-        // printOp(r, "newarray:" + elemType, length);
+        Location r = codeGen.genNewTypeArray(elemType, length);
         push1(r);
     }
 
-    void newInstance(char cpi) {
+    private void doNewInstance(char cpi) {
         CiType type = constantPool().lookupType(cpi);
-        Location r = produce(BasicType.Object);
-        // printOp(r, "new:" + type);
+        Location r = codeGen.genNewInstance(type);
         push1(r);
     }
 
-    void invokeInterface(CiMethod ciMethod) {
+    private void doInvokeInterface(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
         BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = pushZ(retType);
-        // printOp(r, "invokeinterface:" + ciMethod, args);
+        Location r = codeGen.genInvokeInterface(ciMethod, args);
+        pushZ(r, retType);
     }
 
-    void invokeStatic(CiMethod ciMethod) {
+    private void doInvokeStatic(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentSlots(false));
         BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = pushZ(retType);
-        // printOp(r, "invokestatic:" + ciMethod, args);
+        Location r = codeGen.genInvokeStatic(ciMethod, args);
+        pushZ(r, retType);
     }
 
-    void invokeSpecial(CiMethod ciMethod) {
+    private void doInvokeSpecial(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
         BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = pushZ(retType);
-        // printOp(r, "invokespecial:" + ciMethod, args);
+        Location r = codeGen.genInvokeSpecial(ciMethod, args);
+        pushZ(r, retType);
     }
 
-    void invokeVirtual(CiMethod ciMethod) {
+    private void doInvokeVirtual(CiMethod ciMethod) {
         Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
         BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = pushZ(retType);
-        // printOp(r, "invokevirtual:" + ciMethod, args);
+        Location r = codeGen.genInvokeVirtual(ciMethod, args);
+        pushZ(r, retType);
     }
 
-    void putField(CiField ciField) {
+    private void doPutField(CiField ciField) {
         Location object = pop1();
         Location value = popX(ciField.basicType());
-        // printOp(null, "putfield:" + ciField, object, value);
+        codeGen.genPutField(ciField, object, value);
     }
 
-    void getField(CiField ciField) {
+    private void doGetField(CiField ciField) {
         Location object = pop1();
-        Location r = produce(ciField.basicType());
-        pushX(r, ciField.basicType());
-        // printOp(r, "getfield:" + ciField, object);
-    }
-
-    void putStatic(CiField ciField) {
-        Location value = popX(ciField.basicType());
-        // printOp(null, "putstatic:" + ciField, value);
-    }
-
-    void getStatic(CiField ciField) {
-        Location r = produce(ciField.basicType());
-        // printOp(r, "getstatic:" + ciField);
+        Location r = codeGen.genGetField(ciField, object);
         pushX(r, ciField.basicType());
     }
 
-    void doThrow(int i) {
+    private void doPutStatic(CiField ciField) {
+        Location value = popX(ciField.basicType());
+        codeGen.getPutStatic(ciField, value);
+    }
+
+    void doGetStatic(CiField ciField) {
+        Location r = codeGen.genGetStatic(ciField);
+        pushX(r, ciField.basicType());
+    }
+
+    private void doThrow(int i) {
         Location thrown = pop1();
-        // printString("throw " + thrown);
+        codeGen.genThrow(thrown);
     }
 
-    void doReturn(Location value) {
-        // printString("return " + (value == null ? "" : value.toString()));
+    private void doReturn(Location value) {
+        codeGen.genReturn(value);
     }
 
-    void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {
+    private void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {
         Location key = pop1();
-        // printSwitch("tableswitch", key, bytecodeTableSwitch);
+        codeGen.genTableswitch(bytecodeTableSwitch, key);
     }
 
-    void doLookupswitch(BytecodeLookupSwitch bytecodeLookupSwitch) {
+    private void doLookupswitch(BytecodeLookupSwitch bytecodeLookupSwitch) {
         Location key = pop1();
-        // printSwitch("lookupswitch", key, bytecodeLookupSwitch);
+        codeGen.genLookupswitch(bytecodeLookupSwitch, key);
     }
 
-    void doRet(int index) {
+    private void doRet(int index) {
         Location r = currentState.state[index];
-        // printString("ret " + r);
+        codeGen.genRet(r);
     }
 
-    void doJsr(int bci, int targetBCI) {
-        push1(emitBlockEndPC(bci));
-        // printString("jsr -> " + targetBCI);
+    private void doJsr(int bci, int targetBCI) {
+        Location r = codeGen.genJsr(bci, targetBCI);
+        push1(r);
         enqueue(targetBCI, currentState);
     }
 
-    void doGoto(int bci, int targetBCI) {
-        // printString("goto -> " + targetBCI);
+    private void doGoto(int bci, int targetBCI) {
+        codeGen.genGoto(bci, targetBCI);
         enqueue(targetBCI, currentState);
     }
 
-    void doIfNull(Condition cond, int nextBCI, int targetBCI) {
+    private void doIfNull(Condition cond, int nextBCI, int targetBCI) {
         Location obj = pop1();
-        // printString("if(" + obj + " " + cond.operator + " null) -> " + targetBCI + " else -> " + nextBCI);
+        codeGen.genIfNull(cond, obj, nextBCI, targetBCI);
         FrameState nstate = enqueue(nextBCI, currentState);
         FrameState tstate = enqueue(targetBCI, currentState.copy());
     }
 
-    void doIfSame(BasicType basicType, Condition cond, int nextBCI, int targetBCI) {
+    private void doIfSame(BasicType basicType, Condition cond, int nextBCI, int targetBCI) {
         Location y = popX(basicType);
         Location x = popX(basicType);
-        // printString("if:" + basicType + "(" + x + " " + cond.operator + " " + y + ") -> " + targetBCI + " else -> " + nextBCI);
+        codeGen.genIfSame(cond, x, y, nextBCI, targetBCI);
         FrameState nstate = enqueue(nextBCI, currentState);
         FrameState tstate = enqueue(targetBCI, currentState.copy());
     }
 
-    void doIfZero(Condition condition, int nextBCI, int targetBCI) {
-        Location r = pop1();
-        // printString("if(" + r + " " + condition.operator + " 0) -> " + targetBCI + " else -> " + nextBCI);
+    private void doIfZero(Condition cond, int nextBCI, int targetBCI) {
+        Location val = pop1();
+        codeGen.genIfZero(cond, val, nextBCI, targetBCI);
         FrameState nstate = enqueue(nextBCI, currentState);
         FrameState tstate = enqueue(targetBCI, currentState.copy());
     }
 
-    void increment(int index) {
+    private void doIncrement(int index) {
         Location l = currentState.state[index];
-        Location r = produce(BasicType.Int);
-        // printOp(r, "inc", l);
+        Location r = codeGen.genIncrement(l);
+        currentState.state[index] = r;
     }
 
-    void compareOp(BasicType basicType, int opcode) {
+    private void doCompareOp(BasicType basicType, int opcode) {
         Location y = popX(basicType);
         Location x = popX(basicType);
-        Location r = produce(BasicType.Int);
-        // printOp(r, "compare:" + basicType, x, y);
+        Location r = codeGen.genCompareOp(basicType, opcode, x, y);
         push1(r);
     }
 
-    void convert(int opcode, BasicType from, BasicType to) {
+    private void doConvert(int opcode, BasicType from, BasicType to) {
         Location value = popX(from);
-        Location r = produce(to);
-        // printOp(r, "convert:" + from + ":" + to, value);
+        Location r = codeGen.genConvert(opcode, from, to, value);
         pushX(r, to);
     }
 
-    void arrayLoad(BasicType basicType) {
+    private void doArrayLoad(BasicType basicType) {
         Location index = pop1();
         Location array = pop1();
-        Location r = produce(basicType);
-        // printOp(r, "array_load:" + basicType, array, index);
+        Location r = codeGen.genArrayLoad(basicType, array, index);
         pushX(r, basicType);
     }
 
-    void arrayStore(BasicType basicType) {
+    private void doArrayStore(BasicType basicType) {
         Location value = popX(basicType);
         Location index = pop1();
         Location array = pop1();
-        // printOp(null, "array_store:" + basicType, array, index, value);
+        codeGen.genArrayStore(basicType, array, index, value);
     }
 
-    void intOp2(int opcode) {
+    private void doIntOp2(int opcode) {
         Location y = pop1();
         Location x = pop1();
-        Location r = produce(BasicType.Int);
-        // printOp(r, "int." + Bytecodes.operator(opcode), x, y);
+        Location r = codeGen.genIntOp2(opcode, x, y);
         push1(r);
     }
 
-    void longOp2(int opcode) {
+    private void doLongOp2(int opcode) {
         Location y = pop2();
         Location x = pop2();
-        Location r = produce(BasicType.Long);
-        // printOp(r, "long." + Bytecodes.operator(opcode), x, y);
+        Location r = codeGen.genLongOp2(opcode, x, y);
         push2(r);
     }
 
-    void longShift(int opcode) {
+    private void doLongShift(int opcode) {
         Location y = pop1();
         Location x = pop2();
-        Location r = produce(BasicType.Long);
-        // printOp(r, "long." + Bytecodes.operator(opcode), x, y);
+        Location r = codeGen.genLongOp2(opcode, x, y);
         push2(r);
     }
 
-    void floatOp2(int opcode) {
+    private void doFloatOp2(int opcode) {
         Location y = pop1();
         Location x = pop1();
-        Location r = produce(BasicType.Float);
-        // printOp(r, "float." + Bytecodes.operator(opcode), x, y);
+        Location r = codeGen.genFloatOp2(opcode, x, y);
         push1(r);
     }
 
-    void doubleOp2(int opcode) {
+    private void doDoubleOp2(int opcode) {
         Location y = pop2();
         Location x = pop2();
-        Location r = produce(BasicType.Double);
-        // printOp(r, "double." + Bytecodes.operator(opcode), x, y);
+        Location r = codeGen.genDoubleOp2(opcode, x, y);
         push2(r);
     }
 
-    void intNeg(int opcode) {
+    private void doIntNeg(int opcode) {
         Location x = pop1();
-        Location r = produce(BasicType.Int);
-        // printOp(r, "int.neg", x);
+        Location r = codeGen.genIntNeg(opcode, x);
         push1(r);
     }
 
-    void longNeg(int opcode) {
+    private void doLongNeg(int opcode) {
         Location x = pop2();
-        Location r = produce(BasicType.Long);
-        // printOp(r, "long.neg", x);
+        Location r = codeGen.genLongNeg(opcode, x);
         push2(r);
     }
 
-    void floatNeg(int opcode) {
+    private void doFloatNeg(int opcode) {
         Location x = pop1();
-        Location r = produce(BasicType.Float);
-        // printOp(r, "float.neg", x);
+        Location r = codeGen.genFloatNeg(opcode, x);
         push1(r);
     }
 
-    void doubleNeg(int opcode) {
+    private void doDoubleNeg(int opcode) {
         Location x = pop2();
-        Location r = produce(BasicType.Double);
-        // printOp(r, "double.neg", x);
+        Location r = codeGen.genDoubleNeg(opcode, x);
         push2(r);
     }
 
-    void loadConstant(int bci) {
+    private void doLoadConstant(int bci) {
         Object con = constantPool().lookupConstant((char) bci);
 
         if (con instanceof CiType) {
             // this is a load of class constant which might be unresolved
             CiType citype = (CiType) con;
+            Location r;
             if (!citype.isLoaded()) {
-                Util.nonFatalUnimplemented("load of unresolved class");
-                push1(emitResolveClass(citype));
+                r = codeGen.genResolveClass(citype);
             } else {
-                push1(emitObject(citype.javaClass()));
+                r = codeGen.genObjectConstant(citype.javaClass());
             }
+            push1(r);
             return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
             switch (constant.basicType.stackType()) {
-                case Int:    push1(emitInt(constant.asInt())); return;
-                case Long:   push2(emitLong(constant.asLong())); return;
-                case Float:  push1(emitFloat(constant.asFloat())); return;
-                case Double: push2(emitDouble(constant.asDouble())); return;
-                case Object: push1(emitObject(constant.asObject())); return;
+                case Int:    push1(codeGen.genIntConstant(constant.asInt())); return;
+                case Long:   push2(codeGen.genLongConstant(constant.asLong())); return;
+                case Float:  push1(codeGen.genFloatConstant(constant.asFloat())); return;
+                case Double: push2(codeGen.genDoubleConstant(constant.asDouble())); return;
+                case Object: push1(codeGen.genObjectConstant(constant.asObject())); return;
             }
         }
         throw new Error("lookupConstant returned an object of incorrect type");
     }
 
-    void stackOp(int opcode) {
+    private void doStackOp(int opcode) {
         switch (opcode) {
             case Bytecodes.POP: {
                 pop1();
@@ -970,6 +964,13 @@ public class C0XCompilation {
         return r;
     }
 
+    Location pushZ(Location r, BasicType retType) {
+        if (retType != BasicType.Void) {
+            pushX(r, retType);
+        }
+        return r;
+    }
+
     Location pop1() {
         return currentState.state[--currentState.stackIndex];
     }
@@ -1045,7 +1046,7 @@ public class C0XCompilation {
 
     void spill(FrameState state, int index, boolean kill) {
         // generate code to move the value from its current location into the stack
-        Location spillLocation = new StackSlot(index);
+        Location spillLocation = stackSlot(index);
         emitMove(state.state[index], spillLocation);
         if (kill) {
             // if we are killing values, then the new current location is on the stack
@@ -1071,39 +1072,34 @@ public class C0XCompilation {
         return r;
     }
 
-    Location emitBlockEndPC(int bci) {
-        Location r = produce(BasicType.Word);
-        // printOp(r, "block_end_pc @ " + bci);
-        return r;
-    }
-
     Location emitInt(int val) {
-        Location r = produce(BasicType.Int);
-        // printString(r + " = int: " + val);
-        return r;
+        return codeGen.genIntConstant(val);
     }
 
     Location emitLong(long val) {
-        Location r = produce(BasicType.Long);
-        // printString(r + " = long: " + val);
-        return r;
+        return codeGen.genLongConstant(val);
     }
 
     Location emitFloat(float val) {
-        Location r = produce(BasicType.Float);
-        // printString(r + " = float: " + val);
-        return r;
+        return codeGen.genFloatConstant(val);
     }
 
     Location emitDouble(double val) {
-        Location r = produce(BasicType.Double);
-        // printString(r + " = double: " + val);
-        return r;
+        return codeGen.genDoubleConstant(val);
     }
 
     Location emitObject(Object val) {
-        Location r = produce(BasicType.Object);
-        // printString(r + " = object: " + val);
-        return r;
+        return codeGen.genObjectConstant(val);
+    }
+
+    StackSlot stackSlot(int index) {
+        if (stackSlots == null) {
+            // initialize the stack slot array lazily
+            stackSlots = new StackSlot[maxLocals + maxStack];
+            for (int k = 0; k < stackSlots.length; k++) {
+                stackSlots[k] = new StackSlot(k);
+            }
+        }
+        return stackSlots[index];
     }
 }
