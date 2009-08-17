@@ -149,20 +149,9 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         model = new FocusTableModel();
         columns = new TableColumn[FocusColumnKind.VALUES.length()];
         columnModel = new FocusColumnModel();
-
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
+        configureDefaultTable(model, columnModel);
         setRowSelectionAllowed(false);
-        setColumnSelectionAllowed(false);
-        //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
     public void refresh(boolean force) {

@@ -43,6 +43,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
 
     private final RowSearchListener owner;
     private final RowTextSearcher searcher;
+    private final InspectorCheckBox regexpCheckBox;
     private final JTextField textField;
     private final Color textFieldDefaultBackground;
     private final JLabel statusLabel;
@@ -80,6 +81,16 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         setFloatable(false);
         setRollover(true);
         add(new TextLabel(inspection, "Search: "));
+
+        regexpCheckBox = new InspectorCheckBox(inspection, "regexp", "Treat search pattern as a regular expression?", false);
+        regexpCheckBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                processTextInput();
+            }
+        });
+        add(regexpCheckBox);
+
+        add(new TextLabel(inspection, "Pattern:"));
 
         textField = new JTextField();
         textField.setColumns(10);  // doesn't seem to have an effect
@@ -154,10 +165,16 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         } else {
             Pattern pattern;
             try {
-                pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
+                if (regexpCheckBox.isSelected()) {
+                    pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
+                } else {
+                    pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE + Pattern.LITERAL);
+                }
             } catch (PatternSyntaxException patternSyntaxException) {
                 textField.setBackground(style().searchFailedBackground());
                 statusLabel.setText("regexp error");
+                matchingRows = null;
+                owner.searchResult(matchingRows);
                 return;
             }
             matchingRows = searcher.search(pattern);

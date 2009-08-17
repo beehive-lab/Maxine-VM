@@ -24,7 +24,6 @@ import java.awt.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.prototype.*;
@@ -53,7 +52,7 @@ public class TypeLabel extends InspectorLabel {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
-                            MemoryInspector.create(inspection(), teleClassActor).highlight();
+                            actions().inspectObjectMemoryWords(teleClassActor, null).perform();
                         } else {
                             inspection().focus().setHeapObject(teleClassActor);
                         }
@@ -68,11 +67,7 @@ public class TypeLabel extends InspectorLabel {
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryAction = inspection().actions().inspectMemory(teleClassActor, "Inspect ClassActor memory");
-                    inspectMemoryAction.setEnabled(enabled);
-                    menu.add(inspectMemoryAction);
-
-                    final InspectorAction inspectMemoryWordsAction = inspection().actions().inspectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
+                    final InspectorAction inspectMemoryWordsAction = inspection().actions().inspectObjectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 

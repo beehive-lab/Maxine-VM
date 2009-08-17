@@ -30,7 +30,6 @@ import javax.swing.border.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -71,6 +70,12 @@ public abstract class ObjectInspector extends Inspector {
         return currentObjectOrigin;
     }
 
+    /**
+     * Cache of the most recent update to the frame title; needed
+     * in situations where the frame becomes unavailable.
+     */
+    private String title = null;
+
     private boolean showHeader;
     private boolean showAddresses;
     private boolean showOffsets;
@@ -100,25 +105,13 @@ public abstract class ObjectInspector extends Inspector {
     public void createFrame(InspectorMenu menu) {
         super.createFrame(menu);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection(), "Inspect object's memory") {
-            @Override
-            protected void procedure() {
-                MemoryInspector.create(inspection(), teleObject).highlight();
-            }
-        });
-        frame().menu().add(new InspectorAction(inspection(), "Inspect object's memory words") {
-            @Override
-            protected void procedure() {
-                MemoryWordInspector.create(inspection(), teleObject.getCurrentMemoryRegion()).highlight();
-            }
-        });
-        //frame().menu().add(actions().inspectMemoryWords(teleObject, "TEST: Inspect object's memory words"));
-
-        frame().menu().add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
-        frame().menu().addSeparator();
-        frame().menu().add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
-        frame().menu().add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
+        final InspectorMenu frameMenu = frame().menu();
+        frameMenu.addSeparator();
+        frameMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect object's memory"));
+        frameMenu.add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
+        frameMenu.addSeparator();
+        frameMenu.add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
+        frameMenu.add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
     }
 
     @Override
@@ -135,14 +128,13 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public final String getTextForTitle() {
-        Pointer pointer = teleObject.getCurrentOrigin();
         if (teleObject.isLive()) {
-            return pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+            Pointer pointer = teleObject.getCurrentOrigin();
+            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+            return title;
         }
-        if (getCurrentTitle().endsWith(" - got collected by GC")) {
-            return getCurrentTitle();
-        }
-        return getCurrentTitle() + " - got collected by GC";
+        // Use the last good title
+        return title + " - collected by GC";
     }
 
     @Override

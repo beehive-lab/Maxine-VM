@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
 public class DescriptorInspector extends ObjectInspector {
 
     private JTabbedPane tabbedPane;
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
@@ -60,7 +60,7 @@ public class DescriptorInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleDescriptor);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleDescriptor);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

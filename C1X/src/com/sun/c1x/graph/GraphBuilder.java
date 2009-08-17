@@ -476,7 +476,6 @@ public class GraphBuilder {
             } else {
                 push(BasicType.Object, append(Constant.forObject(citype.javaClass())));
             }
-            return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
             push(constant.basicType.stackType(), appendConstant(constant));
@@ -1869,9 +1868,7 @@ public class GraphBuilder {
                 case Bytecodes.LSTORE         : storeLocal(BasicType.Long, s.readLocalIndex()); break;
                 case Bytecodes.FSTORE         : storeLocal(BasicType.Float, s.readLocalIndex()); break;
                 case Bytecodes.DSTORE         : storeLocal(BasicType.Double, s.readLocalIndex()); break;
-                case Bytecodes.ASTORE         :
-                    storeLocal(BasicType.Object, s.readLocalIndex());
-                    break;
+                case Bytecodes.ASTORE         : storeLocal(BasicType.Object, s.readLocalIndex()); break;
                 case Bytecodes.ISTORE_0       : storeLocal(BasicType.Int, 0); break;
                 case Bytecodes.ISTORE_1       : storeLocal(BasicType.Int, 1); break;
                 case Bytecodes.ISTORE_2       : storeLocal(BasicType.Int, 2); break;
@@ -1888,18 +1885,10 @@ public class GraphBuilder {
                 case Bytecodes.DSTORE_1       : storeLocal(BasicType.Double, 1); break;
                 case Bytecodes.DSTORE_2       : storeLocal(BasicType.Double, 2); break;
                 case Bytecodes.DSTORE_3       : storeLocal(BasicType.Double, 3); break;
-                case Bytecodes.ASTORE_0       :
-                    storeLocal(BasicType.Object, 0);
-                    break;
-                case Bytecodes.ASTORE_1       :
-                    storeLocal(BasicType.Object, 1);
-                    break;
-                case Bytecodes.ASTORE_2       :
-                    storeLocal(BasicType.Object, 2);
-                    break;
-                case Bytecodes.ASTORE_3       :
-                    storeLocal(BasicType.Object, 3);
-                    break;
+                case Bytecodes.ASTORE_0       : storeLocal(BasicType.Object, 0); break;
+                case Bytecodes.ASTORE_1       : storeLocal(BasicType.Object, 1); break;
+                case Bytecodes.ASTORE_2       : storeLocal(BasicType.Object, 2); break;
+                case Bytecodes.ASTORE_3       : storeLocal(BasicType.Object, 3); break;
                 case Bytecodes.IASTORE        : storeIndexed(BasicType.Int   ); break;
                 case Bytecodes.LASTORE        : storeIndexed(BasicType.Long  ); break;
                 case Bytecodes.FASTORE        : storeIndexed(BasicType.Float ); break;
@@ -1917,41 +1906,41 @@ public class GraphBuilder {
                 case Bytecodes.DUP2_X1        : // fall through
                 case Bytecodes.DUP2_X2        : // fall through
                 case Bytecodes.SWAP           : stackOp(opcode); break;
-                case Bytecodes.IADD           : arithmeticOp(BasicType.Int, opcode); break;
-                case Bytecodes.LADD           : arithmeticOp(BasicType.Long, opcode); break;
-                case Bytecodes.FADD           : arithmeticOp(BasicType.Float, opcode); break;
-                case Bytecodes.DADD           : arithmeticOp(BasicType.Double, opcode); break;
-                case Bytecodes.ISUB           : arithmeticOp(BasicType.Int, opcode); break;
-                case Bytecodes.LSUB           : arithmeticOp(BasicType.Long, opcode); break;
-                case Bytecodes.FSUB           : arithmeticOp(BasicType.Float, opcode); break;
-                case Bytecodes.DSUB           : arithmeticOp(BasicType.Double, opcode); break;
+                case Bytecodes.IADD           : // fall through
+                case Bytecodes.ISUB           : // fall through
                 case Bytecodes.IMUL           : arithmeticOp(BasicType.Int, opcode); break;
-                case Bytecodes.LMUL           : arithmeticOp(BasicType.Long, opcode); break;
-                case Bytecodes.FMUL           : arithmeticOp(BasicType.Float, opcode); break;
-                case Bytecodes.DMUL           : arithmeticOp(BasicType.Double, opcode); break;
-                case Bytecodes.IDIV           : arithmeticOp(BasicType.Int, opcode, lockStack()); break;
-                case Bytecodes.LDIV           : arithmeticOp(BasicType.Long, opcode, lockStack()); break;
-                case Bytecodes.FDIV           : arithmeticOp(BasicType.Float, opcode); break;
-                case Bytecodes.DDIV           : arithmeticOp(BasicType.Double, opcode); break;
+                case Bytecodes.IDIV           : // fall through
                 case Bytecodes.IREM           : arithmeticOp(BasicType.Int, opcode, lockStack()); break;
+                case Bytecodes.LADD           : // fall through
+                case Bytecodes.LSUB           : // fall through
+                case Bytecodes.LMUL           : arithmeticOp(BasicType.Long, opcode); break;
+                case Bytecodes.LDIV           : // fall through
                 case Bytecodes.LREM           : arithmeticOp(BasicType.Long, opcode, lockStack()); break;
+                case Bytecodes.FADD           : // fall through
+                case Bytecodes.FSUB           : // fall through
+                case Bytecodes.FMUL           : // fall through
+                case Bytecodes.FDIV           : // fall through
                 case Bytecodes.FREM           : arithmeticOp(BasicType.Float, opcode); break;
+                case Bytecodes.DADD           : // fall through
+                case Bytecodes.DSUB           : // fall through
+                case Bytecodes.DMUL           : // fall through
+                case Bytecodes.DDIV           : // fall through
                 case Bytecodes.DREM           : arithmeticOp(BasicType.Double, opcode); break;
                 case Bytecodes.INEG           : negateOp(BasicType.Int); break;
                 case Bytecodes.LNEG           : negateOp(BasicType.Long); break;
                 case Bytecodes.FNEG           : negateOp(BasicType.Float); break;
                 case Bytecodes.DNEG           : negateOp(BasicType.Double); break;
-                case Bytecodes.ISHL           : shiftOp(BasicType.Int, opcode); break;
-                case Bytecodes.LSHL           : shiftOp(BasicType.Long, opcode); break;
-                case Bytecodes.ISHR           : shiftOp(BasicType.Int, opcode); break;
-                case Bytecodes.LSHR           : shiftOp(BasicType.Long, opcode); break;
+                case Bytecodes.ISHL           : // fall through
+                case Bytecodes.ISHR           : // fall through
                 case Bytecodes.IUSHR          : shiftOp(BasicType.Int, opcode); break;
-                case Bytecodes.LUSHR          : shiftOp(BasicType.Long, opcode); break;
-                case Bytecodes.IAND           : logicOp(BasicType.Int, opcode); break;
-                case Bytecodes.LAND           : logicOp(BasicType.Long, opcode); break;
-                case Bytecodes.IOR            : logicOp(BasicType.Int, opcode); break;
-                case Bytecodes.LOR            : logicOp(BasicType.Long, opcode); break;
+                case Bytecodes.IAND           : // fall through
+                case Bytecodes.IOR            : // fall through
                 case Bytecodes.IXOR           : logicOp(BasicType.Int, opcode); break;
+                case Bytecodes.LSHL           : // fall through
+                case Bytecodes.LSHR           : // fall through
+                case Bytecodes.LUSHR          : shiftOp(BasicType.Long, opcode); break;
+                case Bytecodes.LAND           : // fall through
+                case Bytecodes.LOR            : // fall through
                 case Bytecodes.LXOR           : logicOp(BasicType.Long, opcode); break;
                 case Bytecodes.IINC           : increment(); break;
                 case Bytecodes.I2L            : convert(opcode, BasicType.Int   , BasicType.Long  ); break;

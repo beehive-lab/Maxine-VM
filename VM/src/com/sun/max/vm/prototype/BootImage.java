@@ -185,7 +185,6 @@ public class BootImage {
         public final int codeCacheSize;
 
         public final int heapRegionsPointerOffset;
-        public final int codeRegionsPointerOffset;
 
         public final int auxiliarySpaceSize;
 
@@ -257,7 +256,6 @@ public class BootImage {
             codeCacheSize = endian.readInt(dataInputStream);
 
             heapRegionsPointerOffset = endian.readInt(dataInputStream);
-            codeRegionsPointerOffset = endian.readInt(dataInputStream);
 
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
@@ -309,7 +307,6 @@ public class BootImage {
             codeCacheSize = CodeManager.CODE_CACHE_SIZE;
 
             heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
-            codeRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, Code.class, "memoryRegions");
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
 

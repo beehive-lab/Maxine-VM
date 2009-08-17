@@ -49,11 +49,11 @@ public final class HubInspector extends ObjectInspector {
     private boolean showMTables;
     private boolean showRefMaps;
 
-    private ObjectPane fieldsPane;
-    private ObjectPane vTablePane;
-    private ObjectPane iTablePane;
-    private ObjectPane mTablePane;
-    private ObjectPane refMapPane;
+    private ObjectScrollPane fieldsPane;
+    private ObjectScrollPane vTablePane;
+    private ObjectScrollPane iTablePane;
+    private ObjectScrollPane mTablePane;
+    private ObjectScrollPane refMapPane;
 
     private final InspectorMenuItems classMethodInspectorMenuItems;
 
@@ -136,35 +136,35 @@ public final class HubInspector extends ObjectInspector {
 
         panel.add(toolBar);
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleHub);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleHub);
         showFieldsCheckBox.setEnabled(true);
         if (showFieldsCheckBox.isSelected()) {
             fieldsPane.setBorder(style().defaultPaneTopBorder());
             panel.add(fieldsPane);
         }
 
-        vTablePane = ObjectPane.createVTablePane(this, teleHub);
+        vTablePane = ObjectScrollPane.createVTablePane(this, teleHub);
         showVTableCheckBox.setEnabled(vTablePane != null);
         if (vTablePane != null && showVTableCheckBox.isSelected()) {
             vTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(vTablePane);
         }
 
-        iTablePane = ObjectPane.createITablePane(this, teleHub);
+        iTablePane = ObjectScrollPane.createITablePane(this, teleHub);
         showITableCheckBox.setEnabled(iTablePane != null);
         if (iTablePane != null && showITableCheckBox.isSelected()) {
             iTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(iTablePane);
         }
 
-        mTablePane = ObjectPane.createMTablePane(this, teleHub);
+        mTablePane = ObjectScrollPane.createMTablePane(this, teleHub);
         showMTableCheckBox.setEnabled(mTablePane != null);
         if (mTablePane != null && showMTableCheckBox.isSelected()) {
             mTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(mTablePane);
         }
 
-        refMapPane = ObjectPane.createRefMapPane(this, teleHub);
+        refMapPane = ObjectScrollPane.createRefMapPane(this, teleHub);
         showRefMapCheckBox.setEnabled(refMapPane != null);
         if (refMapPane != null && showRefMapCheckBox.isSelected()) {
             refMapPane.setBorder(style().defaultPaneTopBorder());

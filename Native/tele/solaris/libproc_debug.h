@@ -29,7 +29,6 @@
 #ifndef LIBPROC_DEBUG_H
 #define LIBPROC_DEBUG_H
 
-#include "threads.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <synch.h>
@@ -172,6 +171,27 @@ struct ps_prochandle {
     uint_t  ucnelems;   /* number of elements in the ucaddrs list */
     char    *zoneroot;  /* cached path to zone root */
 };
+
+struct ps_lwphandle {
+    struct ps_prochandle *lwp_proc; /* process to which this lwp belongs */
+    struct ps_lwphandle *lwp_hash;  /* hash table linked list */
+    lwpstatus_t lwp_status; /* status when stopped */
+    lwpsinfo_t  lwp_psinfo; /* lwpsinfo_t from last Lpsinfo() */
+    lwpid_t     lwp_id;     /* lwp identifier */
+    int     lwp_state;  /* state of the lwp, see "libproc.h" */
+    uint_t      lwp_flags;  /* SETHOLD and/or SETREGS */
+    int     lwp_ctlfd;  /* /proc/<pid>/lwp/<lwpid>/lwpctl */
+    int     lwp_statfd; /* /proc/<pid>/lwp/<lwpid>/lwpstatus */
+};
+
+
+void print_lwpstatus(struct lwpstatus *status);
+
+void print_pstatus(pstatus_t *status, char *name);
+
+void print_lwphandle(struct ps_lwphandle *lwp, int i);
+
+void print_ps_prochandle(struct ps_prochandle *ps);
 
 void statloc_eval(int statloc);
 

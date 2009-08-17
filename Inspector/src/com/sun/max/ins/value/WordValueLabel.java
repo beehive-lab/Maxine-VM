@@ -344,7 +344,7 @@ public class WordValueLabel extends ValueLabel {
             setFont(style().wordAlternateTextFont());
             setForeground(style().wordInvalidDataColor());
             setText("void");
-            setToolTipText("Location not in allocated regions");
+            setToolTipText("Unable to read value");
             if (parent != null) {
                 parent.repaint();
             }
@@ -717,44 +717,6 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
-    private InspectorAction getInspectMemoryAction(Value value) {
-        InspectorAction action = null;
-        if (value != VoidValue.VOID) {
-            final Address address = value.toWord().asAddress();
-            switch (displayMode) {
-                case INVALID_OBJECT_REFERENCE:
-                case UNCHECKED_REFERENCE:
-                case OBJECT_REFERENCE:
-                case OBJECT_REFERENCE_TEXT:
-                case STACK_LOCATION:
-                case  STACK_LOCATION_TEXT:
-                case CALL_ENTRY_POINT:
-                case CALL_ENTRY_POINT_TEXT:
-                case CALL_RETURN_POINT:
-                case CALL_RETURN_POINT_TEXT:
-                case UNCHECKED_CALL_POINT: {
-                    action = inspection().actions().inspectMemory(address, null);
-                    break;
-                }
-                case WORD:
-                case NULL:
-                case CLASS_ACTOR_ID:
-                case CLASS_ACTOR:
-                case FLAGS:
-                case DECIMAL:
-                case FLOAT:
-                case DOUBLE:
-                case UNCHECKED_WORD:
-                case INVALID: {
-                    if (maxVM().contains(address)) {
-                        action = inspection().actions().inspectMemory(address, null);
-                    }
-                    break;
-                }
-            }
-        }
-        return action;
-    }
 
     private InspectorAction getInspectMemoryWordsAction(Value value) {
         InspectorAction action = null;
@@ -763,8 +725,6 @@ public class WordValueLabel extends ValueLabel {
             switch (displayMode) {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
-                case OBJECT_REFERENCE:
-                case OBJECT_REFERENCE_TEXT:
                 case STACK_LOCATION:
                 case  STACK_LOCATION_TEXT:
                 case CALL_ENTRY_POINT:
@@ -773,6 +733,15 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
                     action = inspection().actions().inspectMemoryWords(address, null);
+                    break;
+                }
+                case OBJECT_REFERENCE:
+                case OBJECT_REFERENCE_TEXT: {
+                    if (teleObject != null) {
+                        action = inspection().actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                    } else {
+                        action = inspection().actions().inspectMemoryWords(address, null);
+                    }
                     break;
                 }
                 case WORD:
@@ -849,33 +818,19 @@ public class WordValueLabel extends ValueLabel {
         private final MenuToggleDisplayAction menuToggleDisplayAction;
 
 
-        private final class MenuInspectMemoryAction extends InspectorAction {
-
-            private final InspectorAction inspectMemoryAction;
-
-            private MenuInspectMemoryAction(Value value) {
-                super(inspection(), "Inspect memory");
-                inspectMemoryAction = getInspectMemoryAction(value);
-                setEnabled(inspectMemoryAction != null);
-            }
-
-            @Override
-            public void procedure() {
-                inspectMemoryAction.perform();
-            }
-        }
-
-        private final MenuInspectMemoryAction menuInspectMemoryAction;
-
-
         private final class MenuInspectMemoryWordsAction extends InspectorAction {
 
             private final InspectorAction inspectMemoryWordsAction;
 
             private MenuInspectMemoryWordsAction(Value value) {
-                super(inspection(), "Inspect memory words");
+                super(inspection(), "Inspect memory");
                 inspectMemoryWordsAction = getInspectMemoryWordsAction(value);
-                setEnabled(inspectMemoryWordsAction != null);
+                if (inspectMemoryWordsAction == null) {
+                    setEnabled(false);
+                } else {
+                    setName(inspectMemoryWordsAction.name());
+                    setEnabled(true);
+                }
             }
 
             @Override
@@ -914,7 +869,6 @@ public class WordValueLabel extends ValueLabel {
             copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
             menuInspectObjectAction = new MenuInspectObjectAction(value);
             menuToggleDisplayAction = new MenuToggleDisplayAction();
-            menuInspectMemoryAction = new MenuInspectMemoryAction(value);
             menuInspectMemoryWordsAction = new MenuInspectMemoryWordsAction(value);
             menuShowMemoryRegionAction = new MenuShowMemoryRegionAction(value);
         }
@@ -923,7 +877,6 @@ public class WordValueLabel extends ValueLabel {
             menu.add(copyWordAction);
             menu.add(menuInspectObjectAction);
             menu.add(menuToggleDisplayAction);
-            menu.add(menuInspectMemoryAction);
             menu.add(menuInspectMemoryWordsAction);
             menu.add(menuShowMemoryRegionAction);
             menu.addSeparator();

@@ -203,6 +203,7 @@ function get_project_cp() {
 # precede x in the list).
 projects=( \
     C1X:src               \
+    C0X:src               \
     Base:src,test,shell   \
     Assembler:src,test    \
     VM:src,test           \
@@ -516,7 +517,7 @@ function run_check() {
         set_project_dir_parent ${project}
 
         source_dirs_spec=${project/*:/}
-        source_dirs=${source_dirs_spec//,/ }        
+        source_dirs=${source_dirs_spec//,/ }
         for source_dir in ${source_dirs} ; do
             pushd ${project_dir_parent}/${project_dir}/${source_dir} >/dev/null
             javac_input=/tmp/javacfiles.txt.$$
@@ -544,7 +545,7 @@ function run_check() {
                     grep -v 'test/optimize/' |\
                     grep -v 'test/reflect/' |\
                     grep -v 'test/threads/' >$checkstyle_input
-                
+
                 run $jvm -Xmx1g -jar $CHECKSTYLE_JAR -c $checks_file $(cat $checkstyle_input) -o $checkstyle_out
                 result=$?
                 rm $checkstyle_input
@@ -560,7 +561,7 @@ function run_check() {
             fi
             rm $javac_input
             popd >/dev/null
-            if [ $result -ne 0 ]; then
+            if [ "$result" -ne "0" ]; then
                 exit $result
             fi
         done

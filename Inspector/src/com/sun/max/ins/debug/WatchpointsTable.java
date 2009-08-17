@@ -58,8 +58,7 @@ public final class WatchpointsTable extends InspectorTable {
         model = new WatchpointsTableModel();
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
-
-        configure(model, columnModel);
+        configureDefaultTable(model, columnModel);
 
         //TODO: generalize this
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
@@ -166,7 +165,7 @@ public final class WatchpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class WatchpointsTableModel extends DefaultTableModel {
+    private final class WatchpointsTableModel extends AbstractTableModel {
 
         void refresh() {
             fireTableDataChanged();
@@ -246,6 +245,20 @@ public final class WatchpointsTable extends InspectorTable {
                     inspection().settings().save();
                     break;
                 default:
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            switch (WatchpointsColumnKind.VALUES.get(column)) {
+                case READ:
+                case WRITE:
+                case EXEC:
+                case GC:
+                case EAGER:
+                    return true;
+                default:
+                    return false;
             }
         }
 
