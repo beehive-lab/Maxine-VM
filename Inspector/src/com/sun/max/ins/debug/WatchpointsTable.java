@@ -172,17 +172,14 @@ public final class WatchpointsTable extends InspectorTable {
             updateFocusSelection();
         }
 
-        @Override
         public int getColumnCount() {
             return WatchpointsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return maxVM().watchpoints().length();
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             final MaxWatchpoint watchpoint = rowToWatchpoint(row);
             switch (WatchpointsColumnKind.VALUES.get(col)) {
