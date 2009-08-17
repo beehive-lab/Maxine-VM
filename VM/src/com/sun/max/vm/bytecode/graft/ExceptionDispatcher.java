@@ -70,14 +70,19 @@ public class ExceptionDispatcher {
     @NEVER_INLINE
     private static Throwable safepointAndLoadExceptionObject() {
         if (MaxineVM.isPrototyping()) {
-            Throwable throwable = INTERPRETER_EXCEPTION.get();
-            INTERPRETER_EXCEPTION.set(null);
-            return throwable;
+            return prototypeSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
         Throwable exception = UnsafeLoophole.cast(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
         VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(null);
         return exception;
+    }
+
+    @PROTOTYPE_ONLY
+    public static Throwable prototypeSafepointAndLoadExceptionObject() {
+        Throwable throwable = INTERPRETER_EXCEPTION.get();
+        INTERPRETER_EXCEPTION.set(null);
+        return throwable;
     }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
