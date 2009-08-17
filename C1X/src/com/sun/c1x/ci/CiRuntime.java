@@ -271,6 +271,7 @@ public interface CiRuntime {
 
     int outPreserveStackSlots();
 
+    // TODO: why not pass the CiSignature instead?
     int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
 
     int sizeofBasicObjectLock();

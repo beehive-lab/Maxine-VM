@@ -18,45 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package jtt.micro;
 
-/**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0 = true; 1 = false
  */
-public class BytecodeLookupSwitch extends BytecodeSwitch {
+public class ArrayCompare01 {
+    static final long[] a1 = {1, 2, 3, -5};
+    static final long[] a2 = {1, 2, 3, -5};
+    static final long[] a3 = {1, 2, 4, -5};
 
-    public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
-        super(stream, bci);
+    public static boolean test(int arg) {
+        if (arg == 0) {
+            return compare(a1, a2);
+        }
+        if (arg == 1) {
+            return compare(a1, a3);
+        }
+        return false;
     }
 
-    public BytecodeLookupSwitch(byte[] code, int bci) {
-        super(code, bci);
-    }
-
-    @Override
-    public int defaultOffset() {
-        return readWord(aligned);
-    }
-
-    @Override
-    public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
-    }
-
-    @Override
-    public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
-    }
-
-    @Override
-    public int numberOfCases() {
-        return readWord(aligned + 4);
-    }
-
-    @Override
-    public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
+    static boolean compare(long[] a, long[] b) {
+        if (a.length == b.length) {
+            for (int i = 0; i < a.length; i++) {
+                if (a[i] != b[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }
