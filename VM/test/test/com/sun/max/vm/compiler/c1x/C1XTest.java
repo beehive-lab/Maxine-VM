@@ -25,7 +25,6 @@ import static test.com.sun.max.vm.compiler.c1x.C1XTest.PatternType.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
@@ -107,7 +106,6 @@ public class C1XTest {
     private static int totalInstrs;
     private static long totalNs;
     private static long lastRunNs;
-    private static int timingRun;
     private static final double ONE_BILLION = 1000000000;
 
     public static void main(String[] args) {
