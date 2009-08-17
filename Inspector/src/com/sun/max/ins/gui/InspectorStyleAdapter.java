@@ -429,10 +429,67 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugToggleBreakpointButtonIcon;
     }
 
+    private final Icon generalAboutIcon = createImageIcon("/toolbarButtonGraphics/general/About16.gif", "About");
+    public Icon generalAboutIcon() {
+        return generalAboutIcon;
+    }
+    private final Icon generalCopyIcon = createImageIcon("/toolbarButtonGraphics/general/Copy16.gif", "Copy");
+    public Icon generalCopyIcon() {
+        return generalCopyIcon;
+    }
+    private final Icon generalCutIcon = createImageIcon("/toolbarButtonGraphics/general/Cut16.gif", "Cut");
+    public Icon generalCutIcon() {
+        return generalCutIcon;
+    }
+    private final Icon generalDeleteIcon = createImageIcon("/toolbarButtonGraphics/general/Delete16.gif", "Delete");
+    public Icon generalDeleteIcon() {
+        return generalDeleteIcon;
+    }
+    private final Icon generalEditIcon = createImageIcon("/toolbarButtonGraphics/general/Edit16.gif", "Edit");
+    public Icon generalEditIcon() {
+        return generalEditIcon;
+    }
     private final Icon generalFindIcon = createImageIcon("/toolbarButtonGraphics/general/Find16.gif", "Find");
     public Icon generalFindIcon() {
         return generalFindIcon;
     }
+    private final Icon generalFindAgainIcon = createImageIcon("/toolbarButtonGraphics/general/FindAgain16.gif", "FindAgain");
+    public Icon generalFindAgainIcon() {
+        return generalFindAgainIcon;
+    }
+    private final Icon generalHelpIcon = createImageIcon("/toolbarButtonGraphics/general/Help16.gif", "Help");
+    public Icon generalHelpIcon() {
+        return generalHelpIcon;
+    }
+    private final Icon generalInformationIcon = createImageIcon("/toolbarButtonGraphics/general/Information16.gif", "Information");
+    public Icon generalInformationIcon() {
+        return generalInformationIcon;
+    }
+    private final Icon generalPreferencesIcon = createImageIcon("/toolbarButtonGraphics/general/Preferences16.gif", "Preferences");
+    public Icon generalPreferencesIcon() {
+        return generalPreferencesIcon;
+    }
+    private final Icon generalRedoIcon = createImageIcon("/toolbarButtonGraphics/general/Redo16.gif", "Redo");
+    public Icon generalRedoIcon() {
+        return generalRedoIcon;
+    }
+    private final Icon generalRefreshIcon = createImageIcon("/toolbarButtonGraphics/general/Refresh16.gif", "Refresh");
+    public Icon generalRefreshIcon() {
+        return generalRefreshIcon;
+    }
+    private final Icon generalRemoveIcon = createImageIcon("/toolbarButtonGraphics/general/Remove16.gif", "Remove");
+    public Icon generalRemoveIcon() {
+        return generalRemoveIcon;
+    }
+    private final Icon generalReplaceIcon = createImageIcon("/toolbarButtonGraphics/general/Replace16.gif", "Replace");
+    public Icon generalReplaceIcon() {
+        return generalReplaceIcon;
+    }
+    private final Icon generalUndoIcon = createImageIcon("/toolbarButtonGraphics/general/Undo16.gif", "Undo");
+    public Icon generalUndoIcon() {
+        return generalUndoIcon;
+    }
+
     private final Icon navigationUpIcon = createImageIcon("/toolbarButtonGraphics/navigation/Up16.gif", "Move up");
     private final Icon navigationDownIcon = createImageIcon("/toolbarButtonGraphics/navigation/Down16.gif", "Move down");
     private final Icon navigationForwardIcon = createImageIcon("/toolbarButtonGraphics/navigation/Forward16.gif", "Move forward");

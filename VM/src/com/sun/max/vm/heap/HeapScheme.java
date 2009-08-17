@@ -214,4 +214,5 @@ public interface HeapScheme extends VMScheme {
      * @see Heap#codeReferencesAreGCRoots()
      */
     boolean codeReferencesAreGCRoots();
+
 }

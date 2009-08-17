@@ -88,6 +88,11 @@ public final class ArrayAccess {
         return Reference.fromJava(array).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(index));
     }
 
+    @INLINE
+    public static Pointer elementPointer(int[] array, int index) {
+        return Reference.fromJava(array).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(index));
+    }
+
     /**
      * Gets a byte from the specified array at the specified index.
      *

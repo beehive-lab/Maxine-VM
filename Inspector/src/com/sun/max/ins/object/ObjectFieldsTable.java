@@ -100,15 +100,8 @@ public final class ObjectFieldsTable extends InspectorTable {
         model = new ObjectFieldsTableModel();
         columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         columnModel = new ObjectFieldsTableColumnModel(objectInspector);
-        setModel(model);
-        setColumnModel(columnModel);
-        setFillsViewportHeight(true);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
-        setRowSelectionAllowed(true);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        configureMemoryTable(model, columnModel);
+
         addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
@@ -143,8 +136,6 @@ public final class ObjectFieldsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
     public void refresh(boolean force) {
@@ -176,17 +167,6 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
         invalidate();
         repaint();
-    }
-
-    @Override
-    public void paintChildren(Graphics g) {
-        // Draw a box around the selected row in the table
-        super.paintChildren(g);
-        final int row = getSelectedRow();
-        if (row >= 0) {
-            g.setColor(style().memorySelectedAddressBorderColor());
-            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-        }
     }
 
     /**

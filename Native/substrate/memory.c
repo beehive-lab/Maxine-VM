@@ -40,20 +40,27 @@ long free_memory = -1;
 
 Address memory_allocate(Size size)
 {
-    return (Address) calloc(1, (size_t) size);
+    Address mem = (Address) calloc(1, (size_t) size);
+    //log_println("MEMORY ALLOCATED of size:%d at address:%x", size, mem);
+    return mem;
 }
 
 Address memory_reallocate(Address pointer, Size size)
 {
+    Address mem;
 	if (pointer == 0) {
-		return (Address) calloc(1, (size_t) size);
+		mem = (Address) calloc(1, (size_t) size);
+	} else {
+	    mem = (Address) realloc((void *) pointer, (size_t) size);
 	}
-    return (Address) realloc((void *) pointer, (size_t) size);
+	//log_println("MEMORY ALLOCATED of size:%d at address:%x", size, mem);
+    return mem;
 }
 
 jint memory_deallocate(Address pointer)
 {
     free((void *) pointer);
+    //log_println("MEMORY FREED at address: %x", pointer);
     return 0;
 }
 

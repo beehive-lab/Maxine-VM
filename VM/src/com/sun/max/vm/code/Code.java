@@ -23,7 +23,6 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
@@ -186,17 +185,4 @@ public final class Code {
         return codeManager.getSize();
     }
 
-    /**
-     * All code memory regions, needed by the inspector.
-     */
-    private static MemoryRegion[] memoryRegions = new MemoryRegion[]{};
-
-    /**
-     * Registers a new memory region with the code manager.
-     *
-     * @param codeRegion the code region to add
-     */
-    public static void registerMemoryRegion(CodeRegion codeRegion) {
-        memoryRegions = Arrays.append(memoryRegions, codeRegion);
-    }
 }

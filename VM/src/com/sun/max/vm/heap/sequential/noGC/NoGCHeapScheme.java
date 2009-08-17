@@ -332,4 +332,5 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }
+
 }

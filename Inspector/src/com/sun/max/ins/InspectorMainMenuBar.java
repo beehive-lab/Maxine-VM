@@ -112,17 +112,11 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private JMenu createMemoryMenu() {
         final JMenu menu = new JMenu("Memory");
 
-        final JMenu wordsMenu = new JMenu("As words");
-        wordsMenu.add(actions.inspectBootHeapMemoryWords());
-        wordsMenu.add(actions.inspectBootCodeMemoryWords());
-        wordsMenu.add(actions.inspectMemoryWords());
-        menu.add(wordsMenu);
-
-        final JMenu bytesMenu = new JMenu("As bytes");
-        bytesMenu.add(actions.inspectBootHeapMemory());
-        bytesMenu.add(actions.inspectBootCodeMemory());
-        bytesMenu.add(actions.inspectMemory());
-        menu.add(bytesMenu);
+        menu.add(actions.inspectBootHeapMemoryWords());
+        menu.add(actions.inspectBootCodeMemoryWords());
+        menu.add(actions.inspectSelectedMemoryRegionWords());
+        menu.add(actions.inspectMemoryWords());
+        menu.add(actions.inspectMemoryBytes());
         return menu;
     }
 

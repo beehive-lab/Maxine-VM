@@ -208,7 +208,7 @@ public abstract class Hub extends Hybrid {
     }
 
     protected final Hub expand() {
-        return (Hub) expand(Unsigned.idiv(Ints.roundUp((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
+        return (Hub) expand(Unsigned.idiv(Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
     }
 
     @INLINE
