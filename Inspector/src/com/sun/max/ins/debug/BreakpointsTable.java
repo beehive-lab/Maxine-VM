@@ -187,12 +187,10 @@ public final class BreakpointsTable extends InspectorTable {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return BreakpointsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             // This gets called during superclass initialization, before the local
             // data has been initialized, even  if you try to set row size to 0
@@ -215,7 +213,6 @@ public final class BreakpointsTable extends InspectorTable {
             return false;
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             final BreakpointData breakpointData = get(row);
             switch (BreakpointsColumnKind.VALUES.get(col)) {

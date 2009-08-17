@@ -239,17 +239,14 @@ public final class MemoryWordsTable extends InspectorTable {
             return origin;
         }
 
-        @Override
         public int getColumnCount() {
             return MemoryWordsColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return memoryWordRegion == null ? 0 : memoryWordRegion.wordCount;
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             return row;
         }
