@@ -302,6 +302,6 @@ public final class ByteArrayBitMap implements Cloneable {
      * Computes the minimum number of bytes required to encode a bit map with a given number of bits.
      */
     public static int computeBitMapSize(int numberOfBits) {
-        return Unsigned.idiv(Ints.roundUp(numberOfBits, Bytes.WIDTH), Bytes.WIDTH);
+        return Unsigned.idiv(Ints.roundUnsignedUpByPowerOfTwo(numberOfBits, Bytes.WIDTH), Bytes.WIDTH);
     }
 }
