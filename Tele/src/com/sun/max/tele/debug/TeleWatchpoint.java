@@ -377,11 +377,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         private final TeleObject teleObject;
         private final int index;
 
-        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
-            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec, gc);
+        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
+            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec, gc);
             this.teleObject = teleObject;
             this.index = index;
-            teleObjectStartAddressOffset = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes)).minus(teleObject.getCurrentMemoryRegion().start()).toLong();
+            teleObjectStartAddressOffset = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes)).minus(teleObject.getCurrentMemoryRegion().start()).toLong();
         }
 
         @Override
@@ -594,7 +594,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          */
-        public synchronized TeleWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+        public synchronized TeleWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             final TeleWatchpoint teleWatchpoint =
                 new TeleArrayElementWatchpoint(this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);

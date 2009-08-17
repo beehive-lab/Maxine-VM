@@ -36,7 +36,7 @@ public enum ArrayElementColumnKind {
         }
     },
     ADDRESS("Addr.", "Memory address of element", true, -1),
-    POSITION("Pos.", "Relative position of element (bytes)", true, 10),
+    OFFSET("Offset", "Relative position of element (bytes)", true, 10),
     NAME("Elem.", "Array element name", true, 10),
     VALUE("Value", "Element value", true, 5),
     REGION("Region", "Memory region pointed to by value", true, -1);
