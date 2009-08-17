@@ -426,7 +426,7 @@ public class AMD64JitCompiler extends JitCompiler {
             // + space of the first slot itself).
             final Pointer catcherStackPointer = localVariablesBase.minus(framePointerState.sizeOfNonParameterLocals(targetMethod) + JitStackFrameLayout.JIT_SLOT_SIZE);
             // Push the null object on top of the stack first
-            catcherStackPointer.writeReference(0, Reference.fromJava(null));
+            catcherStackPointer.writeReference(0, null);
 
             // found an exception handler, and thus we are done with the stack walker
             stackFrameWalker.reset();
