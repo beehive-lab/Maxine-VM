@@ -108,14 +108,14 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * @param size the size of the block to allocate
      * @return the allocated space or zero if allocation was not successful
      */
-    public Pointer allocateTargetMethod(TargetMethod targetMethod, Size size) {
+    public Pointer allocateTargetMethod(Size size) {
         final Pointer start = allocateSpace(null, size);
         if (!start.isZero()) {
             if (Code.traceAllocation.getValue()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.printVmThread(VmThread.current(), false);
                 Log.print(": Allocated target code bundle for ");
-                Log.printMethodActor(targetMethod.classMethodActor(), false);
+
                 Log.print(" at ");
                 Log.print(start);
                 Log.print(" [size=");
@@ -125,11 +125,12 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
                 Log.println("]");
                 Log.unlock(lockDisabledSafepoints);
             }
-            targetMethod.setStart(start);
-            targetMethod.setSize(size);
-            sortedMemoryRegions.add(targetMethod);
         }
         return start;
+    }
+
+    public void addTargetMethod(TargetMethod targetMethod) {
+        sortedMemoryRegions.add(targetMethod);
     }
 
     /**

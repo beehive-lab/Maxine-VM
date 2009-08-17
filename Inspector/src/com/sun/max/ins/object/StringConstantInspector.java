@@ -37,7 +37,7 @@ import com.sun.max.vm.classfile.constant.*;
 public class StringConstantInspector extends ObjectInspector {
 
     private JTabbedPane tabbedPane;
-    private ObjectPane fieldsPane;
+    private ObjectScrollPane fieldsPane;
     private StringPane stringPane;
 
     // Should the alternate visualization be displayed?
@@ -61,7 +61,7 @@ public class StringConstantInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectPane.createFieldsPane(this, teleStringConstant);
+        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleStringConstant);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

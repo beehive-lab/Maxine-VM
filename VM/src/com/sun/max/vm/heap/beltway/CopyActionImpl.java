@@ -95,11 +95,14 @@ public class CopyActionImpl implements Action {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme.outOfMemoryError;
             }
-
-            DebugHeap.writeCellTag(toCell);
+            if (MaxineVM.isDebug()) {
+                DebugHeap.writeCellTag(toCell);
+            }
             Memory.copyBytes(fromCell, toCell, size);
+            //heapScheme.relocateWatchpoint(fromCell, toCell);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
+
             Layout.writeForwardGrip(fromOrigin, toGrip);
             return toGrip;
         }

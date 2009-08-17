@@ -156,4 +156,5 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }
+
 }

@@ -86,7 +86,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     private static int getJitSlotSize() {
         final int stackFrameAlignment = VMConfiguration.target().targetABIsScheme().jitABI().stackFrameAlignment();
-        return Ints.roundUp(stackFrameAlignment, Word.size());
+        return Ints.roundUnsignedUpByPowerOfTwo(stackFrameAlignment, Word.size());
     }
 
     private static int getJitStackBias() {
