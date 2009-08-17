@@ -664,13 +664,13 @@ public final class Log {
          * Convenience routine for printing a {@link FieldActor} to this stream. The output is of the form:
          *
          * <pre>
-         *     &lt;name&gt;:&lt;descriptor&gt; in &lt;holder&gt;
+         *     &lt;holder&gt;.&lt;name&gt;:&lt;descriptor&gt;
          * </pre>
          *
          * For example, the output for {@link System#err} is:
          *
          * <pre>
-         * &quot;err:Ljava/io/PrintStream; in java.lang.System&quot;
+         * &quot;java.lang.System.err:Ljava/io/PrintStream;&quot;
          * </pre>
          * @param fieldActor the field actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the field actor
@@ -680,11 +680,11 @@ public final class Log {
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
             }
+            print(fieldActor.holder().name.string, withNewline);
+            print('.');
             print(fieldActor.name.string);
             print(":");
             print(fieldActor.descriptor().string);
-            print(" in ");
-            print(fieldActor.holder().name.string, withNewline);
             if (!MaxineVM.isPrototyping()) {
                 unlock(lockDisabledSafepoints);
             }
@@ -694,13 +694,13 @@ public final class Log {
          * Convenience routine for printing a {@link MethodActor} to this stream. The output is of the form:
          *
          * <pre>
-         *     &lt;name&gt;&lt;descriptor&gt; in &lt;holder&gt;
+         *     &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt;
          * </pre>
          *
          * For example, the output for {@link Runnable#run()} is:
          *
          * <pre>
-         * &quot;run()V in java.lang.Runnable&quot;
+         * &quot;java.lang.Runnable.run()V&quot;
          * </pre>
          * @param methodActor the method actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the method actor
@@ -710,9 +710,10 @@ public final class Log {
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
             }
+            print(methodActor.holder().name.string, withNewline);
+            print('.');
             print(methodActor.name.string);
             print(methodActor.descriptor().string);
-            print(" in ");
             print(methodActor.holder().name.string, withNewline);
             if (!MaxineVM.isPrototyping()) {
                 unlock(lockDisabledSafepoints);
