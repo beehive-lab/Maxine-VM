@@ -34,14 +34,12 @@ public class StackUnwindingContext {
      * The cause of the stack unwinding.
      */
     public final Throwable throwable;
-    public final Pointer implicitExceptionTrapState;
     protected Word stackPointer;
     protected Word framePointer;
     protected boolean isTopFrame;
 
-    public StackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable, Pointer implicitExceptionTrapState) {
+    public StackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
         this.throwable = throwable;
-        this.implicitExceptionTrapState = implicitExceptionTrapState;
         this.stackPointer = stackPointer;
         this.framePointer = framePointer;
         this.isTopFrame = true;

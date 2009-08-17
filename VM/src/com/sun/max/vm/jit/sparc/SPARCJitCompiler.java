@@ -40,7 +40,6 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.template.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Template-based implementation of JIT compiler for SPARC.
@@ -246,32 +245,29 @@ public class SPARCJitCompiler extends JitCompiler {
                 final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    final Pointer stackPointer = stackFrameWalker.stackPointer();
-                    if (!(unwindingContext.throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                        // The Java operand stack of the method that handles the exception is always cleared before pushing the
-                        // thrown object.
-                        // Compute the offset to the first stack slot of the Java Stack: frame pointer -
-                        // (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
-                        final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
-                        final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
-                        // Push the exception on top of the stack first
-                        catcherTopOfStackPointer.writeReference(0, Reference.fromJava(unwindingContext.throwable));
+                    // The Java operand stack of the method that handles the exception is always cleared before pushing the
+                    // thrown object.
+                    // Compute the offset to the first stack slot of the Java Stack: frame pointer -
+                    // (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
+                    final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
+                    final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
+                    // Push the exception on top of the stack first
+                    catcherTopOfStackPointer.writeReference(0, Reference.fromJava(unwindingContext.throwable));
 
-                        // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
-                        // mandatory output register. We also need to bias it.
-                        final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
-                        final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
+                    // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
+                    // mandatory output register. We also need to bias it.
+                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
+                    final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
-                        // found an exception handler, and thus we are done with the stack walker
-                        stackFrameWalker.reset();
+                    // found an exception handler, and thus we are done with the stack walker
+                    stackFrameWalker.reset();
 
-                        // Completes the exception handling protocol (with respect to the garbage collector) initiated in
-                        // Throwing.raise()
-                        Safepoint.enable();
+                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in
+                    // Throwing.raise()
+                    Safepoint.enable();
 
-                        unwind(unwindingContext, catchAddress, catcherStackPointer, localVariablesBase, literalBase);
-                        // We should never reach here
-                    }
+                    unwind(unwindingContext, catchAddress, catcherStackPointer, localVariablesBase, literalBase);
+                    // We should never reach here
                 }
                 break;
             }

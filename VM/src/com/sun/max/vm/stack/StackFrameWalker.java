@@ -52,7 +52,7 @@ public abstract class StackFrameWalker {
 
 
     /**
-     * A VM option for specifying how heap memory is to be allocated.
+     * A VM option for enabling stack frame walk tracing.
      */
     public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
@@ -135,7 +135,7 @@ public abstract class StackFrameWalker {
     private void walk(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Purpose purpose, Object context) {
 
         if (traceStackWalk.getValue()) {
-            Log.print("Walking the stack for purpose ");
+            Log.print("StackFrameWalk: Start stack frame walk for purpose ");
             Log.println(purpose);
         }
 
@@ -157,10 +157,17 @@ public abstract class StackFrameWalker {
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
 
                 if (traceStackWalk.getValue()) {
-                    Log.print("Found target method at ");
-                    Log.print(this.instructionPointer.toLong());
-                    Log.print(": ");
-                    Log.println(targetMethod.description());
+                    Log.print("StackFrameWalk: Frame for ");
+                    if (targetMethod.classMethodActor() == null) {
+                        Log.print(targetMethod.description());
+                    } else {
+                        Log.printMethodActor(targetMethod.classMethodActor(), false);
+                    }
+                    Log.print(" [IP=");
+                    Log.print(this.instructionPointer);
+                    Log.print(", isTopFrame=");
+                    Log.print(isTopFrame);
+                    Log.println("]");
                 }
 
                 // Java frame
@@ -182,15 +189,17 @@ public abstract class StackFrameWalker {
             } else {
                 final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
                 if (traceStackWalk.getValue()) {
-                    Log.print("No target method found at ");
-                    Log.print(this.instructionPointer.toLong());
-
                     if (stub != null) {
-                        Log.print(", but found stub ");
+                        Log.print("StackFrameWalk: Frame for stub ");
                         Log.print(stub.description());
+                        Log.print(" [IP=");
+                        Log.println(this.instructionPointer);
+                        Log.println(']');
+                    } else {
+                        Log.print("StackFrameWalk: Frame for native function [IP=");
+                        Log.print(this.instructionPointer);
+                        Log.println(']');
                     }
-
-                    Log.println();
                 }
                 if (stub != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
                     if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
@@ -440,8 +449,8 @@ public abstract class StackFrameWalker {
     /**
      * Walks a thread's stack for the purpose of raising an exception.
      */
-    public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable, Pointer implicitExceptionTrapState) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable, implicitExceptionTrapState));
+    public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable));
     }
 
     /**
@@ -458,6 +467,11 @@ public abstract class StackFrameWalker {
      */
     @INLINE
     public final void reset() {
+        if (traceStackWalk.getValue()) {
+            Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
+            Log.println(purpose);
+        }
+
         trapState = Pointer.zero();
         stackPointer = Pointer.zero();
         purpose = null;

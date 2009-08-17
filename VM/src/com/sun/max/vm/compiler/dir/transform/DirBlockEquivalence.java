@@ -83,6 +83,9 @@ public final class DirBlockEquivalence {
             return true;
         }
         maybePairs.add(pair);
+        if (a.role() != b.role()) {
+            return pair.makeFalse();
+        }
         if (a.instructions().length() != b.instructions().length()) {
             return pair.makeFalse();
         }

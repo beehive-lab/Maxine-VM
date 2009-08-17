@@ -48,9 +48,6 @@ public class BirBlock implements IrBlock {
 
     public void setRole(IrBlock.Role role) {
         this.role = role;
-        if (role == IrBlock.Role.EXCEPTION_DISPATCHER) {
-            haveSafepoint();
-        }
     }
 
     public boolean hasSafepoint() {

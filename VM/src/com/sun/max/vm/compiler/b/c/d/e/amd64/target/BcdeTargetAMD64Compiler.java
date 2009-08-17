@@ -27,6 +27,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -54,10 +55,6 @@ import com.sun.max.vm.thread.*;
 public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
 
     private final AMD64EirToTargetTranslator eirToTargetTranslator;
-
-    protected AMD64EirToTargetTranslator createTargetTranslator() {
-        return new AMD64EirToTargetTranslator(this);
-    }
 
     public BcdeTargetAMD64Compiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -213,16 +210,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     }
 
     public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
-
-        if (StackFrameWalker.traceStackWalk.getValue()) {
-            Log.print("Walk frame helper called: ");
-            Log.print("isTopFrame=");
-            Log.print(isTopFrame);
-            Log.print(", targetMethod=");
-            Log.print(targetMethod.description());
-            Log.println();
-        }
-
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;
@@ -313,39 +300,20 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
 
-                if (StackFrameWalker.traceStackWalk.getValue()) {
-                    Log.print("Catch address for ");
-                    Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
-                    Log.print(" in ");
-                    Log.print(targetMethod.description());
-                    Log.print(" is ");
-                    Log.println((catchAddress.isZero()) ? -1 : catchAddress.minus(targetMethod.codeStart()).toInt());
-                }
-
                 if (!catchAddress.isZero()) {
+                    if (StackFrameWalker.traceStackWalk.getValue()) {
+                        Log.print("StackFrameWalk: Handler position for exception at position ");
+                        Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
+                        Log.print(" is ");
+                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+                    }
                     final Throwable throwable = stackUnwindingContext.throwable;
                     // Reset the stack walker
                     stackFrameWalker.reset();
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
                     Safepoint.enable();
 
-                    // Save the exception object in a thread local
-                    VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
-
-                    // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
-                    // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
-                    // and the stack will be in the correct state for the handler.
-                    final Pointer returnAddressPointer = stackPointer.minus(Word.size());
-                    returnAddressPointer.setWord(catchAddress);
-
-                    Pointer trapState = stackUnwindingContext.implicitExceptionTrapState;
-                    if (throwable instanceof StackOverflowError && !trapState.isZero()) {
-                        TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                        trapStateAccess.setExceptionObject(trapState, throwable);
-                        trapStateAccess.setStackPointer(trapState, returnAddressPointer.minus(Trap.trapStubFrameSize()));
-                        return false;
-                    }
-                    unwind(throwable, returnAddressPointer, stackPointer);
+                    unwind(throwable, catchAddress, stackPointer);
                     ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
                 }
                 break;
@@ -421,17 +389,25 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
      *            returning from this method
      */
     @NEVER_INLINE
-    private static Throwable unwind(Throwable throwable, Address returnAddressPointer, Pointer stackPointer) {
+    private static void unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
+        final int unwindFrameSize = getUnwindFrameSize();
 
-        if (unwindFrameSize == -1) {
-            unwindFrameSize = getUnwindFrameSize();
+        // Put the exception where the exception handler expects to find it
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+
+        if (throwable instanceof StackOverflowError) {
+            // This complete call-chain must be inlined down to the native call
+            // so that no further stack banging instructions
+            // are executed before execution jumps to the catch handler.
+            VirtualMemory.protectPage(VmThread.current().guardPage());
         }
-        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
 
-        // put the throwable in the return slot
-        // NOTE: this is potentially dangerous, since this value must not be spilled onto the stack,
-        // since the adjustment to the stack pointer above would cause the spill code to load the wrong value.
-        return throwable;
+        // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
+        // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
+        // and the stack will be in the correct state for the handler.
+        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        returnAddressPointer.setWord(catchAddress);
+        VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
     }
 
     @Override

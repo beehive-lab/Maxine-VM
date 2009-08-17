@@ -145,12 +145,4 @@ public abstract class TrapStateAccess {
      * @param trapState the block of memory holding the trap state
      */
     public abstract void logTrapState(Pointer trapState);
-
-    /**
-     * Sets the value of the stack pointer in a given trap state area.
-     *
-     * @param trapState the block of memory holding the trap state
-     * @param value the stack pointer that will be set
-     */
-    public abstract void setStackPointer(Pointer trapState, Pointer value);
 }
