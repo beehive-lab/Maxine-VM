@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
@@ -37,7 +38,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -614,8 +614,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
-        switch (processorKind.instructionSet) {
+        InstructionSet instructionSet = maxVM().vmConfiguration().platform().instructionSet();
+        switch (instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
             case SPARC:

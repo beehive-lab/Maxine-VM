@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.b.c.d.e.sparc;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.platform.Platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.b.c.d.e.*;
@@ -43,32 +42,11 @@ public class BcdeSPARCCompiler extends BcdeCompiler<SPARCEirGenerator> implement
 
     public BcdeSPARCCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-
-        vmConfiguration.platform().inspect(new PlatformInspectorAdapter() {
-
-            private String incompatibilityMessage(String s) {
-                return name() + " compiler incompatible with " + s;
-            }
-
-            @Override
-            public void inspectEndianness(Endianness endianness) {
-                ProgramError.check(endianness == Endianness.BIG, incompatibilityMessage(endianness + " endian platform"));
-            }
-
-            @Override
-            public void inspectInstructionSet(InstructionSet isa) {
-                ProgramError.check(isa == InstructionSet.SPARC, incompatibilityMessage(isa + " instruction set"));
-            }
-
-            @Override
-            public void inspectProcessorModel(ProcessorModel cpu) {
-                ProgramError.check(cpu == ProcessorModel.SPARC || cpu == ProcessorModel.SPARCV9, incompatibilityMessage(cpu + " processor model"));
-            }
-
-            @Override
-            public void inspectWordWidth(WordWidth wordWidth) {
-            }
-        });
+        Platform platform = vmConfiguration.platform();
+        ProgramError.check(platform.endianess() == Endianness.BIG);
+        ProgramError.check(platform.instructionSet() == InstructionSet.SPARC);
+        ProgramError.check(platform.processorModel() == ProcessorModel.SPARCV9);
+        ProgramError.check(platform.wordWidth() == WordWidth.BITS_64);
         dirToEirTranslator = new DirToSPARCEirTranslator(this);
     }
 
