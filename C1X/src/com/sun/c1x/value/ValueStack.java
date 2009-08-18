@@ -577,9 +577,11 @@ public class ValueStack {
      */
     public void setupPhiForStack(BlockBegin block, int i) {
         Instruction p = stackAt(i);
-        assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, -i - 1);
-        values[maxLocals + i] = phi;
+        if (p != null) {
+            assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
+            Instruction phi = new Phi(p.type(), block, -i - 1);
+            values[maxLocals + i] = phi;
+        }
     }
 
     /**
