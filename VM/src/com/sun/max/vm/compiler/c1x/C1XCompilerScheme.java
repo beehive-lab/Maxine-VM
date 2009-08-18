@@ -111,7 +111,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
 
-            compiler = new C1XCompiler(c1xTarget, c1xRuntime);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
 

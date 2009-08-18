@@ -18,45 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package jtt.lang;
 
-/**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0x1122334455667708L = 0x877665544332211L
  */
-public class BytecodeLookupSwitch extends BytecodeSwitch {
-
-    public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
-        super(stream, bci);
-    }
-
-    public BytecodeLookupSwitch(byte[] code, int bci) {
-        super(code, bci);
-    }
-
-    @Override
-    public int defaultOffset() {
-        return readWord(aligned);
-    }
-
-    @Override
-    public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
-    }
-
-    @Override
-    public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
-    }
-
-    @Override
-    public int numberOfCases() {
-        return readWord(aligned + 4);
-    }
-
-    @Override
-    public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
+public class Long_reverseBytes02 {
+    public static long test(long val) {
+        return (((val >> 56) & 0xff) << 0)
+                | (((val >> 48) & 0xff) << 8)
+                | (((val >> 40) & 0xff) << 16)
+                | (((val >> 32) & 0xff) << 24)
+                | (((val >> 24) & 0xff) << 32)
+                | (((val >> 16) & 0xff) << 40)
+                | (((val >> 8) & 0xff) << 48)
+                | (((val >> 0) & 0xff) << 56);
     }
 }

@@ -29,19 +29,15 @@ import com.sun.c1x.target.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
-public class C1XCompiler {
+public class C1XCompiler extends CiCompiler {
 
-    public final Target target;
-    public final CiRuntime runtime;
     private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
 
     private boolean initialized;
 
-    public C1XCompiler(Target target, CiRuntime runtime) {
-        this.target = target;
-        this.runtime = runtime;
+    public C1XCompiler(CiRuntime runtime, Target target) {
+        super(runtime, target);
     }
 
     public CiTargetMethod compileMethod(CiMethod method) {
