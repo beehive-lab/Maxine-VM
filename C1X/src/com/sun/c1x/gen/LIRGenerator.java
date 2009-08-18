@@ -591,7 +591,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
         CodeEmitInfo rangeCheckInfo = stateFor(x);
         CodeEmitInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
-            nullCheckInfo = rangeCheckInfo;
+            // TODO (tw) Check why we need to duplicate the code emit info!
+            nullCheckInfo = stateFor(x);
         }
 
         // emit array address setup early so it schedules better
@@ -1197,6 +1198,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // does an rlock and sets result
         LIROperand reg;
         switch (type) {
+
+            // TODO (tw): Check why we need char here too?
+            case Char:
             case Byte:
             case Boolean:
                 reg = rlockByte(type);
