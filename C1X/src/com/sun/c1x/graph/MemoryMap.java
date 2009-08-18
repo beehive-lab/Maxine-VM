@@ -38,8 +38,8 @@ import com.sun.c1x.ir.*;
  */
 public class MemoryMap {
 
-    private final HashMap<CiField, Instruction> objectMap = new HashMap<CiField, Instruction>();
-    private final HashMap<CiField, Instruction> valueMap = new HashMap<CiField, Instruction>();
+    private final HashMap<RiField, Instruction> objectMap = new HashMap<RiField, Instruction>();
+    private final HashMap<RiField, Instruction> valueMap = new HashMap<RiField, Instruction>();
     private final IdentityHashMap<Instruction, Instruction> newObjects = new IdentityHashMap<Instruction, Instruction>();
 
     /**
@@ -79,7 +79,7 @@ public class MemoryMap {
             kill();
             return load;
         }
-        CiField field = load.field();
+        RiField field = load.field();
         if (load.isStatic()) {
             // the field is static, look in the static map
             Instruction r = valueMap.get(field);
@@ -106,7 +106,7 @@ public class MemoryMap {
      */
     public void setResult(LoadField load, Instruction result) {
         if (load.isLoaded()) {
-            CiField field = load.field();
+            RiField field = load.field();
             if (load.isStatic()) {
                 // the field is static, put it in the static map
                 valueMap.put(field, result);
@@ -130,7 +130,7 @@ public class MemoryMap {
             kill();
             return store;
         }
-        CiField field = store.field();
+        RiField field = store.field();
         Instruction value = store.value();
         if (store.isStatic()) {
             // the field is static, overwrite it into the static map
@@ -157,7 +157,7 @@ public class MemoryMap {
         return store; // the store cannot be eliminated
     }
 
-    private boolean fieldHasNoStores(CiField field) {
+    private boolean fieldHasNoStores(RiField field) {
         return objectMap.get(field) == null;
     }
 }

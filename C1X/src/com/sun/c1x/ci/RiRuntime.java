@@ -24,7 +24,7 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>CiRuntime</code> class provides the major interface between the compiler and the
+ * The <code>RiRuntime</code> class provides the major interface between the compiler and the
  * runtime system, including access to constant pools, OSR frames, inlining requirements,
  * and runtime calls such as checkcast. C1X may insert calls to the
  * implementation of these methods into compiled code, typically as the slow path.
@@ -32,22 +32,22 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public interface CiRuntime {
+public interface RiRuntime {
     /**
      * Gets the constant pool for a method.
      * @param method the method
      * @return the constant pool for the method
      */
-    CiConstantPool getConstantPool(CiMethod method);
+    RiConstantPool getConstantPool(RiMethod method);
 
     /**
-     * Gets an {@link com.sun.c1x.ci.CiOsrFrame OSR frame} instance for the specified method
+     * Gets an {@link RiOsrFrame OSR frame} instance for the specified method
      * at the specified OSR bytecode index.
      * @param method the method
      * @param bci the bytecode index
      * @return an OSR frame that describes the layout of the frame
      */
-    CiOsrFrame getOsrFrame(CiMethod method, int bci);
+    RiOsrFrame getOsrFrame(RiMethod method, int bci);
 
     /**
      * Checks whether the specified method is required to be inlined (for semantic reasons).
@@ -55,7 +55,7 @@ public interface CiRuntime {
      * @return {@code true} if the method must be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustInline(CiMethod method);
+    boolean mustInline(RiMethod method);
 
     /**
      * Checks whether the specified method must not be inlined (for semantic reasons).
@@ -63,14 +63,14 @@ public interface CiRuntime {
      * @return {@code true} if the method must not be inlined; {@code false} to let the compiler
      * use its own heuristics
      */
-    boolean mustNotInline(CiMethod method);
+    boolean mustNotInline(RiMethod method);
 
     /**
      * Checks whether the specified method cannot be compiled.
      * @param method the method being called
      * @return {@code true} if the method cannot be compiled
      */
-    boolean mustNotCompile(CiMethod method);
+    boolean mustNotCompile(RiMethod method);
 
     /**
      * Byte offset of the array length of an array object.
@@ -169,7 +169,7 @@ public interface CiRuntime {
      * @param string the name of the type
      * @return the resolved type
      */
-    CiType resolveType(String string);
+    RiType resolveType(String string);
 
     int arrayBaseOffsetInBytes(BasicType type);
 
@@ -271,7 +271,7 @@ public interface CiRuntime {
 
     int outPreserveStackSlots();
 
-    // TODO: why not pass the CiSignature instead?
+    // TODO: why not pass the RiSignature instead?
     int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
 
     int sizeofBasicObjectLock();
@@ -294,6 +294,6 @@ public interface CiRuntime {
 
     Object registerTargetMethod(CiTargetMethod targetMethod);
 
-    CiType primitiveArrayType(BasicType elemType);
+    RiType primitiveArrayType(BasicType elemType);
 
 }

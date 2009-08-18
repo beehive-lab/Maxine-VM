@@ -318,7 +318,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // unlock the receiver/klass if necessary
         // rax : : exception
-        CiMethod method = compilation.method();
+        RiMethod method = compilation.method();
         if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
             monitorexit(X86FrameMap.rbxOopOpr, X86FrameMap.rcxOpr, SYNCHeader, 0, X86.rax);
         }
@@ -1361,7 +1361,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register kRInfo = op.tmp1().asRegister();
             Register klassRInfo = op.tmp2().asRegister();
             Register dst = op.result().asRegister();
-            CiType k = op.klass();
+            RiType k = op.klass();
             Register rtmp1 = Register.noreg;
 
             Label done = new Label();
@@ -1397,13 +1397,13 @@ public class X86LIRAssembler extends LIRAssembler {
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
             if (op.profiledMethod() != null) {
-                CiMethod method = op.profiledMethod();
+                RiMethod method = op.profiledMethod();
                 int bci = op.profiledBci();
 
                 Label profileDone = new Label();
                 masm().jcc(X86Assembler.Condition.notEqual, profileDone);
                 // Object is null; update methodDataOop
-                CiMethodData md = method.methodData();
+                RiMethodProfile md = method.methodData();
                 if (md == null) {
                     throw new Bailout("out of memory building methodDataOop");
                 }
@@ -1486,7 +1486,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register kRInfo = op.tmp1().asRegister();
             Register klassRInfo = op.tmp2().asRegister();
             Register dst = op.result().asRegister();
-            CiType k = op.klass();
+            RiType k = op.klass();
 
             Label done = new Label();
             Label zero = new Label();
@@ -2416,7 +2416,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap) {
+    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap) {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
         masm().callMethodDirect(method, stackRefMap);
@@ -2424,7 +2424,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void icCall(CiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
+    protected void icCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
 //        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
         masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
         masm().callRuntime(entry, method);
@@ -2435,7 +2435,7 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void vtableCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
+    protected void vtableCall(RiMethod method, LIROperand receiver, CodeEmitInfo info) {
         int vtableOffset = compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
         vtableOffset += compilation.runtime.vtableEntryMethodOffsetInBytes();
         assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
@@ -2448,7 +2448,7 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of an interface call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void interfaceCall(CiMethod method, LIROperand receiver, CodeEmitInfo info) {
+    protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info) {
         assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movl(rscratch1, method.interfaceID());
@@ -2615,7 +2615,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArrayCopy(LIRArrayCopy op) {
-        CiType defaultType = op.expectedType();
+        RiType defaultType = op.expectedType();
         Register src = op.src().asRegister();
         Register dst = op.dst().asRegister();
         Register srcPos = op.srcPos().asRegister();
@@ -2814,17 +2814,17 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitProfileCall(LIRProfileCall op) {
-        CiMethod method = op.profiledMethod();
+        RiMethod method = op.profiledMethod();
         int bci = op.profiledBci();
 
         // Update counter for all call types
-        CiMethodData md = method.methodData();
+        RiMethodProfile md = method.methodData();
         if (md == null) {
             throw new Bailout("out of memory building methodDataOop");
         }
         assert op.mdo().isSingleCpu() : "mdo must be allocated";
         Register mdo = op.mdo().asRegister();
-        masm().movoop(mdo, md.dataObject());
+        masm().movoop(mdo, md.encoding().asObject());
         Address counterAddr = new Address(mdo, md.countOffset(bci));
         masm().addl(counterAddr, 1);
         // TODO: use the bytecode from the invoke instruction
@@ -2835,7 +2835,7 @@ public class X86LIRAssembler extends LIRAssembler {
             assert op.recv().isSingleCpu() : "recv must be allocated";
             Register recv = op.recv().asRegister();
             assert Register.assertDifferentRegisters(mdo, recv);
-            CiType knownKlass = op.knownHolder();
+            RiType knownKlass = op.knownHolder();
             if (C1XOptions.OptimizeVirtualCallProfiling && knownKlass != null) {
                 // We know the type that will be seen at this call site; we can
                 // statically update the methodDataOop rather than needing to do
@@ -2844,7 +2844,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // NOTE: we should probably put a lock around this search to
                 // avoid collisions by concurrent compilations
                 for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    CiType receiver = md.receiver(bci, i);
+                    RiType receiver = md.receiver(bci, i);
                     if (knownKlass.equals(receiver)) {
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
@@ -2858,7 +2858,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // always does a write to the receiver part of the
                 // VirtualCallData rather than just the first time
                 for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    CiType receiver = md.receiver(bci, i);
+                    RiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
                         masm().movoop(recvAddr, knownKlass.encoding());

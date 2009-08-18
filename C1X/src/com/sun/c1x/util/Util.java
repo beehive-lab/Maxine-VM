@@ -188,16 +188,16 @@ public class Util {
      *         boolean[][]
      * </pre>
      *
-     * @param ciType the type to be converted to a Java name
+     * @param riType the type to be converted to a Java name
      * @param qualified specifies if the package prefix of the type should be included in the returned name
-     * @return the Java name corresponding to {@code ciType}
+     * @return the Java name corresponding to {@code riType}
      */
-    public static String toJavaName(CiType ciType, boolean qualified) {
-        BasicType basicType = ciType.basicType();
+    public static String toJavaName(RiType riType, boolean qualified) {
+        BasicType basicType = riType.basicType();
         if (basicType.isPrimitive() || basicType == BasicType.Void) {
             return basicType.javaName;
         }
-        String string = internalNameToJava(ciType.name());
+        String string = internalNameToJava(riType.name());
         if (qualified) {
             return string;
         }
@@ -218,11 +218,11 @@ public class Util {
      *      boolean[][]
      * </pre>
      *
-     * @param ciType the type to be converted to a Java name
-     * @return the Java name corresponding to {@code ciType}
+     * @param riType the type to be converted to a Java name
+     * @return the Java name corresponding to {@code riType}
      */
-    public static String toJavaName(CiType ciType) {
-        return internalNameToJava(ciType.name());
+    public static String toJavaName(RiType riType) {
+        return internalNameToJava(riType.name());
     }
 
     /**
@@ -252,10 +252,10 @@ public class Util {
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public static String format(String format, CiMethod method, boolean basicTypes) throws IllegalFormatException {
+    public static String format(String format, RiMethod method, boolean basicTypes) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
-        CiSignature sig = method.signatureType();
+        RiSignature sig = method.signatureType();
         while (index < format.length()) {
             final char ch = format.charAt(index++);
             if (ch == '%') {
@@ -339,7 +339,7 @@ public class Util {
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public static String format(String format, CiField field, boolean basicTypes) throws IllegalFormatException {
+    public static String format(String format, RiField field, boolean basicTypes) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
         while (index < format.length()) {
@@ -583,7 +583,7 @@ public class Util {
         }
     }
 
-    public static BasicType[] signatureToBasicTypes(CiSignature signature, boolean withReceiver) {
+    public static BasicType[] signatureToBasicTypes(RiSignature signature, boolean withReceiver) {
         int args = signature.argumentCount(false);
         BasicType[] result;
         int i = 0;

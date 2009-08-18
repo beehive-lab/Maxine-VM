@@ -144,14 +144,14 @@ public class C0XCompilation {
 
     final byte[] bytecode;
     byte[] blockMap;
-    final List<CiExceptionHandler> handlers;
+    final List<RiExceptionHandler> handlers;
 
-    final CiRuntime runtime;
-    final CiMethod method;
+    final RiRuntime runtime;
+    final RiMethod method;
     final Target target;
-    final CiBytecodeExtension extension;
+    final RiBytecodeExtension extension;
     CodeGen codeGen;
-    CiConstantPool constantPool;
+    RiConstantPool constantPool;
     final BlockState[] blockState;
     final int maxLocals;
     final int maxStack;
@@ -163,14 +163,14 @@ public class C0XCompilation {
     int blockQueuePos;
     int regNum;
 
-    public C0XCompilation(CiRuntime runtime, CiMethod method, Target target, CiBytecodeExtension extension) {
+    public C0XCompilation(RiRuntime runtime, RiMethod method, Target target, RiBytecodeExtension extension) {
         this.runtime = runtime;
         this.method = method;
         this.target = target;
         this.extension = extension;
         this.bytecode = method.code();
         this.blockState = new BlockState[this.bytecode.length];
-        List<CiExceptionHandler> hlist = method.exceptionHandlers();
+        List<RiExceptionHandler> hlist = method.exceptionHandlers();
         this.handlers = hlist == null || hlist.size() == 0 ? null : hlist;
         this.maxLocals = method.maxLocals();
         this.maxStack = method.maxStackSize();
@@ -222,10 +222,10 @@ public class C0XCompilation {
             frameState.state[index] = produce(BasicType.Object);
             index = 1;
         }
-        CiSignature sig = method.signatureType();
+        RiSignature sig = method.signatureType();
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
-            CiType type = sig.argumentTypeAt(i);
+            RiType type = sig.argumentTypeAt(i);
             BasicType vt = type.basicType().stackType();
             frameState.state[index] = produce(vt);
             index += vt.sizeInSlots();
@@ -543,7 +543,7 @@ public class C0XCompilation {
 
     private void doUnknownBytecode(int bci, int opcode) {
         if (extension != null) {
-            CiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
+            RiBytecodeExtension.Bytecode extcode = extension.getBytecode(opcode, bci, bytecode);
             if (extcode != null) {
                 doExtendedBytecode(extcode);
                 return;
@@ -552,7 +552,7 @@ public class C0XCompilation {
         throw Util.shouldNotReachHere();
     }
 
-    private void doExtendedBytecode(CiBytecodeExtension.Bytecode extcode) {
+    private void doExtendedBytecode(RiBytecodeExtension.Bytecode extcode) {
         Location[] args = popN(extcode.signatureType().argumentSlots(false));
         BasicType retType = extcode.signatureType().returnBasicType();
         Location r = codeGen.genExtendedBytecode(extcode, args);
@@ -564,7 +564,7 @@ public class C0XCompilation {
     }
 
     private void doNewMultiArray(char cpi, int rank) {
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         Location[] lengths = popN(rank);
         Location r = codeGen.genNewMultiArray(type, lengths);
         push1(r);
@@ -581,14 +581,14 @@ public class C0XCompilation {
     }
 
     private void doInstanceOf(char cpi) {
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         Location r = codeGen.genInstanceOf(type, object);
         push1(r);
     }
 
     private void doCheckCast(char cpi) {
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         Location object = pop1();
         Location r = codeGen.genCheckCast(type, object);
         push1(object);
@@ -601,7 +601,7 @@ public class C0XCompilation {
     }
 
     private void doNewObjectArray(char cpi) {
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         Location length = pop1();
         Location r = codeGen.genNewObjectArray(type, length);
         push1(r);
@@ -615,59 +615,59 @@ public class C0XCompilation {
     }
 
     private void doNewInstance(char cpi) {
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         Location r = codeGen.genNewInstance(type);
         push1(r);
     }
 
-    private void doInvokeInterface(CiMethod ciMethod) {
-        Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
-        BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = codeGen.genInvokeInterface(ciMethod, args);
+    private void doInvokeInterface(RiMethod riMethod) {
+        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
+        BasicType retType = riMethod.signatureType().returnBasicType();
+        Location r = codeGen.genInvokeInterface(riMethod, args);
         pushZ(r, retType);
     }
 
-    private void doInvokeStatic(CiMethod ciMethod) {
-        Location[] args = popN(ciMethod.signatureType().argumentSlots(false));
-        BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = codeGen.genInvokeStatic(ciMethod, args);
+    private void doInvokeStatic(RiMethod riMethod) {
+        Location[] args = popN(riMethod.signatureType().argumentSlots(false));
+        BasicType retType = riMethod.signatureType().returnBasicType();
+        Location r = codeGen.genInvokeStatic(riMethod, args);
         pushZ(r, retType);
     }
 
-    private void doInvokeSpecial(CiMethod ciMethod) {
-        Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
-        BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = codeGen.genInvokeSpecial(ciMethod, args);
+    private void doInvokeSpecial(RiMethod riMethod) {
+        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
+        BasicType retType = riMethod.signatureType().returnBasicType();
+        Location r = codeGen.genInvokeSpecial(riMethod, args);
         pushZ(r, retType);
     }
 
-    private void doInvokeVirtual(CiMethod ciMethod) {
-        Location[] args = popN(ciMethod.signatureType().argumentSlots(true));
-        BasicType retType = ciMethod.signatureType().returnBasicType();
-        Location r = codeGen.genInvokeVirtual(ciMethod, args);
+    private void doInvokeVirtual(RiMethod riMethod) {
+        Location[] args = popN(riMethod.signatureType().argumentSlots(true));
+        BasicType retType = riMethod.signatureType().returnBasicType();
+        Location r = codeGen.genInvokeVirtual(riMethod, args);
         pushZ(r, retType);
     }
 
-    private void doPutField(CiField ciField) {
+    private void doPutField(RiField riField) {
         Location object = pop1();
-        Location value = popX(ciField.basicType());
-        codeGen.genPutField(ciField, object, value);
+        Location value = popX(riField.basicType());
+        codeGen.genPutField(riField, object, value);
     }
 
-    private void doGetField(CiField ciField) {
+    private void doGetField(RiField riField) {
         Location object = pop1();
-        Location r = codeGen.genGetField(ciField, object);
-        pushX(r, ciField.basicType());
+        Location r = codeGen.genGetField(riField, object);
+        pushX(r, riField.basicType());
     }
 
-    private void doPutStatic(CiField ciField) {
-        Location value = popX(ciField.basicType());
-        codeGen.getPutStatic(ciField, value);
+    private void doPutStatic(RiField riField) {
+        Location value = popX(riField.basicType());
+        codeGen.getPutStatic(riField, value);
     }
 
-    void doGetStatic(CiField ciField) {
-        Location r = codeGen.genGetStatic(ciField);
-        pushX(r, ciField.basicType());
+    void doGetStatic(RiField riField) {
+        Location r = codeGen.genGetStatic(riField);
+        pushX(r, riField.basicType());
     }
 
     private void doThrow(int i) {
@@ -822,14 +822,14 @@ public class C0XCompilation {
     private void doLoadConstant(int bci) {
         Object con = constantPool().lookupConstant((char) bci);
 
-        if (con instanceof CiType) {
+        if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
-            CiType citype = (CiType) con;
+            RiType ritype = (RiType) con;
             Location r;
-            if (!citype.isLoaded()) {
-                r = codeGen.genResolveClass(citype);
+            if (!ritype.isLoaded()) {
+                r = codeGen.genResolveClass(ritype);
             } else {
-                r = codeGen.genObjectConstant(citype.javaClass());
+                r = codeGen.genObjectConstant(ritype.javaClass());
             }
             push1(r);
             return;
@@ -1003,7 +1003,7 @@ public class C0XCompilation {
         return new Register(regNum++, basicType);
     }
 
-    CiConstantPool constantPool() {
+    RiConstantPool constantPool() {
         if (constantPool == null) {
             constantPool = runtime.getConstantPool(method);
         }
@@ -1012,7 +1012,7 @@ public class C0XCompilation {
 
     void handleException(int bci) {
         FrameState state = null;
-        for (CiExceptionHandler h : handlers) {
+        for (RiExceptionHandler h : handlers) {
             // XXX: could be sped up if handlers are sorted by startBCI
             if (h.startBCI() <= bci && bci < h.endBCI()) {
                 if (state == null) {
@@ -1023,7 +1023,7 @@ public class C0XCompilation {
         }
     }
 
-    void deferExceptionAdapter(FrameState state, int bci, CiExceptionHandler h) {
+    void deferExceptionAdapter(FrameState state, int bci, RiExceptionHandler h) {
         Util.nonFatalUnimplemented("defer the exception adapter state");
     }
 
@@ -1066,9 +1066,9 @@ public class C0XCompilation {
         // printBlockPrologue(this, bci);
     }
 
-    Location emitResolveClass(CiType citype) {
+    Location emitResolveClass(RiType ritype) {
         Location r = produce(BasicType.Object);
-        // printOp(r, "resolve_class:" + citype);
+        // printOp(r, "resolve_class:" + ritype);
         return r;
     }
 

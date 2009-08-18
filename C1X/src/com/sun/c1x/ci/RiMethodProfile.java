@@ -18,12 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package com.sun.c1x.ci;
 
 /**
- * The <code>MaxCiOsrFrame</code> class definition.
+ * The <code>RiMethodProfile</code> class definition.
  *
  * @author Ben L. Titzer
  */
-public class MaxCiOsrFrame {
+public interface RiMethodProfile {
+    CiConstant encoding();
+    int invocationCountOffset();
+    int bciCountOffset(int bci);
+    int branchTakenCountOffset(int bci);
+    int branchNotTakenCountOffset(int bci);
+
+    int headerOffset(int bci);
+    int countOffset(int bci);
+    RiType receiver(int bci, int i);
+    int receiverCountOffset(int bci, int i);
+    int receiverOffset(int bci, int i);
 }

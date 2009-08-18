@@ -482,7 +482,7 @@ public class InstructionPrinter extends InstructionVisitor {
           }
           out.println(')');
           INSTRUCTION.advance(out);
-          CiMethod target = invoke.target();
+          RiMethod target = invoke.target();
           out.print(target.holder().name()).print('.').print(target.name()).print(target.signatureType().asString());
     }
 
@@ -591,7 +591,7 @@ public class InstructionPrinter extends InstructionVisitor {
 
     @Override
     public void visitProfileCall(ProfileCall profileCall) {
-        final CiMethod method = profileCall.method();
+        final RiMethod method = profileCall.method();
         out.print("profile ").print(profileCall.object()).print(method.holder().name()).print('.').print(method.name());
         if (profileCall.knownHolder() != null) {
           out.print(", ").print(profileCall.knownHolder().name());

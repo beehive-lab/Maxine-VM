@@ -47,8 +47,8 @@ public class LoadIndexed extends AccessIndexed {
      * @return the declared type
      */
     @Override
-    public CiType declaredType() {
-        CiType arrayType = array().declaredType();
+    public RiType declaredType() {
+        RiType arrayType = array().declaredType();
         if (arrayType == null) {
             return null;
         }
@@ -60,8 +60,8 @@ public class LoadIndexed extends AccessIndexed {
      * @return the exact type
      */
     @Override
-    public CiType exactType() {
-        CiType declared = declaredType();
+    public RiType exactType() {
+        RiType declared = declaredType();
         return declared != null ? declared.exactType() : null;
     }
 

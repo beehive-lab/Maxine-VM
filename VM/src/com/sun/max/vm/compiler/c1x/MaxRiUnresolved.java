@@ -18,23 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.max.vm.compiler.c1x;
 
 /**
- * The <code>CiMethodData</code> class definition.
+ * The <code>MaxRiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
+ * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
  * @author Ben L. Titzer
  */
-public interface CiMethodData {
-    Object dataObject();
-    int invocationCountOffset();
-    int bciCountOffset(int bci);
-    int branchTakenCountOffset(int bci);
-    int branchNotTakenCountOffset(int bci);
-
-    int headerOffset(int bci);
-    int countOffset(int bci);
-    CiType receiver(int bci, int i);
-    int receiverCountOffset(int bci, int i);
-    int receiverOffset(int bci, int i);
+public class MaxRiUnresolved extends RuntimeException {
+    public MaxRiUnresolved(String msg) {
+        super(msg);
+    }
 }

@@ -41,7 +41,7 @@ public class StoreField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Instruction object, CiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
         super(object, field, isStatic, lockStack, stateBefore, isLoaded);
         this.value = value;
         setFlag(Flag.NoWriteBarrier);

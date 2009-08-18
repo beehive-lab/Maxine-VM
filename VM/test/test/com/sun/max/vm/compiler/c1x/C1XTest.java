@@ -146,7 +146,7 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        final MaxCiRuntime runtime = new MaxCiRuntime();
+        final MaxRiRuntime runtime = new MaxRiRuntime();
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final Target target = createTarget();
@@ -222,7 +222,7 @@ public class C1XTest {
 
         CiTargetMethod result;
         try {
-            result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
+            result = compiler.compileMethod(((MaxRiRuntime) compiler.runtime).getRiMethod((ClassMethodActor) method));
             if (timing) {
                 long timeNs = System.nanoTime() - startNs;
                 recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
@@ -392,7 +392,7 @@ public class C1XTest {
             if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
                 final Method method = methodActor.toJava();
                 assert method != null;
-                C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod((ClassMethodActor) methodActor), method);
+                C1XIntrinsic.registerFoldableMethod(MaxRiRuntime.globalRuntime.getRiMethod((ClassMethodActor) methodActor), method);
             }
             methods.add(methodActor);
             if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {
@@ -542,7 +542,7 @@ public class C1XTest {
         // configure the allocatable registers
         List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
         for (Register r : arch.registers) {
-            if (r != X86.rsp && r != MaxCiRuntime.globalRuntime.exceptionOopRegister()) {
+            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.exceptionOopRegister()) {
                 allocatable.add(r);
             }
         }

@@ -33,7 +33,7 @@ import com.sun.c1x.debug.*;
  */
 public class LIRJavaCall extends LIRCall {
 
-    private CiMethod method;
+    private RiMethod method;
     LIROperand receiver;
 
     /**
@@ -47,7 +47,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -64,7 +64,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, null, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -84,7 +84,7 @@ public class LIRJavaCall extends LIRCall {
      *
      * @return the method
      */
-    public CiMethod method() {
+    public RiMethod method() {
         return method;
     }
 

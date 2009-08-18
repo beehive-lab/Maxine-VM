@@ -30,7 +30,6 @@ import com.sun.c1x.ci.*;
  */
 public class Constant extends Instruction {
 
-
     public final CiConstant value;
 
     /**

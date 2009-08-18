@@ -52,12 +52,12 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genNewMultiArray(CiType type, Location[] lengths) {
+    Location genNewMultiArray(RiType type, Location[] lengths) {
         return unimplemented(BasicType.Object);
     }
 
     @Override
-    Location genExtendedBytecode(CiBytecodeExtension.Bytecode extcode, Location[] args) {
+    Location genExtendedBytecode(RiBytecodeExtension.Bytecode extcode, Location[] args) {
         return unimplemented(extcode.signatureType().returnBasicType());
     }
 
@@ -72,12 +72,12 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genInstanceOf(CiType type, Location object) {
+    Location genInstanceOf(RiType type, Location object) {
         return unimplemented(BasicType.Int);
     }
 
     @Override
-    Location genCheckCast(CiType type, Location object) {
+    Location genCheckCast(RiType type, Location object) {
         return unimplemented(BasicType.Object);
     }
 
@@ -87,7 +87,7 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genNewObjectArray(CiType type, Location length) {
+    Location genNewObjectArray(RiType type, Location length) {
         return unimplemented(BasicType.Object);
     }
 
@@ -97,48 +97,48 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genNewInstance(CiType type) {
+    Location genNewInstance(RiType type) {
         return unimplemented(BasicType.Object);
     }
 
     @Override
-    Location genInvokeInterface(CiMethod ciMethod, Location[] args) {
-        return unimplemented(ciMethod.signatureType().returnBasicType());
+    Location genInvokeInterface(RiMethod riMethod, Location[] args) {
+        return unimplemented(riMethod.signatureType().returnBasicType());
     }
 
     @Override
-    Location genInvokeStatic(CiMethod ciMethod, Location[] args) {
-        return unimplemented(ciMethod.signatureType().returnBasicType());
+    Location genInvokeStatic(RiMethod riMethod, Location[] args) {
+        return unimplemented(riMethod.signatureType().returnBasicType());
     }
 
     @Override
-    Location genInvokeSpecial(CiMethod ciMethod, Location[] args) {
-        return unimplemented(ciMethod.signatureType().returnBasicType());
+    Location genInvokeSpecial(RiMethod riMethod, Location[] args) {
+        return unimplemented(riMethod.signatureType().returnBasicType());
     }
 
     @Override
-    Location genInvokeVirtual(CiMethod ciMethod, Location[] args) {
-        return unimplemented(ciMethod.signatureType().returnBasicType());
+    Location genInvokeVirtual(RiMethod riMethod, Location[] args) {
+        return unimplemented(riMethod.signatureType().returnBasicType());
     }
 
     @Override
-    void genPutField(CiField ciField, Location object, Location value) {
+    void genPutField(RiField riField, Location object, Location value) {
         unimplemented(BasicType.Void);
     }
 
     @Override
-    Location genGetField(CiField ciField, Location object) {
-        return unimplemented(ciField.basicType());
+    Location genGetField(RiField riField, Location object) {
+        return unimplemented(riField.basicType());
     }
 
     @Override
-    void getPutStatic(CiField ciField, Location value) {
+    void getPutStatic(RiField riField, Location value) {
         unimplemented(BasicType.Void);
     }
 
     @Override
-    Location genGetStatic(CiField ciField) {
-        return unimplemented(ciField.basicType());
+    Location genGetStatic(RiField riField) {
+        return unimplemented(riField.basicType());
     }
 
     @Override
@@ -323,7 +323,7 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genResolveClass(CiType type) {
+    Location genResolveClass(RiType type) {
         return unimplemented(BasicType.Object);
     }
 

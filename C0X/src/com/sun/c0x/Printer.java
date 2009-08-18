@@ -21,7 +21,7 @@
 package com.sun.c0x;
 
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.CiMethod;
+import com.sun.c1x.ci.RiMethod;
 import com.sun.c1x.bytecode.BytecodeSwitch;
 import com.sun.c1x.bytecode.Bytecodes;
 
@@ -91,7 +91,7 @@ public class Printer {
         }
     }
 
-    static void printPrologue(CiMethod method) {
+    static void printPrologue(RiMethod method) {
         if (C1XOptions.PrintIR) {
             out.print(CTRL_RED);
             String s = "====== " + method + " ";

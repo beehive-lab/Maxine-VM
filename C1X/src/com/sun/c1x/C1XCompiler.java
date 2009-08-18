@@ -36,15 +36,15 @@ public class C1XCompiler extends CiCompiler {
 
     private boolean initialized;
 
-    public C1XCompiler(CiRuntime runtime, Target target) {
+    public C1XCompiler(RiRuntime runtime, Target target) {
         super(runtime, target);
     }
 
-    public CiTargetMethod compileMethod(CiMethod method) {
+    public CiTargetMethod compileMethod(RiMethod method) {
         return compileMethod(method, -1);
     }
 
-    public CiTargetMethod compileMethod(CiMethod method, int osrBCI) {
+    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
 
         if (!initialized) {
             initialized = true;
