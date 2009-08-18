@@ -192,7 +192,7 @@ public class NullCheckEliminator extends InstructionVisitor {
             localOut = new BitMap(32);
             for (Instruction i : this.localOut.get(block)) {
                 int index = makeIndex(i);
-                localOut.grow(index);
+                localOut.grow(index + 1);
                 localOut.set(index);
             }
             outBitmaps.put(block, localOut);
