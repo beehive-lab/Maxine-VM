@@ -158,7 +158,7 @@ public class CiTargetMethod {
 
         @Override
         public String toString() {
-            return String.format("Exception edge from pos %d to %d with type %s", codePos, handlerPos, exceptionType.javaClass().getName());
+            return String.format("Exception edge from pos %d to %d with type %s", codePos, handlerPos, (exceptionType == null) ? "null" : exceptionType.javaClass().getName());
         }
     }
 

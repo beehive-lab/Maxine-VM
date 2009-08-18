@@ -111,6 +111,15 @@ public final class Log {
     }
 
     /**
+     * Equivalent to calling {@link LogPrintStream#print(String...)} on {@link #out}.
+     */
+    public static void print(String... arr) {
+        for (String s : arr) {
+            out.print(s);
+        }
+    }
+
+    /**
      * Equivalent to calling {@link LogPrintStream#print(String, boolean)} on {@link #out}.
      */
     public static void print(String s, boolean withNewLine) {

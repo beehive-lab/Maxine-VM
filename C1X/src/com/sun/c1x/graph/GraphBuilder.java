@@ -180,7 +180,18 @@ public class GraphBuilder {
         }
 
         Base base = new Base(newHeaderBlock, osrEntry);
-        start.setNext(base, 0);
+
+        if (false && method().isSynchronized()) {
+            Instruction synchronizedObject = synchronizedObject(initialState, method());
+
+            monitorenter(synchronizedObject, 0);
+            /*Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
+            start.setNext(monitorEnter, 0);
+            monitorEnter.setNext(base, 0);*/
+        } else {
+            start.setNext(base, 0);
+        }
+
         start.setEnd(base);
         // create and setup state for start block
         start.setState(state.copy());

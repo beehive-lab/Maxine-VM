@@ -654,14 +654,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().verifyOop(src.asRegister());
                 masm().movptr(dst, src.asRegister());
             } else {
-                if (compilation.target.arch.is32bit()) {
-                    masm().movl(dst, src.asRegister());
-                } else if (compilation.target.arch.is64bit()) {
-                    masm().movq(dst, src.asRegister());
-
-                } else {
-                    throw Util.shouldNotReachHere();
-                }
+                masm().movl(dst, src.asRegister());
             }
 
         } else if (src.isDoubleCpu()) {
@@ -735,11 +728,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 break;
             case Int:
-                if (compilation.target.arch.is64bit()) {
-                    masm().movq(asAddress(toAddr), src.asRegister());
-                } else {
-                    masm().movl(asAddress(toAddr), src.asRegister());
-                }
+                masm().movl(asAddress(toAddr), src.asRegister());
                 break;
 
             case Long: {
