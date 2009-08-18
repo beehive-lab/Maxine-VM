@@ -42,9 +42,9 @@ import com.sun.max.lang.Function;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiType implements CiType {
+public class MaxRiType implements RiType {
 
-    final MaxCiConstantPool constantPool;
+    final MaxRiConstantPool constantPool;
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
     final BasicType basicType;
@@ -55,7 +55,7 @@ public class MaxCiType implements CiType {
      * @param constantPool the constant pool
      * @param classActor the class actor
      */
-    public MaxCiType(MaxCiConstantPool constantPool, ClassActor classActor) {
+    public MaxRiType(MaxRiConstantPool constantPool, ClassActor classActor) {
         this.constantPool = constantPool;
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
@@ -70,7 +70,7 @@ public class MaxCiType implements CiType {
      * @param constantPool the constant pool
      * @param classRef the class ref
      */
-    public MaxCiType(MaxCiConstantPool constantPool, ClassConstant classRef) {
+    public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
         this.classRef = classRef;
@@ -82,7 +82,7 @@ public class MaxCiType implements CiType {
      * @param constantPool the constant pool
      * @param typeDescriptor the type descriptor
      */
-    public MaxCiType(MaxCiConstantPool constantPool, TypeDescriptor typeDescriptor) {
+    public MaxRiType(MaxRiConstantPool constantPool, TypeDescriptor typeDescriptor) {
         this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
@@ -105,7 +105,7 @@ public class MaxCiType implements CiType {
     /**
      * Gets the Java class object for this compiler interface type.
      * @return the class object
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public Class<?> javaClass() {
         return asClassActor("javaClass").mirror();
@@ -115,7 +115,7 @@ public class MaxCiType implements CiType {
      * Checks whether this compiler interface type has any subclasses in the current
      * runtime environment.
      * @return <code>true</code> if this class has any subclasses
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasSubclass() {
         return !asClassActor("hasSubclass()").isFinal(); // TODO: leaf type assumptions
@@ -124,7 +124,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type has a finalizer method.
      * @return <code>true</code> if this class has a finalizer method
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasFinalizer() {
         return asClassActor("hasFinalizer()").hasFinalizer();
@@ -133,7 +133,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type has any subclasses that have finalizers.
      * @return <code>true</code> if this class has any subclasses with finalizers
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasFinalizableSubclass() {
         return asClassActor("hasFinalizer()").hasFinalizer(); // TODO: is this correct?
@@ -142,7 +142,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is an interface.
      * @return <code>true</code> if this class is an interface
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInterface() {
         return asClassActor("isInterface()").isInterfaceActor();
@@ -151,7 +151,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is an array class.
      * @return <code>true</code> if this class is an interface
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isArrayKlass() {
         return asClassActor("isArrayClass()") instanceof ArrayClassActor;
@@ -160,7 +160,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is an instance class.
      * @return <code>true</code> if this class is an instance class
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstanceClass() {
         final ClassActor classActor = asClassActor("isInstanceClass()");
@@ -170,7 +170,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is an array.
      * @return <code>true</code> if this class is an array.
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isTypeArrayClass() {
         // TODO: should this check whether this is a primitive array?
@@ -180,7 +180,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is final.
      * @return <code>true</code> if this class is final
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isFinal() {
         return asClassActor("isFinal()").isFinal();
@@ -197,7 +197,7 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is initialized.
      * @return <code>true</code> if this class is initialized
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInitialized() {
         return asClassActor("isInitialized()").isInitialized();
@@ -206,17 +206,17 @@ public class MaxCiType implements CiType {
     /**
      * Checks whether this compiler interface type is a subtype of another type.
      * @return <code>true</code> if this class is a subtype of the other type
-     * @throws MaxCiUnresolved if either class is not resolved
+     * @throws MaxRiUnresolved if either class is not resolved
      */
-    public boolean isSubtypeOf(CiType other) {
-        final MaxCiType otherType = (MaxCiType) other;
+    public boolean isSubtypeOf(RiType other) {
+        final MaxRiType otherType = (MaxRiType) other;
         return otherType.asClassActor("isSubtypeOf()").isAssignableFrom(this.asClassActor("isSubtypeOf()"));
     }
 
     /**
      * Checks whether the specified object is an instance of this compiler interface type.
      * @return <code>true</code> if this object is an instance of this type
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstance(Object obj) {
         return asClassActor("isInstance()").isInstance(obj);
@@ -225,15 +225,15 @@ public class MaxCiType implements CiType {
     /**
      * Gets the component type of this compiler interface type.
      * @return the component type if this class is an array
-     * @throws MaxCiUnresolved if the class is not resolved
+     * @throws MaxRiUnresolved if the class is not resolved
      */
-    public CiType componentType() {
+    public RiType componentType() {
         if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
             return constantPool.canonicalCiType(classActor.componentClassActor());
         }
         // the type is not resolved, but we can get the type of the elements
-        return new MaxCiType(constantPool, typeDescriptor.componentTypeDescriptor());
+        return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor());
     }
 
     /**
@@ -242,7 +242,7 @@ public class MaxCiType implements CiType {
      * Otherwise, or if the type is unresolved, this method will return null.
      * @return the exact type of this type, if it is known; <code>null</code> otherwise
      */
-    public CiType exactType() {
+    public RiType exactType() {
         if (classActor != null) {
             if (isFinalOrPrimitive(classActor)) {
                 return this;
@@ -258,7 +258,7 @@ public class MaxCiType implements CiType {
      * Gets the compiler interface type representing an array of this compiler interface type.
      * @return the compiler interface type representing an array with elements of this compiler interface type
      */
-    public CiType arrayOf() {
+    public RiType arrayOf() {
         if (classActor != null) {
             ArrayClassActor arrayClassActor = MaxineVM.usingTarget(new Function<ArrayClassActor>() {
                 public ArrayClassActor call() {
@@ -267,7 +267,7 @@ public class MaxCiType implements CiType {
             });
             return constantPool.canonicalCiType(arrayClassActor);
         }
-        return new MaxCiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
+        return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }
 
     /**
@@ -276,10 +276,10 @@ public class MaxCiType implements CiType {
      * @param method the method for which to resolve the implementation
      * @return the compiler interface method corresponding to the method implementation that would
      * be selected for objects of this dynamic type
-     * @throws MaxCiUnresolved if this type or the method is unresolved
+     * @throws MaxRiUnresolved if this type or the method is unresolved
      */
-    public CiMethod resolveMethodImpl(CiMethod method) {
-        final MethodActor methodActor = ((MaxCiMethod) method).methodActor;
+    public RiMethod resolveMethodImpl(RiMethod method) {
+        final MethodActor methodActor = ((MaxRiMethod) method).methodActor;
         final ClassActor resolvedClassActor = asClassActor("resolveMethod()");
         if (methodActor instanceof InterfaceMethodActor) {
             // resolve the actual method implementation in this class
@@ -317,8 +317,8 @@ public class MaxCiType implements CiType {
         return (ArrayClassActor) asClassActor(operation);
     }
 
-    private MaxCiUnresolved unresolved(String operation) {
-        throw new MaxCiUnresolved(operation + " not defined for unresolved class " + typeDescriptor.toString());
+    private MaxRiUnresolved unresolved(String operation) {
+        throw new MaxRiUnresolved(operation + " not defined for unresolved class " + typeDescriptor.toString());
     }
 
     private static boolean isFinalOrPrimitive(ClassActor classActor) {
@@ -383,8 +383,8 @@ public class MaxCiType implements CiType {
      */
     @Override
     public boolean equals(Object o) {
-        if (classActor != null && o instanceof MaxCiType) {
-            return classActor == ((MaxCiType) o).classActor;
+        if (classActor != null && o instanceof MaxRiType) {
+            return classActor == ((MaxRiType) o).classActor;
         }
         return o == this;
     }

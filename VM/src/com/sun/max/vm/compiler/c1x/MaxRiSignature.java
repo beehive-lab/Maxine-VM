@@ -30,21 +30,21 @@ import com.sun.max.vm.type.*;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiSignature implements CiSignature {
+public class MaxRiSignature implements RiSignature {
 
-    final MaxCiConstantPool constantPool;
+    final MaxRiConstantPool constantPool;
     final SignatureDescriptor descriptor;
     BasicType[] basicTypes;
     BasicType basicReturnType;
-    MaxCiType[] ciTypes;
-    MaxCiType ciReturnType;
+    MaxRiType[] ciTypes;
+    MaxRiType ciReturnType;
 
     /**
      * Creates a new signature within the specified constant pool from the specified signature descriptor.
      * @param constantPool the constant pool used to canonicalize types
      * @param descriptor the signature descriptor
      */
-    public MaxCiSignature(MaxCiConstantPool constantPool, SignatureDescriptor descriptor) {
+    public MaxRiSignature(MaxRiConstantPool constantPool, SignatureDescriptor descriptor) {
         this.constantPool = constantPool;
         this.descriptor = descriptor;
     }
@@ -63,10 +63,10 @@ public class MaxCiSignature implements CiSignature {
      * @param index the index of the argument
      * @return the type of the specified argument
      */
-    public CiType argumentTypeAt(int index) {
+    public RiType argumentTypeAt(int index) {
         if (ciTypes == null) {
             final int max = descriptor.numberOfParameters();
-            ciTypes = new MaxCiType[max];
+            ciTypes = new MaxRiType[max];
             for (int i = 0; i < max; i++) {
                 ciTypes[i] = descriptorToCiType(descriptor.parameterDescriptorAt(i));
             }
@@ -96,7 +96,7 @@ public class MaxCiSignature implements CiSignature {
      * Gets the return type of this signature.
      * @return the return type
      */
-    public CiType returnType() {
+    public RiType returnType() {
         if (ciReturnType == null) {
             ciReturnType = descriptorToCiType(descriptor.resultDescriptor());
         }
@@ -139,12 +139,12 @@ public class MaxCiSignature implements CiSignature {
     }
 
     private BasicType descriptorToBasicType(TypeDescriptor typeDescriptor) {
-        return MaxCiType.kindToBasicType(typeDescriptor.toKind());
+        return MaxRiType.kindToBasicType(typeDescriptor.toKind());
     }
 
-    private MaxCiType descriptorToCiType(TypeDescriptor typeDescriptor) {
+    private MaxRiType descriptorToCiType(TypeDescriptor typeDescriptor) {
          // TODO: resolve the descriptor if possible in the constant pool
-        return new MaxCiType(constantPool, typeDescriptor);
+        return new MaxRiType(constantPool, typeDescriptor);
     }
 
 }

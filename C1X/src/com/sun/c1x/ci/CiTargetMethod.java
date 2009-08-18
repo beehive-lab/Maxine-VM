@@ -72,12 +72,12 @@ public class CiTargetMethod {
     public static class CallSite {
         public final int codePos;
         public final CiRuntimeCall runtimeCall;
-        public final CiMethod method;
+        public final RiMethod method;
         public final Object globalStubID;
         public final boolean direct;
         public final boolean[] stackMap;
 
-        CallSite(int codePos, CiRuntimeCall runtimeCall, CiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
+        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
             this.codePos = codePos;
             this.runtimeCall = runtimeCall;
             this.method = method;
@@ -148,9 +148,9 @@ public class CiTargetMethod {
     public static class ExceptionHandler {
         public final int codePos;
         public final int handlerPos;
-        public final CiType exceptionType;
+        public final RiType exceptionType;
 
-        ExceptionHandler(int codePos, int handlerPos, CiType exceptionType) {
+        ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
             this.codePos = codePos;
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
@@ -254,7 +254,7 @@ public class CiTargetMethod {
      * @param method the method being called
      * @param stackMap the bitmap that indicates which stack locations
      */
-    public void recordDirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+    public void recordDirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
         callSites.add(new CallSite(codePosition, null, method, null, true, stackMap));
         directCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
@@ -266,7 +266,7 @@ public class CiTargetMethod {
      * @param method the method being called
      * @param stackMap the bitmap that indicates which stack locations
      */
-    public void recordIndirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+    public void recordIndirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
         callSites.add(new CallSite(codePosition, null, method, null, false, stackMap));
         indirectCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
@@ -279,7 +279,7 @@ public class CiTargetMethod {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-    public void recordExceptionHandler(int codePos, int handlerPos, CiType throwableType) {
+    public void recordExceptionHandler(int codePos, int handlerPos, RiType throwableType) {
         exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
     }
 

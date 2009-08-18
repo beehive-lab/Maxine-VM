@@ -35,10 +35,10 @@ import com.sun.c1x.globalstub.*;
  */
 public class LIRJavaCall extends LIRCall {
 
-    private CiMethod method;
+    private RiMethod method;
     LIROperand receiver;
     public final char cpi;
-    public final CiConstantPool constantPool;
+    public final RiConstantPool constantPool;
 
     /**
      * Creates a new LIRJavaCall instruction.
@@ -51,7 +51,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -70,7 +70,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         super(opcode, null, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -92,7 +92,7 @@ public class LIRJavaCall extends LIRCall {
      *
      * @return the method
      */
-    public CiMethod method() {
+    public RiMethod method() {
         return method;
     }
 

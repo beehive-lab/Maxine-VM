@@ -52,35 +52,35 @@ import com.sun.max.vm.type.*;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiRuntime implements CiRuntime {
+public class MaxRiRuntime implements RiRuntime {
 
     private static final Register[] generalParameterRegisters = new Register[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
     private static final Register[] xmmParameterRegisters = new Register[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
 
-    public static final MaxCiRuntime globalRuntime = new MaxCiRuntime();
+    public static final MaxRiRuntime globalRuntime = new MaxRiRuntime();
 
-    final MaxCiConstantPool globalConstantPool = new MaxCiConstantPool(this, null);
+    final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
 
-    final WeakHashMap<MaxCiField, MaxCiField> fields = new WeakHashMap<MaxCiField, MaxCiField>();
-    final WeakHashMap<MaxCiMethod, MaxCiMethod> methods = new WeakHashMap<MaxCiMethod, MaxCiMethod>();
-    final WeakHashMap<MaxCiType, MaxCiType> types = new WeakHashMap<MaxCiType, MaxCiType>();
-    final WeakHashMap<ConstantPool, MaxCiConstantPool> constantPools = new WeakHashMap<ConstantPool, MaxCiConstantPool>();
+    final WeakHashMap<MaxRiField, MaxRiField> fields = new WeakHashMap<MaxRiField, MaxRiField>();
+    final WeakHashMap<MaxRiMethod, MaxRiMethod> methods = new WeakHashMap<MaxRiMethod, MaxRiMethod>();
+    final WeakHashMap<MaxRiType, MaxRiType> types = new WeakHashMap<MaxRiType, MaxRiType>();
+    final WeakHashMap<ConstantPool, MaxRiConstantPool> constantPools = new WeakHashMap<ConstantPool, MaxRiConstantPool>();
 
     /**
      * Gets the constant pool for a specified method.
      * @param method the compiler interface method
      * @return the compiler interface constant pool for the specified method
      */
-    public CiConstantPool getConstantPool(CiMethod method) {
+    public RiConstantPool getConstantPool(RiMethod method) {
         return getConstantPool(this.asClassMethodActor(method, "getConstantPool()"));
     }
 
-    private MaxCiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
+    private MaxRiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
         final ConstantPool cp = classMethodActor.rawCodeAttribute().constantPool();
         synchronized (this) {
-            MaxCiConstantPool constantPool = constantPools.get(cp);
+            MaxRiConstantPool constantPool = constantPools.get(cp);
             if (constantPool == null) {
-                constantPool = new MaxCiConstantPool(this, cp);
+                constantPool = new MaxRiConstantPool(this, cp);
                 constantPools.put(cp, constantPool);
             }
             return constantPool;
@@ -94,7 +94,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @param name the name of the class
      * @return the compiler interface type for the class
      */
-    public CiType resolveType(String name) {
+    public RiType resolveType(String name) {
         final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name), false);
         if (classActor != null) {
             return globalConstantPool.canonicalCiType(classActor);
@@ -107,7 +107,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
-    public CiMethod getCiMethod(ClassMethodActor methodActor) {
+    public RiMethod getCiMethod(ClassMethodActor methodActor) {
         return getConstantPool(methodActor).canonicalCiMethod(methodActor);
     }
 
@@ -117,7 +117,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @param bci the bytecode index
      * @return the OSR frame
      */
-    public CiOsrFrame getOsrFrame(CiMethod method, int bci) {
+    public RiOsrFrame getOsrFrame(RiMethod method, int bci) {
         throw FatalError.unimplemented();
     }
 
@@ -127,7 +127,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return <code>true</code> if the method must be inlined; <code>false</code>
      * to allow the compiler to use its own heuristics
      */
-    public boolean mustInline(CiMethod method) {
+    public boolean mustInline(RiMethod method) {
         return asClassMethodActor(method, "mustInline()").isInline();
     }
 
@@ -137,7 +137,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return <code>true</code> if the runtime forbids inlining of the specified method;
      * <code>false</code> to allow the compiler to use its own heuristics
      */
-    public boolean mustNotInline(CiMethod method) {
+    public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
         return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
     }
@@ -148,7 +148,7 @@ public class MaxCiRuntime implements CiRuntime {
      * @return <code>true</code> if the runtime forbids compilation of the specified method;
      * <code>false</code> to allow the compiler to compile the method
      */
-    public boolean mustNotCompile(CiMethod method) {
+    public boolean mustNotCompile(RiMethod method) {
         return false;
     }
 
@@ -180,18 +180,18 @@ public class MaxCiRuntime implements CiRuntime {
         return getCRarg(i + 1);
     }
 
-    ClassMethodActor asClassMethodActor(CiMethod method, String operation) {
-        if (method instanceof MaxCiMethod) {
-            return ((MaxCiMethod) method).asClassMethodActor(operation);
+    ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
+        if (method instanceof MaxRiMethod) {
+            return ((MaxRiMethod) method).asClassMethodActor(operation);
         }
-        throw new MaxCiUnresolved("invalid CiMethod instance: " + method.getClass());
+        throw new MaxRiUnresolved("invalid CiMethod instance: " + method.getClass());
     }
 
-    ClassActor asClassActor(CiType type, String operation) {
-        if (type instanceof MaxCiType) {
-            return ((MaxCiType) type).asClassActor(operation);
+    ClassActor asClassActor(RiType type, String operation) {
+        if (type instanceof MaxRiType) {
+            return ((MaxRiType) type).asClassActor(operation);
         }
-        throw new MaxCiUnresolved("invalid CiType instance: " + type.getClass());
+        throw new MaxRiUnresolved("invalid CiType instance: " + type.getClass());
     }
 
     public int arrayLengthOffsetInBytes() {
@@ -603,7 +603,7 @@ public class MaxCiRuntime implements CiRuntime {
         return targetMethod;
     }
 
-    public CiType primitiveArrayType(BasicType elemType) {
+    public RiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 
     }

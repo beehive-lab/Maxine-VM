@@ -697,7 +697,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     public void visitInvoke(Invoke i) {
         assertNonNull(i.target(), "Target of invoke cannot be null");
         assertNonNull(i.state(), "Invoke must have ValueStack");
-        CiSignature signatureType = i.target().signatureType();
+        RiSignature signatureType = i.target().signatureType();
         assertBasicType(i, signatureType.returnBasicType().stackType());
         Instruction[] args = i.arguments();
         if (i.isStatic()) {
@@ -720,7 +720,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    private void typeCheckArguments(boolean isStatic, Instruction[] args, CiSignature signatureType) {
+    private void typeCheckArguments(boolean isStatic, Instruction[] args, RiSignature signatureType) {
         int argSize = signatureType.argumentSlots(!isStatic);
         if (argSize != args.length) {
             fail("Size of arguments does not match invoke signature");
@@ -896,7 +896,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    private void assertInstanceType(CiType ciType) {
+    private void assertInstanceType(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (ciType.isArrayKlass() || ciType.isInterface() || ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must be an instance class");
@@ -904,7 +904,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    private void assertArrayType(CiType ciType) {
+    private void assertArrayType(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (!ciType.isArrayKlass()) {
                 fail("CiType " + ciType + " must be an array class");
@@ -912,7 +912,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    private void assertNotPrimitive(CiType ciType) {
+    private void assertNotPrimitive(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must not be a primitive");

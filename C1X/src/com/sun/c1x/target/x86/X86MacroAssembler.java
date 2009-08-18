@@ -971,7 +971,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void biasedLockingExit(CiRuntime runtime, Register objReg, Register tempReg, Label done) {
+    void biasedLockingExit(RiRuntime runtime, Register objReg, Register tempReg, Label done) {
         assert C1XOptions.UseBiasedLocking;
 
         // Check for biased locking unlock case : which is a no-op
@@ -1615,7 +1615,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     // Defines obj : preserves varSizeInBytes : okay for t2 == varSizeInBytes.
-    void tlabAllocate(CiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
+    void tlabAllocate(RiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
         assert Register.assertDifferentRegisters(obj, t1, t2);
         assert Register.assertDifferentRegisters(obj, varSizeInBytes, t1);
         Register end = t2;
@@ -1760,7 +1760,7 @@ public class X86MacroAssembler extends X86Assembler {
     // The receiver klass is in recvKlass.
     // On success : the result will be in methodResult : and execution falls through.
     // On failure : execution transfers to the given label.
-    void lookupInterfaceMethod(CiRuntime runtime, Register recvKlass, Register intfKlass, RegisterOrConstant itableIndex, Register methodResult, Register scanTemp, Label lNoSuchInterface) {
+    void lookupInterfaceMethod(RiRuntime runtime, Register recvKlass, Register intfKlass, RegisterOrConstant itableIndex, Register methodResult, Register scanTemp, Label lNoSuchInterface) {
         assert Register.assertDifferentRegisters(recvKlass, intfKlass, methodResult, scanTemp);
         assert itableIndex.isConstant() || itableIndex.asRegister() == methodResult : "caller must use same register for non-constant itable index as for method";
 
@@ -1826,7 +1826,7 @@ public class X86MacroAssembler extends X86Assembler {
         movptr(methodResult, new Address(recvKlass, scanTemp, Address.ScaleFactor.times1));
     }
 
-    void checkKlassSubtype(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess) {
+    void checkKlassSubtype(RiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess) {
         // TODO: Also use the fast path!
         //Label lFailure = new Label();
         //checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
@@ -1834,7 +1834,7 @@ public class X86MacroAssembler extends X86Assembler {
         //bind(lFailure);
     }
 
-    void checkKlassSubtypeFastPath(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
+    void checkKlassSubtypeFastPath(RiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
         // TODO: Model the fast path!
         if (true) {
             throw Util.unimplemented();
@@ -1980,7 +1980,7 @@ public class X86MacroAssembler extends X86Assembler {
         bind(lFallthrough);
     }
 
-    void checkKlassSubtypeSlowPath(CiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Register temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
+    void checkKlassSubtypeSlowPath(RiRuntime runtime, Register subKlass, Register superKlass, Register tempReg, Register temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
         assert Register.assertDifferentRegisters(subKlass, superKlass, tempReg);
         if (temp2Reg != Register.noreg) {
             assert Register.assertDifferentRegisters(subKlass, superKlass, tempReg, temp2Reg);
@@ -2140,7 +2140,7 @@ public class X86MacroAssembler extends X86Assembler {
 // // see MethodHandles.generateMethodHandleStub
     }
 
-    boolean verifyTlab(CiRuntime runtime) {
+    boolean verifyTlab(RiRuntime runtime) {
         if (C1XOptions.UseTLAB && C1XOptions.VerifyOops) {
             Label next = new Label();
             Label ok = new Label();
@@ -2249,7 +2249,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    int lockObject(CiRuntime runtime, Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
+    int lockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
         /*int alignedMask = wordSize - 1;
         int hdrOffset = runtime.markOffsetInBytes();
         assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
@@ -2312,7 +2312,7 @@ public class X86MacroAssembler extends X86Assembler {
         return 0;
     }
 
-    public void unlockObject(CiRuntime runtime, Register hdr, Register obj, Register dispHdr, Label slowCase) {
+    public void unlockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Label slowCase) {
         /*int hdrOffset = runtime.markOffsetInBytes();
         assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
@@ -2396,7 +2396,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void allocateArray(CiRuntime runtime, Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
+    void allocateArray(RiRuntime runtime, Register obj, Register len, Register t1, Register t2, int headerSize, Address.ScaleFactor scaleFactor, Register klass, Label slowCase) {
         assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert Register.assertDifferentRegisters(obj, len, t1, t2, klass);
 
@@ -2425,7 +2425,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     // Defines obj, preserves varSizeInBytes
-    void tryAllocate(CiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
+    void tryAllocate(RiRuntime runtime, Register obj, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2, Label slowCase) {
         if (C1XOptions.UseTLAB) {
             tlabAllocate(runtime, obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
         } else {
@@ -2433,7 +2433,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void initializeHeader(CiRuntime runtime, Register obj, Register klass, Register len, Register t1, Register t2) {
+    void initializeHeader(RiRuntime runtime, Register obj, Register klass, Register len, Register t1, Register t2) {
         assert Register.assertDifferentRegisters(obj, klass, len);
         if (C1XOptions.UseBiasedLocking && !len.isValid()) {
             assert Register.assertDifferentRegisters(obj, klass, len, t1, t2);
@@ -2505,7 +2505,7 @@ public class X86MacroAssembler extends X86Assembler {
         bind(done);
     }
 
-    void allocateObject(CiRuntime runtime, Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
+    void allocateObject(RiRuntime runtime, Register obj, Register t1, Register t2, int headerSize, int objectSize, Register klass, Label slowCase) {
         assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
         assert obj != t1 && obj != t2 && t1 != t2 : "registers must be different"; // XXX really?
         assert headerSize >= 0 && objectSize >= headerSize : "illegal sizes";
@@ -2515,7 +2515,7 @@ public class X86MacroAssembler extends X86Assembler {
         initializeObject(runtime, obj, klass, Register.noreg, objectSize * wordSize, t1, t2);
     }
 
-    void initializeObject(CiRuntime runtime, Register obj, Register klass, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2) {
+    void initializeObject(RiRuntime runtime, Register obj, Register klass, Register varSizeInBytes, int conSizeInBytes, Register t1, Register t2) {
         assert (conSizeInBytes & runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
         int hdrSizeInBytes = runtime.instanceOopDescBaseOffsetInBytes();
 

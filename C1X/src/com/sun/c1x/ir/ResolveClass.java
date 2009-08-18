@@ -33,10 +33,10 @@ import com.sun.c1x.value.*;
  */
 public class ResolveClass extends Instruction {
 
-    public final CiType ciType;
+    public final RiType ciType;
     private final ValueStack state;
 
-    public ResolveClass(CiType type, ValueStack stack) {
+    public ResolveClass(RiType type, ValueStack stack) {
         super(BasicType.Object);
         this.ciType = type;
         assert stack != null;

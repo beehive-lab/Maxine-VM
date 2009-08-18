@@ -34,7 +34,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private X86MacroAssembler asm;
     private final Target target;
     private int frameSize;
-    private CiRuntime runtime;
+    private RiRuntime runtime;
     private C1XCompiler compiler;
     private Register[] registersSaved;
 

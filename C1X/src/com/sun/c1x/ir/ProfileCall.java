@@ -31,10 +31,10 @@ import com.sun.c1x.value.*;
  */
 public class ProfileCall extends Instruction {
 
-    final CiMethod method;
+    final RiMethod method;
     final int bciOfInvoke;
     Instruction object;
-    final CiType knownHolder;
+    final RiType knownHolder;
 
     /**
      * Constructs a new ProfileCall instruction.
@@ -43,7 +43,7 @@ public class ProfileCall extends Instruction {
      * @param object the instruction generating the receiver object; <code>null</code> if there is no receiver
      * @param knownHolder the static type known at the call site
      */
-    public ProfileCall(CiMethod method, int bci, Instruction object, CiType knownHolder) {
+    public ProfileCall(RiMethod method, int bci, Instruction object, RiType knownHolder) {
         super(BasicType.Void);
         this.method = method;
         this.bciOfInvoke = bci;
@@ -56,7 +56,7 @@ public class ProfileCall extends Instruction {
      * Gets the method being profiled.
      * @return the method
      */
-    public CiMethod method() {
+    public RiMethod method() {
         return method;
     }
 
@@ -80,7 +80,7 @@ public class ProfileCall extends Instruction {
      * Gets the known information about the class of the object.
      * @return the known holder
      */
-    public CiType knownHolder() {
+    public RiType knownHolder() {
         return knownHolder;
     }
 

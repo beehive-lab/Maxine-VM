@@ -39,7 +39,7 @@ public class LIRArrayCopy extends LIRInstruction {
     LIROperand dstPos;
     LIROperand length;
     LIROperand tmp;
-    private CiType expectedType;
+    private RiType expectedType;
     private int arrayCopyFlags;
 
     public enum Flags {
@@ -68,7 +68,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param length
      * @param tmp
      */
-    public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, CiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
+    public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
         super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info);
         this.src = src;
         this.srcPos = srcPos;
@@ -148,7 +148,7 @@ public class LIRArrayCopy extends LIRInstruction {
      *
      * @return the expected type
      */
-    public CiType expectedType() {
+    public RiType expectedType() {
         return expectedType;
     }
 

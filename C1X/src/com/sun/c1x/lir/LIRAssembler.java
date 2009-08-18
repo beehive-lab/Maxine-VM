@@ -78,7 +78,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected CiMethod method() {
+    protected RiMethod method() {
         return compilation.method();
     }
 
@@ -169,7 +169,7 @@ public abstract class LIRAssembler {
         emitStubs(slowCaseStubs);
     }
 
-    boolean needsIcache(CiMethod method) {
+    boolean needsIcache(RiMethod method) {
         return !method.isStatic();
     }
 
@@ -490,15 +490,15 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(CiMethod ciMethod, GlobalStub addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, CiConstantPool constantPool);
+    protected abstract void call(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void interfaceCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool);
+    protected abstract void interfaceCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool);
+    protected abstract void vtableCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void icCall(CiMethod ciMethod, GlobalStub addr, CodeEmitInfo info);
+    protected abstract void icCall(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 

@@ -409,7 +409,7 @@ public abstract class Instruction {
      * Computes the exact type of the result of this instruction, if possible.
      * @return the exact type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
-    public CiType exactType() {
+    public RiType exactType() {
         return null;
     }
 
@@ -417,7 +417,7 @@ public abstract class Instruction {
      * Computes the declared type of the result of this instruction, if possible.
      * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
-    public CiType declaredType() {
+    public RiType declaredType() {
         return null;
     }
 

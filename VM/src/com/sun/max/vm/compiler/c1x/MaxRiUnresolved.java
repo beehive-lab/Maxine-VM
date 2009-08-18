@@ -21,9 +21,13 @@
 package com.sun.max.vm.compiler.c1x;
 
 /**
- * The <code>MaxCiOsrFrame</code> class definition.
+ * The <code>MaxCiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
+ * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
  * @author Ben L. Titzer
  */
-public class MaxCiOsrFrame {
+public class MaxRiUnresolved extends RuntimeException {
+    public MaxRiUnresolved(String msg) {
+        super(msg);
+    }
 }

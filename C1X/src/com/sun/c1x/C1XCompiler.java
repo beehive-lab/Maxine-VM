@@ -34,21 +34,21 @@ import com.sun.c1x.target.*;
 public class C1XCompiler {
 
     public final Target target;
-    public final CiRuntime runtime;
+    public final RiRuntime runtime;
     private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
 
     private boolean initialized;
 
-    public C1XCompiler(Target target, CiRuntime runtime) {
+    public C1XCompiler(Target target, RiRuntime runtime) {
         this.target = target;
         this.runtime = runtime;
     }
 
-    public CiTargetMethod compileMethod(CiMethod method) {
+    public CiTargetMethod compileMethod(RiMethod method) {
         return compileMethod(method, -1);
     }
 
-    public CiTargetMethod compileMethod(CiMethod method, int osrBCI) {
+    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
 
         if (!initialized) {
             initialized = true;

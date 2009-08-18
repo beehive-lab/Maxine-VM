@@ -32,14 +32,14 @@ public abstract class NewArray extends StateSplit {
 
     Instruction length;
     final ValueStack stateBefore;
-    public final CiConstantPool constantPool;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new NewArray instruction.
      * @param length the instruction that produces the length for this allocation
      * @param stateBefore the state before the allocation
      */
-    NewArray(Instruction length, ValueStack stateBefore, CiConstantPool constantPool) {
+    NewArray(Instruction length, ValueStack stateBefore, RiConstantPool constantPool) {
         super(BasicType.Object);
         this.constantPool = constantPool;
         this.length = length;

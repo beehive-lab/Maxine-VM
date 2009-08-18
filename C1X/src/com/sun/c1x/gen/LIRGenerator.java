@@ -218,7 +218,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             javaIndex += t.size;
         }
 
-        final CiMethod method = compilation.method;
+        final RiMethod method = compilation.method;
 
         if (method.isSynchronized()) {
             LIROperand obj;
@@ -848,7 +848,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         } else {
             // get some idea of the throw type
             boolean typeIsExact = true;
-            CiType throwType = x.exception().exactType();
+            RiType throwType = x.exception().exactType();
             if (throwType == null) {
                 typeIsExact = false;
                 throwType = x.exception().declaredType();
@@ -1156,9 +1156,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     protected void profileBranch(If ifInstr, Condition cond) {
         if (ifInstr.shouldProfile()) {
-            CiMethod method = ifInstr.profiledMethod();
+            RiMethod method = ifInstr.profiledMethod();
             assert method != null : "method should be set if branch is profiled";
-            CiMethodData md = method.methodData();
+            RiMethodProfile md = method.methodData();
             if (md != null) {
                 int takenCountOffset = md.branchTakenCountOffset(ifInstr.profiledBCI());
 
@@ -1537,7 +1537,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected final void arraycopyHelper(Intrinsic x, int[] flagsp, CiType[] expectedTypep) {
+    protected final void arraycopyHelper(Intrinsic x, int[] flagsp, RiType[] expectedTypep) {
         Instruction src = x.argumentAt(0);
         Instruction srcPos = x.argumentAt(1);
         Instruction dst = x.argumentAt(2);
@@ -1545,13 +1545,13 @@ public abstract class LIRGenerator extends InstructionVisitor {
         Instruction length = x.argumentAt(4);
 
         // first try to identify the likely type of the arrays involved
-        CiType expectedType = null;
+        RiType expectedType = null;
         boolean isExact = false;
 
-        CiType srcExactType = src.exactType();
-        CiType srcDeclaredType = src.declaredType();
-        CiType dstExactType = dst.exactType();
-        CiType dstDeclaredType = dst.declaredType();
+        RiType srcExactType = src.exactType();
+        RiType srcDeclaredType = src.declaredType();
+        RiType dstExactType = dst.exactType();
+        RiType dstDeclaredType = dst.declaredType();
 
         // TODO: Check that the types are array classes!
 
@@ -1560,8 +1560,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
             isExact = true;
             expectedType = srcExactType;
         } else if (dstExactType != null && dstExactType.isTypeArrayClass()) {
-            CiType dstType = dstExactType;
-            CiType srcType = null;
+            RiType dstType = dstExactType;
+            RiType srcType = null;
             if (srcExactType != null && srcExactType.isTypeArrayClass()) {
                 srcType = srcExactType;
             } else if (srcDeclaredType != null && srcDeclaredType.isTypeArrayClass()) {
@@ -2049,7 +2049,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         while (s != null) {
 
             IRScope scope = s.scope();
-            CiMethod method = scope.method;
+            RiMethod method = scope.method;
 
             BitMap liveness = method.liveness(bci);
             if (bci == Instruction.SYNCHRONIZATION_ENTRY_BCI) {

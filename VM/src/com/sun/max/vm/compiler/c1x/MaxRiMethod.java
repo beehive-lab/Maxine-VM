@@ -40,19 +40,19 @@ import com.sun.max.collect.Sequence;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiMethod implements CiMethod {
+public class MaxRiMethod implements RiMethod {
 
-    final MaxCiConstantPool constantPool;
+    final MaxRiConstantPool constantPool;
     MethodRefConstant methodRef;
     MethodActor methodActor;
-    List<CiExceptionHandler> exceptionHandlers;
+    List<RiExceptionHandler> exceptionHandlers;
 
     /**
      * Creates a new resolved compiler interface method from the specified method actor.
      * @param constantPool the constant pool
      * @param methodActor the method actor
      */
-    public MaxCiMethod(MaxCiConstantPool constantPool, MethodActor methodActor) {
+    public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
     }
@@ -62,7 +62,7 @@ public class MaxCiMethod implements CiMethod {
      * @param constantPool the constant pool
      * @param methodRef the method ref
      */
-    public MaxCiMethod(MaxCiConstantPool constantPool, MethodRefConstant methodRef) {
+    public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef) {
         this.constantPool = constantPool;
         this.methodRef = methodRef;
     }
@@ -82,18 +82,18 @@ public class MaxCiMethod implements CiMethod {
      * Gets the compiler interface type of the holder of this method.
      * @return the holder of this method
      */
-    public CiType holder() {
+    public RiType holder() {
         if (methodActor != null) {
             return constantPool.canonicalCiType(methodActor.holder());
         }
-        return new MaxCiType(constantPool, methodRef.holder(constantPool.constantPool));
+        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool));
     }
 
     /**
      * Gets the compiler interface signature for this method.
      * @return the signature of this method
      */
-    public CiSignature signatureType() {
+    public RiSignature signatureType() {
         if (methodActor != null) {
             return constantPool.cacheSignature(methodActor.descriptor());
         }
@@ -103,7 +103,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the code of this method as byte array.
      * @return the code of this method
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public byte[] code() {
         return asClassMethodActor("code()").rawCodeAttribute().code();
@@ -112,7 +112,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the maximum number of locals used in the code of this method.
      * @return the maximum number of locals
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxLocals() {
         return asClassMethodActor("maxLocals()").rawCodeAttribute().maxLocals();
@@ -121,7 +121,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the maximum stack size used in the code of this method.
      * @return the maximum stack size
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxStackSize() {
         return asClassMethodActor("maxStackSize()").rawCodeAttribute().maxStack();
@@ -130,7 +130,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method has balanced monitor operations.
      * @return <code>true</code> if the monitor operations are balanced correctly
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasBalancedMonitors() {
         asClassMethodActor("hasBalancedMonitors()");
@@ -140,7 +140,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method has any exception handlers.
      * @return <code>true</code> if this method has any exception handlers
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
         final CodeAttribute codeAttribute = asClassMethodActor("hasExceptionHandlers()").rawCodeAttribute();
@@ -162,7 +162,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is abstract.
      * @return <code>true</code> if this method is abstract
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isAbstract() {
         return asMethodActor("isAbstract()").isAbstract();
@@ -171,7 +171,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is native.
      * @return <code>true</code> if this method is native
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isNative() {
         return asMethodActor("isNative()").isNative();
@@ -180,7 +180,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is final.
      * @return <code>true</code> if this method is final
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isFinalMethod() {
         return asMethodActor("isFinalMethod()").isFinal();
@@ -189,7 +189,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is synchronized.
      * @return <code>true</code> if this method is synchronized
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isSynchronized() {
         return asMethodActor("isSynchronized()").isSynchronized();
@@ -199,7 +199,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is strict-fp.
      * @return <code>true</code> if this method is strict-fp
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isStrictFP() {
         return asMethodActor("isStrictFP()").isStrict();
@@ -208,7 +208,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method is static.
      * @return <code>true</code> if this method is static
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isStatic() {
         return asMethodActor("isStatic()").isStatic();
@@ -217,7 +217,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Checks whether this method has been overridden in the current runtime environment.
      * @return <code>true</code> if this method has been overridden
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isOverridden() {
         return !canBeStaticallyBound(); // TODO: do leaf method checks
@@ -226,7 +226,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the virtual table index of this method.
      * @return the virtual table index of this method
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public int vtableIndex() {
         if (methodActor instanceof VirtualMethodActor) {
@@ -242,7 +242,7 @@ public class MaxCiMethod implements CiMethod {
      * @return the method instruction for this method; <code>null</code> if no instrumentation
      * is available
      */
-    public CiMethodData methodData() {
+    public RiMethodProfile methodData() {
         return null;
     }
 
@@ -272,7 +272,7 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the size of the code in this method.
      * @return the size of the code in bytes
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
     public int codeSize() {
         return asClassMethodActor("codeSize()").rawCodeAttribute().code().length;
@@ -281,17 +281,17 @@ public class MaxCiMethod implements CiMethod {
     /**
      * Gets the exception handlers for this method.
      * @return the exception handlers
-     * @throws MaxCiUnresolved if the method is unresolved
+     * @throws MaxRiUnresolved if the method is unresolved
      */
-    public List<CiExceptionHandler> exceptionHandlers() {
+    public List<RiExceptionHandler> exceptionHandlers() {
         if (exceptionHandlers != null) {
             // return the cached exception handlers
             return exceptionHandlers;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
-        exceptionHandlers = new ArrayList<CiExceptionHandler>();
+        exceptionHandlers = new ArrayList<RiExceptionHandler>();
         for (ExceptionHandlerEntry entry : classMethodActor.rawCodeAttribute().exceptionHandlerTable()) {
-            exceptionHandlers.add(new MaxCiExceptionHandler((char) entry.startPosition(),
+            exceptionHandlers.add(new MaxRiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),
                                                              (char) entry.catchTypeIndex(), (entry.catchTypeIndex() == 0) ? null : constantPool.resolveType((char) entry.catchTypeIndex())));
@@ -313,14 +313,14 @@ public class MaxCiMethod implements CiMethod {
         throw unresolved(operation);
     }
 
-    private MaxCiUnresolved unresolved(String operation) {
+    private MaxRiUnresolved unresolved(String operation) {
         String name;
         if (methodActor != null) {
             name = methodActor.toString();
         } else {
             name = methodRef.toString(constantPool.constantPool);
         }
-        throw new MaxCiUnresolved(operation + " not defined for unresolved method " + name);
+        throw new MaxRiUnresolved(operation + " not defined for unresolved method " + name);
     }
 
     /**
@@ -347,8 +347,8 @@ public class MaxCiMethod implements CiMethod {
      */
     @Override
     public boolean equals(Object o) {
-        if (methodActor != null && o instanceof MaxCiMethod) {
-            return methodActor == ((MaxCiMethod) o).methodActor;
+        if (methodActor != null && o instanceof MaxRiMethod) {
+            return methodActor == ((MaxRiMethod) o).methodActor;
         }
         return o == this;
     }

@@ -28,13 +28,13 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiExceptionHandler implements CiExceptionHandler {
+public class MaxRiExceptionHandler implements RiExceptionHandler {
 
     private final int startBCI;
     private final int endBCI;
     private final int handlerBCI;
     private final int classCPI;
-    private final CiType classType;
+    private final RiType classType;
 
     /**
      * Creates a new exception handler with the specified ranges.
@@ -44,7 +44,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @param classCPI the index of the throwable class in the constant pool
      * @param maxCiType
      */
-    public MaxCiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, CiType classType) {
+    public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;
@@ -93,7 +93,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
     }
 
     @Override
-    public CiType catchKlass() {
+    public RiType catchKlass() {
         return classType;
     }
 }

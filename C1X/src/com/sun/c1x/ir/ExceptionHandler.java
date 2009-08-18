@@ -34,7 +34,7 @@ public class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
-    public final CiExceptionHandler handler;
+    public final RiExceptionHandler handler;
     private BlockBegin entryBlock;
     private LIRList entryCode;
     private int entryCodeOffset;
@@ -42,7 +42,7 @@ public class ExceptionHandler {
     private int scopeCount;
     private int lirOpId;
 
-    public ExceptionHandler(CiExceptionHandler handler) {
+    public ExceptionHandler(RiExceptionHandler handler) {
         this.handler = handler;
         this.entryCodeOffset = -1;
         this.phiOperand = -1;
@@ -119,7 +119,7 @@ public class ExceptionHandler {
         return handler.catchClassIndex() == 0;
     }
 
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType klass, boolean typeIsExact) {
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
         // the type is unknown so be conservative
         if (!klass.isLoaded()) {
             return true;
@@ -131,7 +131,7 @@ public class ExceptionHandler {
                 // catch of ANY
                 return true;
             }
-            CiType handlerKlass = handler.handler.catchKlass();
+            RiType handlerKlass = handler.handler.catchKlass();
             // if it's unknown it might be catchable
             if (!handlerKlass.isLoaded()) {
                 return true;

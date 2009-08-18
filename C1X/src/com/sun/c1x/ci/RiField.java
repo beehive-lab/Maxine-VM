@@ -25,13 +25,13 @@ import com.sun.c1x.value.*;
 /**
  * The <code>CiField</code> interface represents a reference to a field, including both
  * resolved and unresolved fields. Fields, like methods and types, are resolved through
- * {@link CiConstantPool constant pools}, and their actual implementation is provided
- * by the {@link CiRuntime runtime} to the compiler. Note that some operations are only
+ * {@link RiConstantPool constant pools}, and their actual implementation is provided
+ * by the {@link RiRuntime runtime} to the compiler. Note that some operations are only
  * available on resolved fields.
  *
  * @author Ben L. Titzer
  */
-public interface CiField {
+public interface RiField {
     /**
      * Gets the name of this field as a string.
      * @return the name of this field
@@ -42,7 +42,7 @@ public interface CiField {
      * Gets the type of this field as a compiler interface type.
      * @return the type of this field
      */
-    CiType type();
+    RiType type();
 
     /**
      * Gets the basic type of this field.
@@ -54,7 +54,7 @@ public interface CiField {
      * Gets the holder of this field as a compiler interface type.
      * @return the holder of this field
      */
-    CiType holder();
+    RiType holder();
 
     /**
      * Checks whether this field is loaded (i.e. resolved).
