@@ -45,7 +45,7 @@ public class BlockMarker {
 
     final byte[] code;
     final byte[] blockMap;
-    List<CiExceptionHandler> handlers;
+    List<RiExceptionHandler> handlers;
     int numBlocks;
     int numBackwardEdges;
 
@@ -53,7 +53,7 @@ public class BlockMarker {
      * Creates a new BlockMap instance from the specified bytecode.
      * @param method the compiler interface method containing the code
      */
-    public BlockMarker(CiMethod method) {
+    public BlockMarker(RiMethod method) {
         byte[] code = method.code();
         this.handlers = method.exceptionHandlers();
         this.code = code;
@@ -63,7 +63,7 @@ public class BlockMarker {
     public void markBlocks() {
         if (handlers != null) {
             // mark all exception handler blocks
-            for (CiExceptionHandler h : handlers) {
+            for (RiExceptionHandler h : handlers) {
                 setExceptionEntry(h.handlerBCI());
             }
         }

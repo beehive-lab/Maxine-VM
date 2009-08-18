@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
 public class Local extends Instruction {
 
     private final int javaIndex;
-    private CiType declaredType;
+    private RiType declaredType;
 
     public Local(BasicType type, int javaIndex) {
         super(type);
@@ -51,7 +51,7 @@ public class Local extends Instruction {
      * Sets the declared type of this local, e.g. derived from the signature of the method.
      * @param declaredType the declared type of the local variable
      */
-    public void setDeclaredType(CiType declaredType) {
+    public void setDeclaredType(RiType declaredType) {
         this.declaredType = declaredType;
     }
 
@@ -60,7 +60,7 @@ public class Local extends Instruction {
      * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
     @Override
-    public CiType declaredType() {
+    public RiType declaredType() {
         return declaredType;
     }
 

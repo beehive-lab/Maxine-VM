@@ -20,7 +20,6 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.asm.Buffer;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.Target;
 import com.sun.c1x.value.BasicType;
@@ -34,9 +33,9 @@ import com.sun.c0x.C0XCompilation.Location;
  * @author Ben L. Titzer
  */
 public abstract class CodeGen {
-    protected final CiRuntime runtime;
+    protected final RiRuntime runtime;
     protected final Target target;
-    protected final CiMethod method;
+    protected final RiMethod method;
 
     public CodeGen(C0XCompilation compilation, Target target) {
         this.runtime = compilation.runtime;
@@ -46,41 +45,41 @@ public abstract class CodeGen {
 
     abstract void genBreakpoint(int bci);
 
-    abstract Location genNewMultiArray(CiType type, Location[] lengths);
+    abstract Location genNewMultiArray(RiType type, Location[] lengths);
 
-    abstract Location genExtendedBytecode(CiBytecodeExtension.Bytecode extcode, Location[] args);
+    abstract Location genExtendedBytecode(RiBytecodeExtension.Bytecode extcode, Location[] args);
 
     abstract void genMonitorExit(Location object);
 
     abstract void genMonitorEnter(Location object);
 
-    abstract Location genInstanceOf(CiType type, Location object);
+    abstract Location genInstanceOf(RiType type, Location object);
 
-    abstract Location genCheckCast(CiType type, Location object);
+    abstract Location genCheckCast(RiType type, Location object);
 
     abstract Location genArrayLength(Location object);
 
-    abstract Location genNewObjectArray(CiType type, Location length);
+    abstract Location genNewObjectArray(RiType type, Location length);
 
     abstract Location genNewTypeArray(BasicType elemType, Location length);
 
-    abstract Location genNewInstance(CiType type);
+    abstract Location genNewInstance(RiType type);
 
-    abstract Location genInvokeInterface(CiMethod ciMethod, Location[] args);
+    abstract Location genInvokeInterface(RiMethod riMethod, Location[] args);
 
-    abstract Location genInvokeStatic(CiMethod ciMethod, Location[] args);
+    abstract Location genInvokeStatic(RiMethod riMethod, Location[] args);
 
-    abstract Location genInvokeSpecial(CiMethod ciMethod, Location[] args);
+    abstract Location genInvokeSpecial(RiMethod riMethod, Location[] args);
 
-    abstract Location genInvokeVirtual(CiMethod ciMethod, Location[] args);
+    abstract Location genInvokeVirtual(RiMethod riMethod, Location[] args);
 
-    abstract void genPutField(CiField ciField, Location object, Location value);
+    abstract void genPutField(RiField riField, Location object, Location value);
 
-    abstract Location genGetField(CiField ciField, Location object);
+    abstract Location genGetField(RiField riField, Location object);
 
-    abstract void getPutStatic(CiField ciField, Location value);
+    abstract void getPutStatic(RiField riField, Location value);
 
-    abstract Location genGetStatic(CiField ciField);
+    abstract Location genGetStatic(RiField riField);
 
     abstract void genThrow(Location thrown);
 
@@ -128,7 +127,7 @@ public abstract class CodeGen {
 
     abstract Location genDoubleNeg(int opcode, Location x);
 
-    abstract Location genResolveClass(CiType type);
+    abstract Location genResolveClass(RiType type);
 
     abstract Location genObjectConstant(Object aClass);
 

@@ -37,9 +37,9 @@ public abstract class CiCompiler {
     /**
      * The runtime that this compiler has been configured for.
      */
-    public final CiRuntime runtime;
+    public final RiRuntime runtime;
 
-    protected CiCompiler(CiRuntime runtime, Target target) {
+    protected CiCompiler(RiRuntime runtime, Target target) {
         this.runtime = runtime;
         this.target = target;
     }
@@ -49,7 +49,7 @@ public abstract class CiCompiler {
      * @param method the method to compile
      * @return a {@link CiTargetMethod target method} representing the compiled method
      */
-    public abstract CiTargetMethod compileMethod(CiMethod method);
+    public abstract CiTargetMethod compileMethod(RiMethod method);
 
     /**
      * Compile the specified method.
@@ -57,5 +57,5 @@ public abstract class CiCompiler {
      * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
      * @return a {@link CiTargetMethod target method} representing the compiled method
      */
-    public abstract CiTargetMethod compileMethod(CiMethod method, int osrBCI);
+    public abstract CiTargetMethod compileMethod(RiMethod method, int osrBCI);
 }

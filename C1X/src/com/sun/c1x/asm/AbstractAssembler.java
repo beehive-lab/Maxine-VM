@@ -66,7 +66,7 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    public CiTargetMethod finishTargetMethod(CiRuntime runtime, int framesize) {
+    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize) {
 
         final Buffer codeBuffer = this.codeBuffer;
         final Buffer dataBuffer = this.dataBuffer;
@@ -150,7 +150,7 @@ public abstract class AbstractAssembler {
         }
     }
 
-    protected void recordDirectCall(int pos, CiMethod call, boolean[] stackMap) {
+    protected void recordDirectCall(int pos, RiMethod call, boolean[] stackMap) {
 
         assert pos >= 0 && call != null && stackMap != null;
 

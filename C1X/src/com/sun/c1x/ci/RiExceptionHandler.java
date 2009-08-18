@@ -21,12 +21,12 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiExceptionHandler</code> interface represents an exception
+ * The <code>RiExceptionHandler</code> interface represents an exception
  * handler.
  *
  * @author Ben L. Titzer
  */
-public interface CiExceptionHandler {
+public interface RiExceptionHandler {
     /**
      * Gets the start bytecode index of the protected range of this handler.
      * @return the start bytecode index

@@ -117,7 +117,7 @@ Inlining
 Load/store elimination
    => C1X may eliminate loads of static fields, which C1 did not
    => C1X distinguishes loads/stores to different fields in MemoryBuffer
-   => C1X assumes that CiField instances are unique when .isLoaded() is true
+   => C1X assumes that RiField instances are unique when .isLoaded() is true
 
 Local/Global Value Numbering
    => C1X improved local load elimination and no longer value numbers fields, reducing the

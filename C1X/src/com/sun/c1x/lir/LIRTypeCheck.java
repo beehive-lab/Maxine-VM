@@ -36,7 +36,7 @@ public class LIRTypeCheck extends LIRInstruction {
 
     LIROperand object;
     LIROperand array;
-    private CiType klass;
+    private RiType klass;
     LIROperand tmp1;
     LIROperand tmp2;
     LIROperand tmp3;
@@ -45,7 +45,7 @@ public class LIRTypeCheck extends LIRInstruction {
     CodeEmitInfo infoForException;
     CodeStub stub;
     // Helpers for Tier1UpdateMethodData
-    CiMethod profiledMethod;
+    RiMethod profiledMethod;
     int profiledBci;
 
     /**
@@ -64,8 +64,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
-                        CodeEmitInfo infoForPatch, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
+                        CodeEmitInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
         super(opcode, result, null);
         this.object = object;
         this.array = LIROperandFactory.IllegalOperand;
@@ -104,7 +104,7 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
                         LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
-                        CodeEmitInfo infoForException, CiMethod profiledMethod, int profiledBci) {
+                        CodeEmitInfo infoForException, RiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
         this.object = object;
         this.klass = null;
@@ -178,7 +178,7 @@ public class LIRTypeCheck extends LIRInstruction {
      *
      * @return the klass
      */
-    public CiType klass() {
+    public RiType klass() {
         assert code() == LIROpcode.InstanceOf || code() == LIROpcode.CheckCast : "opcode is not valid.";
         return klass;
     }
@@ -225,7 +225,7 @@ public class LIRTypeCheck extends LIRInstruction {
      *
      * @return the profiledMethod
      */
-    public CiMethod profiledMethod() {
+    public RiMethod profiledMethod() {
         return profiledMethod;
     }
 

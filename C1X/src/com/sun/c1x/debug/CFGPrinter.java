@@ -44,7 +44,7 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
-    private CiMethod currentMethod;
+    private RiMethod currentMethod;
 
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
@@ -90,7 +90,7 @@ public class CFGPrinter {
      *
      * @param method the method for which a timestamp will be printed
      */
-    public void printCompilation(CiMethod method) {
+    public void printCompilation(RiMethod method) {
         currentMethod = method;
         begin("compilation");
         out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
@@ -325,7 +325,7 @@ public class CFGPrinter {
      * @param printHIR if {@code true} the HIR for each instruction in the block will be printed
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
-    public void printCFG(CiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
+    public void printCFG(RiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
         assert method == currentMethod;
         begin("cfg");
         out.print("name \"").print(label).println('"');

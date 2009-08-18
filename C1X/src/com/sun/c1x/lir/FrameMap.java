@@ -52,7 +52,7 @@ public abstract class FrameMap {
     final C1XCompilation compilation;
 
 
-    public FrameMap(C1XCompilation compilation, CiMethod method, int monitors, int maxStack) {
+    public FrameMap(C1XCompilation compilation, RiMethod method, int monitors, int maxStack) {
 
         this.compilation = compilation;
         framesize = -1;
@@ -83,8 +83,8 @@ public abstract class FrameMap {
         }
     }
 
-    private static BasicType[] signatureTypeArrayFor(CiMethod method) {
-        CiSignature sig = method.signatureType();
+    private static BasicType[] signatureTypeArrayFor(RiMethod method) {
+        RiSignature sig = method.signatureType();
         BasicType[] sta = new BasicType[sig.argumentCount(!method.isStatic())];
 
         int z = 0;
@@ -96,7 +96,7 @@ public abstract class FrameMap {
 
         // add remaining arguments
         for (int i = 0; i < sig.argumentCount(false); i++) {
-            CiType type = sig.argumentTypeAt(i);
+            RiType type = sig.argumentTypeAt(i);
             BasicType t = type.basicType();
             sta[z++] = t;
         }
