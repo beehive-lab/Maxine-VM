@@ -25,6 +25,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
@@ -102,41 +103,33 @@ public final class ObjectFieldsTable extends InspectorTable {
         columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         columnModel = new ObjectFieldsTableColumnModel(objectInspector);
         configureMemoryTable(model, columnModel);
+    }
 
-        addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                // By the way we get this event, a left click will have already made a new row selection.
-                final int selectedRow = getSelectedRow();
-                final int selectedColumn = getSelectedColumn();
-                if (selectedRow != -1 && selectedColumn != -1) {
-                    // Left button selects a table cell; also cause an address selection at the row.
-                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.getMemoryRegion(selectedRow).start());
-                    }
-                }
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    if (maxVM().watchpointsEnabled()) {
-                        // So far, only watchpoint-related items on this popup menu.
-                        final Point p = mouseEvent.getPoint();
-                        final int hitRowIndex = rowAtPoint(p);
-                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
-                            final InspectorMenu menu = new InspectorMenu();
-                            final FieldActor fieldActor = model.rowToFieldActor(hitRowIndex);
-                            menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
-                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-                            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(hitRowIndex)));
-                            menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Remove memory watchpoint"));
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        if (maxVM().watchpointsEnabled()) {
+            final InspectorMenu menu = new InspectorMenu();
+            final FieldActor fieldActor = model.rowToFieldActor(row);
+            menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
+            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Remove memory watchpoint"));
+            return menu;
+        }
+        return null;
+    }
 
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                        }
-                    }
-                }
-                super.procedure(mouseEvent);
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        // The selection in the table has changed; might have happened via user action (click, arrow) or
+        // as a side effect of a focus change.
+        super.valueChanged(e);
+        if (!e.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0 && row < model.getRowCount()) {
+                inspection().focus().setAddress(model.getAddress(row));
             }
-        });
+        }
     }
 
     public void refresh(boolean force) {
@@ -221,7 +214,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      * Models the fields/rows in a list of object fields;
      * the value of each cell is the {@link FieldActor} that describes the field.
      */
-    private final class ObjectFieldsTableModel extends AbstractTableModel implements InspectorMemoryTable {
+    private final class ObjectFieldsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
 
         public int getColumnCount() {
             return ObjectFieldColumnKind.VALUES.length();

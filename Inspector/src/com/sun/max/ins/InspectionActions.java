@@ -2810,6 +2810,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.teleObject = teleObject;
             this.fieldActor = fieldActor;
             this.memoryRegion = teleObject.getCurrentMemoryRegion(fieldActor);
+            refresh(true);
         }
 
         @Override
