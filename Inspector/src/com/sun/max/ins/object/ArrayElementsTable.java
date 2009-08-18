@@ -75,6 +75,26 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private MaxVMState lastRefreshedState = null;
 
+    private final class ToggleArrayElementsWatchpointAction extends InspectorAction {
+
+        private final int row;
+
+        public ToggleArrayElementsWatchpointAction(Inspection inspection, String name, int row) {
+            super(inspection, name);
+            this.row = row;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
+            if (watchpoint == null) {
+                actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
+            } else {
+                watchpoint.dispose();
+            }
+        }
+    }
+
     /**
      * A {@link JTable} specialized to display Maxine array elements.
      * This table is somewhat complex so that it can serve for both ordinary array elements
@@ -117,9 +137,18 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     @Override
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+            final InspectorAction action = new ToggleArrayElementsWatchpointAction(inspection(), null, row);
+            action.perform();
+        }
+    }
+
+    @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
             final InspectorMenu menu = new InspectorMenu();
+            menu.add(new ToggleArrayElementsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, "Watch this array element"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
             menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));

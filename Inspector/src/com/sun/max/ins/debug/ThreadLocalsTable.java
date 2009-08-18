@@ -55,7 +55,30 @@ public final class ThreadLocalsTable extends InspectorTable {
     private final ThreadLocalsTableColumnModel columnModel;
     private final TableColumn[] columns;
 
+
+
     private MaxVMState lastRefreshedState = null;
+
+
+    private final class ToggleThreadLocalsWatchpointAction extends InspectorAction {
+
+        private final int row;
+
+        public ToggleThreadLocalsWatchpointAction(Inspection inspection, String name, int row) {
+            super(inspection, name);
+            this.row = row;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
+            if (watchpoint == null) {
+                actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
+            } else {
+                watchpoint.dispose();
+            }
+        }
+    }
 
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
@@ -70,10 +93,19 @@ public final class ThreadLocalsTable extends InspectorTable {
     }
 
     @Override
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+            final InspectorAction action = new ToggleThreadLocalsWatchpointAction(inspection(), null, row);
+            action.perform();
+        }
+    }
+
+    @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled() && col == ThreadLocalsColumnKind.TAG.ordinal()) {
             final InspectorMenu menu = new InspectorMenu();
             final MemoryRegion memoryRegion = model.getMemoryRegion(row);
+            menu.add(new ToggleThreadLocalsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             menu.add(actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, "Watch this memory location"));
             menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
