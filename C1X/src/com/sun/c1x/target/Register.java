@@ -93,6 +93,11 @@ public final class Register {
         return checkFlag(RegisterFlag.MMX);
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
     public static boolean assertDifferentRegisters(Register... reg) {
 
         for (int i = 0; i < reg.length; i++) {
