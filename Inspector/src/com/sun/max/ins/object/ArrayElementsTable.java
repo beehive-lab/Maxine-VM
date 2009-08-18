@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
@@ -113,39 +114,32 @@ public final class ArrayElementsTable extends InspectorTable {
         this.columnModel = new ArrayElementsTableColumnModel(objectInspector);
         configureMemoryTable(model, columnModel);
         setFillsViewportHeight(true);
+    }
 
-        addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                final int selectedRow = getSelectedRow();
-                final int selectedColumn = getSelectedColumn();
-                if (selectedRow != -1 && selectedColumn != -1) {
-                    // Left button selects a table cell; also cause an address selection at the row.
-                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        inspection.focus().setAddress(model.getAddress(selectedRow));
-                    }
-                }
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    if (maxVM().watchpointsEnabled()) {
-                        // So far, only watchpoint-related items on this popup menu.
-                        final Point p = mouseEvent.getPoint();
-                        final int hitRowIndex = rowAtPoint(p);
-                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
-                            final InspectorMenu menu = new InspectorMenu();
-                            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(hitRowIndex), indexPrefix, "Watch this array element"));
-                            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
-                            final MemoryRegion memoryRegion = model.getMemoryRegion(hitRowIndex);
-                            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(hitRowIndex)));
-                            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                        }
-                    }
-                }
-                super.procedure(mouseEvent);
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        if (maxVM().watchpointsEnabled()) {
+            final InspectorMenu menu = new InspectorMenu();
+            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, "Watch this array element"));
+            menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(actions().removeWatchpoint(model.getMemoryRegion(row), "Remove memory watchpoint"));
+            return menu;
+        }
+        return null;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        // The selection in the table has changed; might have happened via user action (click, arrow) or
+        // as a side effect of a focus change.
+        super.valueChanged(e);
+        if (!e.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0 && row < model.getRowCount()) {
+                inspection().focus().setAddress(model.getAddress(row));
             }
-        });
+        }
     }
 
     public void refresh(boolean force) {
@@ -225,7 +219,7 @@ public final class ArrayElementsTable extends InspectorTable {
      * the value of each cell is simply the index into the array
      * elements being displayed.
      */
-    private final class ArrayElementsTableModel extends AbstractTableModel implements InspectorMemoryTable {
+    private final class ArrayElementsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
 
         public int getColumnCount() {
             return ArrayElementColumnKind.VALUES.length();

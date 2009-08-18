@@ -25,11 +25,11 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
@@ -51,50 +51,38 @@ public final class MemoryWordsTable extends InspectorTable {
 
     private MaxVMState lastRefreshedState = null;
 
-
     public MemoryWordsTable(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin, TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
         super(inspection);
         model = new MemoryWordsTableModel(memoryWordRegion, origin);
         columns = new TableColumn[MemoryWordsColumnKind.VALUES.length()];
         columnModel = new MemoryWordsColumnModel(instanceViewPreferences);
-
         configureMemoryTable(model, columnModel);
-        addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                // By the way we get this event, a left click will have already made a new row selection.
-                final int selectedRow = getSelectedRow();
-                final int selectedColumn = getSelectedColumn();
-                if (selectedRow != -1 && selectedColumn != -1) {
-                    // Left button selects a table cell; also cause an address selection at the row.
-                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        final MemoryRegion memoryRegion = model.getMemoryRegion(selectedRow);
-                        inspection().focus().setAddress(memoryRegion.start());
-                        if (mouseEvent.getClickCount() > 1) {
-                            actions().toggleWatchpointAtLocation(memoryRegion, null).perform();
-                        }
-                    }
-                }
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    final Point p = mouseEvent.getPoint();
-                    final int hitRowIndex = rowAtPoint(p);
-                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                    if (modelIndex == ObjectFieldColumnKind.TAG.ordinal() && hitRowIndex >= 0) {
-                        final InspectorMenu menu = new InspectorMenu();
-                        if (maxVM().watchpointsEnabled()) {
-                            final MemoryRegion memoryRegion = model.getMemoryRegion(hitRowIndex);
-                            menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
-                            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(hitRowIndex)));
-                            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
-                        }
-                        menu.add(actions().inspectMemoryBytes(model.getAddress(hitRowIndex), "Inspect this memory as bytes"));
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                    }
-                }
-                super.procedure(mouseEvent);
+    }
+
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        final InspectorMenu menu = new InspectorMenu();
+        if (maxVM().watchpointsEnabled()) {
+            final MemoryRegion memoryRegion = model.getMemoryRegion(row);
+            menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
+        }
+        menu.add(actions().inspectMemoryBytes(model.getAddress(row), "Inspect this memory as bytes"));
+        return menu;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        // The selection in the table has changed; might have happened via user action (click, arrow) or
+        // as a side effect of a focus change.
+        super.valueChanged(e);
+        if (!e.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0 && row < model.getRowCount()) {
+                inspection().focus().setAddress(model.getAddress(row));
             }
-        });
+        }
     }
 
     /**
@@ -194,7 +182,7 @@ public final class MemoryWordsTable extends InspectorTable {
      * A base address may also be specified, from which offsets are computed.
      * There is no requirement that the base address be in the memory region displayed.
      */
-    private final class MemoryWordsTableModel extends AbstractTableModel implements InspectorMemoryTable {
+    private final class MemoryWordsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
 
         final Size wordSize;
         MemoryWordRegion memoryWordRegion;

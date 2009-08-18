@@ -72,28 +72,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         model = new MemoryRegionsTableModel();
         columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
-
         configureDefaultTable(model, columnModel);
+    }
 
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    final Point p = mouseEvent.getPoint();
-                    final int hitRowIndex = rowAtPoint(p);
-                    final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                    final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                    if (modelIndex == MemoryRegionsColumnKind.NAME.ordinal() && hitRowIndex >= 0) {
-                        final InspectorMenu menu = new InspectorMenu();
-                        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getValueAt(hitRowIndex, modelIndex);
-                        final String regionName = memoryRegionDisplay.description();
-                        menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                    }
-                }
-                super.procedure(mouseEvent);
-            }
-        });
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        final InspectorMenu menu = new InspectorMenu();
+        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getValueAt(row, col);
+        final String regionName = memoryRegionDisplay.description();
+        menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));
+        return menu;
     }
 
     /**
