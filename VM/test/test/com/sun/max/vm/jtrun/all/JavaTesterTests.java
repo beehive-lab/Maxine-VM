@@ -14386,6 +14386,38 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_lang_Long_reverseBytes01() {
+        JavaTesterRunScheme.begin("jtt.lang.Long_reverseBytes01");
+        String runString = null;
+        try {
+        // (1234605616436508424) == 610068790934446609
+            runString = "(1234605616436508424)";
+            if (610068790934446609L != jtt.lang.Long_reverseBytes01.test(1234605616436508424L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_lang_Long_reverseBytes02() {
+        JavaTesterRunScheme.begin("jtt.lang.Long_reverseBytes02");
+        String runString = null;
+        try {
+        // (1234605616436508424) == 610068790934446609
+            runString = "(1234605616436508424)";
+            if (610068790934446609L != jtt.lang.Long_reverseBytes02.test(1234605616436508424L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_lang_Math_pow() {
         JavaTesterRunScheme.begin("jtt.lang.Math_pow");
         String runString = null;
@@ -18329,6 +18361,62 @@ public class JavaTesterTests {
         // (0) == true
             runString = "(0)";
             if (true != jtt.threads.Thread_yield01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_micro_ArrayCompare01() {
+        JavaTesterRunScheme.begin("jtt.micro.ArrayCompare01");
+        String runString = null;
+        try {
+        // (0) == true
+            runString = "(0)";
+            if (true != jtt.micro.ArrayCompare01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == false
+            runString = "(1)";
+            if (false != jtt.micro.ArrayCompare01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_micro_ArrayCompare02() {
+        JavaTesterRunScheme.begin("jtt.micro.ArrayCompare02");
+        String runString = null;
+        try {
+        // (0) == true
+            runString = "(0)";
+            if (true != jtt.micro.ArrayCompare02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == false
+            runString = "(1)";
+            if (false != jtt.micro.ArrayCompare02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == true
+            runString = "(2)";
+            if (true != jtt.micro.ArrayCompare02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == false
+            runString = "(3)";
+            if (false != jtt.micro.ArrayCompare02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

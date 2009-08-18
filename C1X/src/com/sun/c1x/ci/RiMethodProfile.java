@@ -18,45 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package com.sun.c1x.ci;
 
 /**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
+ * The <code>RiMethodProfile</code> class definition.
  *
  * @author Ben L. Titzer
  */
-public class BytecodeLookupSwitch extends BytecodeSwitch {
+public interface RiMethodProfile {
+    CiConstant encoding();
+    int invocationCountOffset();
+    int bciCountOffset(int bci);
+    int branchTakenCountOffset(int bci);
+    int branchNotTakenCountOffset(int bci);
 
-    public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
-        super(stream, bci);
-    }
-
-    public BytecodeLookupSwitch(byte[] code, int bci) {
-        super(code, bci);
-    }
-
-    @Override
-    public int defaultOffset() {
-        return readWord(aligned);
-    }
-
-    @Override
-    public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
-    }
-
-    @Override
-    public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
-    }
-
-    @Override
-    public int numberOfCases() {
-        return readWord(aligned + 4);
-    }
-
-    @Override
-    public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
-    }
+    int headerOffset(int bci);
+    int countOffset(int bci);
+    RiType receiver(int bci, int i);
+    int receiverCountOffset(int bci, int i);
+    int receiverOffset(int bci, int i);
 }

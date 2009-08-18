@@ -44,8 +44,8 @@ import com.sun.c1x.util.*;
 public class C1XCompilation {
 
     public final Target target;
-    public final CiRuntime runtime;
-    public final CiMethod method;
+    public final RiRuntime runtime;
+    public final RiMethod method;
     public final int osrBCI;
 
     int maxSpills;
@@ -77,7 +77,7 @@ public class C1XCompilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    C1XCompilation(C1XCompiler compiler, Target target, CiRuntime runtime, CiMethod method, int osrBCI) {
+    C1XCompilation(C1XCompiler compiler, Target target, RiRuntime runtime, RiMethod method, int osrBCI) {
         this.compiler = compiler;
         this.target = target;
         this.runtime = runtime;
@@ -93,7 +93,7 @@ public class C1XCompilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public C1XCompilation(C1XCompiler compiler, Target target, CiRuntime runtime, CiMethod method) {
+    public C1XCompilation(C1XCompiler compiler, Target target, RiRuntime runtime, RiMethod method) {
         this(compiler, target, runtime, method, -1);
     }
 
@@ -115,7 +115,7 @@ public class C1XCompilation {
      *
      * @return the method being compiled
      */
-    public CiMethod method() {
+    public RiMethod method() {
         return method;
     }
 
@@ -140,7 +140,7 @@ public class C1XCompilation {
      *
      * @return the OSR frame
      */
-    public CiOsrFrame getOsrFrame() {
+    public RiOsrFrame getOsrFrame() {
         return runtime.getOsrFrame(method, osrBCI);
     }
 
@@ -150,7 +150,7 @@ public class C1XCompilation {
      * @param type the type that is assumed to be a leaf class
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
-    public boolean recordLeafTypeAssumption(CiType type) {
+    public boolean recordLeafTypeAssumption(RiType type) {
         return false;
     }
 
@@ -160,7 +160,7 @@ public class C1XCompilation {
      * @param method the method that is assumed to be a leaf method
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
-    public boolean recordLeafMethodAssumption(CiMethod method) {
+    public boolean recordLeafMethodAssumption(RiMethod method) {
         return false;
     }
 
@@ -170,16 +170,16 @@ public class C1XCompilation {
      * @param receiverType the type that is assumed to have no finalizable subclasses
      * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
      */
-    public boolean recordNoFinalizableSubclassAssumption(CiType receiverType) {
+    public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
         return false;
     }
 
     /**
-     * Gets the <code>CiType</code> corresponding to <code>java.lang.Throwable</code>.
+     * Gets the <code>RiType</code> corresponding to <code>java.lang.Throwable</code>.
      *
      * @return the compiler interface type for Throwable
      */
-    public CiType throwableType() {
+    public RiType throwableType() {
         return runtime.resolveType("java.lang.Throwable");
     }
 
@@ -189,7 +189,7 @@ public class C1XCompilation {
      * @param target the method that was not inlined
      * @param reason a description of the reason why the method was not inlined
      */
-    public void recordInliningFailure(CiMethod target, String reason) {
+    public void recordInliningFailure(RiMethod target, String reason) {
         // TODO: record inlining failure
     }
 
@@ -213,7 +213,7 @@ public class C1XCompilation {
      * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
      * @return the block map for the specified method
      */
-    public BlockMap getBlockMap(CiMethod method, int osrBCI) {
+    public BlockMap getBlockMap(RiMethod method, int osrBCI) {
         // XXX: cache the block map for methods that are compiled or inlined often
         BlockMap map = new BlockMap(method, hir.numberOfBlocks());
         boolean isOsrCompilation = false;

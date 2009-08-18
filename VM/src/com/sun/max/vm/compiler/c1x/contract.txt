@@ -9,7 +9,7 @@ A. Folding and inlining methods by annotation.
 the @INLINE, @FOLD, and @CONSTANT annotations will become less necessary due
 to C1X's better optimization, C1X has been extended to support some of these
 annotations.
-    @INLINE, @NEVER_INLINE annotations are handled by C1X through the CiRuntime
+    @INLINE, @NEVER_INLINE annotations are handled by C1X through the RiRuntime
 interface with .mustInline() and .mustNotInline() methods that are consulted
 when C1X makes inlining decisions during compilation.
     @FOLD methods are handled by C1X by providing a mechanism that allows the
@@ -18,7 +18,7 @@ is detected, it will be evaluated (via standard Java reflection) if the inputs
 are constants.
     @CONSTANT is not currently handled correctly, but it does not require any
 changes to C1X. The Maxine implementation of the compiler interface simply
-has to return "true" to the .isConstant() call on the CiField for such
+has to return "true" to the .isConstant() call on the RiField for such
 fields, and return the appropriate constant value for .constantValue() calls.
 
 =====================================================================================
@@ -72,7 +72,7 @@ as well (e.g. UnsafeLoophole.cast() would become nops).
 
 #20 pread     (read from pointer, type of operand is in constant pool)
 #21 pwrite    (write to pointer, type of operand is in constant pool)
-#22 pcmpswp
+#22 pcmpswp   (compare and swap, type of operand is in constant pool)
 
 5. A set of (10) comparison operators:
 
@@ -98,12 +98,12 @@ as well (e.g. UnsafeLoophole.cast() would become nops).
 
 7. An optional set of operators for performance
 
-#39 walignup4    (align word on next 4 byte boundary)
-#40 walignup8
-#41 walignup16
-#42 waligndn4    (align word on previous 4 byte boundary)
-#43 waligndn8
-#44 waligndn16
+#39 wroundup4    (align word on next 4 byte boundary)
+#40 wroundup8
+#41 wroundup16
+#42 wroundupdn4    (align word on previous 4 byte boundary)
+#43 wroundupdn8
+#44 wroundupdn16
 #45 wudiv        (unsigned divide)
 #46 pfread       (prefetch for read)
 #47 pfwrite      (prefetch for write)
@@ -120,11 +120,10 @@ files. To view rewritten bytecodes in the Inspector, for example,
 would require modifications to the Inspector.
 
     C1X would provide an interface for bytecode extensions to be installed
-by the client (i.e. the VM using it). When C1X processes bytecode,
-any undefined bytecodes encountered would trigger appropriate calls to
-the bytecode extension(s) installed.
+by the VM. When C1X processes bytecode, any undefined bytecodes encountered
+would trigger appropriate calls to the bytecode extensions installed.
 
-Information needed by C1X:
+Information needed by C1X for extended bytecodes:
 
 Globally:
     - name of bytecode
@@ -155,7 +154,7 @@ Optimizations:
     - value number and value equal for IR nodes
 
 Lowering:
-    - translation to lower-level operations (LIR)
+    - translation to lower-level operations (LIR / XIR)
 
 =====================================================================================
 C. Stack frame walking / reference map issues

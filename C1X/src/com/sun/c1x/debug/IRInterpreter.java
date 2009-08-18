@@ -51,10 +51,10 @@ public class IRInterpreter {
         }
     }
 
-    public CiRuntime runtime;
+    public RiRuntime runtime;
     public InterpreterInterface ii; // TODO: not used yet
 
-    public IRInterpreter(CiRuntime runtime, InterpreterInterface ii) {
+    public IRInterpreter(RiRuntime runtime, InterpreterInterface ii) {
         this.runtime = runtime;
         this.ii = ii;
     }
@@ -132,7 +132,7 @@ public class IRInterpreter {
 
     private class Evaluator extends InstructionVisitor {
 
-        private final CiMethod method;
+        private final RiMethod method;
         private BlockBegin block;
         private Instruction currentInstruction;
         private CiConstant result;
@@ -614,10 +614,10 @@ public class IRInterpreter {
 
         @Override
         public void visitInvoke(Invoke i) {
-            CiSignature signature = method.signatureType();
+            RiSignature signature = method.signatureType();
 
             if (i.isStatic()) {
-                CiMethod method = i.target();
+                RiMethod method = i.target();
 
                 int nargs = signature.argumentCount(false);
                 Object[] arglist = new Object[nargs];
@@ -654,7 +654,7 @@ public class IRInterpreter {
 
                 environment.bind(i, new CiConstant(signature.returnBasicType(), res), instructionCounter);
             } else {
-                CiMethod method = i.target();
+                RiMethod method = i.target();
                 Object objref = environment.lookup((i.arguments()[0])).boxedValue();
 
                 int nargs = method.signatureType().argumentCount(false);
@@ -699,10 +699,10 @@ public class IRInterpreter {
             currentInstruction = currentInstruction.next();
         }
 
-        private Class<?>[] toJavaSignature(CiSignature signature, int nargs) {
+        private Class<?>[] toJavaSignature(RiSignature signature, int nargs) {
             Class<?>[] partypes = new Class< ? >[signature.argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
-                CiType argumentType = signature.argumentTypeAt(j);
+                RiType argumentType = signature.argumentTypeAt(j);
                 partypes[j] = toJavaClass(argumentType);
             }
             return partypes;
@@ -710,7 +710,7 @@ public class IRInterpreter {
 
         @Override
         public void visitNewInstance(NewInstance i) {
-            CiType type = i.instanceClass();
+            RiType type = i.instanceClass();
             Class <?> javaClass = null;
             Object obj = null;
             javaClass = toJavaClass(type);
@@ -731,7 +731,7 @@ public class IRInterpreter {
              currentInstruction = currentInstruction.next();
         }
 
-        private Class<?> toJavaClass(CiType type) {
+        private Class<?> toJavaClass(RiType type) {
             if (type.isLoaded()) {
                 return type.javaClass();
             } else {
@@ -1145,14 +1145,14 @@ public class IRInterpreter {
 
         private void assertPrimitive(BasicType basicType) {
             if (!basicType.isPrimitive()) {
-                fail("CiType " + basicType + " must be a primitive");
+                fail("RiType " + basicType + " must be a primitive");
             }
         }
 
-        private void assertArrayType(CiType ciType) {
-            if (ciType != null && ciType.isLoaded()) {
-                if (!ciType.isArrayKlass()) {
-                    fail("CiType " + ciType + " must be an array class");
+        private void assertArrayType(RiType riType) {
+            if (riType != null && riType.isLoaded()) {
+                if (!riType.isArrayKlass()) {
+                    fail("RiType " + riType + " must be an array class");
                 }
             }
         }

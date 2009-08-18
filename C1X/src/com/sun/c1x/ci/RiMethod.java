@@ -25,14 +25,14 @@ import java.util.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>CiMethod</code> interface represents resolved and unresolved methods.
- * Methods, like fields and types, are resolved through {@link CiConstantPool constant
- * pools}, and their actual implementation is provided by the {@link CiRuntime runtime}
+ * The <code>RiMethod</code> interface represents resolved and unresolved methods.
+ * Methods, like fields and types, are resolved through {@link RiConstantPool constant
+ * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that some operations are only available on resolved methods.
  *
  * @author Ben L. Titzer
  */
-public interface CiMethod {
+public interface RiMethod {
 
     /**
      * Gets the name of the method as a string.
@@ -44,13 +44,13 @@ public interface CiMethod {
      * Gets the holder of the method as a compiler interface type.
      * @return the holder
      */
-    CiType holder();
+    RiType holder();
 
     /**
      * Gets the signature of the method.
      * @return the signature of the method
      */
-    CiSignature signatureType();
+    RiSignature signatureType();
 
     /**
      * Gets the bytecode of the method, if the method has bytecode.
@@ -159,11 +159,11 @@ public interface CiMethod {
     int vtableIndex();
 
     /**
-     * Gets the {@link CiMethodData method data} for this method, which stores instrumentation,
+     * Gets the {@link RiMethodProfile method data} for this method, which stores instrumentation,
      * including invocation counts, branch counts, etc.
      * @return the method data object, if it exists; {@code null} otherwise
      */
-    CiMethodData methodData();
+    RiMethodProfile methodData();
 
     /**
      * Gets the liveness map for local variables at the specified bytecode index, if it exists.
@@ -185,7 +185,7 @@ public interface CiMethod {
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the list of exception handlers
      */
-    List<CiExceptionHandler> exceptionHandlers();
+    List<RiExceptionHandler> exceptionHandlers();
 
     /**
      * Retrieves the Java bytecode at the specified bytecode index.

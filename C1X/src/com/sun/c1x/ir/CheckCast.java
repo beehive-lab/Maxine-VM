@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
  */
 public class CheckCast extends TypeCheck {
 
-    CiMethod profiledMethod;
+    RiMethod profiledMethod;
     int profiledBCI;
 
     /**
@@ -41,7 +41,7 @@ public class CheckCast extends TypeCheck {
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(CiType targetClass, Instruction object, ValueStack stateBefore) {
+    public CheckCast(RiType targetClass, Instruction object, ValueStack stateBefore) {
         super(targetClass, object, BasicType.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }
@@ -50,7 +50,7 @@ public class CheckCast extends TypeCheck {
      * Gets the profiled method for this instruction.
      * @return the profiled method
      */
-    public CiMethod profiledMethod() {
+    public RiMethod profiledMethod() {
         return profiledMethod;
     }
 
@@ -75,7 +75,7 @@ public class CheckCast extends TypeCheck {
      * @param method the profiled method
      * @param bci the bytecode index
      */
-    public void setProfile(CiMethod method, int bci) {
+    public void setProfile(RiMethod method, int bci) {
         profiledMethod = method;
         profiledBCI = bci;
     }
@@ -85,7 +85,7 @@ public class CheckCast extends TypeCheck {
      * @return the declared type of the result
      */
     @Override
-    public CiType declaredType() {
+    public RiType declaredType() {
         return targetClass;
     }
 
@@ -94,7 +94,7 @@ public class CheckCast extends TypeCheck {
      * @return the exact type of the result
      */
     @Override
-    public CiType exactType() {
+    public RiType exactType() {
         return targetClass.exactType();
     }
 

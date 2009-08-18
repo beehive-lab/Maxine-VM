@@ -341,7 +341,7 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveClass)
-    public static Object resolveClass(int index, MaxCiConstantPool constantPool) {
+    public static Object resolveClass(int index, MaxRiConstantPool constantPool) {
         final ClassActor classActor = constantPool.constantPool.classAt(index).resolve(constantPool.constantPool, index);
         return classActor.dynamicHub();
     }

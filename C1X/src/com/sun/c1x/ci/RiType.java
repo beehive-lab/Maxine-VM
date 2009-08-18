@@ -23,15 +23,15 @@ package com.sun.c1x.ci;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>CiType</code> interface represents a resolved or unresolved type in the compiler
+ * The <code>RiType</code> interface represents a resolved or unresolved type in the compiler
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.
- * Types, like fields and methods, are resolved through {@link CiConstantPool constant
- * pools}, and their actual implementation is provided by the {@link CiRuntime runtime}
+ * Types, like fields and methods, are resolved through {@link RiConstantPool constant
+ * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that some operations are only available on resolved types.
  *
  * @author Ben L. Titzer
  */
-public interface CiType {
+public interface RiType {
     /**
      * Gets the name of this type in internal form. The following are examples of strings returned by this method:
      * <pre>
@@ -39,7 +39,7 @@ public interface CiType {
      *     "I"
      *     "[[B"
      * </pre>
-     * To convert this name to it Java programming language form, use {@link com.sun.c1x.util.Util#toJavaName(CiType)}.
+     * To convert this name to it Java programming language form, use {@link com.sun.c1x.util.Util#toJavaName(RiType)}.
      *
      * @return the name of this type in internal form
      */
@@ -130,7 +130,7 @@ public interface CiType {
      * @param other the type to test
      * @return {@code true} if this type a subtype of the specified type
      */
-    boolean isSubtypeOf(CiType other);
+    boolean isSubtypeOf(RiType other);
 
     /**
      * Checks whether the specified object is an instance of this type.
@@ -144,7 +144,7 @@ public interface CiType {
      * For array types, gets the type of the components.
      * @return the component type of this array type
      */
-    CiType componentType();
+    RiType componentType();
 
     /**
      * Attempts to get an exact type for this type. Final classes,
@@ -152,13 +152,13 @@ public interface CiType {
      * NOTE THIS OPERATION IS ONLY AVAILABLE ON RESOLVED TYPES.
      * @return the exact type of this type, if it exists; {@code null} otherwise
      */
-    CiType exactType();
+    RiType exactType();
 
     /**
      * Gets the type representing an array with elements of this type.
      * @return a new compiler interface type representing an array of this type
      */
-    CiType arrayOf();
+    RiType arrayOf();
 
     /**
      * Resolves the method implementation for virtual dispatches on objects
@@ -167,7 +167,7 @@ public interface CiType {
      * @param method the method to select the implementation of
      * @return the method implementation that would be selected at runtime
      */
-    CiMethod resolveMethodImpl(CiMethod method);
+    RiMethod resolveMethodImpl(RiMethod method);
 
     /**
      * Gets the basic type of this compiler interface type.
@@ -181,13 +181,6 @@ public interface CiType {
      * @return the instance size in bytes
      */
     int sizeHelper();
-
-    /**
-     * Determines whether the slow path should always be taken when creating new instances of this type.
-     * XXX: this is a dumb name
-     * @return true if the slow path should always be taken, false otherwise
-     */
-    boolean layoutHelperNeedsSlowPath();
 
     int superCheckOffset();
 
