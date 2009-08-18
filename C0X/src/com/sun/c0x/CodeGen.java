@@ -34,7 +34,6 @@ import com.sun.c0x.C0XCompilation.Location;
  * @author Ben L. Titzer
  */
 public abstract class CodeGen {
-    protected final Buffer buffer;
     protected final CiRuntime runtime;
     protected final Target target;
     protected final CiMethod method;
@@ -43,7 +42,6 @@ public abstract class CodeGen {
         this.runtime = compilation.runtime;
         this.target = compilation.target;
         this.method = compilation.method;
-        this.buffer = new Buffer(target.arch.bitOrdering);
     }
 
     abstract void genBreakpoint(int bci);
