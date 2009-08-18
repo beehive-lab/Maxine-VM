@@ -21,7 +21,11 @@
 package com.sun.c1x.ci;
 
 /**
+<<<<<<< local
  * The <code>CiExceptionHandler</code> interface represents an exception
+=======
+ * The <code>RiExceptionHandler</code> interface represents an exception
+>>>>>>> other
  * handler.
  *
  * @author Ben L. Titzer
@@ -58,5 +62,8 @@ public interface RiExceptionHandler {
      */
     boolean isCatchAll();
 
+<<<<<<< local
     RiType catchKlass();
+=======
+>>>>>>> other
 }

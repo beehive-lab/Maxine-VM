@@ -18,31 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package jtt.micro;
 
-/**
-<<<<<<< local
- * The <code>CiMethodData</code> class definition.
-=======
- * The <code>RiMethodProfile</code> class definition.
->>>>>>> other
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0 = true; 1 = false; 2 = true; 3 = false
  */
-public interface RiMethodProfile {
-<<<<<<< local
-    Object dataObject();
-=======
-    CiConstant encoding();
->>>>>>> other
-    int invocationCountOffset();
-    int bciCountOffset(int bci);
-    int branchTakenCountOffset(int bci);
-    int branchNotTakenCountOffset(int bci);
+public class ArrayCompare02 {
+    static final long[] a1 = {1, 1, 1, 1, 1, 1};
+    static final long[] a2 = {1, 1, 1, 2, 1, 1};
+    static final long[] a3 = {1, 1, 2, 2, 3, 3};
 
-    int headerOffset(int bci);
-    int countOffset(int bci);
-    RiType receiver(int bci, int i);
-    int receiverCountOffset(int bci, int i);
-    int receiverOffset(int bci, int i);
+    public static boolean test(int arg) {
+        if (arg == 0) {
+            return compare(a1);
+        }
+        if (arg == 1) {
+            return compare(a2);
+        }
+        if (arg == 2) {
+            return compare(a3);
+        }
+        return false;
+    }
+
+    static boolean compare(long[] a) {
+        return a[0] == a[1] & a[2] == a[3] & a[4] == a[5];
+    }
 }

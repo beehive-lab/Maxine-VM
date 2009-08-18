@@ -28,7 +28,11 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.value.*;
 
 /**
+<<<<<<< local
  * The <code>MaxCiField</code> implements a compiler interface field. A field can
+=======
+ * The <code>MaxRiField</code> implements a compiler interface field. A field can
+>>>>>>> other
  * be either resolved or unresolved. A resolved field has a reference to its
  * associated <code>FieldActor</code> and unresolved field has a reference
  * to its <code>FieldRefConstant</code> some method calls are only appropriate
@@ -83,7 +87,11 @@ public class MaxRiField implements RiField {
      */
     public RiType type() {
         if (fieldActor != null) {
+<<<<<<< local
             return constantPool.canonicalCiType(fieldActor.type());
+=======
+            return constantPool.canonicalRiType(fieldActor.type());
+>>>>>>> other
         }
         return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool));
     }
@@ -102,7 +110,11 @@ public class MaxRiField implements RiField {
      */
     public RiType holder() {
         if (fieldActor != null) {
+<<<<<<< local
             return constantPool.canonicalCiType(fieldActor.holder());
+=======
+            return constantPool.canonicalRiType(fieldActor.holder());
+>>>>>>> other
         }
         return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool));
     }

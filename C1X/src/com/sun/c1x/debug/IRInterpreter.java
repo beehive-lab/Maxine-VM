@@ -1145,14 +1145,21 @@ public class IRInterpreter {
 
         private void assertPrimitive(BasicType basicType) {
             if (!basicType.isPrimitive()) {
-                fail("CiType " + basicType + " must be a primitive");
+                fail("RiType " + basicType + " must be a primitive");
             }
         }
 
+<<<<<<< local
         private void assertArrayType(RiType ciType) {
             if (ciType != null && ciType.isLoaded()) {
                 if (!ciType.isArrayKlass()) {
                     fail("CiType " + ciType + " must be an array class");
+=======
+        private void assertArrayType(RiType riType) {
+            if (riType != null && riType.isLoaded()) {
+                if (!riType.isArrayKlass()) {
+                    fail("RiType " + riType + " must be an array class");
+>>>>>>> other
                 }
             }
         }

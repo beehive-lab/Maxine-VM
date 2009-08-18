@@ -42,11 +42,18 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
+<<<<<<< local
 import com.sun.max.vm.thread.*;
+=======
+>>>>>>> other
 import com.sun.max.vm.type.*;
 
 /**
+<<<<<<< local
  * The <code>MaxCiRuntime</code> class implements the runtime interface needed by C1X.
+=======
+ * The <code>MaxRiRuntime</code> class implements the runtime interface needed by C1X.
+>>>>>>> other
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  *
@@ -97,18 +104,31 @@ public class MaxRiRuntime implements RiRuntime {
     public RiType resolveType(String name) {
         final ClassActor classActor = ClassRegistry.get((ClassLoader) null, JavaTypeDescriptor.getDescriptorForJavaString(name), false);
         if (classActor != null) {
+<<<<<<< local
             return globalConstantPool.canonicalCiType(classActor);
+=======
+            return globalConstantPool.canonicalRiType(classActor);
+>>>>>>> other
         }
         return null;
     }
 
     /**
+<<<<<<< local
      * Gets the <code>CiMethod</code> for a given method actor.
+=======
+     * Gets the <code>RiMethod</code> for a given method actor.
+>>>>>>> other
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
+<<<<<<< local
     public RiMethod getCiMethod(ClassMethodActor methodActor) {
         return getConstantPool(methodActor).canonicalCiMethod(methodActor);
+=======
+    public RiMethod getRiMethod(ClassMethodActor methodActor) {
+        return getConstantPool(methodActor).canonicalRiMethod(methodActor);
+>>>>>>> other
     }
 
     /**
@@ -184,14 +204,22 @@ public class MaxRiRuntime implements RiRuntime {
         if (method instanceof MaxRiMethod) {
             return ((MaxRiMethod) method).asClassMethodActor(operation);
         }
+<<<<<<< local
         throw new MaxRiUnresolved("invalid CiMethod instance: " + method.getClass());
+=======
+        throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
+>>>>>>> other
     }
 
     ClassActor asClassActor(RiType type, String operation) {
         if (type instanceof MaxRiType) {
             return ((MaxRiType) type).asClassActor(operation);
         }
+<<<<<<< local
         throw new MaxRiUnresolved("invalid CiType instance: " + type.getClass());
+=======
+        throw new MaxRiUnresolved("invalid RiType instance: " + type.getClass());
+>>>>>>> other
     }
 
     public int arrayLengthOffsetInBytes() {
@@ -234,7 +262,11 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int threadExceptionOopOffset() {
+<<<<<<< local
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
+=======
+        throw Util.unimplemented();
+>>>>>>> other
     }
 
     public int threadExceptionPcOffset() {
@@ -579,6 +611,13 @@ public class MaxRiRuntime implements RiRuntime {
         return 0;
     }
 
+<<<<<<< local
+=======
+    public Register exceptionOopRegister() {
+        return X86.r14;
+    }
+
+>>>>>>> other
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -597,19 +636,81 @@ public class MaxRiRuntime implements RiRuntime {
 
     int memberIndex;
 
+<<<<<<< local
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
         C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod);
+=======
+    public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
+//        ClassMethodActor classMethodActor = null;
+//        try {
+//            classMethodActor = (ClassMethodActor) MethodActor.fromJava(MaxRiRuntime.class.getMethod("skeleton" + globalStubID.toString()));
+//        } catch (SecurityException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+
+        //new StaticMethodActor(new Utf8Constant(globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
+        //classMethodActor.assignHolder(ClassActor.fromJava(MaxRiRuntime.class), memberIndex++);
+//        ClassActor classActor = ClassActor.fromJava(MaxRiRuntime.class);
+//        ClassMethodActor classMethodActor = new StaticMethodActor(new Utf8Constant("skeleton" + globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
+//        classMethodActor.assignHolder(classActor, 0);
+
+
+        // TODO: pass an appropriate compiler scheme
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, null, ciTargetMethod);
+        //assert !globalStubCache.containsKey(globalStubID);
+>>>>>>> other
         final C1XTargetMethod targetMethod = generator.finish();
+<<<<<<< local
+=======
+        //globalStubCache.put(globalStubID, targetMethod);
+>>>>>>> other
         return targetMethod;
+<<<<<<< local
+=======
+
+
+//        MethodState state = VMConfiguration.target().compilationScheme().makeMethodState(classMethodActor);
+//
+//        if (state.currentTargetMethod(CompilationDirective.STUB) == null) {
+//
+//            AdaptiveMethodState methodState = (AdaptiveMethodState) state;
+//            methodState.setTargetMethod(targetMethod, CompilationDirective.STUB);
+//        }
+//
+//
+//
+//        classMethodActor.setMethodState(new MethodState(classMethodActor, 1) {
+//
+//            @Override
+//            public TargetMethod currentTargetMethod() {
+//                return targetMethod;
+//            }
+//
+//            @Override
+//            public TargetMethod currentTargetMethod(CompilationDirective compilationDirective) {
+//                return targetMethod;
+//            }});
+>>>>>>> other
     }
 
     public RiType primitiveArrayType(BasicType elemType) {
+<<<<<<< local
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
+=======
+        return globalConstantPool.canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
+>>>>>>> other
 
     }
+<<<<<<< local
 
     @Override
     public Register threadRegister() {
         return X86.r14;
     }
+=======
+>>>>>>> other
 }

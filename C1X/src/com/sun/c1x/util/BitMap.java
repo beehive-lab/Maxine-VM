@@ -164,7 +164,10 @@ public class BitMap {
      * @return <code>true</code> if the bit at the specified position is <code>1</code>
      */
     public boolean getDefault(int i) {
-        if (checkIndexLow(i) < 32) {
+        if (i < 0 || i >= length) {
+            return false;
+        }
+        if (i < 32) {
             return ((low >> i) & 1) != 0;
         }
         int pos = wordIndex(i);

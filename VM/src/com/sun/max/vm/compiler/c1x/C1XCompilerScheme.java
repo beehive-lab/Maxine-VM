@@ -82,7 +82,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             markUnallocatable(unallocatable, roles, VMRegister.Role.ABI_SCRATCH);
             markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
 
+<<<<<<< local
             // create the CiRuntime object passed to C1X
+=======
+            // create the RiRuntime object passed to C1X
+>>>>>>> other
             c1xRuntime = MaxRiRuntime.globalRuntime;
 
             // configure the allocatable registers
@@ -99,7 +103,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
 
-            compiler = new C1XCompiler(c1xTarget, c1xRuntime);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
 
@@ -148,7 +152,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
 
     public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
+<<<<<<< local
         RiMethod method = c1xRuntime.getCiMethod(classMethodActor);
+=======
+        RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
+>>>>>>> other
         CiTargetMethod compiledMethod = compiler.compileMethod(method);
         if (compiledMethod != null) {
 

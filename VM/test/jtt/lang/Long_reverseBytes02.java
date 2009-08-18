@@ -18,31 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package jtt.lang;
 
-/**
-<<<<<<< local
- * The <code>CiMethodData</code> class definition.
-=======
- * The <code>RiMethodProfile</code> class definition.
->>>>>>> other
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0x1122334455667708L = 0x877665544332211L
  */
-public interface RiMethodProfile {
-<<<<<<< local
-    Object dataObject();
-=======
-    CiConstant encoding();
->>>>>>> other
-    int invocationCountOffset();
-    int bciCountOffset(int bci);
-    int branchTakenCountOffset(int bci);
-    int branchNotTakenCountOffset(int bci);
-
-    int headerOffset(int bci);
-    int countOffset(int bci);
-    RiType receiver(int bci, int i);
-    int receiverCountOffset(int bci, int i);
-    int receiverOffset(int bci, int i);
+public class Long_reverseBytes02 {
+    public static long test(long val) {
+        return (((val >> 56) & 0xff) << 0)
+                | (((val >> 48) & 0xff) << 8)
+                | (((val >> 40) & 0xff) << 16)
+                | (((val >> 32) & 0xff) << 24)
+                | (((val >> 24) & 0xff) << 32)
+                | (((val >> 16) & 0xff) << 40)
+                | (((val >> 8) & 0xff) << 48)
+                | (((val >> 0) & 0xff) << 56);
+    }
 }

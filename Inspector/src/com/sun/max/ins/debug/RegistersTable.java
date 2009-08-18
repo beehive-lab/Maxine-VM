@@ -175,17 +175,14 @@ public final class RegistersTable extends InspectorTable {
             fireTableDataChanged();
         }
 
-        @Override
         public int getColumnCount() {
             return RegistersColumnKind.VALUES.length();
         }
 
-        @Override
         public int getRowCount() {
             return nRegisters;
         }
 
-        @Override
         public Object getValueAt(int row, int col) {
             return registerInfos[row];
         }

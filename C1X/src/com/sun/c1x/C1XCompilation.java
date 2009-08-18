@@ -175,7 +175,7 @@ public class C1XCompilation {
     }
 
     /**
-     * Gets the <code>CiType</code> corresponding to <code>java.lang.Throwable</code>.
+     * Gets the <code>RiType</code> corresponding to <code>java.lang.Throwable</code>.
      *
      * @return the compiler interface type for Throwable
      */

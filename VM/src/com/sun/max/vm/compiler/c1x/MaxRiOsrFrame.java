@@ -21,7 +21,11 @@
 package com.sun.max.vm.compiler.c1x;
 
 /**
+<<<<<<< local
  * The <code>MaxCiOsrFrame</code> class definition.
+=======
+ * The <code>MaxRiOsrFrame</code> class definition.
+>>>>>>> other
  *
  * @author Ben L. Titzer
  */

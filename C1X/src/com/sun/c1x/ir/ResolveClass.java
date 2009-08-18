@@ -33,12 +33,16 @@ import com.sun.c1x.value.*;
  */
 public class ResolveClass extends Instruction {
 
+<<<<<<< local
     public final RiType ciType;
+=======
+    public final RiType riType;
+>>>>>>> other
     private final ValueStack state;
 
     public ResolveClass(RiType type, ValueStack stack) {
         super(BasicType.Object);
-        this.ciType = type;
+        this.riType = type;
         assert stack != null;
         this.state = stack;
         setFlag(Flag.NonNull);
@@ -70,14 +74,14 @@ public class ResolveClass extends Instruction {
 
     @Override
     public int valueNumber() {
-        return ciType.hashCode() | 0x50000000;
+        return riType.hashCode() | 0x50000000;
     }
 
     @Override
     public boolean valueEqual(Instruction i) {
         if (i instanceof ResolveClass) {
             final ResolveClass other = (ResolveClass) i;
-            return other.ciType.equals(ciType);
+            return other.riType.equals(riType);
         }
         return false;
     }

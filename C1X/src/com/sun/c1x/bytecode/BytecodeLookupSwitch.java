@@ -45,6 +45,7 @@ public class BytecodeLookupSwitch extends BytecodeSwitch {
         return readWord(aligned + 12 + 8 * i);
     }
 
+    @Override
     public int keyAt(int i) {
         return readWord(aligned + 8 + 8 * i);
     }

@@ -896,33 +896,54 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
+<<<<<<< local
     private void assertInstanceType(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (ciType.isArrayKlass() || ciType.isInterface() || ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must be an instance class");
+=======
+    private void assertInstanceType(RiType riType) {
+        if (riType != null && riType.isLoaded()) {
+            if (riType.isArrayKlass() || riType.isInterface() || riType.basicType().isPrimitive()) {
+                fail("RiType " + riType + " must be an instance class");
+>>>>>>> other
             }
         }
     }
 
+<<<<<<< local
     private void assertArrayType(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (!ciType.isArrayKlass()) {
                 fail("CiType " + ciType + " must be an array class");
+=======
+    private void assertArrayType(RiType riType) {
+        if (riType != null && riType.isLoaded()) {
+            if (!riType.isArrayKlass()) {
+                fail("RiType " + riType + " must be an array class");
+>>>>>>> other
             }
         }
     }
 
+<<<<<<< local
     private void assertNotPrimitive(RiType ciType) {
         if (ciType != null && ciType.isLoaded()) {
             if (ciType.basicType().isPrimitive()) {
                 fail("CiType " + ciType + " must not be a primitive");
+=======
+    private void assertNotPrimitive(RiType riType) {
+        if (riType != null && riType.isLoaded()) {
+            if (riType.basicType().isPrimitive()) {
+                fail("RiType " + riType + " must not be a primitive");
+>>>>>>> other
             }
         }
     }
 
     private void assertPrimitive(BasicType basicType) {
         if (!basicType.isPrimitive()) {
-            fail("CiType " + basicType + " must be a primitive");
+            fail("RiType " + basicType + " must be a primitive");
         }
     }
 

@@ -25,10 +25,9 @@ import java.util.*;
 import com.sun.c1x.*;
 
 /**
- * This interface represents the consumer of compiler output. When a client
- * of C1X requests a {@link com.sun.c1x.C1XCompilation compilation}, it must supply
- * an instance of this interface which consumes the output and produces
- * its own internal representation of compiled code.
+ * This interface represents the result which encapsulates compiler output, including
+ * the compiled machine code, associated data and references, relocation information,
+ * deoptimization information, etc.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
@@ -145,13 +144,27 @@ public class CiTargetMethod {
         }
     }
 
+<<<<<<< local
     public static class ExceptionHandler {
         public final int codePos;
         public final int handlerPos;
         public final RiType exceptionType;
+=======
+    static class ExceptionHandler {
+        final int codePosStart;
+        final int codePosEnd;
+        final int handlerPos;
+        final RiType exceptionType;
+>>>>>>> other
 
+<<<<<<< local
         ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
             this.codePos = codePos;
+=======
+        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType exceptionType) {
+            this.codePosStart = codePosStart;
+            this.codePosEnd = codePosEnd;
+>>>>>>> other
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
         }
@@ -279,8 +292,13 @@ public class CiTargetMethod {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
+<<<<<<< local
     public void recordExceptionHandler(int codePos, int handlerPos, RiType throwableType) {
         exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
+=======
+    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType throwableType) {
+        exceptionHandlers.add(new ExceptionHandler(codePosStart, codePosEnd, handlerPos, throwableType));
+>>>>>>> other
     }
 
     /**
