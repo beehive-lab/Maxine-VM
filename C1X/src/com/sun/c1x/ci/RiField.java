@@ -23,11 +23,7 @@ package com.sun.c1x.ci;
 import com.sun.c1x.value.*;
 
 /**
-<<<<<<< local
- * The <code>CiField</code> interface represents a reference to a field, including both
-=======
  * The <code>RiField</code> interface represents a reference to a field, including both
->>>>>>> other
  * resolved and unresolved fields. Fields, like methods and types, are resolved through
  * {@link RiConstantPool constant pools}, and their actual implementation is provided
  * by the {@link RiRuntime runtime} to the compiler. Note that some operations are only

@@ -21,20 +21,12 @@
 package com.sun.c1x.ci;
 
 /**
-<<<<<<< local
- * The <code>CiMethodData</code> class definition.
-=======
  * The <code>RiMethodProfile</code> class definition.
->>>>>>> other
  *
  * @author Ben L. Titzer
  */
 public interface RiMethodProfile {
-<<<<<<< local
-    Object dataObject();
-=======
     CiConstant encoding();
->>>>>>> other
     int invocationCountOffset();
     int bciCountOffset(int bci);
     int branchTakenCountOffset(int bci);

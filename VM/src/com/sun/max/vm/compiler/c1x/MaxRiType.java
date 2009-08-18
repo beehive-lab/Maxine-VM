@@ -29,26 +29,14 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-<<<<<<< local
-=======
-import com.sun.max.vm.value.*;
->>>>>>> other
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.lang.Function;
 
 /**
-<<<<<<< local
- * The <code>MaxCiType</code> class represents a compiler interface type,
-=======
  * The <code>MaxRiType</code> class represents a compiler interface type,
->>>>>>> other
  * either resolved or unresolved. A resolved compiler interface type refers
  * to the <code>ClassActor</code>, and instances are unique with respect
-<<<<<<< local
- * to a <code>MaxCiRuntime</code> instance. Unresolved compiler interface
-=======
  * to a <code>MaxRiRuntime</code> instance. Unresolved compiler interface
->>>>>>> other
  * types refer to <code>TypeDescriptors</code>. In either case, both
  * refer to the constant pool from which they were referenced.
  *
@@ -73,11 +61,6 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.classRef = null;
-<<<<<<< local
-
-        assert classActor != null;
-=======
->>>>>>> other
     }
 
     /**
@@ -245,11 +228,7 @@ public class MaxRiType implements RiType {
     public RiType componentType() {
         if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
-<<<<<<< local
-            return constantPool.canonicalCiType(classActor.componentClassActor());
-=======
             return constantPool.canonicalRiType(classActor.componentClassActor());
->>>>>>> other
         }
         // the type is not resolved, but we can get the type of the elements
         return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor());
@@ -284,11 +263,7 @@ public class MaxRiType implements RiType {
                     return ArrayClassActor.forComponentClassActor(classActor);
                 }
             });
-<<<<<<< local
-            return constantPool.canonicalCiType(arrayClassActor);
-=======
             return constantPool.canonicalRiType(arrayClassActor);
->>>>>>> other
         }
         return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }
@@ -308,20 +283,12 @@ public class MaxRiType implements RiType {
             // resolve the actual method implementation in this class
             final int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByIIndex(index);
-<<<<<<< local
-            return constantPool.canonicalCiMethod(implementation);
-=======
             return constantPool.canonicalRiMethod(implementation);
->>>>>>> other
         } else if (methodActor instanceof VirtualMethodActor) {
             // resolve the actual method implementation in this class
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByVTableIndex(index);
-<<<<<<< local
-            return constantPool.canonicalCiMethod(implementation);
-=======
             return constantPool.canonicalRiMethod(implementation);
->>>>>>> other
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
             return method;
@@ -431,24 +398,16 @@ public class MaxRiType implements RiType {
         return typeDescriptor.toString() + " [unresolved]";
     }
 
-<<<<<<< local
     public boolean layoutHelperNeedsSlowPath() {
         throw Util.unimplemented();
     }
 
-=======
->>>>>>> other
     public int sizeHelper() {
         throw Util.unimplemented();
     }
 
-<<<<<<< local
     public CiConstant encoding() {
         return CiConstant.forObject(asClassActor("encoding()").dynamicHub());
-=======
-    public Object encoding() {
-        return ReferenceValue.from(asClassActor("encoding()").dynamicHub());
->>>>>>> other
     }
 
     public int superCheckOffset() {
@@ -458,12 +417,4 @@ public class MaxRiType implements RiType {
     public CiConstant getStaticContainer() {
         return CiConstant.forObject(asClassActor("getStaticContainer()").staticTuple());
     }
-<<<<<<< local
-=======
-
-    public Object resolveObject() {
-        return classRef;
-    }
-
->>>>>>> other
 }

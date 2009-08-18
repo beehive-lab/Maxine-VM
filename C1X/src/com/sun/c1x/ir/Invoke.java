@@ -37,11 +37,8 @@ public class Invoke extends StateSplit {
     final int vtableIndex;
     final boolean isStatic;
     final RiMethod target;
-<<<<<<< local
     public final char cpi;
     public final RiConstantPool constantPool;
-=======
->>>>>>> other
 
     /**
      * Constructs a new Invoke instruction.
@@ -53,11 +50,7 @@ public class Invoke extends StateSplit {
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      */
-<<<<<<< local
     public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool) {
-=======
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target) {
->>>>>>> other
         super(result);
         this.opcode = opcode;
         this.arguments = args;

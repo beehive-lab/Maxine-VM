@@ -24,11 +24,7 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.value.*;
 
 /**
-<<<<<<< local
- * The <code>CiRuntime</code> class provides the major interface between the compiler and the
-=======
  * The <code>RiRuntime</code> class provides the major interface between the compiler and the
->>>>>>> other
  * runtime system, including access to constant pools, OSR frames, inlining requirements,
  * and runtime calls such as checkcast. C1X may insert calls to the
  * implementation of these methods into compiled code, typically as the slow path.
@@ -45,11 +41,7 @@ public interface RiRuntime {
     RiConstantPool getConstantPool(RiMethod method);
 
     /**
-<<<<<<< local
-     * Gets an {@link com.sun.c1x.ci.RiOsrFrame OSR frame} instance for the specified method
-=======
      * Gets an {@link RiOsrFrame OSR frame} instance for the specified method
->>>>>>> other
      * at the specified OSR bytecode index.
      * @param method the method
      * @param bci the bytecode index
@@ -279,10 +271,7 @@ public interface RiRuntime {
 
     int outPreserveStackSlots();
 
-<<<<<<< local
-=======
     // TODO: why not pass the RiSignature instead?
->>>>>>> other
     int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
 
     int sizeofBasicObjectLock();
@@ -297,26 +286,13 @@ public interface RiRuntime {
 
     int initThreadOffsetInBytes();
 
-<<<<<<< local
-=======
-    Register exceptionOopRegister();
-
->>>>>>> other
     Register returnRegister(BasicType object);
 
     int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs);
 
-<<<<<<< local
     Object registerTargetMethod(CiTargetMethod targetMethod, String name);
-=======
-    Object registerTargetMethod(CiTargetMethod targetMethod);
->>>>>>> other
 
     RiType primitiveArrayType(BasicType elemType);
 
-<<<<<<< local
     Register threadRegister();
-
-=======
->>>>>>> other
 }

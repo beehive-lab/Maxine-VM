@@ -31,11 +31,8 @@ import com.sun.c1x.value.*;
  * The <code>CodeEmitInfo</code> class definition.
  *
  * @author Marcelo Cintra
-<<<<<<< local
  * @author Thomas Wuerthinger
  *
-=======
->>>>>>> other
  */
 public class CodeEmitInfo {
 

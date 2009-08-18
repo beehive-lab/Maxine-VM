@@ -21,11 +21,7 @@
 package com.sun.c1x.ci;
 
 /**
-<<<<<<< local
- * The <code>CiOsrFrame</code> interface allows the compiler to query the runtime for
-=======
  * The <code>RiOsrFrame</code> interface allows the compiler to query the runtime for
->>>>>>> other
  * the locations of the state of locals, stacks, and locks when generating code to
  * transition from one frame layout during OSR (on-stack replacement).
  *

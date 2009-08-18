@@ -34,11 +34,7 @@ public class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
-<<<<<<< local
     public final RiExceptionHandler handler;
-=======
-    private final RiExceptionHandler handler;
->>>>>>> other
     private BlockBegin entryBlock;
     private LIRList entryCode;
     private int entryCodeOffset;
@@ -64,11 +60,11 @@ public class ExceptionHandler {
         this.lirOpId = other.lirOpId;
     }
 
-<<<<<<< local
     @Override
     public String toString() {
         return "XHandler(Block=" + entryBlock.blockID + ")";
-=======
+    }
+
     /**
      * Gets the compiler interface object that describes this exception handler,
      * including the bytecode ranges.
@@ -84,7 +80,6 @@ public class ExceptionHandler {
      */
     public int handlerBCI() {
         return handler.handlerBCI();
->>>>>>> other
     }
 
     /**
@@ -141,7 +136,6 @@ public class ExceptionHandler {
         return handler.catchClassIndex() == 0;
     }
 
-<<<<<<< local
     public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
         // the type is unknown so be conservative
         if (!klass.isLoaded()) {
@@ -177,11 +171,6 @@ public class ExceptionHandler {
                 }
             }
         }
-
-=======
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType throwKlass, boolean typeIsExact) {
-        // TODO Port implementation
->>>>>>> other
         return false;
     }
 

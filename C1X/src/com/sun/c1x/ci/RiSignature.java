@@ -23,11 +23,7 @@ package com.sun.c1x.ci;
 import com.sun.c1x.value.*;
 
 /**
-<<<<<<< local
- * The <code>CiSignature</code> class represents a method signature.
-=======
  * The <code>RiSignature</code> class represents a method signature.
->>>>>>> other
  *
  * @author Ben L. Titzer
  */

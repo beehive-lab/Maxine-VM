@@ -33,11 +33,7 @@ import com.sun.c1x.value.*;
  */
 public class ResolveClass extends Instruction {
 
-<<<<<<< local
-    public final RiType ciType;
-=======
     public final RiType riType;
->>>>>>> other
     private final ValueStack state;
 
     public ResolveClass(RiType type, ValueStack stack) {

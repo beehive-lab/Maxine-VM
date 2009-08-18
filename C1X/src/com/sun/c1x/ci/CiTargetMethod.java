@@ -144,27 +144,13 @@ public class CiTargetMethod {
         }
     }
 
-<<<<<<< local
     public static class ExceptionHandler {
         public final int codePos;
         public final int handlerPos;
         public final RiType exceptionType;
-=======
-    static class ExceptionHandler {
-        final int codePosStart;
-        final int codePosEnd;
-        final int handlerPos;
-        final RiType exceptionType;
->>>>>>> other
 
-<<<<<<< local
         ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
             this.codePos = codePos;
-=======
-        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType exceptionType) {
-            this.codePosStart = codePosStart;
-            this.codePosEnd = codePosEnd;
->>>>>>> other
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
         }
@@ -292,13 +278,8 @@ public class CiTargetMethod {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-<<<<<<< local
     public void recordExceptionHandler(int codePos, int handlerPos, RiType throwableType) {
         exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
-=======
-    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType throwableType) {
-        exceptionHandlers.add(new ExceptionHandler(codePosStart, codePosEnd, handlerPos, throwableType));
->>>>>>> other
     }
 
     /**

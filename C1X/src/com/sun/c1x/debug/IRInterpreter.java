@@ -1149,17 +1149,10 @@ public class IRInterpreter {
             }
         }
 
-<<<<<<< local
-        private void assertArrayType(RiType ciType) {
-            if (ciType != null && ciType.isLoaded()) {
-                if (!ciType.isArrayKlass()) {
-                    fail("CiType " + ciType + " must be an array class");
-=======
         private void assertArrayType(RiType riType) {
             if (riType != null && riType.isLoaded()) {
                 if (!riType.isArrayKlass()) {
                     fail("RiType " + riType + " must be an array class");
->>>>>>> other
                 }
             }
         }
