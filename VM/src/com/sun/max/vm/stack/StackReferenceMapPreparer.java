@@ -261,7 +261,7 @@ public final class StackReferenceMapPreparer {
     public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
         assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
         for (VmThreadLocal tl : vmThreadLocals) {
-            assert tl.kind == Kind.REFERENCE;
+            assert tl.isReference;
         }
         vmThreadLocalGCRoots = vmThreadLocals;
     }
