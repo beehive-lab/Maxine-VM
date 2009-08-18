@@ -36,6 +36,8 @@ public enum MemoryWordsColumnKind {
     BYTES("Bytes", "Word as bytes", false, 20),
     CHAR("Char", "Word as 8 bit chars", false, 20),
     UNICODE("Unicode", "Word as 16 bit chars", false, 20),
+    FLOAT("Float", "Word as single precision float", false, 20),
+    DOUBLE("Double", "Word as double precision float", false, 20),
     REGION("Region", "Memory region pointed to by value", true, 20);
 
     private final String columnLabel;
