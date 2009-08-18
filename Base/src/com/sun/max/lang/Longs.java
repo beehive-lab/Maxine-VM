@@ -21,6 +21,7 @@
 package com.sun.max.lang;
 
 
+
 /**
  * Additional methods that one might want in java.lang.Long.
  *
@@ -103,6 +104,48 @@ public final class Longs {
             return number / K + "K";
         }
         return Long.toString(number);
+    }
+
+    /**
+     * Parse a size specification nX, where X := {K, M, G, T, P, k, m, g, t, p}.
+     *
+     * @param value a string containing a long number that can be parsed by {@link Long#parseLong(String)} followed by
+     *            an optional scaling character
+     * @return the scaled value
+     * @throws NumberFormatException if {@code value} does not contain a parsable {@code long} or has an invalid scale
+     *             suffix
+     */
+    public static long parseScaledValue(String value) throws NumberFormatException {
+        char lastChar = value.charAt(value.length() - 1);
+        if (!Character.isDigit(lastChar)) {
+            long result = Long.parseLong(value.substring(0, value.length() - 1));
+            switch (lastChar) {
+                case 'K':
+                case 'k': {
+                    return result * Longs.K;
+                }
+                case 'M':
+                case 'm': {
+                    return result * Longs.M;
+                }
+                case 'G':
+                case 'g': {
+                    return result * Longs.G;
+                }
+                case 'T':
+                case 't': {
+                    return result * Longs.T;
+                }
+                case 'P':
+                case 'p': {
+                    return result * Longs.P;
+                }
+                default: {
+                    throw new NumberFormatException("Number with unknown scale suffix: " + value);
+                }
+            }
+        }
+        return Long.parseLong(value);
     }
 
     public static long[] insert(long[] array, int index, long element) {
