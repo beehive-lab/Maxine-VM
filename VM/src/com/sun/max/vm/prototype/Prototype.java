@@ -26,6 +26,7 @@ import com.sun.max.asm.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
@@ -37,6 +38,11 @@ import com.sun.max.vm.*;
  * @author Doug Simon
  */
 public abstract class Prototype {
+
+    /**
+     * The name of the system property whose value (if non-null) will determine the host platform.
+     */
+    public static final String PLATFORM_PROPERTY = "max.platform";
 
     /**
      * The name of the system property whose value (if non-null) will override the processor model specified by the
@@ -178,6 +184,19 @@ public abstract class Prototype {
      */
     public static Platform createHostPlatform() {
         loadLibrary(PROTOTYPE_LIBRARY_NAME);
+
+        String platformSpec = System.getProperty(PLATFORM_PROPERTY);
+        if (platformSpec != null) {
+            Platform platform = Platform.parse(platformSpec);
+            if (platform == null) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PrintStream out = new PrintStream(baos);
+                out.println("Invalid platform specification: " + platformSpec);
+                Platform.printPlatformSpecificationHelp(out);
+                ProgramError.unexpected(baos.toString());
+            }
+            return platform;
+        }
 
         final InstructionSet instructionSet = InstructionSet.valueOf(System.getProperty(INSTRUCTION_SET_PROPERTY, nativeGetInstructionSet()));
         final WordWidth wordWidth = WordWidth.fromInt(Integer.getInteger(WORD_WIDTH_PROPERTY, nativeGetWordWidth()));
