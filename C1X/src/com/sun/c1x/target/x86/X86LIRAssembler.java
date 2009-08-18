@@ -271,6 +271,9 @@ public class X86LIRAssembler extends LIRAssembler {
         // The frameMap records size in slots (32bit word)
 
         // subtract two words to account for return address and link
+
+        // TODO: Check if correct
+
         return frameMap().framesize();
     }
 /*

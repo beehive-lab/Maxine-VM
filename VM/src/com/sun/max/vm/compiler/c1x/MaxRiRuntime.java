@@ -299,16 +299,16 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public long basicObjectLockOffsetInBytes() {
-        throw Util.unimplemented();
+    public int basicObjectLockOffsetInBytes() {
+        return Util.nonFatalUnimplemented(0);
     }
 
-    public long basicObjectLockSize() {
-        throw Util.unimplemented();
+    public int basicObjectLockSize() {
+        return Util.nonFatalUnimplemented(0);
     }
 
-    public long basicObjectObjOffsetInBytes() {
-        throw Util.unimplemented();
+    public int basicObjectObjOffsetInBytes() {
+        return Util.nonFatalUnimplemented(0);
     }
 
     public long doubleSignmaskPoolAddress() {

@@ -191,11 +191,11 @@ public interface RiRuntime {
 
     int interpreterFrameMonitorSize();
 
-    long basicObjectLockSize();
+    int basicObjectLockSize();
 
-    long basicObjectLockOffsetInBytes();
+    int basicObjectLockOffsetInBytes();
 
-    long basicObjectObjOffsetInBytes();
+    int basicObjectObjOffsetInBytes();
 
     int basicLockDisplacedHeaderOffsetInBytes();
 

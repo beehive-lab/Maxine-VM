@@ -2178,7 +2178,7 @@ public class LinearScan {
         if (assignedReg >= nofRegs) {
             // stack slot
             assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-            return LIROperandFactory.stack(assignedReg - nofRegs + 1, type);
+            return LIROperandFactory.stack(assignedReg - nofRegs, type);
 
         } else {
             // register
@@ -2275,7 +2275,7 @@ public class LinearScan {
 
     LIROperand canonicalSpillOpr(Interval interval) {
         assert interval.canonicalSpillSlot() >= nofRegs : "canonical spill slot not set";
-        return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs + 1, interval.type());
+        return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs, interval.type());
     }
 
     LIROperand colorLirOpr(LIROperand opr, int opId, LIRVisitState.OperandMode mode) {

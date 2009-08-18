@@ -313,6 +313,8 @@ public class C1XCompilation {
 
     public CiTargetMethod compile() {
 
+        Instruction.nextID = 0;
+
         if (C1XOptions.PrintCompilation) {
             TTY.println();
             TTY.println("Compiling method: " + method.toString());
