@@ -22,7 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 
 /**
  * The <code>LIRCall</code> class definition.
@@ -33,7 +33,7 @@ import com.sun.c1x.ci.*;
  */
 public abstract class LIRCall extends LIRInstruction {
 
-    protected CiRuntimeCall addr;   // TODO not sure if we should create a new class for address
+    protected GlobalStub addr;   // TODO not sure if we should create a new class for address
     protected List<LIROperand> arguments;
 
     /**
@@ -42,7 +42,7 @@ public abstract class LIRCall extends LIRInstruction {
      * @param entry
      * @param arguments
      */
-    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+    public LIRCall(LIROpcode opcode, GlobalStub entry, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
         super(opcode, result, info);
         this.addr = entry;
         this.arguments = arguments;
@@ -53,7 +53,7 @@ public abstract class LIRCall extends LIRInstruction {
      *
      * @return the address
      */
-    public CiRuntimeCall address() {
+    public GlobalStub address() {
         return addr;
     }
 

@@ -32,7 +32,7 @@ import com.sun.max.vm.type.*;
  * Tests of JIT-compilation of methods with exception handler.
  *
  * @author Laurent Daynes
- * 
+ *
  */
 public class JITTest_exceptions  extends JitCompilerTestCase {
 
@@ -70,7 +70,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     }
 
     private void check_num_handlers(String methodName, int num) {
-        final TargetMethod targetMethod = compileMethod(methodName);
+        final ExceptionRangeTargetMethod targetMethod = compileMethod(methodName);
         assert targetMethod.numberOfCatchRanges() == num;
         assert targetMethod.catchRangePositions() != null && targetMethod.catchRangePositions().length == num;
         assert targetMethod.catchBlockPositions() != null && targetMethod.catchBlockPositions().length == num;
@@ -137,7 +137,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
         }
     }
 
-    public void printExceptionHandlers(TargetMethod targetMethod) {
+    public void printExceptionHandlers(ExceptionRangeTargetMethod targetMethod) {
         final int[] catchRangePositions = targetMethod.catchRangePositions();
         if (catchRangePositions == null) {
             Trace.line(1, "Target method " + targetMethod.name() + " has no exception handlers");
@@ -154,7 +154,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     private static final Throwable[] THROWABLES = new Throwable[]{new ArrayIndexOutOfBoundsException(), new ClassCastException() };
 
     private void compileMethodWithExceptionHandlers(String methodName) {
-        final TargetMethod targetMethod = compileMethod(methodName,  SignatureDescriptor.create(JITTest_exceptions.class, Object[].class, int.class));
+        final ExceptionRangeTargetMethod targetMethod = compileMethod(methodName,  SignatureDescriptor.create(JITTest_exceptions.class, Object[].class, int.class));
         printExceptionHandlers(targetMethod);
 
         // Get handler at random address, walking 5 bytes at a time.
@@ -162,7 +162,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
         while (throwOffset < targetMethod.codeLength()) {
             final Address throwAddress = targetMethod.codeStart().plus(throwOffset);
             for (Throwable throwable : THROWABLES) {
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
                 Trace.line(1, throwable.getClass().getName() + " thrown at " + throwOffset + (catchAddress.isZero() ? " uncaught" :
                     " caught at " + (catchAddress.minus(targetMethod.codeStart())).toInt()));
             }

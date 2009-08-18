@@ -78,7 +78,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         eirMethod.setFrameSize(frameSize);
 
         // the very first instruction must save the flags.
-        // we save them twice and overwrite one copy with the trap instruction address.
+        // we save them twice and overwrite one copy with the trap instruction/return address.
         asm.pushfq();
 
         asm.pushfq();
@@ -106,7 +106,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
             offset += 2 * Word.size();
         }
 
-        // write the return address pointer at the end of the frame
+        // write the return address pointer to the end of the frame
         asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, latchRegister.indirect());
         asm.mov(frameSize, framePointer.indirect(), scratchRegister);
 

@@ -191,10 +191,8 @@ public interface CiType {
 
     int superCheckOffset();
 
-    Object encoding();
+    CiConstant encoding();
 
     CiConstant getStaticContainer();
-
-    Object resolveObject();
 
 }

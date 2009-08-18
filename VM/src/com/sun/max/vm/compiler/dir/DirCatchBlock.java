@@ -44,6 +44,11 @@ public class DirCatchBlock extends DirBlock {
     }
 
     @Override
+    public boolean isTrivial() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "Catch#" + serial() + "(" + catchParameter + ")";
     }

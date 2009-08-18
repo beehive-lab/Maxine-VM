@@ -37,6 +37,8 @@ public class Invoke extends StateSplit {
     final int vtableIndex;
     final boolean isStatic;
     final CiMethod target;
+    public final char cpi;
+    public final CiConstantPool constantPool;
 
     /**
      * Constructs a new Invoke instruction.
@@ -48,7 +50,7 @@ public class Invoke extends StateSplit {
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
      */
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target) {
+    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, CiMethod target, char cpi, CiConstantPool constantPool) {
         super(result);
         this.opcode = opcode;
         this.arguments = args;
@@ -59,6 +61,9 @@ public class Invoke extends StateSplit {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
+
+        this.cpi = cpi;
+        this.constantPool = constantPool;
 
         // TODO: Active this when there is no longer 2-slot concept (for long and doubles) in HIR
         //        if (C1XOptions.DetailedAsserts) {

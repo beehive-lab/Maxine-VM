@@ -28,6 +28,7 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -42,6 +43,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.runtime.sparc.*;
@@ -163,27 +165,32 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
      * <p>
      * The critical state of the registers before the RET instruction is:
      * <ul>
-     * <li> %i0 must hold the exception object</li>
-     * <li> %i7 must hold the catch address, minus 8 -- the ret instruction assume %i7 holds the address of a call instruction and always jump to %i7 + 2 instructions.
-     * So we have pass it the catch address - 2 instructions.</li>
-     * <li> %i6 must hold the stack pointer of the handler</li>
+     * <li>%i0 must hold the exception object</li>
+     * <li>%i7 must hold the catch address, minus 8 -- the ret instruction assume %i7 holds the address of a call
+     * instruction and always jump to %i7 + 2 instructions. So we have pass it the catch address - 2 instructions.</li>
+     * <li>%i6 must hold the stack pointer of the handler</li>
      * The register windows must be flushed before unwinding so all register windows are cleaned.
      * </ul>
      *
-     * @param throwable
-     *                the exception object
-     * @param catchAddress
-     *                the address of the handler code (actually the dispatcher code)
-     * @param stackPointer
-     *                the stack pointer denoting the frame of the handler to which the stack is unwound upon returning
-     *                from this method
+     * @param throwable the exception object
+     * @param catchAddress the address of the handler code (actually the dispatcher code)
+     * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
+     *            returning from this method
      */
     @NEVER_INLINE
-    private static Throwable unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
+    private static void unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
+        // Put the exception where the exception handler expects to find it
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+
+        if (throwable instanceof StackOverflowError) {
+            // This complete call-chain must be inlined down to the native call
+            // so that no further stack banging instructions
+            // are executed before execution jumps to the catch handler.
+            VirtualMemory.protectPage(VmThread.current().guardPage());
+        }
         SpecialBuiltin.flushRegisterWindows();
         VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));
         VMRegister.setAbiFramePointer(stackPointer);
-        return throwable;
     }
 
     private boolean walkAdapterFrame(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
@@ -195,7 +202,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case EXCEPTION_HANDLING: {
                 assert !isTopFrame;
                 // Record this JIT -> OPT adapter frame.
-                final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 unwindingContext.record(stackPointer, stackFrameWalker.framePointer());
                 break;
             }
@@ -323,7 +330,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapStateInPreviousFrame))) {
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame));
+                        StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), stackUnwindingContext.throwable.getClass());
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -337,7 +345,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     if (!trapState.isZero()) {  // Frame is a trapStub
                         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState));
+                            StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), stackUnwindingContext.throwable.getClass());
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -361,21 +370,19 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
+                final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+                final Throwable throwable = stackUnwindingContext.throwable;
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                    final Throwable throwable = stackUnwindingContext.throwable;
-                    if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
-                        // Reset the stack walker
-                        stackFrameWalker.reset();
+                    // Reset the stack walker
+                    stackFrameWalker.reset();
 
-                        // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
-                        Safepoint.enable();
+                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
+                    Safepoint.enable();
 
-                        unwind(throwable, catchAddress, stackPointer);
-                    }
+                    unwind(throwable, catchAddress, stackPointer);
                 }
-                final SPARCStackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 unwindingContext.record(stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 break;
             }
@@ -452,10 +459,5 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return framePointer;
-    }
-
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        return new SPARCStackUnwindingContext(stackPointer, framePointer, throwable);
     }
 }

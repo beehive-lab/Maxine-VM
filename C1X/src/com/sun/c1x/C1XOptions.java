@@ -144,9 +144,9 @@ public class C1XOptions {
     public static boolean TwoOperandLIRForm                  = TRUE; // This flag is false for SPARC => probably move it to target
     public static boolean PatchALot                          = ____;
     public static boolean PrintNotLoaded                     = ____;
-    public static boolean GenerateSynchronizationCode        = ____;
+    public static boolean GenerateSynchronizationCode        = TRUE;
     public static boolean GenerateArrayStoreCheck            = TRUE;
-    public static boolean GenerateBoundsChecks               = ____;
+    public static boolean GenerateBoundsChecks               = TRUE;
     public static boolean GenerateCompilerNullChecks         = ____;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
@@ -198,6 +198,7 @@ public class C1XOptions {
     public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
     public static boolean PrintAssembly                      = ____;
+    public static int     BytesPerLine                       = 16;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {

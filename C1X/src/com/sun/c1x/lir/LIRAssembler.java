@@ -28,6 +28,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
@@ -83,10 +84,6 @@ public abstract class LIRAssembler {
 
     protected CodeOffsets offsets() {
         return compilation.offsets();
-    }
-
-    public void addCallInfoHere(CodeEmitInfo info) {
-        addCallInfo(codeOffset(), info);
     }
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
@@ -189,26 +186,26 @@ public abstract class LIRAssembler {
             return;
         }
         for (ExceptionInfo ilist : infoList) {
-            List<ExceptionHandler> handlers = ilist.exceptionHandlers();
+            List<ExceptionHandler> handlers = ilist.exceptionHandlers;
 
             for (ExceptionHandler handler : handlers) {
                 assert handler.lirOpId() != -1 : "handler not processed by LinearScan";
                 assert handler.entryCode() == null || handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.Branch ||
                         handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
 
-                if (handler.entryPCO() == -1) {
+                if (handler.entryCodeOffset() == -1) {
                     // entry code not emitted yet
                     if (handler.entryCode() != null && handler.entryCode().instructionsList().size() > 1) {
-                        handler.setEntryPCO(codeOffset());
+                        handler.setEntryCodeOffset(codeOffset());
                         if (C1XOptions.CommentedAssembly) {
                             asm.blockComment("Exception adapter block");
                         }
                         emitLirList(handler.entryCode());
                     } else {
-                        handler.setEntryPCO(handler.entryBlock().exceptionHandlerPco());
+                        handler.setEntryCodeOffset(handler.entryBlock().exceptionHandlerPco());
                     }
 
-                    assert handler.entryPCO() != -1 : "must be set now";
+                    assert handler.entryCodeOffset() != -1 : "must be set now";
                 }
             }
         }
@@ -300,7 +297,7 @@ public abstract class LIRAssembler {
     private int lastDecodeStart;
     private void printAssembly(AbstractAssembler asm) {
         byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
-        Util.printBytes(currentBytes);
+        Util.printBytes("Code Part", currentBytes, C1XOptions.BytesPerLine);
         if (currentBytes.length > 0) {
             TTY.println(compilation.runtime.disassemble(currentBytes));
         }
@@ -320,8 +317,6 @@ public abstract class LIRAssembler {
     }
 
     protected void addDebugInfoForBranch(CodeEmitInfo info) {
-        // TODO: poll
-        //masm.codeSection().relocate(pc(), RelocInfo.Type.pollType);
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
         info.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
@@ -330,8 +325,16 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
-        flushDebugInfo(pcOffset);
+    public void addCallInfoHere(CodeEmitInfo cinfo) {
+        addCallInfo(codeOffset(), cinfo);
+    }
+
+    public void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
+
+        if (cinfo == null) {
+            return;
+        }
+
         cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
         if (cinfo.exceptionHandlers() != null) {
             compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
@@ -431,8 +434,9 @@ public abstract class LIRAssembler {
     }
 
     protected void addDebugInfoForNullCheck(int pcOffset, CodeEmitInfo cinfo) {
-        ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
-        emitCodeStub(stub);
+        //ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
+        //emitCodeStub(stub);
+        addCallInfo(pcOffset, cinfo);
     }
 
     void addDebugInfoForDiv0here(CodeEmitInfo info) {
@@ -440,12 +444,13 @@ public abstract class LIRAssembler {
     }
 
     protected void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {
-        DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
-        emitCodeStub(stub);
+        //DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
+        //emitCodeStub(stub);
+        addCallInfo(pcOffset, cinfo);
     }
 
     void emitRtcall(LIRRTCall op) {
-        rtCall(op.result(), op.address(), op.arguments(), op.tmp(), op.info());
+        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info());
     }
 
     protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
@@ -466,34 +471,34 @@ public abstract class LIRAssembler {
 
         switch (op.code()) {
             case StaticCall:
-                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()]);
+                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
                 break;
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info());
                 break;
             case InterfaceCall:
-                interfaceCall(op.method(), op.receiver, op.info());
+                interfaceCall(op.method(), op.receiver, op.info(), op.cpi, op.constantPool);
                 break;
             case VirtualCall:
-                vtableCall(op.method(), op.receiver, op.info());
+                vtableCall(op.method(), op.receiver, op.info(), op.cpi, op.constantPool);
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    protected abstract void call(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap);
+    protected abstract void call(CiMethod ciMethod, GlobalStub addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, CiConstantPool constantPool);
 
     protected abstract void emitStaticCallStub();
 
-    protected abstract void interfaceCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
+    protected abstract void interfaceCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool);
 
-    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info);
+    protected abstract void vtableCall(CiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, CiConstantPool constantPool);
 
-    protected abstract void icCall(CiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
+    protected abstract void icCall(CiMethod ciMethod, GlobalStub addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 
@@ -866,7 +871,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitProfileCall(LIRProfileCall lirProfileCall);
 
-    public abstract void emitExceptionHandler();
+   // public abstract void emitExceptionHandler();
 
     public void emitDeoptHandler() {
         Util.nonFatalUnimplemented();

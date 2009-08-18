@@ -52,8 +52,10 @@ class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer 
 
     @Override
     void releaseMonitorAndRethrow() {
+        asm().pop();
         asm().ldc(classConstantIndex);
         asm().monitorexit();
+        asm().invokestatic(ExceptionDispatcher.safepointAndLoadExceptionObject, 0, 1);
         asm().athrow();
     }
 }

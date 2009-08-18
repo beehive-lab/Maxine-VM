@@ -64,9 +64,4 @@ public class PrototypeJitCompiler extends JitCompiler {
         ProgramError.unexpected();
     }
 
-    @Override
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        throw ProgramError.unexpected();
-    }
-
 }

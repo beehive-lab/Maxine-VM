@@ -42,6 +42,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -233,7 +234,7 @@ public class MaxCiRuntime implements CiRuntime {
     }
 
     public int threadExceptionOopOffset() {
-        throw Util.unimplemented();
+        return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
     public int threadExceptionPcOffset() {
@@ -578,10 +579,6 @@ public class MaxCiRuntime implements CiRuntime {
         return 0;
     }
 
-    public Register exceptionOopRegister() {
-        return X86.r14;
-    }
-
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -600,58 +597,19 @@ public class MaxCiRuntime implements CiRuntime {
 
     int memberIndex;
 
-    public Object registerTargetMethod(CiTargetMethod ciTargetMethod) {
-//        ClassMethodActor classMethodActor = null;
-//        try {
-//            classMethodActor = (ClassMethodActor) MethodActor.fromJava(MaxCiRuntime.class.getMethod("skeleton" + globalStubID.toString()));
-//        } catch (SecurityException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        } catch (NoSuchMethodException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-
-        //new StaticMethodActor(new Utf8Constant(globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
-        //classMethodActor.assignHolder(ClassActor.fromJava(MaxCiRuntime.class), memberIndex++);
-//        ClassActor classActor = ClassActor.fromJava(MaxCiRuntime.class);
-//        ClassMethodActor classMethodActor = new StaticMethodActor(new Utf8Constant("skeleton" + globalStubID.toString()), SignatureDescriptor.fromJava(Void.TYPE), Actor.ACC_PUBLIC | Actor.ACC_STATIC, null);
-//        classMethodActor.assignHolder(classActor, 0);
-
-
-        // TODO: pass an appropriate compiler scheme
-        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(null, null, ciTargetMethod);
-        //assert !globalStubCache.containsKey(globalStubID);
+    public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
+        C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod);
         final C1XTargetMethod targetMethod = generator.finish();
-        //globalStubCache.put(globalStubID, targetMethod);
         return targetMethod;
-
-
-//        MethodState state = VMConfiguration.target().compilationScheme().makeMethodState(classMethodActor);
-//
-//        if (state.currentTargetMethod(CompilationDirective.STUB) == null) {
-//
-//            AdaptiveMethodState methodState = (AdaptiveMethodState) state;
-//            methodState.setTargetMethod(targetMethod, CompilationDirective.STUB);
-//        }
-//
-//
-//
-//        classMethodActor.setMethodState(new MethodState(classMethodActor, 1) {
-//
-//            @Override
-//            public TargetMethod currentTargetMethod() {
-//                return targetMethod;
-//            }
-//
-//            @Override
-//            public TargetMethod currentTargetMethod(CompilationDirective compilationDirective) {
-//                return targetMethod;
-//            }});
     }
 
     public CiType primitiveArrayType(BasicType elemType) {
         return globalConstantPool.canonicalCiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
 
+    }
+
+    @Override
+    public Register threadRegister() {
+        return X86.r14;
     }
 }

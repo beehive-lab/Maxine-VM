@@ -36,7 +36,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
@@ -112,12 +111,6 @@ public class VmThread {
         }
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
-
-    /**
-     * The amount of stack required to {@linkplain #reprotectGuardPage(Throwable) reset} the
-     * {@linkplain #guardPage() guard page} after unwinding a stack while raising a {@code StackOverflowError}.
-     */
-    private static final int MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING = 200;
 
     private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
@@ -878,30 +871,6 @@ public class VmThread {
 
     public static int guardPageSize() {
         return VMConfiguration.target().platform().pageSize;
-    }
-
-    /**
-     * Determines if a given exception is a {@link StackOverflowError} and resets the protection access of the guard page
-     * used to detect stack overflow. This method is called by each {@linkplain ExceptionDispatcher exception dispatcher}.
-     *
-     * @param throwable the exception being dispatched
-     */
-    private static void reprotectGuardPage(Throwable throwable) {
-        if (throwable instanceof StackOverflowError) {
-            VirtualMemory.protectPage(current().guardPage());
-        }
-    }
-
-    /**
-     * Determines if there is enough space left on this thread's stack to execute the code that resets the stack guard
-     * page.
-     *
-     * @param stackPointer the stack pointer that this thread's stack will be unwound to before executing the code that
-     *            resets the stack guard page
-     */
-    public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
-        final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
-        return limit.greaterThan(guardPageEnd());
     }
 
     /**

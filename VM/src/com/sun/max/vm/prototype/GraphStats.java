@@ -226,8 +226,8 @@ public class GraphStats {
     private int computeTargetMethodSize(TargetMethod targetMethod) {
         int total = sizeOf(targetMethod);
         total += sizeOf(targetMethod.code());
-        total += sizeOf(targetMethod.catchBlockPositions());
-        total += sizeOf(targetMethod.catchRangePositions());
+        total += sizeOf((targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchRangePositions() : null);
+        total += sizeOf((targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchBlockPositions() : null);
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
         total += sizeOf(targetMethod.referenceMaps());

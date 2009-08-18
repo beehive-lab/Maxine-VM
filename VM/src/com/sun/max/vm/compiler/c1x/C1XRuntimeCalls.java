@@ -24,12 +24,15 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.value.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -65,6 +68,7 @@ public class C1XRuntimeCalls {
 
         for (CiRuntimeCall call : CiRuntimeCall.values()) {
             assert getClassMethodActor(call) != null : "no runtime method defined for " + call.toString();
+            assert checkCompatible(call, getClassMethodActor(call));
         }
     }
 
@@ -72,6 +76,51 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(type = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         throw throwable;
+    }
+
+
+    private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
+
+        assert checkCompatible(call.resultType, classMethodActor.resultKind());
+        for (int i = 0; i < call.arguments.length; i++) {
+            assert checkCompatible(call.arguments[i], classMethodActor.getParameterKinds()[i]);
+        }
+
+        return true;
+    }
+
+
+    private static boolean checkCompatible(BasicType resultType, Kind resultKind) {
+        switch(resultType) {
+            case Boolean:
+                return resultKind == Kind.BOOLEAN;
+            case Byte:
+                return resultKind == Kind.BYTE;
+            case Char:
+                return resultKind == Kind.CHAR;
+            case Double:
+                return resultKind == Kind.DOUBLE;
+            case Float:
+                return resultKind == Kind.FLOAT;
+            case Illegal:
+                return false;
+            case Int:
+                return resultKind == Kind.INT;
+            case Jsr:
+                return resultKind == Kind.REFERENCE;
+            case Long:
+                return resultKind == Kind.LONG;
+            case Object:
+                return resultKind == Kind.REFERENCE;
+            case Short:
+                return resultKind == Kind.SHORT;
+            case Void:
+                return resultKind == Kind.VOID;
+            case Word:
+                return resultKind == Kind.LONG;
+        }
+
+        return false;
     }
 
 
@@ -141,7 +190,7 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
-    public static int runtimeNewArray(Object receiver, int interfaceId) {
+    public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
@@ -159,6 +208,12 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
+
+        for (int i = 0; i < lengths.length; i++) {
+            if (lengths[i] < 0) {
+                Throw.negativeArraySizeException(lengths[i]);
+            }
+        }
         return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
     }
 
@@ -185,7 +240,8 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.HandleException)
-    public static void runtimeHandleException() {
+    public static void runtimeHandleException(Throwable throwable) throws Throwable {
+        throw throwable;
     }
 
 
@@ -214,14 +270,14 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.Monitorenter)
-    public static void runtimeMonitorenter() {
+    public static void runtimeMonitorenter(Object obj, int monitorID) {
+        VMConfiguration.target().monitorScheme().monitorEnter(obj);
     }
-
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.Monitorexit)
-    public static void runtimeMonitorexit() {
+    public static void runtimeMonitorexit(Object obj, int monitorID) {
+        VMConfiguration.target().monitorScheme().monitorExit(obj);
     }
-
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.TraceBlockEntry)
     public static void runtimeTraceBlockEntry() {
@@ -265,20 +321,16 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveOptVirtualCall)
-    public static void runtimeResolveOptVirtualCall() {
-        // TODO: Implement correctly!
+    public static long runtimeResolveOptVirtualCall(int index, ConstantPool constantPool) {
+        final VirtualMethodActor methodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+        return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveStaticCall)
-    public static void runtimeResolveStaticCall() {
-        // TODO: Implement correctly!
-    }
-
-
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVirtualCall)
-    public static void runtimeResolveVirtualCall() {
-        // TODO: Implement correctly!
+    public static long runtimeResolveStaticCall(int index, ConstantPool constantPool) {
+        final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
+        return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
 
@@ -341,9 +393,15 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveClass)
-    public static Object resolveClass(int index, MaxCiConstantPool constantPool) {
-        final ClassActor classActor = constantPool.constantPool.classAt(index).resolve(constantPool.constantPool, index);
+    public static Object resolveClass(int index, ConstantPool constantPool) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return classActor.dynamicHub();
+    }
+
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
+    public static int resolveVTableIndex(int index, ConstantPool constantPool) {
+        final VirtualMethodActor dynamicMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+        return dynamicMethodActor.vTableIndex();
     }
 
 

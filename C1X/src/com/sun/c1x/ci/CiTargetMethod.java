@@ -45,6 +45,28 @@ public class CiTargetMethod {
             this.registerMap = registerMap;
             this.stackMap = stackMap;
         }
+
+        @Override
+        public String toString() {
+            StringBuffer sb = new StringBuffer();
+            sb.append("Safepoint at ");
+            sb.append(codePos);
+            sb.append(mapToString("registerMap", registerMap));
+            sb.append(mapToString("stackMap", stackMap));
+            return sb.toString();
+        }
+    }
+
+    private static String mapToString(String name, boolean[] map) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(' ');
+        sb.append(name);
+        sb.append('[');
+        for (boolean b : map) {
+            sb.append(b ? '1' : '0');
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     public static class CallSite {
@@ -63,17 +85,48 @@ public class CiTargetMethod {
             this.stackMap = stackMap;
             this.globalStubID = globalStubID;
         }
+
+        @Override
+        public String toString() {
+
+            StringBuffer sb = new StringBuffer();
+            if (runtimeCall != null) {
+                sb.append("Runtime call to ");
+                sb.append(runtimeCall.name());
+            } else if (globalStubID != null) {
+                sb.append("Global stub call to ");
+                sb.append(globalStubID);
+            } else {
+                assert method != null;
+                sb.append("Method call to " + method.toString());
+            }
+
+            sb.append(" at pos ");
+            sb.append(codePos);
+
+            if (direct) {
+                sb.append(" (direct)");
+            } else {
+                sb.append(" (indirect)");
+            }
+
+            sb.append(mapToString("stackMap", stackMap));
+            return sb.toString();
+        }
     }
 
     public static class DataPatchSite {
         public final int codePos;
         public final int dataPos;
-        final boolean relative;
 
-        DataPatchSite(int codePos, int dataPos, boolean relative) {
+        DataPatchSite(int codePos, int dataPos) {
             this.codePos = codePos;
             this.dataPos = dataPos;
-            this.relative = relative;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Data patch site at pos %d referring to data pos %d", codePos, dataPos);
         }
     }
 
@@ -85,19 +138,27 @@ public class CiTargetMethod {
             this.codePos = codePos;
             this.referrent = referrent;
         }
+
+        @Override
+        public String toString() {
+            return String.format("Reference patch site at pos %d to object %s", codePos, referrent);
+        }
     }
 
-    static class ExceptionHandler {
-        final int codePosStart;
-        final int codePosEnd;
-        final int handlerPos;
-        final CiType exceptionType;
+    public static class ExceptionHandler {
+        public final int codePos;
+        public final int handlerPos;
+        public final CiType exceptionType;
 
-        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType exceptionType) {
-            this.codePosStart = codePosStart;
-            this.codePosEnd = codePosEnd;
+        ExceptionHandler(int codePos, int handlerPos, CiType exceptionType) {
+            this.codePos = codePos;
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Exception edge from pos %d to %d with type %s", codePos, handlerPos, exceptionType.javaClass().getName());
         }
     }
 
@@ -129,10 +190,6 @@ public class CiTargetMethod {
      */
     public void setFrameSize(int size) {
         frameSize = size;
-    }
-
-    public void setRegisterSize(int size) {
-        registerSize = size;
     }
 
     /**
@@ -175,9 +232,9 @@ public class CiTargetMethod {
      * @param dataPosition the position in the data which is referred to
      * @param relative {@code true} if the reference is instruction-relative
      */
-    public void recordDataReferenceInCode(int codePosition, int dataPosition, boolean relative) {
+    public void recordDataReferenceInCode(int codePosition, int dataPosition) {
         assert codePosition >= 0 && dataPosition >= 0;
-        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition, relative));
+        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition));
     }
 
     /**
@@ -218,13 +275,12 @@ public class CiTargetMethod {
     /**
      * Records an exception handler for this method.
      *
-     * @param codePosStart  the start position in the code that is covered by the handler (inclusive)
-     * @param codePosEnd    the end position covered by the handler (exclusive)
+     * @param codePos  the position in the code that is covered by the handler
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType throwableType) {
-        exceptionHandlers.add(new ExceptionHandler(codePosStart, codePosEnd, handlerPos, throwableType));
+    public void recordExceptionHandler(int codePos, int handlerPos, CiType throwableType) {
+        exceptionHandlers.add(new ExceptionHandler(codePos, handlerPos, throwableType));
     }
 
     /**

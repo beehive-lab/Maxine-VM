@@ -95,8 +95,8 @@ public final class JDK_java_lang_Throwable {
                 continue;
             }
             final TargetMethod targetMethod = stackFrame.targetMethod();
-            if (targetMethod == null) {
-                // native frame
+            if (targetMethod == null || targetMethod.classMethodActor() == null) {
+                // native frame or stub frame without a class method actor
                 continue;
             } else if (targetMethod.classMethodActor().isTrapStub()) {
                 // Reset the stack trace. We want the trace to start from the actual exception throw.

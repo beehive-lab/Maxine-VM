@@ -23,6 +23,7 @@ package com.sun.max.vm.jit.amd64;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -104,8 +105,11 @@ public class AMD64JitCompiler extends JitCompiler {
     private static int unwindFrameSize = -1;
 
     @NEVER_INLINE
-    private static void getUnwindFrameSize() {
-        unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(unwindMethod).frameSize();
+    private static int getUnwindFrameSize() {
+        if (unwindFrameSize == -1) {
+            unwindFrameSize = CompilationScheme.Static.getCurrentTargetMethod(unwindMethod).frameSize();
+        }
+        return unwindFrameSize;
     }
 
     /**
@@ -124,15 +128,24 @@ public class AMD64JitCompiler extends JitCompiler {
      * @param framePointer
      */
     @NEVER_INLINE
-    public static void unwind(Address catchAddress, Pointer stackPointer, Pointer framePointer) {
-        // The following code will make the stack frame temporarily inconsistent until we return from this
-        // function
+    public static void unwind(Throwable throwable, Address catchAddress, Pointer stackPointer, Pointer framePointer) {
+        final int unwindFrameSize = getUnwindFrameSize();
+
+        // Put the exception where the exception handler expects to find it
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(throwable));
+
+        if (throwable instanceof StackOverflowError) {
+            // This complete call-chain must be inlined down to the native call
+            // so that no further stack banging instructions
+            // are executed before execution jumps to the catch handler.
+            VirtualMemory.protectPage(VmThread.current().guardPage());
+        }
+        // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
+        // When the RET instruction is executed, the pushed 'catchAddress' will be popped from the stack
+        // and the stack will be in the correct state for the handler.
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
-        if (unwindFrameSize == -1) {
-            // we need to get the size of our own frame if it's not known yet.
-            getUnwindFrameSize();
-        }
+
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
         VMRegister.setCpuFramePointer(framePointer);
     }
@@ -397,30 +410,33 @@ public class AMD64JitCompiler extends JitCompiler {
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         // if not at the top frame, subtract 1 to get an address that is _inside_ the call instruction of the caller
         final Address throwAddress = isTopFrame ? stackFrameWalker.instructionPointer() : stackFrameWalker.instructionPointer().minus(1);
-        final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
+
+        final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
+
         if (!catchAddress.isZero()) {
-            final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
             final Throwable throwable = stackUnwindingContext.throwable;
             final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
-            if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(localVariablesBase)) {
-                // The Java operand stack of the method that handles the exception is always cleared before pushing the
-                // thrown object.
-                // Compute the offset to the first stack slot of the Java Stack: frame size - (space for locals + saved RBP
-                // + space of the first slot itself).
-                final Pointer catcherStackPointer = localVariablesBase.minus(framePointerState.sizeOfNonParameterLocals(targetMethod) + JitStackFrameLayout.JIT_SLOT_SIZE);
-                // Push the exception on top of the stack first
-                catcherStackPointer.writeReference(0, Reference.fromJava(throwable));
+            // The Java operand stack of the method that handles the exception is always cleared.
+            // A null object is then pushed to ensure the depth of the stack is as expected upon
+            // entry to an exception handler. However, the handler must have a prologue that loads
+            // the exception from VmThreadLocal.EXCEPTION_OBJECT which is indeed guaranteed by
+            // ExceptionDispatcher.
+            // Compute the offset to the first stack slot of the Java Stack: frame size - (space for locals + saved RBP
+            // + space of the first slot itself).
+            final Pointer catcherStackPointer = localVariablesBase.minus(framePointerState.sizeOfNonParameterLocals(targetMethod) + JitStackFrameLayout.JIT_SLOT_SIZE);
+            // Push the null object on top of the stack first
+            catcherStackPointer.writeReference(0, null);
 
-                // found an exception handler, and thus we are done with the stack walker
-                stackFrameWalker.reset();
+            // found an exception handler, and thus we are done with the stack walker
+            stackFrameWalker.reset();
 
-                // Completes the exception handling protocol (with respect to the garbage collector) initiated in
-                // Throwing.raise()
-                Safepoint.enable();
+            // Completes the exception handling protocol (with respect to the garbage collector) initiated in
+            // Throwing.raise()
+            Safepoint.enable();
 
-                unwind(catchAddress, catcherStackPointer, localVariablesBase);
-                // We should never reach here
-            }
+            unwind(throwable, catchAddress, catcherStackPointer, localVariablesBase);
+            // We should never reach here
         }
     }
 
