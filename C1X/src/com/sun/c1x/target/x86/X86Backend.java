@@ -60,7 +60,7 @@ public class X86Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack) {
+    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
         return new X86FrameMap(compilation, method, numberOfLocks, maxStack);
     }
     @Override

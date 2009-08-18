@@ -34,7 +34,7 @@ public class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
-    private final CiExceptionHandler handler;
+    private final RiExceptionHandler handler;
     private BlockBegin entryBlock;
     private LIRList entryCode;
     private int entryPCO;
@@ -42,7 +42,7 @@ public class ExceptionHandler {
     private int scopeCount;
     private int lirOpId;
 
-    public ExceptionHandler(CiExceptionHandler handler) {
+    public ExceptionHandler(RiExceptionHandler handler) {
         this.handler = handler;
         this.entryPCO = -1;
         this.phiOperand = -1;
@@ -65,7 +65,7 @@ public class ExceptionHandler {
      * including the bytecode ranges.
      * @return the compiler interface exception handler
      */
-    public final CiExceptionHandler handler() {
+    public final RiExceptionHandler handler() {
         return handler;
     }
 
@@ -131,7 +131,7 @@ public class ExceptionHandler {
         return handler.catchClassIndex() == 0;
     }
 
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, CiType throwKlass, boolean typeIsExact) {
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType throwKlass, boolean typeIsExact) {
         // TODO Port implementation
         return false;
     }

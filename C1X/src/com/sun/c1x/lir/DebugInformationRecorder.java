@@ -45,7 +45,7 @@ public class DebugInformationRecorder {
 
     }
 
-    public void describeScope(int pcOffset, CiMethod method, int[] sBci) {
+    public void describeScope(int pcOffset, RiMethod method, int[] sBci) {
         // TODO Auto-generated method stub
 
     }
@@ -81,7 +81,7 @@ public class DebugInformationRecorder {
      * @param expvals
      * @param monvals
      */
-    public void describeScope(int pcOffset, CiMethod method, int bci, long locvals, long expvals, long monvals) {
+    public void describeScope(int pcOffset, RiMethod method, int bci, long locvals, long expvals, long monvals) {
         // TODO Auto-generated method stub
 
     }

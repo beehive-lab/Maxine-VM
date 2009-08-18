@@ -545,7 +545,7 @@ public class ValueStack {
      */
     public ValueStack pushScope(IRScope scope) {
         assert scope.caller == this.scope;
-        CiMethod method = scope.method;
+        RiMethod method = scope.method;
         ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
@@ -577,9 +577,11 @@ public class ValueStack {
      */
     public void setupPhiForStack(BlockBegin block, int i) {
         Instruction p = stackAt(i);
-        assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Instruction phi = new Phi(p.type(), block, -i - 1);
-        values[maxLocals + i] = phi;
+        if (p != null) {
+            assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
+            Instruction phi = new Phi(p.type(), block, -i - 1);
+            values[maxLocals + i] = phi;
+        }
     }
 
     /**

@@ -30,6 +30,6 @@ import com.sun.c1x.ci.*;
  */
 public interface InterpreterInterface {
 
-    Object loadField(CiField field, Object objectReference);
+    Object loadField(RiField field, Object objectReference);
 
 }

@@ -208,11 +208,11 @@ public class C1XTargetMethodGenerator {
         return directCallees.toArray(new Object[directCallees.size()]);
     }
 
-    private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, CiMethod method) {
+    private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
 
 
         if (method != null) {
-            final MaxCiMethod maxMethod = (MaxCiMethod) method;
+            final MaxRiMethod maxMethod = (MaxRiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
         }
 
@@ -247,7 +247,7 @@ public class C1XTargetMethodGenerator {
             }
 
             if (site.method != null) {
-                MethodActor methodActor = ((MaxCiMethod) site.method).asMethodActor("gatherCalls()");
+                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.direct) {
                     directCalls.append(methodActor);
                 } else {

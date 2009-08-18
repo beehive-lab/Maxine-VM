@@ -30,16 +30,16 @@ import com.sun.c1x.value.*;
  */
 public class NewInstance extends StateSplit {
 
-    final CiType instanceClass;
+    final RiType instanceClass;
     public final char cpi;
-    public final CiConstantPool constantPool;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a NewInstance instruction.
      * @param theClass the class being allocated
      * @param cpi
      */
-    public NewInstance(CiType theClass, char cpi, CiConstantPool constantPool) {
+    public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool) {
         super(BasicType.Object);
         instanceClass = theClass;
         this.cpi = cpi;
@@ -51,7 +51,7 @@ public class NewInstance extends StateSplit {
      * Gets the instance class being allocated by this instruction.
      * @return the instance class allocated
      */
-    public CiType instanceClass() {
+    public RiType instanceClass() {
         return instanceClass;
     }
 
@@ -70,7 +70,7 @@ public class NewInstance extends StateSplit {
      * @return the exact type produced by this instruction
      */
     @Override
-    public CiType exactType() {
+    public RiType exactType() {
         return instanceClass;
     }
 

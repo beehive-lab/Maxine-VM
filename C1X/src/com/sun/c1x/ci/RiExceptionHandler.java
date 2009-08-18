@@ -18,45 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.bytecode;
+package com.sun.c1x.ci;
 
 /**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
+ * The <code>RiExceptionHandler</code> interface represents an exception
+ * handler.
  *
  * @author Ben L. Titzer
  */
-public class BytecodeLookupSwitch extends BytecodeSwitch {
+public interface RiExceptionHandler {
+    /**
+     * Gets the start bytecode index of the protected range of this handler.
+     * @return the start bytecode index
+     */
+    int startBCI();
 
-    public BytecodeLookupSwitch(BytecodeStream stream, int bci) {
-        super(stream, bci);
-    }
+    /**
+     * Gets the end bytecode index of the protected range of this handler.
+     * @return the end bytecode index
+     */
+    int endBCI();
 
-    public BytecodeLookupSwitch(byte[] code, int bci) {
-        super(code, bci);
-    }
+    /**
+     * Gets the bytecode index of the handler block of this handler.
+     * @return the handler block bytecode index
+     */
+    int handlerBCI();
 
-    @Override
-    public int defaultOffset() {
-        return readWord(aligned);
-    }
+    /**
+     * Gets the index into the constant pool representing the type of exceptions
+     * caught by this handler.
+     * @return the constant pool index of the catch type
+     */
+    int catchClassIndex();
 
-    @Override
-    public int offsetAt(int i) {
-        return readWord(aligned + 12 + 8 * i);
-    }
+    /**
+     * Checks whether this handler catches all exceptions.
+     * @return {@code true} if this handler catches all exceptions
+     */
+    boolean isCatchAll();
 
-    @Override
-    public int keyAt(int i) {
-        return readWord(aligned + 8 + 8 * i);
-    }
-
-    @Override
-    public int numberOfCases() {
-        return readWord(aligned + 4);
-    }
-
-    @Override
-    public int size() {
-        return aligned + 8 + 8 * numberOfCases() - bci;
-    }
 }

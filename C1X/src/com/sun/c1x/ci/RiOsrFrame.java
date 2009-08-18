@@ -21,13 +21,13 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiOsrFrame</code> interface allows the compiler to query the runtime for
+ * The <code>RiOsrFrame</code> interface allows the compiler to query the runtime for
  * the locations of the state of locals, stacks, and locks when generating code to
  * transition from one frame layout during OSR (on-stack replacement).
  *
  * @author Ben L. Titzer
  */
-public interface CiOsrFrame {
+public interface RiOsrFrame {
     /**
      * Get the offset of a local variable within the OSR frame.
      * @param local the local index
