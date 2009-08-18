@@ -214,8 +214,9 @@ public final class MemoryWordsInspector extends Inspector {
             // Clone another set of instance preferences
             this.instanceViewPreferences = new MemoryWordsViewPreferences(instanceViewPreferences, this);
         }
-
-        final Address start = memoryRegion.start().aligned(wordSize.toInt());
+        Address start = memoryRegion.start();
+        final Address alignedStart = start.aligned(wordSize.toInt());
+        start = (start.equals(alignedStart)) ? start : alignedStart.minus(wordSize);
         final int wordCount = wordsInRegion(memoryRegion);
         this.originalMemoryWordRegion = new MemoryWordRegion(start, wordCount, wordSize);
         this.memoryWordRegion = originalMemoryWordRegion;
