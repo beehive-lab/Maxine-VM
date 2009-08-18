@@ -27,13 +27,13 @@ import com.sun.max.vm.compiler.c1x.*;
 
 public class MaxInterpreterInterface implements InterpreterInterface {
 
-    private MaxCiRuntime runtime;
+    private MaxRiRuntime runtime;
 
-    public MaxInterpreterInterface(MaxCiRuntime runtime) {
+    public MaxInterpreterInterface(MaxRiRuntime runtime) {
         this.runtime = runtime;
     }
 
-    public Object loadField(CiField field, Object objectRef) {
+    public Object loadField(RiField field, Object objectRef) {
         return null;
     }
 

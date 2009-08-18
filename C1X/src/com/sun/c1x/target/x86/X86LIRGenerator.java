@@ -806,7 +806,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         setNoResult(x);
 
         int[] flags = new int[1];
-        CiType[] expectedType = new CiType[1];
+        RiType[] expectedType = new RiType[1];
         arraycopyHelper(x, flags, expectedType);
 
         CodeEmitInfo info = stateFor(x, x.state()); // we may want to have stack (deoptimization?)
@@ -841,7 +841,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (!x.instanceClass().isLoaded() && C1XOptions.PrintNotLoaded) {
             TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
         }
-        CiType klass = x.instanceClass();
+        RiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {
             lir.oop2reg(klass.encoding().asObject(), klassReg);
@@ -918,7 +918,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        CiType elementType = x.elementClass().arrayOf();
+        RiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
             Object obj = elementType.encoding().asObject();
             lir.oop2reg(obj, klassReg);

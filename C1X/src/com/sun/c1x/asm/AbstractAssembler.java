@@ -67,7 +67,7 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    public CiTargetMethod finishTargetMethod(CiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList) {
+    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList) {
 
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
@@ -80,7 +80,7 @@ public abstract class AbstractAssembler {
                 int codeOffset = ei.codeOffset;
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
-                    CiType catchedType = handler.handler.catchKlass();
+                    RiType catchedType = handler.handler.catchKlass();
                     targetMethod.recordExceptionHandler(codeOffset, entryOffset, catchedType);
                 }
             }
@@ -187,7 +187,7 @@ public abstract class AbstractAssembler {
         }
     }
 
-    protected void recordDirectCall(int pos, CiMethod call, boolean[] stackMap) {
+    protected void recordDirectCall(int pos, RiMethod call, boolean[] stackMap) {
 
         assert pos >= 0 && call != null && stackMap != null;
 

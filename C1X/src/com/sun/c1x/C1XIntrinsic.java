@@ -200,7 +200,7 @@ public enum C1XIntrinsic {
     sun_misc_Unsafe$prefetchWriteStatic  ("(Ljava/lang/Object;J)V");
 
     private static HashMap<String, HashMap<String, C1XIntrinsic>> intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
-    private static HashMap<CiMethod, Method> foldableMap = new HashMap<CiMethod, Method>();
+    private static HashMap<RiMethod, Method> foldableMap = new HashMap<RiMethod, Method>();
     private static boolean anyFoldables;
 
     private final String className;
@@ -280,8 +280,8 @@ public enum C1XIntrinsic {
      * @return a reference to the intrinsic for the method, if the method is an intrinsic
      * (and is loaded); <code>null</code> otherwise
      */
-    public static C1XIntrinsic getIntrinsic(CiMethod method) {
-        CiType holder = method.holder();
+    public static C1XIntrinsic getIntrinsic(RiMethod method) {
+        RiType holder = method.holder();
         if (method.isLoaded() && holder.isLoaded() && holder.isInitialized()) {
             // note that the map uses internal names to map lookup faster
             HashMap<String, C1XIntrinsic> map = intrinsicMap.get(holder.name());
@@ -300,7 +300,7 @@ public enum C1XIntrinsic {
      * @param ciMethod the compiler interface method for matching
      * @param reflectMethod the reflection method to execute for folding
      */
-    public static void registerFoldableMethod(CiMethod ciMethod, Method reflectMethod) {
+    public static void registerFoldableMethod(RiMethod ciMethod, Method reflectMethod) {
         reflectMethod.setAccessible(true);
         foldableMap.put(ciMethod, reflectMethod);
         anyFoldables = true;
@@ -313,7 +313,7 @@ public enum C1XIntrinsic {
      * @return the reflective method for the compiler interface method, if one is register; <code>null</code>
      * otherwise
      */
-    public static Method getFoldableMethod(CiMethod ciMethod) {
+    public static Method getFoldableMethod(RiMethod ciMethod) {
         if (anyFoldables) {
             return foldableMap.get(ciMethod);
         }

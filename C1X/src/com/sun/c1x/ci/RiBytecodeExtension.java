@@ -29,7 +29,7 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public interface CiBytecodeExtension {
+public interface RiBytecodeExtension {
 
     /**
      * This interface represents an instance of a particular extended bytecode.
@@ -48,7 +48,7 @@ public interface CiBytecodeExtension {
          * stack, including the input argument types and the output type.
          * @return a signature describing this bytecode
          */
-        CiSignature signatureType();
+        RiSignature signatureType();
 
         /**
          * Checks whether this bytecode can trap--i.e. generate an exception.

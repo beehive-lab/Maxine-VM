@@ -75,7 +75,7 @@ public class GraphBuilder {
         start.merge(initialState);
 
         BlockBegin syncHandler = null;
-        CiMethod method = method();
+        RiMethod method = method();
         if (method.isSynchronized()) {
             // setup and exception handler
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
@@ -83,7 +83,7 @@ public class GraphBuilder {
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            CiExceptionHandler desc = newDefaultExceptionHandler(method);
+            RiExceptionHandler desc = newDefaultExceptionHandler(method);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
             scopeData.addExceptionHandler(h);
@@ -158,13 +158,13 @@ public class GraphBuilder {
         }
     }
 
-    private CiExceptionHandler newDefaultExceptionHandler(CiMethod method) {
+    private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
         return constantPool().newExceptionHandler(0, method.codeSize(), -1, 0);
     }
 
     void pushRootScope(IRScope scope, BlockMap blockMap, BlockBegin start) {
         BytecodeStream stream = new BytecodeStream(scope.method.code());
-        CiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
+        RiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
         scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         curBlock = start;
     }
@@ -211,7 +211,7 @@ public class GraphBuilder {
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
-        CiMethodData methodData = method().methodData();
+        RiMethodProfile methodData = method().methodData();
         if (C1XOptions.ProfileBranches && methodData != null) {
             // increment the invocation counter;
             // note that the normal append() won't work, so we do this manually
@@ -248,7 +248,7 @@ public class GraphBuilder {
         return root;
     }
 
-    public CiMethod method() {
+    public RiMethod method() {
         return scopeData.scope.method;
     }
 
@@ -479,9 +479,9 @@ public class GraphBuilder {
     void loadConstant() {
         Object con = constantPool().lookupConstant(stream().readCPI());
 
-        if (con instanceof CiType) {
+        if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
-            CiType citype = (CiType) con;
+            RiType citype = (RiType) con;
             if (!citype.isLoaded() || C1XOptions.TestPatching) {
                 push(BasicType.Object, append(new ResolveClass(citype, curState.copy())));
             } else {
@@ -696,7 +696,7 @@ public class GraphBuilder {
     }
 
     void checkcast_() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        RiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         CheckCast c = new CheckCast(type, apop(), stateBefore);
         apush(append(c));
@@ -709,7 +709,7 @@ public class GraphBuilder {
     }
 
     void instanceof_() {
-        CiType type = constantPool().lookupType(stream().readCPI());
+        RiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         InstanceOf i = new InstanceOf(type, apop(), stateBefore);
         ipush(append(i));
@@ -720,7 +720,7 @@ public class GraphBuilder {
 
     void newInstance() {
         char cpi = stream().readCPI();
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         assert !type.isLoaded() || type.isInstanceClass();
         NewInstance n = new NewInstance(type, cpi, constantPool());
         if (memoryMap != null) {
@@ -735,7 +735,7 @@ public class GraphBuilder {
 
     void newObjectArray() {
         char cpi = stream().readCPI();
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
@@ -743,7 +743,7 @@ public class GraphBuilder {
 
     void newMultiArray() {
         char cpi = stream().readCPI();
-        CiType type = constantPool().lookupType(cpi);
+        RiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         int rank = stream().readUByte(stream().currentBCI() + 3);
         Instruction[] dims = new Instruction[rank];
@@ -755,7 +755,7 @@ public class GraphBuilder {
     }
 
     void getField() {
-        CiField field = constantPool().lookupGetField(stream().readCPI());
+        RiField field = constantPool().lookupGetField(stream().readCPI());
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded);
@@ -763,7 +763,7 @@ public class GraphBuilder {
     }
 
     void putField() {
-        CiField field = constantPool().lookupPutField(stream().readCPI());
+        RiField field = constantPool().lookupPutField(stream().readCPI());
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
         ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         Instruction value = pop(field.basicType().stackType());
@@ -771,8 +771,8 @@ public class GraphBuilder {
     }
 
     void getStatic() {
-        CiField field = constantPool().lookupGetStatic(stream().readCPI());
-        CiType holder = field.holder();
+        RiField field = constantPool().lookupGetStatic(stream().readCPI());
+        RiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
         ValueStack stateCopy = isInitialized ? null : curState.copy();
@@ -782,8 +782,8 @@ public class GraphBuilder {
     }
 
     void putStatic() {
-        CiField field = constantPool().lookupPutStatic(stream().readCPI());
-        CiType holder = field.holder();
+        RiField field = constantPool().lookupPutStatic(stream().readCPI());
+        RiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
         ValueStack stateCopy = isInitialized ? null : curState.copy();
@@ -793,7 +793,7 @@ public class GraphBuilder {
         storeField(store);
     }
 
-    private Instruction getStaticContainer(CiType holder, boolean isInitialized) {
+    private Instruction getStaticContainer(RiType holder, boolean isInitialized) {
         Instruction holderConstant = null;
         if (isInitialized) {
             holderConstant = appendConstant(holder.getStaticContainer());
@@ -830,7 +830,7 @@ public class GraphBuilder {
         push(basicType.stackType(), optimized);
     }
 
-    void invokeStatic(CiMethod target, char cpi, CiConstantPool constantPool) {
+    void invokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null)) {
@@ -840,7 +840,7 @@ public class GraphBuilder {
         }
     }
 
-    void invokeInterface(CiMethod target, char cpi, CiConstantPool constantPool) {
+    void invokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
@@ -849,13 +849,13 @@ public class GraphBuilder {
         }
     }
 
-    void invokeVirtual(CiMethod target, char cpi, CiConstantPool constantPool) {
+    void invokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             Instruction receiver = args[0];
             // attempt to devirtualize the call
             if (target.isLoaded() && target.holder().isLoaded()) {
-                CiType klass = target.holder();
+                RiType klass = target.holder();
                 // 0. check for trivial cases
                 if (target.canBeStaticallyBound() && !target.isAbstract()) {
                     // check for trivial cases (e.g. final methods, nonvirtual methods)
@@ -863,14 +863,14 @@ public class GraphBuilder {
                     return;
                 }
                 // 1. check if the exact type of the receiver can be determined
-                CiType exact = getExactType(klass, receiver);
+                RiType exact = getExactType(klass, receiver);
                 if (exact != null && exact.isLoaded()) {
                     // either the holder class is exact, or the receiver object has an exact type
                     invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
                     return;
                 }
                 // 2. check if an assumed leaf method can be found
-                CiMethod leaf = getAssumedLeafMethod(target, receiver);
+                RiMethod leaf = getAssumedLeafMethod(target, receiver);
                 if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
                     invokeDirect(leaf, args, null, cpi, constantPool);
                     return;
@@ -889,15 +889,15 @@ public class GraphBuilder {
         }
     }
 
-    private BasicType returnBasicType(CiMethod target) {
+    private BasicType returnBasicType(RiMethod target) {
         return target.signatureType().returnBasicType();
     }
 
-    void invokeSpecial(CiMethod target, CiType knownHolder, char cpi, CiConstantPool constantPool) {
+    void invokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
         invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder, cpi, constantPool);
     }
 
-    private void invokeDirect(CiMethod target, Instruction[] args, CiType knownHolder, char cpi, CiConstantPool constantPool) {
+    private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder, char cpi, RiConstantPool constantPool) {
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder)) {
                 // could not optimize or inline the method call
@@ -908,7 +908,7 @@ public class GraphBuilder {
         }
     }
 
-    private void appendInvoke(int opcode, CiMethod target, Instruction[] args, boolean isStatic, char cpi, CiConstantPool constantPool) {
+    private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool) {
         BasicType resultType = returnBasicType(target);
         Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
@@ -918,36 +918,36 @@ public class GraphBuilder {
         }
     }
 
-    private CiType getExactType(CiType staticType, Instruction receiver) {
-        CiType exact = staticType.exactType();
+    private RiType getExactType(RiType staticType, Instruction receiver) {
+        RiType exact = staticType.exactType();
         if (exact == null) {
             exact = receiver.exactType();
             if (exact == null) {
-                CiType declared = receiver.declaredType();
+                RiType declared = receiver.declaredType();
                 exact = declared == null ? null : declared.exactType();
             }
         }
         return exact;
     }
 
-    private CiType getAssumedLeafType(CiType staticType, Instruction receiver) {
+    private RiType getAssumedLeafType(RiType staticType, Instruction receiver) {
         if (assumeLeafClass(staticType)) {
             return staticType;
         }
-        CiType declared = receiver.declaredType();
+        RiType declared = receiver.declaredType();
         if (declared != null && assumeLeafClass(declared)) {
             return declared;
         }
         return null;
     }
 
-    private CiMethod getAssumedLeafMethod(CiMethod target, Instruction receiver) {
+    private RiMethod getAssumedLeafMethod(RiMethod target, Instruction receiver) {
         if (assumeLeafMethod(target)) {
             return target;
         }
-        CiType declared = receiver.declaredType();
+        RiType declared = receiver.declaredType();
         if (declared != null && declared.isLoaded() && !declared.isInterface()) {
-            CiMethod impl = declared.resolveMethodImpl(target);
+            RiMethod impl = declared.resolveMethodImpl(target);
             if (impl != null && assumeLeafClass(declared)) {
                 return impl;
             }
@@ -955,19 +955,19 @@ public class GraphBuilder {
         return null;
     }
 
-    Instruction getReceiver(CiMethod target) {
+    Instruction getReceiver(RiMethod target) {
         return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
     }
 
-    Instruction[] popArguments(CiMethod target) {
+    Instruction[] popArguments(RiMethod target) {
         return curState.popArguments(target.signatureType().argumentSlots(false));
     }
 
     void callRegisterFinalizer() {
         Instruction receiver = curState.loadLocal(0);
-        CiType declaredType = receiver.declaredType();
-        CiType receiverType = declaredType;
-        CiType exactType = receiver.exactType();
+        RiType declaredType = receiver.declaredType();
+        RiType receiverType = declaredType;
+        RiType exactType = receiver.exactType();
         if (exactType == null && declaredType != null) {
             exactType = declaredType.exactType();
         }
@@ -1059,7 +1059,7 @@ public class GraphBuilder {
         append(new Return(x));
     }
 
-    private ValueStack valueStackIfClassNotLoaded(CiType type) {
+    private ValueStack valueStackIfClassNotLoaded(RiType type) {
         return !type.isLoaded() || C1XOptions.TestPatching ? curState.copy() : null;
     }
 
@@ -1171,15 +1171,15 @@ public class GraphBuilder {
         return false;
     }
 
-    private void profileCall(Instruction receiver, CiType knownHolder) {
+    private void profileCall(Instruction receiver, RiType knownHolder) {
         if (C1XOptions.ProfileCalls) {
             append(new ProfileCall(method(), bci(), receiver, knownHolder));
         }
     }
 
-    private void profileInvocation(CiMethod callee) {
+    private void profileInvocation(RiMethod callee) {
         if (C1XOptions.ProfileCalls) {
-            CiMethodData mdo = callee.methodData();
+            RiMethodProfile mdo = callee.methodData();
             if (mdo != null) {
                 int offset = mdo.invocationCountOffset();
                 if (offset >= 0) {
@@ -1193,7 +1193,7 @@ public class GraphBuilder {
 
     private void profileBCI(int bci) {
         if (C1XOptions.ProfileBranches) {
-            CiMethodData mdo = method().methodData();
+            RiMethodProfile mdo = method().methodData();
             if (mdo != null) {
                 int offset = mdo.bciCountOffset(bci);
                 if (offset >= 0) {
@@ -1320,7 +1320,7 @@ public class GraphBuilder {
 
     void pushScopeForJsr(BlockBegin jsrCont, int jsrStart) {
         BytecodeStream stream = new BytecodeStream(scope().method.code());
-        CiConstantPool constantPool = scopeData.constantPool;
+        RiConstantPool constantPool = scopeData.constantPool;
         ScopeData data = new ScopeData(scopeData, scope(), scopeData.blockMap, stream, constantPool, jsrStart);
         BlockBegin continuation = scopeData.continuation();
         data.setContinuation(continuation);
@@ -1332,7 +1332,7 @@ public class GraphBuilder {
         scopeData = data;
     }
 
-    void pushScope(CiMethod target, BlockBegin continuation) {
+    void pushScope(RiMethod target, BlockBegin continuation) {
         IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
         scope().addCallee(calleeScope);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
@@ -1341,14 +1341,14 @@ public class GraphBuilder {
         calleeScope.setStoresInLoops(blockMap.getStoresInLoops());
         curState = curState.pushScope(calleeScope);
         BytecodeStream stream = new BytecodeStream(target.code());
-        CiConstantPool constantPool = compilation.runtime.getConstantPool(target);
+        RiConstantPool constantPool = compilation.runtime.getConstantPool(target);
         ScopeData data = new ScopeData(scopeData, calleeScope, blockMap, stream, constantPool);
         data.setContinuation(continuation);
         scopeData = data;
     }
 
     ValueStack stateAtEntry() {
-        CiMethod method = method();
+        RiMethod method = method();
         ValueStack state = new ValueStack(scope(), method.maxLocals(), method.maxStackSize());
         int index = 0;
         if (!method.isStatic()) {
@@ -1359,10 +1359,10 @@ public class GraphBuilder {
             state.storeLocal(index, local);
             index = 1;
         }
-        CiSignature sig = method.signatureType();
+        RiSignature sig = method.signatureType();
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
-            CiType type = sig.argumentTypeAt(i);
+            RiType type = sig.argumentTypeAt(i);
             BasicType vt = type.basicType().stackType();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
@@ -1378,7 +1378,7 @@ public class GraphBuilder {
         return state;
     }
 
-    boolean tryOptimizeCall(CiMethod target, Instruction[] args, boolean isStatic) {
+    boolean tryOptimizeCall(RiMethod target, Instruction[] args, boolean isStatic) {
         if (target.isLoaded()) {
             if (C1XOptions.InlineIntrinsics) {
                 // try to create an intrinsic node
@@ -1398,7 +1398,7 @@ public class GraphBuilder {
         return false;
     }
 
-    private boolean tryInlineIntrinsic(CiMethod target, Instruction[] args, boolean isStatic, C1XIntrinsic intrinsic) {
+    private boolean tryInlineIntrinsic(RiMethod target, Instruction[] args, boolean isStatic, C1XIntrinsic intrinsic) {
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1420,7 +1420,7 @@ public class GraphBuilder {
         return true;
     }
 
-    private boolean tryFoldable(CiMethod target, Instruction[] args) {
+    private boolean tryFoldable(RiMethod target, Instruction[] args) {
         CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
             pushReturn(returnBasicType(target), new Constant(result));
@@ -1429,11 +1429,11 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(CiMethod target, Instruction[] args, CiType knownHolder) {
+    boolean tryInline(RiMethod target, Instruction[] args, RiType knownHolder) {
         return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder);
     }
 
-    boolean checkInliningConditions(CiMethod target) {
+    boolean checkInliningConditions(RiMethod target) {
         if (!C1XOptions.InlineMethods) {
             return false; // all inlining is turned off
         }
@@ -1493,12 +1493,12 @@ public class GraphBuilder {
         return true;
     }
 
-    boolean cannotInline(CiMethod target, String reason) {
+    boolean cannotInline(RiMethod target, String reason) {
         compilation.recordInliningFailure(target, reason);
         return false;
     }
 
-    boolean tryInlineFull(CiMethod target, Instruction[] args, CiType knownHolder) {
+    boolean tryInlineFull(RiMethod target, Instruction[] args, RiType knownHolder) {
         BlockBegin orig = curBlock;
         Instruction receiver = null;
         if (!target.isStatic()) {
@@ -1625,7 +1625,7 @@ public class GraphBuilder {
         return true;
     }
 
-    private Instruction synchronizedObject(ValueStack state, CiMethod target) {
+    private Instruction synchronizedObject(ValueStack state, RiMethod target) {
         return target.isStatic() ? append(Constant.forObject(target.holder().javaClass())) : state.localAt(0);
     }
 
@@ -1635,7 +1635,7 @@ public class GraphBuilder {
         lastInstr.setFlag(Instruction.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
-        CiExceptionHandler handler = newDefaultExceptionHandler(method());
+        RiExceptionHandler handler = newDefaultExceptionHandler(method());
         ExceptionHandler h = new ExceptionHandler(handler);
         h.setEntryBlock(syncHandler);
         scopeData.addExceptionHandler(h);
@@ -1724,7 +1724,7 @@ public class GraphBuilder {
 
         int osrBCI = compilation.osrBCI;
         BytecodeStream s = scopeData.stream;
-        CiOsrFrame frame = compilation.getOsrFrame();
+        RiOsrFrame frame = compilation.getOsrFrame();
         s.setBCI(osrBCI);
         s.next(); // XXX: why go to next bytecode?
 
@@ -2075,7 +2075,7 @@ public class GraphBuilder {
         }
     }
 
-    boolean assumeLeafClass(CiType type) {
+    boolean assumeLeafClass(RiType type) {
         if (!C1XOptions.TestSlowPath && type.isLoaded()) {
             if (type.isFinal()) {
                 return true;
@@ -2089,7 +2089,7 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean assumeLeafMethod(CiMethod method) {
+    boolean assumeLeafMethod(RiMethod method) {
         if (!C1XOptions.TestSlowPath && method.isLoaded()) {
             if (method.isFinalMethod()) {
                 return true;
@@ -2103,7 +2103,7 @@ public class GraphBuilder {
         return false;
     }
 
-    int recursiveInlineLevel(CiMethod target) {
+    int recursiveInlineLevel(RiMethod target) {
         int rec = 0;
         IRScope scope = scope();
         while (scope != null) {
@@ -2116,7 +2116,7 @@ public class GraphBuilder {
         return rec;
     }
 
-    CiConstantPool constantPool() {
+    RiConstantPool constantPool() {
         return scopeData.constantPool;
     }
 

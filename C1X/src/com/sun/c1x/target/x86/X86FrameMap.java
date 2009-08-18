@@ -146,7 +146,7 @@ public class X86FrameMap extends FrameMap {
         return (arch.is32bit()) ? Register.noreg : X86.r10;
     }
 
-    public X86FrameMap(C1XCompilation compilation, CiMethod method, int numberOfLocks, int maxStack) {
+    public X86FrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
         super(compilation, method, numberOfLocks, maxStack);
     }
 

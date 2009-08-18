@@ -546,7 +546,7 @@ public abstract class X86Assembler extends AbstractAssembler {
      * @param runtimeCall
      *            the destination of the call
      */
-    public void callRuntime(CiRuntimeCall runtimeCall, CiMethod method) {
+    public void callRuntime(CiRuntimeCall runtimeCall, RiMethod method) {
         recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[0]);
         emitByte(0xE8);
         emitInt(0);
@@ -559,7 +559,7 @@ public abstract class X86Assembler extends AbstractAssembler {
      * @param runtimeCall
      *            the destination of the call
      */
-    public void callMethodDirect(CiMethod method, boolean[] stackRefMap) {
+    public void callMethodDirect(RiMethod method, boolean[] stackRefMap) {
         recordDirectCall(codeBuffer.position(), method, stackRefMap);
         emitByte(0xE8);
         emitInt(0);

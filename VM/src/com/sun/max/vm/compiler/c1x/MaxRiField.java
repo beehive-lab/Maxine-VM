@@ -37,9 +37,9 @@ import com.sun.max.vm.value.*;
  *
  * @author Ben L. Titzer
  */
-public class MaxCiField implements CiField {
+public class MaxRiField implements RiField {
 
-    final MaxCiConstantPool constantPool;
+    final MaxRiConstantPool constantPool;
     final BasicType basicType; // cached for performance
     FieldRefConstant fieldRef;
     FieldActor fieldActor;
@@ -49,10 +49,10 @@ public class MaxCiField implements CiField {
      * @param constantPool the constant pool in which the field is referenced
      * @param fieldActor the field actor
      */
-    public MaxCiField(MaxCiConstantPool constantPool, FieldActor fieldActor) {
+    public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
-        this.basicType = MaxCiType.kindToBasicType(fieldActor.kind);
+        this.basicType = MaxRiType.kindToBasicType(fieldActor.kind);
     }
 
     /**
@@ -60,10 +60,10 @@ public class MaxCiField implements CiField {
      * @param constantPool the constant pool in which the field is referenced
      * @param fieldRef the field reference
      */
-    public MaxCiField(MaxCiConstantPool constantPool, FieldRefConstant fieldRef) {
+    public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef) {
         this.constantPool = constantPool;
         this.fieldRef = fieldRef;
-        this.basicType = MaxCiType.kindToBasicType(fieldRef.type(constantPool.constantPool).toKind());
+        this.basicType = MaxRiType.kindToBasicType(fieldRef.type(constantPool.constantPool).toKind());
     }
 
     /**
@@ -81,11 +81,11 @@ public class MaxCiField implements CiField {
      * Gets the compiler interface type of this field.
      * @return the compiler interface type
      */
-    public CiType type() {
+    public RiType type() {
         if (fieldActor != null) {
             return constantPool.canonicalCiType(fieldActor.type());
         }
-        return new MaxCiType(constantPool, fieldRef.type(constantPool.constantPool));
+        return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool));
     }
 
     /**
@@ -100,11 +100,11 @@ public class MaxCiField implements CiField {
      * Gets the holder of this field.
      * @return the compiler interface type that represents the holder
      */
-    public CiType holder() {
+    public RiType holder() {
         if (fieldActor != null) {
             return constantPool.canonicalCiType(fieldActor.holder());
         }
-        return new MaxCiType(constantPool, fieldRef.holder(constantPool.constantPool));
+        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool));
     }
 
     /**
@@ -118,7 +118,7 @@ public class MaxCiField implements CiField {
     /**
      * Checks whether this field is static.
      * @return <code>true</code> if this field is static
-     * @throws MaxCiUnresolved if the field is unresolved
+     * @throws MaxRiUnresolved if the field is unresolved
      */
     public boolean isStatic() {
         if (fieldActor != null) {
@@ -130,7 +130,7 @@ public class MaxCiField implements CiField {
     /**
      * Checks whether this field is volatile.
      * @return <code>true</code> if the field is volatile
-     * @throws MaxCiUnresolved if the field is unresolved
+     * @throws MaxRiUnresolved if the field is unresolved
      */
     public boolean isVolatile() {
         if (fieldActor != null) {
@@ -150,7 +150,7 @@ public class MaxCiField implements CiField {
     /**
      * Gets the offset from the origin of the object for this field.
      * @return the offset in bytes
-     * @throws MaxCiUnresolved if the field is unresolved
+     * @throws MaxRiUnresolved if the field is unresolved
      */
     public int offset() {
         if (fieldActor != null) {
@@ -166,13 +166,13 @@ public class MaxCiField implements CiField {
     public CiConstant constantValue() {
         if (fieldActor != null && fieldActor.isConstant()) {
             Value v = HostTupleAccess.readValue(null, fieldActor);
-            return new CiConstant(MaxCiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
+            return new CiConstant(MaxRiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
         }
         return null;
     }
 
-    private MaxCiUnresolved unresolved(String operation) {
-        throw new MaxCiUnresolved(operation + " not defined for unresolved field " + fieldRef.toString(constantPool.constantPool));
+    private MaxRiUnresolved unresolved(String operation) {
+        throw new MaxRiUnresolved(operation + " not defined for unresolved field " + fieldRef.toString(constantPool.constantPool));
     }
 
     /**
@@ -199,8 +199,8 @@ public class MaxCiField implements CiField {
      */
     @Override
     public boolean equals(Object o) {
-        if (fieldActor != null && o instanceof MaxCiField) {
-            return fieldActor == ((MaxCiField) o).fieldActor;
+        if (fieldActor != null && o instanceof MaxRiField) {
+            return fieldActor == ((MaxRiField) o).fieldActor;
         }
         return o == this;
     }

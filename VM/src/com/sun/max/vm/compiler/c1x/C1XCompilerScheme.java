@@ -47,7 +47,7 @@ import com.sun.max.vm.stack.*;
 public class C1XCompilerScheme extends AbstractVMScheme implements CompilerScheme {
 
     private Target c1xTarget;
-    private MaxCiRuntime c1xRuntime;
+    private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
 
     @PROTOTYPE_ONLY
@@ -83,7 +83,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
 
             // create the CiRuntime object passed to C1X
-            c1xRuntime = MaxCiRuntime.globalRuntime;
+            c1xRuntime = MaxRiRuntime.globalRuntime;
 
             // configure the allocatable registers
             List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
@@ -148,7 +148,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
 
     public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
-        CiMethod method = c1xRuntime.getCiMethod(classMethodActor);
+        RiMethod method = c1xRuntime.getCiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method);
         if (compiledMethod != null) {
 

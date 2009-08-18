@@ -39,7 +39,7 @@ public class LoadField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Instruction object, CiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
+    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
         super(object, field, isStatic, lockStack, stateBefore, isLoaded);
     }
 
@@ -48,7 +48,7 @@ public class LoadField extends AccessField {
      * @return the declared type of the field being accessed.
      */
     @Override
-    public CiType declaredType() {
+    public RiType declaredType() {
         return field().type();
     }
 
@@ -59,7 +59,7 @@ public class LoadField extends AccessField {
      * @return the exact type of the field if known; <code>null</code> otherwise
      */
     @Override
-    public CiType exactType() {
+    public RiType exactType() {
         return declaredType().exactType();
     }
 

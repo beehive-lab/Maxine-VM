@@ -26,7 +26,7 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public interface CiExceptionHandler {
+public interface RiExceptionHandler {
     /**
      * Gets the start bytecode index of the protected range of this handler.
      * @return the start bytecode index
@@ -58,5 +58,5 @@ public interface CiExceptionHandler {
      */
     boolean isCatchAll();
 
-    CiType catchKlass();
+    RiType catchKlass();
 }

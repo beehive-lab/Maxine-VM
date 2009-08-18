@@ -90,19 +90,19 @@ public class LIRList {
         return block;
     }
 
-    public void callOptVirtual(CiMethod method, LIROperand receiver, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public void callOptVirtual(RiMethod method, LIROperand receiver, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info, cpi, constantPool));
     }
 
-    public void callStatic(CiMethod method, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public void callStatic(RiMethod method, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info, cpi, constantPool));
     }
 
-    public void callInterface(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public void callInterface(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info, cpi, constantPool));
     }
 
-    public void callVirtual(CiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, CiConstantPool constantPool) {
+    public void callVirtual(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info, cpi, constantPool));
     }
 
@@ -368,11 +368,11 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
 
-    public void arraycopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, CiType expectedType, int flags, CodeEmitInfo info) {
+    public void arraycopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int flags, CodeEmitInfo info) {
         append(new LIRArrayCopy(src, srcPos, dst, dstPos, length, tmp, expectedType, flags, info));
     }
 
-    public void profileCall(CiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, CiType chaKlass) {
+    public void profileCall(RiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, RiType chaKlass) {
         append(new LIRProfileCall(LIROpcode.ProfileCall, method, bci, mdo, recv, t1, chaKlass));
     }
 
@@ -477,12 +477,12 @@ public class LIRList {
         // guarantee(sizeof(LIR_OprDesc) == wordSize, "may not have a v-table");
     }
 
-    public void checkcast(LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
-                    CodeEmitInfo infoForPatch, CodeStub stub, CiMethod profiledMethod, int profiledBci) {
+    public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
+                    CodeEmitInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
         append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, infoForException, infoForPatch, stub, profiledMethod, profiledBci));
     }
 
-    public void genInstanceof(LIROperand result, LIROperand object, CiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForPatch) {
+    public void genInstanceof(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForPatch) {
         append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, infoForPatch, null, null, 0));
     }
 

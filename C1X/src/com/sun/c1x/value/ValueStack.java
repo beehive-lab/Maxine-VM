@@ -545,7 +545,7 @@ public class ValueStack {
      */
     public ValueStack pushScope(IRScope scope) {
         assert scope.caller == this.scope;
-        CiMethod method = scope.method;
+        RiMethod method = scope.method;
         ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);

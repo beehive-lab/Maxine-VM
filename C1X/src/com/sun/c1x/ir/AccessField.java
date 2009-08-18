@@ -34,7 +34,7 @@ public abstract class AccessField extends Instruction {
 
     Instruction object;
     final int offset;
-    final CiField field;
+    final RiField field;
     ValueStack stateBefore;
     ValueStack lockStack;
     boolean isStatic;
@@ -48,7 +48,7 @@ public abstract class AccessField extends Instruction {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Instruction object, CiField field, boolean isStatic,
+    public AccessField(Instruction object, RiField field, boolean isStatic,
                        ValueStack exceptionState, ValueStack stateBefore, boolean isLoaded) {
         super(field.basicType().stackType());
         this.object = object;
@@ -91,7 +91,7 @@ public abstract class AccessField extends Instruction {
      * Gets the compiler interface field for this field access.
      * @return the compiler interface field for this field access
      */
-    public CiField field() {
+    public RiField field() {
         return field;
     }
 

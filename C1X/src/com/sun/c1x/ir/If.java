@@ -34,7 +34,7 @@ public class If extends BlockEnd {
     Instruction x;
     Instruction y;
     Condition condition;
-    CiMethod profiledMethod;
+    RiMethod profiledMethod;
     int profiledBCI;
 
     /**
@@ -153,7 +153,7 @@ public class If extends BlockEnd {
      * Gets the profiled method for this instruction.
      * @return the profiled method
      */
-    public CiMethod profiledMethod() {
+    public RiMethod profiledMethod() {
         return profiledMethod;
     }
 
@@ -178,7 +178,7 @@ public class If extends BlockEnd {
      * @param method the profiled method
      * @param bci the bytecode index
      */
-    public void setProfile(CiMethod method, int bci) {
+    public void setProfile(RiMethod method, int bci) {
         profiledMethod = method;
         profiledBCI = bci;
     }

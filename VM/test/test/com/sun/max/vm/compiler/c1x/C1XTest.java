@@ -133,7 +133,7 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        final MaxCiRuntime runtime = new MaxCiRuntime();
+        final MaxRiRuntime runtime = new MaxRiRuntime();
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final Target target = createTarget();
@@ -188,7 +188,7 @@ public class C1XTest {
 
             CiTargetMethod result = null;
             try {
-                result = compiler.compileMethod(((MaxCiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
+                result = compiler.compileMethod(((MaxRiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
                 if (!warmup) {
                     long timeNs = System.nanoTime() - startNs;
                     recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
@@ -285,7 +285,7 @@ public class C1XTest {
                 if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags()) && e instanceof ClassMethodActor) {
                     final Method method = e.toJava();
                     assert method != null;
-                    C1XIntrinsic.registerFoldableMethod(MaxCiRuntime.globalRuntime.getCiMethod((ClassMethodActor) e), method);
+                    C1XIntrinsic.registerFoldableMethod(MaxRiRuntime.globalRuntime.getCiMethod((ClassMethodActor) e), method);
                 }
                 if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
                     out.print('.');
@@ -498,7 +498,7 @@ public class C1XTest {
         // configure the allocatable registers
         List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
         for (Register r : arch.registers) {
-            if (r != X86.rsp && r != MaxCiRuntime.globalRuntime.threadRegister()) {
+            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
                 allocatable.add(r);
             }
         }

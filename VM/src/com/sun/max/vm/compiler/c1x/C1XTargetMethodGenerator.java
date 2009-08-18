@@ -98,7 +98,7 @@ public class C1XTargetMethodGenerator {
         for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
             exceptionPositionsToCatchPositions[z * 2] = handler.codePos;
             exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
-            exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxCiType) handler.exceptionType).classActor;
+            exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxRiType) handler.exceptionType).classActor;
             z++;
         }
 
@@ -225,11 +225,11 @@ public class C1XTargetMethodGenerator {
         return directCallees.toArray(new Object[directCallees.size()]);
     }
 
-    private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, CiMethod method) {
+    private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
 
 
         if (method != null) {
-            final MaxCiMethod maxMethod = (MaxCiMethod) method;
+            final MaxRiMethod maxMethod = (MaxRiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");
         }
 
@@ -264,7 +264,7 @@ public class C1XTargetMethodGenerator {
             }
 
             if (site.method != null) {
-                MethodActor methodActor = ((MaxCiMethod) site.method).asMethodActor("gatherCalls()");
+                MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.direct) {
                     directCalls.append(methodActor);
                 } else {

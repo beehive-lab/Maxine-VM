@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class NewObjectArray extends NewArray {
 
-    final CiType elementClass;
+    final RiType elementClass;
     public final char cpi;
 
     /**
@@ -41,7 +41,7 @@ public class NewObjectArray extends NewArray {
      * @param cpi
      * @param ciConstantPool
      */
-    public NewObjectArray(CiType elementClass, Instruction length, ValueStack stateBefore, char cpi, CiConstantPool ciConstantPool) {
+    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
         super(length, stateBefore, ciConstantPool);
         this.elementClass = elementClass;
         this.cpi = cpi;
@@ -51,7 +51,7 @@ public class NewObjectArray extends NewArray {
      * Gets the type of the elements of the array.
      * @return the element type of the array
      */
-    public CiType elementClass() {
+    public RiType elementClass() {
         return elementClass;
     }
 
@@ -60,7 +60,7 @@ public class NewObjectArray extends NewArray {
      * @return the exact type of this instruction
      */
     @Override
-    public CiType exactType() {
+    public RiType exactType() {
         return elementClass.arrayOf();
     }
 

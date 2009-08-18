@@ -25,7 +25,7 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public interface CiMethodData {
+public interface RiMethodProfile {
     Object dataObject();
     int invocationCountOffset();
     int bciCountOffset(int bci);
@@ -34,7 +34,7 @@ public interface CiMethodData {
 
     int headerOffset(int bci);
     int countOffset(int bci);
-    CiType receiver(int bci, int i);
+    RiType receiver(int bci, int i);
     int receiverCountOffset(int bci, int i);
     int receiverOffset(int bci, int i);
 }

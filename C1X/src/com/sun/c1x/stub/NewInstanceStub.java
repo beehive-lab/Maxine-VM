@@ -34,7 +34,7 @@ import com.sun.c1x.lir.*;
  */
 public class NewInstanceStub extends CodeStub {
 
-    public final CiType klass;
+    public final RiType klass;
     public LIROperand klassReg;
     public LIROperand result;
     public final GlobalStub stubId;
@@ -47,7 +47,7 @@ public class NewInstanceStub extends CodeStub {
      * @param info
      * @param stubId
      */
-    public NewInstanceStub(LIROperand klassReg, LIROperand result, CiType klass, CodeEmitInfo info, GlobalStub stubId) {
+    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, CodeEmitInfo info, GlobalStub stubId) {
         super(info);
         this.klass = klass;
         this.klassReg = klassReg;

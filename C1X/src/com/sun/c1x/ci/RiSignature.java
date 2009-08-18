@@ -27,7 +27,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public interface CiSignature {
+public interface RiSignature {
     /**
      * Gets the number of arguments to this signature, not including a receiver object.
      * @param receiver true if there is a receiver, false otherwise
@@ -40,7 +40,7 @@ public interface CiSignature {
      * @param index the index into the parameters, with {@code 0} indicating the first parameter
      * @return the compiler interface type of the argument at the specified position
      */
-    CiType argumentTypeAt(int index);
+    RiType argumentTypeAt(int index);
 
     /**
      * Gets the argument basic type at the specified position.
@@ -53,7 +53,7 @@ public interface CiSignature {
      * Gets the return type of this signature.
      * @return the compiler interface type representing the return type
      */
-    CiType returnType();
+    RiType returnType();
 
     /**
      * Gets the return basic type of this signature.

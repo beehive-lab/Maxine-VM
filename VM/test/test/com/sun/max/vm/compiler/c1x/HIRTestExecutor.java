@@ -78,7 +78,7 @@ public class HIRTestExecutor implements Executor {
 
     private static HIRGenerator generator;
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
-    public static final MaxCiRuntime runtime = new MaxCiRuntime();
+    public static final MaxRiRuntime runtime = new MaxRiRuntime();
     public static final MaxInterpreterInterface interpreterInterface = new MaxInterpreterInterface(runtime);
 
     private static void initialize(boolean loadingPackages) {
@@ -120,7 +120,7 @@ public class HIRTestExecutor implements Executor {
     }
 
     public static class HIRGenerator {
-        private CiRuntime ciRuntime;
+        private RiRuntime ciRuntime;
         private Target target;
         private C1XCompiler compiler;
 
@@ -130,7 +130,7 @@ public class HIRTestExecutor implements Executor {
          * @param target the target
          * @param compiler the compiler
          */
-        public HIRGenerator(CiRuntime runtime, Target target, C1XCompiler compiler) {
+        public HIRGenerator(RiRuntime runtime, Target target, C1XCompiler compiler) {
             this.ciRuntime = runtime;
             this.target = target;
             this.compiler = compiler;
@@ -140,7 +140,7 @@ public class HIRTestExecutor implements Executor {
          * @param classMethodActor the method for which to make the IR
          * @return the IR for the method
          */
-        public IR makeHirMethod(CiMethod classMethodActor) {
+        public IR makeHirMethod(RiMethod classMethodActor) {
             C1XCompilation compilation = new C1XCompilation(compiler, target, ciRuntime, classMethodActor);
             compilation.compile();
             return compilation.hir();

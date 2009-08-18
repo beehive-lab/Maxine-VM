@@ -27,7 +27,7 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public interface CiOsrFrame {
+public interface RiOsrFrame {
     /**
      * Get the offset of a local variable within the OSR frame.
      * @param local the local index

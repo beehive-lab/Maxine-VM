@@ -29,70 +29,70 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public interface CiConstantPool {
+public interface RiConstantPool {
 
     /**
      * Resolves a reference to a field for a GETFIELD operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField resolveGetField(char cpi);
+    RiField resolveGetField(char cpi);
 
     /**
      * Resolves a reference to a field for a PUTFIELD operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField resolvePutField(char cpi);
+    RiField resolvePutField(char cpi);
 
     /**
      * Resolves a reference to a field for a GETSTATIC operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField resolveGetStatic(char cpi);
+    RiField resolveGetStatic(char cpi);
 
     /**
      * Resolves a reference to a field for a PUTSTATIC operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField resolvePutStatic(char cpi);
+    RiField resolvePutStatic(char cpi);
 
     /**
      * Resolves a reference to a method for an INVOKEVIRTUAL operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod resolveInvokeVirtual(char cpi);
+    RiMethod resolveInvokeVirtual(char cpi);
 
     /**
      * Resolves a reference to a method for an INVOKESPECIAL operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod resolveInvokeSpecial(char cpi);
+    RiMethod resolveInvokeSpecial(char cpi);
 
     /**
      * Resolves a reference to a method for an INVOKEINTERFACE operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod resolveInvokeInterface(char cpi);
+    RiMethod resolveInvokeInterface(char cpi);
 
     /**
      * Resolves a reference to a method for an INVOKESTATIC operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod resolveInvokeStatic(char cpi);
+    RiMethod resolveInvokeStatic(char cpi);
 
     /**
      * Resolves a reference to a compiler interface type at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface type
      */
-    CiType resolveType(char cpi);
+    RiType resolveType(char cpi);
 
     /**
      * Looks up a reference to a field for a GETFIELD operation at compile time
@@ -101,7 +101,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField lookupGetField(char cpi);
+    RiField lookupGetField(char cpi);
 
     /**
      * Looks up a reference to a field for a PUTFIELD operation at compile time
@@ -110,7 +110,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField lookupPutField(char cpi);
+    RiField lookupPutField(char cpi);
 
     /**
      * Looks up a reference to a field for a GETSTATIC operation at compile time
@@ -119,7 +119,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField lookupGetStatic(char cpi);
+    RiField lookupGetStatic(char cpi);
 
     /**
      * Looks a reference to a field for a PUTSTATIC operation at compile time
@@ -128,7 +128,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface field
      */
-    CiField lookupPutStatic(char cpi);
+    RiField lookupPutStatic(char cpi);
 
     /**
      * Looks up a reference to a method for an INVOKEVIRTUAL operation at compile time
@@ -137,7 +137,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod lookupInvokeVirtual(char cpi);
+    RiMethod lookupInvokeVirtual(char cpi);
 
     /**
      * Looks up a reference to a method for an INVOKESPECIAL operation at compile time
@@ -146,7 +146,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod lookupInvokeSpecial(char cpi);
+    RiMethod lookupInvokeSpecial(char cpi);
 
     /**
      * Looks up a reference to a method for an INVOKEINTERFACE operation at compile time
@@ -155,7 +155,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod lookupInvokeInterface(char cpi);
+    RiMethod lookupInvokeInterface(char cpi);
 
     /**
      * Looks up a reference to a method for an INVOKESTATIC operation at compile time
@@ -164,7 +164,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
      */
-    CiMethod lookupInvokeStatic(char cpi);
+    RiMethod lookupInvokeStatic(char cpi);
 
     /**
      * Looks up a reference to a compiler interface type at compile time (does not
@@ -173,7 +173,7 @@ public interface CiConstantPool {
      * @param cpi the constant pool index
      * @return a reference to the compiler interface type
      */
-    CiType lookupType(char cpi);
+    RiType lookupType(char cpi);
 
     /**
      * Resolves a reference to a constant string at runtime.
@@ -205,7 +205,7 @@ public interface CiConstantPool {
      * @param classCPI the constant pool index of the class of the caught exception
      * @return a new exception handler object
      */
-    CiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
+    RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
 
     Object encoding();
 }

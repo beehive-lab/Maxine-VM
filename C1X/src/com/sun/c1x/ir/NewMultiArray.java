@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class NewMultiArray extends NewArray {
-    public final CiType elementType;
+    public final RiType elementType;
     final Instruction[] dimensions;
     public final char cpi;
 
@@ -42,7 +42,7 @@ public class NewMultiArray extends NewArray {
      * @param cpi
      * @param ciConstantPool
      */
-    public NewMultiArray(CiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, CiConstantPool ciConstantPool) {
+    public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
         super(null, stateBefore, ciConstantPool); // note that this instruction doesn't have a "length" per-se
         this.elementType = elementType;
         this.dimensions = dimensions;
@@ -88,7 +88,7 @@ public class NewMultiArray extends NewArray {
      * Gets the element type of the array.
      * @return the element type of the array
      */
-    public CiType elementType() {
+    public RiType elementType() {
         return elementType;
     }
 }
