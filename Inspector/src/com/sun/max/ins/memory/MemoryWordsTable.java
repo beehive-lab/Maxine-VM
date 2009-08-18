@@ -60,6 +60,13 @@ public final class MemoryWordsTable extends InspectorTable {
     }
 
     @Override
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1) {
+            actions().toggleWatchpointAtLocation(model.getMemoryRegion(row), null).perform();
+        }
+    }
+
+    @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
         if (maxVM().watchpointsEnabled()) {

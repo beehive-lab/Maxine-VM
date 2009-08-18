@@ -67,6 +67,27 @@ public final class ObjectFieldsTable extends InspectorTable {
 
     private MaxVMState lastRefreshedState = null;
 
+    private final class ToggleObjectFieldsWatchpointAction extends InspectorAction {
+
+        private final int row;
+
+        public ToggleObjectFieldsWatchpointAction(Inspection inspection, String name, int row) {
+            super(inspection, name);
+            this.row = row;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
+            if (watchpoint == null) {
+                final FieldActor fieldActor = model.rowToFieldActor(row);
+                actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory").perform();
+            } else {
+                watchpoint.dispose();
+            }
+        }
+    }
+
     /**
      * A {@link JTable} specialized to display Maxine object fields.
      *
@@ -106,9 +127,18 @@ public final class ObjectFieldsTable extends InspectorTable {
     }
 
     @Override
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+            final InspectorAction action = new ToggleObjectFieldsWatchpointAction(inspection(), null, row);
+            action.perform();
+        }
+    }
+
+    @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
             final InspectorMenu menu = new InspectorMenu();
+            menu.add(new ToggleObjectFieldsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final FieldActor fieldActor = model.rowToFieldActor(row);
             menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));

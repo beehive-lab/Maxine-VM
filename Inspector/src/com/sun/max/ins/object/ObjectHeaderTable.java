@@ -63,6 +63,28 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private MaxVMState lastRefreshedState = null;
 
+
+    private final class ToggleObjectHeaderWatchpointAction extends InspectorAction {
+
+        private final int row;
+
+        public ToggleObjectHeaderWatchpointAction(Inspection inspection, String name, int row) {
+            super(inspection, name);
+            this.row = row;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
+            if (watchpoint == null) {
+                final HeaderField headerField = headerFields.get(row);
+                actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
+            } else {
+                watchpoint.dispose();
+            }
+        }
+    }
+
     /**
      * A {@link JTable} specialized to display Maxine object header fields.
      *
@@ -82,9 +104,18 @@ public final class ObjectHeaderTable extends InspectorTable {
     }
 
     @Override
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+            final InspectorAction action = new ToggleObjectHeaderWatchpointAction(inspection(), null, row);
+            action.perform();
+        }
+    }
+
+    @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
             final InspectorMenu menu = new InspectorMenu();
+            menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields.get(row);
             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
