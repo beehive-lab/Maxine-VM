@@ -31,9 +31,13 @@ public class InstrumentedBytecodeSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NOP)
-    public static void nop(MethodProfile mpo, int index) {
-        // location and entrypoint counters count down to zero ("overflow")
-        JitInstrumentation.recordLocation(mpo, index);
+    public static void nop(MethodProfile mpo) {
+        // entrypoint counters count down to zero ("overflow")
+        JitInstrumentation.recordEntrypoint(mpo);
+    }
+
+    public static void nop_location(MethodProfile mpo, int mpoIndex) {
+        JitInstrumentation.recordLocation(mpo, mpoIndex);
     }
 
 }

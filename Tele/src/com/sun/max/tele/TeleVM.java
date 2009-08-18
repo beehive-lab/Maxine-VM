@@ -1100,7 +1100,15 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.lookupObject(id);
     }
 
-    public final TeleObject findObjectFollowing(Address address, long maxSearchExtent) {
+    public final TeleObject findObjectAt(Address cellAddress) {
+        try {
+            return makeTeleObject(cellToReference(cellAddress.asPointer()));
+        } catch (Throwable throwable) {
+        }
+        return null;
+    }
+
+    public final TeleObject findObjectFollowing(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -1109,9 +1117,9 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             for (long count = 0; count < wordSearchExtent; count++) {
-                address = address.plus(wordSize());
-                if (isValidOrigin(address.asPointer())) {
-                    return makeTeleObject(originToReference(address.asPointer()));
+                cellAddress = cellAddress.plus(wordSize());
+                if (isValidOrigin(cellAddress.asPointer())) {
+                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
                 }
             }
         } catch (Throwable throwable) {
@@ -1119,7 +1127,7 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    public final TeleObject findObjectPreceding(Address address, long maxSearchExtent) {
+    public final TeleObject findObjectPreceding(Address cellAddress, long maxSearchExtent) {
 
         // Search limit expressed in words
         long wordSearchExtent = Long.MAX_VALUE;
@@ -1128,9 +1136,9 @@ public abstract class TeleVM implements MaxVM {
         }
         try {
             for (long count = 0; count < wordSearchExtent; count++) {
-                address = address.minus(wordSize());
-                if (isValidOrigin(address.asPointer())) {
-                    return makeTeleObject(originToReference(address.asPointer()));
+                cellAddress = cellAddress.minus(wordSize());
+                if (isValidOrigin(cellAddress.asPointer())) {
+                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
                 }
             }
         } catch (Throwable throwable) {
@@ -1364,9 +1372,9 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, int, int, boolean, boolean, boolean, boolean)
+     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, com.sun.max.unsafe.Offset, int, boolean, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }
@@ -1382,11 +1390,6 @@ public abstract class TeleVM implements MaxVM {
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
-    }
-
-    public final MaxWatchpoint createInvisibleWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().createInvisibleWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     /* (non-Javadoc)

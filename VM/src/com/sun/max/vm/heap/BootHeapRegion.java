@@ -54,7 +54,6 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
         this.specialReferences = specialRefs;
     }
 
-    @Override
     public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
         if (referenceMap.isZero()) {
             referenceMap = ArrayAccess.elementPointer(referenceMapBytes, 0);

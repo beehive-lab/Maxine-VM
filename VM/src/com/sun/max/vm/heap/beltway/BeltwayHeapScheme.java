@@ -242,16 +242,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     /**
-     * This collector treats the references in code as GC roots.
-     * (an alternative would be to have a special Belt for code with
-     * a remembered set for reference from the code belt).
-     */
-    @Override
-    public boolean codeReferencesAreGCRoots() {
-        return true;
-    }
-
-    /**
      * Allocate the backing storage for the entire heap.
      * For now, the beltway heap schemes require that the heap be contiguous with the boot heap region so as to
      * simply implement card-tables (the write barrier currently uses a card table that covers both the boot and the heap).
@@ -299,11 +289,10 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             Log.println("Scan Boot Heap");
         }
         Heap.bootHeapRegion.visitReferences(cellVisitor.pointerVisitorGripUpdater);
-
         if (Heap.verbose()) {
             Log.println("Scan Code");
         }
-        Code.visitReferences(cellVisitor.pointerVisitorGripUpdater);
+        Code.visitCells(cellVisitor, false);
     }
 
     protected Size calculateHeapSize() {

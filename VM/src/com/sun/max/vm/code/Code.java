@@ -23,7 +23,6 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
@@ -174,29 +173,18 @@ public final class Code {
     }
 
     /**
-     * Visits all the references in memory managed by the code manager except for the boot code region.
+     * Visits each cell that is managed by the code manager.
      *
-     * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
+     * @param cellVisitor the cell visitor to call back for each cell
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be visited
      */
-    public static void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-        codeManager.visitReferences(pointerIndexVisitor);
+    public static void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
+        codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
     public static Size getCodeSize() {
         return codeManager.getSize();
     }
 
-    /**
-     * All code memory regions, needed by the inspector.
-     */
-    private static MemoryRegion[] memoryRegions = new MemoryRegion[]{};
-
-    /**
-     * Registers a new memory region with the code manager.
-     *
-     * @param codeRegion the code region to add
-     */
-    public static void registerMemoryRegion(CodeRegion codeRegion) {
-        memoryRegions = Arrays.append(memoryRegions, codeRegion);
-    }
 }

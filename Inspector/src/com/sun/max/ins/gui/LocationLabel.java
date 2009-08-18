@@ -46,7 +46,6 @@ public abstract class LocationLabel extends InspectorLabel {
         final Address address = origin.plus(value);
         final InspectorMenu menu = new InspectorMenu();
         menu.add(inspection().actions().copyWord(address, null));
-        menu.add(inspection().actions().inspectMemory(address, null));
         menu.add(inspection().actions().inspectMemoryWords(address, null));
         if (maxVM().watchpointsEnabled()) {
             menu.add(inspection().actions().setWordWatchpoint(address, null));
@@ -118,8 +117,8 @@ public abstract class LocationLabel extends InspectorLabel {
         updateText();
     }
 
-    public final void setValue(int value, Address origin) {
-        this.value = value;
+    public final void setValue(Offset value, Address origin) {
+        this.value = value.toInt();
         this.origin = origin;
         updateText();
     }
@@ -326,8 +325,8 @@ public abstract class LocationLabel extends InspectorLabel {
          * A label that displays a memory location <origin> + <offset> as "<prefix>[<index>]",
          * with a ToolTip giving more detail.
          */
-        public AsIndex(Inspection inspection, String prefix, int index, int value, Address origin) {
-            super(inspection, value, origin);
+        public AsIndex(Inspection inspection, String prefix, int index, Offset value, Address origin) {
+            super(inspection, value.toInt(), origin);
             this.prefix = prefix;
             this.index = index;
             redisplay();
@@ -340,9 +339,9 @@ public abstract class LocationLabel extends InspectorLabel {
             updateText();
         }
 
-        public void setValue(int index, int value, Address origin) {
+        public void setValue(int index, Offset value, Address origin) {
             this.index = index;
-            this.value = value;
+            this.value = value.toInt();
             this.origin = origin;
             updateText();
         }

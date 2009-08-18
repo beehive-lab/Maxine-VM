@@ -57,11 +57,12 @@ public class MethodProfile {
     private static final byte RECVR_COUNT   = 6;
     private static final byte RECVR_NOT_FOUND = 7;
 
+    public int entryCount;
+    public boolean triggered;
     private int[] data; // records actual counts
     private int[] info; // records bci and type for each count entry
 
     public Object method;
-    public boolean triggered;
 
     MethodProfile() {
     }
@@ -245,8 +246,8 @@ public class MethodProfile {
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
 
-        public int addEntryCounter(int initialValue) {
-            return add(0, METHOD_ENTRY, initialValue);
+        public void addEntryCounter(int initialValue) {
+            mpo.entryCount = initialValue;
         }
 
         public int addGotoCounter(int bci) {
@@ -291,16 +292,18 @@ public class MethodProfile {
 
         public MethodProfile finish() {
             int size = infoList.size();
-            int[] data = new int[size];
-            int[] info = new int[size];
-            for (int i = 0; i < size; i++) {
-                info[i] = infoList.get(i);
+            if (size > 0) {
+                int[] data = new int[size];
+                int[] info = new int[size];
+                for (int i = 0; i < size; i++) {
+                    info[i] = infoList.get(i);
+                }
+                for (int i = 0; i < size; i++) {
+                    data[i] = dataList.get(i);
+                }
+                mpo.info = info;
+                mpo.data = data;
             }
-            for (int i = 0; i < size; i++) {
-                data[i] = dataList.get(i);
-            }
-            mpo.info = info;
-            mpo.data = data;
             return mpo;
         }
 

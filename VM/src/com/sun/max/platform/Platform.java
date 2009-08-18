@@ -20,6 +20,7 @@
  */
 package com.sun.max.platform;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -125,18 +126,18 @@ public final class Platform {
      * is returned are any of the keys of {@link #Supported}. The string can include a suffix of a ':' followed by a
      * value parsable by {@link Longs#parseScaledValue(String)} specifying a page size.
      *
-     * @param platformString a string describing a platform and an optional page size
-     * @return the Platform object corresponding to {@code platformString} or null if none of the preset platforms is
-     *         matched by {@code platformString}
+     * @param platformSpec a string describing a platform and an optional page size
+     * @return the Platform object corresponding to {@code platformSpec} or null if none of the preset platforms is
+     *         matched by {@code platformSpec}
      */
-    public static Platform parse(String platformString) {
-        int colonIndex = platformString.indexOf(':');
+    public static Platform parse(String platformSpec) {
+        int colonIndex = platformSpec.indexOf(':');
         String pageSizeString = null;
         if (colonIndex != -1) {
-            pageSizeString = platformString.substring(colonIndex + 1);
-            platformString = platformString.substring(0, colonIndex);
+            pageSizeString = platformSpec.substring(colonIndex + 1);
+            platformSpec = platformSpec.substring(0, colonIndex);
         }
-        Platform platform = Supported.get(platformString);
+        Platform platform = Supported.get(platformSpec);
         if (platform == null) {
             return null;
         }
@@ -149,8 +150,29 @@ public final class Platform {
     }
 
     public static void main(String[] args) {
+        printPlatformSpecificationHelp(System.out);
+    }
+
+    /**
+     * Prints a help message detailing the format of a platform specification accepted by {@link #parse(String)}.
+     *
+     * @param out stream to which the help message is printed
+     */
+    public static void printPlatformSpecificationHelp(PrintStream out) {
+        out.println("A platform specification has one of the following formats:");
+        out.println();
+        out.println("    <platform>");
+        out.println("    <platform>:<page size>");
+        out.println();
+        out.println("For example:");
+        out.println();
+        out.println("    solaris-amd64");
+        out.println("    solaris-amd64:8k");
+        out.println();
+        out.println("The supported platforms are:");
+        out.println();
         for (Map.Entry<String, Platform> entry : Supported.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
+            out.println("    " + entry.getKey());
         }
     }
 }
