@@ -125,8 +125,7 @@ public class Constant extends Instruction {
 
     @Override
     public boolean valueEqual(Instruction i) {
-        // basic type comparison is all that's necessary for constants
-        return i instanceof Constant && i.type().equals(type());
+        return i instanceof Constant && ((Constant) i).value.equivalent(this.value);
     }
 
 }
