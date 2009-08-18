@@ -633,23 +633,28 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.dataAccess().readFully(address, bytes);
     }
 
-    public final IndexedSequence<MemoryRegion> memoryRegions() {
+    public final IndexedSequence<MemoryRegion> allocatedMemoryRegions() {
         final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions = teleHeapRegions();
         final IndexedSequence<TeleCodeRegion> teleCodeRegions = teleCodeManager().teleCodeRegions();
         final IterableWithLength<TeleNativeThread> threads = teleProcess.threads();
         final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + teleCodeRegions.length() + threads.length() + 2);
-        regions.append(teleBootHeapRegion());
+        // Special "tele roots" region
         if (teleRootsRegion() != null) {
             regions.append(teleRootsRegion());
         }
+        // Heap regions
+        regions.append(teleBootHeapRegion());
         for (MemoryRegion region : teleHeapRegions) {
             regions.append(region);
         }
-        regions.append(teleRootsRegion());
+        // Code regions
         regions.append(teleCodeManager().teleBootCodeRegion());
-        for (MemoryRegion region : teleCodeRegions) {
-            regions.append(region);
+        for (TeleCodeRegion region : teleCodeRegions) {
+            if (region.isAllocated()) {
+                regions.append(region);
+            }
         }
+        // Thread memory (stacks + thread locals)
         for (TeleNativeThread thread : threads) {
             final TeleNativeStack stack = thread.stack();
             if (!stack.size().isZero()) {
@@ -1372,9 +1377,9 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, int, int, boolean, boolean, boolean, boolean)
+     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, com.sun.max.unsafe.Offset, int, boolean, boolean, boolean, boolean, boolean)
      */
-    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }

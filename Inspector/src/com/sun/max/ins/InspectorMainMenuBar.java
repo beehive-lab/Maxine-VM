@@ -23,8 +23,10 @@ package com.sun.max.ins;
 import java.awt.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 import com.sun.max.ins.gui.*;
+import com.sun.max.memory.*;
 
 /**
  * MenuBar for the Inspection; shows VM state with background color.
@@ -112,9 +114,24 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     private JMenu createMemoryMenu() {
         final JMenu menu = new JMenu("Memory");
 
-        menu.add(actions.inspectBootHeapMemoryWords());
-        menu.add(actions.inspectBootCodeMemoryWords());
-        menu.add(actions.inspectSelectedMemoryRegionWords());
+        final JMenu regionMenu = new JMenu("Inspect memory region");
+        regionMenu.addMenuListener(new MenuListener() {
+
+            public void menuCanceled(MenuEvent e) {
+            }
+
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            public void menuSelected(MenuEvent e) {
+                regionMenu.removeAll();
+                for (MemoryRegion memoryRegion : maxVM().allocatedMemoryRegions()) {
+                    System.out.println(memoryRegion.toString());
+                    regionMenu.add(actions.inspectRegionMemoryWords(memoryRegion, memoryRegion.description(), memoryRegion.description()));
+                }
+            }
+        });
+        menu.add(regionMenu);
         menu.add(actions.inspectMemoryWords());
         menu.add(actions.inspectMemoryBytes());
         return menu;

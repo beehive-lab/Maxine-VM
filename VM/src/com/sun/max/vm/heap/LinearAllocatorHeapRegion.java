@@ -25,6 +25,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
@@ -100,23 +101,30 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * administrative data such as debug tags.
      *
      * @param purpose if non-null, then a log message is printed upon successful allocation. This value describes what
-     *            the allocated memory is being used for
+     *            the allocated memory is being used for.
      * @param size the size of the allocation request
      * @return start address of allocated space
      */
-    public Pointer allocateSpace(String purpose, Size size) {
+    public Pointer allocateSpace(Object purpose, Size size) {
         final Pointer cell = allocate(size.wordAligned(), false);
         if (!cell.isZero() && purpose != null) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printVmThread(VmThread.current(), false);
-            Log.print(": Allocated chunk at ");
-            Log.print(cell);
-            Log.print(" of size ");
-            Log.print(size.wordAligned().toInt());
-            Log.print(" from ");
+            Log.print(": Allocated chunk in region ");
             Log.print(description());
             Log.print(" for ");
-            Log.println(purpose);
+            if (purpose instanceof MethodActor) {
+                Log.printMethodActor((MethodActor) purpose, false);
+            } else {
+                Log.print(purpose);
+            }
+            Log.print(" at ");
+            Log.print(cell);
+            Log.print(" [size ");
+            Log.print(size.wordAligned().toInt());
+            Log.print(", end=");
+            Log.print(cell.plus(size.wordAligned()));
+            Log.println(']');
             Log.unlock(lockDisabledSafepoints);
         }
         return cell;
@@ -127,15 +135,6 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      */
     public void trim() {
         setSize(getAllocationMark().minus(start()).asSize());
-    }
-
-    /**
-     * Visits all the references in this region with a given visitor.
-     * This method does nothing if this region does not track internal references.
-     *
-     * @param pointerIndexVisitor the visitor that is notified of each reference in this region
-     */
-    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
     }
 
     @INLINE

@@ -296,7 +296,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             setRowSelectionAllowed(true);
             setColumnSelectionAllowed(true);
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         }
 
         @Override

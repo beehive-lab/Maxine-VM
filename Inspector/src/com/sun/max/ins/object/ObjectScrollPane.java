@@ -28,6 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
@@ -48,7 +49,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
         final Kind kind = arrayClassActor.componentClassActor().kind;
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
-        final int arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0).toInt();
+        final Offset arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0);
         final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(objectInspector, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
         return new ObjectScrollPane(objectInspector.inspection(), arrayElementsTable);
     }
@@ -78,7 +79,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         }
         final InspectorTable table = new ArrayElementsTable(objectInspector,
                         teleHub.vTableKind(),
-                        teleHub.vTableOffset().toInt(),
+                        teleHub.vTableOffset(),
                         teleHub.vTableStartIndex(),
                         teleHub.vTableLength(),
                         "V",
@@ -95,7 +96,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         }
         final InspectorTable table = new ArrayElementsTable(objectInspector,
                         teleHub.iTableKind(),
-                        teleHub.iTableOffset().toInt(),
+                        teleHub.iTableOffset(),
                         teleHub.iTableStartIndex(),
                         teleHub.iTableLength(),
                         "I",
@@ -112,7 +113,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         }
         final InspectorTable table = new ArrayElementsTable(objectInspector,
                         teleHub.mTableKind(),
-                        teleHub.mTableOffset().toInt(),
+                        teleHub.mTableOffset(),
                         teleHub.mTableStartIndex(),
                         teleHub.mTableLength(),
                         "M",
@@ -129,7 +130,7 @@ public final class ObjectScrollPane extends InspectorScrollPane {
         }
         final InspectorTable table = new ArrayElementsTable(objectInspector,
                         teleHub.referenceMapKind(),
-                        teleHub.referenceMapOffset().toInt(),
+                        teleHub.referenceMapOffset(),
                         teleHub.referenceMapStartIndex(),
                         teleHub.referenceMapLength(),
                         "R",
