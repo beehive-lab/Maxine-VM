@@ -173,12 +173,14 @@ public final class Code {
     }
 
     /**
-     * Visits all the references in memory managed by the code manager except for the boot code region.
+     * Visits each cell that is managed by the code manager.
      *
-     * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
+     * @param cellVisitor the cell visitor to call back for each cell
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be visited
      */
-    public static void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-        codeManager.visitReferences(pointerIndexVisitor);
+    public static void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
+        codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
     public static Size getCodeSize() {

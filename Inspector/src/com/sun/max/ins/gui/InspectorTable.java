@@ -35,6 +35,14 @@ import com.sun.max.tele.*;
 
 /**
  * A table specialized for use in the Maxine Inspector.
+ * <br>
+ * Dispatches mouse events to table cell renderers, after first giving
+ * implementations an opportunity to respond in the case of left
+ * or middle-clicks.  A right click pops up a menu, if provided by
+ * an implementation, over the cell where the click took place.
+ * <br>
+ * After all special handling has completed, the event is passed
+ * along to the renderer for the cell where the click took place.
  *
  * @author Michael Van De Vanter
  */
@@ -62,11 +70,100 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
+     *
+     * @param model a model for the table
+     * @param tableColumnModel a column model for the table
+     */
+    protected InspectorTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
+        super(model, tableColumnModel);
+        this.inspection = inspection;
+        initialize();
+        addMouseListener(new InspectorTableMouseListener());
+    }
+
+    /**
+     * Creates a new {@JTable} for use in the {@link Inspection}.
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
         initialize();
+        addMouseListener(new InspectorTableMouseListener());
     }
+
+    private final class InspectorTableMouseListener extends MouseAdapter {
+        @Override
+        public void mouseClicked(final MouseEvent mouseEvent) {
+            final Point p = mouseEvent.getPoint();
+            final int col = columnAtPoint(p);
+            final int modelCol = getColumnModel().getColumn(col).getModelIndex();
+            final int row = rowAtPoint(p);
+            //System.out.println("(" + row + "," + col + ")");
+            if ((col != -1) && (row != -1)) {
+                switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                    case MouseEvent.BUTTON1:
+                        // Give subclass an opportunity to handle a left-click specially.
+                        mouseButton1Clicked(row, modelCol, mouseEvent);
+                        break;
+                    case MouseEvent.BUTTON2:
+                        // Give subclass an opportunity to handle a middle-click specially.
+                        mouseButton2Clicked(row, modelCol, mouseEvent);
+                        break;
+                    case MouseEvent.BUTTON3:
+                        // Pop up a menu, if provided by subclass.
+                        final InspectorMenu menu = getDynamicMenu(row, modelCol, mouseEvent);
+                        if (menu != null) {
+                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        }
+                        break;
+                }
+                // Locate the renderer under the event location and pass along the event.
+                final TableCellRenderer tableCellRenderer = getCellRenderer(row, col);
+                final Object cellValue = getValueAt(row, col);
+                final Component component = tableCellRenderer.getTableCellRendererComponent(InspectorTable.this, cellValue, false, true, row, col);
+                if (component != null) {
+                    component.dispatchEvent(mouseEvent);
+                }
+            }
+        }
+    }
+
+    /**
+     * Gives table implementations an opportunity to respond specially to left-button clicks
+     * over the table.  Default implementation of this method in null.
+     * <br>
+     * After this method is called, the left-button click is passed along to the renderer
+     * for the cell under the mouse.
+     *
+     * @param row row in the table model where the click took place
+     * @param col column in the column model where the click took place
+     * @param mouseEvent the originating event
+     */
+    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+    }
+
+    /**
+     * Gives table implementations an opportunity to respond specially to middle-button clicks
+     * over the table.  Default implementation of this method in null.
+     * <br>
+     * After this method is called, the middle-button click is passed along to the renderer
+     * for the cell under the mouse.
+     *
+     * @param row row in the table model where the click took place
+     * @param col column in the column model where the click took place
+     * @param mouseEvent the originating event
+     */    protected void mouseButton2Clicked(int row, int col, MouseEvent mouseEvent) {
+    }
+
+    /**
+     * @param row row in the table model where the click took place
+     * @param col column in the column model where the click took place
+     * @param mouseEvent the originating event
+     * @return a menu suitable for popup, null if none relevant to location and circumstances.
+     */
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        return null;
+    }
+
     /**
      * Sets up default view configuration for tables.
      */
@@ -106,18 +203,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
 
-    /**
-     * Creates a new {@JTable} for use in the {@link Inspection}.
-     *
-     * @param model a model for the table
-     * @param tableColumnModel a column model for the table
-     */
-    protected InspectorTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
-        super(model, tableColumnModel);
-        this.inspection = inspection;
-        initialize();
-    }
-
     private void initialize() {
         setOpaque(true);
         setBackground(inspection.style().defaultBackgroundColor());
@@ -125,6 +210,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         getTableHeader().setFont(style().defaultTextFont());
     }
 
+    /**
+     * Updates table state to display a new request for row
+     * selection; clears table selection if -1.
+     */
     public void updateFocusSelection(int row) {
         if (row < 0) {
             clearSelection();

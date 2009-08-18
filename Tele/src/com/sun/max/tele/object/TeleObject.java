@@ -78,7 +78,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * Controls tracing for object copying.
      */
-    protected static final int COPY_TRACE_VALUE = 2;
+    protected static final int COPY_TRACE_VALUE = 4;
 
     private final TeleReference reference;
     private final LayoutScheme layoutScheme;
@@ -411,9 +411,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return a best effort deep copy - with certain substitutions
      */
     public final Object deepCopy() {
-        Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        Trace.begin(2, "Deep copying from VM: " + this);
+        long start = System.currentTimeMillis();
         final Object objectCopy = makeDeepCopy(new DeepCopyContext());
-        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        Trace.end(2, "Deep copying from VM: " + this, start);
         return objectCopy;
     }
 
@@ -422,9 +423,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * certain specified field omissions.
      */
     public final Object deepCopy(FieldIncludeChecker fieldIncludeChecker) {
-        Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        Trace.begin(2, "Deep copying from VM: " + this);
+        long start = System.currentTimeMillis();
         final Object objectCopy = makeDeepCopy(new DeepCopyContext(fieldIncludeChecker));
-        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        Trace.end(2, "Deep copying from VM: " + this, start);
         return objectCopy;
     }
 

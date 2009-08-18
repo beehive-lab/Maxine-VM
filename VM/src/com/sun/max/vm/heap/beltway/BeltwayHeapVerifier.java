@@ -35,7 +35,7 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  * @author Christos Kotselidis
  */
-public class BeltwayHeapVerifier {
+public class BeltwayHeapVerifier implements CellVisitor {
 
     private final GripVerifierPointerVisitor cellVerifier = new GripVerifierPointerVisitor();
 
@@ -47,7 +47,7 @@ public class BeltwayHeapVerifier {
 
     public void verifyCodeRegions(HeapBoundChecker heapBoundChecker) {
         cellVerifier.init(heapBoundChecker);
-        Code.visitReferences(cellVerifier);
+        Code.visitCells(this, false);
     }
 
     public void verifyThreadAndStack(HeapBoundChecker heapBoundChecker) {
@@ -65,28 +65,33 @@ public class BeltwayHeapVerifier {
         Pointer cell = start.asPointer();
         while (cell.lessThan(end)) {
             cell = DebugHeap.checkDebugCellTag(start, cell);
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Grip hubGrip = Layout.readHubGrip(origin);
-            FatalError.check(!hubGrip.isZero(), "null hub");
-            cellVerifier.verifyGrip(hubGrip);
-            final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
-            cellVerifier.checkHub(hub);
-            final SpecificLayout specificLayout = hub.specificLayout;
-            if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
-                cell = cell.plus(hub.tupleSize);
-            } else {
-                if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
-                } else if (specificLayout.isReferenceArrayLayout()) {
-                    final int length = Layout.readArrayLength(origin);
-                    for (int index = 0; index < length; index++) {
-                        cellVerifier.verifyGrip(Layout.getGrip(origin, index));
-                    }
-                }
-                cell = cell.plus(Layout.size(origin));
-            }
+            cell = visitCell(cell);
         }
 
+    }
+
+    public Pointer visitCell(Pointer cell) {
+        final Pointer origin = Layout.cellToOrigin(cell);
+        final Grip hubGrip = Layout.readHubGrip(origin);
+        FatalError.check(!hubGrip.isZero(), "null hub");
+        cellVerifier.verifyGrip(hubGrip);
+        final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
+        cellVerifier.checkHub(hub);
+        final SpecificLayout specificLayout = hub.specificLayout;
+        if (specificLayout.isTupleLayout()) {
+            TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
+            cell = cell.plus(hub.tupleSize);
+        } else {
+            if (specificLayout.isHybridLayout()) {
+                TupleReferenceMap.visitReferences(hub, origin, cellVerifier);
+            } else if (specificLayout.isReferenceArrayLayout()) {
+                final int length = Layout.readArrayLength(origin);
+                for (int index = 0; index < length; index++) {
+                    cellVerifier.verifyGrip(Layout.getGrip(origin, index));
+                }
+            }
+            cell = cell.plus(Layout.size(origin));
+        }
+        return cell;
     }
 }

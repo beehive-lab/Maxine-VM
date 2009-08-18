@@ -57,9 +57,7 @@ public final class RegistersTable extends InspectorTable {
         columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(model, columnModel);
         setRowSelectionAllowed(false);
-        addMouseListener(new TableCellMouseClickAdapter(inspection, this));
     }
-
 
     public void refresh(boolean force) {
         if (maxVMState().newerThan(lastRefreshedState) || force) {

@@ -24,12 +24,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
@@ -99,34 +97,6 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
             }
         }
         return result;
-    }
-
-    /**
-     * Allocate space for a target method's code and data structures in this code region.
-     *
-     * @param targetMethod the target method to allocate in this region
-     * @param size the size of the block to allocate
-     * @return the allocated space or zero if allocation was not successful
-     */
-    public Pointer allocateTargetMethod(Size size) {
-        final Pointer start = allocateSpace(null, size);
-        if (!start.isZero()) {
-            if (Code.traceAllocation.getValue()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(VmThread.current(), false);
-                Log.print(": Allocated target code bundle for ");
-
-                Log.print(" at ");
-                Log.print(start);
-                Log.print(" [size=");
-                Log.print(size.toInt());
-                Log.print(", end=");
-                Log.print(start.plus(size));
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
-        }
-        return start;
     }
 
     public void addTargetMethod(TargetMethod targetMethod) {

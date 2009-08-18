@@ -58,10 +58,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         FatalError.unimplemented();
     }
 
-    public boolean codeReferencesAreGCRoots() {
-        throw FatalError.unimplemented();
-    }
-
     /**
      * Tells the inspector that a watchpoint on this object has to be relocated.
      * @param oldAddress

@@ -59,32 +59,20 @@ public final class WatchpointsTable extends InspectorTable {
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
         configureDefaultTable(model, columnModel);
+    }
 
-        //TODO: generalize this
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    if (maxVM().watchpointsEnabled()) {
-                        // So far, only watchpoint-related items on this popup menu.
-                        final Point p = mouseEvent.getPoint();
-                        final int hitRowIndex = rowAtPoint(p);
-                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
-                            final InspectorMenu menu = new InspectorMenu();
-                            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(hitRowIndex, modelIndex);
-                            final TeleObject teleObject = watchpoint.getTeleObject();
-                            if (teleObject != null) {
-                                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
-                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                            }
-                        }
-                    }
-                }
-                super.procedure(mouseEvent);
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        if (maxVM().watchpointsEnabled() && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
+            final InspectorMenu menu = new InspectorMenu();
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(row, col);
+            final TeleObject teleObject = watchpoint.getTeleObject();
+            if (teleObject != null) {
+                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
+                return menu;
             }
-        });
+        }
+        return null;
     }
 
     /**
