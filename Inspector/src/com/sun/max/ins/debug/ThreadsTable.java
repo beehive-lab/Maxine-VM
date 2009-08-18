@@ -51,7 +51,6 @@ public final class ThreadsTable extends InspectorTable {
         columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
         columnModel = new ThreadsColumnModel(viewPreferences);
         configureDefaultTable(model, columnModel);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
     }
 
     /**

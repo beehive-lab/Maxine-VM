@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.b.c.d.e.amd64;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.platform.Platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.b.c.d.e.*;
@@ -44,32 +43,11 @@ public class BcdeAMD64Compiler extends BcdeCompiler<AMD64EirGenerator> implement
     public BcdeAMD64Compiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
 
-        vmConfiguration.platform().inspect(new PlatformInspectorAdapter() {
-
-            private String incompatibilityMessage(String s) {
-                return name() + " compiler incompatible with " + s;
-            }
-
-            @Override
-            public void inspectEndianness(Endianness endianness) {
-                ProgramError.check(endianness == Endianness.LITTLE, incompatibilityMessage(endianness + " endian platform"));
-            }
-
-            @Override
-            public void inspectInstructionSet(InstructionSet isa) {
-                ProgramError.check(isa == InstructionSet.AMD64, incompatibilityMessage(isa + " instruction set"));
-            }
-
-            @Override
-            public void inspectProcessorModel(ProcessorModel cpu) {
-                ProgramError.check(cpu == ProcessorModel.AMD64, incompatibilityMessage(cpu + " processor model"));
-            }
-
-            @Override
-            public void inspectWordWidth(WordWidth wordWidth) {
-                ProgramError.check(wordWidth == WordWidth.BITS_64, incompatibilityMessage(wordWidth + " word width"));
-            }
-        });
+        Platform platform = vmConfiguration.platform();
+        ProgramError.check(platform.endianess() == Endianness.LITTLE);
+        ProgramError.check(platform.instructionSet() == InstructionSet.AMD64);
+        ProgramError.check(platform.processorModel() == ProcessorModel.AMD64);
+        ProgramError.check(platform.wordWidth() == WordWidth.BITS_64);
         dirToEirTranslator = new DirToAMD64EirTranslator(this);
     }
 

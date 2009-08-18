@@ -23,15 +23,13 @@ package com.sun.max.vm.code;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
-import com.sun.max.vm.grip.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -127,22 +125,26 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         allocationSize = bundleSize;
 
         if (!MaxineVM.isPrototyping()) {
+            // The allocation and initialization of objects in a code region must be atomic wrt garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
         }
 
-        Pointer start = currentCodeRegion.allocateTargetMethod(allocationSize);
+        Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor()) : null;
+        Pointer start = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
         if (start.isZero()) {
             currentCodeRegion = makeFreeCodeRegion();
-            start = currentCodeRegion.allocateTargetMethod(allocationSize);
+            start = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
             if (start.isZero()) {
-                ProgramError.unexpected("could not allocate code");
+                FatalError.unexpected("could not allocate code");
             }
-        } //Log.printMethodActor(targetMethod.classMethodActor(), false);
+        }
 
         targetMethod.setStart(start);
         targetMethod.setSize(allocationSize);
 
+        // Initialize the objects in the allocated space so that they appear as a set of contiguous
+        // well-formed objects that can be traversed.
         byte[] code;
         byte[] scalarLiterals = null;
         Object[] referenceLiterals = null;
@@ -170,6 +172,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
 
         if (!MaxineVM.isPrototyping()) {
+            // It is now safe again to perform operations that may block and/or trigger a garbage collection
             Safepoint.enable();
             Heap.enableAllocationForCurrentThread();
         }
@@ -197,12 +200,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
             Log.print(" - ");
             Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
-            if (Heap.codeReferencesAreGCRoots()) {
-                Log.print(", referenceListNode=");
-                Log.print(start.plus(bundleSize));
-//                Log.print(" - ");
-//                Log.print(start.plus(bundleSize).plus(ReferenceListNode.SIZE));
-            }
             Log.println("]");
         } else {
             Log.println(0);
@@ -294,19 +291,30 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     }
 
     /**
-     * Visits all the references in memory managed by this code manager except for the boot code region.
+     * Visit the cells in all the code regions in this code manager.
      *
-     * @param pointerIndexVisitor the visitor that is notified of each reference in the code cache
+     * @param cellVisitor the visitor to call back for each cell in each region
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be visited
      */
-    public void visitReferences(PointerIndexVisitor pointerIndexVisitor) {
-        for (CodeRegion rcr : runtimeCodeRegions) {
-            Pointer cell = rcr.start().asPointer();
-            while (cell.lessThan(rcr.getAllocationMark())) {
-                final Pointer origin = Layout.cellToOrigin(cell);
-                final Grip newHubGrip = Layout.readHubGrip(origin);
-                final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
-                TupleReferenceMap.visitReferences(hub, origin, pointerIndexVisitor);
-                cell = cell.plus(Layout.size(origin));
+    void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
+        if (includeBootCode) {
+            CodeRegion codeRegion = Code.bootCodeRegion;
+            Pointer firstCell = codeRegion.start().asPointer();
+            Pointer cell = firstCell;
+            while (cell.lessThan(codeRegion.getAllocationMark())) {
+                cell = DebugHeap.checkDebugCellTag(firstCell, cell);
+                cell = cellVisitor.visitCell(cell);
+            }
+        }
+        for (CodeRegion codeRegion : runtimeCodeRegions) {
+            if (codeRegion != null) {
+                Pointer firstCell = codeRegion.start().asPointer();
+                Pointer cell = firstCell;
+                while (cell.lessThan(codeRegion.getAllocationMark())) {
+                    cell = DebugHeap.checkDebugCellTag(firstCell, cell);
+                    cell = cellVisitor.visitCell(cell);
+                }
             }
         }
     }

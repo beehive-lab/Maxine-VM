@@ -123,11 +123,17 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
     }
 
     /**
+     * @return the VM memory location occupied by the {@linkplain VmThreadLocal thread local variable} at a specified index.
+     */
+    public Address getAddress(int index) {
+        final VmThreadLocal vmThreadLocal = getVmThreadLocal(index);
+        return start().plus(vmThreadLocal.offset);
+    }
+    /**
      * @return the memory occupied by  the {@linkplain VmThreadLocal thread local variable} at a specified index.
      */
     public MemoryRegion getMemoryRegion(int index) {
-        final VmThreadLocal vmThreadLocal = getVmThreadLocal(index);
-        return new FixedMemoryRegion(start().plus(vmThreadLocal.offset), teleNativeThread.teleVM().wordSize(), "");
+        return new FixedMemoryRegion(getAddress(index), teleNativeThread.teleVM().wordSize(), "");
     }
 
     /**

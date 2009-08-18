@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -40,6 +41,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.template.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Template-based implementation of JIT compiler for SPARC.
@@ -107,6 +109,16 @@ public class SPARCJitCompiler extends JitCompiler {
         SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, jitLiteralBaseRegister,  literalBase);
        // Patch the frame pointer in the register window to that of the JIT frame we'll unwind to.
         SPARCStackFrameLayout.setRegisterInSavedWindow(unwindStubFramePointer, jitFramePointerRegister,  framePointer);
+
+        // Put the exception where the exception handler expects to find it
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(context.throwable));
+
+        if (context.throwable instanceof StackOverflowError) {
+            // This complete call-chain must be inlined down to the native call
+            // so that no further stack banging instructions
+            // are executed before execution jumps to the catch handler.
+            VirtualMemory.protectPage(VmThread.current().guardPage());
+        }
 
         // Save caller instruction pointer in call address register. This is only to help inspector figuring out what's the
         // call stack once we've smashed our return address with that of the unwind stub.
@@ -245,14 +257,17 @@ public class SPARCJitCompiler extends JitCompiler {
                 final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    // The Java operand stack of the method that handles the exception is always cleared before pushing the
-                    // thrown object.
+                    // The Java operand stack of the method that handles the exception is always cleared.
+                    // A null object is then pushed to ensure the depth of the stack is as expected upon
+                    // entry to an exception handler. However, the handler must have a prologue that loads
+                    // the exception from VmThreadLocal.EXCEPTION_OBJECT which is indeed guaranteed by
+                    // ExceptionDispatcher.
                     // Compute the offset to the first stack slot of the Java Stack: frame pointer -
                     // (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
                     final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
                     final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
                     // Push the exception on top of the stack first
-                    catcherTopOfStackPointer.writeReference(0, Reference.fromJava(unwindingContext.throwable));
+                    catcherTopOfStackPointer.writeReference(0, null);
 
                     // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                     // mandatory output register. We also need to bias it.
