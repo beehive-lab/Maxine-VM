@@ -47,7 +47,21 @@ public abstract class BytecodeSwitch {
         this.bci = bci;
     }
 
+    public int bci() {
+        return bci;
+    }
+
+    public int targetAt(int i) {
+        return bci + offsetAt(i);
+    }
+
+    public int defaultTarget() {
+        return bci + defaultOffset();
+    }
+
     public abstract int defaultOffset();
+
+    public abstract int keyAt(int i);
 
     public abstract int offsetAt(int i);
 

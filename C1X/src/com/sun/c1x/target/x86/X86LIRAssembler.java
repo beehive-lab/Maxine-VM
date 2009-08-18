@@ -332,8 +332,6 @@ public class X86LIRAssembler extends LIRAssembler {
         // masm().endAStub();
     }
 
-    // TODO: Check if emit_string_compare is used somewhere?
-
     @Override
     protected void returnOp(LIROperand result) {
 
@@ -348,16 +346,6 @@ public class X86LIRAssembler extends LIRAssembler {
         masm().increment(X86.rsp, initialFrameSizeInBytes());
 
         // TODO: Add Safepoint polling at return!
-        // Note: we do not need to round double result; float result has the right precision
-        // the poll sets the condition code, but no data registers
-        // AddressLiteral pollingPage = new AddressLiteral(compilation.runtime.getPollingPage() +
-        // (C1XOptions.SafepointPollOffset % compilation.runtime.vmPageSize()), RelocInfo.Type.pollReturnType);
-
-        // NOTE: the requires that the polling page be reachable else the reloc
-        // goes to the movq that loads the address and not the faulting instruction
-        // which breaks the signal handler code
-
-        // lir().test32(X86.rax, pollingPage);
 
         masm().ret(0);
     }
@@ -365,22 +353,6 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void safepointPoll(LIROperand tmp, CodeEmitInfo info) {
         // TODO: Add safepoint polling
-// AddressLiteral pollingPage = new ExternalAddress(compilation.runtime.getPollingPage() +
-        // (C1XOptions.SafepointPollOffset % compilation.runtime.vmPageSize()), RelocInfo.Type.pollType);
-//
-// if (info != null) {
-// addDebugInfoForBranch(info);
-// } else {
-// throw Util.shouldNotReachHere();
-// }
-//
-// int offset = masm().offset();
-//
-// // NOTE: the requires that the polling page be reachable else the reloc
-// // goes to the movq that loads the address and not the faulting instruction
-// // which breaks the signal handler code
-//
-// masm().test32(X86.rax, pollingPage);
     }
 
     private void moveRegs(Register fromReg, Register toReg) {
@@ -1347,9 +1319,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitTypeCheck(LIRTypeCheck op) {
 
         // TODO: Make this work with Maxine while preserving the general semantics
-        // if (C1XOptions.AvoidUnsupported) {
-        // throw new Bailout("Currently cannot emit a type check!");
-        // }
 
         LIROpcode code = op.code();
         if (code == LIROpcode.StoreCheck) {
@@ -2496,31 +2465,6 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitStaticCallStub() {
         // TODO: Check with what to replace this!
-        // Pointer callPc = masm().pc();
-
-// Pointer stub = masm().startAStub(callStubSize);
-// if (stub == null) {
-// throw new Bailout("static call stub overflow");
-// }
-//
-// int start = masm().offset();
-// if (compilation.runtime.isMP()) {
-// // make sure that the displacement word of the call ends up word aligned
-// int offset = masm().offset() + compilation.runtime.nativeMovConstRegInstructionSize() +
-        // compilation.runtime.nativeCallDisplacementOffset();
-// while (offset++ % wordSize != 0) {
-// masm().nop();
-// }
-// }
-// masm().relocate(Relocation.staticStubRelocationSpec(callPc));
-// masm().movoop(X86.rbx, null);
-// // must be set to -1 at code generation time
-// assert !compilation.runtime.isMP() || ((masm().offset() + 1) % wordSize) == 0 : "must be aligned on MP";
-// // On 64bit this will die since it will take a movq & jmp, must be only a jmp
-// masm().jump(new RuntimeAddress(masm().pc().value));
-//
-// assert masm().offset() - start <= callStubSize : "stub too big";
-        // masm().endAStub();
     }
 
     @Override
@@ -2682,14 +2626,6 @@ public class X86LIRAssembler extends LIRAssembler {
         Register cRarg0 = compilation.runtime.getCRarg(0);
         Register cRarg1 = compilation.runtime.getCRarg(1);
         Register cRarg2 = compilation.runtime.getCRarg(2);
-//        Register cRarg3 = compilation.runtime.getCRarg(3);
-//        Register cRarg4 = compilation.runtime.getCRarg(4);
-//
-//        Register jRarg0 = compilation.runtime.getJRarg(0);
-//        Register jRarg1 = compilation.runtime.getJRarg(1);
-//        Register jRarg2 = compilation.runtime.getJRarg(2);
-//        Register jRarg3 = compilation.runtime.getJRarg(3);
-//        Register jRarg4 = compilation.runtime.getJRarg(4);
 
         CodeStub stub = op.stub();
         int flags = op.flags();
@@ -2697,54 +2633,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // if we don't know anything or it's an object array, just go through the generic arraycopy
         if (defaultType == null) {
-            // save outgoing arguments on stack in case call to System.arraycopy is needed
-            // HACK ALERT. This code used to push the parameters in a hardwired fashion
-            // for interpreter calling conventions. Now we have to do it in new style conventions.
-            // For the moment until C1 gets the new register allocator I just force all the
-            // args to the right place (except the register args) and then on the back side
-            // reload the register args properly if we go slow path. Yuck
-
-            // These are proper for the calling convention
-
-            /*
-            storeParameter(length, 2);
-            storeParameter(dstPos, 1);
-            storeParameter(dst, 0);
-
-            // these are just temporary placements until we need to reload
-            storeParameter(srcPos, 3);
-            storeParameter(src, 4);
-            assert compilation.target.arch.is64bit() || (src == X86.rcx && srcPos == X86.rdx) : "mismatch in calling convention";
-
-            CiRuntimeCall entry = CiRuntimeCall.ArrayCopy;
-
-            // pass arguments: may push as this is not a safepoint; SP must be fix at each safepoint
-            if (compilation.target.arch.is64bit()) {
-
-
-                // The arguments are in java calling convention so we can trivially shift them to C
-                // convention
-                assert Register.assertDifferentRegisters(cRarg0, jRarg1, jRarg2, jRarg3, jRarg4);
-                masm().mov(cRarg0, jRarg0);
-                assert Register.assertDifferentRegisters(cRarg1, jRarg2, jRarg3, jRarg4);
-                masm().mov(cRarg1, jRarg1);
-                assert Register.assertDifferentRegisters(cRarg2, jRarg3, jRarg4);
-                masm().mov(cRarg2, jRarg2);
-                assert Register.assertDifferentRegisters(cRarg3, jRarg4);
-                masm().mov(cRarg3, jRarg3);
-                if (compilation.target.isWindows()) {
-                    // Allocate abi space for args but be sure to keep stack aligned
-                    masm().subptr(X86.rsp, 6 * compilation.target.arch.wordSize);
-                    storeParameter(jRarg4, 4);
-                    masm().callRuntime(entry);
-                    masm().addptr(X86.rsp, 6 * compilation.target.arch.wordSize);
-                } else {
-                    masm().mov(cRarg4, jRarg4);
-                    masm().callRuntime(entry);
-                }
-            } else {*/
             Util.unimplemented();
-            //}
 
             masm().cmpl(X86.rax, 0);
             masm().jcc(X86Assembler.Condition.equal, stub.continuation);

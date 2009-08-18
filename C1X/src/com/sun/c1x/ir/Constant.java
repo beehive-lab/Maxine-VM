@@ -38,7 +38,7 @@ public class Constant extends Instruction {
      * @param value the constant
      */
     public Constant(CiConstant value) {
-        super(value.basicType);
+        super(value.basicType.stackType());
         this.value = value;
         initFlag(Instruction.Flag.NonNull, value.isNonNull());
     }
