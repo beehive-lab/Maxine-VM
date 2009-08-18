@@ -230,10 +230,6 @@ public final class MemoryWordsTable extends InspectorTable {
             fireTableDataChanged();
         }
 
-        Address getOrigin() {
-            return origin;
-        }
-
         public int getColumnCount() {
             return MemoryWordsColumnKind.VALUES.length();
         }
