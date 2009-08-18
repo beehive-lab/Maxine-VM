@@ -263,7 +263,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
     int error = proc_Pwait(ph, 0);
     if (error != 0) {
         int rc = proc_Pstate(ph);
-        log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; erroro: %d; errno: %d", rc, error, errno);
+        log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; error: %d; errno: %d", rc, error, errno);
 		log_println("ERROR: %s", strerror(errno));
 
 		int statloc = 0;
@@ -272,7 +272,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
 
         return false;
     }
-;
+
     if (Pclearfault(ph) != 0) {
         int rc = proc_Pstate(ph);
         log_println("Pclearfault failed, proc_Pstate %d", rc);
