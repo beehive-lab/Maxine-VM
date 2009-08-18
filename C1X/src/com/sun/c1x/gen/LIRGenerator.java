@@ -490,10 +490,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 } else {
 
                     if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
-                        assert x.vtableIndex() >= 0;
                         lir.callInterface(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     } else {
-                        assert x.vtableIndex() >= 0;
                         lir.callVirtual(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     }
                 }

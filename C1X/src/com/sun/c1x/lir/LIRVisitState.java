@@ -360,6 +360,10 @@ public class LIRVisitState {
                 if (op2.opr2.isValid()) {
                     op2.opr2 = doInput(op2.opr2); // exception object is input parameter
                 }
+
+                if (op.code == LIROpcode.Throw) {
+                    doCall();
+                }
                 assert op2.result.isIllegal() : "no result";
 
                 break;

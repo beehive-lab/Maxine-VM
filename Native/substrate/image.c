@@ -177,7 +177,8 @@ static char *endiannessToString(jint isBigEndian) {
 
 #define checkThreadLocalIndex(name) do { \
     if (theImageHeader->name != name) { \
-        log_exit(2, "value of %s in image [%d] conflicts with value declared in threadLocals.h [%d]", \
+        log_exit(2, "index of thread local %s in image [%d] conflicts with value declared in threadLocals.h [%d]" \
+        		    "\nEdit the number in threadLocals.h to reflect the current index of the thread local in the image.", \
                         STRINGIZE(name), theImageHeader->name, name); \
     } \
 } while(0)

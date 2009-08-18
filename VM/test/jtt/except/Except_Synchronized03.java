@@ -28,7 +28,7 @@ public class Except_Synchronized03 {
 
     static final Except_Synchronized03 object = new Except_Synchronized03();
 
-    final int x = 1;
+    int x = 1;
 
     public static int test(int i) throws Exception {
         if (i == 0) {

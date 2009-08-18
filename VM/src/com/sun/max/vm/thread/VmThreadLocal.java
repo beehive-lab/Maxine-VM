@@ -287,6 +287,11 @@ public class VmThreadLocal {
     public static final VmThreadLocal NEW_OBJECT_ADDRESS
         = new VmThreadLocal("NEW_OBJECT_ADDRESS", Kind.WORD, "New address of an object, after compaction");
 
+    /**
+     * Records the size of the native call stack.
+     */
+    public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", Kind.INT, "Size of the native call stack");
+
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
         // The C code in trap.c relies on the following relationships:
