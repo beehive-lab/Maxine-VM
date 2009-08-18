@@ -211,13 +211,18 @@ public class GraphBuilder {
         h.setDepthFirstNumber(0);
 
         Instruction l = h;
+<<<<<<< local
         RiMethodProfile methodData = method().methodData();
         if (C1XOptions.ProfileBranches && methodData != null) {
+=======
+        RiMethodProfile methodProfile = method().methodData();
+        if (C1XOptions.ProfileBranches && methodProfile != null) {
+>>>>>>> other
             // increment the invocation counter;
             // note that the normal append() won't work, so we do this manually
-            Instruction m = Constant.forObject(methodData.dataObject());
+            Instruction m = new Constant(methodProfile.encoding());
             h.setNext(m, 0);
-            Instruction p = new ProfileCounter(m, methodData.invocationCountOffset(), 1);
+            Instruction p = new ProfileCounter(m, methodProfile.invocationCountOffset(), 1);
             m.setNext(p, 0);
             l = p;
         }
@@ -481,11 +486,17 @@ public class GraphBuilder {
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
+<<<<<<< local
             RiType citype = (RiType) con;
             if (!citype.isLoaded() || C1XOptions.TestPatching) {
                 push(BasicType.Object, append(new ResolveClass(citype, curState.copy())));
+=======
+            RiType ritype = (RiType) con;
+            if (!ritype.isLoaded() || C1XOptions.TestPatching) {
+                push(BasicType.Object, append(new ResolveClass(ritype, curState.copy())));
+>>>>>>> other
             } else {
-                push(BasicType.Object, append(Constant.forObject(citype.javaClass())));
+                push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -830,7 +841,11 @@ public class GraphBuilder {
         push(basicType.stackType(), optimized);
     }
 
+<<<<<<< local
     void invokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
+=======
+    void invokeStatic(RiMethod target) {
+>>>>>>> other
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null)) {
@@ -840,7 +855,11 @@ public class GraphBuilder {
         }
     }
 
+<<<<<<< local
     void invokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
+=======
+    void invokeInterface(RiMethod target) {
+>>>>>>> other
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
@@ -849,7 +868,11 @@ public class GraphBuilder {
         }
     }
 
+<<<<<<< local
     void invokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
+=======
+    void invokeVirtual(RiMethod target) {
+>>>>>>> other
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             Instruction receiver = args[0];
@@ -893,11 +916,20 @@ public class GraphBuilder {
         return target.signatureType().returnBasicType();
     }
 
+<<<<<<< local
     void invokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
         invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder, cpi, constantPool);
+=======
+    void invokeSpecial(RiMethod target, RiType knownHolder) {
+        invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder);
+>>>>>>> other
     }
 
+<<<<<<< local
     private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+=======
+    private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder) {
+>>>>>>> other
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder)) {
                 // could not optimize or inline the method call
@@ -908,7 +940,11 @@ public class GraphBuilder {
         }
     }
 
+<<<<<<< local
     private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool) {
+=======
+    private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic) {
+>>>>>>> other
         BasicType resultType = returnBasicType(target);
         Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
@@ -1184,7 +1220,7 @@ public class GraphBuilder {
                 int offset = mdo.invocationCountOffset();
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the invocation count
-                    Instruction m = append(Constant.forObject(mdo.dataObject()));
+                    Instruction m = append(new Constant(mdo.encoding()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1198,7 +1234,7 @@ public class GraphBuilder {
                 int offset = mdo.bciCountOffset(bci);
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the bytecode index
-                    Instruction m = append(Constant.forObject(mdo.dataObject()));
+                    Instruction m = append(new Constant(mdo.encoding()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }

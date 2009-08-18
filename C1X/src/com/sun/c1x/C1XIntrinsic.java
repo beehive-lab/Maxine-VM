@@ -297,25 +297,33 @@ public enum C1XIntrinsic {
      * i.e. they are pure functions that have no side effects. Such methods can be executed
      * with reflection when all their inputs are constants, and the resulting value substituted
      * for the method call.
-     * @param ciMethod the compiler interface method for matching
+     * @param riMethod the compiler interface method for matching
      * @param reflectMethod the reflection method to execute for folding
      */
+<<<<<<< local
     public static void registerFoldableMethod(RiMethod ciMethod, Method reflectMethod) {
+=======
+    public static void registerFoldableMethod(RiMethod riMethod, Method reflectMethod) {
+>>>>>>> other
         reflectMethod.setAccessible(true);
-        foldableMap.put(ciMethod, reflectMethod);
+        foldableMap.put(riMethod, reflectMethod);
         anyFoldables = true;
         C1XMetrics.FoldableMethodsRegistered++;
     }
 
     /**
      * Looks up the foldable reflective method for a compiler interface method, if it one is registered.
-     * @param ciMethod the compiler interface method
+     * @param riMethod the compiler interface method
      * @return the reflective method for the compiler interface method, if one is register; <code>null</code>
      * otherwise
      */
+<<<<<<< local
     public static Method getFoldableMethod(RiMethod ciMethod) {
+=======
+    public static Method getFoldableMethod(RiMethod riMethod) {
+>>>>>>> other
         if (anyFoldables) {
-            return foldableMap.get(ciMethod);
+            return foldableMap.get(riMethod);
         }
         return null; // don't even bother checking the map if none are registered
     }

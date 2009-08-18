@@ -850,7 +850,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
-        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
+        if (C1XOptions.UseFastNewInstance && klass.isLoaded()) {
 //            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
 //            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
 //            assert klass.isLoaded() : "must be loaded";

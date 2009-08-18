@@ -20,29 +20,42 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.target.Target;
+
 /**
-<<<<<<< local
- * The <code>CiMethodData</code> class definition.
-=======
- * The <code>RiMethodProfile</code> class definition.
->>>>>>> other
+ * The <code>CiCompiler</code> class represents a compiler instance which has been
+ * configured for a particular runtime system and target machine.
  *
  * @author Ben L. Titzer
  */
-public interface RiMethodProfile {
-<<<<<<< local
-    Object dataObject();
-=======
-    CiConstant encoding();
->>>>>>> other
-    int invocationCountOffset();
-    int bciCountOffset(int bci);
-    int branchTakenCountOffset(int bci);
-    int branchNotTakenCountOffset(int bci);
+public abstract class CiCompiler {
+    /**
+     * The target that this compiler has been configured for.
+     */
+    public final Target target;
 
-    int headerOffset(int bci);
-    int countOffset(int bci);
-    RiType receiver(int bci, int i);
-    int receiverCountOffset(int bci, int i);
-    int receiverOffset(int bci, int i);
+    /**
+     * The runtime that this compiler has been configured for.
+     */
+    public final RiRuntime runtime;
+
+    protected CiCompiler(RiRuntime runtime, Target target) {
+        this.runtime = runtime;
+        this.target = target;
+    }
+
+    /**
+     * Compile the specified method.
+     * @param method the method to compile
+     * @return a {@link CiTargetMethod target method} representing the compiled method
+     */
+    public abstract CiTargetMethod compileMethod(RiMethod method);
+
+    /**
+     * Compile the specified method.
+     * @param method the method to compile
+     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
+     * @return a {@link CiTargetMethod target method} representing the compiled method
+     */
+    public abstract CiTargetMethod compileMethod(RiMethod method, int osrBCI);
 }

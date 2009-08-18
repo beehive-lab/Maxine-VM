@@ -51,7 +51,11 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
+<<<<<<< local
     public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+=======
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info) {
+>>>>>>> other
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;
@@ -70,7 +74,11 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
+<<<<<<< local
     public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+=======
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+>>>>>>> other
         super(opcode, null, result, arguments, info);
         this.method = method;
         this.receiver = receiver;

@@ -21,7 +21,11 @@
 package com.sun.c1x.ci;
 
 /**
+<<<<<<< local
  * The <code>CiBytecodeExtension</code> interface allows the runtime to extend the behavior of C1X
+=======
+ * The <code>RiBytecodeExtension</code> interface allows the runtime to extend the behavior of C1X
+>>>>>>> other
  * with extended bytecodes that are <i>not</i> part of the JVM spec. The behavior of existing Java
  * bytecodes <i>cannot</i> be altered. Extended bytecodes can implement
  * additional primitive operations and allow access to non-Java types. The interface is limited and does

@@ -2250,7 +2250,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     int lockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
+<<<<<<< local
         /*int alignedMask = wordSize - 1;
+=======
+        int alignedMask = wordSize - 1;
+>>>>>>> other
         int hdrOffset = runtime.markOffsetInBytes();
         assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
@@ -2313,7 +2317,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public void unlockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Label slowCase) {
+<<<<<<< local
         /*int hdrOffset = runtime.markOffsetInBytes();
+=======
+        int hdrOffset = runtime.markOffsetInBytes();
+>>>>>>> other
         assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();

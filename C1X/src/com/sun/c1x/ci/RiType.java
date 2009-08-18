@@ -23,7 +23,11 @@ package com.sun.c1x.ci;
 import com.sun.c1x.value.*;
 
 /**
+<<<<<<< local
  * The <code>CiType</code> interface represents a resolved or unresolved type in the compiler
+=======
+ * The <code>RiType</code> interface represents a resolved or unresolved type in the compiler
+>>>>>>> other
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.
  * Types, like fields and methods, are resolved through {@link RiConstantPool constant
  * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
@@ -182,6 +186,7 @@ public interface RiType {
      */
     int sizeHelper();
 
+<<<<<<< local
     /**
      * Determines whether the slow path should always be taken when creating new instances of this type.
      * XXX: this is a dumb name
@@ -189,10 +194,21 @@ public interface RiType {
      */
     boolean layoutHelperNeedsSlowPath();
 
+=======
+>>>>>>> other
     int superCheckOffset();
 
+<<<<<<< local
     CiConstant encoding();
+=======
+    Object encoding();
+>>>>>>> other
 
     CiConstant getStaticContainer();
 
+<<<<<<< local
+=======
+    Object resolveObject();
+
+>>>>>>> other
 }

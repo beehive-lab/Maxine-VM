@@ -25,7 +25,11 @@ import com.sun.c1x.value.*;
 import com.sun.max.vm.type.*;
 
 /**
+<<<<<<< local
  * The <code>MaxCiSignature</code> class implements a method signature for the
+=======
+ * The <code>MaxRiSignature</code> class implements a method signature for the
+>>>>>>> other
  * compiler interface.
  *
  * @author Ben L. Titzer
@@ -36,7 +40,11 @@ public class MaxRiSignature implements RiSignature {
     final SignatureDescriptor descriptor;
     BasicType[] basicTypes;
     BasicType basicReturnType;
+<<<<<<< local
     MaxRiType[] ciTypes;
+=======
+    MaxRiType[] riTypes;
+>>>>>>> other
     MaxRiType ciReturnType;
 
     /**
@@ -64,15 +72,31 @@ public class MaxRiSignature implements RiSignature {
      * @return the type of the specified argument
      */
     public RiType argumentTypeAt(int index) {
+<<<<<<< local
         if (ciTypes == null) {
+=======
+        if (riTypes == null) {
+>>>>>>> other
             final int max = descriptor.numberOfParameters();
+<<<<<<< local
             ciTypes = new MaxRiType[max];
+=======
+            riTypes = new MaxRiType[max];
+>>>>>>> other
             for (int i = 0; i < max; i++) {
+<<<<<<< local
                 ciTypes[i] = descriptorToCiType(descriptor.parameterDescriptorAt(i));
+=======
+                riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));
+>>>>>>> other
             }
 
         }
+<<<<<<< local
         return ciTypes[index];
+=======
+        return riTypes[index];
+>>>>>>> other
     }
 
     /**
@@ -98,7 +122,11 @@ public class MaxRiSignature implements RiSignature {
      */
     public RiType returnType() {
         if (ciReturnType == null) {
+<<<<<<< local
             ciReturnType = descriptorToCiType(descriptor.resultDescriptor());
+=======
+            ciReturnType = descriptorToRiType(descriptor.resultDescriptor());
+>>>>>>> other
         }
         return ciReturnType;
     }
@@ -142,7 +170,11 @@ public class MaxRiSignature implements RiSignature {
         return MaxRiType.kindToBasicType(typeDescriptor.toKind());
     }
 
+<<<<<<< local
     private MaxRiType descriptorToCiType(TypeDescriptor typeDescriptor) {
+=======
+    private MaxRiType descriptorToRiType(TypeDescriptor typeDescriptor) {
+>>>>>>> other
          // TODO: resolve the descriptor if possible in the constant pool
         return new MaxRiType(constantPool, typeDescriptor);
     }

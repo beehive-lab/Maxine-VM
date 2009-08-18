@@ -490,15 +490,31 @@ public abstract class LIRAssembler {
         }
     }
 
+<<<<<<< local
     protected abstract void call(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
+=======
+    protected abstract void call(RiMethod riMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap);
+>>>>>>> other
 
     protected abstract void emitStaticCallStub();
 
+<<<<<<< local
     protected abstract void interfaceCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
+=======
+    protected abstract void interfaceCall(RiMethod riMethod, LIROperand receiver, CodeEmitInfo info);
+>>>>>>> other
 
+<<<<<<< local
     protected abstract void vtableCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
+=======
+    protected abstract void vtableCall(RiMethod riMethod, LIROperand receiver, CodeEmitInfo info);
+>>>>>>> other
 
+<<<<<<< local
     protected abstract void icCall(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info);
+=======
+    protected abstract void icCall(RiMethod riMethod, CiRuntimeCall addr, CodeEmitInfo info);
+>>>>>>> other
 
     protected abstract void alignCall(LIROpcode code);
 

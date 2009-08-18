@@ -90,20 +90,40 @@ public class LIRList {
         return block;
     }
 
+<<<<<<< local
     public void callOptVirtual(RiMethod method, LIROperand receiver, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info, cpi, constantPool));
+=======
+    public void callOptVirtual(RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info));
+>>>>>>> other
     }
 
+<<<<<<< local
     public void callStatic(RiMethod method, LIROperand result, GlobalStub dest, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info, cpi, constantPool));
+=======
+    public void callStatic(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalOperand, result, dest, arguments, info));
+>>>>>>> other
     }
 
+<<<<<<< local
     public void callInterface(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info, cpi, constantPool));
+=======
+    public void callInterface(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, arguments, info));
+>>>>>>> other
     }
 
+<<<<<<< local
     public void callVirtual(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info, cpi, constantPool));
+=======
+    public void callVirtual(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, arguments, info));
+>>>>>>> other
     }
 
     public void getThread(LIROperand result) {

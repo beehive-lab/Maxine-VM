@@ -192,16 +192,21 @@ public class Util {
      *         boolean[][]
      * </pre>
      *
-     * @param ciType the type to be converted to a Java name
+     * @param riType the type to be converted to a Java name
      * @param qualified specifies if the package prefix of the type should be included in the returned name
-     * @return the Java name corresponding to {@code ciType}
+     * @return the Java name corresponding to {@code riType}
      */
+<<<<<<< local
     public static String toJavaName(RiType ciType, boolean qualified) {
         BasicType basicType = ciType.basicType();
+=======
+    public static String toJavaName(RiType riType, boolean qualified) {
+        BasicType basicType = riType.basicType();
+>>>>>>> other
         if (basicType.isPrimitive() || basicType == BasicType.Void) {
             return basicType.javaName;
         }
-        String string = internalNameToJava(ciType.name());
+        String string = internalNameToJava(riType.name());
         if (qualified) {
             return string;
         }
@@ -222,11 +227,16 @@ public class Util {
      *      boolean[][]
      * </pre>
      *
-     * @param ciType the type to be converted to a Java name
-     * @return the Java name corresponding to {@code ciType}
+     * @param riType the type to be converted to a Java name
+     * @return the Java name corresponding to {@code riType}
      */
+<<<<<<< local
     public static String toJavaName(RiType ciType) {
         return internalNameToJava(ciType.name());
+=======
+    public static String toJavaName(RiType riType) {
+        return internalNameToJava(riType.name());
+>>>>>>> other
     }
 
     /**

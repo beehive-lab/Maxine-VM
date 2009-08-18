@@ -31,7 +31,11 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.collect.Sequence;
 
 /**
+<<<<<<< local
  * The <code>MaxCiMethod</code> implements a compiler interface method. A method can
+=======
+ * The <code>MaxRiMethod</code> implements a compiler interface method. A method can
+>>>>>>> other
  * be either resolved or unresolved. A resolved method has a reference to its
  * associated <code>MethodActor</code> and unresolved method has a reference
  * to its <code>MethodRefConstant</code> some method calls are only appropriate
@@ -84,7 +88,11 @@ public class MaxRiMethod implements RiMethod {
      */
     public RiType holder() {
         if (methodActor != null) {
+<<<<<<< local
             return constantPool.canonicalCiType(methodActor.holder());
+=======
+            return constantPool.canonicalRiType(methodActor.holder());
+>>>>>>> other
         }
         return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool));
     }
@@ -294,7 +302,11 @@ public class MaxRiMethod implements RiMethod {
             exceptionHandlers.add(new MaxRiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),
+<<<<<<< local
                                                              (char) entry.catchTypeIndex(), (entry.catchTypeIndex() == 0) ? null : constantPool.resolveType((char) entry.catchTypeIndex())));
+=======
+                                                             (char) entry.catchTypeIndex()));
+>>>>>>> other
         }
         return exceptionHandlers;
     }

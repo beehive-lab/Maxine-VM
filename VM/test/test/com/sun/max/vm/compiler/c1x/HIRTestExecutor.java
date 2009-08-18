@@ -85,7 +85,7 @@ public class HIRTestExecutor implements Executor {
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
         final Target target = createTarget();
-        final C1XCompiler compiler = new C1XCompiler(target, runtime);
+        final C1XCompiler compiler = new C1XCompiler(runtime, target);
 
         // create MaxineRuntime
         generator = new HIRGenerator(runtime, target, compiler);
@@ -113,14 +113,18 @@ public class HIRTestExecutor implements Executor {
             args[i] = CiConstant.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
-        final IR method = generator.makeHirMethod(runtime.getCiMethod(classMethodActor));
+        final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
         final IRInterpreter interpreter = new IRInterpreter(runtime, interpreterInterface);
         final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();
     }
 
     public static class HIRGenerator {
+<<<<<<< local
         private RiRuntime ciRuntime;
+=======
+        private RiRuntime riRuntime;
+>>>>>>> other
         private Target target;
         private C1XCompiler compiler;
 
@@ -131,7 +135,11 @@ public class HIRTestExecutor implements Executor {
          * @param compiler the compiler
          */
         public HIRGenerator(RiRuntime runtime, Target target, C1XCompiler compiler) {
+<<<<<<< local
             this.ciRuntime = runtime;
+=======
+            this.riRuntime = runtime;
+>>>>>>> other
             this.target = target;
             this.compiler = compiler;
         }
@@ -141,7 +149,11 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
+<<<<<<< local
             C1XCompilation compilation = new C1XCompilation(compiler, target, ciRuntime, classMethodActor);
+=======
+            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
+>>>>>>> other
             compilation.compile();
             return compilation.hir();
         }
