@@ -198,8 +198,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
             final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
-            final Pointer bootCodePointer = bootCodeStart.plus(header.codeRegionsPointerOffset);
-            addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodePointer));
 
             final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));

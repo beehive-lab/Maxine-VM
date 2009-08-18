@@ -20,6 +20,7 @@
  */
 package com.sun.max.lang;
 
+import com.sun.max.annotate.*;
 import com.sun.max.util.*;
 
 /**
@@ -27,6 +28,7 @@ import com.sun.max.util.*;
  * and int array stuff.
  *
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public final class Ints {
 
@@ -111,6 +113,21 @@ public final class Ints {
             return value - rest;
         }
         return value + (by - rest);
+    }
+
+    /**
+     * Calculates an unsigned integer which is greater than or equal to <code>value</code> and
+     * is a multiple of <code>by</code>.  Results are undefined if <code>by</code> is not
+     * a power of two.
+     * @param value the unsigned integer which is to be rounded upwards.
+     * @param by a positive power of two.
+     * @return the unsigned integer calculated by rounding upwards to a multiple of <code>by</code>.
+     */
+    @INLINE
+    public static int roundUnsignedUpByPowerOfTwo(int value, int by) {
+        assert isPowerOfTwoOrZero(by);
+        final int mask = by - 1;
+        return (value + mask) & ~mask;
     }
 
     /**
@@ -275,4 +292,5 @@ public final class Ints {
         }
         return max;
     }
+
 }

@@ -209,10 +209,4 @@ public interface HeapScheme extends VMScheme {
 
     @INLINE
     void writeBarrier(Reference from, Reference to);
-
-    /**
-     * @see Heap#codeReferencesAreGCRoots()
-     */
-    boolean codeReferencesAreGCRoots();
-
 }

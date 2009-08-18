@@ -50,7 +50,7 @@ import com.sun.max.vm.thread.*;
  * @author Hannes Payer
  * @author Laurent Daynes
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme {
+public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
 
     /**
      * A VM option for specifying how heap memory is to be allocated.
@@ -92,7 +92,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     /**
      * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
-     * It's enabled by default in this collector its primary design goals are simplicity and robustness,
+     * It's enabled by default as the primary goal of this collector are simplicity and robustness,
      * not high performance.
      */
     private static final VMBooleanXXOption verifyReferencesOption =
@@ -326,7 +326,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 }
 
                 startTimer(copyTimer);
-                moveReachableObjects();
+                moveReachableObjects(toSpace.start().asPointer());
                 stopTimer(copyTimer);
 
                 if (Heap.traceGCPhases()) {
@@ -537,7 +537,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      *
      * @param cell a cell in 'toSpace' to whose references are to be updated
      */
-    private Pointer visitCell(Pointer cell) {
+    public Pointer visitCell(Pointer cell) {
+        if (Heap.traceGC()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Visiting cell ");
+            Log.println(cell);
+            Log.unlock(lockDisabledSafepoints);
+        }
         final Pointer origin = Layout.cellToOrigin(cell);
 
         // Update the hub first so that is can be dereferenced to obtain
@@ -567,26 +573,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         return cell.plus(Layout.size(origin));
     }
 
-    private void moveReachableObjects() {
-        Pointer cell = toSpace.start().asPointer();
+    void moveReachableObjects(Pointer cell) {
+        Pointer first = cell;
         while (cell.lessThan(allocationMark())) {
-            cell = DebugHeap.checkDebugCellTag(toSpace.start(), cell);
-            if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Visiting cell in to space ");
-                Log.println(cell);
-                Log.unlock(lockDisabledSafepoints);
-            }
+            cell = DebugHeap.checkDebugCellTag(first, cell);
             cell = visitCell(cell);
         }
     }
 
-    private void scanBootHeap() {
+    void scanBootHeap() {
         Heap.bootHeapRegion.visitReferences(gripUpdater);
     }
 
-    private void scanCode() {
-        Code.visitReferences(gripUpdater);
+    void scanCode() {
+        // References in the boot code region are immutable and only ever refer
+        // to objects in the boot heap region.
+        boolean includeBootCode = false;
+        Code.visitCells(this, includeBootCode);
     }
 
     private boolean cannotGrow() {
@@ -889,17 +892,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     public void runFinalization() {
     }
 
-    /**
-     * This collector treats the references in code as GC roots. Not doing so would require
-     * maintaining a list of reachable objects in the code region as the heap objects are
-     * being scanned and {@linkplain #moveReachableObjects() moved} so that the references
-     * in the code objects can subsequently updated.
-     */
-    @Override
-    public boolean codeReferencesAreGCRoots() {
-        return true;
-    }
-
     @INLINE
     public boolean pin(Object object) {
         return false;
@@ -929,11 +921,25 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             Log.println(when);
         }
 
+        if (Heap.traceGCPhases()) {
+            Log.println("Verifying object references on thread stacks...");
+        }
         gcRootsVerifier.run();
         if (MaxineVM.isDebug()) {
+            if (Heap.traceGCPhases()) {
+                Log.println("Verifying heap objects...");
+            }
             DebugHeap.verifyRegion(toSpace.description(), toSpace.start().asPointer(), allocationMark(), toSpace, gripVerifier);
+            if (Heap.traceGCPhases()) {
+                Log.println("Verifying code objects...");
+            }
+
+            for (CodeRegion codeRegion : Code.getCodeManager().getCodeRegions()) {
+                if (!codeRegion.size().isZero()) {
+                    DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
+                }
+            }
         }
-        Code.visitReferences(gripVerifier);
 
         if (Heap.traceGCPhases()) {
             Log.print("Verifying object spaces ");

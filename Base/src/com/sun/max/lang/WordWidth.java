@@ -23,7 +23,7 @@ package com.sun.max.lang;
 import com.sun.max.collect.*;
 
 /**
- * A word width value describes many bits there are in a machine word.
+ * A word width value describes how many bits there are in a machine word.
  *
  * @author Bernd Mathiske
  */
@@ -36,8 +36,18 @@ public enum WordWidth {
 
     public static final IndexedSequence<WordWidth> VALUES = new ArraySequence<WordWidth>(values());
 
+    /**
+     * Number of bits in a Word.
+     * This must be a positive power of two.
+     */
     public final int numberOfBits;
+
+    /**
+     * Number of bytes in a Word.
+     * This must be a positive power of two.
+     */
     public final int numberOfBytes;
+
     public final Class canonicalPrimitiveType;
     public final long min;
     public final long max;
