@@ -50,20 +50,7 @@ public final class ThreadsTable extends InspectorTable {
         model = new ThreadsTableModel();
         columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
         columnModel = new ThreadsColumnModel(viewPreferences);
-
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
+        configureDefaultTable(model, columnModel);
     }
 
     /**

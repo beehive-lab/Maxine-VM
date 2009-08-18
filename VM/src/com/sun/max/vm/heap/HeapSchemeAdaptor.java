@@ -20,9 +20,11 @@
  */
 package com.sun.max.vm.heap;
 
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 
 /**
  * Class to capture common methods for heap scheme implementations.
@@ -56,7 +58,22 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         FatalError.unimplemented();
     }
 
-    public boolean codeReferencesAreGCRoots() {
-        throw FatalError.unimplemented();
+    /**
+     * Tells the inspector that a watchpoint on this object has to be relocated.
+     * @param oldAddress
+     * @param newAddress
+     */
+    public void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
+        if (MaxineMessenger.isVmInspected()) {
+            //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
+            //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
+            InspectableHeapInfo.oldAddress = oldAddress;
+            InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
+        }
+    }
+
+    public void zapRegion(MemoryRegion region) {
+        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 }

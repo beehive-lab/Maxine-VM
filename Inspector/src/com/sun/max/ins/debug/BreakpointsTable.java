@@ -57,9 +57,33 @@ public final class BreakpointsTable extends InspectorTable {
         tableModel = new BreakpointsTableModel();
         columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
         columnModel = new BreakpointsColumnModel(viewPreferences);
+        configureDefaultTable(tableModel, columnModel);
+    }
 
-        configure(tableModel, columnModel);
-        addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        final BreakpointData breakpointData = tableModel.get(row);
+        final InspectorMenu menu = new InspectorMenu();
+        final String shortName = breakpointData.shortName();
+        menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
+        if (breakpointData.enabled()) {
+            menu.add(inspection().actions().disableBreakpoint(breakpointData.teleBreakpoint(), "Disable: " + shortName));
+        } else {
+            menu.add(inspection().actions().enableBreakpoint(breakpointData.teleBreakpoint(), "Enable: " + shortName));
+        }
+        menu.addSeparator();
+        final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
+        methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
+        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
+        menu.add(methodEntryBreakpoints);
+        menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(inspection().actions().removeAllBreakpoints());
+        menu.addSeparator();
+        menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+        menu.addSeparator();
+        menu.add(inspection().actions().removeAllBytecodeBreakpoints());
+        return menu;
     }
 
     /**
@@ -69,7 +93,6 @@ public final class BreakpointsTable extends InspectorTable {
     public void updateFocusSelection() {
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
         final int row = tableModel.findRow(teleBreakpoint);
-
         updateFocusSelection(row);
     }
 
@@ -142,7 +165,7 @@ public final class BreakpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class BreakpointsTableModel extends DefaultTableModel {
+    private final class BreakpointsTableModel extends AbstractTableModel {
 
         // Cache of information objects for each known breakpoint
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
@@ -439,77 +462,6 @@ public final class BreakpointsTable extends InspectorTable {
                 setBackground(style().defaultTextBackgroundColor());
             }
             return this;
-        }
-    }
-
-    private final class BreakpointMenuItems implements InspectorMenuItems {
-
-        private final Inspection inspection;
-        private final BreakpointData breakpointData;
-
-        BreakpointMenuItems(Inspection inspection, BreakpointData breakpointData) {
-            this.inspection = inspection;
-            this.breakpointData = breakpointData;
-        }
-
-        public void addTo(InspectorMenu menu) {
-            final String shortName = breakpointData.shortName();
-            menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
-            if (breakpointData.enabled()) {
-                menu.add(inspection().actions().disableBreakpoint(breakpointData.teleBreakpoint(), "Disable: " + shortName));
-            } else {
-                menu.add(inspection().actions().enableBreakpoint(breakpointData.teleBreakpoint(), "Enable: " + shortName));
-            }
-        }
-
-        public Inspection inspection() {
-            return inspection;
-        }
-
-        public void refresh(boolean force) {
-        }
-
-        public void redisplay() {
-        }
-    }
-
-    /**
-     * @param breakpointData a breakpoint in the VM.
-     * @return a menu of actions, some of which are specific to the specified breakpoint
-     */
-    private InspectorMenu getButton3Menu(BreakpointData breakpointData) {
-        final InspectorMenu menu = new InspectorMenu();
-        menu.add(new BreakpointMenuItems(inspection(), breakpointData));
-        menu.addSeparator();
-        final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-        methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
-        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
-        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
-        menu.add(methodEntryBreakpoints);
-        menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
-        menu.add(inspection().actions().removeAllBreakpoints());
-        menu.addSeparator();
-        menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
-        menu.addSeparator();
-        menu.add(inspection().actions().removeAllBytecodeBreakpoints());
-        return menu;
-    }
-
-    private final class BreakpointInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-
-        BreakpointInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                final Point p = mouseEvent.getPoint();
-                final int row = rowAtPoint(p);
-                final BreakpointData breakpointData = tableModel.get(row);
-                final InspectorMenu menu = getButton3Menu(breakpointData);
-                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-            }
         }
     }
 

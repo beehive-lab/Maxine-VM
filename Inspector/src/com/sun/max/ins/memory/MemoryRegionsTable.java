@@ -72,20 +72,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         model = new MemoryRegionsTableModel();
         columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
+        configureDefaultTable(model, columnModel);
+    }
 
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        setShowVerticalLines(style().defaultTableShowVerticalLines());
-        setIntercellSpacing(style().defaultTableIntercellSpacing());
-        setRowHeight(style().defaultTableRowHeight());
-        setRowSelectionAllowed(true);
-        setColumnSelectionAllowed(false);
-        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
-        updateFocusSelection();
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        final InspectorMenu menu = new InspectorMenu();
+        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getValueAt(row, col);
+        final String regionName = memoryRegionDisplay.description();
+        menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));
+        return menu;
     }
 
     /**

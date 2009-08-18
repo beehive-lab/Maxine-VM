@@ -142,6 +142,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
         });
         viewOptionsButton.setToolTipText("Bytecode view options");
+        viewOptionsButton.setText(null);
+        viewOptionsButton.setIcon(style().generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());
@@ -294,7 +296,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             setRowSelectionAllowed(true);
             setColumnSelectionAllowed(true);
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         }
 
         @Override

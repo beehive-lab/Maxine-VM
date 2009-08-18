@@ -40,6 +40,14 @@ public class PlainLabel extends InspectorLabel {
     /**
      * Creates a new text label displaying specified text.
      */
+    public PlainLabel(Inspection inspection, String text, String toolTipText) {
+        super(inspection, text, toolTipText);
+        redisplay();
+    }
+
+    /**
+     * Creates a new text label displaying specified text.
+     */
     public PlainLabel(Inspection inspection, String text) {
         super(inspection, text);
         redisplay();

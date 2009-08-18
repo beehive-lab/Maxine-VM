@@ -58,34 +58,21 @@ public final class WatchpointsTable extends InspectorTable {
         model = new WatchpointsTableModel();
         columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
         columnModel = new WatchpointsColumnModel(viewPreferences);
+        configureDefaultTable(model, columnModel);
+    }
 
-        configure(model, columnModel);
-
-        //TODO: generalize this
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this) {
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    if (maxVM().watchpointsEnabled()) {
-                        // So far, only watchpoint-related items on this popup menu.
-                        final Point p = mouseEvent.getPoint();
-                        final int hitRowIndex = rowAtPoint(p);
-                        final int columnIndex = getColumnModel().getColumnIndexAtX(p.x);
-                        final int modelIndex = getColumnModel().getColumn(columnIndex).getModelIndex();
-                        if (modelIndex == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
-                            final InspectorMenu menu = new InspectorMenu();
-                            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(hitRowIndex, modelIndex);
-                            final TeleObject teleObject = watchpoint.getTeleObject();
-                            if (teleObject != null) {
-                                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
-                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                            }
-                        }
-                    }
-                }
-                super.procedure(mouseEvent);
+    @Override
+    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        if (maxVM().watchpointsEnabled() && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
+            final InspectorMenu menu = new InspectorMenu();
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(row, col);
+            final TeleObject teleObject = watchpoint.getTeleObject();
+            if (teleObject != null) {
+                menu.add(actions().inspectObject(teleObject, "Inspect Object"));
+                return menu;
             }
-        });
+        }
+        return null;
     }
 
     /**
@@ -166,7 +153,7 @@ public final class WatchpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class WatchpointsTableModel extends DefaultTableModel {
+    private final class WatchpointsTableModel extends AbstractTableModel {
 
         void refresh() {
             fireTableDataChanged();
@@ -246,6 +233,20 @@ public final class WatchpointsTable extends InspectorTable {
                     inspection().settings().save();
                     break;
                 default:
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            switch (WatchpointsColumnKind.VALUES.get(column)) {
+                case READ:
+                case WRITE:
+                case EXEC:
+                case GC:
+                case EAGER:
+                    return true;
+                default:
+                    return false;
             }
         }
 

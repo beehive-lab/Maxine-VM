@@ -57,6 +57,9 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
      */
     private static final SemiSpaceParCollector parallelCollector = new SemiSpaceParCollector();
 
+    /**
+     * Bound Checker for heap verification only.
+     */
     final class BSSHeapBoundChecker extends HeapBoundChecker {
         private Address start;
         private Address end;

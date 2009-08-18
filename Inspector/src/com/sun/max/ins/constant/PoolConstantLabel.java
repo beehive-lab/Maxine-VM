@@ -200,8 +200,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         final InspectorMenu menu = new InspectorMenu();
         if (telePoolConstant != null) {
             menu.add(inspection().actions().copyWord(telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
-            menu.add(inspection().actions().inspectMemory(telePoolConstant, "Inspect PoolConstant memory"));
-            menu.add(inspection().actions().inspectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
+            menu.add(inspection().actions().inspectObjectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
             menu.add(inspection().actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
             menu.add(inspection().actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
             specializeMenu(menu);

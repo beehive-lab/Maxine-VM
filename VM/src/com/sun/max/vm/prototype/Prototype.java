@@ -21,12 +21,10 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -187,18 +185,15 @@ public abstract class Prototype {
     public static Platform createHostPlatform() {
         loadLibrary(PROTOTYPE_LIBRARY_NAME);
 
-        String platformValue = System.getProperty(PLATFORM_PROPERTY);
-        if (platformValue != null) {
-            Platform platform = Platform.parse(platformValue);
+        String platformSpec = System.getProperty(PLATFORM_PROPERTY);
+        if (platformSpec != null) {
+            Platform platform = Platform.parse(platformSpec);
             if (platform == null) {
-                StringWriter stringWriter = new StringWriter();
-                PrintWriter out = new PrintWriter(stringWriter);
-                out.println("Invalid platform string: " + platformValue);
-                out.println("Preset platforms are:");
-                for (Map.Entry<String, Platform> entry : Platform.Supported.entrySet()) {
-                    out.println("    " + entry.getKey());
-                }
-                ProgramError.unexpected(stringWriter.toString());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PrintStream out = new PrintStream(baos);
+                out.println("Invalid platform specification: " + platformSpec);
+                Platform.printPlatformSpecificationHelp(out);
+                ProgramError.unexpected(baos.toString());
             }
             return platform;
         }

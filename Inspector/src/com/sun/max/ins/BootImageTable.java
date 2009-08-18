@@ -55,18 +55,8 @@ public final class BootImageTable extends InspectorTable {
         model = new BootImageTableModel(inspection);
         columns = new TableColumn[BootImageColumnKind.VALUES.length()];
         this.columnModel = new BootImageColumnModel(viewPreferences);
-
-        setModel(model);
-        setColumnModel(columnModel);
-        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
-        setShowVerticalLines(style().memoryTableShowVerticalLines());
-        setIntercellSpacing(style().memoryTableIntercellSpacing());
-        setRowHeight(style().memoryTableRowHeight());
+        configureMemoryTable(model, columnModel);
         setRowSelectionAllowed(false);
-        setColumnSelectionAllowed(false);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
     public void refresh(boolean force) {
@@ -208,8 +198,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
             final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
-            final Pointer bootCodePointer = bootCodeStart.plus(header.codeRegionsPointerOffset);
-            addRow("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodePointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodePointer));
 
             final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));

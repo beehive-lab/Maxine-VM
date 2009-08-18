@@ -103,6 +103,104 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeSuspend(JNIEnv *env
     return true;
 }
 
+#ifdef false
+int
+Psetrun_dbg(struct ps_prochandle *P,
+    int sig,    /* signal to pass to process */
+    int flags)  /* PRSTEP|PRSABORT|PRSTOP|PRCSIG|PRCFAULT */
+{
+    int ctlfd = (P->agentctlfd >= 0) ? P->agentctlfd : P->ctlfd;
+    int sbits = (PR_DSTOP | PR_ISTOP | PR_ASLEEP);
+
+    long ctl[1 +                    /* PCCFAULT */
+        1 + sizeof (siginfo_t)/sizeof (long) +  /* PCSSIG/PCCSIG */
+        2 ] = {0};                    /* PCRUN    */
+
+    int ctl_len = 1 +                    /* PCCFAULT */
+                    1 + sizeof (siginfo_t)/sizeof (long) +  /* PCSSIG/PCCSIG */
+                    2;
+
+    log_println("CTLlen: %d\n", ctl_len);
+
+
+    long *ctlp = ctl;
+    size_t size;
+
+    if (P->state != PS_STOP && (P->status.pr_lwp.pr_flags & sbits) == 0) {
+        errno = EBUSY;
+        return (-1);
+    }
+
+    Psync(P);   /* flush tracing flags and registers */
+
+    if (flags & PRCFAULT) {     /* clear current fault */
+        *ctlp++ = PCCFAULT;
+        flags &= ~PRCFAULT;
+    }
+
+    if (flags & PRCSIG) {       /* clear current signal */
+        *ctlp++ = PCCSIG;
+        flags &= ~PRCSIG;
+    } else if (sig && sig != P->status.pr_lwp.pr_cursig) {
+        /* make current signal */
+        siginfo_t *infop;
+
+        *ctlp++ = PCSSIG;
+        infop = (siginfo_t *)ctlp;
+        (void) memset(infop, 0, sizeof (*infop));
+        infop->si_signo = sig;
+        ctlp += sizeof (siginfo_t) / sizeof (long);
+    }
+
+    *ctlp++ = PCRUN;
+    *ctlp++ = flags;
+    size = (char *)ctlp - (char *)ctl;
+
+    P->info_valid = 0;  /* will need to update map and file info */
+
+    /*
+     * If we've cached ucontext-list information while we were stopped,
+     * free it now.
+     */
+    if (P->ucaddrs != NULL) {
+        free(P->ucaddrs);
+        P->ucaddrs = NULL;
+        P->ucnelems = 0;
+    }
+
+
+    log_println("BEFORE WRITE ctlfd: %d; ctl: %ld; size: %ld\n", ctlfd, ctl, size);
+    int i;
+    for(i=0; i<ctl_len; i++) {
+        printf("%d ", ctl[i]);
+    }
+    print_ps_prochandle(P);
+    printf("\n");
+    if (write(ctlfd, ctl, size) != size) {
+        log_println("PROBLEM WRITE\n");
+        print_ps_prochandle(P);
+        /* If it is dead or lost, return the real status, not PS_RUN */
+        if (errno == ENOENT || errno == EAGAIN) {
+            (void) Pstopstatus(P, PCNULL, 0);
+            return (0);
+        }
+        /* If it is not in a jobcontrol stop, issue an error message */
+        if (errno != EBUSY ||
+            P->status.pr_lwp.pr_why != PR_JOBCONTROL) {
+            log_println("Psetrun: %s\n", strerror(errno));
+            return (-1);
+        }
+        /* Otherwise pretend that the job-stopped process is running */
+    }
+
+    log_println("AFTER WRITE\n");
+    print_ps_prochandle(P);
+
+    P->state = PS_RUN;
+    return (0);
+}
+#endif
+
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong processHandle) {
@@ -141,8 +239,10 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
         log_println("Pclearsig failed");
         return false;
     }
+
     proc_Psync(ph);
-    if (proc_Psetrun(ph, 0, 0) != 0) {
+
+    if (Psetrun(ph, 0, 0) != 0) {
         log_println("Psetrun failed, proc_Pstate %d", proc_Pstate(ph));
 #ifdef __SunOS_5_11
         /* For some unknown reason, Psetrun can return a non-zero result on OpenSolaris
@@ -153,6 +253,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
         return false;
 #endif
     }
+
     return true;
 }
 
@@ -162,7 +263,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
     int error = proc_Pwait(ph, 0);
     if (error != 0) {
         int rc = proc_Pstate(ph);
-        log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; erroro: %d; errno: %d", rc, error, errno);
+        log_println("nativeWait: Pwait failed in solarisTeleProcess, proc_Pstate %d; error: %d; errno: %d", rc, error, errno);
 		log_println("ERROR: %s", strerror(errno));
 
 		int statloc = 0;
@@ -171,7 +272,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
 
         return false;
     }
-;
+
     if (Pclearfault(ph) != 0) {
         int rc = proc_Pstate(ph);
         log_println("Pclearfault failed, proc_Pstate %d", rc);
@@ -297,13 +398,27 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
 
     w.pr_pad = 0;
 
+    log_println("BEFORE PSETWAPT\n");
+    print_ps_prochandle(ph);
+
     int error = Psetwapt(ph, &w);
     if (error != 0) {
         log_println("could not set watch point - error: %d", error);
         return false;
     }
 
+    log_println("AFTER PSETWAPT\n");
+    print_ps_prochandle(ph);
+
+    int rc = proc_Pstate(ph);
+    log_println("nativeActivateWatchpoint before sync: proc_Pstate %d; errno: %d", rc, errno);
+    log_println("ERROR: %s", strerror(errno));
+
     proc_Psync(ph);
+
+    rc = proc_Pstate(ph);
+    log_println("nativeActivateWatchpoint after sync: proc_Pstate %d; errno: %d", rc, errno);
+    log_println("ERROR: %s", strerror(errno));
 
     return true;
 }
