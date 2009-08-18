@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A Maxine VM specific version of {@link ThreadLocal} that is much more efficient.
@@ -48,7 +47,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
 
     @PROTOTYPE_ONLY
     public ObjectThreadLocal(String name, String description) {
-        super(name, Kind.REFERENCE, description);
+        super(name, true, description);
     }
 
     @Override
