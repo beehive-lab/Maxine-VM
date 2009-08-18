@@ -211,7 +211,9 @@ public interface MaxVM {
      *
      * <p><b>Code</b><br>
      * Code memory regions are allocated by the singleton {@link CodeManager} in the VM,
-     * whose local surrogate is an instance of {@link TeleCodeManager}.
+     * whose local surrogate is an instance of {@link TeleCodeManager}.  Code memory regions
+     * are created at initialization, but are only allocated as needed.
+     *
      * <br>See also:<ol>
      *   <li>{@link CodeManager}</li>
      *   <li>{@link #containsInCode(Address)}</li>
@@ -230,12 +232,12 @@ public interface MaxVM {
      *
      * @return all allocated memory regions in the VM.
      */
-    IndexedSequence<MemoryRegion> memoryRegions();
+    IndexedSequence<MemoryRegion> allocatedMemoryRegions();
 
     /**
      * @param address a memory location in the VM
      * @return the allocated {@link MemoryRegion} containing the address, null if not in any known region.
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     MemoryRegion memoryRegionContaining(Address address);
 
@@ -243,7 +245,7 @@ public interface MaxVM {
      * @param address a memory location in the VM.
      * @return whether the location is either in the object heap, the code
      *         regions, or a stack region of the VM.
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     boolean contains(Address address);
 
@@ -251,7 +253,7 @@ public interface MaxVM {
      * @param address a memory address in the VM.
      * @return is the address within an allocated heap {@link MemoryRegion}?
      * @see #containsInDynamicHeap(Address)
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     boolean containsInHeap(Address address);
 
@@ -259,14 +261,14 @@ public interface MaxVM {
      * @param address a memory address in the VM.
      * @return is the address within a dynamically allocated heap {@link MemoryRegion}?
      * @see #containsInHeap(Address)
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     boolean containsInDynamicHeap(Address address);
 
     /**
      * @return surrogate for the special heap {@link MemoryRegion} in the {@link BootImage} of the VM.
      * @see #teleHeapRegions()
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     TeleRuntimeMemoryRegion teleBootHeapRegion();
 
@@ -274,7 +276,7 @@ public interface MaxVM {
      * @return surrogates for all {@link MemoryRegion}s in the {@link Heap} of the VM.
      * Sorted in order of allocation.  Does not include the boot heap region.
      * @see #teleBootHeapRegion()
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions();
 
@@ -287,14 +289,14 @@ public interface MaxVM {
     /**
      * @param address a memory address in the VM.
      * @return is the address within an allocated code {@link MemoryRegion}?
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     boolean containsInCode(Address address);
 
     /**
      * @return surrogate for the special code {@link MemoryRegion} in the {@link BootImage} of the VM.
      * @see #teleCodeRegions()
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     TeleCodeRegion teleBootCodeRegion();
 
@@ -302,14 +304,14 @@ public interface MaxVM {
      * @return surrogates for all code {@link MemoryRegion}s in the VM, including those not yet allocated.
      * Sorted in order of allocation.  Does not include the boot code region.
      * @see #teleBootCodeRegion()
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      */
     IndexedSequence<TeleCodeRegion> teleCodeRegions();
 
     /**
      * @param address a memory address in the VM.
      * @return is the address within a {@link MemoryRegion} allocated to a thread?
-     * @see #memoryRegions()
+     * @see #allocatedMemoryRegions()
      * @see TeleNativeStack
      */
     boolean containsInThread(Address address);
