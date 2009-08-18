@@ -138,6 +138,91 @@ public abstract class DataLabel extends InspectorLabel {
     }
 
     /**
+     * A label that displays a changeable array of bytes as 8 bit characters.
+     */
+    public static class ByteArrayAsUnicode extends DataLabel {
+
+        private byte[] bytes;
+
+        public ByteArrayAsUnicode(Inspection inspection, byte[] bytes) {
+            super(inspection, "");
+            this.bytes = bytes;
+            redisplay();
+        }
+
+        @Override
+        public void redisplay() {
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
+            updateText();
+        }
+
+        public void setValue(byte[] bytes) {
+            this.bytes = bytes;
+            updateText();
+        }
+
+        private void updateText() {
+            if (bytes != null && bytes.length > 0) {
+                final StringBuilder result = new StringBuilder(100);
+                String prefix = "[";
+                for (int i = 0; i < bytes.length / 2; i++) {
+                    result.append(prefix);
+                    final int index = 2 * i;
+                    final char ch = (char) ((bytes[index + 1] * 256) + bytes[index]);
+                    result.append(Character.toString(ch));
+                    prefix = " ";
+                }
+                result.append("]");
+                setText(result.toString());
+            }
+        }
+    }
+
+    /**
+     * A label that displays a changeable array of bytes as 8 bit characters.
+     */
+    public static class ByteArrayAsChar extends DataLabel {
+
+        private byte[] bytes;
+
+        public ByteArrayAsChar(Inspection inspection, byte[] bytes) {
+            super(inspection, "");
+            this.bytes = bytes;
+            redisplay();
+        }
+
+        @Override
+        public void redisplay() {
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
+            updateText();
+        }
+
+        public void setValue(byte[] bytes) {
+            this.bytes = bytes;
+            updateText();
+        }
+
+        private void updateText() {
+            if (bytes != null && bytes.length > 0) {
+                final StringBuilder result = new StringBuilder(100);
+                String prefix = "[";
+                for (byte b : bytes) {
+                    result.append(prefix);
+                    final char ch = (char) b;
+                    result.append(Character.toString(ch));
+                    prefix = " ";
+                }
+                result.append("]");
+                setText(result.toString());
+            }
+        }
+    }
+
+    /**
      * A label that displays an unchanging short value in decimal;  a ToolTip displays the value in hex.
      */
     public static final class ShortAsDecimal extends DataLabel {

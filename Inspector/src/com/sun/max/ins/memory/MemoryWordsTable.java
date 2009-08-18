@@ -168,6 +168,8 @@ public final class MemoryWordsTable extends InspectorTable {
             createColumn(MemoryWordsColumnKind.OFFSET, new OffsetRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.VALUE, new ValueRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.BYTES, new BytesRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.CHAR, new CharRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.UNICODE, new UnicodeRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.REGION, new RegionRenderer(inspection()));
         }
 
@@ -442,6 +444,40 @@ public final class MemoryWordsTable extends InspectorTable {
 
     private final class BytesRenderer extends DataLabel.ByteArrayAsHex implements TableCellRenderer {
         BytesRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final byte[] bytes = new byte[model.wordSize.toInt()];
+            maxVM().readFully(address, bytes);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            setValue(bytes);
+            return this;
+        }
+    }
+
+
+    private final class CharRenderer extends DataLabel.ByteArrayAsChar implements TableCellRenderer {
+        CharRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final byte[] bytes = new byte[model.wordSize.toInt()];
+            maxVM().readFully(address, bytes);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            setValue(bytes);
+            return this;
+        }
+    }
+
+
+    private final class UnicodeRenderer extends DataLabel.ByteArrayAsUnicode implements TableCellRenderer {
+        UnicodeRenderer(Inspection inspection) {
             super(inspection, null);
         }
 
