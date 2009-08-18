@@ -2409,11 +2409,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-<<<<<<< local
     protected void call(RiMethod method, GlobalStub entry, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool) {
-=======
-    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap) {
->>>>>>> other
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
 
@@ -2425,11 +2421,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-<<<<<<< local
     protected void icCall(RiMethod method, GlobalStub entry, CodeEmitInfo info) {
-=======
-    protected void icCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
->>>>>>> other
 //        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
 //        masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
 //        masm().callRuntime(entry, method);
@@ -2442,7 +2434,6 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-<<<<<<< local
     protected void vtableCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
 
         Address callAddress;
@@ -2465,26 +2456,13 @@ public class X86LIRAssembler extends LIRAssembler {
 
         masm.call(callAddress);
         addCallInfoHere(info);
-=======
-    protected void vtableCall(RiMethod method, LIROperand receiver, CodeEmitInfo info) {
-        int vtableOffset = compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
-        vtableOffset += compilation.runtime.vtableEntryMethodOffsetInBytes();
-        assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
-        assert receiver.isRegister() : "Receiver must be in a register";
-        masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
-        masm.call(new Address(rscratch1, Util.safeToInt(vtableOffset)));
->>>>>>> other
     }
 
     /**
      * (tw) Tentative implementation of an interface call (C1 does always do a resolving runtime call).
      */
     @Override
-<<<<<<< local
     protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-=======
-    protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info) {
->>>>>>> other
         assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movl(rscratch1, method.interfaceID());

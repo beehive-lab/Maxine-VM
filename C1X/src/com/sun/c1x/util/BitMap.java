@@ -245,13 +245,6 @@ public class BitMap {
         return i;
     }
 
-    private int checkIndexLow(int i) {
-        if (i < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-        return i;
-    }
-
     public void setFrom(BitMap other) {
         assert this.length == other.length : "must have same size";
 

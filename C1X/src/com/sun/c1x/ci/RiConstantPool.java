@@ -21,11 +21,7 @@
 package com.sun.c1x.ci;
 
 /**
-<<<<<<< local
- * The <code>CiConstantPool</code> class provides the interface to the constant pool that is
-=======
  * The <code>RiConstantPool</code> class provides the interface to the constant pool that is
->>>>>>> other
  * used by C1X. The <code>lookup</code> methods look up a constant pool entry without performing
  * resolution, and are used during compilation. The <code>resolve</code> methods are used
  * for resolving constant pool entries at run time, and calls to these methods are inserted
@@ -210,9 +206,6 @@ public interface RiConstantPool {
      * @return a new exception handler object
      */
     RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
-<<<<<<< local
 
     Object encoding();
-=======
->>>>>>> other
 }

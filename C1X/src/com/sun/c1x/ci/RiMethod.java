@@ -25,11 +25,7 @@ import java.util.*;
 import com.sun.c1x.util.*;
 
 /**
-<<<<<<< local
- * The <code>CiMethod</code> interface represents resolved and unresolved methods.
-=======
  * The <code>RiMethod</code> interface represents resolved and unresolved methods.
->>>>>>> other
  * Methods, like fields and types, are resolved through {@link RiConstantPool constant
  * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that some operations are only available on resolved methods.

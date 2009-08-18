@@ -220,27 +220,12 @@ public class C1XTest {
         // compile a single method
         final long startNs = System.nanoTime();
 
-<<<<<<< local
-            CiTargetMethod result = null;
-            try {
-                result = compiler.compileMethod(((MaxRiRuntime) compiler.runtime).getCiMethod((ClassMethodActor) method));
-                if (!warmup) {
-                    long timeNs = System.nanoTime() - startNs;
-                    recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
-                }
-            } catch (Bailout bailout) {
-                if (printBailout) {
-                    bailout.printStackTrace();
-                }
-                return false;
-=======
         CiTargetMethod result;
         try {
             result = compiler.compileMethod(((MaxRiRuntime) compiler.runtime).getRiMethod((ClassMethodActor) method));
             if (timing) {
                 long timeNs = System.nanoTime() - startNs;
                 recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
->>>>>>> other
             }
         } catch (Bailout bailout) {
             if (printBailout) {
@@ -324,26 +309,8 @@ public class C1XTest {
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
         final Classpath classpath = Classpath.fromSystem();
-<<<<<<< local
-        final List<MethodActor> methods = new ArrayList<MethodActor>() {
-            @Override
-            public boolean add(MethodActor e) {
-                final boolean result = super.add(e);
-                // register foldable methods with C1X.
-                if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(e.flags()) && e instanceof ClassMethodActor) {
-                    final Method method = e.toJava();
-                    assert method != null;
-                    C1XIntrinsic.registerFoldableMethod(MaxRiRuntime.globalRuntime.getCiMethod((ClassMethodActor) e), method);
-                }
-                if ((size() % 1000) == 0 && verboseOption.getValue() >= 1) {
-                    out.print('.');
-                }
-                return result;
-            }
-        };
-=======
+
         final List<MethodActor> methods = new ArrayList<MethodActor>();
->>>>>>> other
 
         for (int i = 0; i != arguments.length; ++i) {
             final String argument = arguments[i];
@@ -576,11 +543,7 @@ public class C1XTest {
         // configure the allocatable registers
         List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
         for (Register r : arch.registers) {
-<<<<<<< local
             if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
-=======
-            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.exceptionOopRegister()) {
->>>>>>> other
                 allocatable.add(r);
             }
         }

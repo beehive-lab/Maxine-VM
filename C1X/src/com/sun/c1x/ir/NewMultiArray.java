@@ -33,10 +33,6 @@ public class NewMultiArray extends NewArray {
     public final RiType elementType;
     final Instruction[] dimensions;
     public final char cpi;
-<<<<<<< local
-=======
-    public final RiConstantPool constantPool;
->>>>>>> other
 
     /**
      * Constructs a new NewMultiArray instruction.
@@ -46,20 +42,11 @@ public class NewMultiArray extends NewArray {
      * @param cpi
      * @param riConstantPool
      */
-<<<<<<< local
     public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
         super(null, stateBefore, ciConstantPool); // note that this instruction doesn't have a "length" per-se
-=======
-    public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
-        super(null, stateBefore); // note that this instruction doesn't have a "length" per-se
->>>>>>> other
         this.elementType = elementType;
         this.dimensions = dimensions;
         this.cpi = cpi;
-<<<<<<< local
-=======
-        this.constantPool = riConstantPool;
->>>>>>> other
     }
 
     /**

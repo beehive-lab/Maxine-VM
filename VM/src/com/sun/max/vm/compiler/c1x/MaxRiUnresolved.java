@@ -21,11 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 /**
-<<<<<<< local
- * The <code>MaxCiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
-=======
  * The <code>MaxRiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
->>>>>>> other
  * queries a compiler interface object in a way that is not appropriate for an unresolved object.
  *
  * @author Ben L. Titzer

@@ -120,11 +120,7 @@ public class HIRTestExecutor implements Executor {
     }
 
     public static class HIRGenerator {
-<<<<<<< local
-        private RiRuntime ciRuntime;
-=======
         private RiRuntime riRuntime;
->>>>>>> other
         private Target target;
         private C1XCompiler compiler;
 
@@ -135,11 +131,7 @@ public class HIRTestExecutor implements Executor {
          * @param compiler the compiler
          */
         public HIRGenerator(RiRuntime runtime, Target target, C1XCompiler compiler) {
-<<<<<<< local
-            this.ciRuntime = runtime;
-=======
             this.riRuntime = runtime;
->>>>>>> other
             this.target = target;
             this.compiler = compiler;
         }
@@ -149,11 +141,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-<<<<<<< local
-            C1XCompilation compilation = new C1XCompilation(compiler, target, ciRuntime, classMethodActor);
-=======
             C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
->>>>>>> other
             compilation.compile();
             return compilation.hir();
         }

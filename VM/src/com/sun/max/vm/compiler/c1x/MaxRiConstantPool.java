@@ -31,11 +31,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
-<<<<<<< local
- * The <code>MaxCiConstantPool</code> class implements a constant pool for
-=======
  * The <code>MaxRiConstantPool</code> class implements a constant pool for
->>>>>>> other
  * the compiler interface, including support for looking up constants during
  * compilation, as well as runtime support for resolving constants in
  * the compiled code.
@@ -62,10 +58,6 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @param constantPool the actual constant pool contents
      */
     MaxRiConstantPool(MaxRiRuntime runtime, ConstantPool constantPool) {
-<<<<<<< local
-        //assert constantPool != null && runtime != null;
-=======
->>>>>>> other
         this.runtime = runtime;
         this.constantPool = constantPool;
     }
@@ -233,19 +225,11 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     private MaxRiField resolveField(char cpi) {
-<<<<<<< local
-        return canonicalCiField(constantPool.fieldAt(cpi).resolve(constantPool, cpi));
-=======
         return canonicalRiField(constantPool.fieldAt(cpi).resolve(constantPool, cpi));
->>>>>>> other
     }
 
     private MaxRiMethod resolveMethod(char cpi) {
-<<<<<<< local
-        return canonicalCiMethod(constantPool.methodAt(cpi).resolve(constantPool, cpi));
-=======
         return canonicalRiMethod(constantPool.methodAt(cpi).resolve(constantPool, cpi));
->>>>>>> other
     }
 
     /**
@@ -254,11 +238,7 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @return the compiler interface type resolved at that index
      */
     public RiType resolveType(char cpi) {
-<<<<<<< local
-        return canonicalCiType(constantPool.classAt(cpi).resolve(constantPool, cpi));
-=======
         return canonicalRiType(constantPool.classAt(cpi).resolve(constantPool, cpi));
->>>>>>> other
     }
 
     /**
@@ -326,18 +306,10 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiField fieldFrom(FieldRefConstant constant, int cpi) {
         if (constant instanceof FieldRefConstant.Resolved) {
             // already resolved
-<<<<<<< local
-            return canonicalCiField(((FieldRefConstant.Resolved) constant).fieldActor());
-=======
             return canonicalRiField(((FieldRefConstant.Resolved) constant).fieldActor());
->>>>>>> other
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-<<<<<<< local
-            return canonicalCiField(constant.resolve(constantPool, cpi));
-=======
             return canonicalRiField(constant.resolve(constantPool, cpi));
->>>>>>> other
         }
         return new MaxRiField(this, constant); // unresolved
     }
@@ -345,25 +317,13 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiMethod methodFrom(MethodRefConstant constant, int cpi) {
         if (constant instanceof ClassMethodRefConstant.Resolved) {
             // already resolved
-<<<<<<< local
-            return canonicalCiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor());
-=======
             return canonicalRiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor());
->>>>>>> other
         } else if (constant instanceof InterfaceMethodRefConstant.Resolved) {
             // already resolved
-<<<<<<< local
-            return canonicalCiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor());
-=======
             return canonicalRiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor());
->>>>>>> other
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-<<<<<<< local
-            return canonicalCiMethod(constant.resolve(constantPool, cpi));
-=======
             return canonicalRiMethod(constant.resolve(constantPool, cpi));
->>>>>>> other
         }
         return new MaxRiMethod(this, constant); // unresolved
     }
@@ -371,18 +331,10 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiType typeFrom(ClassConstant constant, int cpi) {
         if (constant instanceof ClassConstant.Resolved) {
             // already resolved
-<<<<<<< local
-            return canonicalCiType(((ClassConstant.Resolved) constant).classActor);
-=======
             return canonicalRiType(((ClassConstant.Resolved) constant).classActor);
->>>>>>> other
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-<<<<<<< local
-            return canonicalCiType(constant.resolve(constantPool, cpi));
-=======
             return canonicalRiType(constant.resolve(constantPool, cpi));
->>>>>>> other
         }
         return new MaxRiType(this, constant); // unresolved
     }
@@ -392,22 +344,13 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     /**
-<<<<<<< local
-     * Canonicalizes resolved <code>MaxCiType</code> instances (per runtime), so
-     * that the same <code>MaxCiType</code> instance is always returned for the
-=======
      * Canonicalizes resolved <code>MaxRiType</code> instances (per runtime), so
      * that the same <code>MaxRiType</code> instance is always returned for the
->>>>>>> other
      * same <code>ClassActor</code>.
      * @param classActor the class actor for which to get the canonical type
      * @return the canonical compiler interface type for the class actor
      */
-<<<<<<< local
-    public MaxRiType canonicalCiType(ClassActor classActor) {
-=======
     public MaxRiType canonicalRiType(ClassActor classActor) {
->>>>>>> other
         final MaxRiType type = new MaxRiType(this, classActor);
         synchronized (runtime) {
             // all resolved types are canonicalized per runtime instance
@@ -421,22 +364,13 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     /**
-<<<<<<< local
-     * Canonicalizes resolved <code>MaxCiMethod</code> instances (per runtime), so
-     * that the same <code>MaxCiMethod</code> instance is always returned for the
-=======
      * Canonicalizes resolved <code>MaxRiMethod</code> instances (per runtime), so
      * that the same <code>MaxRiMethod</code> instance is always returned for the
->>>>>>> other
      * same <code>MethodActor</code>.
      * @param methodActor the mehtod actor for which to get the canonical type
      * @return the canonical compiler interface method for the method actor
      */
-<<<<<<< local
-    public MaxRiMethod canonicalCiMethod(MethodActor methodActor) {
-=======
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor) {
->>>>>>> other
         final MaxRiMethod method = new MaxRiMethod(this, methodActor);
         synchronized (runtime) {
             // all resolved methods are canonicalized per runtime instance
@@ -450,22 +384,13 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     /**
-<<<<<<< local
-     * Canonicalizes resolved <code>MaxCiFielde</code> instances (per runtime), so
-     * that the same <code>MaxCiField</code> instance is always returned for the
-=======
      * Canonicalizes resolved <code>MaxRiFielde</code> instances (per runtime), so
      * that the same <code>MaxRiField</code> instance is always returned for the
->>>>>>> other
      * same <code>FieldActor</code>.
      * @param fieldActor the field actor for which to get the canonical type
      * @return the canonical compiler interface field for the field actor
      */
-<<<<<<< local
-    public MaxRiField canonicalCiField(FieldActor fieldActor) {
-=======
     public MaxRiField canonicalRiField(FieldActor fieldActor) {
->>>>>>> other
         final MaxRiField field = new MaxRiField(this, fieldActor);
         synchronized (runtime) {
             // all resolved field are canonicalized per runtime instance
@@ -502,15 +427,11 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @return a compiler interface exception handler object
      */
     public RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-<<<<<<< local
         return new MaxRiExceptionHandler(startBCI, endBCI, catchBCI, classCPI, (classCPI == 0) ? null : resolveType((char) classCPI));
     }
 
     @Override
     public Object encoding() {
         return this.constantPool;
-=======
-        return new MaxRiExceptionHandler(startBCI, endBCI, catchBCI, classCPI);
->>>>>>> other
     }
 }

@@ -23,11 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.ci.*;
 
 /**
-<<<<<<< local
- * The <code>MaxCiExceptionHandler</code> represents an exception handler
-=======
  * The <code>MaxRiExceptionHandler</code> represents an exception handler
->>>>>>> other
  * in the compiler interface.
  *
  * @author Ben L. Titzer
@@ -38,10 +34,7 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
     private final int endBCI;
     private final int handlerBCI;
     private final int classCPI;
-<<<<<<< local
     private final RiType classType;
-=======
->>>>>>> other
 
     /**
      * Creates a new exception handler with the specified ranges.
@@ -49,24 +42,14 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
      * @param endBCI the end index of the protected range
      * @param catchBCI the index of the handler
      * @param classCPI the index of the throwable class in the constant pool
-<<<<<<< local
      * @param maxCiType
-=======
->>>>>>> other
      */
-<<<<<<< local
     public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
-=======
-    public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
->>>>>>> other
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;
         this.classCPI = classCPI;
-<<<<<<< local
         this.classType = classType;
-=======
->>>>>>> other
     }
 
     /**
@@ -108,12 +91,9 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
     public boolean isCatchAll() {
         return classCPI == 0;
     }
-<<<<<<< local
 
     @Override
     public RiType catchKlass() {
         return classType;
     }
-=======
->>>>>>> other
 }

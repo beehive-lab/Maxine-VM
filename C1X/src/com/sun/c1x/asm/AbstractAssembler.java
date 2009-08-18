@@ -67,11 +67,7 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-<<<<<<< local
     public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList) {
-=======
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize) {
->>>>>>> other
 
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());

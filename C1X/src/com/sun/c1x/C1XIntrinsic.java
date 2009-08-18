@@ -300,11 +300,7 @@ public enum C1XIntrinsic {
      * @param riMethod the compiler interface method for matching
      * @param reflectMethod the reflection method to execute for folding
      */
-<<<<<<< local
-    public static void registerFoldableMethod(RiMethod ciMethod, Method reflectMethod) {
-=======
     public static void registerFoldableMethod(RiMethod riMethod, Method reflectMethod) {
->>>>>>> other
         reflectMethod.setAccessible(true);
         foldableMap.put(riMethod, reflectMethod);
         anyFoldables = true;
@@ -317,11 +313,7 @@ public enum C1XIntrinsic {
      * @return the reflective method for the compiler interface method, if one is register; <code>null</code>
      * otherwise
      */
-<<<<<<< local
-    public static Method getFoldableMethod(RiMethod ciMethod) {
-=======
     public static Method getFoldableMethod(RiMethod riMethod) {
->>>>>>> other
         if (anyFoldables) {
             return foldableMap.get(riMethod);
         }
