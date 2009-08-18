@@ -2079,14 +2079,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
      /**
-     * Action:  toggle on/off a breakpoint at the target code location of the current focus.
+     * Action:  toggle on/off a breakpoint at the target code location specified, or
+     * if not initialized, then to the target code location of the current focus.
      */
     final class ToggleTargetCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Toggle target code breakpoint";
 
+        private final Address address;
+
         ToggleTargetCodeBreakpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = null;
             refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
@@ -2094,11 +2098,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     refresh(false);
                 }
             });
+            refresh(true);
+        }
+
+        ToggleTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
         }
 
         @Override
         protected void procedure() {
-            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
+            final Address targetCodeInstructionAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
             if (!targetCodeInstructionAddress.isZero()) {
                 TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
@@ -2128,6 +2138,23 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction toggleTargetCodeBreakpoint() {
         return toggleTargetCodeBreakpoint;
+    }
+
+    /**
+     * @param title string that identifies the action
+     * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
+     */
+    public final InspectorAction toggleTargetCodeBreakpoint(String title) {
+        return new ToggleTargetCodeBreakpointAction(title);
+    }
+
+    /**
+     * @param address code location
+     * @param title string that identifies the action
+     * @return an Action that will toggle on/off a breakpoint at the specified target code location.
+     */
+    public final InspectorAction toggleTargetCodeBreakpoint(Address address, String title) {
+        return new ToggleTargetCodeBreakpointAction(address, title);
     }
 
 
