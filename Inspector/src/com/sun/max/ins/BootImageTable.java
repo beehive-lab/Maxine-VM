@@ -57,7 +57,6 @@ public final class BootImageTable extends InspectorTable {
         this.columnModel = new BootImageColumnModel(viewPreferences);
         configureMemoryTable(model, columnModel);
         setRowSelectionAllowed(false);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
     }
 
     public void refresh(boolean force) {

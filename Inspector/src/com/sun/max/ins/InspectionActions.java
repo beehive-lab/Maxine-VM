@@ -2810,6 +2810,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.teleObject = teleObject;
             this.fieldActor = fieldActor;
             this.memoryRegion = teleObject.getCurrentMemoryRegion(fieldActor);
+            refresh(true);
         }
 
         @Override
@@ -2860,19 +2861,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Watch array element";
         private final TeleObject teleObject;
         private final Kind elementKind;
-        private final int arrayOffsetFromOrigin;
+        private final Offset arrayOffsetFromOrigin;
         private final int index;
         private final String indexPrefix;
         private final MemoryRegion memoryRegion;
 
-        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String title) {
+        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.teleObject = teleObject;
             this.elementKind = elementKind;
             this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
             this.index = index;
             this.indexPrefix = indexPrefix;
-            final Pointer address = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin + (index * elementKind.width.numberOfBytes));
+            final Pointer address = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
             this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
             refresh(true);
         }
@@ -2915,7 +2916,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param string a title for the action, use default name if null
      * @return an Action that will set an array element watchpoint.
      */
-    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, int arrayOffsetFromOrigin, int index, String indexPrefix, String string) {
+    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String string) {
         return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, string);
     }
 
