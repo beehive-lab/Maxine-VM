@@ -69,6 +69,7 @@ epilogue
 floatable
 generational
 hashcode
+hexadecimal
 hotspot
 iff
 initialize
@@ -101,6 +102,7 @@ namespace
 nop
 nops
 payload
+polymorphic
 popup
 preprocessed
 primordial
