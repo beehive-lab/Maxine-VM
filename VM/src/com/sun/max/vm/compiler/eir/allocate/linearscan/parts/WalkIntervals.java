@@ -90,10 +90,10 @@ public class WalkIntervals extends AlgorithmPart {
 
             final EirRegister register = variable.location().asRegister();
             if (register != null && !variable.isLocationFixed()) {
-                if (register.category() == EirLocationCategory.FLOATING_POINT_REGISTER && register.ordinal() < data().floatingPointRegisters().length) {
-                    assert data().floatingPointRegisters()[register.ordinal()] != null;
-                } else if (register.ordinal() < data().integerRegisters().length) {
-                    assert data().integerRegisters()[register.ordinal()] != null;
+                if (register.category() == EirLocationCategory.FLOATING_POINT_REGISTER && register.ordinal < data().floatingPointRegisters().length) {
+                    assert data().floatingPointRegisters()[register.ordinal] != null;
+                } else if (register.ordinal < data().integerRegisters().length) {
+                    assert data().integerRegisters()[register.ordinal] != null;
                 }
             }
         }
@@ -137,7 +137,7 @@ public class WalkIntervals extends AlgorithmPart {
         int length = registers.length;
         for (EirRegister reg : registers) {
             if (reg != null) {
-                length = Math.max(length, reg.ordinal() + 1);
+                length = Math.max(length, reg.ordinal + 1);
             }
         }
 
@@ -205,7 +205,7 @@ public class WalkIntervals extends AlgorithmPart {
 
                 final EirRegister fixedReg = interval.variable().location().asRegister();
 
-                if (fixedReg != null && registers.length > fixedReg.ordinal() && registers[fixedReg.ordinal()] != null) {
+                if (fixedReg != null && registers.length > fixedReg.ordinal && registers[fixedReg.ordinal] != null) {
                     // Fixed interval with register => make it active!
                     assert interval.register() != null;
                     active.append(interval);
@@ -371,11 +371,11 @@ public class WalkIntervals extends AlgorithmPart {
             final EirRegister register = interval.register();
             if (interval.isFixed()) {
                 // Fixed active
-                blockPos[register.ordinal()] = 0;
+                blockPos[register.ordinal] = 0;
             } else {
                 // Non-fixed active
                 final int nextUsage = interval.nextUsageAfter(current.getFirstRangeStart());
-                usePos[register.ordinal()] = Math.min(usePos[register.ordinal()], nextUsage);
+                usePos[register.ordinal] = Math.min(usePos[register.ordinal], nextUsage);
             }
         }
 
@@ -388,11 +388,11 @@ public class WalkIntervals extends AlgorithmPart {
 
                 if (interval.isFixed()) {
                     // Fixed inactive
-                    blockPos[register.ordinal()] = Math.min(blockPos[register.ordinal()], nextIntersection);
+                    blockPos[register.ordinal] = Math.min(blockPos[register.ordinal], nextIntersection);
                 } else {
                     // Non-fixed inactive
                     final int nextUsage = interval.nextUsageAfter(current.getFirstRangeStart());
-                    usePos[register.ordinal()] = Math.min(usePos[register.ordinal()], nextUsage);
+                    usePos[register.ordinal] = Math.min(usePos[register.ordinal], nextUsage);
                 }
             }
         }
@@ -563,7 +563,7 @@ public class WalkIntervals extends AlgorithmPart {
 
         for (Interval interval : active) {
             assert interval.register() != null;
-            freePos[interval.register().ordinal()] = 0;
+            freePos[interval.register().ordinal] = 0;
         }
 
         for (Interval interval : inactive) {
@@ -574,7 +574,7 @@ public class WalkIntervals extends AlgorithmPart {
 
                 if (nextIntersection != -1) {
                     assert nextIntersection >= position;
-                    final int ordial = register.ordinal();
+                    final int ordial = register.ordinal;
                     freePos[ordial] = Math.min(freePos[ordial], nextIntersection);
                 }
             }
@@ -591,7 +591,7 @@ public class WalkIntervals extends AlgorithmPart {
 
         if (current.preferredLocation() != null && current.preferredLocation().asRegister() != null) {
 
-            final int preferredRegister = current.preferredLocation().asRegister().ordinal();
+            final int preferredRegister = current.preferredLocation().asRegister().ordinal;
             if (preferredRegister != bestRegister && preferredRegister < registers.length && registers[preferredRegister] != null && freePos[preferredRegister] > position + 1) {
                 bestRegister = preferredRegister;
                 highestFreePos = freePos[preferredRegister];
@@ -604,7 +604,7 @@ public class WalkIntervals extends AlgorithmPart {
 
         if (current.register() != null) {
             // This variable has already a register assigned! Make sure this is no problem!
-            assert freePos[current.register().ordinal()] > position;
+            assert freePos[current.register().ordinal] > position;
             return true;
         }
 

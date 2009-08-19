@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 /**
  * A policy object that helps with taking decisions with respect to when to refill a tlab on allocation failure, what size the tlab should have on next refill etc....
  * TLABRefillPolicy are stored in a thread local variable TLAB_REFILL_POLICY if tlabs are being used. Threads may refer to the same TLAB policy or
@@ -36,7 +35,7 @@ public abstract class TLABRefillPolicy {
     /**
      * Thread local holding the thread's refill policy.
      */
-    private static final VmThreadLocal TLAB_REFILL_POLICY = new VmThreadLocal("TLAB_REFILL_POLICY", Kind.REFERENCE, "Refill policy for thread's TLABs");
+    private static final VmThreadLocal TLAB_REFILL_POLICY = new VmThreadLocal("TLAB_REFILL_POLICY", true, "Refill policy for thread's TLABs");
 
     /**
      * Storage for saving the TLAB's allocation mark. Used when disabling / enabling allocation.

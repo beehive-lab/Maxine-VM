@@ -488,6 +488,21 @@ public final class Inspection {
         Trace.begin(TRACE_VALUE, threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
+            final MaxThread currentThread = focus().thread();
+            if (!currentThread.isLive()) {
+                boolean foundMatchingThread = false;
+                for (MaxThread thread : maxVMState().threads()) {
+                    if (thread.handle() == currentThread.handle()) {
+                        focus().setThread(thread);
+                        foundMatchingThread = true;
+                        break;
+                    }
+                }
+                if (!foundMatchingThread && !maxVMState().threads().isEmpty()) {
+                    // Need to preserve invariant that a live thread is the current focus
+                    focus().setThread(maxVMState().threads().first());
+                }
+            }
             for (MaxThread thread : maxVMState().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(thread);

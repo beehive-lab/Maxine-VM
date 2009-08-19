@@ -166,7 +166,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                 removeInterferingRegisters(v, availableRegisters);
             } else if (v.location() instanceof EirStackSlot) {
                 final EirStackSlot stackSlot = (EirStackSlot) v.location();
-                final int stackSlotIndex = stackSlot.offset() / methodGeneration().abi.stackSlotSize();
+                final int stackSlotIndex = stackSlot.offset / methodGeneration().abi.stackSlotSize();
                 stackSlots.set(stackSlotIndex);
             }
         }

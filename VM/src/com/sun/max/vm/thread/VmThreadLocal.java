@@ -33,7 +33,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The predefined VM thread local variables and mechanisms for accessing them.
@@ -64,9 +63,9 @@ import com.sun.max.vm.type.*;
 public class VmThreadLocal {
 
     /**
-     * The kind of this variable.
+     * Specifies if this variable is a reference.
      */
-    public final Kind kind;
+    public final boolean isReference;
 
     /**
      * The name of this variable.
@@ -98,64 +97,64 @@ public class VmThreadLocal {
     /**
      * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
      */
-    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", Kind.WORD, "memory location loaded by safepoint instruction");
+    public static final VmThreadLocal SAFEPOINT_LATCH = new VmThreadLocal("SAFEPOINT_LATCH", false, "memory location loaded by safepoint instruction");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#enable() enabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_ENABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints enabled");
+        = new VmThreadLocal("SAFEPOINTS_ENABLED_THREAD_LOCALS", false, "points to TLS used when safepoints enabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#disable() disabled}.
      */
     public static final VmThreadLocal SAFEPOINTS_DISABLED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints disabled");
+        = new VmThreadLocal("SAFEPOINTS_DISABLED_THREAD_LOCALS", false, "points to TLS used when safepoints disabled");
 
     /**
      * The {@linkplain VmThread#currentVmThreadLocals() current} thread local storage when safepoints for the thread are
      * {@linkplain Safepoint#trigger(Pointer) triggered}.
      */
     public static final VmThreadLocal SAFEPOINTS_TRIGGERED_THREAD_LOCALS
-        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", Kind.WORD, "points to TLS used when safepoints triggered");
+        = new VmThreadLocal("SAFEPOINTS_TRIGGERED_THREAD_LOCALS", false, "points to TLS used when safepoints triggered");
 
-    public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", Kind.WORD, "pointer to a NativeThreadLocalsStruct");
+    public static final VmThreadLocal NATIVE_THREAD_LOCALS = new VmThreadLocal("NATIVE_THREAD_LOCALS", false, "pointer to a NativeThreadLocalsStruct");
 
     /**
      * Next link for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", Kind.WORD, "points to next thread locals in list of all active");
+    public static final VmThreadLocal FORWARD_LINK = new VmThreadLocal("FORWARD_LINK", false, "points to next thread locals in list of all active");
 
     /**
      * Previous link for a doubly-linked list of all thread locals for active threads.
      */
-    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", Kind.WORD, "points to previous thread locals in list of all active");
+    public static final VmThreadLocal BACKWARD_LINK = new VmThreadLocal("BACKWARD_LINK", false, "points to previous thread locals in list of all active");
 
     /**
      * The procedure to run when a safepoint has been triggered.
      */
     public static final VmThreadLocal SAFEPOINT_PROCEDURE
-        = new VmThreadLocal("SAFEPOINT_PROCEDURE", Kind.REFERENCE, "Procedure to run when a safepoint is triggered");
+        = new VmThreadLocal("SAFEPOINT_PROCEDURE", true, "Procedure to run when a safepoint is triggered");
 
     /**
      * Holds the exception object for the exception currently being raised. This value will only be non-null very briefly.
      */
     public static final VmThreadLocal EXCEPTION_OBJECT
-        = new VmThreadLocal("EXCEPTION_OBJECT", Kind.REFERENCE, "The exception being raised");
+        = new VmThreadLocal("EXCEPTION_OBJECT", true, "The exception being raised");
 
     /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
      *
      * @see VmThread#id()
      */
-    public static final VmThreadLocal ID = new VmThreadLocal("ID", Kind.WORD, "Native ID of VM thread holding these locals");
+    public static final VmThreadLocal ID = new VmThreadLocal("ID", false, "Native ID of VM thread holding these locals");
 
     /**
      * Reference to the {@link VmThread} associated with a set of thread locals.
      */
-    public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", Kind.REFERENCE, "VM thread holding these locals") {
+    public static final VmThreadLocal VM_THREAD = new VmThreadLocal("VM_THREAD", true, "VM thread holding these locals") {
         @Override
         public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {
             super.log(out, vmThreadLocals, prefixName);
@@ -170,53 +169,53 @@ public class VmThreadLocal {
     /**
      * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
      */
-    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", Kind.WORD, "points to table of JNI functions");
+    public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", false, "points to table of JNI functions");
 
-    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", Kind.WORD, "");
-    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", Kind.WORD, "");
+    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", false, "");
+    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", false, "");
 
     /**
      * Records the instruction pointer in the Java frame for the call that transitioned to native code. If this value is
      * zero then, the thread is not in native code.
      */
     public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER
-        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER", Kind.WORD, "IP in Java frame at call to native code, 0 of if not in native");
+        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER", false, "IP in Java frame at call to native code, 0 of if not in native");
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER_FOR_C", Kind.WORD, "Stack pointer for last Java caller to a C function");
+        = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER_FOR_C", false, "Stack pointer for last Java caller to a C function");
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER_FOR_C", Kind.WORD, "Frame pointer for last Java caller to a C function");
+        = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER_FOR_C", false, "Frame pointer for last Java caller to a C function");
 
     /**
      * Records information for the last Java caller for {@link C_FUNCTION} calls.
      * This is only used by the Inspector for debugging
      */
     public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C", Kind.WORD, "IP for last Java caller to a C function");
+        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C", false, "IP for last Java caller to a C function");
 
     /**
      * The state of this thread with respect to GC. This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
      */
-    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", Kind.WORD, "Thread state wrt GC");
+    public static final VmThreadLocal MUTATOR_STATE = new VmThreadLocal("MUTATOR_STATE", false, "Thread state wrt GC");
 
     /**
      * A boolean denoting whether a GC is in progress. A non-zero value means true, a zero value means false.
      */
-    public static final VmThreadLocal GC_STATE = new VmThreadLocal("GC_STATE", Kind.WORD, "Non-zero if GC in progress");
+    public static final VmThreadLocal GC_STATE = new VmThreadLocal("GC_STATE", false, "Non-zero if GC in progress");
 
     /**
      * The number of the trap (i.e. signal) that occurred.
      */
-    public static final VmThreadLocal TRAP_NUMBER = new VmThreadLocal("TRAP_NUMBER", Kind.WORD, "Number of the trap (signal) that occurred");
+    public static final VmThreadLocal TRAP_NUMBER = new VmThreadLocal("TRAP_NUMBER", false, "Number of the trap (signal) that occurred");
 
     /**
      * The value of the instruction pointer when the last trap occurred.
@@ -224,19 +223,19 @@ public class VmThreadLocal {
      * used by the C trap handler and the prologue of the trap stub to pass information.
      */
     public static final VmThreadLocal TRAP_INSTRUCTION_POINTER
-        = new VmThreadLocal("TRAP_INSTRUCTION_POINTER", Kind.WORD, "IP when last trap occurred; short-lived");
+        = new VmThreadLocal("TRAP_INSTRUCTION_POINTER", false, "IP when last trap occurred; short-lived");
 
     /**
      * The fault address causing the trap.
      */
     public static final VmThreadLocal TRAP_FAULT_ADDRESS
-        = new VmThreadLocal("TRAP_FAULT_ADDRESS", Kind.WORD, "Fault address causing last trap; short-lived");
+        = new VmThreadLocal("TRAP_FAULT_ADDRESS", false, "Fault address causing last trap; short-lived");
 
     /**
      * The value of the latch register when the last trap occurred.
      */
     public static final VmThreadLocal TRAP_LATCH_REGISTER
-        = new VmThreadLocal("TRAP_LATCH_REGISTER", Kind.WORD, "Value of latch register at last trap; short-lived");
+        = new VmThreadLocal("TRAP_LATCH_REGISTER", false, "Value of latch register at last trap; short-lived");
 
     /**
      * The address of the stack slot with the highest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
@@ -244,7 +243,7 @@ public class VmThreadLocal {
      * Once initialized, this value does not change for the lifetime of the thread.
      */
     public static final VmThreadLocal HIGHEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with highest address covered by stack reference map");
+        = new VmThreadLocal("HIGHEST_STACK_SLOT_ADDRESS", false, "points to stack slot with highest address covered by stack reference map");
 
     /**
      * The address of the stack slot with the lowest address that is covered by the {@linkplain #STACK_REFERENCE_MAP
@@ -252,7 +251,7 @@ public class VmThreadLocal {
      * not change for the lifetime of the thread.
      */
     public static final VmThreadLocal LOWEST_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", Kind.WORD, "points to stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_STACK_SLOT_ADDRESS", false, "points to stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the active stack slot with the lowest address that is covered by the
@@ -264,7 +263,7 @@ public class VmThreadLocal {
      * needs to have its <b>complete</b> stack reference map prepared on its behalf.
      */
     public static final VmThreadLocal LOWEST_ACTIVE_STACK_SLOT_ADDRESS
-        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", Kind.WORD, "points to active stack slot with lowest address covered by stack reference map");
+        = new VmThreadLocal("LOWEST_ACTIVE_STACK_SLOT_ADDRESS", false, "points to active stack slot with lowest address covered by stack reference map");
 
     /**
      * The address of the stack reference map. This reference map has sufficient capacity to store a bit for each
@@ -273,24 +272,24 @@ public class VmThreadLocal {
      * bit 0) denotes the address given by {@code STACK_TOP_FOR_REFERENCE_MAP}.
      */
     public static final VmThreadLocal STACK_REFERENCE_MAP
-        = new VmThreadLocal("STACK_REFERENCE_MAP", Kind.WORD, "points to stack reference map");
+        = new VmThreadLocal("STACK_REFERENCE_MAP", false, "points to stack reference map");
 
     /**
      * This is address of the object before it got relocated by the GC.
      */
     public static final VmThreadLocal OLD_OBJECT_ADDRESS
-        = new VmThreadLocal("OLD_OBJECT_ADDRESS", Kind.WORD, "Old address of an object, before compaction");
+        = new VmThreadLocal("OLD_OBJECT_ADDRESS", false, "Old address of an object, before compaction");
 
     /**
      * This is the new address of the object after relocation.
      */
     public static final VmThreadLocal NEW_OBJECT_ADDRESS
-        = new VmThreadLocal("NEW_OBJECT_ADDRESS", Kind.WORD, "New address of an object, after compaction");
+        = new VmThreadLocal("NEW_OBJECT_ADDRESS", false, "New address of an object, after compaction");
 
     /**
      * Records the size of the native call stack.
      */
-    public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", Kind.INT, "Size of the native call stack");
+    public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", false, "Size of the native call stack");
 
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
@@ -331,7 +330,7 @@ public class VmThreadLocal {
                 if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
                     valuesNeedingInitialization.append(value);
                 }
-                if (value.kind == Kind.REFERENCE) {
+                if (value.isReference) {
                     referenceVmThreadLocals.append(value);
                 }
             }
@@ -357,12 +356,12 @@ public class VmThreadLocal {
      * Creates a new thread local variable and adds a slot for it to the map.
      *
      * @param name name of the variable
-     * @param kind the kind of value held by the variable
+     * @param isReference specifies if this variable is a reference
      * @param description a very short textual description, useful for debugging
      */
     @PROTOTYPE_ONLY
-    public VmThreadLocal(String name, Kind kind, String description) {
-        this.kind = kind;
+    public VmThreadLocal(String name, boolean isReference, String description) {
+        this.isReference = isReference;
         this.name = name;
         this.index = values.length();
         this.offset = index * Word.size();

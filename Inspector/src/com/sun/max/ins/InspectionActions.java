@@ -2079,14 +2079,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
      /**
-     * Action:  toggle on/off a breakpoint at the target code location of the current focus.
+     * Action:  toggle on/off a breakpoint at the target code location specified, or
+     * if not initialized, then to the target code location of the current focus.
      */
     final class ToggleTargetCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Toggle target code breakpoint";
 
+        private final Address address;
+
         ToggleTargetCodeBreakpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = null;
             refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
@@ -2094,11 +2098,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     refresh(false);
                 }
             });
+            refresh(true);
+        }
+
+        ToggleTargetCodeBreakpointAction(Address address, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
         }
 
         @Override
         protected void procedure() {
-            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
+            final Address targetCodeInstructionAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
             if (!targetCodeInstructionAddress.isZero()) {
                 TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
@@ -2128,6 +2138,23 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction toggleTargetCodeBreakpoint() {
         return toggleTargetCodeBreakpoint;
+    }
+
+    /**
+     * @param title string that identifies the action
+     * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
+     */
+    public final InspectorAction toggleTargetCodeBreakpoint(String title) {
+        return new ToggleTargetCodeBreakpointAction(title);
+    }
+
+    /**
+     * @param address code location
+     * @param title string that identifies the action
+     * @return an Action that will toggle on/off a breakpoint at the specified target code location.
+     */
+    public final InspectorAction toggleTargetCodeBreakpoint(Address address, String title) {
+        return new ToggleTargetCodeBreakpointAction(address, title);
     }
 
 
@@ -3391,24 +3418,28 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread in the VM until it reaches the selected instruction,
-     * ignoring breakpoints.
+     * Action:  advance the currently selected thread in the VM until it reaches the specified instruction, or
+     * if none specified, then the currently selected instruction, ignoring breakpoints.
      */
-    final class DebugRunToSelectedInstructionAction extends InspectorAction {
+    final class DebugRunToInstructionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction (ignoring breakpoints)";
 
-        DebugRunToSelectedInstructionAction(String title) {
+        private final Address address;
+
+        DebugRunToInstructionAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
             refreshableActions.append(this);
+            refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
-            if (!selectedAddress.isZero()) {
+            final Address ttargetAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
+            if (!ttargetAddress.isZero()) {
                 try {
-                    maxVM().runToInstruction(selectedAddress, false, true);
+                    maxVM().runToInstruction(ttargetAddress, false, true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -3423,7 +3454,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugRunToSelectedInstruction = new DebugRunToSelectedInstructionAction(null);
+    private final InspectorAction debugRunToSelectedInstruction = new DebugRunToInstructionAction(null, null);
 
     /**
      * @return an Action that will resume execution in the VM, stopping at the the currently
@@ -3433,26 +3464,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugRunToSelectedInstruction;
     }
 
+    /**
+     * @param address a code location in the VM
+     * @param title string that describes the action
+     * @return an Action that will resume execution in the VM, stopping at the specified
+     * code location, ignoring breakpoints.
+     */
+    public final InspectorAction debugRunToInstruction(Address address, String title) {
+        return new DebugRunToInstructionAction(address, title);
+    }
+
 
     /**
-     * Action:  advance the currently selected thread in the VM until it reaches the selected instruction
-     * or a breakpoint, whichever comes first.
+     * Action:  advance the currently selected thread in the VM until it reaches the specified code location
+     * (or the currently selected instruction if none specified) or a breakpoint, whichever comes first.
      */
-    final class DebugRunToSelectedInstructionWithBreakpointsAction extends InspectorAction {
+    final class DebugRunToInstructionWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction";
 
-        DebugRunToSelectedInstructionWithBreakpointsAction(String title) {
+        final Address address;
+
+        DebugRunToInstructionWithBreakpointsAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.address = address;
             refreshableActions.append(this);
         }
 
         @Override
         protected void procedure() {
-            final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddress();
-            if (!selectedAddress.isZero()) {
+            final Address targetAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
+            if (!targetAddress.isZero()) {
                 try {
-                    maxVM().runToInstruction(selectedAddress, false, false);
+                    maxVM().runToInstruction(targetAddress, false, false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
@@ -3467,7 +3511,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugRunToSelectedInstructionWithBreakpoints = new DebugRunToSelectedInstructionWithBreakpointsAction(null);
+    private final InspectorAction debugRunToSelectedInstructionWithBreakpoints = new DebugRunToInstructionWithBreakpointsAction(null, null);
 
     /**
      * @return an Action that will resume execution in the VM, stopping at the selected instruction
@@ -3477,6 +3521,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugRunToSelectedInstructionWithBreakpoints;
     }
 
+    /**
+     * @param address a code location in the VM
+     * @param title string that identifies the action
+     * @return an Action that will resume execution in the VM, stopping at the specified instruction
+     * or a breakpoint, whichever comes first..
+     */
+    public final InspectorAction debugRunToInstructionWithBreakpoints(Address address, String title) {
+        return new DebugRunToInstructionWithBreakpointsAction(address, title);
+    }
 
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the next call instruction,

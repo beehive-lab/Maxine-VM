@@ -295,7 +295,7 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
 
         @Override
         public void visitThrow(DirThrow dirThrow) {
-            throwable = (Throwable) dirThrow.throwable().value().asObject();
+            throwable = (Throwable) environment.lookup(dirThrow.throwable()).value().asObject();
         }
     }
 

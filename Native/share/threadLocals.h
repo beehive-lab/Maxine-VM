@@ -80,6 +80,19 @@ extern int threadLocalsSize();
  */
 #define getThreadLocal(type, tl, name) ((type) *((Address *) tl + name))
 
+/**
+ * Sets the value of a specified thread local to all three thread local spaces.
+ *
+ * @param tl a ThreadLocals value
+ * @param name the name of the thread local to access (a ThreadLocal_t value)
+ * @param value the value to which the named thread local should be set
+ */
+#define setConstantThreadLocal(tl, name, value) do { \
+    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS) + name) = (Address) (value); \
+    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS) + name) = (Address) (value); \
+    *((Address *) getThreadLocal(ThreadLocals, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS) + name) = (Address) (value); \
+} while (0)
+
 typedef struct {
     jint id; //  0: denotes the primordial thread
              // >0: denotes a VmThread

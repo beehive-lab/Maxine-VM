@@ -168,6 +168,10 @@ public final class MemoryWordsTable extends InspectorTable {
             createColumn(MemoryWordsColumnKind.OFFSET, new OffsetRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.VALUE, new ValueRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.BYTES, new BytesRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.CHAR, new CharRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.UNICODE, new UnicodeRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.FLOAT, new FloatRenderer(inspection()));
+            createColumn(MemoryWordsColumnKind.DOUBLE, new DoubleRenderer(inspection()));
             createColumn(MemoryWordsColumnKind.REGION, new RegionRenderer(inspection()));
         }
 
@@ -449,6 +453,76 @@ public final class MemoryWordsTable extends InspectorTable {
             setBackground(getRowBackgroundColor(row));
             setForeground(getRowTextColor(row));
             setValue(bytes);
+            return this;
+        }
+    }
+
+
+    private final class CharRenderer extends DataLabel.ByteArrayAsChar implements TableCellRenderer {
+        CharRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final byte[] bytes = new byte[model.wordSize.toInt()];
+            maxVM().readFully(address, bytes);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            setValue(bytes);
+            return this;
+        }
+    }
+
+
+    private final class UnicodeRenderer extends DataLabel.ByteArrayAsUnicode implements TableCellRenderer {
+        UnicodeRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final byte[] bytes = new byte[model.wordSize.toInt()];
+            maxVM().readFully(address, bytes);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            setValue(bytes);
+            return this;
+        }
+    }
+
+
+    private final class FloatRenderer extends DataLabel.FloatAsText implements TableCellRenderer {
+        FloatRenderer(Inspection inspection) {
+            super(inspection, 0.0f);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final Word word = maxVM().readWord(address);
+            final WordValue wordValue = new WordValue(word);
+            final float f = Float.intBitsToFloat((int) (wordValue.toLong() & 0xffffffffL));
+            setValue(f);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            return this;
+        }
+    }
+
+
+    private final class DoubleRenderer extends DataLabel.DoubleAsText implements TableCellRenderer {
+        DoubleRenderer(Inspection inspection) {
+            super(inspection, 0.0d);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = model.getMemoryRegion(row).start();
+            final Word word = maxVM().readWord(address);
+            final WordValue wordValue = new WordValue(word);
+            final double f = Double.longBitsToDouble(wordValue.toLong());
+            setValue(f);
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
             return this;
         }
     }
