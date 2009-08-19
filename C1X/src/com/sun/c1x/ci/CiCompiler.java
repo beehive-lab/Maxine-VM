@@ -18,58 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package com.sun.c1x.ci;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.target.Target;
 
 /**
- * The <code>Local</code> instruction is a placeholder for an incoming argument
- * to a function call.
+ * The <code>CiCompiler</code> class represents a compiler instance which has been
+ * configured for a particular runtime system and target machine.
  *
  * @author Ben L. Titzer
  */
-public class Local extends Instruction {
+public abstract class CiCompiler {
+    /**
+     * The target that this compiler has been configured for.
+     */
+    public final Target target;
 
-    private final int javaIndex;
-    private RiType declaredType;
+    /**
+     * The runtime that this compiler has been configured for.
+     */
+    public final RiRuntime runtime;
 
-    public Local(BasicType type, int javaIndex) {
-        super(type);
-        this.javaIndex = javaIndex;
+    protected CiCompiler(RiRuntime runtime, Target target) {
+        this.runtime = runtime;
+        this.target = target;
     }
 
     /**
-     * Gets the index of this local.
-     * @return the index
+     * Compile the specified method.
+     * @param method the method to compile
+     * @return a {@link CiTargetMethod target method} representing the compiled method
      */
-    public int javaIndex() {
-        return javaIndex;
-    }
+    public abstract CiTargetMethod compileMethod(RiMethod method);
 
     /**
-     * Sets the declared type of this local, e.g. derived from the signature of the method.
-     * @param declaredType the declared type of the local variable
+     * Compile the specified method.
+     * @param method the method to compile
+     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
+     * @return a {@link CiTargetMethod target method} representing the compiled method
      */
-    public void setDeclaredType(RiType declaredType) {
-        this.declaredType = declaredType;
-    }
-
-    /**
-     * Computes the declared type of the result of this instruction, if possible.
-     * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
-     */
-    @Override
-    public RiType declaredType() {
-        return declaredType;
-    }
-
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to dispatch to
-     */
-    @Override
-    public void accept(InstructionVisitor v) {
-        v.visitLocal(this);
-    }
+    public abstract CiTargetMethod compileMethod(RiMethod method, int osrBCI);
 }

@@ -377,7 +377,7 @@ public class Canonicalizer extends InstructionVisitor {
     public void visitLoadField(LoadField i) {
         if (i.isStatic() && i.isLoaded() && C1XOptions.CanonicalizeConstantFields) {
             // only try to canonicalize static field loads
-            CiField field = i.field();
+            RiField field = i.field();
             if (field.isConstant()) {
                 setConstant(field.constantValue());
             }
@@ -419,7 +419,7 @@ public class Canonicalizer extends InstructionVisitor {
             }
         } else if (array instanceof LoadField) {
             // the array is a load of a field; check if it is a constant
-            CiField field = ((LoadField) array).field();
+            RiField field = ((LoadField) array).field();
             if (field.isConstant() && field.isStatic()) {
                 Object obj = field.constantValue().asObject();
                 if (obj != null) {
@@ -641,7 +641,7 @@ public class Canonicalizer extends InstructionVisitor {
     @Override
     public void visitInvoke(Invoke i) {
         if (C1XOptions.CanonicalizeFoldableMethods) {
-            CiMethod method = i.target();
+            RiMethod method = i.target();
             if (method.isLoaded()) {
                 // only try to fold resolved method invocations
                 CiConstant result = foldInvocation(i.target(), i.arguments());
@@ -659,7 +659,7 @@ public class Canonicalizer extends InstructionVisitor {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
             Instruction o = i.object();
-            CiType type = o.exactType();
+            RiType type = o.exactType();
             if (type == null) {
                 type = o.declaredType();
             }
@@ -687,7 +687,7 @@ public class Canonicalizer extends InstructionVisitor {
         // we can fold an instanceof if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
             Instruction o = i.object();
-            CiType exact = o.exactType();
+            RiType exact = o.exactType();
             if (exact != null && exact.isLoaded() && (o instanceof NewArray || o instanceof NewInstance)) {
                 // compute instanceof statically for NewArray and NewInstance
                 // XXX: why is it necessary to check (o instanceof New)? isn't exact type sufficient?
@@ -1158,7 +1158,7 @@ public class Canonicalizer extends InstructionVisitor {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(CiMethod method, Instruction[] args) {
+    public static CiConstant foldInvocation(RiMethod method, Instruction[] args) {
         Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
             // the method is foldable. check that all input arguments are constants

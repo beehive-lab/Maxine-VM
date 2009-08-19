@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class IfInstanceOf extends BlockEnd {
 
-    final CiType targetClass;
+    final RiType targetClass;
     Instruction object;
     boolean testIsInstance;
     final int instanceofBCI;
@@ -44,7 +44,7 @@ public class IfInstanceOf extends BlockEnd {
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
      */
-    public IfInstanceOf(CiType targetClass, Instruction object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
+    public IfInstanceOf(RiType targetClass, Instruction object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
         super(BasicType.Illegal, null, false); // XXX: why don't we need the state before??
         this.targetClass = targetClass;
         this.object = object;
@@ -58,7 +58,7 @@ public class IfInstanceOf extends BlockEnd {
      * Gets the target class of the instanceof operation in this branch.
      * @return the target class
      */
-    public CiType targetClass() {
+    public RiType targetClass() {
         return targetClass;
     }
 

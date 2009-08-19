@@ -805,7 +805,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         setNoResult(x);
 
         int[] flags = new int[1];
-        CiType[] expectedType = new CiType[1];
+        RiType[] expectedType = new RiType[1];
         arraycopyHelper(x, flags, expectedType);
 
         CodeEmitInfo info = stateFor(x, x.state()); // we may want to have stack (deoptimization?)
@@ -840,7 +840,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (!x.instanceClass().isLoaded() && C1XOptions.PrintNotLoaded) {
             TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
         }
-        CiType klass = x.instanceClass();
+        RiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {
             lir.oop2reg(klass.encoding(), klassReg);
@@ -849,7 +849,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
-        if (C1XOptions.UseFastNewInstance && klass.isLoaded() && !klass.layoutHelperNeedsSlowPath()) {
+        if (C1XOptions.UseFastNewInstance && klass.isLoaded()) {
 //            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
 //            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
 //            assert klass.isLoaded() : "must be loaded";
@@ -917,7 +917,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand len = length.result();
 
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
-        CiType elementType = x.elementClass().arrayOf();
+        RiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
             Object obj = elementType.encoding();
             lir.oop2reg(obj, klassReg);

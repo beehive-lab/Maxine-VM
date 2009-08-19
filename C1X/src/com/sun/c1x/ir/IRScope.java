@@ -36,7 +36,7 @@ import com.sun.c1x.value.*;
 public class IRScope {
 
     public final IRScope caller;
-    public final CiMethod method;
+    public final RiMethod method;
     public final int level;
 
     final C1XCompilation compilation; // TODO: remove this field
@@ -50,7 +50,7 @@ public class IRScope {
 
     BitMap storesInLoops;
 
-    public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, CiMethod method, int osrBCI) {
+    public IRScope(C1XCompilation compilation, IRScope caller, int callerBCI, RiMethod method, int osrBCI) {
         this.compilation = compilation;
         this.caller = caller;
         this.callerBCI = callerBCI;

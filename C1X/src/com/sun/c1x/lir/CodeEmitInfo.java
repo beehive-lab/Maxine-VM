@@ -124,7 +124,7 @@ public class CodeEmitInfo {
         return scope;
     }
 
-    public CiMethod method() {
+    public RiMethod method() {
         return scope.method;
     }
 

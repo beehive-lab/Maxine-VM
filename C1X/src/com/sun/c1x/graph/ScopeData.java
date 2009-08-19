@@ -44,7 +44,7 @@ public class ScopeData {
     // the bytecode stream
     final BytecodeStream stream;
     // the constant pool
-    final CiConstantPool constantPool;
+    final RiConstantPool constantPool;
     // whether this scope or any parent scope has exception handlers
     boolean hasHandler;
     // the worklist of blocks, managed like a sorted list
@@ -105,7 +105,7 @@ public class ScopeData {
      * @param stream the bytecode stream
      * @param constantPool the constant pool
      */
-    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, CiConstantPool constantPool) {
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, RiConstantPool constantPool) {
         this.parent = parent;
         this.scope = scope;
         this.blockMap = blockMap;
@@ -122,10 +122,10 @@ public class ScopeData {
         } else {
             maxInlineSize = C1XOptions.MaximumInlineSize;
         }
-        List<CiExceptionHandler> handlers = scope.method.exceptionHandlers();
+        List<RiExceptionHandler> handlers = scope.method.exceptionHandlers();
         if (handlers != null && handlers.size() > 0) {
             exceptionHandlers = new ArrayList<ExceptionHandler>(handlers.size());
-            for (CiExceptionHandler ch : handlers) {
+            for (RiExceptionHandler ch : handlers) {
                 ExceptionHandler h = new ExceptionHandler(ch);
                 h.setEntryBlock(blockAt(h.handlerBCI()));
                 exceptionHandlers.add(h);
@@ -144,7 +144,7 @@ public class ScopeData {
      * @param constantPool the constant pool
      * @param jsrEntryBci the bytecode index of the entrypoint of the JSR
      */
-    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, CiConstantPool constantPool, int jsrEntryBci) {
+    public ScopeData(ScopeData parent, IRScope scope, BlockMap blockMap, BytecodeStream stream, RiConstantPool constantPool, int jsrEntryBci) {
         this.parent = parent;
         this.scope = scope;
         this.blockMap = blockMap;

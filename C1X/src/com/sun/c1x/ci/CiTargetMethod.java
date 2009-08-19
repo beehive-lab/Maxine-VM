@@ -25,10 +25,9 @@ import java.util.*;
 import com.sun.c1x.*;
 
 /**
- * This interface represents the consumer of compiler output. When a client
- * of C1X requests a {@link com.sun.c1x.C1XCompilation compilation}, it must supply
- * an instance of this interface which consumes the output and produces
- * its own internal representation of compiled code.
+ * This interface represents the result which encapsulates compiler output, including
+ * the compiled machine code, associated data and references, relocation information,
+ * deoptimization information, etc.
  *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
@@ -50,12 +49,12 @@ public class CiTargetMethod {
     public static class CallSite {
         public final int codePos;
         public final CiRuntimeCall runtimeCall;
-        public final CiMethod method;
+        public final RiMethod method;
         public final Object globalStubID;
         public final boolean direct;
         public final boolean[] stackMap;
 
-        CallSite(int codePos, CiRuntimeCall runtimeCall, CiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
+        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
             this.codePos = codePos;
             this.runtimeCall = runtimeCall;
             this.method = method;
@@ -91,9 +90,9 @@ public class CiTargetMethod {
         final int codePosStart;
         final int codePosEnd;
         final int handlerPos;
-        final CiType exceptionType;
+        final RiType exceptionType;
 
-        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType exceptionType) {
+        ExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType exceptionType) {
             this.codePosStart = codePosStart;
             this.codePosEnd = codePosEnd;
             this.handlerPos = handlerPos;
@@ -197,7 +196,7 @@ public class CiTargetMethod {
      * @param method the method being called
      * @param stackMap the bitmap that indicates which stack locations
      */
-    public void recordDirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+    public void recordDirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
         callSites.add(new CallSite(codePosition, null, method, null, true, stackMap));
         directCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
@@ -209,7 +208,7 @@ public class CiTargetMethod {
      * @param method the method being called
      * @param stackMap the bitmap that indicates which stack locations
      */
-    public void recordIndirectCall(int codePosition, CiMethod method, boolean[] stackMap) {
+    public void recordIndirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
         callSites.add(new CallSite(codePosition, null, method, null, false, stackMap));
         indirectCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
@@ -223,7 +222,7 @@ public class CiTargetMethod {
      * @param handlerPos    the position of the handler
      * @param throwableType the type of exceptions handled by the handler
      */
-    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, CiType throwableType) {
+    public void recordExceptionHandler(int codePosStart, int codePosEnd, int handlerPos, RiType throwableType) {
         exceptionHandlers.add(new ExceptionHandler(codePosStart, codePosEnd, handlerPos, throwableType));
     }
 
