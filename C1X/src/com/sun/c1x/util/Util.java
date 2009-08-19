@@ -655,4 +655,13 @@ public class Util {
     public static boolean is8bit(int x) {
         return -0x80 <= x && x < 0x80;
     }
+
+    public static boolean is16bit(int x) {
+        return -0x8000 <= x && x < 0x8000;
+    }
+
+    public static short safeToShort(int v) {
+        assert is16bit(v);
+        return (short) v;
+    }
 }

@@ -193,6 +193,12 @@ public class LIRLocation extends LIROperand {
     }
 
     @Override
+    public int stackIx() {
+        assert (isSingleStack() || isDoubleStack()) && !isVirtual() : "type check";
+        return -index - 1;
+    }
+
+    @Override
     public int singleStackIx() {
         assert isSingleStack() && !isVirtual() : "type check";
         return -index - 1;

@@ -42,6 +42,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -61,10 +62,10 @@ public class MaxRiRuntime implements RiRuntime {
 
     final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
 
-    final WeakHashMap<MaxRiField, MaxRiField> fields = new WeakHashMap<MaxRiField, MaxRiField>();
-    final WeakHashMap<MaxRiMethod, MaxRiMethod> methods = new WeakHashMap<MaxRiMethod, MaxRiMethod>();
-    final WeakHashMap<MaxRiType, MaxRiType> types = new WeakHashMap<MaxRiType, MaxRiType>();
-    final WeakHashMap<ConstantPool, MaxRiConstantPool> constantPools = new WeakHashMap<ConstantPool, MaxRiConstantPool>();
+    final HashMap<MaxRiField, MaxRiField> fields = new HashMap<MaxRiField, MaxRiField>();
+    final HashMap<MaxRiMethod, MaxRiMethod> methods = new HashMap<MaxRiMethod, MaxRiMethod>();
+    final HashMap<MaxRiType, MaxRiType> types = new HashMap<MaxRiType, MaxRiType>();
+    final HashMap<ConstantPool, MaxRiConstantPool> constantPools = new HashMap<ConstantPool, MaxRiConstantPool>();
 
     /**
      * Gets the constant pool for a specified method.
@@ -226,6 +227,13 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int klassOffsetInBytes() {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
+    }
+
+    @Override
+    public int overflowArgumentsSize(BasicType basicType) {
+        // TODO: Return wordSize
+        // Currently must be a constant!!
+        return 8;
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -511,7 +519,7 @@ public class MaxRiRuntime implements RiRuntime {
 
             if (result[i] == null) {
                 result[i] = new CiLocation(currentStackSlot);
-                currentStackSlot += kind.size;
+                currentStackSlot++; //+= kind.size;
             }
         }
 
@@ -611,5 +619,10 @@ public class MaxRiRuntime implements RiRuntime {
     @Override
     public Register threadRegister() {
         return X86.r14;
+    }
+
+    @Override
+    public int getJITStackSlotSize() {
+        return JitStackFrameLayout.JIT_SLOT_SIZE;
     }
 }

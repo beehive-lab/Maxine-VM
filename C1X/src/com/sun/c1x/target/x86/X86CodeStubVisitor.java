@@ -27,6 +27,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 public class X86CodeStubVisitor implements CodeStubVisitor {
@@ -40,6 +41,87 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         this.ce = lirAssembler;
         this.masm = lirAssembler.masm;
         this.compilation = lirAssembler.compilation;
+    }
+
+    private int overflowArgumentsSize(CallingConvention cc) {
+        int result = 0;
+        for (LIROperand op : cc.args()) {
+            if (op.isStack()) {
+                result += compilation.runtime.overflowArgumentsSize(op.basicType);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
+        masm.bind(stub.entry);
+
+        // Computing how much space need to be allocated on the stack for the adapter. It's at least one slot for saving framePointer(), plus
+        // space for out-of-band arguments.
+        // The stack will look like this:
+        //        <low address>  oarg(n), oarg(n-1), oarg(m), RBP, RIP, jarg(n), jarg(n -1), ... jarg0, ...  <high address>
+        //                               |<--------------------------------------------->|
+        //                                             adapterFrameSize
+        // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
+        // save the caller's RBP
+
+
+        final int wordSize =  masm.target.arch.wordSize;
+
+        // Receive calling convention
+        FrameMap map = compilation.frameMap();
+        CallingConvention cc = map.incomingArguments();
+
+
+        // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
+        final int adapterFrameSize = overflowArgumentsSize(cc);
+
+        // Allocate space on the stack (adapted parameters + caller's frame pointer)
+        masm.push(X86.rbp);
+        if (adapterFrameSize != 0) {
+            masm.decrement(X86.rsp, adapterFrameSize);
+        }
+
+         // Prefix of a frame is RIP + saved RBP.
+        final int framePrefixSize = 2 * wordSize;
+
+        // On entry to the adapter, the top of the stack contains the RIP. The last argument on the stack is
+        // immediately above the RIP.
+        // We set an offset to that last argument (relative to the new stack pointer) and iterate over the arguments
+        // in reverse order,
+        // from last to first.
+        // This avoids computing the size of the arguments to get the offset to the first argument.
+        int jitCallerStackOffset = adapterFrameSize + framePrefixSize;
+
+        final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
+        for (int i = cc.args().size() - 1; i >= 0;  i--) {
+            LIROperand dst = cc.args().get(i);
+            BasicType t = dst.basicType;
+            LIROperand src = LIROperandFactory.address(X86.rsp, jitCallerStackOffset, t);
+
+            if (dst.isStack()) {
+                int stackSlot = dst.stackIx();
+
+                int argumentLocation = compilation.frameMap().getArgumentLocation(stackSlot);
+                int displacement = argumentLocation - compilation.frameMap().framesize() - wordSize;
+                dst = LIROperandFactory.address(X86.rsp, displacement, t);
+                assert displacement < adapterFrameSize && displacement >= 0;
+            }
+            ce.moveOp(src, dst, t, LIRPatchCode.PatchNone, null, false);
+            jitCallerStackOffset += t.size * jitSlotSize;
+        }
+
+        // jitCallerOffset is now set to the first location before the first parameter, i.e., the point where
+        // the caller stack will retract to.
+        masm.call(stub.continuation);
+        final int jitCallArgumentSize = jitCallerStackOffset - (adapterFrameSize + framePrefixSize);
+        if (adapterFrameSize != 0) {
+            masm.increment(X86.rsp, adapterFrameSize);
+        }
+        masm.pop(X86.rbp);
+        // Retract the stack pointer back to its position before the first argument on the caller's stack.
+        masm.ret(Util.safeToShort(jitCallArgumentSize));
     }
 
     public void visitArrayCopyStub(ArrayCopyStub stub) {

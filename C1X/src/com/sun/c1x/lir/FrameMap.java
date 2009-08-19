@@ -75,13 +75,17 @@ public abstract class FrameMap {
         int javaIndex = 0;
         for (int i = 0; i < incomingArguments.length(); i++) {
             LIROperand opr = incomingArguments.at(i);
-            if (opr.isAddress()) {
-                LIRAddress pointer = opr.asAddressPtr();
-                argumentLocations[javaIndex] = pointer.displacement - compilation.target.arch.stackBias;
-                incomingArguments.setArg(i, LIROperandFactory.stack(javaIndex, pointer.type()));
+            if (opr.isStack()) {
+                int stackIndex = opr.stackIx();
+                argumentLocations[javaIndex] = compilation.runtime.overflowArgumentsSize(opr.basicType) * (stackIndex - 1) - compilation.target.arch.stackBias;
+                incomingArguments.setArg(i, LIROperandFactory.stack(javaIndex, opr.type()));
             }
             javaIndex += opr.type().size;
         }
+    }
+
+    public int getArgumentLocation(int index) {
+        return argumentLocations[index];
     }
 
     private static BasicType[] signatureTypeArrayFor(RiMethod method) {
@@ -135,8 +139,12 @@ public abstract class FrameMap {
     private LIROperand mapToOpr(BasicType t, CiLocation location, boolean outgoing) {
 
         if (location.isStackOffset()) {
-            int stackOffset = location.stackOffset * spillSlotSizeInBytes;
-            return LIROperandFactory.address(LIROperandFactory.singleLocation(BasicType.Int, stackRegister()), stackOffset, t);
+            if (outgoing) {
+                int stackOffset = location.stackOffset * spillSlotSizeInBytes;
+                return LIROperandFactory.address(LIROperandFactory.singleLocation(BasicType.Int, stackRegister()), stackOffset, t);
+            } else {
+                return LIROperandFactory.stack(location.stackOffset, t);
+            }
         } else if (location.second == null) {
             assert location.first != null;
             return new LIRLocation(t, location.first);
@@ -157,7 +165,7 @@ public abstract class FrameMap {
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(stackRegister(), reservedArgumentAreaSize + spOffsetForSlot(stackSlot) + offset);
+        return new Address(stackRegister(), spOffsetForSlot(stackSlot) + offset);
     }
 
     int spOffsetForSlot(int index) {
@@ -235,7 +243,7 @@ public abstract class FrameMap {
             LIROperand opr = incomingArguments.at(i);
             if (opr.isStack()) {
                 assert argumentLocations[javaIndex] != -1;
-                argumentLocations[javaIndex] += framesizeInBytes();
+                argumentLocations[javaIndex] += framesizeInBytes() + compilation.target.arch.wordSize;
             }
             javaIndex += opr.basicType.size;
         }
