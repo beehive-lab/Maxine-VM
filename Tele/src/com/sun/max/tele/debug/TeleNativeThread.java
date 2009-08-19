@@ -242,8 +242,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @see com.sun.max.tele.MaxThread#threadLocalsFor(com.sun.max.vm.runtime.Safepoint.State)
      */
     public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
-        assert hasThreadLocals();
         refreshThreadLocals();
+        if (teleVmThreadLocals == null) {
+            return null;
+        }
         return teleVmThreadLocals.get(state);
     }
 
@@ -491,7 +493,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         breakpoint = null;
         teleVmThread = null;
         frameCache = null;
-        teleVmThreadLocals.clear();
+        if (teleVmThreadLocals != null) {
+            teleVmThreadLocals.clear();
+        }
         integerRegisters = null;
         stateRegisters = null;
         floatingPointRegisters = null;
@@ -618,7 +622,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     public boolean equals(Object other) {
         if (other instanceof TeleNativeThread) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) other;
-            return handle() == teleNativeThread.handle();
+            return handle() == teleNativeThread.handle() && id() == teleNativeThread.id();
         }
         return false;
     }

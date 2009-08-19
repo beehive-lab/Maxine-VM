@@ -76,7 +76,7 @@ public abstract class Instruction {
     public static final int INVOCATION_ENTRY_BCI = -1;
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
-    private static int nextID;
+    public static int nextID;
 
     private final int id;
     private int bci;

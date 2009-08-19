@@ -220,6 +220,10 @@ public abstract class LIROperand {
         throw Util.shouldNotReachHere();
     }
 
+    public int stackIx() {
+        throw Util.shouldNotReachHere();
+    }
+
     public int singleStackIx() {
         throw Util.shouldNotReachHere();
     }

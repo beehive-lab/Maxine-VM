@@ -153,7 +153,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         if (traceFilters != null) {
             this.traceCpu = false;
             this.trace = false;
-            final String name = eirMethod.classMethodActor().holder().name + eirMethod.name();
+            final String name = eirMethod.classMethodActor().holder().name + "." + eirMethod.name();
             for (String filter : traceFilters) {
                 if (name.contains(filter)) {
                     this.traceCpu = savedTraceCpu;
@@ -163,7 +163,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
 
-        if (savedTrace && !tracedMethods.contains(eirMethod.classMethodActor())) {
+        if (trace && !tracedMethods.contains(eirMethod.classMethodActor())) {
             tracedMethods.add(eirMethod.classMethodActor());
             Trace.stream().println(eirMethod.traceToString());
         }

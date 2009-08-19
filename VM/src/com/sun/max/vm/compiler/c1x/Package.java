@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * The package class that describes the C1X packages to the Maxine configurator.
@@ -31,6 +32,7 @@ import com.sun.max.vm.*;
 public class Package extends VMPackage {
     public Package() {
         super();
+        registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
     }
 
     @Override

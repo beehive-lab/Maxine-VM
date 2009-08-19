@@ -112,7 +112,6 @@ public final class VmThreadMap {
      */
     public VmThread addVmThreadLocals(int id, Pointer vmThreadLocals) {
         final VmThread vmThread = idMap.get(id);
-        VmThreadLocal.ID.setConstantWord(vmThreadLocals, Address.fromInt(id));
         VmThreadLocal.VM_THREAD.setConstantReference(vmThreadLocals, Reference.fromJava(vmThread));
         // insert this thread locals into the list
         setNext(vmThreadLocals, threadLocalsListHead);

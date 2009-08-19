@@ -255,8 +255,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitResolveClass(ResolveClass i) {
         assert i.state() != null;
-
-
+        LIROperand result = rlockResult(i);
+        lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding()), stateFor(i));
     }
 
     @Override
@@ -2037,10 +2037,12 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         for (int index = 0; index < state.stackSize(); index++) {
             final Instruction value = state.stackAt(index);
-            assert value.subst() == value : "missed substitution";
-            if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
-                walk(value);
-                assert value.operand().isValid() : "must be evaluated now";
+            if (value != null) {
+                assert value.subst() == value : "missed substitution";
+                if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
+                    walk(value);
+                    assert value.operand().isValid() : "must be evaluated now";
+                }
             }
         }
         ValueStack s = state;

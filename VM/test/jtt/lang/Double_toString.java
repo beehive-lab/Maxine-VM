@@ -18,12 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.lang;
+
 /*
  * @Harness: java
  * @Runs: 0="9.834050399508132E-4"
  */
-package jtt.lang;
-
 public final class Double_toString {
 
     private Double_toString() {

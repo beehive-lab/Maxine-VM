@@ -49,7 +49,7 @@ public class LIRLocation extends LIROperand {
      * @param flags
      *            the flags of this location
      */
-    public LIRLocation(BasicType basicType, Register number) {
+    LIRLocation(BasicType basicType, Register number) {
         super(basicType);
         assert basicType.size == 1;
         assert number != null;
@@ -67,7 +67,7 @@ public class LIRLocation extends LIROperand {
      * @param number
      *            the virtual register index or the stack location index if negative
      */
-    public LIRLocation(BasicType basicType, int number) {
+    LIRLocation(BasicType basicType, int number) {
         super(basicType);
         assert number != 0;
         this.location1 = Register.noreg;
@@ -85,7 +85,7 @@ public class LIRLocation extends LIROperand {
      * @param location2
      *            the number of the second location
      */
-    public LIRLocation(BasicType basicType, Register location1, Register location2) {
+    LIRLocation(BasicType basicType, Register location1, Register location2) {
         super(basicType);
         assert basicType.size == 2;
         assert location1 != null && location2 != null;
@@ -193,15 +193,21 @@ public class LIRLocation extends LIROperand {
     }
 
     @Override
+    public int stackIx() {
+        assert (isSingleStack() || isDoubleStack()) && !isVirtual() : "type check";
+        return -index - 1;
+    }
+
+    @Override
     public int singleStackIx() {
         assert isSingleStack() && !isVirtual() : "type check";
-        return -index;
+        return -index - 1;
     }
 
     @Override
     public int doubleStackIx() {
         assert isDoubleStack() && !isVirtual() : "type check";
-        return -index;
+        return -index - 1;
     }
 
     @Override

@@ -20,37 +20,32 @@
  */
 package com.sun.c1x.stub;
 
+import com.sun.c1x.lir.*;
+
+
 /**
  *
  * @author Thomas Wuerthinger
  *
  */
-public interface CodeStubVisitor {
+public class JITAdapterFrameStub extends CodeStub {
 
-    void visitArrayCopyStub(ArrayCopyStub arrayCopyStub);
+    /**
+     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
+     *
+     * @param offset the offset for this code stub
+     * @param info the debug information associated to this code stub
+     */
+    public JITAdapterFrameStub() {
+        super(null);
+    }
 
-    void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
+    @Override
+    public void visit(LIRVisitState visitor) {
+    }
 
-    void visitDivByZeroStub(DivByZeroStub divByZeroStub);
-
-    void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);
-
-    void visitMonitorEnterStub(MonitorEnterStub monitorEnterStub);
-
-    void visitMonitorExitStub(MonitorExitStub monitorExitStub);
-
-    void visitNewInstanceStub(NewInstanceStub visitor);
-
-    void visitNewObjectArrayStub(NewObjectArrayStub newObjectArrayStub);
-
-    void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
-
-    void visitPatchingStub(PatchingStub patchingStub);
-
-    void visitRangeCheckStub(RangeCheckStub visitor);
-
-    void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
-
-    void visitJITAdapterFrameStub(JITAdapterFrameStub jitAdapterFrameStub);
-
+    @Override
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitJITAdapterFrameStub(this);
+    }
 }
