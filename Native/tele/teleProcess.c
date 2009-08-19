@@ -47,7 +47,11 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
         memset((void *) tl, 0, threadLocalsSize());
         memset(ntl, 0, sizeof(NativeThreadLocalsStruct));
         jint id = handle;
-        // Made id negative to indicate no thread locals were available for the thread
+        /* Make id negative to indicate no thread locals were available for the thread.
+         * This will be the case for a native thread or a Java thread that has not yet
+         * executed past the point in VmThread.run() where it is added to the active
+         * thread list.
+         */
         setThreadLocal(tl, ID, id < 0 ? id : -id);
         setThreadLocal(tl, NATIVE_THREAD_LOCALS, ntl);
     } else {

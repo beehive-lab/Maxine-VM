@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
@@ -492,6 +493,20 @@ public interface SPARCEirInstruction {
         }
 
         @Override
+        public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+            SPARCEirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
+            if (arguments != null) {
+                for (EirOperand argument : arguments) {
+                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
+                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
+                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                }
+            }
+        }
+
+        @Override
         public void emit(SPARCEirTargetEmitter emitter) {
             final EirLocation location = function().location();
             switch (location.category()) {
@@ -550,6 +565,20 @@ public interface SPARCEirInstruction {
                 sparcMethodGeneration.needsSavingSafepointLatchInLocal();
             } else {
                 savedSafepointLatch = null;
+            }
+        }
+
+        @Override
+        public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+            SPARCEirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
+            if (arguments != null) {
+                for (EirOperand argument : arguments) {
+                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
+                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
+                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                }
             }
         }
 

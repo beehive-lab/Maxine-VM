@@ -46,25 +46,15 @@ public abstract class SPARCEirRegister extends EirRegister {
         return pool;
     }
 
-    /**
-     * Unique identifier of the register.
-     */
-    private final int ordinal;
-
     private final int serial;
 
     private static int nextSerial;
 
     protected SPARCEirRegister(int ordinal) {
-        this.ordinal = ordinal;
+        super(ordinal);
         serial = nextSerial++;
         assert registers[serial] == null;
         registers[serial] = this;
-    }
-
-    @Override
-    public final int ordinal() {
-        return ordinal;
     }
 
     @Override
@@ -145,7 +135,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         }
 
         public GPR as() {
-            return GPR.SYMBOLIZER.fromValue(ordinal());
+            return GPR.SYMBOLIZER.fromValue(ordinal);
         }
 
         public static GeneralPurpose from(GPR register) {
@@ -155,6 +145,28 @@ public abstract class SPARCEirRegister extends EirRegister {
         @Override
         public EirLocationCategory category() {
             return EirLocationCategory.INTEGER_REGISTER;
+        }
+
+        /**
+         * Gets the index into the spill area.
+         * Negative return value indicates this register is not spilled.
+         */
+        public int registerSpillIndex() {
+            return ordinal - 16;
+        }
+
+        /**
+         * Gets the index within trap state at which this global integer register is saved.
+         * Negative return value indicates this integer register is not a global in the trap state area.
+         */
+        public int trapStateIndex() {
+            if (ordinal > G0.ordinal && ordinal <= G5.ordinal) {
+                return ordinal - G1.ordinal;
+            }
+            if (ordinal >= O0.ordinal && ordinal <= O7.ordinal) {
+                return ordinal - 3;  // Since G0, G6, G7 are not in trapState.
+            }
+            return -1;
         }
 
         private String name;
@@ -203,7 +215,7 @@ public abstract class SPARCEirRegister extends EirRegister {
          * @return a boolean indicating the precision of the floating point register.
          */
         public boolean isDoublePrecision() {
-            return (ordinal() & 1) == 0;
+            return (ordinal & 1) == 0;
         }
 
         private static boolean isDoublePrecisionOnly(int value) {
@@ -214,7 +226,7 @@ public abstract class SPARCEirRegister extends EirRegister {
          * Returns the single precision floating-point register this register overlaps with, null if none.
          */
         public FloatingPoint overlappingSinglePrecision() {
-            final int value = ordinal();
+            final int value = ordinal;
             if (isDoublePrecision()) {
                 return isDoublePrecisionOnly(value) ? null : singlePrecisionValues[value + 1];
             }
@@ -323,7 +335,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         }
 
         public FPR as() {
-            return FPR.fromValue(ordinal());
+            return FPR.fromValue(ordinal);
         }
 
         public SFPR asSinglePrecision() {
@@ -346,9 +358,10 @@ public abstract class SPARCEirRegister extends EirRegister {
 
         @Override
         public TargetLocation toTargetLocation() {
-            return new TargetLocation.FloatingPointRegister(ordinal());
+            return new TargetLocation.FloatingPointRegister(ordinal);
         }
     }
+
     public static final class DoublePrecision extends FloatingPoint {
 
         private DoublePrecision(int value) {

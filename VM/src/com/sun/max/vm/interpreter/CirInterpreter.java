@@ -114,6 +114,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 if (procedure instanceof CirExceptionContinuationParameter) {
                     assert arguments.length == 1;
                     final CirConstant throwable = (CirConstant) arguments[0];
+                    ExceptionDispatcher.INTERPRETER_EXCEPTION.set(null);
                     throw new InvocationTargetException((Throwable) throwable.value().asObject());
                 }
                 ProgramError.unexpected("call to variable other than continuation parameter: " + procedure);

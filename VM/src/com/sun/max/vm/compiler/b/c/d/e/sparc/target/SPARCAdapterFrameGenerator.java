@@ -176,7 +176,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 break;
             case STACK_SLOT:
                 //assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose() == EirStackSlot.Purpose.PARAMETER;
-                adapt(kind, parameterLocation.asStackSlot().offset(), offset32);
+                adapt(kind, parameterLocation.asStackSlot().offset, offset32);
                 break;
             default:
                 ProgramError.unexpected();

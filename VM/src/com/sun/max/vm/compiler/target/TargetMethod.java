@@ -649,7 +649,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
+    public abstract Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass);
 
     /**
      * Traces the metadata of the compiled code represented by this object. In particular, the
@@ -1050,11 +1050,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *
      * @param stackReferenceMapPreparer
      * @param instructionPointer
-     * @param stackPointer
-     * @param framePointer
+     * @param operandStackPointer
+     * @param refmapFramePointer
      * @return
      */
-    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer, stackPointer);
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer operandStackPointer, Pointer refmapFramePointer) {
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, refmapFramePointer, operandStackPointer);
     }
 }

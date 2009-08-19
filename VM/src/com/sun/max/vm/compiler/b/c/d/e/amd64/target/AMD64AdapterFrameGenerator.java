@@ -195,8 +195,8 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
                 adapt(kind, (AMD64EirRegister.XMM) parameterLocation, offset32);
                 break;
             case STACK_SLOT:
-                assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose() == EirStackSlot.Purpose.PARAMETER;
-                adapt(kind, parameterLocation.asStackSlot().offset(), offset32);
+                assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose == EirStackSlot.Purpose.PARAMETER;
+                adapt(kind, parameterLocation.asStackSlot().offset, offset32);
                 break;
             default:
                 ProgramError.unexpected();

@@ -162,15 +162,9 @@ public abstract class ExceptionRangeTargetMethod extends TargetMethod {
     }
 
     @Override
-    public final Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public final Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass) {
         if (catchRangePositions != null) {
             int throwOffset = throwAddress.minus(codeStart).toInt();
-
-            // Be sure to be inside of a possible call instruction
-            if (!isTopFrame) {
-                throwOffset--;
-            }
-
             for (int i = catchRangePositions.length - 1; i >= 0; i--) {
                 if (throwOffset >= catchRangePositions[i]) {
                     final int catchBlockPosition = catchBlockPositions[i];

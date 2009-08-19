@@ -153,7 +153,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         if (traceFilters != null) {
             this.traceCpu = false;
             this.trace = false;
-            final String name = eirMethod.classMethodActor().holder().name + eirMethod.name();
+            final String name = eirMethod.classMethodActor().holder().name + "." + eirMethod.name();
             for (String filter : traceFilters) {
                 if (name.contains(filter)) {
                     this.traceCpu = savedTraceCpu;
@@ -163,7 +163,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
 
-        if (savedTrace && !tracedMethods.contains(eirMethod.classMethodActor())) {
+        if (trace && !tracedMethods.contains(eirMethod.classMethodActor())) {
             tracedMethods.add(eirMethod.classMethodActor());
             Trace.stream().println(eirMethod.traceToString());
         }
@@ -238,7 +238,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             final EirLocation location = locations[i];
             if (location instanceof EirStackSlot) {
                 final EirStackSlot slot = (EirStackSlot) location;
-                assert slot.purpose() == EirStackSlot.Purpose.PARAMETER;
+                assert slot.purpose == EirStackSlot.Purpose.PARAMETER;
                 parameterArguments.put(slot, arguments[i]);
                 cpu().push(arguments[i]);
             } else {
@@ -246,7 +246,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
         for (Map.Entry<EirStackSlot, Value> entry : parameterArguments.entrySet()) {
-            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset()));
+            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset));
             assert value == entry.getValue();
         }
     }

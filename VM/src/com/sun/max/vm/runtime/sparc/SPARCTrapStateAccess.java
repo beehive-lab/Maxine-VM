@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
@@ -174,5 +175,12 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     @Override
     public void logTrapState(Pointer trapState) {
         Log.println("<logging of SPARC trap state is yet to be implemented>");
+    }
+
+    /**
+     * Gets the number of bytes needed for a bitmap covering the integer registers in a trap state.
+     */
+    public static int registerReferenceMapSize() {
+        return ByteArrayBitMap.computeBitMapSize(TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues() + SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length());
     }
 }

@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
@@ -113,12 +112,6 @@ public class EirMethod extends AbstractIrMethod {
      */
     public void setFrameSize(int numberOfBytes) {
         frameSize = numberOfBytes;
-
-        if (frameSize < Word.size()) {
-            // To support deoptimization we need at least one word besides the return address on the stack
-            // @see Deoptimizer
-            frameSize = Word.size();
-        }
     }
 
     public void emit(EirTargetEmitter emitter) {

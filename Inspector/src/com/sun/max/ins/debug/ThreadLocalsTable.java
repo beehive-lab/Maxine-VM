@@ -37,7 +37,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 
@@ -353,7 +352,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             setValue(vmThreadLocal.name);
             setToolTipText("<html>" + (vmThreadLocal.description.length() > 0 ? vmThreadLocal.description + "<br>" : "") + "Declaration: " + vmThreadLocal.declaration);
-            if (vmThreadLocal.kind == Kind.REFERENCE) {
+            if (vmThreadLocal.isReference) {
                 setForeground(style().wordValidObjectReferenceDataColor());
             } else {
                 setForeground(getRowTextColor(row));
@@ -386,7 +385,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
             InspectorLabel label = labels[row];
             if (label == null) {
-                final ValueMode valueMode = vmThreadLocal.kind == Kind.REFERENCE ? ValueMode.REFERENCE : ValueMode.WORD;
+                final ValueMode valueMode = vmThreadLocal.isReference ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
                     public Value fetchValue() {

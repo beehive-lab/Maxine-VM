@@ -34,7 +34,6 @@ import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Snippets that are used in {@linkplain NativeStubGenerator native method stubs}.
@@ -72,7 +71,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         public static final LinkNativeMethod SNIPPET = new LinkNativeMethod();
     }
 
-    private static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", Kind.WORD, "");
+    private static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
 
     /**
      * Disables calling native methods on the current thread. This state is recursive. That is,

@@ -44,11 +44,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
-    private final EirInterpreter interpreter;
-
-    protected EirInterpreter interpreter() {
-        return interpreter;
-    }
+    protected final EirInterpreter interpreter;
 
     protected int stackSlotSize() {
         return interpreter.abi().stackSlotSize();
@@ -194,18 +190,8 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
 
     /**
      * Gets the offset of a stack slot relative to the current value of the frame pointer.
-     * The default calling convention assumed by the EirCPU here is that the frame pointer
-     * is at the bottom of the stack frame; the caller has pushed its arguments then a return address.
-     * Extensions of the EirCPU needs to override this method if they make different assumption.
      */
-    public int offset(EirStackSlot slot) {
-        if (slot.purpose() == EirStackSlot.Purpose.PARAMETER) {
-            final EirFrame frame = interpreter.frame();
-            // Add one slot to account for the pushed return address and then add the size of the local stack frame
-            return slot.offset() + frame.abi().stackSlotSize() + frame.method().frameSize();
-        }
-        return slot.offset();
-    }
+    public abstract int offset(EirStackSlot slot);
 
     public Value read(EirLocation location) {
         switch (location.category()) {

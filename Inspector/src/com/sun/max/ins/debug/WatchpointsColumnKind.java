@@ -39,7 +39,7 @@ public enum WatchpointsColumnKind implements ColumnKind{
     READ("R", "Should watchpoint trap when location is read?", true, 5),
     WRITE("W", "Should watchpoint trap when location is written?", true, 5),
     EXEC("X", "Should watchpoint trap when location is executed?", false, 5),
-    GC("GC", "Active during GC?", false, 5),
+    GC("GC", "Active during GC?", true, 5),
     EAGER("Eager relocation", "Watchpoint relocation update mechanism", false, 5),
     TRIGGERED_THREAD("Thread", "Name of thread currently stopped at breakpoint", true, 1),
     ADDRESS_TRIGGERED("Address", "Address where watchpoint was triggered", true, 1),

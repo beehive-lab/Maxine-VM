@@ -145,11 +145,11 @@ public class SPARCJitCompiler extends JitCompiler {
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
-            framePointer =  stackFrameWalker.stackPointer();
+            framePointer = stackFrameWalker.stackPointer();
             stackPointer = framePointer.minus(adapterFrameSize);
         } else {
             framePointer = isTopFrame ?  stackFrameWalker.framePointer() : StackBias.SPARC_V9.bias(stackFrameWalker.framePointer());
-            stackPointer =  stackFrameWalker.stackPointer();
+            stackPointer = stackFrameWalker.stackPointer();
         }
 
         switch (purpose) {
@@ -255,7 +255,7 @@ public class SPARCJitCompiler extends JitCompiler {
             }
             case EXCEPTION_HANDLING: {
                 final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
                     // The Java operand stack of the method that handles the exception is always cleared.
                     // A null object is then pushed to ensure the depth of the stack is as expected upon
