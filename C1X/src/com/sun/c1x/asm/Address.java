@@ -45,13 +45,13 @@ public class Address {
         }
 
         public static ScaleFactor fromInt(int v) {
-            for (ScaleFactor f : values()) {
-                if (f.value == v) {
-                    return f;
-                }
+            switch (v) {
+                case 1: return times1;
+                case 2: return times2;
+                case 4: return times4;
+                case 8: return times8;
             }
-
-            return null;
+            throw Util.shouldNotReachHere();
         }
     }
 

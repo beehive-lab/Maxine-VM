@@ -65,7 +65,7 @@ public class X86Backend extends Backend {
     }
     @Override
     public AbstractAssembler newAssembler(C1XCompiler compiler) {
-        return new X86MacroAssembler(compiler);
+        return new X86MacroAssembler(compiler, compiler.target);
     }
 
     @Override

@@ -34,7 +34,7 @@ import com.sun.c1x.util.*;
 public abstract class X86Assembler extends AbstractAssembler {
 
     // The x86 condition codes used for conditional jumps/moves.
-    enum Condition {
+    public enum Condition {
         zero(0x4), notZero(0x5), equal(0x4), notEqual(0x5), less(0xc), lessEqual(0xe), greater(0xf), greaterEqual(0xd), below(0x2), belowEqual(0x6), above(0x7), aboveEqual(0x3), overflow(0x0), noOverflow(
                         0x1), carrySet(0x2), carryClear(0x3), negative(0x8), positive(0x9), parity(0xa), noParity(0xb);
 
