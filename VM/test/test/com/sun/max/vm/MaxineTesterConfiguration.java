@@ -75,7 +75,7 @@ public class MaxineTesterConfiguration {
         output(test.output.GetResource.class,              FAIL_SPARC);
         output(test.output.SafepointWhileInNative.class,   FAIL_SPARC);
         output(test.output.SafepointWhileInJava.class,     FAIL_SPARC);
-        output(test.output.BlockingQueue.class);
+        output(test.output.BlockingQueue.class,            RAND_SPARC);
         output(test.output.Recursion.class);
         output(test.output.StaticInitializers.class);
         output(test.output.LocalCatch.class);
