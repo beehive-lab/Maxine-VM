@@ -224,7 +224,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
     @Override
     public TargetMethod makeIrMethod(EirMethod eirMethod) {
-        final TargetMethod targetMethod = createIrMethod(eirMethod.classMethodActor());
+        final ExceptionRangeTargetMethod targetMethod = createIrMethod(eirMethod.classMethodActor());
         generateTarget(targetMethod, eirMethod);
         return targetMethod;
     }
@@ -232,7 +232,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
     private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
 
     @Override
-    protected void generateIrMethod(TargetMethod targetMethod) {
+    protected void generateIrMethod(ExceptionRangeTargetMethod targetMethod) {
         final EirGeneratorScheme eirGeneratorScheme = (EirGeneratorScheme) compilerScheme();
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
@@ -242,7 +242,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         timer.stop();
     }
 
-    private void generateTarget(TargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
+    private void generateTarget(ExceptionRangeTargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
         final EirTargetEmitter<?> emitter = createEirTargetEmitter(eirMethod);
         emitter.emitFrameAdapterPrologue();
         eirMethod.emit(emitter);

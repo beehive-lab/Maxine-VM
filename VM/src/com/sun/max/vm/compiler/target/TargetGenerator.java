@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.ir.*;
 
-public abstract class TargetGenerator extends IrGenerator<DynamicCompilerScheme, TargetMethod> {
+public abstract class TargetGenerator extends IrGenerator<DynamicCompilerScheme, ExceptionRangeTargetMethod> {
 
     private final InstructionSet instructionSet;
 

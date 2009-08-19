@@ -54,8 +54,10 @@ class VirtualSynchronizedMethodTransformer extends SynchronizedMethodTransformer
 
     @Override
     void releaseMonitorAndRethrow() {
+        asm().pop();
         asm().aload(copyOfReceiver);
         asm().monitorexit();
+        asm().invokestatic(ExceptionDispatcher.safepointAndLoadExceptionObject, 0, 1);
         asm().athrow();
     }
 }

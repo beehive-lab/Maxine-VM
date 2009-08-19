@@ -49,13 +49,13 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private TargetMethod template;
+    private ExceptionRangeTargetMethod template;
 
     private synchronized void generateTemplate() {
         if (MaxineVM.isPrototyping()) {
             // The template is created at prototyping time only.
             if (template == null) {
-                template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
+                template = (ExceptionRangeTargetMethod) CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
                 assert template.referenceLiterals().length == 1;
             }
         }

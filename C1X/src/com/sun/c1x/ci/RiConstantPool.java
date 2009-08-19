@@ -206,4 +206,6 @@ public interface RiConstantPool {
      * @return a new exception handler object
      */
     RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
+
+    Object encoding();
 }

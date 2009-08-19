@@ -63,10 +63,15 @@ public final class Throw {
             if (targetMethod != null) {
                 if (!isAdapter(flags)) {
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                    Log.print(classMethodActor.holder().name);
-                    Log.print(".");
-                    Log.print(classMethodActor.name);
-                    Log.print(classMethodActor.descriptor());
+
+                    if (classMethodActor == null) {
+                        Log.print(targetMethod.description());
+                    } else {
+                        Log.print(classMethodActor.holder().name);
+                        Log.print(".");
+                        Log.print(classMethodActor.name);
+                        Log.print(classMethodActor.descriptor());
+                    }
                 } else {
                     Log.print("<adapter>");
                 }

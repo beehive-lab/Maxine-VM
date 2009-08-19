@@ -29,6 +29,7 @@ import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.interpreter.eir.EirCPU.*;
@@ -389,7 +390,9 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
                     Trace.stream().flush();
                     outdent();
                 }
-                cpu().write(eirGenerator.catchParameterLocation(), ReferenceValue.from(invocationTargetException.getTargetException()));
+                ReferenceValue throwable = ReferenceValue.from(invocationTargetException.getTargetException());
+                cpu().write(eirGenerator.catchParameterLocation(), throwable);
+                ExceptionDispatcher.INTERPRETER_EXCEPTION.set(invocationTargetException.getTargetException());
                 cpu().gotoBlock(frame.catchBlock());
                 return;
             }

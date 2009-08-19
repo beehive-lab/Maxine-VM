@@ -58,4 +58,5 @@ public interface RiExceptionHandler {
      */
     boolean isCatchAll();
 
+    RiType catchKlass();
 }

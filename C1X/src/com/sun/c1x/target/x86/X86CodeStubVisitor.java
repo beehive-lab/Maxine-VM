@@ -80,6 +80,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         masm.callRuntime(CiRuntimeCall.ThrowArrayStoreException);
         ce.addCallInfoHere(stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
         }
@@ -93,6 +97,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         masm.callRuntime(CiRuntimeCall.ThrowDiv0Exception);
         ce.addCallInfoHere(stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
         }
@@ -103,6 +111,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         masm.callRuntime(CiRuntimeCall.ThrowNullPointerException);
         ce.addCallInfoHere(stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
         }
@@ -110,9 +122,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
-        masm.storeParameter(stub.objReg.asRegister(), 1);
-        masm.storeParameter(stub.lockReg.asRegister(), 0);
-        masm.callRuntime(CiRuntimeCall.Monitorenter);
+        masm.callGlobalStub(GlobalStub.MonitorEnter, Register.noreg, stub.objReg.asRegister(), stub.lockReg.asRegister());
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         masm.jmp(stub.continuation);
@@ -124,9 +134,9 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             // lockReg was destroyed by fast unlocking attempt => recompute it
             ce.monitorAddress(stub.monitorIx, stub.lockReg);
         }
-        masm.storeParameter(stub.lockReg.asRegister(), 0);
-        // note: non-blocking leaf routine => no call info needed
-        masm.callRuntime(CiRuntimeCall.Monitorexit);
+
+
+        masm.callGlobalStub(GlobalStub.MonitorExit, Register.noreg, stub.objReg.asRegister(), stub.lockReg.asRegister());
         masm.jmp(stub.continuation);
     }
 
@@ -290,6 +300,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
         masm.callRuntime(stubId);
         ce.addCallInfoHere(stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
         }
@@ -303,6 +317,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
         masm.callRuntime(stub.stub);
         ce.addCallInfoHere(stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
         if (C1XOptions.GenerateAssertionCode) {
             masm.shouldNotReachHere();
         }

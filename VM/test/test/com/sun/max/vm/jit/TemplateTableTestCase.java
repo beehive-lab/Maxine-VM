@@ -224,7 +224,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
                 final Bytecode bytecode = template.bytecode;
-                final TargetMethod targetMethod = template.targetMethod;
+                final ExceptionRangeTargetMethod targetMethod = template.targetMethod;
                 final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {

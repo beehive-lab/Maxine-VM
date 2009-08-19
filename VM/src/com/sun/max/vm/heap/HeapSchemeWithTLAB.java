@@ -64,20 +64,20 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("_TLAB_TOP", Kind.WORD, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_TOP", false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("_TLAB_MARK", Kind.WORD, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_MARK", false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("_TLAB_DISABLED", Kind.WORD, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
+        = new VmThreadLocal("_TLAB_DISABLED", false, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
 
     /**
      * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.

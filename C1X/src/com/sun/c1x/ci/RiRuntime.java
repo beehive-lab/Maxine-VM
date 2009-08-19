@@ -286,14 +286,13 @@ public interface RiRuntime {
 
     int initThreadOffsetInBytes();
 
-    Register exceptionOopRegister();
-
     Register returnRegister(BasicType object);
 
     int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs);
 
-    Object registerTargetMethod(CiTargetMethod targetMethod);
+    Object registerTargetMethod(CiTargetMethod targetMethod, String name);
 
     RiType primitiveArrayType(BasicType elemType);
 
+    Register threadRegister();
 }

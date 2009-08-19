@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.eir.sparc;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
@@ -32,17 +31,6 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  */
 public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorScheme> {
-
-    /**
-     * Assigns an exception object into the result location defined by the {@linkplain EirABIsScheme#javaABI() Java ABI}.
-     * which is where this compiler expects the exception to be when compiling a catch block.
-     *
-     * The {@link NEVER_INLINE} annotation guarantees that the assignment to the result location actually occurs.
-     */
-    @NEVER_INLINE
-    public static Throwable assignExceptionToCatchParameterLocation(Throwable throwable) {
-        return throwable;
-    }
 
     public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
         for (EirVariable variable : liveVariables) {

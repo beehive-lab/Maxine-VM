@@ -37,6 +37,10 @@ public class Util {
 
     public static final int K = 1024;
     public static final int M = 1024 * 1024;
+    public static final int PRINTING_LINE_WIDTH = 40;
+    public static final char SECTION_CHARACTER = '*';
+    public static final char SUB_SECTION_CHARACTER = '=';
+    public static final char SEPERATOR_CHARACTER = '-';
 
     public static RuntimeException unimplemented() {
         throw new Error("unimplemented");
@@ -527,18 +531,6 @@ public class Util {
         return (int) l;
     }
 
-    public static int sizeofBoolean() {
-        return 1;
-    }
-
-    public static int toInt(boolean boolConst) {
-        if (boolConst) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
     public static int sizeofOopDesc() {
         return nonFatalUnimplemented(0);
     }
@@ -558,28 +550,53 @@ public class Util {
         return ((numVirtualRegs + v - 1) / v) * v;
     }
 
-    public static void truncate(List<?> instructions, int length) {
+    public static void truncate(List< ? > instructions, int length) {
         while (instructions.size() > length) {
             instructions.remove(instructions.size() - 1);
         }
     }
 
-    public static int sizeofDouble() {
-        return 8;
+    public static void printBytes(String name, byte[] array, int bytesPerLine) {
+        printBytes(name, array, array.length, bytesPerLine);
     }
 
-    public static void printBytes(byte[] array) {
-        printBytes(array, array.length);
+    public static void printSeperator() {
+        for (int i = 0; i < PRINTING_LINE_WIDTH; i++) {
+            TTY.print(SEPERATOR_CHARACTER);
+        }
     }
 
+    public static void printSection(String name, char sectionCharacter) {
 
-    public static void printBytes(byte[] array, int length) {
-        TTY.println("%d bytes: ", length);
+        String header = " " + name + " ";
+        int remainingCharacters = PRINTING_LINE_WIDTH - header.length();
+        int leftPart = remainingCharacters / 2;
+        int rightPart = remainingCharacters - leftPart;
+        for (int i = 0; i < leftPart; i++) {
+            TTY.print(sectionCharacter);
+        }
+
+        TTY.print(header);
+
+        for (int i = 0; i < rightPart; i++) {
+            TTY.print(sectionCharacter);
+        }
+
+        TTY.println();
+    }
+
+    public static void printBytes(String name, byte[] array, int length, int bytesPerLine) {
+        assert bytesPerLine > 0;
+        TTY.println("%s: %d bytes", name, length);
         for (int i = 0; i < length; i++) {
-            TTY.print("%2x ", array[i]);
-            if (i % 8 == 7) {
+            TTY.print("%02x ", array[i]);
+            if (i % bytesPerLine == bytesPerLine - 1) {
                 TTY.println();
             }
+        }
+
+        if (length % bytesPerLine != bytesPerLine - 1) {
+            TTY.println();
         }
     }
 

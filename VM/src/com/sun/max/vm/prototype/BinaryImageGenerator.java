@@ -474,8 +474,8 @@ public final class BinaryImageGenerator {
                 }
             }
             zeroLiterals += savingsFrom(headerSize, referenceLiterals);
-            zeroCatchRangePositions += savingsFrom(headerSize, targetMethod.catchRangePositions());
-            zeroCatchBlockPositions += savingsFrom(headerSize, targetMethod.catchBlockPositions());
+            zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchRangePositions() : null);
+            zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchBlockPositions() : null);
             zeroStopPositions += savingsFrom(headerSize, targetMethod.stopPositions());
             zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
             zeroReferenceMaps += savingsFrom(headerSize, targetMethod.referenceMaps());

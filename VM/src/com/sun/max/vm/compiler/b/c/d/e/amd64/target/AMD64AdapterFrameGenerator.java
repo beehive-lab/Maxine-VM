@@ -114,7 +114,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
         } else {
             // (tw) Did not find a jump here => return max
-            return Pointer.fromLong(-1L);
+            distance = Integer.MAX_VALUE;
         }
         return jitEntryPoint.plus(distance);
     }

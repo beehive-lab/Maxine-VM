@@ -18,12 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.except;
+
 /*
  * @Harness: java
  * @Runs: true = true; false = !java.lang.NullPointerException
  */
-package jtt.except;
-
 public class BC_monitorenter {
     static jtt.bytecode.BC_monitorenter object = new jtt.bytecode.BC_monitorenter();
 

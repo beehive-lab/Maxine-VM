@@ -140,10 +140,6 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         throw new UnsupportedOperationException();
     }
 
-    public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
-        throw new UnsupportedOperationException();
-    }
-
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }

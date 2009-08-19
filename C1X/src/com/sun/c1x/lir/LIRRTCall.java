@@ -34,18 +34,7 @@ import com.sun.c1x.debug.*;
 public class LIRRTCall extends LIRCall {
 
     LIROperand tmp;
-
-    /**
-     * Creates a new LIRRTCall instruction.
-     *
-     * @param entry
-     * @param tmp
-     * @param result
-     * @param arguments
-     */
-    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments) {
-        this(entry, tmp, result, arguments, null);
-    }
+    public final CiRuntimeCall runtimeEntry;
 
     /**
      * Creates a new LIRRTCall instruction.
@@ -57,8 +46,9 @@ public class LIRRTCall extends LIRCall {
      * @param info
      */
     public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, entry, result, arguments, info);
+        super(LIROpcode.RtCall, null, result, arguments, info);
         this.tmp = tmp;
+        this.runtimeEntry = entry;
     }
 
     /**

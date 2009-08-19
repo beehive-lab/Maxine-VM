@@ -61,7 +61,7 @@ public class C1XCompiler extends CiCompiler {
         final GlobalStubEmitter emitter = target.backend.newGlobalStubEmitter(this);
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);
-            Object result = runtime.registerTargetMethod(targetMethod);
+            Object result = runtime.registerTargetMethod(targetMethod, globalStub.toString());
             map.put(globalStub, result);
         }
     }

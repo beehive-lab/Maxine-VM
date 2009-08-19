@@ -117,11 +117,12 @@ public class LIRVisitState {
      *
      */
     public void doSlowCase() {
-        // TODO to be completed later
+        hasSlowCase = true;
     }
 
     public void doSlowCase(CodeEmitInfo info) {
-        // TODO to be completed later
+        hasSlowCase = true;
+        append(info);
     }
 
     private boolean replaceMode;
@@ -307,7 +308,8 @@ public class LIRVisitState {
             case LogicXor:
             case Shl:
             case Shr:
-            case Ushr: {
+            case Ushr:
+            case Resolve: {
                 LIROp2 op2 = (LIROp2) op;
 
                 if (op2.info != null) {
@@ -357,6 +359,10 @@ public class LIRVisitState {
                 }
                 if (op2.opr2.isValid()) {
                     op2.opr2 = doInput(op2.opr2); // exception object is input parameter
+                }
+
+                if (op.code == LIROpcode.Throw) {
+                    doCall();
                 }
                 assert op2.result.isIllegal() : "no result";
 

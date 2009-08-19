@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.target.*;
@@ -260,6 +261,10 @@ public abstract class LIROperand {
     }
 
     public Register asRegister() {
+        if (this == LIROperand.ILLEGAL) {
+            return Register.noreg;
+        }
+
         throw Util.shouldNotReachHere();
     }
 
@@ -315,5 +320,22 @@ public abstract class LIROperand {
 
     public void assignPhysicalRegister(LIROperand colorLirOpr) {
         Util.shouldNotReachHere();
+    }
+
+    public RegisterOrConstant asRegisterOrConstant() {
+        if (isRegister()) {
+            return new RegisterOrConstant(asRegister());
+        } else if (this.isConstant()) {
+            final LIRConstant c = (LIRConstant) this;
+            if (c.value.basicType == BasicType.Int) {
+                return new RegisterOrConstant(c.value.asInt());
+            } else if (c.value.basicType == BasicType.Object) {
+                return new RegisterOrConstant(c.value.asObject());
+            } else {
+                throw Util.shouldNotReachHere();
+            }
+        } else {
+            throw Util.shouldNotReachHere();
+        }
     }
 }

@@ -160,10 +160,9 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         vmThreadLocals = topSP.asPointer().roundedUpBy(2 * Word.size());
 
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
-            if (threadLocal.kind == Kind.WORD) {
+            if (!threadLocal.isReference) {
                 stack.writeWord(vmThreadLocals.plusWords(threadLocal.index), Word.zero());
             } else {
-                assert threadLocal.kind == Kind.REFERENCE;
                 stack.write(vmThreadLocals.plusWords(threadLocal.index), ReferenceValue.NULL);
             }
         }

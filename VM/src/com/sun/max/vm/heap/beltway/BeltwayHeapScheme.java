@@ -36,7 +36,6 @@ import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A heap scheme for beltway collectors.
@@ -324,7 +323,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     /**
      * Holds the biased card table address.
      */
-    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", Kind.WORD, "Beltway: ->biased card table") {
+    public static final VmThreadLocal ADJUSTED_CARDTABLE_BASE = new VmThreadLocal("ADJUSTED_CARDTABLE_BASE", false, "Beltway: ->biased card table") {
         @Override
         public void initialize() {
             final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();

@@ -225,7 +225,66 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.bytecode.BC_tableswitch3.class,
         jtt.bytecode.BC_tableswitch4.class,
         jtt.bytecode.BC_wide01.class,
-        jtt.bytecode.BC_wide02.class
+        jtt.bytecode.BC_wide02.class,
+        jtt.except.BC_aaload.class,
+        jtt.except.BC_aastore.class,
+        jtt.except.BC_anewarray.class,
+        jtt.except.BC_arraylength.class,
+        jtt.except.BC_athrow.class,
+        jtt.except.BC_athrow1.class,
+        jtt.except.BC_athrow2.class,
+        jtt.except.BC_athrow3.class,
+        jtt.except.BC_baload.class,
+        jtt.except.BC_bastore.class,
+        jtt.except.BC_caload.class,
+        jtt.except.BC_castore.class,
+        jtt.except.BC_checkcast.class,
+        jtt.except.BC_checkcast1.class,
+        jtt.except.BC_checkcast2.class,
+        jtt.except.BC_daload.class,
+        jtt.except.BC_dastore.class,
+        jtt.except.BC_faload.class,
+        jtt.except.BC_fastore.class,
+        jtt.except.BC_getfield.class,
+        jtt.except.BC_iaload.class,
+        jtt.except.BC_iastore.class,
+        jtt.except.BC_idiv.class,
+        jtt.except.BC_invokevirtual01.class,
+        jtt.except.BC_irem.class,
+        jtt.except.BC_laload.class,
+        jtt.except.BC_lastore.class,
+        jtt.except.BC_ldiv.class,
+        jtt.except.BC_lrem.class,
+        jtt.except.BC_monitorenter.class,
+        jtt.except.BC_multianewarray.class,
+        jtt.except.BC_newarray.class,
+        jtt.except.BC_putfield.class,
+        jtt.except.BC_saload.class,
+        jtt.except.BC_sastore.class,
+        jtt.except.Catch_NPE_01.class,
+        jtt.except.Catch_NPE_02.class,
+        jtt.except.Catch_NPE_03.class,
+        jtt.except.Catch_NPE_04.class,
+        jtt.except.Catch_NPE_05.class,
+        jtt.except.Catch_NPE_06.class,
+        jtt.except.Catch_NPE_07.class,
+        jtt.except.Catch_NPE_08.class,
+        jtt.except.Catch_StackOverflowError_01.class,
+        jtt.except.Catch_StackOverflowError_02.class,
+        jtt.except.Catch_StackOverflowError_03.class,
+        jtt.except.Except_Synchronized01.class,
+        jtt.except.Except_Synchronized02.class,
+        jtt.except.Except_Synchronized03.class,
+        jtt.except.Except_Synchronized04.class,
+        jtt.except.Throw_InCatch01.class,
+        jtt.except.Throw_InCatch02.class,
+        jtt.except.Throw_InCatch03.class,
+        jtt.except.Throw_NPE_01.class,
+        jtt.except.Throw_Synchronized01.class,
+        jtt.except.Throw_Synchronized02.class,
+        jtt.except.Throw_Synchronized03.class,
+        jtt.except.Throw_Synchronized04.class,
+        jtt.except.Throw_Synchronized05.class
     };
     @Override
     public void runTests() {
@@ -790,6 +849,183 @@ public class JavaTesterRunScheme extends AbstractTester {
                     break;
                 case 185:
                     JavaTesterTests.jtt_bytecode_BC_wide02();
+                    break;
+                case 186:
+                    JavaTesterTests.jtt_except_BC_aaload();
+                    break;
+                case 187:
+                    JavaTesterTests.jtt_except_BC_aastore();
+                    break;
+                case 188:
+                    JavaTesterTests.jtt_except_BC_anewarray();
+                    break;
+                case 189:
+                    JavaTesterTests.jtt_except_BC_arraylength();
+                    break;
+                case 190:
+                    JavaTesterTests.jtt_except_BC_athrow();
+                    break;
+                case 191:
+                    JavaTesterTests.jtt_except_BC_athrow1();
+                    break;
+                case 192:
+                    JavaTesterTests.jtt_except_BC_athrow2();
+                    break;
+                case 193:
+                    JavaTesterTests.jtt_except_BC_athrow3();
+                    break;
+                case 194:
+                    JavaTesterTests.jtt_except_BC_baload();
+                    break;
+                case 195:
+                    JavaTesterTests.jtt_except_BC_bastore();
+                    break;
+                case 196:
+                    JavaTesterTests.jtt_except_BC_caload();
+                    break;
+                case 197:
+                    JavaTesterTests.jtt_except_BC_castore();
+                    break;
+                case 198:
+                    JavaTesterTests.jtt_except_BC_checkcast();
+                    break;
+                case 199:
+                    JavaTesterTests.jtt_except_BC_checkcast1();
+                    break;
+                case 200:
+                    JavaTesterTests.jtt_except_BC_checkcast2();
+                    break;
+                case 201:
+                    JavaTesterTests.jtt_except_BC_daload();
+                    break;
+                case 202:
+                    JavaTesterTests.jtt_except_BC_dastore();
+                    break;
+                case 203:
+                    JavaTesterTests.jtt_except_BC_faload();
+                    break;
+                case 204:
+                    JavaTesterTests.jtt_except_BC_fastore();
+                    break;
+                case 205:
+                    JavaTesterTests.jtt_except_BC_getfield();
+                    break;
+                case 206:
+                    JavaTesterTests.jtt_except_BC_iaload();
+                    break;
+                case 207:
+                    JavaTesterTests.jtt_except_BC_iastore();
+                    break;
+                case 208:
+                    JavaTesterTests.jtt_except_BC_idiv();
+                    break;
+                case 209:
+                    JavaTesterTests.jtt_except_BC_invokevirtual01();
+                    break;
+                case 210:
+                    JavaTesterTests.jtt_except_BC_irem();
+                    break;
+                case 211:
+                    JavaTesterTests.jtt_except_BC_laload();
+                    break;
+                case 212:
+                    JavaTesterTests.jtt_except_BC_lastore();
+                    break;
+                case 213:
+                    JavaTesterTests.jtt_except_BC_ldiv();
+                    break;
+                case 214:
+                    JavaTesterTests.jtt_except_BC_lrem();
+                    break;
+                case 215:
+                    JavaTesterTests.jtt_except_BC_monitorenter();
+                    break;
+                case 216:
+                    JavaTesterTests.jtt_except_BC_multianewarray();
+                    break;
+                case 217:
+                    JavaTesterTests.jtt_except_BC_newarray();
+                    break;
+                case 218:
+                    JavaTesterTests.jtt_except_BC_putfield();
+                    break;
+                case 219:
+                    JavaTesterTests.jtt_except_BC_saload();
+                    break;
+                case 220:
+                    JavaTesterTests.jtt_except_BC_sastore();
+                    break;
+                case 221:
+                    JavaTesterTests.jtt_except_Catch_NPE_01();
+                    break;
+                case 222:
+                    JavaTesterTests.jtt_except_Catch_NPE_02();
+                    break;
+                case 223:
+                    JavaTesterTests.jtt_except_Catch_NPE_03();
+                    break;
+                case 224:
+                    JavaTesterTests.jtt_except_Catch_NPE_04();
+                    break;
+                case 225:
+                    JavaTesterTests.jtt_except_Catch_NPE_05();
+                    break;
+                case 226:
+                    JavaTesterTests.jtt_except_Catch_NPE_06();
+                    break;
+                case 227:
+                    JavaTesterTests.jtt_except_Catch_NPE_07();
+                    break;
+                case 228:
+                    JavaTesterTests.jtt_except_Catch_NPE_08();
+                    break;
+                case 229:
+                    JavaTesterTests.jtt_except_Catch_StackOverflowError_01();
+                    break;
+                case 230:
+                    JavaTesterTests.jtt_except_Catch_StackOverflowError_02();
+                    break;
+                case 231:
+                    JavaTesterTests.jtt_except_Catch_StackOverflowError_03();
+                    break;
+                case 232:
+                    JavaTesterTests.jtt_except_Except_Synchronized01();
+                    break;
+                case 233:
+                    JavaTesterTests.jtt_except_Except_Synchronized02();
+                    break;
+                case 234:
+                    JavaTesterTests.jtt_except_Except_Synchronized03();
+                    break;
+                case 235:
+                    JavaTesterTests.jtt_except_Except_Synchronized04();
+                    break;
+                case 236:
+                    JavaTesterTests.jtt_except_Throw_InCatch01();
+                    break;
+                case 237:
+                    JavaTesterTests.jtt_except_Throw_InCatch02();
+                    break;
+                case 238:
+                    JavaTesterTests.jtt_except_Throw_InCatch03();
+                    break;
+                case 239:
+                    JavaTesterTests.jtt_except_Throw_NPE_01();
+                    break;
+                case 240:
+                    JavaTesterTests.jtt_except_Throw_Synchronized01();
+                    break;
+                case 241:
+                    JavaTesterTests.jtt_except_Throw_Synchronized02();
+                    break;
+                case 242:
+                    JavaTesterTests.jtt_except_Throw_Synchronized03();
+                    break;
+                case 243:
+                    JavaTesterTests.jtt_except_Throw_Synchronized04();
+                    break;
+                case 244:
+                    JavaTesterTests.jtt_except_Throw_Synchronized05();
             }
         }
         reportPassed(passed, total);
