@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.eir.amd64;
 
+import com.sun.max.collect.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.type.*;
 
@@ -28,14 +31,30 @@ import com.sun.max.vm.type.*;
  */
 public abstract class AMD64EirGenerator extends EirGenerator<AMD64EirGeneratorScheme> {
 
-    public AMD64EirGenerator(AMD64EirGeneratorScheme eirGeneratorScheme) {
-        super(eirGeneratorScheme);
+    public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        for (EirVariable variable : liveVariables) {
+            if (variable.kind() == Kind.REFERENCE) {
+                EirLocation location = variable.location();
+                if (location.category() == EirLocationCategory.STACK_SLOT) {
+                    final EirStackSlot stackSlot = (EirStackSlot) location;
+                    if (stackSlot.purpose != EirStackSlot.Purpose.PARAMETER) {
+                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                }
+            }
+        }
     }
 
     private final EirLocation eirCatchParameterLocation = eirABIsScheme().javaABI.getResultLocation(Kind.REFERENCE);
+
+    public AMD64EirGenerator(AMD64EirGeneratorScheme eirGeneratorScheme) {
+        super(eirGeneratorScheme);
+    }
 
     @Override
     public EirLocation catchParameterLocation() {
         return eirCatchParameterLocation;
     }
+
 }

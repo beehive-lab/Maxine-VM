@@ -38,12 +38,12 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
      * Converts a logical stack slot offset to a {@linkplain StackAddress target address}.
      */
     public StackAddress stackAddress(EirStackSlot slot) {
-        if (slot.purpose() == EirStackSlot.Purpose.PARAMETER) {
+        if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             // The offset is adjusted to account for the frame allocated for local variables as
             // well as the return address that is pushed to the stack by a call instruction.
-            return new StackAddress(slot.offset() + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
+            return new StackAddress(slot.offset + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
         }
-        return new StackAddress(slot.offset(),  framePointer.indirect());
+        return new StackAddress(slot.offset,  framePointer.indirect());
     }
 
     /**

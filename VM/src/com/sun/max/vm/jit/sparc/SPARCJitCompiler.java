@@ -145,11 +145,11 @@ public class SPARCJitCompiler extends JitCompiler {
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
-            framePointer =  stackFrameWalker.stackPointer();
+            framePointer = stackFrameWalker.stackPointer();
             stackPointer = framePointer.minus(adapterFrameSize);
         } else {
             framePointer = isTopFrame ?  stackFrameWalker.framePointer() : StackBias.SPARC_V9.bias(stackFrameWalker.framePointer());
-            stackPointer =  stackFrameWalker.stackPointer();
+            stackPointer = stackFrameWalker.stackPointer();
         }
 
         switch (purpose) {

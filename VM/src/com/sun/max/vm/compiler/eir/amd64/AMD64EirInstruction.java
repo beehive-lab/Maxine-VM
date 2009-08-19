@@ -31,6 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.asm.amd64.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirTargetEmitter.*;
@@ -425,6 +426,20 @@ public interface AMD64EirInstruction {
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                     boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, isNativeFunctionCall, methodGeneration);
+        }
+
+        @Override
+        public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+            AMD64EirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
+            if (arguments != null) {
+                for (EirOperand argument : arguments) {
+                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
+                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
+                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                }
+            }
         }
 
         @Override

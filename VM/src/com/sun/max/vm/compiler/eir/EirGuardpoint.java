@@ -23,6 +23,10 @@ package com.sun.max.vm.compiler.eir;
 
 import java.lang.reflect.*;
 
+import com.sun.max.lang.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.runtime.*;
+
 /**
  * @author Michael Bebenita
  */
@@ -47,4 +51,10 @@ public final class EirGuardpoint<EirInstructionVisitor_Type extends EirInstructi
     public void emit(EirTargetEmitter_Type emitter) {
         emitter.addGuardpoint(this);
     }
+
+    @Override
+    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        FatalError.unimplemented();
+    }
+
 }

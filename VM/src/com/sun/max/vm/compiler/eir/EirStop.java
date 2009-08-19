@@ -22,11 +22,11 @@ package com.sun.max.vm.compiler.eir;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.type.*;
 
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionVisitor, EirTargetEmitter_Type extends EirTargetEmitter>
                       extends EirInstruction<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
@@ -45,17 +45,7 @@ public abstract class EirStop<EirInstructionVisitor_Type extends EirInstructionV
         super(block);
     }
 
-    public void addStackReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-        for (EirVariable variable : liveVariables()) {
-            if (variable.location().category() == EirLocationCategory.STACK_SLOT) {
-                final EirStackSlot stackSlot = (EirStackSlot) variable.location();
-                if (stackSlot.purpose() != EirStackSlot.Purpose.PARAMETER && variable.kind() == Kind.REFERENCE) {
-                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes;
-                    map.set(stackSlotBitIndex);
-                }
-            }
-        }
-    }
+    public abstract void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map);
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
