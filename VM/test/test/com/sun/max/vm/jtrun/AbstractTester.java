@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jtrun;
 
 import static com.sun.max.vm.VMOptions.*;
-import test.com.sun.max.vm.jtrun.all.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
