@@ -23,12 +23,12 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>MaxCiExceptionHandler</code> represents an exception handler
+ * The <code>MaxRiExceptionHandler</code> represents an exception handler
  * in the compiler interface.
  *
  * @author Ben L. Titzer
  */
-public class MaxCiExceptionHandler implements CiExceptionHandler {
+public class MaxRiExceptionHandler implements RiExceptionHandler {
 
     private final int startBCI;
     private final int endBCI;
@@ -42,7 +42,7 @@ public class MaxCiExceptionHandler implements CiExceptionHandler {
      * @param catchBCI the index of the handler
      * @param classCPI the index of the throwable class in the constant pool
      */
-    public MaxCiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
+    public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
         this.startBCI = startBCI;
         this.endBCI = endBCI;
         this.handlerBCI = catchBCI;

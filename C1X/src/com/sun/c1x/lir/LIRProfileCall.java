@@ -32,12 +32,12 @@ import com.sun.c1x.debug.*;
  */
 public class LIRProfileCall extends LIRInstruction {
 
-    private CiMethod profiledMethod;
+    private RiMethod profiledMethod;
     private int profiledBci;
     LIROperand mdo;
     LIROperand recv;
     LIROperand tmp1;
-    private CiType knownHolder;
+    private RiType knownHolder;
 
     /**
      * Constructs a new LIRProfileCall Instruction.
@@ -48,7 +48,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @param receiver
      * @param tmp1
      */
-    public LIRProfileCall(LIROpcode opcode, CiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, CiType knownHolder) {
+    public LIRProfileCall(LIROpcode opcode, RiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, RiType knownHolder) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
@@ -63,7 +63,7 @@ public class LIRProfileCall extends LIRInstruction {
      *
      * @return the profiledMethod
      */
-    public CiMethod profiledMethod() {
+    public RiMethod profiledMethod() {
         return profiledMethod;
     }
 
@@ -108,7 +108,7 @@ public class LIRProfileCall extends LIRInstruction {
      *
      * @return the knownHolder
      */
-    public CiType knownHolder() {
+    public RiType knownHolder() {
         return knownHolder;
     }
 

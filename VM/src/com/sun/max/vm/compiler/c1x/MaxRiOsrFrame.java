@@ -21,9 +21,9 @@
 package com.sun.max.vm.compiler.c1x;
 
 /**
- * The <code>MaxCiOsrFrame</code> class definition.
+ * The <code>MaxRiOsrFrame</code> class definition.
  *
  * @author Ben L. Titzer
  */
-public class MaxCiOsrFrame {
+public class MaxRiOsrFrame {
 }

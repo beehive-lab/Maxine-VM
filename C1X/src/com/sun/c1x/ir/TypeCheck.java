@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class TypeCheck extends StateSplit {
 
-    final CiType targetClass;
+    final RiType targetClass;
     Instruction object;
     final ValueStack stateBefore;
 
@@ -41,7 +41,7 @@ public abstract class TypeCheck extends StateSplit {
      * @param type the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(CiType targetClass, Instruction object, BasicType type, ValueStack stateBefore) {
+    public TypeCheck(RiType targetClass, Instruction object, BasicType type, ValueStack stateBefore) {
         super(type);
         this.targetClass = targetClass;
         this.object = object;
@@ -60,7 +60,7 @@ public abstract class TypeCheck extends StateSplit {
      * Gets the target class, i.e. the class being cast to, or the class being tested against.
      * @return the target class
      */
-    public CiType targetClass() {
+    public RiType targetClass() {
         return targetClass;
     }
 

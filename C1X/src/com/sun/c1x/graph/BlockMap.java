@@ -55,10 +55,10 @@ public class BlockMap {
     private class ExceptionMap {
         private final BitMap canTrap;
         private final boolean isObjectInit;
-        private final List<CiExceptionHandler> allHandlers;
+        private final List<RiExceptionHandler> allHandlers;
         private final ArrayMap<HashSet<BlockBegin>> handlerMap;
 
-        ExceptionMap(CiMethod method, byte[] code) {
+        ExceptionMap(RiMethod method, byte[] code) {
             canTrap = new BitMap(code.length);
             isObjectInit = C1XOptions.RegisterFinalizersAtInit && C1XIntrinsic.getIntrinsic(method) == C1XIntrinsic.java_lang_Object$init;
             allHandlers = method.exceptionHandlers();
@@ -72,7 +72,7 @@ public class BlockMap {
         void addHandlers(BlockBegin block, int bci) {
             if (canTrap.get(bci)) {
                 // XXX: replace with faster algorithm (sort exception handlers by start and end)
-                for (CiExceptionHandler h : allHandlers) {
+                for (RiExceptionHandler h : allHandlers) {
                     if (h.startBCI() <= bci && bci < h.endBCI()) {
                         addHandler(block, get(h.handlerBCI()));
                         if (h.isCatchAll()) {
@@ -91,7 +91,7 @@ public class BlockMap {
 
         void setHandlerEntrypoints() {
             // start basic blocks at all exception handler blocks and mark them as exception entries
-            for (CiExceptionHandler h : allHandlers) {
+            for (RiExceptionHandler h : allHandlers) {
                 addEntrypoint(h.handlerBCI(), BlockBegin.BlockFlag.ExceptionEntry);
             }
         }
@@ -121,7 +121,7 @@ public class BlockMap {
      * @param method the compiler interface method containing the code
      * @param firstBlockNum the first block number to use
      */
-    public BlockMap(CiMethod method, int firstBlockNum) {
+    public BlockMap(RiMethod method, int firstBlockNum) {
         byte[] code = method.code();
         this.code = code;
         firstBlock = firstBlockNum;
@@ -359,9 +359,9 @@ public class BlockMap {
         int max = tswitch.numberOfCases();
         ArrayList<BlockBegin> list = new ArrayList<BlockBegin>(max + 1);
         for (int i = 0; i < max; i++) {
-            list.add(make(bci + tswitch.offsetAt(i)));
+            list.add(make(tswitch.targetAt(i)));
         }
-        list.add(make(bci + tswitch.defaultOffset()));
+        list.add(make(tswitch.defaultTarget()));
         successorMap[bci] = list.toArray(new BlockBegin[list.size()]);
     }
 

@@ -18,16 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package jtt.lang;
 
-/**
- * The <code>MaxCiUnresolved</code> exception is thrown if the user of the compiler interface (e.g. C1X)
- * queries a compiler interface object in a way that is not appropriate for an unresolved object.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0x1122334455667708L = 0x877665544332211L
  */
-public class MaxCiUnresolved extends RuntimeException {
-    public MaxCiUnresolved(String msg) {
-        super(msg);
+public class Long_reverseBytes01 {
+    public static long test(long val) {
+        return Long.reverseBytes(val);
     }
 }
