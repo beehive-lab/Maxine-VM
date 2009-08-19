@@ -280,7 +280,7 @@ public class InstructionPrinter extends InstructionVisitor {
         boolean hasPhisInLocals = false;
         boolean hasPhisOnStack = false;
 
-        if (end != null && end.state() != null) {
+        if (end != null && end.stateAfter() != null) {
             ValueStack state = block.state();
 
             int i = 0;

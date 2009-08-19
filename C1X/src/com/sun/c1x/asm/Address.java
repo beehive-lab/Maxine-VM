@@ -53,6 +53,16 @@ public class Address {
             }
             throw Util.shouldNotReachHere();
         }
+
+        public static ScaleFactor fromLog(int v) {
+            switch (v) {
+                case 0: return times1;
+                case 1: return times2;
+                case 2: return times4;
+                case 3: return times8;
+            }
+            throw Util.shouldNotReachHere();
+        }
     }
 
     public static final Address InternalRelocation = new Address(Register.noreg, 0);

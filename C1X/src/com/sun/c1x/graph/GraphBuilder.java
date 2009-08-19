@@ -110,10 +110,10 @@ public class GraphBuilder {
                     if (rt != BasicType.Void) {
                         result = pop(rt);
                     }
-                    methodReturn(result);
+                    genMethodReturn(result);
                     BlockEnd end = (BlockEnd) lastInstr;
                     curBlock.setEnd(end);
-                    end.setState(curState);
+                    end.setStateAfter(curState);
                 }  else {
                     // try intrinsic failed; do the normal parsing
                     scopeData.addToWorkList(start);
@@ -195,7 +195,7 @@ public class GraphBuilder {
         start.setEnd(base);
         // create and setup state for start block
         start.setState(state.copy());
-        base.setState(state.copy());
+        base.setStateAfter(state.copy());
 
         if (base.standardEntry().state() == null) {
             base.standardEntry().merge(state);
@@ -228,7 +228,7 @@ public class GraphBuilder {
         h.setBlockFlag(f);
         ValueStack s = state.copy();
         assert s.stackEmpty();
-        g.setState(s);
+        g.setStateAfter(s);
         return h;
     }
 
@@ -380,12 +380,6 @@ public class GraphBuilder {
         return x;
     }
 
-    void appendNullCheck(Instruction x) {
-        if (!x.isNonNull()) {
-            append(new NullCheck(x, lockStack()));
-        }
-    }
-
     List<ExceptionHandler> handleException(int bci) {
         if (!hasHandler()) {
             return Util.uncheckedCast(Collections.EMPTY_LIST);
@@ -476,7 +470,7 @@ public class GraphBuilder {
         return h.isCatchAll();
     }
 
-    void loadConstant() {
+    void genLoadConstant() {
         Object con = constantPool().lookupConstant(stream().readCPI());
 
         if (con instanceof RiType) {
@@ -495,25 +489,27 @@ public class GraphBuilder {
         }
     }
 
-    void loadIndexed(BasicType type) {
+    void genLoadIndexed(BasicType type) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction index = ipop();
         Instruction array = apop();
         Instruction length = null;
         if (cseArrayLength(array)) {
-            length = append(new ArrayLength(array, lockStack()));
+            length = append(new ArrayLength(array, stateBefore));
         }
-        push(type.stackType(), append(new LoadIndexed(array, index, length, type, lockStack())));
+        push(type.stackType(), append(new LoadIndexed(array, index, length, type, stateBefore)));
     }
 
-    void storeIndexed(BasicType type) {
+    void genStoreIndexed(BasicType type) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction value = pop(type.stackType());
         Instruction index = ipop();
         Instruction array = apop();
         Instruction length = null;
         if (cseArrayLength(array)) {
-            length = append(new ArrayLength(array, lockStack()));
+            length = append(new ArrayLength(array, stateBefore));
         }
-        StoreIndexed result = new StoreIndexed(array, index, length, type, value, lockStack());
+        StoreIndexed result = new StoreIndexed(array, index, length, type, value, stateBefore);
         append(result);
         if (memoryMap != null) {
             memoryMap.storeValue(value);
@@ -601,11 +597,11 @@ public class GraphBuilder {
 
     }
 
-    void arithmeticOp(BasicType basicType, int opcode) {
-        arithmeticOp(basicType, opcode, null);
+    void genArithmeticOp(BasicType basicType, int opcode) {
+        genArithmeticOp(basicType, opcode, null);
     }
 
-    void arithmeticOp(BasicType basicType, int opcode, ValueStack stack) {
+    void genArithmeticOp(BasicType basicType, int opcode, ValueStack stack) {
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         Instruction result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
@@ -615,36 +611,36 @@ public class GraphBuilder {
         push(basicType, result);
     }
 
-    void negateOp(BasicType basicType) {
+    void genNegateOp(BasicType basicType) {
         push(basicType, append(new NegateOp(pop(basicType))));
     }
 
-    void shiftOp(BasicType basicType, int opcode) {
+    void genShiftOp(BasicType basicType, int opcode) {
         Instruction s = ipop();
         Instruction x = pop(basicType);
         // note that strength reduction of e << K >>> K is correctly handled in canonicalizer now
         push(basicType, append(new ShiftOp(opcode, x, s)));
     }
 
-    void logicOp(BasicType basicType, int opcode) {
+    void genLogicOp(BasicType basicType, int opcode) {
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         push(basicType, append(new LogicOp(opcode, x, y)));
     }
 
-    void compareOp(BasicType basicType, int opcode) {
-        ValueStack stateBefore = curState.copy();
+    void genCompareOp(BasicType basicType, int opcode) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
-    void convert(int opcode, BasicType from, BasicType to) {
+    void genConvert(int opcode, BasicType from, BasicType to) {
         BasicType tt = to.stackType();
         push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
-    void increment() {
+    void genIncrement() {
         int index = stream().readLocalIndex();
         int delta = stream().readIncrement();
         Instruction x = curState.localAt(index);
@@ -652,7 +648,7 @@ public class GraphBuilder {
         curState.storeLocal(index, append(new ArithmeticOp(Bytecodes.IADD, x, y, method().isStrictFP(), null)));
     }
 
-    void goto_(int fromBCI, int toBCI) {
+    void genGoto(int fromBCI, int toBCI) {
         profileBCI(fromBCI);
         append(new Goto(blockAt(toBCI), null, toBCI <= fromBCI)); // backwards branch => safepoint
     }
@@ -668,34 +664,34 @@ public class GraphBuilder {
         }
     }
 
-    void ifZero(Condition cond) {
+    void genIfZero(Condition cond) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction y = appendConstant(CiConstant.INT_0);
-        ValueStack stateBefore = curState.copy();
         Instruction x = ipop();
         ifNode(x, cond, y, stateBefore);
     }
 
-    void ifNull(Condition cond) {
+    void genIfNull(Condition cond) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction y = appendConstant(CiConstant.NULL_OBJECT);
-        ValueStack stateBefore = curState.copy();
         Instruction x = apop();
         ifNode(x, cond, y, stateBefore);
     }
 
-    void ifSame(BasicType basicType, Condition cond) {
-        ValueStack stateBefore = curState.copy();
+    void genIfSame(BasicType basicType, Condition cond) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         ifNode(x, cond, y, stateBefore);
     }
 
-    void throw_(int bci) {
-        ValueStack stateBefore = curState.copy();
+    void genThrow(int bci) {
+        ValueStack stateBefore = curState.immutableCopy();
         Throw t = new Throw(apop(), stateBefore);
         appendWithBCI(t, bci, false); // don't bother trying to canonicalize throws
     }
 
-    void checkcast_() {
+    void genCheckCast() {
         RiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         CheckCast c = new CheckCast(type, apop(), stateBefore);
@@ -708,7 +704,7 @@ public class GraphBuilder {
         }
     }
 
-    void instanceof_() {
+    void genInstanceOf() {
         RiType type = constantPool().lookupType(stream().readCPI());
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         InstanceOf i = new InstanceOf(type, apop(), stateBefore);
@@ -718,31 +714,29 @@ public class GraphBuilder {
         }
     }
 
-    void newInstance() {
-        char cpi = stream().readCPI();
+    void genNewInstance(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
         RiType type = constantPool().lookupType(cpi);
-        assert !type.isLoaded() || type.isInstanceClass();
-        NewInstance n = new NewInstance(type, cpi, constantPool());
+        NewInstance n = new NewInstance(type, cpi, constantPool(), stateBefore);
         if (memoryMap != null) {
             memoryMap.newInstance(n);
         }
         apush(append(n));
     }
 
-    void newTypeArray() {
-        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(stream().readLocalIndex()))));
+    void genNewTypeArray(int typeCode) {
+        ValueStack stateBefore = curState.immutableCopy();
+        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(typeCode), stateBefore)));
     }
 
-    void newObjectArray() {
-        char cpi = stream().readCPI();
+    void genNewObjectArray(char cpi) {
         RiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
-    void newMultiArray() {
-        char cpi = stream().readCPI();
+    void genNewMultiArray(char cpi) {
         RiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         int rank = stream().readUByte(stream().currentBCI() + 3);
@@ -754,43 +748,43 @@ public class GraphBuilder {
         apush(append(n));
     }
 
-    void getField() {
-        RiField field = constantPool().lookupGetField(stream().readCPI());
+    void genGetField(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
+        RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
-        LoadField load = new LoadField(apop(), field, false, lockStack(), stateCopy, isLoaded);
-        loadField(field.basicType(), load);
+        LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
+        appendOptimizedLoadField(field.basicType(), load);
     }
 
-    void putField() {
-        RiField field = constantPool().lookupPutField(stream().readCPI());
+    void genPutField(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
+        RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
-        ValueStack stateCopy = !isLoaded ? curState.copy() : null;
         Instruction value = pop(field.basicType().stackType());
-        storeField(new StoreField(apop(), field, value, false, lockStack(), stateCopy, isLoaded));
+        appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
     }
 
-    void getStatic() {
-        RiField field = constantPool().lookupGetStatic(stream().readCPI());
+    void genGetStatic(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
+        RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = isInitialized ? null : curState.copy();
         Instruction holderConstant = getStaticContainer(holder, isInitialized);
-        LoadField load = new LoadField(holderConstant, field, true, lockStack(), stateCopy, isLoaded);
-        loadField(field.basicType(), load);
+        LoadField load = new LoadField(holderConstant, field, true, stateBefore, isLoaded);
+        appendOptimizedLoadField(field.basicType(), load);
     }
 
-    void putStatic() {
-        RiField field = constantPool().lookupPutStatic(stream().readCPI());
+    void genPutStatic(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
+        RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
         boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
         boolean isInitialized = isLoaded && holder.isInitialized();
-        ValueStack stateCopy = isInitialized ? null : curState.copy();
         Instruction holderConstant = getStaticContainer(holder, isInitialized);
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(holderConstant, field, value, true, lockStack(), stateCopy, isLoaded);
-        storeField(store);
+        StoreField store = new StoreField(holderConstant, field, value, true, stateBefore, isLoaded);
+        appendOptimizedStoreField(store);
     }
 
     private Instruction getStaticContainer(RiType holder, boolean isInitialized) {
@@ -801,7 +795,7 @@ public class GraphBuilder {
         return holderConstant;
     }
 
-    private void storeField(StoreField store) {
+    private void appendOptimizedStoreField(StoreField store) {
         if (memoryMap != null) {
             StoreField previous = memoryMap.store(store);
             if (previous == null) {
@@ -812,7 +806,7 @@ public class GraphBuilder {
         append(store);
     }
 
-    private void loadField(BasicType basicType, LoadField load) {
+    private void appendOptimizedLoadField(BasicType basicType, LoadField load) {
         if (memoryMap != null) {
             Instruction replacement = memoryMap.load(load);
             if (replacement != load) {
@@ -830,26 +824,29 @@ public class GraphBuilder {
         push(basicType.stackType(), optimized);
     }
 
-    void invokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
-            if (!tryInline(target, args, null)) {
+            if (!tryInline(target, args, null, stateBefore)) {
                 profileInvocation(target);
-                appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool);
+                appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
         }
     }
 
-    void invokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
             profileCall(args[0], null);
-            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool);
+            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool, stateBefore);
         }
     }
 
-    void invokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
+    void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
+        ValueStack stateBefore = curState.immutableCopy();
         Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             Instruction receiver = args[0];
@@ -859,33 +856,33 @@ public class GraphBuilder {
                 // 0. check for trivial cases
                 if (target.canBeStaticallyBound() && !target.isAbstract()) {
                     // check for trivial cases (e.g. final methods, nonvirtual methods)
-                    invokeDirect(target, args, target.holder(), cpi, constantPool);
+                    invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
                     return;
                 }
                 // 1. check if the exact type of the receiver can be determined
                 RiType exact = getExactType(klass, receiver);
                 if (exact != null && exact.isLoaded()) {
                     // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
                     return;
                 }
                 // 2. check if an assumed leaf method can be found
                 RiMethod leaf = getAssumedLeafMethod(target, receiver);
                 if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
-                    invokeDirect(leaf, args, null, cpi, constantPool);
+                    invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
                     return;
                 }
                 // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
                 exact = getAssumedLeafType(klass, receiver);
                 if (exact != null && exact.isLoaded()) {
                     // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool);
+                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
                     return;
                 }
             }
             // devirtualization failed, produce an actual invokevirtual
             profileCall(args[0], null);
-            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool);
+            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
 
@@ -893,24 +890,26 @@ public class GraphBuilder {
         return target.signatureType().returnBasicType();
     }
 
-    void invokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
-        invokeDirect(target, curState.popArguments(target.signatureType().argumentSlots(true)), knownHolder, cpi, constantPool);
+    void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+        ValueStack stateBefore = curState.immutableCopy();
+        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
     }
 
-    private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+    private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         if (!tryOptimizeCall(target, args, false)) {
-            if (!tryInline(target, args, knownHolder)) {
+            if (!tryInline(target, args, knownHolder, stateBefore)) {
                 // could not optimize or inline the method call
                 profileInvocation(target);
                 profileCall(args[0], target.holder());
-                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool);
+                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
             }
         }
     }
 
-    private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool) {
+    private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         BasicType resultType = returnBasicType(target);
-        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool));
+        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -999,13 +998,13 @@ public class GraphBuilder {
             // append a call to the registration intrinsic
             loadLocal(0, BasicType.Object);
             append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), false, lockStack(), true, true));
+                                          curState.popArguments(1), false, curState.copy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
     }
 
-    void methodReturn(Instruction x) {
+    void genMethodReturn(Instruction x) {
         if (C1XOptions.RegisterFinalizersAtInit) {
             C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
             if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
@@ -1021,7 +1020,7 @@ public class GraphBuilder {
                 assert C1XOptions.InlineSynchronizedMethods;
                 int i = curState.scope().callerState().locksSize();
                 assert curState.locksSize() == i + 1;
-                monitorexit(curState.lockAt(i), Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                genMonitorExit(curState.lockAt(i), Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
 
             // trim back stack to the caller's stack size
@@ -1053,8 +1052,9 @@ public class GraphBuilder {
 
         curState.truncateStack(0);
         if (method().isSynchronized()) {
+            ValueStack stateBefore = curState.immutableCopy();
             // unlock before exiting the method
-            append(new MonitorExit(synchronizedObject(initialState, method()), curState.unlock()));
+            append(new MonitorExit(synchronizedObject(initialState, method()), curState.unlock(), stateBefore));
         }
         append(new Return(x));
     }
@@ -1064,32 +1064,28 @@ public class GraphBuilder {
     }
 
     void monitorenter(Instruction x, int bci) {
-        ValueStack lockStack = lockStack();
-        appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), lockStack), bci, false);
+        appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), curState.copy()), bci, false);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
-    void monitorexit(Instruction x, int bci) {
-        // Mysterious C1 comment:
-        // Note: the comment below is only relevant for the case where we do
-        // not deoptimize due to asynchronous exceptions (!(DeoptC1 &&
-        // DeoptOnAsyncException), which is not used anymore)
-
-        // Note: Potentially, the monitor state in an exception handler
-        //       can be wrong due to wrong 'initialization' of the handler
-        //       via a wrong asynchronous exception path. This can happen,
-        //       if the exception handler range for asynchronous exceptions
-        //       is too long (see also java bug 4327029, and comment in
-        //       GraphBuilder::handle_exception()). This may cause 'under-
-        //       flow' of the monitor stack => bailout instead.
+    void genMonitorExit(Instruction x, int bci) {
         if (curState.locksSize() < 1) {
             throw new Bailout("monitor stack underflow");
         }
-        appendWithBCI(new MonitorExit(x, curState.unlock()), bci, false);
+        ValueStack stateBefore = curState.immutableCopy();
+        appendWithBCI(new MonitorExit(x, curState.unlock(), stateBefore), bci, false);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
-    void jsr(int dest) {
+    void genMonitorExit(int bci, ValueStack stateBefore) {
+        if (curState.locksSize() < 1) {
+            throw new Bailout("monitor stack underflow");
+        }
+        appendWithBCI(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci, false);
+        killMemoryMap(); // prevent any optimizations across synchronization
+    }
+
+    void genJsr(int dest) {
         for (ScopeData cur = scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
@@ -1100,7 +1096,7 @@ public class GraphBuilder {
         tryInlineJsr(dest);
     }
 
-    void ret(int localIndex) {
+    void genRet(int localIndex) {
         if (!scopeData.parsingJsr()) {
             throw new Bailout("ret encountered when not parsing subroutine");
         }
@@ -1112,7 +1108,7 @@ public class GraphBuilder {
         append(new Goto(scopeData.jsrContinuation(), null, false));
     }
 
-    void tableswitch() {
+    void genTableswitch() {
         int bci = bci();
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream(), bci);
         int max = ts.numberOfCases();
@@ -1131,7 +1127,7 @@ public class GraphBuilder {
         append(new TableSwitch(ipop(), list, ts.lowKey(), stateBefore, isBackwards));
     }
 
-    void lookupswitch() {
+    void genLookupswitch() {
         int bci = bci();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream(), bci);
         int max = ls.numberOfCases();
@@ -1249,15 +1245,15 @@ public class GraphBuilder {
                 throw new Bailout("Method and/or inlining is too large");
             }
 
-            if (x instanceof StateSplit) {
-                if (x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState()) {
-                    // conservatively kill all memory across calls
-                    if (memoryMap != null) {
-                        memoryMap.kill();
-                    }
+            if (hasUncontrollableSideEffects(x)) {
+                // conservatively kill all memory if there are unknown side effects
+                if (memoryMap != null) {
+                    memoryMap.kill();
                 }
-                // split the state for any state split operations
-                ((StateSplit) x).setState(curState.copy());
+            }
+
+            if (x instanceof BlockEnd) {
+                ((BlockEnd) x).setStateAfter(curState.immutableCopy());
             }
 
             if (x.canTrap()) {
@@ -1270,8 +1266,8 @@ public class GraphBuilder {
         return x;
     }
 
-    ValueStack lockStack() {
-        return curState.copyLocks();
+    private boolean hasUncontrollableSideEffects(Instruction x) {
+        return x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState() || x instanceof ResolveClass;
     }
 
     private BlockBegin blockAt(int bci) {
@@ -1291,7 +1287,7 @@ public class GraphBuilder {
         assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
-        gotoSub.setState(curState);
+        gotoSub.setStateAfter(curState);
         assert jsrStartBlock.state() == null;
         jsrStartBlock.setState(curState.copy());
         append(gotoSub);
@@ -1414,7 +1410,7 @@ public class GraphBuilder {
         BasicType resultType = returnBasicType(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, lockStack(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         C1XMetrics.InlinedIntrinsics++;
         return true;
@@ -1429,8 +1425,8 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(RiMethod target, Instruction[] args, RiType knownHolder) {
-        return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder);
+    boolean tryInline(RiMethod target, Instruction[] args, RiType knownHolder, ValueStack stateBefore) {
+        return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder, stateBefore);
     }
 
     boolean checkInliningConditions(RiMethod target) {
@@ -1498,13 +1494,15 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInlineFull(RiMethod target, Instruction[] args, RiType knownHolder) {
+    boolean tryInlineFull(RiMethod target, Instruction[] args, RiType knownHolder, ValueStack stateBefore) {
         BlockBegin orig = curBlock;
         Instruction receiver = null;
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
             receiver = args[0];
-            appendNullCheck(receiver);
+            if (!receiver.isNonNull()) {
+                append(new NullCheck(receiver, stateBefore));
+            }
         }
 
         if (C1XOptions.ProfileInlinedCalls) {
@@ -1564,7 +1562,7 @@ public class GraphBuilder {
         if (calleeStartBlock.isParserLoopHeader()) {
             // the block is a loop header, so we have to insert a goto
             Goto gotoCallee = new Goto(calleeStartBlock, null, false);
-            gotoCallee.setState(curState);
+            gotoCallee.setStateAfter(curState);
             appendWithBCI(gotoCallee, 0, false);
             curBlock.setEnd(gotoCallee);
             calleeStartBlock.merge(calleeState);
@@ -1661,7 +1659,7 @@ public class GraphBuilder {
                 lock = appendWithBCI(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
             }
             // exit the monitor
-            monitorexit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            genMonitorExit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
 
             // exit the context of the synchronized method
             if (!defaultHandler) {
@@ -1674,10 +1672,10 @@ public class GraphBuilder {
 
         apush(exception);
         exceptionState = curState.copy();
-        throw_(bci);
+        genThrow(bci);
         BlockEnd end = (BlockEnd) lastInstr;
         curBlock.setEnd(end);
-        end.setState(curState);
+        end.setStateAfter(curState);
 
         curBlock = origBlock;
         curState = origState;
@@ -1773,7 +1771,7 @@ public class GraphBuilder {
         Goto g = new Goto(target, state.copy(), false);
         append(g);
         ir.osrEntryBlock.setEnd(g);
-        target.merge(ir.osrEntryBlock.end().state());
+        target.merge(ir.osrEntryBlock.end().stateAfter());
     }
 
     BlockEnd iterateBytecodesForBlock(int bci) {
@@ -1841,7 +1839,7 @@ public class GraphBuilder {
                 case Bytecodes.SIPUSH         : ipush(appendConstant(CiConstant.forInt(s.readShort()))); break;
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
-                case Bytecodes.LDC2_W         : loadConstant(); break;
+                case Bytecodes.LDC2_W         : genLoadConstant(); break;
                 case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), BasicType.Int); break;
                 case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), BasicType.Long); break;
                 case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), BasicType.Float); break;
@@ -1867,14 +1865,14 @@ public class GraphBuilder {
                 case Bytecodes.ALOAD_1        : loadLocal(1, BasicType.Object); break;
                 case Bytecodes.ALOAD_2        : loadLocal(2, BasicType.Object); break;
                 case Bytecodes.ALOAD_3        : loadLocal(3, BasicType.Object); break;
-                case Bytecodes.IALOAD         : loadIndexed(BasicType.Int   ); break;
-                case Bytecodes.LALOAD         : loadIndexed(BasicType.Long  ); break;
-                case Bytecodes.FALOAD         : loadIndexed(BasicType.Float ); break;
-                case Bytecodes.DALOAD         : loadIndexed(BasicType.Double); break;
-                case Bytecodes.AALOAD         : loadIndexed(BasicType.Object); break;
-                case Bytecodes.BALOAD         : loadIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CALOAD         : loadIndexed(BasicType.Char  ); break;
-                case Bytecodes.SALOAD         : loadIndexed(BasicType.Short ); break;
+                case Bytecodes.IALOAD         : genLoadIndexed(BasicType.Int   ); break;
+                case Bytecodes.LALOAD         : genLoadIndexed(BasicType.Long  ); break;
+                case Bytecodes.FALOAD         : genLoadIndexed(BasicType.Float ); break;
+                case Bytecodes.DALOAD         : genLoadIndexed(BasicType.Double); break;
+                case Bytecodes.AALOAD         : genLoadIndexed(BasicType.Object); break;
+                case Bytecodes.BALOAD         : genLoadIndexed(BasicType.Byte  ); break;
+                case Bytecodes.CALOAD         : genLoadIndexed(BasicType.Char  ); break;
+                case Bytecodes.SALOAD         : genLoadIndexed(BasicType.Short ); break;
                 case Bytecodes.ISTORE         : storeLocal(BasicType.Int, s.readLocalIndex()); break;
                 case Bytecodes.LSTORE         : storeLocal(BasicType.Long, s.readLocalIndex()); break;
                 case Bytecodes.FSTORE         : storeLocal(BasicType.Float, s.readLocalIndex()); break;
@@ -1900,14 +1898,14 @@ public class GraphBuilder {
                 case Bytecodes.ASTORE_1       : storeLocal(BasicType.Object, 1); break;
                 case Bytecodes.ASTORE_2       : storeLocal(BasicType.Object, 2); break;
                 case Bytecodes.ASTORE_3       : storeLocal(BasicType.Object, 3); break;
-                case Bytecodes.IASTORE        : storeIndexed(BasicType.Int   ); break;
-                case Bytecodes.LASTORE        : storeIndexed(BasicType.Long  ); break;
-                case Bytecodes.FASTORE        : storeIndexed(BasicType.Float ); break;
-                case Bytecodes.DASTORE        : storeIndexed(BasicType.Double); break;
-                case Bytecodes.AASTORE        : storeIndexed(BasicType.Object); break;
-                case Bytecodes.BASTORE        : storeIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CASTORE        : storeIndexed(BasicType.Char  ); break;
-                case Bytecodes.SASTORE        : storeIndexed(BasicType.Short ); break;
+                case Bytecodes.IASTORE        : genStoreIndexed(BasicType.Int   ); break;
+                case Bytecodes.LASTORE        : genStoreIndexed(BasicType.Long  ); break;
+                case Bytecodes.FASTORE        : genStoreIndexed(BasicType.Float ); break;
+                case Bytecodes.DASTORE        : genStoreIndexed(BasicType.Double); break;
+                case Bytecodes.AASTORE        : genStoreIndexed(BasicType.Object); break;
+                case Bytecodes.BASTORE        : genStoreIndexed(BasicType.Byte  ); break;
+                case Bytecodes.CASTORE        : genStoreIndexed(BasicType.Char  ); break;
+                case Bytecodes.SASTORE        : genStoreIndexed(BasicType.Short ); break;
                 case Bytecodes.POP            : // fall through
                 case Bytecodes.POP2           : // fall through
                 case Bytecodes.DUP            : // fall through
@@ -1919,108 +1917,108 @@ public class GraphBuilder {
                 case Bytecodes.SWAP           : stackOp(opcode); break;
                 case Bytecodes.IADD           : // fall through
                 case Bytecodes.ISUB           : // fall through
-                case Bytecodes.IMUL           : arithmeticOp(BasicType.Int, opcode); break;
+                case Bytecodes.IMUL           : genArithmeticOp(BasicType.Int, opcode); break;
                 case Bytecodes.IDIV           : // fall through
-                case Bytecodes.IREM           : arithmeticOp(BasicType.Int, opcode, lockStack()); break;
+                case Bytecodes.IREM           : genArithmeticOp(BasicType.Int, opcode, curState.copy()); break;
                 case Bytecodes.LADD           : // fall through
                 case Bytecodes.LSUB           : // fall through
-                case Bytecodes.LMUL           : arithmeticOp(BasicType.Long, opcode); break;
+                case Bytecodes.LMUL           : genArithmeticOp(BasicType.Long, opcode); break;
                 case Bytecodes.LDIV           : // fall through
-                case Bytecodes.LREM           : arithmeticOp(BasicType.Long, opcode, lockStack()); break;
+                case Bytecodes.LREM           : genArithmeticOp(BasicType.Long, opcode, curState.copy()); break;
                 case Bytecodes.FADD           : // fall through
                 case Bytecodes.FSUB           : // fall through
                 case Bytecodes.FMUL           : // fall through
                 case Bytecodes.FDIV           : // fall through
-                case Bytecodes.FREM           : arithmeticOp(BasicType.Float, opcode); break;
+                case Bytecodes.FREM           : genArithmeticOp(BasicType.Float, opcode); break;
                 case Bytecodes.DADD           : // fall through
                 case Bytecodes.DSUB           : // fall through
                 case Bytecodes.DMUL           : // fall through
                 case Bytecodes.DDIV           : // fall through
-                case Bytecodes.DREM           : arithmeticOp(BasicType.Double, opcode); break;
-                case Bytecodes.INEG           : negateOp(BasicType.Int); break;
-                case Bytecodes.LNEG           : negateOp(BasicType.Long); break;
-                case Bytecodes.FNEG           : negateOp(BasicType.Float); break;
-                case Bytecodes.DNEG           : negateOp(BasicType.Double); break;
+                case Bytecodes.DREM           : genArithmeticOp(BasicType.Double, opcode); break;
+                case Bytecodes.INEG           : genNegateOp(BasicType.Int); break;
+                case Bytecodes.LNEG           : genNegateOp(BasicType.Long); break;
+                case Bytecodes.FNEG           : genNegateOp(BasicType.Float); break;
+                case Bytecodes.DNEG           : genNegateOp(BasicType.Double); break;
                 case Bytecodes.ISHL           : // fall through
                 case Bytecodes.ISHR           : // fall through
-                case Bytecodes.IUSHR          : shiftOp(BasicType.Int, opcode); break;
+                case Bytecodes.IUSHR          : genShiftOp(BasicType.Int, opcode); break;
                 case Bytecodes.IAND           : // fall through
                 case Bytecodes.IOR            : // fall through
-                case Bytecodes.IXOR           : logicOp(BasicType.Int, opcode); break;
+                case Bytecodes.IXOR           : genLogicOp(BasicType.Int, opcode); break;
                 case Bytecodes.LSHL           : // fall through
                 case Bytecodes.LSHR           : // fall through
-                case Bytecodes.LUSHR          : shiftOp(BasicType.Long, opcode); break;
+                case Bytecodes.LUSHR          : genShiftOp(BasicType.Long, opcode); break;
                 case Bytecodes.LAND           : // fall through
                 case Bytecodes.LOR            : // fall through
-                case Bytecodes.LXOR           : logicOp(BasicType.Long, opcode); break;
-                case Bytecodes.IINC           : increment(); break;
-                case Bytecodes.I2L            : convert(opcode, BasicType.Int   , BasicType.Long  ); break;
-                case Bytecodes.I2F            : convert(opcode, BasicType.Int   , BasicType.Float ); break;
-                case Bytecodes.I2D            : convert(opcode, BasicType.Int   , BasicType.Double); break;
-                case Bytecodes.L2I            : convert(opcode, BasicType.Long  , BasicType.Int   ); break;
-                case Bytecodes.L2F            : convert(opcode, BasicType.Long  , BasicType.Float ); break;
-                case Bytecodes.L2D            : convert(opcode, BasicType.Long  , BasicType.Double); break;
-                case Bytecodes.F2I            : convert(opcode, BasicType.Float , BasicType.Int   ); break;
-                case Bytecodes.F2L            : convert(opcode, BasicType.Float , BasicType.Long  ); break;
-                case Bytecodes.F2D            : convert(opcode, BasicType.Float , BasicType.Double); break;
-                case Bytecodes.D2I            : convert(opcode, BasicType.Double, BasicType.Int   ); break;
-                case Bytecodes.D2L            : convert(opcode, BasicType.Double, BasicType.Long  ); break;
-                case Bytecodes.D2F            : convert(opcode, BasicType.Double, BasicType.Float ); break;
-                case Bytecodes.I2B            : convert(opcode, BasicType.Int   , BasicType.Byte  ); break;
-                case Bytecodes.I2C            : convert(opcode, BasicType.Int   , BasicType.Char  ); break;
-                case Bytecodes.I2S            : convert(opcode, BasicType.Int   , BasicType.Short ); break;
-                case Bytecodes.LCMP           : compareOp(BasicType.Long, opcode); break;
-                case Bytecodes.FCMPL          : compareOp(BasicType.Float, opcode); break;
-                case Bytecodes.FCMPG          : compareOp(BasicType.Float, opcode); break;
-                case Bytecodes.DCMPL          : compareOp(BasicType.Double, opcode); break;
-                case Bytecodes.DCMPG          : compareOp(BasicType.Double, opcode); break;
-                case Bytecodes.IFEQ           : ifZero(Condition.eql); break;
-                case Bytecodes.IFNE           : ifZero(Condition.neq); break;
-                case Bytecodes.IFLT           : ifZero(Condition.lss); break;
-                case Bytecodes.IFGE           : ifZero(Condition.geq); break;
-                case Bytecodes.IFGT           : ifZero(Condition.gtr); break;
-                case Bytecodes.IFLE           : ifZero(Condition.leq); break;
-                case Bytecodes.IF_ICMPEQ      : ifSame(BasicType.Int, Condition.eql); break;
-                case Bytecodes.IF_ICMPNE      : ifSame(BasicType.Int, Condition.neq); break;
-                case Bytecodes.IF_ICMPLT      : ifSame(BasicType.Int, Condition.lss); break;
-                case Bytecodes.IF_ICMPGE      : ifSame(BasicType.Int, Condition.geq); break;
-                case Bytecodes.IF_ICMPGT      : ifSame(BasicType.Int, Condition.gtr); break;
-                case Bytecodes.IF_ICMPLE      : ifSame(BasicType.Int, Condition.leq); break;
-                case Bytecodes.IF_ACMPEQ      : ifSame(BasicType.Object, Condition.eql); break;
-                case Bytecodes.IF_ACMPNE      : ifSame(BasicType.Object, Condition.neq); break;
-                case Bytecodes.GOTO           : goto_(s.currentBCI(), s.readBranchDest()); break;
-                case Bytecodes.JSR            : jsr(s.readBranchDest()); break;
-                case Bytecodes.RET            : ret(s.readLocalIndex()); break;
-                case Bytecodes.TABLESWITCH    : tableswitch(); break;
-                case Bytecodes.LOOKUPSWITCH   : lookupswitch(); break;
-                case Bytecodes.IRETURN        : methodReturn(ipop()); break;
-                case Bytecodes.LRETURN        : methodReturn(lpop()); break;
-                case Bytecodes.FRETURN        : methodReturn(fpop()); break;
-                case Bytecodes.DRETURN        : methodReturn(dpop()); break;
-                case Bytecodes.ARETURN        : methodReturn(apop()); break;
-                case Bytecodes.RETURN         : methodReturn(null  ); break;
-                case Bytecodes.GETSTATIC      : getStatic(); break;
-                case Bytecodes.PUTSTATIC      : putStatic(); break;
-                case Bytecodes.GETFIELD       : getField(); break;
-                case Bytecodes.PUTFIELD       : putField(); break;
-                case Bytecodes.INVOKEVIRTUAL  : cpi = s.readCPI(); invokeVirtual(constantPool().lookupInvokeVirtual(cpi), cpi, constantPool()); break;
-                case Bytecodes.INVOKESPECIAL  : cpi = s.readCPI(); invokeSpecial(constantPool().lookupInvokeSpecial(cpi), null, cpi, constantPool()); break;
-                case Bytecodes.INVOKESTATIC   : cpi = s.readCPI(); invokeStatic(constantPool().lookupInvokeStatic(cpi), cpi, constantPool()); break;
-                case Bytecodes.INVOKEINTERFACE: cpi = s.readCPI(); invokeInterface(constantPool().lookupInvokeInterface(cpi), cpi, constantPool()); break;
-                case Bytecodes.NEW            : newInstance(); break;
-                case Bytecodes.NEWARRAY       : newTypeArray(); break;
-                case Bytecodes.ANEWARRAY      : newObjectArray(); break;
-                case Bytecodes.ARRAYLENGTH    : ipush(append(new ArrayLength(apop(), lockStack()))); break;
-                case Bytecodes.ATHROW         : throw_(s.currentBCI()); break;
-                case Bytecodes.CHECKCAST      : checkcast_(); break;
-                case Bytecodes.INSTANCEOF     : instanceof_(); break;
-                case Bytecodes.MONITORENTER   : monitorenter(apop(), s.currentBCI()); break;
-                case Bytecodes.MONITOREXIT    : monitorexit(apop(), s.currentBCI()); break;
-                case Bytecodes.MULTIANEWARRAY : newMultiArray(); break;
-                case Bytecodes.IFNULL         : ifNull(Condition.eql); break;
-                case Bytecodes.IFNONNULL      : ifNull(Condition.neq); break;
-                case Bytecodes.GOTO_W         : goto_(s.currentBCI(), s.readFarBranchDest()); break;
-                case Bytecodes.JSR_W          : jsr(s.readFarBranchDest()); break;
+                case Bytecodes.LXOR           : genLogicOp(BasicType.Long, opcode); break;
+                case Bytecodes.IINC           : genIncrement(); break;
+                case Bytecodes.I2L            : genConvert(opcode, BasicType.Int   , BasicType.Long  ); break;
+                case Bytecodes.I2F            : genConvert(opcode, BasicType.Int   , BasicType.Float ); break;
+                case Bytecodes.I2D            : genConvert(opcode, BasicType.Int   , BasicType.Double); break;
+                case Bytecodes.L2I            : genConvert(opcode, BasicType.Long  , BasicType.Int   ); break;
+                case Bytecodes.L2F            : genConvert(opcode, BasicType.Long  , BasicType.Float ); break;
+                case Bytecodes.L2D            : genConvert(opcode, BasicType.Long  , BasicType.Double); break;
+                case Bytecodes.F2I            : genConvert(opcode, BasicType.Float , BasicType.Int   ); break;
+                case Bytecodes.F2L            : genConvert(opcode, BasicType.Float , BasicType.Long  ); break;
+                case Bytecodes.F2D            : genConvert(opcode, BasicType.Float , BasicType.Double); break;
+                case Bytecodes.D2I            : genConvert(opcode, BasicType.Double, BasicType.Int   ); break;
+                case Bytecodes.D2L            : genConvert(opcode, BasicType.Double, BasicType.Long  ); break;
+                case Bytecodes.D2F            : genConvert(opcode, BasicType.Double, BasicType.Float ); break;
+                case Bytecodes.I2B            : genConvert(opcode, BasicType.Int   , BasicType.Byte  ); break;
+                case Bytecodes.I2C            : genConvert(opcode, BasicType.Int   , BasicType.Char  ); break;
+                case Bytecodes.I2S            : genConvert(opcode, BasicType.Int   , BasicType.Short ); break;
+                case Bytecodes.LCMP           : genCompareOp(BasicType.Long, opcode); break;
+                case Bytecodes.FCMPL          : genCompareOp(BasicType.Float, opcode); break;
+                case Bytecodes.FCMPG          : genCompareOp(BasicType.Float, opcode); break;
+                case Bytecodes.DCMPL          : genCompareOp(BasicType.Double, opcode); break;
+                case Bytecodes.DCMPG          : genCompareOp(BasicType.Double, opcode); break;
+                case Bytecodes.IFEQ           : genIfZero(Condition.eql); break;
+                case Bytecodes.IFNE           : genIfZero(Condition.neq); break;
+                case Bytecodes.IFLT           : genIfZero(Condition.lss); break;
+                case Bytecodes.IFGE           : genIfZero(Condition.geq); break;
+                case Bytecodes.IFGT           : genIfZero(Condition.gtr); break;
+                case Bytecodes.IFLE           : genIfZero(Condition.leq); break;
+                case Bytecodes.IF_ICMPEQ      : genIfSame(BasicType.Int, Condition.eql); break;
+                case Bytecodes.IF_ICMPNE      : genIfSame(BasicType.Int, Condition.neq); break;
+                case Bytecodes.IF_ICMPLT      : genIfSame(BasicType.Int, Condition.lss); break;
+                case Bytecodes.IF_ICMPGE      : genIfSame(BasicType.Int, Condition.geq); break;
+                case Bytecodes.IF_ICMPGT      : genIfSame(BasicType.Int, Condition.gtr); break;
+                case Bytecodes.IF_ICMPLE      : genIfSame(BasicType.Int, Condition.leq); break;
+                case Bytecodes.IF_ACMPEQ      : genIfSame(BasicType.Object, Condition.eql); break;
+                case Bytecodes.IF_ACMPNE      : genIfSame(BasicType.Object, Condition.neq); break;
+                case Bytecodes.GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
+                case Bytecodes.JSR            : genJsr(s.readBranchDest()); break;
+                case Bytecodes.RET            : genRet(s.readLocalIndex()); break;
+                case Bytecodes.TABLESWITCH    : genTableswitch(); break;
+                case Bytecodes.LOOKUPSWITCH   : genLookupswitch(); break;
+                case Bytecodes.IRETURN        : genMethodReturn(ipop()); break;
+                case Bytecodes.LRETURN        : genMethodReturn(lpop()); break;
+                case Bytecodes.FRETURN        : genMethodReturn(fpop()); break;
+                case Bytecodes.DRETURN        : genMethodReturn(dpop()); break;
+                case Bytecodes.ARETURN        : genMethodReturn(apop()); break;
+                case Bytecodes.RETURN         : genMethodReturn(null  ); break;
+                case Bytecodes.GETSTATIC      : genGetStatic(stream().readCPI()); break;
+                case Bytecodes.PUTSTATIC      : genPutStatic(stream().readCPI()); break;
+                case Bytecodes.GETFIELD       : genGetField(stream().readCPI()); break;
+                case Bytecodes.PUTFIELD       : genPutField(stream().readCPI()); break;
+                case Bytecodes.INVOKEVIRTUAL  : cpi = s.readCPI(); genInvokeVirtual(constantPool().lookupInvokeVirtual(cpi), cpi, constantPool()); break;
+                case Bytecodes.INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupInvokeSpecial(cpi), null, cpi, constantPool()); break;
+                case Bytecodes.INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupInvokeStatic(cpi), cpi, constantPool()); break;
+                case Bytecodes.INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupInvokeInterface(cpi), cpi, constantPool()); break;
+                case Bytecodes.NEW            : genNewInstance(stream().readCPI()); break;
+                case Bytecodes.NEWARRAY       : genNewTypeArray(stream().readLocalIndex()); break;
+                case Bytecodes.ANEWARRAY      : genNewObjectArray(stream().readCPI()); break;
+                case Bytecodes.ARRAYLENGTH    : genArrayLength(); break;
+                case Bytecodes.ATHROW         : genThrow(s.currentBCI()); break;
+                case Bytecodes.CHECKCAST      : genCheckCast(); break;
+                case Bytecodes.INSTANCEOF     : genInstanceOf(); break;
+                case Bytecodes.MONITORENTER   : genMonitorEnter(s.currentBCI(), curState.copy()); break;
+                case Bytecodes.MONITOREXIT    : genMonitorExit(s.currentBCI(), curState.copy()); break;
+                case Bytecodes.MULTIANEWARRAY : genNewMultiArray(stream().readCPI()); break;
+                case Bytecodes.IFNULL         : genIfNull(Condition.eql); break;
+                case Bytecodes.IFNONNULL      : genIfNull(Condition.neq); break;
+                case Bytecodes.GOTO_W         : genGoto(s.currentBCI(), s.readFarBranchDest()); break;
+                case Bytecodes.JSR_W          : genJsr(s.readFarBranchDest()); break;
                 case Bytecodes.BREAKPOINT:
                     throw new Bailout("concurrent setting of breakpoint");
                 default:
@@ -2056,7 +2054,7 @@ public class GraphBuilder {
         // NOTE that inlining may have changed the block we are parsing
         assert end != null;
         curBlock.setEnd(end);
-        end.setState(curState);
+        end.setStateAfter(curState);
         // propagate the state
         for (BlockBegin succ : end.successors()) {
             assert succ.predecessors().contains(curBlock);
@@ -2064,6 +2062,16 @@ public class GraphBuilder {
             scopeData.addToWorkList(succ);
         }
         return end;
+    }
+
+    private void genArrayLength() {
+        ipush(append(new ArrayLength(apop(), curState.copy())));
+    }
+
+    private void genMonitorEnter(int bci, ValueStack stateBefore) {
+        Instruction object = apop();
+        appendWithBCI(new MonitorEnter(object, curState.lock(scope(), object), stateBefore), bci, false);
+        killMemoryMap(); // prevent any optimizations across synchronization
     }
 
     void killMemoryMap() {

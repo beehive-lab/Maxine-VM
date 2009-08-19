@@ -305,11 +305,12 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         CodeEmitInfo infoForException = null;
         if (x.needsNullCheck()) {
-            infoForException = stateFor(x, x.lockStackBefore());
+            // TODO: lockStackBefore()
+            infoForException = stateFor(x, x.stateBefore());
         }
         // this CodeEmitInfo must not have the xhandlers because here the
         // object is already locked (xhandlers expect object to be unlocked)
-        CodeEmitInfo info = stateFor(x, x.state(), true);
+        CodeEmitInfo info = stateFor(x, x.stateBefore(), true);
         monitorEnter(obj.result(), lock, syncTempOpr(), scratch, x.lockNumber(), infoForException, info);
     }
 
@@ -809,7 +810,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         RiType[] expectedType = new RiType[1];
         arraycopyHelper(x, flags, expectedType);
 
-        CodeEmitInfo info = stateFor(x, x.state()); // we may want to have stack (deoptimization?)
+        CodeEmitInfo info = stateFor(x, x.stateBefore()); // we may want to have stack (deoptimization?)
         lir().arraycopy(src.result(), srcPos.result(), dst.result(), dstPos.result(), length.result(), tmp, expectedType[0], flags[0], info); // does
         // addSafepoint
     }
@@ -833,7 +834,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     public void visitNewInstance(NewInstance x) {
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
 
@@ -869,7 +870,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitNewTypeArray(NewTypeArray x) {
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(X86FrameMap.rbxOpr);
         LIROperand reg = emitNewTypeArray(x.type().basicType, x.elementType(), length.result(), info);
@@ -905,7 +906,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             patchingInfo = stateFor(x, x.stateBefore());
         }
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
 
         LIROperand reg = resultRegisterFor(x.type().basicType);
         LIROperand tmp1 = X86FrameMap.rcxOopOpr;
@@ -953,7 +954,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             x.setExceptionHandlers(new ArrayList<ExceptionHandler>(x.exceptionHandlers()));
         }
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         CallingConvention cc = compilation.frameMap().runtimeCallingConvention(CiRuntimeCall.NewMultiArray.arguments);
 
         LIROperand length = X86FrameMap.rbxOpr;
@@ -975,7 +976,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // Create a new code emit info as they must not be shared!
-        CodeEmitInfo info2 = stateFor(x, x.state());
+        CodeEmitInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
         lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info2);
 
@@ -1002,7 +1003,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         obj.loadItem();
 
         // info for exceptions
-        CodeEmitInfo infoForException = stateFor(x, x.state().copyLocks());
+        CodeEmitInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
@@ -1074,9 +1075,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         // add safepoint before generating condition code so it can be recomputed
         if (x.isSafepoint()) {
             // increment backedge counter if needed
-            incrementBackedgeCounter(stateFor(x, x.stateBefore()));
+            incrementBackedgeCounter(stateFor(x, x.stateAfter()));
 
-            lir().safepoint(LIROperandFactory.IllegalOperand, stateFor(x, x.stateBefore()));
+            lir().safepoint(LIROperandFactory.IllegalOperand, stateFor(x, x.stateAfter()));
         }
         setNoResult(x);
 
@@ -1084,7 +1085,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand right = yin.result();
         lir().cmp(lirCond(cond), left, right);
         profileBranch(x, cond);
-        moveToPhi(x.state());
+        moveToPhi(x.stateAfter());
         if (x.x().type().isFloat() || x.x().type().isDouble()) {
             lir().branch(lirCond(cond), right.type(), x.trueSuccessor(), x.unorderedSuccessor());
         } else {

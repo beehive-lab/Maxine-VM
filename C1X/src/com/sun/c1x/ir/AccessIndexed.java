@@ -40,10 +40,10 @@ public abstract class AccessIndexed extends AccessArray {
      * @param index the instruction producing the index
      * @param length the instruction producing the length (used in bounds check elimination?)
      * @param elementType the type of the elements of the array
-     * @param lockStack the lock stack
+     * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack lockStack) {
-        super(elementType.stackType(), array, lockStack);
+    AccessIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack stateBefore) {
+        super(elementType.stackType(), array, stateBefore);
         this.index = index;
         this.length = length;
         this.elementType = elementType;

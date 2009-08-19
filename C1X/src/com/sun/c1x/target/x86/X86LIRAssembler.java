@@ -103,7 +103,7 @@ public class X86LIRAssembler extends LIRAssembler {
             return new Address(base, addr.displacement());
         } else if (addr.index().isCpuRegister()) {
             Register index = addr.index().asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromInt(addr.scale().ordinal()), addr.displacement());
+            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else if (addr.index().isConstant()) {
             long addrOffset = (addr.index().asConstantPtr().asInt() << addr.scale().ordinal()) + addr.displacement();
             assert X86Assembler.isSimm32(addrOffset) : "must be";

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.value.ValueStack;
+
 import java.util.*;
 
 /**
@@ -71,13 +73,11 @@ public class UseCountComputer {
             worklist.add(n);
         } else {
             n.inputValuesDo(updateUseCount);
-            // special handling for some instructions
-            if (!(n instanceof BlockEnd)) {
-                // note on BlockEnd:
-                // must 'use' the stack only if the method doesn't
-                // terminate, however, in those cases stack is empty
-                n.stateValuesDo(updateUseCount);
+            ValueStack stateBefore = n.stateBefore();
+            if (stateBefore != null) {
+                stateBefore.valuesDo(updateUseCount);
             }
+            // note we don't need to visit the stateAfter (which is only valid for block ends)
         }
         depth--;
     }

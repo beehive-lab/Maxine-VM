@@ -95,6 +95,10 @@ public class ValueStack {
         return copy(true, true, true);
     }
 
+    public ValueStack immutableCopy() {
+        return copy(true, true, true);
+    }
+
     public boolean isSame(ValueStack other) {
         assert scope() == other.scope();
         assert localsSize() == other.localsSize();

@@ -29,20 +29,18 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NullCheck extends Instruction {
+public class NullCheck extends StateSplit {
 
     Instruction object;
-    ValueStack lockStack;
 
     /**
      * Constructs a new NullCheck instruction.
      * @param obj the instruction producing the object to check against null
-     * @param lockStack the lock stack
+     * @param stateBefore the state before executing the null check
      */
-    public NullCheck(Instruction obj, ValueStack lockStack) {
-        super(obj.type());
+    public NullCheck(Instruction obj, ValueStack stateBefore) {
+        super(obj.type(), stateBefore);
         this.object = obj;
-        this.lockStack = lockStack;
         setFlag(Flag.NonNull);
         setNeedsNullCheck(!obj.isNonNull());
         setFlag(Flag.PinExplicitNullCheck);
@@ -57,24 +55,15 @@ public class NullCheck extends Instruction {
     }
 
     /**
-     * Gets the lock stack.
-     * @return the lock stack
-     */
-    @Override
-    public ValueStack lockStack() {
-        return lockStack;
-    }
-
-    /**
      * Sets whether this instruction requires a null check.
      * @param on {@code true} if this instruction requires a null check
      */
     public void setNeedsNullCheck(boolean on) {
         if (on) {
-            assert lockStack != null;
+            assert stateBefore != null;
             setFlag(Instruction.Flag.NoNullCheck);
         } else {
-            lockStack = null;
+            stateBefore = null;
             clearFlag(Instruction.Flag.NoNullCheck);
         }
     }
@@ -95,17 +84,6 @@ public class NullCheck extends Instruction {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         object = closure.apply(object);
-    }
-
-    /**
-     * Iterates over the other values of this instruction.
-     * @param closure the closure to apply to each instruction
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (lockStack != null) {
-            lockStack.valuesDo(closure);
-        }
     }
 
     /**

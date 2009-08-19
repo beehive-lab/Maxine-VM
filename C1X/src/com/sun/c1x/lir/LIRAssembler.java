@@ -343,9 +343,9 @@ public abstract class LIRAssembler {
 
     static ValueStack debugInfo(Instruction ins) {
         if (ins instanceof StateSplit) {
-            return ((StateSplit) ins).state();
+            return ((StateSplit) ins).stateBefore();
         }
-        return ins.lockStack();
+        return ins.stateBefore();
     }
 
     void processDebugInfo(LIRInstruction op) {

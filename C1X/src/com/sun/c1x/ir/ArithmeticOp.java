@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class ArithmeticOp extends Op2 {
 
-    ValueStack lockStack;
+    ValueStack stateBefore;
 
     /**
      * Creates a new arithmetic operation.
@@ -38,12 +38,12 @@ public class ArithmeticOp extends Op2 {
      * @param x the first input instruction
      * @param y the second input instruction
      * @param isStrictFP indicates this operation has strict rounding semantics
-     * @param lockStack the value stack for instructions that may trap
+     * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack lockStack) {
+    public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack stateBefore) {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
-        this.lockStack = lockStack;
+        this.stateBefore = stateBefore;
         if (canTrap()) {
             pin();
         }
@@ -54,16 +54,8 @@ public class ArithmeticOp extends Op2 {
      * @return the lock stack
      */
     @Override
-    public ValueStack lockStack() {
-        return lockStack;
-    }
-
-    /**
-     * Sets the lock stack for this instruction.
-     * @param lockStack the lock stack
-     */
-    public void setLockStack(ValueStack lockStack) {
-        this.lockStack = lockStack;
+    public ValueStack stateBefore() {
+        return stateBefore;
     }
 
     /**
@@ -72,17 +64,6 @@ public class ArithmeticOp extends Op2 {
      */
     public boolean isStrictFP() {
         return checkFlag(Flag.IsStrictFP);
-    }
-
-    /**
-     * Iterates over the other values in this instruction.
-     * @param closure the closure to apply to each instruction
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (lockStack != null) {
-            lockStack.valuesDo(closure);
-        }
     }
 
     /**
