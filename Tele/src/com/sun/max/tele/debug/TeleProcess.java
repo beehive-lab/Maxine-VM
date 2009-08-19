@@ -550,7 +550,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param threads the sequence being used to collect the threads
      * @param id the {@link VmThread#id() id} of the thread. If {@code id > 0}, then this thread corresponds to a
      *            {@link VmThread Java thread}. If {@code id == 0}, then this is the primordial thread. Otherwise, this
-     *            is a native thread.
+     *            is a native thread or a Java thread that has not yet executed past the point in
+     *            {@link VmThread#run()} where it is added to the active thread list.
      * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread (e.g. the
      *            LWP of a Solaris thread)
      * @param state
@@ -568,6 +569,21 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         TeleNativeThread thread = handleToThreadMap.get(handle);
         if (thread == null) {
             thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+        } else {
+            // Handle the cases where a thread was added/removed from the global thread list since the last epoch
+            if (id > 0) {
+                if (thread.id() != id) {
+                    assert !thread.isJava();
+                    // This is a Java thread that added from the global thread list since the last epoch.
+                    thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+                }
+            } else {
+                if (thread.id() != id) {
+                    assert thread.isJava();
+                    // This is a Java thread that removed from the global thread list since the last epoch
+                    thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+                }
+            }
         }
 
         final Map<Safepoint.State, Pointer> vmThreadLocals;
@@ -604,9 +620,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             newHandleToThreadMap.put(thread.handle(), thread);
             final TeleNativeThread oldThread = handleToThreadMap.get(thread.handle());
             if (oldThread != null) {
-                assert oldThread == thread;
-                threadsDied.remove(thread);
-                Trace.line(TRACE_VALUE, "    "  + thread);
+                if (oldThread != thread) {
+                    threadsStarted.add(thread);
+                    if (!oldThread.isJava()) {
+                        assert thread.isJava() : "should be a Java thread just added to the global thread list";
+                    } else {
+                        assert !thread.isJava() : "should be a Java thread just removed from the global thread list";
+                    }
+                } else {
+                    threadsDied.remove(thread);
+                    Trace.line(TRACE_VALUE, "    "  + thread);
+                }
             } else {
                 threadsStarted.add(thread);
                 Trace.line(TRACE_VALUE, "    "  + thread + " STARTED");

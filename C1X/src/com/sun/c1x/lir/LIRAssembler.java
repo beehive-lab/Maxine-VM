@@ -45,6 +45,7 @@ import com.sun.c1x.value.*;
 public abstract class LIRAssembler {
 
     public final AbstractAssembler asm;
+    protected CodeStub adapterFrameStub;
     protected List<CodeStub> slowCaseStubs;
     public final C1XCompilation compilation;
     private FrameMap frameMap;
@@ -167,6 +168,12 @@ public abstract class LIRAssembler {
 
     public void emitSlowCaseStubs() {
         emitStubs(slowCaseStubs);
+
+        // Adapter frame stub must come last!
+        if (adapterFrameStub != null) {
+            emitCode(adapterFrameStub);
+        }
+
     }
 
     boolean needsIcache(RiMethod method) {
@@ -585,6 +592,8 @@ public abstract class LIRAssembler {
 
     protected abstract void volatileMoveOp(LIROperand inOpr, LIROperand result, BasicType type, CodeEmitInfo info);
 
+    protected abstract void emitPrologue();
+
     public void emitOp0(LIROp0 op) {
         switch (op.code()) {
             case WordAlign: {
@@ -609,8 +618,10 @@ public abstract class LIRAssembler {
             case StdEntry:
                 // init offsets
                 offsets().setValue(CodeOffsets.Entries.OSREntry, asm.codeBuffer.position());
-                asm.align(compilation.target.codeAlignment);
-                asm.makeOffset(compilation.runtime.codeOffset());
+
+                emitPrologue();
+
+
                 if (needsIcache(compilation.method())) {
                     checkIcache();
                 }
@@ -755,7 +766,7 @@ public abstract class LIRAssembler {
 
     protected abstract void resolve(LIROperand dest, LIROperand index, LIROperand cp);
 
-    void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    public void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
                 assert patchCode == LIRPatchCode.PatchNone && info == null : "no patching and info allowed here";
@@ -793,7 +804,17 @@ public abstract class LIRAssembler {
             }
 
         } else if (src.isAddress()) {
-            mem2reg(src, dest, type, patchCode, info, unaligned);
+
+            if (dest.isStack()) {
+
+                assert info == null && unaligned == false && patchCode == LIRPatchCode.PatchNone;
+                mem2stack(src, dest, type);
+            } else if (dest.isAddress()) {
+                assert info == null && unaligned == false && patchCode == LIRPatchCode.PatchNone;
+                mem2mem(src, dest, type);
+            } else {
+                mem2reg(src, dest, type, patchCode, info, unaligned);
+            }
 
         } else {
             throw Util.shouldNotReachHere();
@@ -809,6 +830,10 @@ public abstract class LIRAssembler {
     protected abstract void const2stack(LIROperand src, LIROperand dest);
 
     protected abstract void const2reg(LIROperand src, LIROperand dest, LIRPatchCode patchCode, CodeEmitInfo info);
+
+    protected abstract void mem2stack(LIROperand src, LIROperand dest, BasicType type);
+
+    protected abstract void mem2mem(LIROperand src, LIROperand dest, BasicType type);
 
     protected abstract void stack2stack(LIROperand src, LIROperand dest, BasicType type);
 

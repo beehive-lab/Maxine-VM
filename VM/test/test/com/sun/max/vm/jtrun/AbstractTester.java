@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jtrun;
 
 import static com.sun.max.vm.VMOptions.*;
-import test.com.sun.max.vm.jtrun.all.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -204,7 +203,9 @@ public abstract class AbstractTester extends JavaRunScheme {
     @PROTOTYPE_ONLY
     private void registerClasses() {
         if (BinaryImageGenerator.callerJit) {
-            CompiledPrototype.registerJitClass(JavaTesterTests.class);
+            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.all.JavaTesterTests.class);
+            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.c1x.JavaTesterTests.class);
+            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.some.JavaTesterTests.class);
         }
         for (Class<?> testClass : getClassList()) {
             addClassToImage(testClass);

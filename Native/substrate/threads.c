@@ -263,13 +263,8 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     setThreadLocal(enabled_tl, SAFEPOINT_LATCH, enabled_tl);
     setThreadLocal(disabled_tl, SAFEPOINT_LATCH, disabled_tl);
 
-    setThreadLocal(enabled_tl, NATIVE_THREAD_LOCALS, ntl);
-    setThreadLocal(disabled_tl, NATIVE_THREAD_LOCALS, ntl);
-    setThreadLocal(triggered_tl, NATIVE_THREAD_LOCALS, ntl);
-
-    setThreadLocal(enabled_tl, ID, ntl->id);
-    setThreadLocal(disabled_tl, ID, ntl->id);
-    setThreadLocal(triggered_tl, ID, ntl->id);
+    setConstantThreadLocal(enabled_tl, NATIVE_THREAD_LOCALS, ntl);
+    setConstantThreadLocal(enabled_tl, ID, ntl->id);
 
 #if log_THREADS
     int id = ntl->id;

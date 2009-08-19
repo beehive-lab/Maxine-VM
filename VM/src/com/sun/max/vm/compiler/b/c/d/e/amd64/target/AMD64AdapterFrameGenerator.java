@@ -255,6 +255,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
             final short adapterFrameSize = (short) optimizedABI().overflowArgumentsSize(parameterLocations);
             // Allocate space on the stack (adapted parameters + caller's frame pointer)
+
             assembler().enter(adapterFrameSize, (byte) 0);
              // Prefix of a frame is RIP + saved RBP.
             final int framePrefixSize = 2 * wordSize;
