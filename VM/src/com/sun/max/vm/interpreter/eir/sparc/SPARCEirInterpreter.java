@@ -91,12 +91,12 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
 
         final EirLocation [] argumentLocations = new EirLocation[eirMethod.parameterLocations().length];
-        final int i0 = SPARCEirRegister.GeneralPurpose.I0.ordinal();
+        final int i0 = SPARCEirRegister.GeneralPurpose.I0.ordinal;
         int index = 0;
         for (EirLocation location : eirMethod.parameterLocations()) {
             if (location instanceof SPARCEirRegister.GeneralPurpose) {
                 final SPARCEirRegister.GeneralPurpose inRegister = (SPARCEirRegister.GeneralPurpose) location;
-                argumentLocations[index] = SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.get(inRegister.ordinal() - i0);
+                argumentLocations[index] = SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.get(inRegister.ordinal - i0);
             } else {
                 argumentLocations[index] = location;
             }
@@ -116,7 +116,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
      */
     @Override
     protected EirLocation receiverLocation(EirMethod eirMethod) {
-        return  SPARCEirRegister.GeneralPurpose.O0;
+        return SPARCEirRegister.GeneralPurpose.O0;
     }
 
     @Override

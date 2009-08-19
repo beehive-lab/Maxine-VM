@@ -57,7 +57,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     public abstract int stackSlotSize();
 
     public int stackSlotIndex(EirStackSlot stackSlot) {
-        return stackSlot.offset() / stackSlotSize();
+        return stackSlot.offset / stackSlotSize();
     }
 
     public int frameSize(int numLocalStackSlots) {

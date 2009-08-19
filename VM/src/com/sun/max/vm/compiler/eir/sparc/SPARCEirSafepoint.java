@@ -21,8 +21,11 @@
 package com.sun.max.vm.compiler.eir.sparc;
 
 import com.sun.max.asm.sparc.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -39,6 +42,27 @@ public final class SPARCEirSafepoint extends EirSafepoint<EirInstructionVisitor,
         emitter.addSafepoint(this);
         final GPR register =  (GPR) VMConfiguration.hostOrTarget().safepoint.latchRegister();
         emitter.assembler().ldx(register, GPR.G0, register);
+    }
+
+    @Override
+    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        SPARCEirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
+    }
+
+    @Override
+    public void addRegisterReferenceMap(ByteArrayBitMap map) {
+        for (EirVariable variable : liveVariables()) {
+            if (variable.kind() == Kind.REFERENCE) {
+                EirLocation location = variable.location();
+                if (location instanceof SPARCEirRegister.GeneralPurpose) {
+                    final SPARCEirRegister.GeneralPurpose gpr = (SPARCEirRegister.GeneralPurpose) location;
+                    int trapStateIndex = gpr.trapStateIndex();
+                    if (trapStateIndex >= 0) {
+                        map.set(trapStateIndex);
+                    }
+                }
+            }
+        }
     }
 
 }

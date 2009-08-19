@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.DynamicCompilerScheme;
+import com.sun.max.vm.runtime.sparc.*;
 
 /**
  * @author Bernd Mathiske
@@ -42,7 +43,7 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
 
     @Override
     public final int registerReferenceMapSize() {
-        return SPARCTargetMethod.Static.registerReferenceMapSize();
+        return SPARCTrapStateAccess.registerReferenceMapSize();
     }
 
     @Override

@@ -100,9 +100,9 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
         super.visit(call);
         this.node.getProperties().setProperty("name", call.function().toString());
         this.node.getProperties().setProperty("result", call.result().toString());
-        this.node.getProperties().setProperty("arguments", Arrays.toString(call.arguments()));
+        this.node.getProperties().setProperty("arguments", Arrays.toString(call.arguments));
         this.node.getProperties().setProperty("callerSavedOperands", Arrays.toString(call.callerSavedOperands()));
-        this.node.getProperties().setProperty("argumentCount", Integer.toString(call.arguments().length));
+        this.node.getProperties().setProperty("argumentCount", Integer.toString(call.arguments.length));
         if (call.result() != null) {
             this.node.getProperties().setProperty("result", call.result().toString());
         }
