@@ -183,7 +183,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
     private void addStackReferenceMaps(Iterable<? extends EirStop> stops, WordWidth stackSlotWidth, ByteArrayBitMap bitMap) {
         for (EirStop stop : stops) {
-            stop.addStackReferenceMap(stackSlotWidth, bitMap);
+            stop.addFrameReferenceMap(stackSlotWidth, bitMap);
             bitMap.next();
         }
     }
@@ -256,7 +256,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final byte[] scalarLiteralBytes = packScalarLiteralBytes(scalarLiterals, dataModel);
         final Object[] referenceLiteralObjects = packReferenceLiterals(referenceLiterals);
 
-        final int numberOfFrameSlots = Unsigned.idiv(Ints.roundUp(eirMethod.frameSize(), STACK_SLOT_SIZE), STACK_SLOT_SIZE);
+        final int numberOfFrameSlots = Unsigned.idiv(Ints.roundUnsignedUpByPowerOfTwo(eirMethod.frameSize(), STACK_SLOT_SIZE), STACK_SLOT_SIZE);
         final int frameReferenceMapSize = ByteArrayBitMap.computeBitMapSize(numberOfFrameSlots);
 
         final int placeholderCodeLength = 0;

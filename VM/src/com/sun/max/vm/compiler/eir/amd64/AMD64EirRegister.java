@@ -41,22 +41,15 @@ public abstract class AMD64EirRegister extends EirRegister {
         return pool;
     }
 
-    private final int ordinal;
-
     private final int serial;
 
     private static int nextSerial;
 
     protected AMD64EirRegister(int ordinal) {
-        this.ordinal = ordinal;
+        super(ordinal);
         this.serial = nextSerial++;
         assert registers[serial] == null;
         registers[serial] = this;
-    }
-
-    @Override
-    public final int ordinal() {
-        return ordinal;
     }
 
     @Override
@@ -103,19 +96,19 @@ public abstract class AMD64EirRegister extends EirRegister {
         }
 
         public AMD64GeneralRegister8 as8() {
-            return AMD64GeneralRegister8.ENUMERATOR.get(ordinal());
+            return AMD64GeneralRegister8.ENUMERATOR.get(ordinal);
         }
 
         public AMD64GeneralRegister16 as16() {
-            return AMD64GeneralRegister16.ENUMERATOR.get(ordinal());
+            return AMD64GeneralRegister16.ENUMERATOR.get(ordinal);
         }
 
         public AMD64GeneralRegister32 as32() {
-            return AMD64GeneralRegister32.ENUMERATOR.get(ordinal());
+            return AMD64GeneralRegister32.ENUMERATOR.get(ordinal);
         }
 
         public AMD64GeneralRegister64 as64() {
-            return AMD64GeneralRegister64.ENUMERATOR.get(ordinal());
+            return AMD64GeneralRegister64.ENUMERATOR.get(ordinal);
         }
 
         public static General from(GeneralRegister register) {
@@ -191,7 +184,7 @@ public abstract class AMD64EirRegister extends EirRegister {
         }
 
         public AMD64XMMRegister as() {
-            return AMD64XMMRegister.ENUMERATOR.get(ordinal());
+            return AMD64XMMRegister.ENUMERATOR.get(ordinal);
         }
 
         public static XMM from(AMD64XMMRegister register) {
@@ -210,7 +203,7 @@ public abstract class AMD64EirRegister extends EirRegister {
 
         @Override
         public TargetLocation toTargetLocation() {
-            return new TargetLocation.FloatingPointRegister(ordinal());
+            return new TargetLocation.FloatingPointRegister(ordinal);
         }
     }
 }

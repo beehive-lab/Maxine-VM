@@ -21,7 +21,10 @@
 package com.sun.max.vm.compiler.eir.amd64;
 
 import com.sun.max.asm.amd64.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -38,6 +41,23 @@ public final class AMD64EirSafepoint extends EirSafepoint<EirInstructionVisitor,
         final AMD64EirRegister.General r = (AMD64EirRegister.General) emitter.abi().safepointLatchRegister();
         final AMD64GeneralRegister64 register = r.as64();
         emitter.assembler().mov(register, register.indirect());
+    }
+
+    @Override
+    public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        AMD64EirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
+    }
+
+    @Override
+    public void addRegisterReferenceMap(ByteArrayBitMap map) {
+        for (EirVariable variable : liveVariables()) {
+            if (variable.location().category() == EirLocationCategory.INTEGER_REGISTER) {
+                final EirRegister register = (EirRegister) variable.location();
+                if (variable.kind() == Kind.REFERENCE) {
+                    map.set(register.ordinal);
+                }
+            }
+        }
     }
 
 }

@@ -104,6 +104,21 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         return new AMD64EirCPU(this);
     }
 
+    /**
+     * Gets the offset of a stack slot relative to the current value of the frame pointer.
+     * The calling convention assumed here is that the frame pointer is at the bottom
+     * of the stack frame; the caller has pushed its arguments, then a return address.
+     */
+    @Override
+    public int offset(EirStackSlot slot) {
+        if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
+            final EirFrame frame = interpreter.frame();
+            // Add one slot to account for the pushed return address and then add the size of the local stack frame
+            return slot.offset + frame.abi().stackSlotSize() + frame.method().frameSize();
+        }
+        return slot.offset;
+    }
+
     public boolean test(ConditionFlag flag) {
         return conditionFlags[flag.ordinal()];
     }
@@ -113,11 +128,11 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private Value read(AMD64EirRegister.General register) {
-        return generalRegisterContents[register.ordinal()];
+        return generalRegisterContents[register.ordinal];
     }
 
     private Value read(AMD64EirRegister.XMM register) {
-        return xmmRegisterContents[register.ordinal()];
+        return xmmRegisterContents[register.ordinal];
     }
 
     @Override
@@ -134,14 +149,14 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     private void write(AMD64EirRegister.General register, Value value) {
         ProgramError.check(value != null);
-        generalRegisterContents[register.ordinal()] = value;
+        generalRegisterContents[register.ordinal] = value;
         if (register == AMD64EirRegister.General.RSP) {
             stack().setSP(value.asWord().asAddress());
         }
     }
 
     private void write(AMD64EirRegister.XMM register, Value value) {
-        xmmRegisterContents[register.ordinal()] = value;
+        xmmRegisterContents[register.ordinal] = value;
     }
 
     @Override
@@ -160,7 +175,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     }
 
     private Address getGeneralRegisterContents(EirRegister register) {
-        final Value value = generalRegisterContents[register.ordinal()];
+        final Value value = generalRegisterContents[register.ordinal];
         if (value == null || value.isZero()) {
             return Address.zero();
         }
@@ -197,12 +212,12 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
     @Override
     protected void writeRegisterFloat(EirRegister register, float f) {
-        xmmRegisterContents[register.ordinal()] = FloatValue.from(f);
+        xmmRegisterContents[register.ordinal] = FloatValue.from(f);
     }
 
     @Override
     protected void writeRegisterDouble(EirRegister register, double d) {
-        xmmRegisterContents[register.ordinal()] = DoubleValue.from(d);
+        xmmRegisterContents[register.ordinal] = DoubleValue.from(d);
     }
 
     @Override
@@ -219,13 +234,13 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
     public void dump(PrintStream stream) {
         final TextTableColumn generalRegisters = new TextTableColumn("General Registers");
         for (AMD64EirRegister register : AMD64EirRegister.General.VALUES) {
-            final Value value = generalRegisterContents[register.ordinal()];
+            final Value value = generalRegisterContents[register.ordinal];
             generalRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
 
         final TextTableColumn xmmRegisters = new TextTableColumn("XMM Registers:");
         for (AMD64EirRegister register : AMD64EirRegister.XMM.VALUES) {
-            final Value value = xmmRegisterContents[register.ordinal()];
+            final Value value = xmmRegisterContents[register.ordinal];
             xmmRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
 

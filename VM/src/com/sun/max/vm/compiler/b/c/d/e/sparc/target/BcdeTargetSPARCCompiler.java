@@ -317,7 +317,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
                 if (!trapStateInPreviousFrame.isZero()) {
                     FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
@@ -355,7 +354,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         }
                     }
                 }
-                if (!preparer.prepareFrameReferenceMap(targetMethod, instructionPointer, stackPointer, stackPointer)) {
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, StackBias.SPARC_V9.unbias(stackPointer))) {
                     return false;
                 }
                 break;

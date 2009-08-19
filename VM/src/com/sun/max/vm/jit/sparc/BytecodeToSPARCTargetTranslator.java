@@ -41,12 +41,12 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.b.c.d.e.sparc.target.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.sparc.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.template.*;
@@ -573,7 +573,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected int registerReferenceMapSize() {
-        return SPARCTargetMethod.Static.registerReferenceMapSize();
+        return SPARCTrapStateAccess.registerReferenceMapSize();
     }
 
     /**

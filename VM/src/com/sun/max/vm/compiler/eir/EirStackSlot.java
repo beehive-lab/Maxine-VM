@@ -27,6 +27,7 @@ import com.sun.max.vm.compiler.target.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public final class EirStackSlot extends EirLocation {
 
@@ -35,28 +36,20 @@ public final class EirStackSlot extends EirLocation {
         LOCAL      // reusable
     }
 
-    private Purpose purpose;
+    // TODO: this should be an index, not an offset
+    /**
+     * The logical offset of this stack slot. If this stack slot represents a {@linkplain #isParameter() parameter},
+     * then the value is relative to the address of the stack slot holding the first stack based parameter.
+     * Otherwise, the value is relative to the value of the {@linkplain EirABI#stackPointer() stack pointer}
+     * after execution of the enclosing method's prologue.
+     */
+    public final int offset;
 
-    public Purpose purpose() {
-        return purpose;
-    }
+    public final Purpose purpose;
 
     @Override
     public EirStackSlot asStackSlot() {
         return this;
-    }
-
-    // TODO: this should be an index, not an offset
-    private final int offset;
-
-    /**
-     * Gets the logical offset of this stack slot. If this stack slot represents a {@linkplain #isParameter() parameter},
-     * then the returned value is relative to the address of the stack slot holding the first stack based parameter.
-     * Otherwise, the returned value is relative to the value of the {@linkplain EirABI#stackPointer() stack pointer}
-     * after execution of the enclosing method's prologue.
-     */
-    public int offset() {
-        return offset;
     }
 
     public EirStackSlot(Purpose purpose, int offset) {
@@ -80,17 +73,17 @@ public final class EirStackSlot extends EirLocation {
 
     @Override
     public int hashCode() {
-        return (purpose == Purpose.PARAMETER) ? -offset : offset;
+        return offset ^ purpose.ordinal();
     }
 
     @Override
     public String toString() {
-        return purpose.name().toLowerCase() + ":" + offset();
+        return purpose.name().toLowerCase() + ":" + offset;
     }
 
     @Override
     public TargetLocation toTargetLocation() {
-        switch (purpose()) {
+        switch (purpose) {
             case PARAMETER:
                 return new TargetLocation.ParameterStackSlot(Unsigned.idiv(offset, Word.size()));
             case LOCAL:

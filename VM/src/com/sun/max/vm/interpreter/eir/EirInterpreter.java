@@ -237,7 +237,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             final EirLocation location = locations[i];
             if (location instanceof EirStackSlot) {
                 final EirStackSlot slot = (EirStackSlot) location;
-                assert slot.purpose() == EirStackSlot.Purpose.PARAMETER;
+                assert slot.purpose == EirStackSlot.Purpose.PARAMETER;
                 parameterArguments.put(slot, arguments[i]);
                 cpu().push(arguments[i]);
             } else {
@@ -245,7 +245,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
         for (Map.Entry<EirStackSlot, Value> entry : parameterArguments.entrySet()) {
-            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset()));
+            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset));
             assert value == entry.getValue();
         }
     }

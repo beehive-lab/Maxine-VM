@@ -54,7 +54,7 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
     /**
      * SPARC does not support direct floating point to integer register moves. These operations require a staging area in memory.
      * Methods that perform such operations allocate an extra-slot on top of their frame (below the mandatory minimal stack frame)
-     * The EirGenerator can detect the use of this staging area by checking if the _offsetToConversionArea is non-null.
+     * The EirGenerator can detect the use of this staging area by checking if offsetToConversionArea is non-null.
      */
     private EirConstant offsetToConversionArea;
 

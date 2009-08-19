@@ -21,8 +21,6 @@
 package com.sun.max.vm.compiler.target.sparc;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.sparc.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
@@ -46,10 +44,6 @@ public interface SPARCTargetMethod {
 
         public static InstructionSet instructionSet() {
             return InstructionSet.SPARC;
-        }
-
-        public static int registerReferenceMapSize() {
-            return Unsigned.idiv(GPR.SYMBOLIZER.numberOfValues(), Bytes.WIDTH);
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {

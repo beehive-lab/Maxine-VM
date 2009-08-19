@@ -108,12 +108,12 @@ public final class AlgorithmData {
     }
 
     public void clearFloatingPointRegister(EirRegister location) {
-        floatingPointRegisters[location.ordinal()] = null;
+        floatingPointRegisters[location.ordinal] = null;
 
     }
 
     public void clearIntegerRegister(EirRegister location) {
-        integerRegisters[location.ordinal()] = null;
+        integerRegisters[location.ordinal] = null;
 
     }
 

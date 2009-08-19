@@ -21,7 +21,11 @@
 package com.sun.max.vm.compiler.eir.sparc;
 
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -29,26 +33,47 @@ import com.sun.max.vm.type.*;
  */
 public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorScheme> {
 
-    public SPARCEirGenerator(SPARCEirGeneratorScheme eirGeneratorScheme) {
-        super(eirGeneratorScheme);
-    }
-
-    private final EirLocation eirCatchParameterLocation = eirABIsScheme().javaABI.getResultLocation(Kind.REFERENCE);
-
-    @Override
-    public EirLocation catchParameterLocation() {
-        return eirCatchParameterLocation;
-    }
-
     /**
      * Assigns an exception object into the result location defined by the {@linkplain EirABIsScheme#javaABI() Java ABI}.
      * which is where this compiler expects the exception to be when compiling a catch block.
-     * 
+     *
      * The {@link NEVER_INLINE} annotation guarantees that the assignment to the result location actually occurs.
      */
     @NEVER_INLINE
     public static Throwable assignExceptionToCatchParameterLocation(Throwable throwable) {
         return throwable;
+    }
+
+    public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        for (EirVariable variable : liveVariables) {
+            if (variable.kind() == Kind.REFERENCE) {
+                EirLocation location = variable.location();
+                if (location.category() == EirLocationCategory.STACK_SLOT) {
+                    final EirStackSlot stackSlot = (EirStackSlot) location;
+                    if (stackSlot.purpose != EirStackSlot.Purpose.PARAMETER) {
+                        final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.minStackFrameSize()) / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
+                } else if (location instanceof SPARCEirRegister.GeneralPurpose) {
+                    final SPARCEirRegister.GeneralPurpose gpr = (SPARCEirRegister.GeneralPurpose) location;
+                    final int spillIndex = gpr.registerSpillIndex();
+                    if (spillIndex >= 0) {
+                        map.set(spillIndex);
+                    }
+                }
+            }
+        }
+    }
+
+    private final EirLocation eirCatchParameterLocation = eirABIsScheme().javaABI.getResultLocation(Kind.REFERENCE);
+
+    public SPARCEirGenerator(SPARCEirGeneratorScheme eirGeneratorScheme) {
+        super(eirGeneratorScheme);
+    }
+
+    @Override
+    public EirLocation catchParameterLocation() {
+        return eirCatchParameterLocation;
     }
 
 }

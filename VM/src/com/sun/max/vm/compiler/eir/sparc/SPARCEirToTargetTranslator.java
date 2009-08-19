@@ -28,6 +28,7 @@ import com.sun.max.vm.compiler.b.c.d.e.sparc.target.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
+import com.sun.max.vm.runtime.sparc.*;
 
 /**
  * @author Bernd Mathiske
@@ -37,7 +38,7 @@ import com.sun.max.vm.compiler.target.sparc.*;
 public final class SPARCEirToTargetTranslator extends EirToTargetTranslator {
 
     public SPARCEirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme) {
-        super(targetGeneratorScheme, InstructionSet.SPARC, SPARCTargetMethod.Static.registerReferenceMapSize());
+        super(targetGeneratorScheme, InstructionSet.SPARC, SPARCTrapStateAccess.registerReferenceMapSize());
     }
 
     @Override
