@@ -44,9 +44,9 @@ public class PatchingStub extends CodeStub {
     private PatchID id;
     private int pcStart;
     public int bytesToCopy;
-    private Label patchedCodeEntry;
-    private Label patchSiteEntry;
-    public Label patchSiteContinuation;
+    private Label patchedCodeEntry = new Label();
+    private Label patchSiteEntry = new Label();
+    public Label patchSiteContinuation = new Label();
     public Register obj;
     private int oopIndex; // index of the patchable oop in nmethod oop table if needed
     private static int patchInfoOffset;

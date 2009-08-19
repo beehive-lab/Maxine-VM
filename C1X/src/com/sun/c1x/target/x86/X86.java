@@ -37,8 +37,8 @@ public class X86 extends Architecture {
     public static final Register rbx = new Register(4, 3, "rbx", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final Register rsp = new Register(5, 4, "rsp", RegisterFlag.CPU);
     public static final Register rbp = new Register(6, 5, "rbp", RegisterFlag.CPU);
-    public static final Register rsi = new Register(7, 6, "rsi", RegisterFlag.CPU);
-    public static final Register rdi = new Register(8, 7, "rdi", RegisterFlag.CPU);
+    public static final Register rsi = new Register(7, 6, "rsi", RegisterFlag.CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
+    public static final Register rdi = new Register(8, 7, "rdi", RegisterFlag.CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
     public static final Register[] cpuRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi};
 
     // CPU registers only on 64 bit architecture

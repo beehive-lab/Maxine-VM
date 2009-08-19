@@ -48,6 +48,7 @@ public class C1XCompiler extends CiCompiler {
     @Override
     public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
 
+
         if (!initialized) {
             initialized = true;
             init();

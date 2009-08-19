@@ -254,9 +254,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
+<<<<<<< local
         assert i.stateBefore() != null;
 
 
+=======
+        assert i.state() != null;
+        LIROperand result = rlockResult(i);
+        lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding()), stateFor(i));
+>>>>>>> other
     }
 
     @Override

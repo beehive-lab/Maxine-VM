@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
 public class MaxRiConstantPool implements RiConstantPool {
     final MaxRiRuntime runtime;
     public final ConstantPool constantPool;
-    final WeakHashMap<SignatureDescriptor, MaxRiSignature> signatures = new WeakHashMap<SignatureDescriptor, MaxRiSignature>();
+    final HashMap<SignatureDescriptor, MaxRiSignature> signatures = new HashMap<SignatureDescriptor, MaxRiSignature>();
 
     /**
      * Creates a new constant pool inside of the specified runtime for the specified constant pool.

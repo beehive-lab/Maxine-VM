@@ -189,11 +189,11 @@ public interface RiRuntime {
 
     int interpreterFrameMonitorSize();
 
-    long basicObjectLockSize();
+    int basicObjectLockSize();
 
-    long basicObjectLockOffsetInBytes();
+    int basicObjectLockOffsetInBytes();
 
-    long basicObjectObjOffsetInBytes();
+    int basicObjectObjOffsetInBytes();
 
     int basicLockDisplacedHeaderOffsetInBytes();
 
@@ -293,4 +293,8 @@ public interface RiRuntime {
     RiType primitiveArrayType(BasicType elemType);
 
     Register threadRegister();
+
+    int getJITStackSlotSize();
+
+    int overflowArgumentsSize(BasicType basicType);
 }
