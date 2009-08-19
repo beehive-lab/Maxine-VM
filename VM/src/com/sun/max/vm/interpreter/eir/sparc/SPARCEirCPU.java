@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.interpreter.eir.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -276,12 +277,15 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
      * Locals are stored at negative offset relative to the frame pointer.
      */
     @Override
-    public int offset(EirStackSlot slot) {
+    protected int offset(EirStackSlot slot) {
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             // Overflow arguments are stored at positive offset relative to the frame pointer.
             return slot.offset;
         }
         final int stackSlotSize = interpreter.frame().abi().stackSlotSize();
+        FatalError.unimplemented();
+        // (PaulC) The following line of code appears incorrect.
+        // Slots having higher offsets should be at higher addresses....
         return -stackSlotSize - slot.offset;
     }
 

@@ -494,16 +494,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-            SPARCEirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
-            if (arguments != null) {
-                for (EirOperand argument : arguments) {
-                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
-                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
-                        map.set(stackSlotBitIndex);
-                    }
-                }
-            }
+            SPARCEirGenerator.addFrameReferenceMapAtCall(liveVariables(), arguments, stackSlotWidth, map);
         }
 
         @Override
@@ -570,16 +561,7 @@ public interface SPARCEirInstruction {
 
         @Override
         public void addFrameReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-            SPARCEirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
-            if (arguments != null) {
-                for (EirOperand argument : arguments) {
-                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
-                        final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                        final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
-                        map.set(stackSlotBitIndex);
-                    }
-                }
-            }
+            SPARCEirGenerator.addFrameReferenceMapAtCall(liveVariables(), arguments, stackSlotWidth, map);
         }
 
         @Override
