@@ -26,6 +26,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c0x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.target.*;
@@ -36,13 +37,12 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
-import com.sun.c0x.C0XCompiler;
 
 /**
  * A simple harness to run the C1X compiler and test it in various modes, without
