@@ -38,12 +38,13 @@ public class X86MacroAssembler extends X86Assembler {
     private final int wordSize;
     private final C1XCompiler compiler;
 
-    public X86MacroAssembler(C1XCompiler compiler) {
-        super(compiler.target);
+    public X86MacroAssembler(C1XCompiler compiler, Target target) {
+        super(target);
+        // TODO: make macro assembler compiler independent w.r.t global stubs
         this.compiler = compiler;
 
-        rscratch1 = X86FrameMap.rscratch1(target.arch);
-        wordSize = target.arch.wordSize;
+        rscratch1 = X86FrameMap.rscratch1(this.target.arch);
+        wordSize = this.target.arch.wordSize;
     }
 
     int biasedLockingEnter(Register lockReg, Register objReg, Register swapReg, Register tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, BiasedLockingCounters counters) {
@@ -56,7 +57,12 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
+<<<<<<< local
     void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+=======
+
+    public final void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+>>>>>>> other
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
@@ -64,7 +70,7 @@ public class X86MacroAssembler extends X86Assembler {
         callGlobalStub(stub, result, rc);
     }
 
-    void callGlobalStub(GlobalStub stub, Register result, RegisterOrConstant... args) {
+    public final void callGlobalStub(GlobalStub stub, Register result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
@@ -995,11 +1001,11 @@ public class X86MacroAssembler extends X86Assembler {
         setb(X86Assembler.Condition.notZero, x);
     }
 
-    void cmp32(Register src1, int imm) {
+    public final void cmp32(Register src1, int imm) {
         cmpl(src1, imm);
     }
 
-    void cmp32(Register src1, Address src2) {
+    public final void cmp32(Register src1, Address src2) {
         cmpl(src1, src2);
     }
 
@@ -2419,8 +2425,7 @@ public class X86MacroAssembler extends X86Assembler {
         initializeHeader(runtime, obj, klass, len, t1, t2);
 
         // clear rest of allocated space
-        Register lenZero = len;
-        initializeBody(obj, arrSize, headerSize * wordSize, lenZero);
+        initializeBody(obj, arrSize, headerSize * wordSize, len);
 
         verifyOop(obj);
     }

@@ -275,10 +275,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int arrayElementSize(BasicType type) {
-        throw Util.unimplemented(); // TODO: move usages to BasicType.elementSize
-    }
-
     public int arrayOopDescHeaderSize(BasicType type) {
         throw Util.unimplemented();
     }

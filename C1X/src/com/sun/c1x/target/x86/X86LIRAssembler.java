@@ -1276,8 +1276,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().mov(tmp3, len);
             }
+            int elemSize = compilation.target.sizeInBytes(op.type());
             masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(compilation.runtime.arrayElementSize(op.type())), op.klass().asRegister(), op.stub().entry);
+                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
         }
         masm().bind(op.stub().continuation);
     }

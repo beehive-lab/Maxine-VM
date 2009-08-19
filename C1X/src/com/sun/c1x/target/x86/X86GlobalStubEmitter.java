@@ -53,7 +53,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public CiTargetMethod emit(GlobalStub stub) {
-        asm = new X86MacroAssembler(compiler);
+        asm = new X86MacroAssembler(compiler, compiler.target);
         this.frameSize = 0;
 
         switch (stub) {
