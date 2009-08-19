@@ -295,4 +295,8 @@ public interface RiRuntime {
     RiType primitiveArrayType(BasicType elemType);
 
     Register threadRegister();
+
+    int getJITStackSlotSize();
+
+    int overflowArgumentsSize(BasicType basicType);
 }

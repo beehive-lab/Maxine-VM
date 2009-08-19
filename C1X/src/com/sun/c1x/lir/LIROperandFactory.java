@@ -110,7 +110,10 @@ public class LIROperandFactory {
     }
 
     public static LIROperand address(LIROperand register, int disp, BasicType t) {
-        // TODO Auto-generated method stub
         return new LIRAddress(register, disp, t);
+    }
+
+    public static LIROperand address(Register rsp, int disp, BasicType t) {
+        return address(new LIRLocation(BasicType.Int, rsp), disp, t);
     }
 }

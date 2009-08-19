@@ -51,4 +51,6 @@ public interface CodeStubVisitor {
 
     void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
 
+    void visitJITAdapterFrameStub(JITAdapterFrameStub jitAdapterFrameStub);
+
 }
