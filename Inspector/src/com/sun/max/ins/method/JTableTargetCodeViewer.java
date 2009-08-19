@@ -294,10 +294,22 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         @Override
+        protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+            if (mouseEvent.getClickCount() > 1) {
+                // Depends on the first click selecting the row, and that changing the current
+                // code location focus to the location under the mouse event.7
+                inspection.actions().toggleTargetCodeBreakpoint().perform();
+            }
+        }
+
+        @Override
         protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
             if (col == ObjectFieldColumnKind.TAG.ordinal()) {
                 final InspectorMenu menu = new InspectorMenu();
                 final Address address = JTableTargetCodeViewer.this.model.rowToInstruction(row).address;
+                menu.add(actions().debugRunToInstructionWithBreakpoints(address, "Run to this instruction"));
+                menu.add(actions().debugRunToInstruction(address, "Run to this instruction (ignoring breakpoints)"));
+                menu.add(actions().toggleTargetCodeBreakpoint(address, "Toggle breakpoint (double-click)"));
                 menu.add(actions().setTargetCodeBreakpoint(address, "Set breakpoint"));
                 menu.add(actions().removeTargetCodeBreakpoint(address, "Unset breakpoint"));
                 return menu;

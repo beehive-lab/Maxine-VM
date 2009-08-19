@@ -28,46 +28,62 @@ import com.sun.c1x.target.*;
  */
 public class RegisterOrConstant {
 
+    public final Register register;
+    public final int constant;
+    public final Object object;
+
+
     public RegisterOrConstant(int i) {
-        // TODO Auto-generated constructor stub
+        this.constant = i;
+        this.register = Register.noreg;
+        object = null;
     }
 
-    public RegisterOrConstant(long l) {
-        // TODO Auto-generated constructor stub
+    public RegisterOrConstant(Register r) {
+        assert r != Register.noreg;
+        this.constant = 0;
+        this.register = r;
+        object = null;
     }
 
-    public RegisterOrConstant(Register tmp) {
-        // TODO Auto-generated constructor stub
+    public RegisterOrConstant(Object o) {
+        assert o != null;
+        this.constant = 0;
+        this.register = Register.noreg;
+        object = o;
+
     }
 
     public boolean isConstant() {
-        // TODO Auto-generated method stub
-        return false;
+        return register == Register.noreg && object == null;
     }
 
     public Register asRegister() {
-        // TODO Auto-generated method stub
-        return null;
+        return register;
     }
 
     public int constantOrZero() {
-        // TODO Auto-generated method stub
-        return 0;
+        return constant;
     }
 
     public boolean isRegister() {
-        // TODO Auto-generated method stub
-        return false;
+        return register != Register.noreg;
     }
 
     public int asConstant() {
-        // TODO Auto-generated method stub
-        return 0;
+        assert isConstant();
+        return constant;
     }
 
     public Register registerOrNoReg() {
-        // TODO Auto-generated method stub
-        return null;
+        return register;
     }
 
+    public Object asOop() {
+        return object;
+    }
+
+    public boolean isOopConstant() {
+        return object != null;
+    }
 }

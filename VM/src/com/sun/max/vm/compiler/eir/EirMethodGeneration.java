@@ -183,16 +183,12 @@ public abstract class EirMethodGeneration {
         return localStackSlots.get(index);
     }
 
-    public EirStackSlot spillStackSlotFromOffset(int offset) {
-        return localStackSlotFromIndex(offset / abi.stackSlotSize());
-    }
-
     private EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot, AppendableIndexedSequence<EirStackSlot> slots) {
-        final int index = stackSlot.offset() / abi.stackSlotSize();
+        final int index = stackSlot.offset / abi.stackSlotSize();
         if (index >= slots.length()) {
             // Fill in the missing stack slots
             for (int i = slots.length(); i < index; i++) {
-                slots.append(new EirStackSlot(stackSlot.purpose(), i * abi.stackSlotSize()));
+                slots.append(new EirStackSlot(stackSlot.purpose, i * abi.stackSlotSize()));
             }
             slots.append(stackSlot);
             return stackSlot;
@@ -207,7 +203,7 @@ public abstract class EirMethodGeneration {
      * @return the canonical object representing the stack slot at {@code stackSlot.offset()}
      */
     public EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot) {
-        final AppendableIndexedSequence<EirStackSlot> stackSlots = stackSlot.purpose() == EirStackSlot.Purpose.PARAMETER ? parameterStackSlots : localStackSlots;
+        final AppendableIndexedSequence<EirStackSlot> stackSlots = stackSlot.purpose == EirStackSlot.Purpose.PARAMETER ? parameterStackSlots : localStackSlots;
         return canonicalizeStackSlot(stackSlot, stackSlots);
     }
 
@@ -698,7 +694,7 @@ public abstract class EirMethodGeneration {
     }
 
     /**
-     * (tw) Clears variables without usages (operands).
+     * Clears variables without usages (operands).
      */
     public void clearEmptyVariables() {
         boolean variablesToRemove = false;

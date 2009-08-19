@@ -66,6 +66,7 @@ public class MaxRiSignature implements RiSignature {
     public RiType argumentTypeAt(int index) {
         if (riTypes == null) {
             final int max = descriptor.numberOfParameters();
+
             riTypes = new MaxRiType[max];
             for (int i = 0; i < max; i++) {
                 riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));

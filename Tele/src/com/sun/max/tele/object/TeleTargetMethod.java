@@ -314,7 +314,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#catchRangePositions()
      */
     public int[] getCatchRangePositions() {
-        final Reference intArrayReference = teleVM().fields().TargetMethod_catchRangePositions.readReference(reference());
+        final Reference intArrayReference = teleVM().fields().ExceptionRangeTargetMethod_catchRangePositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;
@@ -326,7 +326,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#catchBlockPositions()
      */
     public int[] getCatchBlockPositions() {
-        final Reference intArrayReference = teleVM().fields().TargetMethod_catchBlockPositions.readReference(reference());
+        final Reference intArrayReference = teleVM().fields().ExceptionRangeTargetMethod_catchBlockPositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;

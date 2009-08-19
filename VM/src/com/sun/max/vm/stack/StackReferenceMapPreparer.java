@@ -261,7 +261,7 @@ public final class StackReferenceMapPreparer {
     public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
         assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
         for (VmThreadLocal tl : vmThreadLocals) {
-            assert tl.kind == Kind.REFERENCE;
+            assert tl.isReference;
         }
         vmThreadLocalGCRoots = vmThreadLocals;
     }
@@ -702,11 +702,11 @@ public final class StackReferenceMapPreparer {
      * @param targetMethod the method being executed in the frame
      * @param instructionPointer the current execution point in {@code targetMethod}
      * @param refmapFramePointer the frame pointer of the frame. The reference map entries for the frame are relative to this address.
-     * @param cpuStackPointer the CPU defined stack pointer (e.g. RSP on AMD64)
+     * @param operandStackPointer the CPU defined stack pointer (e.g. RSP on AMD64)
      * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
      *         stack walker should continue to the next frame
      */
-    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer cpuStackPointer) {
+    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
         if (ignoreCurrentFrame) {
             // Skipping the top frame
             ignoreCurrentFrame = false;
@@ -741,7 +741,7 @@ public final class StackReferenceMapPreparer {
                 }
                 if (targetMethod instanceof JitTargetMethod) {
                     // This is a call from a JIT target method to a trampoline.
-                    prepareTrampolineFrameForJITCaller((JitTargetMethod) targetMethod, instructionPointer, refmapFramePointer, cpuStackPointer);
+                    prepareTrampolineFrameForJITCaller((JitTargetMethod) targetMethod, instructionPointer, refmapFramePointer, operandStackPointer);
                 } else {
                     // This is a call from an optimized target method to a trampoline.
                     prepareTrampolineFrameForOptimizedCaller(targetMethod, stopIndex, trampolineFramePointer);

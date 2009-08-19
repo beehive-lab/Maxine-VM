@@ -133,11 +133,11 @@ public abstract class LinearScanRegisterAllocator<EirRegister_Type extends EirRe
 
         int maxOrdial = 0;
         for (EirRegister_Type r : registers) {
-            maxOrdial = Math.max(maxOrdial, r.ordinal());
+            maxOrdial = Math.max(maxOrdial, r.ordinal);
         }
         final EirRegister[] result = new EirRegister[maxOrdial + 1];
         for (EirRegister_Type r : registers) {
-            result[r.ordinal()] = r;
+            result[r.ordinal] = r;
         }
 
         return result;

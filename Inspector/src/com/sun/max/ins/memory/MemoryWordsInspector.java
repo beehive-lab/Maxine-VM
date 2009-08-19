@@ -214,8 +214,9 @@ public final class MemoryWordsInspector extends Inspector {
             // Clone another set of instance preferences
             this.instanceViewPreferences = new MemoryWordsViewPreferences(instanceViewPreferences, this);
         }
-
-        final Address start = memoryRegion.start().aligned(wordSize.toInt());
+        Address start = memoryRegion.start();
+        final Address alignedStart = start.aligned(wordSize.toInt());
+        start = (start.equals(alignedStart)) ? start : alignedStart.minus(wordSize);
         final int wordCount = wordsInRegion(memoryRegion);
         this.originalMemoryWordRegion = new MemoryWordRegion(start, wordCount, wordSize);
         this.memoryWordRegion = originalMemoryWordRegion;
@@ -369,6 +370,34 @@ public final class MemoryWordsInspector extends Inspector {
         toolBar = new InspectorToolBar(inspection());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
+
+//        final JLabel inspectLabel = new JLabel("Inspect");
+//        inspectLabel.addMouseListener(new MouseListener() {
+//
+//            public void mouseClicked(MouseEvent e) {
+//            }
+//            public void mouseEntered(MouseEvent e) {
+//            }
+//            public void mouseExited(MouseEvent e) {
+//            }
+//
+//            public void mousePressed(MouseEvent mouseEvent) {
+//                if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+//                    inspectLabel.getComponentPopupMenu().show(inspectLabel, mouseEvent.getX(), mouseEvent.getY());
+//                }
+//            }
+//
+//            public void mouseReleased(MouseEvent e) {
+//            }
+//        });
+//        final JPopupMenu popupMenu = new JPopupMenu("testPopup");
+//        popupMenu.add(actions().about());
+//        final InspectorMenu inspectMenu = new InspectorMenu();
+//        inspectMenu.add(frameMenuItems);
+//        inspectLabel.setComponentPopupMenu(frame().menu().popupMenu());
+//        toolBar.add(inspectLabel);
+//        toolBar.add(new JLabel("  "));
+
         toolBar.add(new JLabel("Origin:"));
         toolBar.add(originField);
         toolBar.add(new JLabel("Words:"));

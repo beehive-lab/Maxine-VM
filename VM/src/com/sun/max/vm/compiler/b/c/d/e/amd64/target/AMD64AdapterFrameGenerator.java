@@ -114,7 +114,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
         } else {
             // (tw) Did not find a jump here => return max
-            return Pointer.fromLong(-1L);
+            distance = Integer.MAX_VALUE;
         }
         return jitEntryPoint.plus(distance);
     }
@@ -195,8 +195,8 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
                 adapt(kind, (AMD64EirRegister.XMM) parameterLocation, offset32);
                 break;
             case STACK_SLOT:
-                assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose() == EirStackSlot.Purpose.PARAMETER;
-                adapt(kind, parameterLocation.asStackSlot().offset(), offset32);
+                assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose == EirStackSlot.Purpose.PARAMETER;
+                adapt(kind, parameterLocation.asStackSlot().offset, offset32);
                 break;
             default:
                 ProgramError.unexpected();

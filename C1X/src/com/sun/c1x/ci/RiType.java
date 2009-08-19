@@ -182,12 +182,16 @@ public interface RiType {
      */
     int sizeHelper();
 
+    /**
+     * Determines whether the slow path should always be taken when creating new instances of this type.
+     * XXX: this is a dumb name
+     * @return true if the slow path should always be taken, false otherwise
+     */
+    boolean layoutHelperNeedsSlowPath();
+
     int superCheckOffset();
 
-    Object encoding();
+    CiConstant encoding();
 
     CiConstant getStaticContainer();
-
-    Object resolveObject();
-
 }

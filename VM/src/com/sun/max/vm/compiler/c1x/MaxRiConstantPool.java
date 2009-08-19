@@ -427,6 +427,11 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @return a compiler interface exception handler object
      */
     public RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI) {
-        return new MaxRiExceptionHandler(startBCI, endBCI, catchBCI, classCPI);
+        return new MaxRiExceptionHandler(startBCI, endBCI, catchBCI, classCPI, (classCPI == 0) ? null : resolveType((char) classCPI));
+    }
+
+    @Override
+    public Object encoding() {
+        return this.constantPool;
     }
 }

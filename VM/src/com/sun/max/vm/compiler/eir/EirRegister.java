@@ -25,11 +25,18 @@ import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public abstract class EirRegister extends EirLocation implements PoolObject {
 
-    protected EirRegister() {
+    /**
+     * Unique identifier of the register.
+     */
+    public final int ordinal;
+
+    protected EirRegister(int ordinal) {
         super();
+        this.ordinal = ordinal;
     }
 
     @Override
@@ -38,8 +45,6 @@ public abstract class EirRegister extends EirLocation implements PoolObject {
     }
 
     public abstract int serial();
-
-    public abstract int ordinal();
 
     public abstract Kind kind();
 }

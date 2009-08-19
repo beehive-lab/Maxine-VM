@@ -32,7 +32,6 @@ public class NewObjectArray extends NewArray {
 
     final RiType elementClass;
     public final char cpi;
-    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new NewObjectArray instruction.
@@ -42,11 +41,10 @@ public class NewObjectArray extends NewArray {
      * @param cpi
      * @param riConstantPool
      */
-    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
-        super(length, stateBefore);
+    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
+        super(length, stateBefore, ciConstantPool);
         this.elementClass = elementClass;
         this.cpi = cpi;
-        this.constantPool = riConstantPool;
     }
 
     /**

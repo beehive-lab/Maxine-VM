@@ -117,7 +117,7 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
         }
 
-        public void setValue(byte[] bytes) {
+        protected void setValue(byte[] bytes) {
             this.bytes = bytes;
             updateText();
         }
@@ -129,6 +129,91 @@ public abstract class DataLabel extends InspectorLabel {
                 for (byte b : bytes) {
                     result.append(prefix);
                     result.append(String.format("%02X", b));
+                    prefix = " ";
+                }
+                result.append("]");
+                setText(result.toString());
+            }
+        }
+    }
+
+    /**
+     * A label that displays a changeable array of bytes as 8 bit characters.
+     */
+    public static class ByteArrayAsUnicode extends DataLabel {
+
+        private byte[] bytes;
+
+        public ByteArrayAsUnicode(Inspection inspection, byte[] bytes) {
+            super(inspection, "");
+            this.bytes = bytes;
+            redisplay();
+        }
+
+        @Override
+        public void redisplay() {
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
+            updateText();
+        }
+
+        protected void setValue(byte[] bytes) {
+            this.bytes = bytes;
+            updateText();
+        }
+
+        private void updateText() {
+            if (bytes != null && bytes.length > 0) {
+                final StringBuilder result = new StringBuilder(100);
+                String prefix = "[";
+                for (int i = 0; i < bytes.length / 2; i++) {
+                    result.append(prefix);
+                    final int index = 2 * i;
+                    final char ch = (char) ((bytes[index + 1] * 256) + bytes[index]);
+                    result.append(Character.toString(ch));
+                    prefix = " ";
+                }
+                result.append("]");
+                setText(result.toString());
+            }
+        }
+    }
+
+    /**
+     * A label that displays a changeable array of bytes as 8 bit characters.
+     */
+    public static class ByteArrayAsChar extends DataLabel {
+
+        private byte[] bytes;
+
+        public ByteArrayAsChar(Inspection inspection, byte[] bytes) {
+            super(inspection, "");
+            this.bytes = bytes;
+            redisplay();
+        }
+
+        @Override
+        public void redisplay() {
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
+            updateText();
+        }
+
+        protected void setValue(byte[] bytes) {
+            this.bytes = bytes;
+            updateText();
+        }
+
+        private void updateText() {
+            if (bytes != null && bytes.length > 0) {
+                final StringBuilder result = new StringBuilder(100);
+                String prefix = "[";
+                for (byte b : bytes) {
+                    result.append(prefix);
+                    final char ch = (char) b;
+                    result.append(Character.toString(ch));
                     prefix = " ";
                 }
                 result.append("]");
@@ -208,7 +293,7 @@ public abstract class DataLabel extends InspectorLabel {
             setBackground(style().decimalDataBackgroundColor());
         }
 
-        public void setValue(int n) {
+        protected void setValue(int n) {
             this.n = n;
             updateText();
         }
@@ -239,7 +324,7 @@ public abstract class DataLabel extends InspectorLabel {
             setBackground(style().hexDataBackgroundColor());
         }
 
-        public void setValue(int n) {
+        protected void setValue(int n) {
             this.n = n;
             updateText();
         }
@@ -251,17 +336,32 @@ public abstract class DataLabel extends InspectorLabel {
 
     }
 
-    public static final class FloatAsText extends DataLabel {
+    public static class FloatAsText extends DataLabel {
+
+        private float f;
         public FloatAsText(Inspection inspection, float f) {
             super(inspection, Float.toString(f), "0x" + Integer.toHexString(Float.floatToIntBits(f)));
+            this.f = f;
+            updateText();
             redisplay();
         }
+
         @Override
         public void redisplay() {
             // TODO: define a font, color, and background for floats
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
             setBackground(style().hexDataBackgroundColor());
+        }
+
+        protected void updateText() {
+            setText(Float.toString(f));
+            setToolTipText("0x" + Integer.toHexString(Float.floatToIntBits(f)));
+        }
+
+        protected void setValue(float f) {
+            this.f = f;
+            updateText();
         }
     }
 
@@ -297,17 +397,32 @@ public abstract class DataLabel extends InspectorLabel {
         }
     }
 
-    public static final class DoubleAsText extends DataLabel {
+    public static class DoubleAsText extends DataLabel {
+        private double f;
+
         public DoubleAsText(Inspection inspection, double f) {
-            super(inspection, Double.toString(f), "0x" + Long.toHexString(Double.doubleToLongBits(f)));
+            super(inspection, "", "");
+            this.f = f;
+            updateText();
             redisplay();
         }
+
         @Override
         public void redisplay() {
             // TODO: define a font, color, and background for doubles
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
             setBackground(style().hexDataBackgroundColor());
+        }
+
+        private void updateText() {
+            setText(Double.toString(f));
+            setToolTipText("0x" + Long.toHexString(Double.doubleToLongBits(f)));
+        }
+
+        protected void setValue(double f) {
+            this.f = f;
+            updateText();
         }
     }
 
@@ -318,9 +433,6 @@ public abstract class DataLabel extends InspectorLabel {
     public static class AddressAsHex extends DataLabel {
         protected Address address;
         private final Address origin;
-
-        public void changeBiasState() {
-        }
 
         public AddressAsHex(Inspection inspection, Address address) {
             this(inspection, address, null);
@@ -371,9 +483,12 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
         }
 
-        public void setValue(Address address) {
+        protected void setValue(Address address) {
             this.address = address;
             updateText();
+        }
+
+        protected void changeBiasState() {
         }
 
         protected String toolTipText() {
@@ -402,8 +517,9 @@ public abstract class DataLabel extends InspectorLabel {
         private boolean useBias() {
             return bias != null && !bias.equals(StackBias.NONE);
         }
+
         @Override
-        public void changeBiasState() {
+        protected void changeBiasState() {
             if (!useBias()) {
                 return;
             }

@@ -57,8 +57,12 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
+<<<<<<< local
+    void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+=======
 
     public final void callGlobalStub(GlobalStub stub, Register result, Register... args) {
+>>>>>>> other
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
@@ -114,6 +118,8 @@ public class X86MacroAssembler extends X86Assembler {
     void storeParameter(RegisterOrConstant rc, int offsetFromRspInWords) {
         if (rc.isConstant()) {
             storeParameter(rc.asConstant(), offsetFromRspInWords);
+        } else if (rc.isOopConstant()) {
+            storeParameter(rc.asOop(), offsetFromRspInWords);
         } else {
             assert rc.isRegister();
             storeParameter(rc.asRegister(), offsetFromRspInWords);
@@ -1363,47 +1369,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    // C++ boolean manipulation
-
-    void movbool(Register dst, Address src) {
-        if (Util.sizeofBoolean() == 1) {
-            movb(dst, src);
-        } else if (Util.sizeofBoolean() == 2) {
-            movw(dst, src);
-        } else if (Util.sizeofBoolean() == 4) {
-            movl(dst, src);
-        } else {
-            // unsupported
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void movbool(Address dst, boolean boolconst) {
-        if (Util.sizeofBoolean() == 1) {
-            movb(dst, Util.toInt(boolconst));
-        } else if (Util.sizeofBoolean() == 2) {
-            movw(dst, Util.toInt(boolconst));
-        } else if (Util.sizeofBoolean() == 4) {
-            movl(dst, Util.toInt(boolconst));
-        } else {
-            // unsupported
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void movbool(Address dst, Register src) {
-        if (Util.sizeofBoolean() == 1) {
-            movb(dst, src);
-        } else if (Util.sizeofBoolean() == 2) {
-            movw(dst, src);
-        } else if (Util.sizeofBoolean() == 4) {
-            movl(dst, src);
-        } else {
-            // unsupported
-            Util.shouldNotReachHere();
-        }
-    }
-
     void movptr(Register dst, Register src) {
 
         if (target.arch.is64bit()) {
@@ -2291,7 +2256,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     int lockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Register scratch, Label slowCase) {
-        int alignedMask = wordSize - 1;
+
+        /*int alignedMask = wordSize - 1;
         int hdrOffset = runtime.markOffsetInBytes();
         assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
@@ -2343,14 +2309,18 @@ public class X86MacroAssembler extends X86Assembler {
         // location (null in the displaced hdr location indicates recursive locking)
         movptr(new Address(dispHdr, 0), hdr);
         // otherwise we don't care about the result and handle locking via runtime call
-        jcc(X86Assembler.Condition.notZero, slowCase);
+        jcc(X86Assembler.Condition.notZero, slowCase);*/
+
+        // TODO: Implement fast path
+        jmp(slowCase);
         // done
-        bind(done);
-        return nullCheckOffset;
+        //bind(done);
+        //return nullCheckOffset;
+        return 0;
     }
 
     public void unlockObject(RiRuntime runtime, Register hdr, Register obj, Register dispHdr, Label slowCase) {
-        int hdrOffset = runtime.markOffsetInBytes();
+        /*int hdrOffset = runtime.markOffsetInBytes();
         assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
         assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
         Label done = new Label();
@@ -2383,7 +2353,10 @@ public class X86MacroAssembler extends X86Assembler {
         // we do unlocking via runtime call
         jcc(X86Assembler.Condition.notEqual, slowCase);
         // done
-        bind(done);
+        bind(done);*/
+
+        // TODO: Implement fast path!
+        jmp(slowCase);
     }
 
     void invalidateRegisters(boolean invRax, boolean invRbx, boolean invRcx, boolean invRdx, boolean invRsi, boolean invRdi) {

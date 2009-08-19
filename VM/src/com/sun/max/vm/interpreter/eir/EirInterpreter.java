@@ -29,6 +29,7 @@ import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.interpreter.eir.EirCPU.*;
@@ -237,7 +238,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             final EirLocation location = locations[i];
             if (location instanceof EirStackSlot) {
                 final EirStackSlot slot = (EirStackSlot) location;
-                assert slot.purpose() == EirStackSlot.Purpose.PARAMETER;
+                assert slot.purpose == EirStackSlot.Purpose.PARAMETER;
                 parameterArguments.put(slot, arguments[i]);
                 cpu().push(arguments[i]);
             } else {
@@ -245,7 +246,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
         }
         for (Map.Entry<EirStackSlot, Value> entry : parameterArguments.entrySet()) {
-            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset()));
+            final Value value = cpu().stack().read(cpu().readStackPointer().plus(entry.getKey().offset));
             assert value == entry.getValue();
         }
     }
@@ -389,7 +390,9 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
                     Trace.stream().flush();
                     outdent();
                 }
-                cpu().write(eirGenerator.catchParameterLocation(), ReferenceValue.from(invocationTargetException.getTargetException()));
+                ReferenceValue throwable = ReferenceValue.from(invocationTargetException.getTargetException());
+                cpu().write(eirGenerator.catchParameterLocation(), throwable);
+                ExceptionDispatcher.INTERPRETER_EXCEPTION.set(invocationTargetException.getTargetException());
                 cpu().gotoBlock(frame.catchBlock());
                 return;
             }

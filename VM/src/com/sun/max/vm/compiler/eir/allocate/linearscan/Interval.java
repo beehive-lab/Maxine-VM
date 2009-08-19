@@ -626,16 +626,16 @@ public final class Interval {
 
         if (this.stackSlot() != null) {
             if (other.stackSlot() != null) {
-                return this.stackSlot().offset() - other.stackSlot().offset();
+                return this.stackSlot().offset - other.stackSlot().offset;
             }
             return 1;
         }
 
         if (this.register() != null) {
 
-            final int registerOrdial1 = this.register().ordinal() + this.register().category().ordinal() * 100;
+            final int registerOrdial1 = this.register().ordinal + this.register().category().ordinal() * 100;
             if (other.register() != null) {
-                final int registerOrdial2 = other.register().ordinal() + (other.register().category().ordinal() * 100);
+                final int registerOrdial2 = other.register().ordinal + (other.register().category().ordinal() * 100);
                 return registerOrdial2 - registerOrdial1;
             }
             return 1;

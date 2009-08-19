@@ -24,8 +24,6 @@ import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -51,11 +49,7 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         return result;
     }
 
-    private final EirOperand[] arguments;
-
-    public EirOperand[] arguments() {
-        return arguments;
-    }
+    public final EirOperand[] arguments;
 
     public final boolean isNativeFunctionCall;
 
@@ -99,20 +93,6 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
                 callerSavedOperands[i].setRequiredLocation(register);
                 final EirVariable variable = methodGeneration.makeRegisterVariable(register);
                 callerSavedOperands[i].setEirValue(variable);
-            }
-        }
-    }
-
-    @Override
-    public void addStackReferenceMap(WordWidth stackSlotWidth, ByteArrayBitMap map) {
-        super.addStackReferenceMap(stackSlotWidth, map);
-        if (arguments != null) {
-            for (EirOperand argument : arguments) {
-                if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
-                    final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                    final int stackSlotBitIndex = stackSlot.offset() / stackSlotWidth.numberOfBytes;
-                    map.set(stackSlotBitIndex);
-                }
             }
         }
     }

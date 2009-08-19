@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.eir;
 import java.lang.reflect.*;
 
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -40,16 +39,7 @@ public abstract class EirSafepoint<EirInstructionVisitor_Type extends EirInstruc
         return super.toString() + " " + javaFrameDescriptor();
     }
 
-    public void addRegisterReferenceMap(ByteArrayBitMap map) {
-        for (EirVariable variable : liveVariables()) {
-            if (variable.location().category() == EirLocationCategory.INTEGER_REGISTER) {
-                final EirRegister register = (EirRegister) variable.location();
-                if (variable.kind() == Kind.REFERENCE) {
-                    map.set(register.ordinal());
-                }
-            }
-        }
-    }
+    public abstract void addRegisterReferenceMap(ByteArrayBitMap map);
 
     @Override
     public void acceptVisitor(EirInstructionVisitor visitor) throws InvocationTargetException {

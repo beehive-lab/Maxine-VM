@@ -34,17 +34,17 @@ public class ExceptionHandler {
 
     public static final List<ExceptionHandler> ZERO_HANDLERS = Collections.emptyList();
 
-    private final RiExceptionHandler handler;
+    public final RiExceptionHandler handler;
     private BlockBegin entryBlock;
     private LIRList entryCode;
-    private int entryPCO;
+    private int entryCodeOffset;
     private int phiOperand;
     private int scopeCount;
     private int lirOpId;
 
     public ExceptionHandler(RiExceptionHandler handler) {
         this.handler = handler;
-        this.entryPCO = -1;
+        this.entryCodeOffset = -1;
         this.phiOperand = -1;
         this.scopeCount = -1;
         this.lirOpId = -1;
@@ -54,10 +54,15 @@ public class ExceptionHandler {
         this.handler = other.handler;
         this.entryBlock = other.entryBlock;
         this.entryCode = other.entryCode;
-        this.entryPCO = other.entryPCO;
+        this.entryCodeOffset = other.entryCodeOffset;
         this.phiOperand = other.phiOperand;
         this.scopeCount = other.scopeCount;
         this.lirOpId = other.lirOpId;
+    }
+
+    @Override
+    public String toString() {
+        return "XHandler(Block=" + entryBlock.blockID + ")";
     }
 
     /**
@@ -99,8 +104,8 @@ public class ExceptionHandler {
      * the runtime to forward exception points to their catch sites.
      * @return the pc offset of the handler entrypoint
      */
-    public final int entryPCO() {
-        return entryPCO;
+    public final int entryCodeOffset() {
+        return entryCodeOffset;
     }
 
     public final int phiOperand() {
@@ -115,8 +120,8 @@ public class ExceptionHandler {
         entryBlock = entry;
     }
 
-    public final void setEntryPCO(int pco) {
-        entryPCO = pco;
+    public final void setEntryCodeOffset(int pco) {
+        entryCodeOffset = pco;
     }
 
     public final void setPhiOperand(int phi) {
@@ -131,8 +136,41 @@ public class ExceptionHandler {
         return handler.catchClassIndex() == 0;
     }
 
-    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType throwKlass, boolean typeIsExact) {
-        // TODO Port implementation
+    public static boolean couldCatch(List<ExceptionHandler> exceptionHandlers, RiType klass, boolean typeIsExact) {
+        // the type is unknown so be conservative
+        if (!klass.isLoaded()) {
+            return true;
+        }
+
+        for (int i = 0; i < exceptionHandlers.size(); i++) {
+            ExceptionHandler handler = exceptionHandlers.get(i);
+            if (handler.isCatchAll()) {
+                // catch of ANY
+                return true;
+            }
+            RiType handlerKlass = handler.handler.catchKlass();
+            // if it's unknown it might be catchable
+            if (!handlerKlass.isLoaded()) {
+                return true;
+            }
+            // if the throw type is definitely a subtype of the catch type
+            // then it can be caught.
+            if (klass.isSubtypeOf(handlerKlass)) {
+                return true;
+            }
+            if (!typeIsExact) {
+                // If the type isn't exactly known then it can also be caught by
+                // catch statements where the inexact type is a subtype of the
+                // catch type.
+                // given: foo extends bar extends Exception
+                // throw bar can be caught by catch foo, catch bar, and catch
+                // Exception, however it can't be caught by any handlers without
+                // bar in its type hierarchy.
+                if (handlerKlass.isSubtypeOf(klass)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

@@ -114,7 +114,4 @@ public interface DynamicCompilerScheme extends VMScheme {
      * @return whether stack walking may continue after executing this method
      */
     boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context); // TODO: why is the compiler involved in stack walking at all?
-
-    StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable);
-
 }

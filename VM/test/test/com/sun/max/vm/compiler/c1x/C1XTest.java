@@ -309,6 +309,7 @@ public class C1XTest {
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
         final Classpath classpath = Classpath.fromSystem();
+
         final List<MethodActor> methods = new ArrayList<MethodActor>();
 
         for (int i = 0; i != arguments.length; ++i) {
@@ -542,7 +543,7 @@ public class C1XTest {
         // configure the allocatable registers
         List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
         for (Register r : arch.registers) {
-            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.exceptionOopRegister()) {
+            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
                 allocatable.add(r);
             }
         }
