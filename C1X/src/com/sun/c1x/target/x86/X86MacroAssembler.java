@@ -57,12 +57,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-<<<<<<< local
-    void callGlobalStub(GlobalStub stub, Register result, Register... args) {
-=======
-
     public final void callGlobalStub(GlobalStub stub, Register result, Register... args) {
->>>>>>> other
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
