@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.value.ValueStack;
+
 /**
  * The <code>MonitorExit</code> instruction represents a monitor release.
  *
@@ -31,9 +33,10 @@ public class MonitorExit extends AccessMonitor {
      * Creates a new MonitorExit instruction.
      * @param object the instruction produces the object value
      * @param lockNumber the number of the lock
+     * @param stateBefore the state before executing this instruction
      */
-    public MonitorExit(Instruction object, int lockNumber) {
-        super(object, lockNumber);
+    public MonitorExit(Instruction object, int lockNumber, ValueStack stateBefore) {
+        super(object, stateBefore, lockNumber);
         // XXX: unbalanced locks can cause IllegalMonitorState or NullPointerException
     }
 

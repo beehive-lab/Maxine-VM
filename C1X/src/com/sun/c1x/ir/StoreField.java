@@ -37,14 +37,12 @@ public class StoreField extends AccessField {
      * @param field the compiler interface field
      * @param value the instruction representing the value to store to the field
      * @param isStatic indicates if the field is static
-     * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
+    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, stateBefore, isLoaded);
         this.value = value;
-        setFlag(Flag.NoWriteBarrier);
     }
 
     /**
@@ -60,7 +58,7 @@ public class StoreField extends AccessField {
      * @return <code>true</code> if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
-        return checkFlag(Flag.NoWriteBarrier);
+        return !checkFlag(Flag.NoWriteBarrier);
     }
 
     /**

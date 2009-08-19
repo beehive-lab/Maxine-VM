@@ -92,10 +92,10 @@ public class IR {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
+        Instruction.nextID = 0;
         GraphBuilder g = new GraphBuilder(compilation, topScope, this);
         totalInstructions += g.totalInstructions();
         assert startBlock != null;
-
     }
 
     private void optimize1() {
@@ -194,9 +194,9 @@ public class IR {
         newSucc.setNext(e, bci);
         newSucc.setEnd(e);
         // setup states
-        ValueStack s = source.end().state();
+        ValueStack s = source.end().stateAfter();
         newSucc.setState(s.copy());
-        e.setState(s.copy());
+        e.setStateAfter(s.copy());
         assert newSucc.state().localsSize() == s.localsSize();
         assert newSucc.state().stackSize() == s.stackSize();
         assert newSucc.state().locksSize() == s.locksSize();

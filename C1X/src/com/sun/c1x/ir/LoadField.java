@@ -35,12 +35,11 @@ public class LoadField extends AccessField {
      * @param object the receiver object
      * @param field the compiler interface field
      * @param isStatic indicates if the field is static
-     * @param lockStack the lock stack
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack lockStack, ValueStack stateBefore, boolean isLoaded) {
-        super(object, field, isStatic, lockStack, stateBefore, isLoaded);
+    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
+        super(object, field, isStatic, stateBefore, isLoaded);
     }
 
     /**

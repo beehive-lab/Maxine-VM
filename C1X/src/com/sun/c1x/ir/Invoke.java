@@ -49,9 +49,10 @@ public class Invoke extends StateSplit {
      * @param isStatic {@code true} if this call is static (no receiver object)
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
+     * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool) {
-        super(result);
+    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+        super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
         this.isStatic = isStatic;
@@ -64,13 +65,6 @@ public class Invoke extends StateSplit {
 
         this.cpi = cpi;
         this.constantPool = constantPool;
-
-        // TODO: Active this when there is no longer 2-slot concept (for long and doubles) in HIR
-        //        if (C1XOptions.DetailedAsserts) {
-        //            for (int i = 0; i < args.length; i++) {
-        //                assert args[i] != null;
-        //            }
-        //        }
     }
 
     /**
