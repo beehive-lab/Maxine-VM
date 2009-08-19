@@ -604,7 +604,6 @@ public class MaxRiRuntime implements RiRuntime {
         return globalConstantPool.canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
     }
 
-    @Override
     public Register threadRegister() {
         return X86.r14;
     }
