@@ -51,6 +51,7 @@ public abstract class FrameMap {
     int[] argumentLocations;
     final C1XCompilation compilation;
 
+    private int firstAvailableSpInFrame;
 
     public FrameMap(C1XCompilation compilation, RiMethod method, int monitors, int maxStack) {
 
@@ -63,7 +64,7 @@ public abstract class FrameMap {
         numMonitors = monitors;
         reservedArgumentAreaSize = GlobalStub.MaxNumberOfArguments * compilation.target.arch.wordSize;
 
-        argcount = method.signatureType().argumentCount(!method.isStatic());
+        argcount = method.signatureType().argumentSlots(!method.isStatic());
         argumentLocations = new int[argcount];
         for (int i = 0; i < argcount; i++) {
             argumentLocations[i] = -1;
@@ -74,13 +75,17 @@ public abstract class FrameMap {
         int javaIndex = 0;
         for (int i = 0; i < incomingArguments.length(); i++) {
             LIROperand opr = incomingArguments.at(i);
-            if (opr.isAddress()) {
-                LIRAddress pointer = opr.asAddressPtr();
-                argumentLocations[javaIndex] = pointer.displacement - compilation.target.arch.stackBias;
-                incomingArguments.setArg(i, LIROperandFactory.stack(javaIndex, pointer.type()));
+            if (opr.isStack()) {
+                int stackIndex = opr.stackIx();
+                argumentLocations[javaIndex] = compilation.runtime.overflowArgumentsSize(opr.basicType) * (stackIndex - 1) - compilation.target.arch.stackBias;
+                incomingArguments.setArg(i, LIROperandFactory.stack(javaIndex, opr.type()));
             }
             javaIndex += opr.type().size;
         }
+    }
+
+    public int getArgumentLocation(int index) {
+        return argumentLocations[index];
     }
 
     private static BasicType[] signatureTypeArrayFor(RiMethod method) {
@@ -134,7 +139,12 @@ public abstract class FrameMap {
     private LIROperand mapToOpr(BasicType t, CiLocation location, boolean outgoing) {
 
         if (location.isStackOffset()) {
-            return LIROperandFactory.stack(location.stackOffset, t);
+            if (outgoing) {
+                int stackOffset = location.stackOffset * spillSlotSizeInBytes;
+                return LIROperandFactory.address(LIROperandFactory.singleLocation(BasicType.Int, stackRegister()), stackOffset, t);
+            } else {
+                return LIROperandFactory.stack(location.stackOffset, t);
+            }
         } else if (location.second == null) {
             assert location.first != null;
             return new LIRLocation(t, location.first);
@@ -155,7 +165,45 @@ public abstract class FrameMap {
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(stackRegister(), reservedArgumentAreaSize + stackSlot * spillSlotSizeInBytes + offset);
+        return new Address(stackRegister(), spOffsetForSlot(stackSlot) + offset);
+    }
+
+    int spOffsetForSlot(int index) {
+        if (index < argcount()) {
+            int offset = argumentLocations[index];
+            assert offset != -1 : "not a memory argument";
+            assert offset >= framesize() : "argument inside of frame";
+            return offset;
+        }
+        int offset = spOffsetForSpill(index - argcount());
+        assert offset < framesize() : "spill outside of frame";
+        return offset;
+    }
+
+    int spOffsetForSpill(int index) {
+        assert index >= 0 && index < numSpills : "out of range";
+        int offset = Util.roundTo(firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) + index * spillSlotSizeInBytes;
+        return offset;
+    }
+
+    int spOffsetForMonitorBase(int index) {
+        int endOfSpills = Util.roundTo(firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) + numSpills * spillSlotSizeInBytes;
+        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.basicObjectLockSize();
+        return offset;
+    }
+
+    int spOffsetForMonitorLock(int index)  {
+      checkMonitorIndex(index);
+      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
+    }
+
+    int spOffsetForMonitorObject(int index)  {
+      checkMonitorIndex(index);
+      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
+    }
+
+    void checkMonitorIndex(int monitorIndex) {
+        assert monitorIndex >= 0 && monitorIndex < numMonitors : "bad index";
     }
 
     public int reservedArgumentAreaSize() {
@@ -171,7 +219,7 @@ public abstract class FrameMap {
     }
 
     public int framesize() {
-        assert framesize != -1 :  "hasn't been calculated";
+        assert framesize != -1 : "hasn't been calculated";
         return framesize;
     }
 
@@ -180,34 +228,27 @@ public abstract class FrameMap {
     }
 
     public boolean finalizeFrame(int nofSlots) {
-        assert nofSlots >= 0 :  "must be positive";
-        assert numSpills == -1 :  "can only be set once";
+        assert nofSlots >= 0 : "must be positive";
+        assert numSpills == -1 : "can only be set once";
         numSpills = nofSlots;
-        assert framesize == -1 :  "should only be calculated once";
+        assert framesize == -1 : "should only be calculated once";
 
+        // TODO: Add offset of deopt orig pc
+        framesize = Util.roundTo(spOffsetForMonitorBase(0) + numMonitors * compilation.runtime.sizeofBasicObjectLock() +
 
-        // TODO:  Add offset of deopt orig pc
-        framesize =  Util.roundTo(spOffsetForMonitorBase(0) +
-                               numMonitors * compilation.runtime.sizeofBasicObjectLock() +
+        compilation.target.arch.framePadding, compilation.target.stackAlignment);
 
-                               compilation.target.arch.framePadding,
-                               compilation.target.stackAlignment);
-
+        int javaIndex = 0;
         for (int i = 0; i < incomingArguments.length(); i++) {
-          LIROperand opr = incomingArguments.at(i);
-          if (opr.isStack()) {
-            argumentLocations[i] += framesizeInBytes();
-          }
+            LIROperand opr = incomingArguments.at(i);
+            if (opr.isStack()) {
+                assert argumentLocations[javaIndex] != -1;
+                argumentLocations[javaIndex] += framesizeInBytes() + compilation.target.arch.wordSize;
+            }
+            javaIndex += opr.basicType.size;
         }
         // make sure it's expressible on the platform
         return validateFrame();
-    }
-
-    private int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundTo(compilation.target.firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) +
-        numSpills * spillSlotSizeInBytes;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-        return offset;
     }
 
     private int framesizeInBytes() {

@@ -234,14 +234,18 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 listener.stackFrameFocusChanged(oldStackFrame, thread, stackFrame);
             }
         }
-        // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer.
+        // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer
+        // or call return location.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        if (!codeLocation.hasTargetCodeLocation() || !codeLocation.targetCodeInstructionAddress().equals(stackFrame.instructionPointer)) {
-            setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer), interactiveForNative);
+        TeleCodeLocation newCodeLocation =
+            stackFrame.isTopFrame() ? maxVM().createCodeLocation(stackFrame.instructionPointer)
+                            :  maxVM().getStackFrameReturnLocation(stackFrame);
+
+        if (!newCodeLocation.equals(codeLocation)) {
+            setCodeLocation(newCodeLocation, interactiveForNative);
         }
     }
-
 
     // never null, zero if none set
     private Address address = Address.zero();

@@ -551,7 +551,11 @@ public class X86MacroAssembler extends X86Assembler {
             throw Util.unimplemented();
             //movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (target.arch.is64bit()) {
-            this.movq(rscratch1, recordObjectReferenceInCode(obj));
+            if (obj == null) {
+                xorq(rscratch1, rscratch1);
+            } else {
+                this.movq(rscratch1, recordObjectReferenceInCode(obj));
+            }
             movq(dst, rscratch1);
         } else {
             Util.shouldNotReachHere();

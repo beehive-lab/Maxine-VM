@@ -477,13 +477,14 @@ public class GraphBuilder {
     }
 
     void loadConstant() {
-        Object con = constantPool().lookupConstant(stream().readCPI());
+        char cpi = stream().readCPI();
+        Object con = constantPool().lookupConstant(cpi);
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             if (!ritype.isLoaded() || C1XOptions.TestPatching) {
-                push(BasicType.Object, append(new ResolveClass(ritype, curState.copy())));
+                push(BasicType.Object, append(new ResolveClass(ritype, curState.copy(), cpi, constantPool())));
             } else {
                 push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
             }

@@ -68,6 +68,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.prototype.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -314,6 +315,9 @@ public abstract class TeleVM implements MaxVM {
         return pageSize;
     }
 
+    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
+    private final int  offsetToReturnPC;
+
     private final BootImage bootImage;
 
     public final BootImage bootImage() {
@@ -450,6 +454,7 @@ public abstract class TeleVM implements MaxVM {
 
         this.wordSize = Size.fromInt(vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes);
         this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
+        this.offsetToReturnPC = vmConfiguration.platform.processorKind.instructionSet.offsetToReturnPC;
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
@@ -1284,6 +1289,15 @@ public abstract class TeleVM implements MaxVM {
 
     public final TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position) {
         return new TeleCodeLocation(this, address, teleClassMethodActor, position);
+    }
+
+    public TeleCodeLocation getStackFrameReturnLocation(StackFrame stackFrame) {
+        assert !stackFrame.isTopFrame();
+        Address address = stackFrame.instructionPointer;
+        if (stackFrame.targetMethod() != null) {
+            address = address.plus(offsetToReturnPC);
+        }
+        return new TeleCodeLocation(this, address);
     }
 
     public final void addBreakpointObserver(Observer observer) {

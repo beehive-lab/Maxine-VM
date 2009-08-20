@@ -54,8 +54,8 @@ public class LIROperandFactory {
     }
 
     public static LIROperand stack(int index, BasicType type) {
-        assert index > 0;
-        return new LIRLocation(type, -index);
+        assert index >= 0;
+        return new LIRLocation(type, -index - 1);
     }
 
     public static LIROperand intConst(int i) {
@@ -107,5 +107,13 @@ public class LIROperandFactory {
                 return LIROperandFactory.intConst(-1);
             }
         }
+    }
+
+    public static LIROperand address(LIROperand register, int disp, BasicType t) {
+        return new LIRAddress(register, disp, t);
+    }
+
+    public static LIROperand address(Register rsp, int disp, BasicType t) {
+        return address(new LIRLocation(BasicType.Int, rsp), disp, t);
     }
 }

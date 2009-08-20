@@ -35,13 +35,26 @@ public class ResolveClass extends Instruction {
 
     public final RiType riType;
     private final ValueStack state;
+    public final RiConstantPool constantPool;
+    public final char cpi;
 
-    public ResolveClass(RiType type, ValueStack stack) {
+    public ResolveClass(RiType type, ValueStack stack, char cpi, RiConstantPool constantPool) {
         super(BasicType.Object);
         this.riType = type;
         assert stack != null;
         this.state = stack;
         setFlag(Flag.NonNull);
+        this.cpi = cpi;
+        this.constantPool = constantPool;
+    }
+
+    /**
+     * Gets the lock stack of the instruction if one exists.
+     * @return the lock stack
+     */
+    @Override
+    public ValueStack lockStack() {
+        return state;
     }
 
     @Override

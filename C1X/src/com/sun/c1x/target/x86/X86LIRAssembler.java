@@ -271,6 +271,9 @@ public class X86LIRAssembler extends LIRAssembler {
         // The frameMap records size in slots (32bit word)
 
         // subtract two words to account for return address and link
+
+        // TODO: Check if correct
+
         return frameMap().framesize();
     }
 /*
@@ -795,6 +798,64 @@ public class X86LIRAssembler extends LIRAssembler {
             Address srcAddr = frameMap().addressForSlot(src.doubleStackIx());
             masm().movdbl(asXmmDoubleReg(dest), srcAddr);
 
+        } else {
+            throw Util.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    protected void mem2mem(LIROperand src, LIROperand dest, BasicType type) {
+        if (dest.type().isSingleWord()) {
+            assert src.type().isSingleWord();
+            if (type == BasicType.Object) {
+                masm().pushptr(asAddress(src.asAddress()));
+                masm().popptr(asAddress(dest.asAddress()));
+            } else {
+                masm().pushl(asAddress(src.asAddress()));
+                masm().popl(asAddress(dest.asAddress()));
+            }
+
+        } else {
+            assert !src.type().isSingleWord();
+            if (compilation.target.arch.is64bit()) {
+                masm().pushptr(asAddress(src.asAddress()));
+                masm().popptr(asAddress(dest.asAddress()));
+            } else {
+
+                Util.unimplemented();
+//                masm().pushl(frameMap().addressForSlot(src.doubleStackIx(), 0));
+//                // push and pop the part at src + wordSize, adding wordSize for the previous push
+//                masm().pushl(frameMap().addressForSlot(src.doubleStackIx(), 2 * compilation.target.arch.wordSize));
+//                masm().popl(frameMap().addressForSlot(dest.doubleStackIx(), 2 * compilation.target.arch.wordSize));
+//                masm().popl(frameMap().addressForSlot(dest.doubleStackIx(), 0));
+            }
+        }
+    }
+
+    @Override
+    protected void mem2stack(LIROperand src, LIROperand dest, BasicType type) {
+        if (dest.isSingleStack()) {
+            if (type == BasicType.Object) {
+                masm().pushptr(asAddress(src.asAddress()));
+                masm().popptr(frameMap().addressForSlot(dest.singleStackIx()));
+            } else {
+                masm().pushl(asAddress(src.asAddress()));
+                masm().popl(frameMap().addressForSlot(dest.singleStackIx()));
+            }
+
+        } else if (dest.isDoubleStack()) {
+            if (compilation.target.arch.is64bit()) {
+                masm().pushptr(asAddress(src.asAddress()));
+                masm().popptr(frameMap().addressForSlot(dest.doubleStackIx()));
+            } else {
+
+                Util.unimplemented();
+//                masm().pushl(frameMap().addressForSlot(src.doubleStackIx(), 0));
+//                // push and pop the part at src + wordSize, adding wordSize for the previous push
+//                masm().pushl(frameMap().addressForSlot(src.doubleStackIx(), 2 * compilation.target.arch.wordSize));
+//                masm().popl(frameMap().addressForSlot(dest.doubleStackIx(), 2 * compilation.target.arch.wordSize));
+//                masm().popl(frameMap().addressForSlot(dest.doubleStackIx(), 0));
+            }
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -3139,6 +3200,25 @@ public class X86LIRAssembler extends LIRAssembler {
             default:
                 Util.unimplemented();
                 break;
+        }
+    }
+
+    @Override
+    protected void emitPrologue() {
+
+        int entryCodeOffset = compilation.runtime.codeOffset();
+        if (entryCodeOffset > 0) {
+            JITAdapterFrameStub stub = new JITAdapterFrameStub();
+            adapterFrameStub = stub;
+
+            masm.jmp(stub.entry);
+            assert asm.codeBuffer.position() <= entryCodeOffset;
+            while (asm.codeBuffer.position() < entryCodeOffset) {
+                int oldVal = asm.codeBuffer.position();
+                masm.nop();
+                assert oldVal != asm.codeBuffer.position();
+            }
+            masm.bind(stub.continuation);
         }
     }
 
