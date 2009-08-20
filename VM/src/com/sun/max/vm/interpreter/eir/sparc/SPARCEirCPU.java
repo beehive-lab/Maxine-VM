@@ -30,7 +30,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.interpreter.eir.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -272,7 +271,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
     /**
      * Gets the offset of a stack slot relative to the current value of the frame pointer.
-     * On SPARC, the parameter arguments are located above the frame pointer. Note that
+     * On SPARC, the parameter arguments are located above the frame pointer.  Note that
      * the return address isn't stored on the stack, but in the I7 register.
      * Locals are stored at negative offset relative to the frame pointer.
      */
@@ -282,11 +281,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
             // Overflow arguments are stored at positive offset relative to the frame pointer.
             return slot.offset;
         }
-        final int stackSlotSize = interpreter.frame().abi().stackSlotSize();
-        FatalError.unimplemented();
-        // (PaulC) The following line of code appears incorrect.
-        // Slots having higher offsets should be at higher addresses....
-        return -stackSlotSize - slot.offset;
+        final int frameSize = interpreter.frame().method().frameSize();
+        return -frameSize + slot.offset + SPARCStackFrameLayout.minStackFrameSize();
     }
 
     @Override
