@@ -66,8 +66,7 @@ public class BlockPrinter implements BlockClosure {
         ip.printInstructionListingHeader();
 
         for (Instruction i = block.next(); i != null; i = i.next()) {
-            if (!liveOnly || i.isPinned() || true) {
-                // TODO: only print if use count > 0, which is only known in LIR generator
+            if (!liveOnly || i.isLive()) {
                 ip.printInstructionListing(i);
             }
         }

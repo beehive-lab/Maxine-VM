@@ -44,9 +44,6 @@ public class ArithmeticOp extends Op2 {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         this.stateBefore = stateBefore;
-        if (canTrap()) {
-            pin();
-        }
     }
 
     /**

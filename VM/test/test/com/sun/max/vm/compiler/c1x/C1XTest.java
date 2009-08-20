@@ -476,7 +476,7 @@ public class C1XTest {
     }
 
     private static void reportMetrics() {
-        if (C1XOptions.PrintMetrics && verboseOption.getValue() > 0) {
+        if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
     }

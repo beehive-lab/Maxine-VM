@@ -963,6 +963,7 @@ public class Canonicalizer extends InstructionVisitor {
             } else {
                 throw Util.shouldNotReachHere();
             }
+            // TODO: the state after is incorrect here: should it be preserved from the original if?
             If canon = new If(cmp.x(), cond, nanSucc == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepoint());
             if (cmp.x() == cmp.y()) {
                 // re-canonicalize the new if
@@ -1012,7 +1013,9 @@ public class Canonicalizer extends InstructionVisitor {
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.lowKey());
-            setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
+            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            newIf.setStateAfter(i.stateAfter());
+            setCanonical(newIf);
         }
     }
 
@@ -1042,7 +1045,9 @@ public class Canonicalizer extends InstructionVisitor {
         if (max == 2) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
-            setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
+            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            newIf.setStateAfter(i.stateAfter());
+            setCanonical(newIf);
         }
     }
 
@@ -1050,7 +1055,7 @@ public class Canonicalizer extends InstructionVisitor {
         if (i.base() instanceof ArithmeticOp) {
             // if the base is an arithmetic op, try reducing
             ArithmeticOp root = (ArithmeticOp) i.base();
-            if (!root.isPinned() && root.opcode() == Bytecodes.LADD) {
+            if (!root.isLive() && root.opcode() == Bytecodes.LADD) {
                 // match unsafe(x + y) if the x + y is not pinned
                 // try reducing (x + y) and (y + x)
                 Instruction y = root.y();

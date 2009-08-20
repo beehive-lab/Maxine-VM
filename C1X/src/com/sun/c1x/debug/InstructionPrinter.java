@@ -169,7 +169,7 @@ public class InstructionPrinter extends InstructionVisitor {
      * @param instruction the instruction to print
      */
     public void printInstructionListing(Instruction instruction) {
-        if (instruction.isPinned()) {
+        if (instruction.isLive()) {
             out.print('.');
         }
 

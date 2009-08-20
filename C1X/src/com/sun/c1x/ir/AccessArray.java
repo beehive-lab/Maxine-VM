@@ -45,7 +45,6 @@ public abstract class AccessArray extends StateSplit {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
-        pin();
     }
 
     /**
