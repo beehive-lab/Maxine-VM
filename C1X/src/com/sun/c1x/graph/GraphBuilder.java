@@ -470,20 +470,15 @@ public class GraphBuilder {
         return h.isCatchAll();
     }
 
-<<<<<<< local
-    void genLoadConstant() {
-        Object con = constantPool().lookupConstant(stream().readCPI());
-=======
-    void loadConstant() {
-        char cpi = stream().readCPI();
+    void genLoadConstant(char cpi) {
+        ValueStack stateBefore = curState.copy();
         Object con = constantPool().lookupConstant(cpi);
->>>>>>> other
 
         if (con instanceof RiType) {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             if (!ritype.isLoaded() || C1XOptions.TestPatching) {
-                push(BasicType.Object, append(new ResolveClass(ritype, curState.copy(), cpi, constantPool())));
+                push(BasicType.Object, append(new ResolveClass(ritype, stateBefore, cpi, constantPool())));
             } else {
                 push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
             }
@@ -737,14 +732,14 @@ public class GraphBuilder {
 
     void genNewObjectArray(char cpi) {
         RiType type = constantPool().lookupType(cpi);
-        ValueStack stateBefore = valueStackIfClassNotLoaded(type);
+        ValueStack stateBefore = curState.immutableCopy();
         NewArray n = new NewObjectArray(type, ipop(), stateBefore, cpi, constantPool());
         apush(append(n));
     }
 
     void genNewMultiArray(char cpi) {
         RiType type = constantPool().lookupType(cpi);
-        ValueStack stateBefore = valueStackIfClassNotLoaded(type);
+        ValueStack stateBefore = curState.immutableCopy();
         int rank = stream().readUByte(stream().currentBCI() + 3);
         Instruction[] dims = new Instruction[rank];
         for (int i = rank - 1; i >= 0; i--) {
@@ -1845,7 +1840,7 @@ public class GraphBuilder {
                 case Bytecodes.SIPUSH         : ipush(appendConstant(CiConstant.forInt(s.readShort()))); break;
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
-                case Bytecodes.LDC2_W         : genLoadConstant(); break;
+                case Bytecodes.LDC2_W         : genLoadConstant(stream().readCPI()); break;
                 case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), BasicType.Int); break;
                 case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), BasicType.Long); break;
                 case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), BasicType.Float); break;
