@@ -26,6 +26,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
@@ -126,16 +127,18 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         allocationSize = bundleSize;
 
         if (!MaxineVM.isPrototyping()) {
-            // The allocation and initialization of objects in a code region must be atomic wrt garbage collection.
+            // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
         }
 
         Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor()) : null;
-        Pointer start = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+        Pointer start = currentCodeRegion.allocate(allocationSize, false);
+        traceChunkAllocation(allocationTraceDescription, allocationSize, start);
         if (start.isZero()) {
             currentCodeRegion = makeFreeCodeRegion();
-            start = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+            start = currentCodeRegion.allocate(allocationSize, false);
+            traceChunkAllocation(allocationTraceDescription, allocationSize, start);
             if (start.isZero()) {
                 FatalError.unexpected("could not allocate code");
             }
@@ -219,8 +222,10 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      *            {@link MemoryRegion#start()} method of this object.
      */
     synchronized void allocateRuntimeStub(RuntimeStub stub) {
+        assert !MaxineVM.isPrototyping() : "Relocation of runtime stubs not yet supported.";
+
         if (!MaxineVM.isPrototyping()) {
-            // The allocation and initialization of objects in a code region must be atomic wrt garbage collection.
+            // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
         }
@@ -228,10 +233,12 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         String allocationTraceDescription = Code.traceAllocation.getValue() ? stub.name() : null;
         int stubLength = stub.size().toInt();
         Size allocationSize = Layout.byteArrayLayout().getArraySize(stubLength);
-        Pointer stubCell = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+        Pointer stubCell = currentCodeRegion.allocate(allocationSize, true);
+        traceChunkAllocation(allocationTraceDescription, allocationSize, stubCell);
         if (stubCell.isZero()) {
             currentCodeRegion = makeFreeCodeRegion();
-            stubCell = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+            stubCell = currentCodeRegion.allocate(allocationSize, true);
+            traceChunkAllocation(allocationTraceDescription, allocationSize, stubCell);
             if (stubCell.isZero()) {
                 FatalError.unexpected("could not allocate runtime stub");
             }
@@ -246,6 +253,29 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         }
 
         currentCodeRegion.addToSortedMemoryRegions(stub);
+    }
+
+    private void traceChunkAllocation(Object purpose, Size size, Pointer cell) {
+        if (!cell.isZero() && purpose != null) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": Allocated chunk in region ");
+            Log.print(description());
+            Log.print(" for ");
+            if (purpose instanceof MethodActor) {
+                Log.printMethodActor((MethodActor) purpose, false);
+            } else {
+                Log.print(purpose);
+            }
+            Log.print(" at ");
+            Log.print(cell);
+            Log.print(" [size ");
+            Log.print(size.wordAligned().toInt());
+            Log.print(", end=");
+            Log.print(cell.plus(size.wordAligned()));
+            Log.println(']');
+            Log.unlock(lockDisabledSafepoints);
+        }
     }
 
     /**

@@ -185,7 +185,7 @@ public final class DataPrototype extends Prototype {
      */
     private void preventNullConfusion() {
         final Object object = new Object();
-        final Address cell = Heap.bootHeapRegion.allocateCell(HostObjectAccess.getSize(object));
+        final Address cell = Heap.bootHeapRegion.allocate(HostObjectAccess.getSize(object), true);
         assignHeapCell(object, cell);
         nonZeroBootHeapStart = Heap.bootHeapRegion.getAllocationMark();
     }
@@ -232,7 +232,7 @@ public final class DataPrototype extends Prototype {
 
         final Object alignment = createPageAlignmentObject(heapRegion);
         if (alignment != null) {
-            assignHeapCell(alignment, heapRegion.allocateCell(HostObjectAccess.getSize(alignment)));
+            assignHeapCell(alignment, heapRegion.allocate(HostObjectAccess.getSize(alignment), true));
         }
 
         heapRegion.trim();
@@ -262,7 +262,7 @@ public final class DataPrototype extends Prototype {
                 } else {
                     final Hub hub = HostObjectAccess.readHub(object);
                     final Size size = HostObjectAccess.getSize(hub, object);
-                    cell = heapRegion.allocateCell(size);
+                    cell = heapRegion.allocate(size, true);
                     assignHeapCell(object, cell);
 
                     if (objectsWithMutableReferences) {
@@ -372,8 +372,8 @@ public final class DataPrototype extends Prototype {
         }
 
         final Reference[] specialReferenceArray = specialReferences.toCollection().toArray(new Reference[specialReferences.length()]);
-        assignHeapCell(referenceMapBytes, heapRegion.allocateCell(HostObjectAccess.getSize(referenceMapBytes)));
-        assignHeapCell(specialReferenceArray, heapRegion.allocateCell(HostObjectAccess.getSize(specialReferenceArray)));
+        assignHeapCell(referenceMapBytes, heapRegion.allocate(HostObjectAccess.getSize(referenceMapBytes), true));
+        assignHeapCell(specialReferenceArray, heapRegion.allocate(HostObjectAccess.getSize(specialReferenceArray), true));
         heapRegion.init(referenceMapBytes, specialReferenceArray);
         Trace.end(1, "createHeapReferenceMap: width=" + referenceMap.width() + ", cardinality=" +
             referenceMap.cardinality() + ", size=" + referenceMap.size() + ", #special references=" + specialReferenceArray.length);

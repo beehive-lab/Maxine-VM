@@ -79,7 +79,7 @@ public final class TargetBundleLayout {
             if (size.isZero()) {
                 return INVALID_OFFSET;
             }
-            final Pointer cell = region.allocateCell(size);
+            final Pointer cell = region.allocate(size, true);
             assert !cell.isZero() || !region.getAllocationMark().isZero();
             return cell.asOffset();
         }
