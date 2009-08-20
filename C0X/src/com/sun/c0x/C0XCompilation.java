@@ -590,7 +590,7 @@ public class C0XCompilation {
     private void doCheckCast(char cpi) {
         RiType type = constantPool().lookupType(cpi);
         Location object = pop1();
-        Location r = codeGen.genCheckCast(type, object);
+        codeGen.genCheckCast(type, object);
         push1(object);
     }
 
@@ -708,23 +708,23 @@ public class C0XCompilation {
     private void doIfNull(Condition cond, int nextBCI, int targetBCI) {
         Location obj = pop1();
         codeGen.genIfNull(cond, obj, nextBCI, targetBCI);
-        FrameState nstate = enqueue(nextBCI, currentState);
-        FrameState tstate = enqueue(targetBCI, currentState.copy());
+        enqueue(nextBCI, currentState);
+        enqueue(targetBCI, currentState.copy());
     }
 
     private void doIfSame(BasicType basicType, Condition cond, int nextBCI, int targetBCI) {
         Location y = popX(basicType);
         Location x = popX(basicType);
         codeGen.genIfSame(cond, x, y, nextBCI, targetBCI);
-        FrameState nstate = enqueue(nextBCI, currentState);
-        FrameState tstate = enqueue(targetBCI, currentState.copy());
+        enqueue(nextBCI, currentState);
+        enqueue(targetBCI, currentState.copy());
     }
 
     private void doIfZero(Condition cond, int nextBCI, int targetBCI) {
         Location val = pop1();
         codeGen.genIfZero(cond, val, nextBCI, targetBCI);
-        FrameState nstate = enqueue(nextBCI, currentState);
-        FrameState tstate = enqueue(targetBCI, currentState.copy());
+        enqueue(nextBCI, currentState);
+        enqueue(targetBCI, currentState.copy());
     }
 
     private void doIncrement(int index) {
