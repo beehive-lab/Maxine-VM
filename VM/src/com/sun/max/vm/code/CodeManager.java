@@ -30,6 +30,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -177,7 +178,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             Heap.enableAllocationForCurrentThread();
         }
 
-        currentCodeRegion.addTargetMethod(targetMethod);
+        currentCodeRegion.addToSortedMemoryRegions(targetMethod);
     }
 
     private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
@@ -216,16 +217,35 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      *            allocation is successful, the address of the memory chunk allocated (i.e. the address of the first
      *            element of the internally allocated byte array) will be accessible through the
      *            {@link MemoryRegion#start()} method of this object.
-     * @return true if space was successfully allocated for the runtime stub
      */
-    synchronized boolean allocateRuntimeStub(RuntimeStub stub) {
-        if (!currentCodeRegion.allocateRuntimeStub(stub)) {
+    synchronized void allocateRuntimeStub(RuntimeStub stub) {
+        if (!MaxineVM.isPrototyping()) {
+            // The allocation and initialization of objects in a code region must be atomic wrt garbage collection.
+            Safepoint.disable();
+            Heap.disableAllocationForCurrentThread();
+        }
+
+        String allocationTraceDescription = Code.traceAllocation.getValue() ? stub.name() : null;
+        int stubLength = stub.size().toInt();
+        Size allocationSize = Layout.byteArrayLayout().getArraySize(stubLength);
+        Pointer stubCell = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+        if (stubCell.isZero()) {
             currentCodeRegion = makeFreeCodeRegion();
-            if (!currentCodeRegion.allocateRuntimeStub(stub)) {
-                return false;
+            stubCell = currentCodeRegion.allocateSpace(allocationTraceDescription, allocationSize);
+            if (stubCell.isZero()) {
+                FatalError.unexpected("could not allocate runtime stub");
             }
         }
-        return true;
+        Cell.plantArray(stubCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), stubLength);
+        stub.setStart(stubCell.plus(Layout.byteArrayLayout().getElementOffsetInCell(0)));
+
+        if (!MaxineVM.isPrototyping()) {
+            // It is now safe again to perform operations that may block and/or trigger a garbage collection
+            Safepoint.enable();
+            Heap.enableAllocationForCurrentThread();
+        }
+
+        currentCodeRegion.addToSortedMemoryRegions(stub);
     }
 
     /**
