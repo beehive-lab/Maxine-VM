@@ -47,12 +47,8 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
     private static final int TRACE_VALUE = 2;
 
-    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
-    private final int  offsetToReturnPC;
-
     public InspectionFocus(Inspection inspection) {
         super(inspection);
-        offsetToReturnPC = maxVM().vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC;
     }
 
     private IdentityHashSet<ViewFocusListener> listeners = new IdentityHashSet<ViewFocusListener>();
@@ -242,16 +238,14 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // or call return location.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        Address codeAddress = stackFrame.instructionPointer;
-        if (!stackFrame.isTopFrame() && stackFrame.targetMethod() != null) {
-            // For call return location, may have to add an offset for platforms that leave the calling IP in the frame (see SPARC)
-            codeAddress = codeAddress.plus(offsetToReturnPC);
-        }
-        if (!codeLocation.hasTargetCodeLocation() || !codeLocation.targetCodeInstructionAddress().equals(stackFrame.instructionPointer)) {
-            setCodeLocation(maxVM().createCodeLocation(codeAddress), interactiveForNative);
+        TeleCodeLocation newCodeLocation =
+            stackFrame.isTopFrame() ? maxVM().createCodeLocation(stackFrame.instructionPointer)
+                            :  maxVM().getStackFrameReturnLocation(stackFrame);
+
+        if (!newCodeLocation.equals(codeLocation)) {
+            setCodeLocation(newCodeLocation, interactiveForNative);
         }
     }
-
 
     // never null, zero if none set
     private Address address = Address.zero();
