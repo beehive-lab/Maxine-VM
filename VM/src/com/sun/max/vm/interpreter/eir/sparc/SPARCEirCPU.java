@@ -271,18 +271,18 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
     /**
      * Gets the offset of a stack slot relative to the current value of the frame pointer.
-     * On SPARC, the parameter arguments are located above the frame pointer. Note that
+     * On SPARC, the parameter arguments are located above the frame pointer.  Note that
      * the return address isn't stored on the stack, but in the I7 register.
      * Locals are stored at negative offset relative to the frame pointer.
      */
     @Override
-    public int offset(EirStackSlot slot) {
+    protected int offset(EirStackSlot slot) {
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             // Overflow arguments are stored at positive offset relative to the frame pointer.
             return slot.offset;
         }
-        final int stackSlotSize = interpreter.frame().abi().stackSlotSize();
-        return -stackSlotSize - slot.offset;
+        final int frameSize = interpreter.frame().method().frameSize();
+        return -frameSize + slot.offset + SPARCStackFrameLayout.minStackFrameSize();
     }
 
     @Override
