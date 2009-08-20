@@ -42,6 +42,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -605,6 +606,14 @@ public interface MaxVM {
      * @return a new location
      */
     TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position);
+
+    /**
+     * Gets the return address in a stack frame.
+     *
+     * @param stackFrame a VM stack frame, presumed not to be the current top.
+     * @return location of the next target instruction to be executed when control is returned to the frame.
+     */
+    TeleCodeLocation getStackFrameReturnLocation(StackFrame stackFrame);
 
     /**
      * Adds a observer for breakpoint changes in the VM.

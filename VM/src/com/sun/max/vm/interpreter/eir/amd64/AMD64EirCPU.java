@@ -109,7 +109,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
      * of the stack frame; the caller has pushed its arguments, then a return address.
      */
     @Override
-    public int offset(EirStackSlot slot) {
+    protected int offset(EirStackSlot slot) {
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             final EirFrame frame = interpreter.frame();
             // Add one slot to account for the pushed return address and then add the size of the local stack frame

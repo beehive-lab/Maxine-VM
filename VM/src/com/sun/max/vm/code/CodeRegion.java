@@ -99,26 +99,8 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         return result;
     }
 
-    public void addTargetMethod(TargetMethod targetMethod) {
-        sortedMemoryRegions.add(targetMethod);
-    }
-
-    /**
-     * Allocates a raw piece of memory in this code region for storing a runtime stub.
-     *
-     * @param stub an object describing the size of the runtime stub code (i.e. the size in bytes to allocate). If
-     *            allocation is successful, the address of the memory chunk allocated will be accessible through the
-     *            {@link MemoryRegion#start()} method of this object.
-     * @return true if space was successfully allocated for the stub
-     */
-    public boolean allocateRuntimeStub(RuntimeStub stub) {
-        final Pointer cell = allocateSpace(Code.traceAllocation.getValue() ? stub.name() : null, stub.size());
-        if (cell.isZero()) {
-            return false;
-        }
-        stub.setStart(cell);
-        sortedMemoryRegions.add(stub);
-        return true;
+    public void addToSortedMemoryRegions(RuntimeMemoryRegion region) {
+        sortedMemoryRegions.add(region);
     }
 
     /**

@@ -191,7 +191,7 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
     /**
      * Gets the offset of a stack slot relative to the current value of the frame pointer.
      */
-    public abstract int offset(EirStackSlot slot);
+    protected abstract int offset(EirStackSlot slot);
 
     public Value read(EirLocation location) {
         switch (location.category()) {
