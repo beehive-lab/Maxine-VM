@@ -18,22 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.jdk;
+package jtt.micro;
 
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 0 = false; 1 = true;
  */
-public class System_nanoTime02 {
-    public static boolean test(int arg) {
-        long start = System.nanoTime();
-        long delta = 0;
-        for (int i = 0; delta == 0 && i < 50000; i++) {
-            delta = System.nanoTime() - start;
-            // do nothing.
-        }
+public class Loop02 {
 
-        // better get at least 30 microsecond resolution.
-        return delta > 1 && delta < 30000;
+    public static boolean test(int arg) {
+        int x = arg;
+
+        for (int i = 0; i < 10; i++) {
+            int y = m();
+            if (x == 1) {
+                return true;
+            }
+            x = y;
+        }
+        return false;
     }
+
+    private static int m() {
+        return 2;
+    }
+
 }

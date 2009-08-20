@@ -338,6 +338,21 @@ public class C1XCompilation {
         return targetMethod;
     }
 
+    public IR emitHIR() {
+        if (C1XOptions.PrintCompilation) {
+            TTY.println();
+            TTY.println("Compiling method: " + method.toString());
+        }
+        try {
+            hir = new IR(this);
+            hir.build();
+        } catch (Throwable t) {
+            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
+            throw bailout;
+        }
+        return hir;
+    }
+
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
             frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());

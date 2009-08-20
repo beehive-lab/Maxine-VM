@@ -48,7 +48,7 @@ public class GraphBuilder {
     BlockBegin curBlock;                   // the current block
     ValueStack curState;                   // the current execution state
     Instruction lastInstr;                 // the last instruction added
-    int totalInstructions;                        // for bailing out in pathological jsr/ret cases
+    int totalInstructions;                 // for bailing out in pathological jsr/ret cases
 
     ValueStack initialState;               // The state for the start block
     ValueStack exceptionState;             // state that will be used by handleException
@@ -56,6 +56,7 @@ public class GraphBuilder {
 
     /**
      * Creates a new instance and builds the graph for a the specified IRScope.
+     *
      * @param compilation the compilation
      * @param scope the top IRScope
      * @param ir the IR to build the graph into
@@ -114,7 +115,7 @@ public class GraphBuilder {
                     BlockEnd end = (BlockEnd) lastInstr;
                     curBlock.setEnd(end);
                     end.setState(curState);
-                }  else {
+                } else {
                     // try intrinsic failed; do the normal parsing
                     scopeData.addToWorkList(start);
                     iterateAllBlocks();
@@ -181,13 +182,11 @@ public class GraphBuilder {
 
         Base base = new Base(newHeaderBlock, osrEntry);
 
-        if (false && method().isSynchronized()) {
+        if (method().isSynchronized()) {
             Instruction synchronizedObject = synchronizedObject(initialState, method());
-
-            monitorenter(synchronizedObject, 0);
-            /*Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
+            Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
             start.setNext(monitorEnter, 0);
-            monitorEnter.setNext(base, 0);*/
+            monitorEnter.setNext(base, 0);
         } else {
             start.setNext(base, 0);
         }
@@ -362,9 +361,7 @@ public class GraphBuilder {
         // Also check parent jsrs (if any) at this time to see whether
         // they are using this local. We don't handle skipping over a
         // ret.
-        for (ScopeData cur = scopeData.parent;
-                cur != null && cur.parsingJsr() && cur.scope == scope();
-                cur = cur.parent) {
+        for (ScopeData cur = scopeData.parent; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryReturnAddressLocal() == index) {
                 throw new Bailout("subroutine overwrites return address from previous subroutine");
             }
@@ -999,8 +996,7 @@ public class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(0, BasicType.Object);
-            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), false, lockStack(), true, true));
+            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init, curState.popArguments(1), false, lockStack(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1073,8 +1069,8 @@ public class GraphBuilder {
     void monitorexit(Instruction x, int bci) {
         // Mysterious C1 comment:
         // Note: the comment below is only relevant for the case where we do
-        // not deoptimize due to asynchronous exceptions (!(DeoptC1 &&
-        // DeoptOnAsyncException), which is not used anymore)
+        //       not deoptimize due to asynchronous exceptions (!(DeoptC1 &&
+        //       DeoptOnAsyncException), which is not used anymore)
 
         // Note: Potentially, the monitor state in an exception handler
         //       can be wrong due to wrong 'initialization' of the handler
@@ -1164,7 +1160,7 @@ public class GraphBuilder {
         } else if (array instanceof AccessField && ((AccessField) array).field().isConstant()) {
             // the length is derived from a constant array
             return true;
-        } else  if (array instanceof NewArray) {
+        } else if (array instanceof NewArray) {
             // the array is derived from an allocation
             final Instruction length = ((NewArray) array).length();
             return length != null && length.isConstant();
@@ -1406,8 +1402,8 @@ public class GraphBuilder {
         // handle intrinsics differently
         switch (intrinsic) {
             // java.lang.Object
-            case java_lang_Object$init:     // fall through
-            case java_lang_Object$clone:    return false;
+            case java_lang_Object$init:   // fall through
+            case java_lang_Object$clone:  return false;
             // TODO: preservesState and canTrap for complex intrinsics
         }
 
@@ -1807,10 +1803,7 @@ public class GraphBuilder {
             exceptionState = hasHandler() && Bytecodes.canTrap(opcode) ? curState.copy() : null;
 
             // check for active JSR during OSR compilation
-            if (compilation.isOsrCompilation()
-                    && scope().isTopScope()
-                    && scopeData.parsingJsr()
-                    && s.currentBCI() == compilation.osrBCI) {
+            if (compilation.isOsrCompilation() && scope().isTopScope() && scopeData.parsingJsr() && s.currentBCI() == compilation.osrBCI) {
                 throw new Bailout("OSR not supported while a JSR is active");
             }
 
@@ -2123,6 +2116,7 @@ public class GraphBuilder {
 
     /**
      * Returns the number of instructions parsed into this graph.
+     *
      * @return the number of instructions parsed into the graph
      */
     public int totalInstructions() {

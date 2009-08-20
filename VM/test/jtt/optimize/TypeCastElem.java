@@ -22,7 +22,6 @@ package jtt.optimize;
 
 /*
  * @Harness: java
- *
  * @Runs: (10, 13, 25) = 27183
  */
 public class TypeCastElem {
