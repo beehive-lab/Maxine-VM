@@ -55,9 +55,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return "Target Code";
     }
 
-    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
-    private final int  offsetToReturnPC;
-
     private final TeleTargetRoutine teleTargetRoutine;
 
     /**
@@ -120,8 +117,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
 
     protected TargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent);
-
-        this.offsetToReturnPC = maxVM().vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC;
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
@@ -305,7 +300,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 for (TargetCodeInstruction targetCodeInstruction : instructions) {
                     final Address instructionAddress = targetCodeInstruction.address;
                     if ((stackPosition == 0 && instructionAddress.equals(frame.instructionPointer)) ||
-                                    (stackPosition > 0 && instructionAddress.equals(frame.instructionPointer.plus(offsetToReturnPC)))) {
+                                    (stackPosition > 0 && instructionAddress.equals(maxVM().getStackFrameReturnLocation(frame).targetCodeInstructionAddress()))) {
                         rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
