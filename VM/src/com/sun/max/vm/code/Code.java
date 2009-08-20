@@ -109,10 +109,9 @@ public final class Code {
      *            allocation is successful, the address of the memory chunk allocated (i.e. the address of the first
      *            element of the internally allocated byte array) will be accessible through the
      *            {@link MemoryRegion#start()} method of this object.
-     * @return true if space was successfully allocated for the runtime stub
      */
-    public static boolean allocateRuntimeStub(RuntimeStub stub) {
-        return codeManager.allocateRuntimeStub(stub);
+    public static void allocateRuntimeStub(RuntimeStub stub) {
+        codeManager.allocateRuntimeStub(stub);
     }
 
     /**

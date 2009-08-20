@@ -29,6 +29,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorScheme> {
 
@@ -48,6 +49,19 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
                     if (spillIndex >= 0) {
                         map.set(spillIndex);
                     }
+                }
+            }
+        }
+    }
+
+    public static void addFrameReferenceMapAtCall(PoolSet<EirVariable> liveVariables, EirOperand[] arguments, WordWidth stackSlotWidth, ByteArrayBitMap map) {
+        addFrameReferenceMap(liveVariables, stackSlotWidth, map);
+        if (arguments != null) {
+            for (EirOperand argument : arguments) {
+                if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
+                    final EirStackSlot stackSlot = (EirStackSlot) argument.location();
+                    final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.minStackFrameSize()) / stackSlotWidth.numberOfBytes;
+                    map.set(stackSlotBitIndex);
                 }
             }
         }
