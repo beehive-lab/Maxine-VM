@@ -229,7 +229,6 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
-    @Override
     public int overflowArgumentsSize(BasicType basicType) {
         // TODO: Return wordSize
         // Currently must be a constant!!
@@ -616,7 +615,6 @@ public class MaxRiRuntime implements RiRuntime {
         return X86.r14;
     }
 
-    @Override
     public int getJITStackSlotSize() {
         return JitStackFrameLayout.JIT_SLOT_SIZE;
     }

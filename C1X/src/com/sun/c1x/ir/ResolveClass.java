@@ -35,20 +35,10 @@ import com.sun.c1x.value.*;
 public class ResolveClass extends StateSplit {
 
     public final RiType riType;
-<<<<<<< local
-=======
-    private final ValueStack state;
     public final RiConstantPool constantPool;
     public final char cpi;
->>>>>>> other
-
-<<<<<<< local
-    public ResolveClass(RiType type, ValueStack stateBefore) {
+    public ResolveClass(RiType type, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
         super(BasicType.Object, stateBefore);
-=======
-    public ResolveClass(RiType type, ValueStack stack, char cpi, RiConstantPool constantPool) {
-        super(BasicType.Object);
->>>>>>> other
         this.riType = type;
         assert stateBefore != null;
         setFlag(Flag.NonNull);
@@ -56,14 +46,6 @@ public class ResolveClass extends StateSplit {
         this.constantPool = constantPool;
     }
 
-    /**
-     * Gets the lock stack of the instruction if one exists.
-     * @return the lock stack
-     */
-    @Override
-    public ValueStack lockStack() {
-        return state;
-    }
 
     @Override
     public void accept(InstructionVisitor v) {

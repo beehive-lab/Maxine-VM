@@ -254,15 +254,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
-<<<<<<< local
         assert i.stateBefore() != null;
-
-
-=======
-        assert i.state() != null;
         LIROperand result = rlockResult(i);
         lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding()), stateFor(i));
->>>>>>> other
     }
 
     @Override
@@ -2110,9 +2104,12 @@ public abstract class LIRGenerator extends InstructionVisitor {
     protected void walk(Instruction instr) {
         Instruction prev = compilation.setCurrentInstruction(instr);
         try {
+            if (instr instanceof Phi) {
+                assert instr.isPinned() || !instr.operand().isValid() : "phi must be pinned or illegal";
+            }
             // stop walk when encounter a root
             if (instr.isPinned() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
-                assert instr.operand() != LIROperandFactory.IllegalOperand || instr instanceof Constant : "this root has not yet been visited";
+                assert instr.operand().isValid() || instr instanceof Constant : "this root has not yet been visited";
             } else {
                 assert instr.subst() == instr : "shouldn't have missed substitution";
                 instr.accept(this);
@@ -2139,9 +2136,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     /**
      * Returns a LIRAddress for an array location. This method may also emit some code
      * as part of the address calculation.  If
-     * {@link com.sun.c1x.C1XOptions#NeedsCardMark} is true then compute the full address for use by
-     * both the store and the card mark.
-     * XXX: NeedsCardMark is probably part of an instruction (i.e. due to write barrier elision optimization)
      *
      * @param base the base address
      * @param index the array index
