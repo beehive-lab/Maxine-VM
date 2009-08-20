@@ -104,15 +104,13 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         header.add(new TextLabel(inspection(), "Frame size:", frameClassName));
         header.add(new DataLabel.IntAsDecimal(inspection(), frameSize));
 
-        final TextLabel framePointerLabel = new TextLabel(inspection(), "Frame pointer:", frameClassName);
-        final TextLabel stackPointerLabel = new TextLabel(inspection(), "Stack pointer:", frameClassName);
         final Pointer framePointer = javaStackFrame.framePointer;
         final Pointer stackPointer = javaStackFrame.stackPointer;
         final StackBias bias = javaStackFrame.bias();
 
-        header.add(framePointerLabel);
+        header.add(new TextLabel(inspection(), "Frame pointer:", frameClassName));
         header.add(new DataLabel.BiasedStackAddressAsHex(inspection(), framePointer, bias));
-        header.add(stackPointerLabel);
+        header.add(new TextLabel(inspection(), "Stack pointer:", frameClassName));
         header.add(new DataLabel.BiasedStackAddressAsHex(inspection(), stackPointer, bias));
         header.add(new TextLabel(inspection(), "Instruction pointer:", frameClassName));
         header.add(instructionPointerLabel);
@@ -220,7 +218,6 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
                 name = stackFrame.slotBase().plus(offset).toHexString();
                 break;
             case BIASED_OFFSET:
-
                 name = "+" + stackFrame.biasedOffset(offset);
                 break;
             case OFFSET:
