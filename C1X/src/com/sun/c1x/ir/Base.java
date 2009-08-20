@@ -43,8 +43,6 @@ public class Base extends BlockEnd {
             successors.add(osrEntry);
         }
         successors.add(standardEntry);
-        // TODO: Check why we need this?!
-        this.pin();
     }
 
     /**

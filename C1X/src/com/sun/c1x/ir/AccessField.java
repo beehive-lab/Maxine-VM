@@ -35,7 +35,6 @@ public abstract class AccessField extends StateSplit {
     Instruction object;
     final int offset;
     final RiField field;
-    boolean isStatic;
 
     /**
      * Constructs a new access field object.
@@ -51,14 +50,13 @@ public abstract class AccessField extends StateSplit {
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
         this.stateBefore = stateBefore;
-        this.isStatic = isStatic;
         if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
             setFlag(Flag.NeedsPatching);
         }
         initFlag(Flag.IsLoaded, isLoaded);
-        pin(); // pin memory access instructions
+        initFlag(Flag.IsStatic, isStatic);
         if (object != null && object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
@@ -95,7 +93,7 @@ public abstract class AccessField extends StateSplit {
      * @return <code>true</code> if this field access is to a static field
      */
     public boolean isStatic() {
-        return isStatic;
+        return checkFlag(Flag.IsStatic);
     }
 
     /**
@@ -106,18 +104,9 @@ public abstract class AccessField extends StateSplit {
         return checkFlag(Flag.IsLoaded);
     }
 
-    /**
-     * Checks whether the class of the field of this access is initialized.
-     * @return <code>true</code> if the class is initialized
-     */
-    public boolean isInitialized() {
-        // XXX: check may be redundant
-        return !isStatic || isLoaded() && field.holder().isInitialized();
-    }
-
     @Override
     public void clearNullCheck() {
-        if (isInitialized()) {
+        if (isLoaded()) {
             stateBefore = null;
         }
         setFlag(Flag.NoNullCheck);
@@ -156,6 +145,8 @@ public abstract class AccessField extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        object = closure.apply(object);
+        if (object != null) {
+            object = closure.apply(object);
+        }
     }
 }

@@ -35,7 +35,6 @@ public class OsrEntry extends Instruction {
     public OsrEntry() {
         // TODO: this should be a BasicType.Word
         super(BasicType.Jsr);
-        pin();
     }
 
     /**

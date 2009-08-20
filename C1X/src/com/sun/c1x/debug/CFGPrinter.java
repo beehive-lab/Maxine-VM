@@ -304,7 +304,7 @@ public class CFGPrinter {
      * @param i the instruction for which HIR will be printed
      */
     private void printInstructionHIR(Instruction i) {
-        if (i.isPinned()) {
+        if (i.isLive()) {
             out.print('.');
         }
         int useCount = 0;

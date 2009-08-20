@@ -158,8 +158,7 @@ public class BlockMerger implements BlockClosure {
 
                     if (tblock != fblock && !newEnd.isSafepoint()) {
                         // remove the IfOp and move its comparison into the if at the end
-                        If newIf = new If(ifOp.x(), ifOp.condition(), false, ifOp.y(),
-                                tblock, fblock, newEnd.stateAfter(), newEnd.isSafepoint());
+                        If newIf = new If(ifOp.x(), ifOp.condition(), false, ifOp.y(), tblock, fblock, null, newEnd.isSafepoint());
                         newIf.setStateAfter(newEnd.stateAfter().copy());
 
                         assert prev.next() == newEnd : "must be guaranteed by above search";

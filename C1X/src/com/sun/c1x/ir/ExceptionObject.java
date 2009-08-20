@@ -34,7 +34,6 @@ public class ExceptionObject extends Instruction {
      */
     public ExceptionObject() {
         super(BasicType.Object);
-        pin();
     }
 
     /**

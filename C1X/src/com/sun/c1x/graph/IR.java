@@ -100,14 +100,17 @@ public class IR {
 
     private void optimize1() {
         // do basic optimizations
+        if (C1XOptions.DoNullCheckElimination) {
+            new NullCheckEliminator(this);
+        }
+        if (C1XOptions.DoDeadCodeElimination1) {
+            new LivenessMarker(this).removeDeadCode();
+        }
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
         }
         if (C1XOptions.DoBlockMerging) {
             new BlockMerger(this);
-        }
-        if (C1XOptions.DoNullCheckElimination) {
-            new NullCheckEliminator(this);
         }
     }
 
@@ -134,6 +137,9 @@ public class IR {
         if (C1XOptions.DoGlobalValueNumbering) {
             makeLinearScanOrder();
             new GlobalValueNumberer(this);
+        }
+        if (C1XOptions.DoDeadCodeElimination2) {
+            new LivenessMarker(this).removeDeadCode();
         }
     }
 

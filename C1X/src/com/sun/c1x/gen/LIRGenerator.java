@@ -23,6 +23,7 @@ package com.sun.c1x.gen;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.opt.LivenessMarker;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
@@ -70,6 +71,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
+    private Instruction currentInstruction;
+    private Instruction lastInstructionPrinted; // Debugging only
+
     ArrayMap<Instruction> instructionForOperand;
     // XXX: refactor this to use 3 one dimensional bitmaps
     private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
@@ -110,7 +114,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     public boolean isRoot(Instruction x) {
-        return x.isPinned() || useCount(x) > 1;
+        return x.isLive() || useCount(x) > 1;
     }
 
     public void visitBlock(BlockBegin block) {
@@ -118,7 +122,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         this.currentBlock = block;
 
         for (Instruction instr = block; instr != null; instr = instr.next()) {
-            if (instr.isPinned()) {
+            if (instr.isLive()) {
                 doRoot(instr);
             }
         }
@@ -271,7 +275,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
 
         if (useCount(x) > 1 && !canInlineAsConstant(x)) {
-            if (!x.isPinned()) {
+            if (!x.isLive()) {
                 // unpinned constants are handled specially so that they can be
                 // put into registers when they are used multiple times within a
                 // block. After the block completes their operand will be
@@ -301,7 +305,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.state().allPhis(currentBlock)) {
+        for (Phi phi : currentBlock.state().allLivePhis(currentBlock)) {
             operandForInstruction(phi);
         }
 
@@ -1079,7 +1083,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
         // set up the list of LIR instructions
         assert block.lir() == null : "LIR list already computed for this block";
-        lir = new LIRList(compilation, block);
+        lir = new LIRList(this, block);
         block.setLir(lir);
 
         lir.branchDestination(block.label());
@@ -1111,7 +1115,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        assert !x.isPinned() : "only for unpinned constants";
+        assert !x.isLive() : "only for unpinned constants";
         unpinnedConstants.add(x);
         return loadConstant(LIROperandFactory.basicType(x).asConstantPtr());
     }
@@ -1762,17 +1766,17 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     void doRoot(Instruction instr) {
         // This is where the tree-walk starts; instr must be root;
-        // XXX: why the current instruction stored in the Compilation?
-        Instruction prev = compilation.setCurrentInstruction(instr);
+        Instruction prev = currentInstruction;
+        currentInstruction = instr;
         try {
-            assert instr.isPinned() : "use only with roots";
+            assert instr.isLive() : "use only with roots";
             assert instr.subst() == instr : "shouldn't have missed substitution";
 
             instr.accept(this);
 
             assert !hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
         } finally {
-            compilation.setCurrentInstruction(prev);
+            currentInstruction = prev;
         }
     }
 
@@ -1797,15 +1801,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     void init() {
-
-        for (BlockBegin begin : ir.linearScanOrder()) {
-            begin.end().stateAfter().pinStackForLinearScan();
-        }
-
-        UseCountComputer useCountComputer = new UseCountComputer(useCounts);
-        for (BlockBegin begin : ir.linearScanOrder()) {
-            useCountComputer.visitBlock(begin);
-        }
+        // mark the liveness of all instructions if it hasn't already been done by the optimizer
+        new LivenessMarker(ir);
     }
 
     void loadInvokeArguments(Invoke x, List<LIRItem> args, List<LIROperand> argList) {
@@ -1890,23 +1887,23 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     void moveToPhi(PhiResolver resolver, Instruction curVal, Instruction suxVal) {
         // move current value to referenced phi function
-        Phi phi = null;
         if (suxVal instanceof Phi) {
-            phi = (Phi) suxVal;
-        }
-        // curVal can be null without phi being null in conjunction with inlining
-        if (phi != null && curVal != null && curVal != phi && !phi.type().isIllegal()) {
-            LIROperand operand = curVal.operand();
-            if (curVal.operand().isIllegal()) {
-                assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
-                operand = operandForInstruction(curVal);
+            Phi phi = (Phi) suxVal;
+            // curVal can be null without phi being null in conjunction with inlining
+            if (phi.isLive() && curVal != null && curVal != phi) {
+                assert !phi.type().isIllegal() : "illegal phi cannot be marked as live";
+                LIROperand operand = curVal.operand();
+                if (curVal.operand().isIllegal()) {
+                    assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
+                    operand = operandForInstruction(curVal);
+                }
+                resolver.move(operand, operandForInstruction(phi));
             }
-            resolver.move(operand, operandForInstruction(phi));
         }
     }
 
     protected void moveToPhi(ValueStack curState) {
-        // Moves all stack values into their PHI position
+        // Moves all stack values into their phi position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
             BlockBegin sux = bb.suxAt(0);
@@ -1914,27 +1911,23 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             // a block with only one predecessor never has phi functions
             if (sux.numberOfPreds() > 1) {
-                int maxPhis = curState.stackSize() + curState.localsSize();
+                int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, virtualRegisterNumber + maxPhis * 2);
 
                 ValueStack suxState = sux.state();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
-                    Instruction suxValue = suxState.stackAt(index);
-                    moveToPhi(resolver, curState.stackAt(index), suxValue);
+                    moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));
                 }
 
-                // Inlining may cause the local state not to match up, so walk up
-                // the caller state until we get to the same scope as the
-                // successor and then start processing from there.
+                // walk up the inlined scopes until locals match
                 while (curState.scope() != suxState.scope()) {
                     curState = curState.scope().callerState();
                     assert curState != null : "scopes don't match up";
                 }
 
                 for (int index = 0; index < suxState.localsSize(); index++) {
-                    Instruction suxValue = suxState.localAt(index);
-                    moveToPhi(resolver, curState.localAt(index), suxValue);
+                    moveToPhi(resolver, curState.localAt(index), suxState.localAt(index));
                 }
 
                 assert curState.scope().callerState() == suxState.scope().callerState() : "caller states must be equal";
@@ -2039,7 +2032,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             final Instruction value = state.stackAt(index);
             if (value != null) {
                 assert value.subst() == value : "missed substitution";
-                if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
+                if (!value.isLive() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
                     walk(value);
                     assert value.operand().isValid() : "must be evaluated now";
                 }
@@ -2071,7 +2064,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 if (value != null) {
                     assert value.subst() == value : "missed substition";
                     if ((liveness == null || liveness.get(index)) && !value.type().isIllegal()) {
-                        if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
+                        if (!value.isLive() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
                             walk(value);
                             assert value.operand().isValid() : "must be evaluated now";
                         }
@@ -2102,20 +2095,21 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     // This is called for each node in tree; the walk stops if a root is reached
     protected void walk(Instruction instr) {
-        Instruction prev = compilation.setCurrentInstruction(instr);
+        Instruction prev = currentInstruction;
+        currentInstruction = instr;
         try {
             if (instr instanceof Phi) {
-                assert instr.isPinned() || !instr.operand().isValid() : "phi must be pinned or illegal";
+                assert instr.isLive() || !instr.operand().isValid() : "phi must be pinned or illegal";
             }
             // stop walk when encounter a root
-            if (instr.isPinned() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
+            if (instr.isLive() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
                 assert instr.operand().isValid() || instr instanceof Constant : "this root has not yet been visited";
             } else {
                 assert instr.subst() == instr : "shouldn't have missed substitution";
                 instr.accept(this);
             }
         } finally {
-            compilation.setCurrentInstruction(prev);
+            currentInstruction = prev;
         }
     }
 
@@ -2248,5 +2242,17 @@ public abstract class LIRGenerator extends InstructionVisitor {
     public int maxVirtualRegisterNumber() {
         return virtualRegisterNumber;
     }
+
+    public Instruction currentInstruction() {
+        return currentInstruction;
+    }
+
+    public void maybePrintCurrentInstruction() {
+        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
+            lastInstructionPrinted = currentInstruction;
+            currentInstruction.printLine();
+        }
+    }
+
 
 }

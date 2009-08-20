@@ -33,7 +33,6 @@ import com.sun.c1x.value.*;
 public class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
-    final boolean isStatic;
     final Instruction[] arguments;
     final boolean canTrap;
 
@@ -52,13 +51,12 @@ public class Intrinsic extends StateSplit {
         super(type, stateBefore);
         this.intrinsic = intrinsic;
         this.arguments = args;
-        this.isStatic = isStatic;
+        initFlag(Flag.IsStatic, isStatic);
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
         // for load elimination and common subexpression elimination
         initFlag(Flag.PreservesState, preservesState);
         this.canTrap = canTrap;
-        initFlag(Flag.PinStateSplitConstructor, canTrap);
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
@@ -82,7 +80,7 @@ public class Intrinsic extends StateSplit {
     }
 
     public boolean isStatic() {
-        return isStatic;
+        return checkFlag(Flag.IsStatic);
     }
 
     /**
@@ -90,7 +88,7 @@ public class Intrinsic extends StateSplit {
      * @return <code>true</code> if this intrinsic has a receiver object
      */
     public boolean hasReceiver() {
-        return !isStatic;
+        return !isStatic();
     }
 
     /**
@@ -98,7 +96,7 @@ public class Intrinsic extends StateSplit {
      * @return the instruction producing the receiver object
      */
     public Instruction receiver() {
-        assert !isStatic;
+        assert !isStatic();
         return arguments[0];
     }
 

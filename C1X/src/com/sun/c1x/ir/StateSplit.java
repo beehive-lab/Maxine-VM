@@ -39,7 +39,6 @@ public abstract class StateSplit extends Instruction {
     public StateSplit(BasicType type, ValueStack stateBefore) {
         super(type);
         this.stateBefore = stateBefore;
-        pin();
     }
 
     /**

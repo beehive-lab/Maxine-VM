@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.ci.RiType;
 
 /**
  * The <code>NullCheck</code> class represents an explicit null check instruction.
@@ -43,7 +44,6 @@ public class NullCheck extends StateSplit {
         this.object = obj;
         setFlag(Flag.NonNull);
         setNeedsNullCheck(!obj.isNonNull());
-        setFlag(Flag.PinExplicitNullCheck);
     }
 
     /**
@@ -109,4 +109,15 @@ public class NullCheck extends StateSplit {
         return false;
     }
 
+    @Override
+    public RiType declaredType() {
+        // null check does not alter the type of the object
+        return object.declaredType();
+    }
+
+    @Override
+    public RiType exactType() {
+        // null check does not alter the type of the object
+        return object.exactType();
+    }
 }

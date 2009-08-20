@@ -184,7 +184,7 @@ public class GraphBuilder {
         if (false && method().isSynchronized()) {
             Instruction synchronizedObject = synchronizedObject(initialState, method());
 
-            monitorenter(synchronizedObject, 0);
+            genMonitorEnter(synchronizedObject, 0);
             /*Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
             start.setNext(monitorEnter, 0);
             monitorEnter.setNext(base, 0);*/
@@ -693,8 +693,8 @@ public class GraphBuilder {
     }
 
     void genCheckCast() {
+        ValueStack stateBefore = curState.immutableCopy();
         RiType type = constantPool().lookupType(stream().readCPI());
-        ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         CheckCast c = new CheckCast(type, apop(), stateBefore);
         apush(append(c));
         if (assumeLeafClass(type)) {
@@ -706,8 +706,8 @@ public class GraphBuilder {
     }
 
     void genInstanceOf() {
+        ValueStack stateBefore = curState.immutableCopy();
         RiType type = constantPool().lookupType(stream().readCPI());
-        ValueStack stateBefore = valueStackIfClassNotLoaded(type);
         InstanceOf i = new InstanceOf(type, apop(), stateBefore);
         ipush(append(i));
         if (assumeLeafClass(type)) {
@@ -752,7 +752,7 @@ public class GraphBuilder {
     void genGetField(char cpi) {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
-        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
         appendOptimizedLoadField(field.basicType(), load);
     }
@@ -760,7 +760,7 @@ public class GraphBuilder {
     void genPutField(char cpi) {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
-        boolean isLoaded = field.isLoaded() && !C1XOptions.TestPatching;
+        boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
         Instruction value = pop(field.basicType().stackType());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
     }
@@ -769,10 +769,9 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
-        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
-        boolean isInitialized = isLoaded && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Instruction holderConstant = getStaticContainer(holder, isInitialized);
-        LoadField load = new LoadField(holderConstant, field, true, stateBefore, isLoaded);
+        LoadField load = new LoadField(holderConstant, field, true, stateBefore, isInitialized);
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -780,11 +779,10 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
-        boolean isLoaded = field.isLoaded() && holder.isLoaded() && !C1XOptions.TestPatching;
-        boolean isInitialized = isLoaded && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching &&field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Instruction holderConstant = getStaticContainer(holder, isInitialized);
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(holderConstant, field, value, true, stateBefore, isLoaded);
+        StoreField store = new StoreField(holderConstant, field, value, true, stateBefore, isInitialized);
         appendOptimizedStoreField(store);
     }
 
@@ -1060,12 +1058,9 @@ public class GraphBuilder {
         append(new Return(x));
     }
 
-    private ValueStack valueStackIfClassNotLoaded(RiType type) {
-        return !type.isLoaded() || C1XOptions.TestPatching ? curState.copy() : null;
-    }
-
-    void monitorenter(Instruction x, int bci) {
-        appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), curState.copy()), bci, false);
+    void genMonitorEnter(Instruction x, int bci) {
+        ValueStack stateBefore = curState.immutableCopy();
+        appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), stateBefore), bci, false);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1630,7 +1625,7 @@ public class GraphBuilder {
 
     void inlineSyncEntry(Instruction lock, BlockBegin syncHandler) {
         exceptionState = curState.copy();
-        monitorenter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+        genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         lastInstr.setFlag(Instruction.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
