@@ -32,6 +32,13 @@ import com.sun.c1x.value.*;
 public enum GlobalStub {
 
 
+    ThrowRangeCheckFailed(Void, Int),
+    ThrowIndexException(Void, Int),
+    ThrowDiv0Exception(Void),
+    ThrowNullPointerException(Void),
+    ThrowArrayStoreException(Void),
+    ThrowClassCastException(Void),
+    ThrowIncompatibleClassChangeError,
     SlowSubtypeCheck(Boolean, Object, Object),
     NewObjectArray(Object, Object, Int),
     NewInstance(Object, Object),

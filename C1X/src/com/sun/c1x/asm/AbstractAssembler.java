@@ -67,12 +67,13 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList) {
+    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
 
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setData(dataBuffer.finished(), dataBuffer.position());
         targetMethod.setFrameSize(framesize);
+        targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if existant
         if (exceptionInfoList != null) {

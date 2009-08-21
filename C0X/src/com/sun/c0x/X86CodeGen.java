@@ -408,7 +408,7 @@ public class X86CodeGen extends CodeGen {
                 return location(dst);
             }
             case Bytecodes.IREM: {
-                Register dst = allocSrc(x, X86.rax, BasicType.Int);
+                allocSrc(x, X86.rax, BasicType.Int);
                 Register edx = allocDst(X86.rdx, BasicType.Int);
                 asm.xorl(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
@@ -480,7 +480,7 @@ public class X86CodeGen extends CodeGen {
                 return location(dst);
             }
             case Bytecodes.LREM: {
-                Register dst = allocSrc(x, X86.rax, BasicType.Long);
+                allocSrc(x, X86.rax, BasicType.Long);
                 Register edx = allocDst(X86.rdx, BasicType.Long);
                 asm.xorq(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);

@@ -205,11 +205,11 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
-        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
+        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
     }
 
-    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;
@@ -306,13 +306,18 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         Log.print(" is ");
                         Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
                     }
+
                     final Throwable throwable = stackUnwindingContext.throwable;
                     // Reset the stack walker
                     stackFrameWalker.reset();
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
                     Safepoint.enable();
 
-                    unwind(throwable, catchAddress, stackPointer);
+                    if (lastJavaCallee != null && lastJavaCallee.registerRestoreEpilogueOffset() != -1) {
+                        unwindToCalleeEpilogue(throwable, catchAddress, stackPointer, lastJavaCallee);
+                    } else {
+                        unwind(throwable, catchAddress, stackPointer);
+                    }
                     ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
                 }
                 break;
@@ -368,6 +373,21 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         }
         return unwindFrameSize;
     }
+
+    @NEVER_INLINE
+    private static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+
+        // Overwrite return address of callee with catch address
+        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        returnAddressPointer.setWord(catchAddress);
+
+        assert lastJavaCallee.registerRestoreEpilogueOffset() != -1;
+        Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
+
+        final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
+        unwind(throwable, epilogueAddress, calleeStackPointer);
+    }
+
 
     /**
      * Unwinds a thread's stack to an exception handler.

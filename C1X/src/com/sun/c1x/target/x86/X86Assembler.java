@@ -23,6 +23,7 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
@@ -535,7 +536,8 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void callGlobalStub(Object globalStubID) {
+    protected final void emitGlobalStubCall(Object globalStubID) {
+        assert !(globalStubID instanceof GlobalStub);
         recordGlobalStubCall(codeBuffer.position(), globalStubID, new boolean[0]);
         emitByte(0xE8);
         emitInt(0);

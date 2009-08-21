@@ -107,6 +107,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     private int frameSize;
 
+    private int registerRestoreEpilogueOffset = -1;
+
     @INSPECTED
     private int frameReferenceMapSize;
 
@@ -125,6 +127,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         this.classMethodActor = classMethodActor;
         this.compilerScheme = compilerScheme;
         setDescription("Target-" + name());
+    }
+
+    public int registerRestoreEpilogueOffset() {
+        return registerRestoreEpilogueOffset;
+    }
+
+    protected void setRegisterRestoreEpilogueOffset(int x) {
+        registerRestoreEpilogueOffset = x;
     }
 
     public final ClassMethodActor classMethodActor() {
