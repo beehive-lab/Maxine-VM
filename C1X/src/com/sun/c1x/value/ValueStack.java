@@ -220,7 +220,7 @@ public class ValueStack {
     public Instruction loadLocal(int i) {
         Instruction x = values[i];
         if (x != null) {
-            if (x.type().isIllegal()) {
+            if (x.isIllegal()) {
                 return null;
             }
             assert x.type().isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
@@ -832,5 +832,10 @@ public class ValueStack {
         }
 
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "state [locals = " + maxLocals + ", stack = " + stackSize() + "] " + scope;
     }
 }

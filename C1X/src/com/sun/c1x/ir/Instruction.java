@@ -38,6 +38,9 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Instruction {
+    public boolean isDeadPhi() {
+        return checkFlag(Flag.PhiDead);
+    }
 
     /**
      * An enumeration of flags on instructions.
@@ -61,6 +64,8 @@ public abstract class Instruction {
         LiveDeopt,          // live for deoptimization
         LiveControl,        // live for control dependencies
         LiveSideEffect,     // live for possible side-effects only
+        LiveStore,          // instruction is a store
+        PhiDead,         // phi is illegal because local is dead
         PhiCannotSimplify,  // phi cannot be simplified
         PhiVisited;         // phi has been visited during simplification
 
@@ -78,9 +83,9 @@ public abstract class Instruction {
     public static int nextID;
 
     private final int id;
+    protected final BasicType valueType;
     private int bci;
     private int flags;
-    protected BasicType valueType;
     private Instruction next;
     private Instruction subst;
 
@@ -320,6 +325,15 @@ public abstract class Instruction {
 
     public final boolean isConstant() {
         return this instanceof Constant;
+    }
+
+    /**
+     * Checks whether this instruction "is illegal"--i.e. it represents a dead
+     * phi or an instruction which does not produce a value.
+     * @return {@code true} if this instruction is illegal as an input value to another instruction
+     */
+    public final boolean isIllegal() {
+        return checkFlag(Flag.PhiDead);
     }
 
     public final CiConstant asConstant() {
