@@ -43,6 +43,7 @@ public class StoreIndexed extends AccessIndexed {
     public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack stateBefore) {
         super(array, index, length, elementType, stateBefore);
         this.value = value;
+        setFlag(Flag.LiveStore);
     }
 
     /**

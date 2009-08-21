@@ -81,14 +81,16 @@ public class LivenessMarker {
     }
 
     private void markInputs(Instruction i, InstructionClosure marker) {
-        i.inputValuesDo(marker);
-        if (i instanceof Phi) {
-            // phis are special
-            Phi phi = (Phi) i;
-            int max = phi.operandCount();
-            for (int j = 0; j < max; j++) {
-                Instruction x = phi.operandAt(j);
-                marker.apply(x);
+        if (!i.isDeadPhi()) {
+            i.inputValuesDo(marker);
+            if (i instanceof Phi) {
+                // phis are special
+                Phi phi = (Phi) i;
+                int max = phi.operandCount();
+                for (int j = 0; j < max; j++) {
+                    Instruction x = phi.operandAt(j);
+                    marker.apply(x);
+                }
             }
         }
     }
@@ -127,7 +129,7 @@ public class LivenessMarker {
         }
 
         final void markLive(Instruction i) {
-            if (!i.checkFlag(reason)) {
+            if (!i.checkFlag(reason) && !i.isDeadPhi()) {
                 i.setFlag(reason);
                 queue.offer(i);
             }
@@ -139,6 +141,9 @@ public class LivenessMarker {
         if (stateBefore != null) {
             // state before != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);
+            i.inputValuesDo(valueMarker);
+            i.setFlag(Instruction.Flag.LiveSideEffect);
+        } else if (i.checkFlag(Instruction.Flag.LiveStore)) {
             i.inputValuesDo(valueMarker);
             i.setFlag(Instruction.Flag.LiveSideEffect);
         }

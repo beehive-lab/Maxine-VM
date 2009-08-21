@@ -141,8 +141,9 @@ public class Phi extends Instruction {
     /**
      * Make this phi illegal if types were not merged correctly.
      */
-    public void makeIllegal() {
+    public void makeDead() {
         setFlag(Flag.PhiCannotSimplify);
-        valueType = BasicType.Illegal;
+        setFlag(Flag.PhiDead);
     }
+
 }

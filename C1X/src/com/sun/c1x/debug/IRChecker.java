@@ -457,7 +457,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     @Override
     public void visitPhi(Phi i) {
         checkInstruction(i);
-        if (!i.type().isIllegal()) {
+        if (!i.isIllegal()) {
             for (int j = 0; j < i.operandCount(); j++) {
                 assertBasicType(i.operandAt(j), i.type().basicType);
             }
@@ -724,7 +724,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     @Override
     public void visitIntrinsic(Intrinsic i) {
         checkInstruction(i);
-        if (i.type().isIllegal()) {
+        if (i.isIllegal()) {
             fail("Result type of Intrinsic instruction must not be Illegal");
         }
         // TODO: use the signature from the C1XIntrinsic to check arguments
@@ -924,7 +924,11 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    private void checkInstruction(Instruction i) {
+    private void checkInstruction(final Instruction i) {
+        if (!i.isIllegal()) {
+            // legal instructions must have legal instructions as inputs
+            i.inputValuesDo(new LegalInstructionChecker(i));
+        }
         if (i.subst() != null && i.subst() != i) {
             fail("instruction has unresolved substitution");
         }
@@ -1012,5 +1016,20 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
 
     private void fail(String msg) {
         throw new IRCheckException(msg);
+    }
+
+    private class LegalInstructionChecker implements InstructionClosure {
+        private final Instruction i;
+
+        public LegalInstructionChecker(Instruction i) {
+            this.i = i;
+        }
+
+        public Instruction apply(Instruction x) {
+            if (x.isIllegal()) {
+                fail("Instruction has illegal input value " + i + " <- " + x);
+            }
+            return x;
+        }
     }
 }
