@@ -141,7 +141,9 @@ public final class FatalError extends Error {
         Log.printVmThread(vmThread, true);
 
         if (!trapState.isZero()) {
-            Log.print("------ Trap State ------");
+            Log.print("------ Trap State for thread ");
+            Log.printVmThread(vmThread, false);
+            Log.println(" ------");
             TrapStateAccess.instance().logTrapState(trapState);
         }
 
