@@ -116,15 +116,15 @@ public class IR {
 
     private void computeLinearScanOrder() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
-            startBlock.iteratePreOrder(finder);
-            finder.splitCriticalEdges();
             makeLinearScanOrder();
         }
     }
 
     private void makeLinearScanOrder() {
         if (orderedBlocks == null) {
+            CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
+            startBlock.iteratePreOrder(finder);
+            finder.splitCriticalEdges();
             ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
             orderedBlocks = computeLinearScanOrder.linearScanOrder();
             numLoops = computeLinearScanOrder.numLoops();

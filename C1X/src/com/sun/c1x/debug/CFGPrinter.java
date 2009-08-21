@@ -247,7 +247,7 @@ public class CFGPrinter {
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
-                    i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
+                    i += value.isIllegal() ? 1 : value.type().sizeInSlots();
                 } else {
                     i++;
                 }

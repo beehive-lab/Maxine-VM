@@ -683,7 +683,7 @@ public class LinearScan {
         }
 
         // check some asumptions about debug information
-        assert !value.type().isIllegal() : "if this local is used by the interpreter it shouldn't be of indeterminate type";
+        assert !value.isIllegal() : "if this local is used by the interpreter it shouldn't be of indeterminate type";
         assert con == null || opr.isVirtual() || opr.isConstant() || opr.isIllegal() : "asumption: Constant instructions have only constant operands";
         assert con != null || opr.isVirtual() : "asumption: non-Constant instructions have only virtual operands";
 
@@ -1006,7 +1006,7 @@ public class LinearScan {
     // (fills the list intervals)
 
     void addUse(Instruction value, int from, int to, IntervalUseKind useKind) {
-        assert !value.type().isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
+        assert !value.isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
         LIROperand opr = value.operand();
         Constant con = null;
         if (value instanceof Constant) {

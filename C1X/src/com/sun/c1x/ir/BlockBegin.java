@@ -427,7 +427,7 @@ public class BlockBegin extends Instruction {
         assert liveness.size() == max;
         for (int i = 0; i < max; i++) {
             Instruction x = newState.localAt(i);
-            if (x != null && (x.type().isIllegal() || !liveness.get(i))) {
+            if (x != null && (x.isIllegal() || !liveness.get(i))) {
                 // invalidate the local if it is not live
                 newState.invalidateLocal(i);
             }
