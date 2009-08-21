@@ -109,7 +109,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             final Address address = codeLocation.targetCodeInstructionAddress();
             final Sequence<StackFrame> frames = thread.frames();
             for (StackFrame stackFrame : frames) {
-                if (stackFrame.instructionPointer.equals(address)) {
+                if (maxVM().getCodeAddress(stackFrame).equals(address)) {
                     setStackFrame(thread, stackFrame, false);
                     break;
                 }

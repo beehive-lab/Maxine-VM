@@ -577,7 +577,10 @@ public interface MaxVM {
     MaxThread threadContaining(Address address);
 
     /**
-     * Code address in a stack frame, either IP (top frame) or call return address
+     * Returns the target code execution address in a stack frame, either IP (top frame) or call return address.
+     * <br>
+     * Note that a platform-specific offset is applied to the stored address in
+     * non-top frames (see SPARC).
      *
      * @param stackFrame a VM stack frame
      * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
