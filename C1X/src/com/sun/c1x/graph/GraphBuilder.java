@@ -115,13 +115,8 @@ public class GraphBuilder {
                     genMethodReturn(result);
                     BlockEnd end = (BlockEnd) lastInstr;
                     curBlock.setEnd(end);
-<<<<<<< local
-                    end.setState(curState);
-                } else {
-=======
                     end.setStateAfter(curState);
                 }  else {
->>>>>>> other
                     // try intrinsic failed; do the normal parsing
                     scopeData.addToWorkList(start);
                     iterateAllBlocks();
@@ -190,22 +185,10 @@ public class GraphBuilder {
         lastInstr = start;
         curState = state;
 
-<<<<<<< local
-=======
         start.setState(state.copy());
->>>>>>> other
         if (method().isSynchronized()) {
-<<<<<<< local
-            Instruction synchronizedObject = synchronizedObject(initialState, method());
-            Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
-            start.setNext(monitorEnter, 0);
-            monitorEnter.setNext(base, 0);
-        } else {
-            start.setNext(base, 0);
-=======
             rootMethodSynchronizedObject = synchronizedObject(initialState, method());
             genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
->>>>>>> other
         }
 
         Base base = new Base(newHeaderBlock, osrEntry);
@@ -1009,12 +992,8 @@ public class GraphBuilder {
         if (needsCheck) {
             // append a call to the registration intrinsic
             loadLocal(0, BasicType.Object);
-<<<<<<< local
-            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init, curState.popArguments(1), false, lockStack(), true, true));
-=======
             append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), false, curState.copy(), true, true));
->>>>>>> other
+                                          curState.popArguments(1), false, curState.immutableCopy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1085,23 +1064,7 @@ public class GraphBuilder {
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
-<<<<<<< local
-    void monitorexit(Instruction x, int bci) {
-        // Mysterious C1 comment:
-        // Note: the comment below is only relevant for the case where we do
-        //       not deoptimize due to asynchronous exceptions (!(DeoptC1 &&
-        //       DeoptOnAsyncException), which is not used anymore)
-
-        // Note: Potentially, the monitor state in an exception handler
-        //       can be wrong due to wrong 'initialization' of the handler
-        //       via a wrong asynchronous exception path. This can happen,
-        //       if the exception handler range for asynchronous exceptions
-        //       is too long (see also java bug 4327029, and comment in
-        //       GraphBuilder::handle_exception()). This may cause 'under-
-        //       flow' of the monitor stack => bailout instead.
-=======
     void genMonitorExit(Instruction x, int bci) {
->>>>>>> other
         if (curState.locksSize() < 1) {
             throw new Bailout("monitor stack underflow");
         }
