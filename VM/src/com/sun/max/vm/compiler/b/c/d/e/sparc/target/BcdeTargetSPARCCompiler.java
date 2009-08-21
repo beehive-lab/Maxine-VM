@@ -330,7 +330,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapStateInPreviousFrame))) {
                         StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), stackUnwindingContext.throwable.getClass());
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), stackUnwindingContext.throwable.getClass());
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -345,7 +345,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
                             StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), stackUnwindingContext.throwable.getClass());
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), stackUnwindingContext.throwable.getClass());
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -371,7 +371,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case EXCEPTION_HANDLING: {
                 final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
                 final Throwable throwable = stackUnwindingContext.throwable;
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer, throwable.getClass());
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
                     if (StackFrameWalker.traceStackWalk.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");

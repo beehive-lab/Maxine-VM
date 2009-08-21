@@ -174,18 +174,18 @@ public class C1XRuntimeCalls {
     }
 
     @INLINE
-    private static Object createArray(Hub hub, int length) {
+    private static Object createArray(DynamicHub hub, int length) {
         if (length < 0) {
             Throw.negativeArraySizeException(length);
         }
         if (MaxineVM.isPrototyping()) {
             return Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
         }
-        return Heap.createArray(hub.classActor.dynamicHub(), length);
+        return Heap.createArray(hub, length);
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewArray)
-    public static Object runtimeNewArray(Hub arrayClassActor, int length) {
+    public static Object runtimeNewArray(DynamicHub arrayClassActor, int length) {
         return createArray(arrayClassActor, length);
     }
 
@@ -393,10 +393,17 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveClass)
-    public static Object resolveClass(int index, MaxRiConstantPool constantPool) {
-        final ClassActor classActor = constantPool.constantPool.classAt(index).resolve(constantPool.constantPool, index);
+    public static Object resolveClass(int index, ConstantPool constantPool) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return classActor.dynamicHub();
     }
+
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveArrayClass)
+    public static Object resolveArrayClass(int index, ConstantPool constantPool) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        return ArrayClassActor.forComponentClassActor(classActor).dynamicHub();
+    }
+
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {

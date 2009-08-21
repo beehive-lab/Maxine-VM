@@ -649,7 +649,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public abstract Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass);
+    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
     /**
      * Traces the metadata of the compiled code represented by this object. In particular, the

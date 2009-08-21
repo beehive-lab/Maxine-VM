@@ -97,6 +97,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.ResolveClass);
                 break;
 
+            case ResolveArrayClass:
+                emitStandardForward(stub, CiRuntimeCall.ResolveArrayClass);
+                break;
+
             case ResolveVTableIndex:
                 emitStandardForward(stub, CiRuntimeCall.ResolveVTableIndex);
                 break;
@@ -327,6 +331,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
                 index++;
             }
+            registersSaved = null;
         }
 
         // Restore rsp

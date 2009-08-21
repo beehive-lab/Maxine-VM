@@ -255,7 +255,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
                         Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -272,7 +272,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         stackFrameWalker.setTrapState(trapState);
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
                             Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -296,10 +296,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                // if not at the top frame, subtract 1 to get an address that is _inside_ the call instruction of the caller
-                final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
+                final Address throwAddress = instructionPointer;
                 final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress, stackUnwindingContext.throwable.getClass());
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
                     if (StackFrameWalker.traceStackWalk.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");

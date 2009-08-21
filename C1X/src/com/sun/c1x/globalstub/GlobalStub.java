@@ -53,6 +53,7 @@ public enum GlobalStub {
     ResolveStaticCall(Word, Int, Object),
     RetrieveInterfaceIndex(Int, Object, Int),
     ResolveClass(Object, Int, Object),
+    ResolveArrayClass(Object, Int, Object),
     ResolveVTableIndex(Int, Int, Object);
 
     /**

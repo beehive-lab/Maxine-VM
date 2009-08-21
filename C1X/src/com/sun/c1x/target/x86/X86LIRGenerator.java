@@ -846,7 +846,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (x.instanceClass().isLoaded()) {
             lir.oop2reg(klass.encoding().asObject(), klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), info);
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
@@ -923,7 +923,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             Object obj = elementType.encoding().asObject();
             lir.oop2reg(obj, klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveArrayClassInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
@@ -971,7 +971,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (x.elementType.isLoaded()) {
             lir.oop2reg(x.elementType.encoding().asObject(), cc.args().get(0));
         } else {
-            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         // Create a new code emit info as they must not be shared!

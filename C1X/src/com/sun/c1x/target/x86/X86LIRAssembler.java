@@ -2425,16 +2425,21 @@ public class X86LIRAssembler extends LIRAssembler {
             assert code == LIROpcode.Cmpl2i;
             if (compilation.target.arch.is64bit()) {
                 Register dest = dst.asRegister();
-                masm().xorptr(dest, dest);
                 Label high = new Label();
                 Label done = new Label();
+                Label isEqual = new Label();
                 masm().cmpptr(left.asRegisterLo(), right.asRegisterLo());
-                masm().jcc(X86Assembler.Condition.equal, done);
+                masm().jcc(X86Assembler.Condition.equal, isEqual);
                 masm().jcc(X86Assembler.Condition.greater, high);
+                masm().xorptr(dest, dest);
                 masm().decrement(dest, 1);
                 masm().jmp(done);
                 masm().bind(high);
+                masm().xorptr(dest, dest);
                 masm().increment(dest, 1);
+                masm().jmp(done);
+                masm().bind(isEqual);
+                masm().xorptr(dest, dest);
 
                 masm().bind(done);
 
@@ -2474,10 +2479,14 @@ public class X86LIRAssembler extends LIRAssembler {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
 
-        assert entry != null;
-        masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
 
-        masm().call(rscratch1);
+        if (method.isLoaded()) {
+            masm.call(method);
+        } else {
+            assert entry != null;
+            masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm().call(rscratch1);
+        }
         addCallInfoHere(info);
     }
 
@@ -2510,8 +2519,13 @@ public class X86LIRAssembler extends LIRAssembler {
             callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
+            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
             addCallInfoHere(info);
+            int vtableEntrySize = compilation.runtime.vtableEntrySize();
+            assert Util.isPowerOf2(vtableEntrySize);
+            masm.shlq(rscratch1, Util.log2(vtableEntrySize));
+            masm.addq(rscratch1, compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset());
+            masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
             callAddress = new Address(rscratch1);
         }
 
@@ -3232,5 +3246,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // TODO:
         masm.callGlobalStub(GlobalStub.ResolveClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
+    }
+
+    @Override
+    protected void resolveArrayClass(LIROperand dest, LIROperand index, LIROperand cp) {
+
+        // TODO:
+        masm.callGlobalStub(GlobalStub.ResolveArrayClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
     }
 }

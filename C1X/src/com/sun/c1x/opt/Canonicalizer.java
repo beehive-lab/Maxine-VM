@@ -203,13 +203,13 @@ public class Canonicalizer extends InstructionVisitor {
             // the right side is a constant, try strength reduction
             switch (xt.basicType) {
                 case Int: {
-                    if (reduceIntOp2(i, x, i.y().asConstant().asInt()) != null) {
+                    if (reduceIntOp2(i, i.x(), i.y().asConstant().asInt()) != null) {
                         return;
                     }
                     break;
                 }
                 case Long: {
-                    if (reduceLongOp2(i, x, i.y().asConstant().asLong()) != null) {
+                    if (reduceLongOp2(i, i.x(), i.y().asConstant().asLong()) != null) {
                         return;
                     }
                     break;

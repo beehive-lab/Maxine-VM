@@ -70,8 +70,7 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        final long target = callEntryPoint.asAddress().toLong();
-        final int displacement = (int) (target - codeStart().plus(callOffset).toLong());
+        final int displacement = callEntryPoint.asAddress().minus(codeStart().plus(callOffset)).toInt();
         X86InstructionDecoder.patchRelativeInstruction(code(), callOffset, displacement);
     }
 
@@ -125,7 +124,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
 
         final int throwOffset = throwAddress.minus(codeStart).toInt();
         for (int i = 0; i < getExceptionHandlerCount(); i++) {

@@ -521,6 +521,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xD0 | encode);
     }
 
+    public final void call(RiMethod method) {
+        recordDirectCall(codeBuffer.position(), method, new boolean[0]);
+        emitByte(0xE8);
+        emitInt(0);
+
+    }
     public final void call(Address adr) {
 
         prefix(adr);

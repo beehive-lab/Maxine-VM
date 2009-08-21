@@ -431,7 +431,7 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     @Override
-    public Object encoding() {
-        return this.constantPool;
+    public CiConstant encoding() {
+        return CiConstant.forObject(this.constantPool);
     }
 }
