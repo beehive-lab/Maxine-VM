@@ -328,9 +328,10 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 if (!trapStateInPreviousFrame.isZero()) {
                     FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                    if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapStateInPreviousFrame))) {
-                        StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), stackUnwindingContext.throwable.getClass());
+                    final int trapNumber = trapStateAccess.getTrapNumber(trapStateInPreviousFrame);
+                    if (Trap.Number.isImplicitException(trapNumber)) {
+                        Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapNumber);
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -343,9 +344,10 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 } else {
                     if (!trapState.isZero()) {  // Frame is a trapStub
                         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                        if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                            StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), stackUnwindingContext.throwable.getClass());
+                        final int trapNumber = trapStateAccess.getTrapNumber(trapState);
+                        if (Trap.Number.isImplicitException(trapNumber)) {
+                            Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapNumber);
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.

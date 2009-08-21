@@ -25,16 +25,14 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion {
+public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion {
 
     public void setMark(Address mark) {
         this.mark.set(mark.wordAligned());
@@ -71,7 +69,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
      * @return
      */
-    private Pointer allocate(Size size, boolean adjustForDebugTag) {
+    public Pointer allocate(Size size, boolean adjustForDebugTag) {
         if (!size.isWordAligned()) {
             FatalError.unexpected("Allocation size must be word aligned");
         }
@@ -86,47 +84,6 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
             return Pointer.zero();
         }
         setMark(end);
-        return cell;
-    }
-
-    public Pointer allocateCell(Size cellSize) {
-        return allocate(cellSize, true);
-    }
-
-    /**
-     * Allocation of bare space.
-     *
-     * Unlike 'allocateCell()' it is not assumed that the contents of the allocated space is an object and therefore no
-     * memory initialization of any kind is performed and the object's cell space is not extended by any extra
-     * administrative data such as debug tags.
-     *
-     * @param purpose if non-null, then a log message is printed upon successful allocation. This value describes what
-     *            the allocated memory is being used for.
-     * @param size the size of the allocation request
-     * @return start address of allocated space
-     */
-    public Pointer allocateSpace(Object purpose, Size size) {
-        final Pointer cell = allocate(size.wordAligned(), false);
-        if (!cell.isZero() && purpose != null) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
-            Log.print(": Allocated chunk in region ");
-            Log.print(description());
-            Log.print(" for ");
-            if (purpose instanceof MethodActor) {
-                Log.printMethodActor((MethodActor) purpose, false);
-            } else {
-                Log.print(purpose);
-            }
-            Log.print(" at ");
-            Log.print(cell);
-            Log.print(" [size ");
-            Log.print(size.wordAligned().toInt());
-            Log.print(", end=");
-            Log.print(cell.plus(size.wordAligned()));
-            Log.println(']');
-            Log.unlock(lockDisabledSafepoints);
-        }
         return cell;
     }
 
