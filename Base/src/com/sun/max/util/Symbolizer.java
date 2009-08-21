@@ -57,7 +57,6 @@ public interface Symbolizer<Symbol_Type extends Symbol> extends Iterable<Symbol_
     public static final class Static {
 
         private Static() {
-
         }
 
         public static boolean hasPackageExternalAccessibleConstructors(Class type) {
