@@ -1279,6 +1279,9 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#getCodeAddress(com.sun.max.vm.stack.StackFrame)
+     */
     public Address getCodeAddress(StackFrame stackFrame) {
         if (stackFrame.isTopFrame()) {
             return stackFrame.instructionPointer;

@@ -293,7 +293,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
             final boolean isFrameForThisCode = frame instanceof JavaStackFrame ?
                             targetCodeRegion.overlaps(frame.targetMethod()) :
-                            targetCodeRegion.contains(frame.instructionPointer);
+                            targetCodeRegion.contains(maxVM().getCodeAddress(frame));
             if (isFrameForThisCode) {
                 int row = 0;
                 for (TargetCodeInstruction targetCodeInstruction : instructions) {

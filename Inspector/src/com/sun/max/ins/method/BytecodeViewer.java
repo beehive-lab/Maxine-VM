@@ -212,7 +212,7 @@ public abstract class BytecodeViewer extends CodeViewer {
                 int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
                 for (StackFrame frame : frames) {
-                    if (rowContainsAddress(row, frame.instructionPointer)) {
+                    if (rowContainsAddress(row, maxVM().getCodeAddress(frame))) {
                         stackFrameInfo = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }
