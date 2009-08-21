@@ -100,7 +100,8 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
      * Local registers available for allocation. These do not need to be caller saved.
      * Note: L7 is reserved as literal base pointer.
      */
-    protected static final IndexedSequence<SPARCEirRegister> integerLocalRegisters = new ArraySequence<SPARCEirRegister>(L0, L1, L2, L3, L4, L5, L6);
+    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerLocalRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(L0, L1, L2, L3, L4, L5, L6);
 
     /**
      * Global registers available for allocation.
@@ -112,37 +113,47 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
      * The remaining must be consider register-saved.
      *
      */
-    protected static final IndexedSequence<SPARCEirRegister> applicationGlobalRegisters = new ArraySequence<SPARCEirRegister>(G3, G4, G5);
+    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> applicationGlobalRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G3, G4, G5);
 
     /**
      * Global registers reserved for system software and must not be used by the application (here both the VM and the program it runs).
+     * Register %g0 is included here, though it can be used anywhere.
      * These must be made unallocatable, no matter what.
      */
-    protected static final IndexedSequence<SPARCEirRegister> integerSystemReservedGlobalRegisters = new ArraySequence<SPARCEirRegister>(G0, G6, G7);
+    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerSystemReservedGlobalRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G0, G6, G7);
 
-    public static IndexedSequence<SPARCEirRegister> integerSystemReservedGlobalRegisters() {
-        return integerSystemReservedGlobalRegisters;
-    }
+    /**
+     * Global registers not reserved for system software and may be used by the application (either the VM or the program it runs).
+     * Register %g0 is not included here, though it can be used anywhere.
+     */
+    public static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerNonSystemReservedGlobalRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G1, G2, G3, G4, G5);
 
-    protected static final IndexedSequence<SPARCEirRegister> integerOutRegisters = new ArraySequence<SPARCEirRegister>(O0, O1, O2, O3, O4, O5);
-    protected static final IndexedSequence<SPARCEirRegister> integerInRegisters = new ArraySequence<SPARCEirRegister>(I0, I1, I2, I3, I4, I5);
+    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerOutRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(O0, O1, O2, O3, O4, O5);
+
+    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerInRegisters =
+        new ArraySequence<SPARCEirRegister.GeneralPurpose>(I0, I1, I2, I3, I4, I5);
 
     // The SPARC / Solaris ABI distinguishes 3 categories of floating point registers
     // that overlaps over the entire set of floating point registers: single, double and quad precisions.
-    // We currently do not use operations that requires quad-precisions registers so we ignore thse.
+    // We currently do not use operations that requires quad-precisions registers so we ignore these.
     // The FLOAT and DOUBLE kinds map directly to single and double precision register type.
     // SPARC /Solaris ABI makes single precision values passed in odd-numbered registers (F1, F3, F5, etc...), whereas double
-    // precisions are passed in even-numbered registers (D0, D2, D4, etc...). Each double precision register actually maps phisically
-    // to two consecutives single-precision registers (e.g., D0 == F0 + F1, D2 = F2 + F3, etc...) for the first 32 registers. Subsequent
+    // precisions are passed in even-numbered registers (D0, D2, D4, etc...). Each double precision register actually maps physically
+    // to two consecutive single-precision registers (e.g., D0 == F0 + F1, D2 = F2 + F3, etc...) for the first 32 registers. Subsequent
     // registers (D32 and up) are actual double precision registers.
     protected static final IndexedSequence<SPARCEirRegister> floatingPointOutRegisters =
-        new ArraySequence<SPARCEirRegister>(
-                        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
-                        F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
+        new ArraySequence<SPARCEirRegister>(F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+                                            F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
+
     protected static final IndexedSequence<SPARCEirRegister> floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(floatingPointOutRegisters);
 
     protected static final IndexedSequence<SPARCEirRegister> singlePrecisionParameterRegisters =
         new ArraySequence<SPARCEirRegister>(F1, F3, F5, F7, F9,  F11, F13, F15, F17, F19, F21, F23, F25, F27, F29, F31);
+
     protected static final IndexedSequence<SPARCEirRegister> doublePrecisionParameterRegisters =
         new ArraySequence<SPARCEirRegister>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30);
 
@@ -151,7 +162,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public EirLocation[] getParameterLocations(EirStackSlot.Purpose stackSlotPurpose, Kind... kinds) {
         final EirLocation[] result = new EirLocation[kinds.length];
-        final IndexedSequence<SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? integerInRegisters : integerOutRegisters;
+        final IndexedSequence<? extends SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? integerInRegisters : integerOutRegisters;
         // This strictly follows the Solaris / SPARC 64-bits ABI.
         // Each argument matches a position on the stack, and each stack position corresponds to a specific register.
         // So it may be the case that a register is not used. For instance, consider the following call:
@@ -169,7 +180,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
         int stackOffset = 0;
         for (int i = 0; i < kinds.length; i++) {
-            final IndexedSequence<SPARCEirRegister> parameterRegisters;
+            final IndexedSequence<? extends SPARCEirRegister> parameterRegisters;
             switch (kinds[i].asEnum) {
                 case BYTE:
                 case BOOLEAN:
@@ -256,6 +267,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         }
         return result;
     }
+
     private final PoolSet<SPARCEirRegister> callerSavedRegisters;
 
     @Override
@@ -278,15 +290,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public PoolSet<SPARCEirRegister> resultRegisters() {
         return resultRegisters;
-    }
-
-    private static GPR[] getTargetIntegerParameterRegisters() {
-        final GPR[] result = new GPR[integerOutRegisters.length()];
-        for (int i = 0; i < integerOutRegisters.length(); i++) {
-            final SPARCEirRegister.GeneralPurpose r = (SPARCEirRegister.GeneralPurpose) integerOutRegisters.get(i);
-            result[i] = r.as();
-        }
-        return result;
     }
 
     protected void makeUnallocatable(SPARCEirRegister register) {

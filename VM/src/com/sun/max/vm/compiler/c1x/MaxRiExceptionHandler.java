@@ -42,7 +42,7 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
      * @param endBCI the end index of the protected range
      * @param catchBCI the index of the handler
      * @param classCPI the index of the throwable class in the constant pool
-     * @param maxCiType
+     * @param classType the type caught by this exception handler
      */
     public MaxRiExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI, RiType classType) {
         this.startBCI = startBCI;
@@ -92,7 +92,6 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
         return classCPI == 0;
     }
 
-    @Override
     public RiType catchKlass() {
         return classType;
     }

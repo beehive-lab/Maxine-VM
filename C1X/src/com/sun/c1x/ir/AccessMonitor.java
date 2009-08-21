@@ -35,10 +35,11 @@ public abstract class AccessMonitor extends StateSplit {
     /**
      * Creates a new AccessMonitor instruction.
      * @param object the instruction producing the object
+     * @param stateBefore the state before executing the monitor operation
      * @param lockNumber the number of the lock being acquired
      */
-    public AccessMonitor(Instruction object, int lockNumber) {
-        super(BasicType.Illegal);
+    public AccessMonitor(Instruction object, ValueStack stateBefore, int lockNumber) {
+        super(BasicType.Illegal, stateBefore);
         this.object = object;
         this.lockNumber = lockNumber;
     }

@@ -31,7 +31,6 @@ import com.sun.c1x.value.*;
 public abstract class NewArray extends StateSplit {
 
     Instruction length;
-    final ValueStack stateBefore;
     public final RiConstantPool constantPool;
 
     /**
@@ -40,19 +39,11 @@ public abstract class NewArray extends StateSplit {
      * @param stateBefore the state before the allocation
      */
     NewArray(Instruction length, ValueStack stateBefore, RiConstantPool constantPool) {
-        super(BasicType.Object);
+        super(BasicType.Object, stateBefore);
         this.constantPool = constantPool;
         this.length = length;
         this.stateBefore = stateBefore;
         setFlag(Flag.NonNull);
-    }
-
-    /**
-     * Gets the value stack which represents the state before this instruction.
-     * @return the state before this instruction
-     */
-    public ValueStack stateBefore() {
-        return stateBefore;
     }
 
     /**
@@ -82,15 +73,4 @@ public abstract class NewArray extends StateSplit {
         length = closure.apply(length);
     }
 
-    /**
-     * Applies the specified closure to all the other input values of this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        super.otherValuesDo(closure);
-        if (stateBefore != null) {
-            stateBefore.valuesDo(closure);
-        }
-    }
 }

@@ -53,7 +53,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         return result;
     }
 
-    @Override
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
 

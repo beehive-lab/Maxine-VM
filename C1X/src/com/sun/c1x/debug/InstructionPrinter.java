@@ -169,7 +169,7 @@ public class InstructionPrinter extends InstructionVisitor {
      * @param instruction the instruction to print
      */
     public void printInstructionListing(Instruction instruction) {
-        if (instruction.isPinned()) {
+        if (instruction.isLive()) {
             out.print('.');
         }
 
@@ -280,7 +280,7 @@ public class InstructionPrinter extends InstructionVisitor {
         boolean hasPhisInLocals = false;
         boolean hasPhisOnStack = false;
 
-        if (end != null && end.state() != null) {
+        if (end != null && end.stateAfter() != null) {
             ValueStack state = block.state();
 
             int i = 0;

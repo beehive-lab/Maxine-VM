@@ -103,7 +103,7 @@ public class X86LIRAssembler extends LIRAssembler {
             return new Address(base, addr.displacement());
         } else if (addr.index().isCpuRegister()) {
             Register index = addr.index().asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromInt(addr.scale().ordinal()), addr.displacement());
+            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else if (addr.index().isConstant()) {
             long addrOffset = (addr.index().asConstantPtr().asInt() << addr.scale().ordinal()) + addr.displacement();
             assert X86Assembler.isSimm32(addrOffset) : "must be";
@@ -1337,8 +1337,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().mov(tmp3, len);
             }
+            int elemSize = compilation.target.sizeInBytes(op.type());
             masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(compilation.runtime.arrayElementSize(op.type())), op.klass().asRegister(), op.stub().entry);
+                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
         }
         masm().bind(op.stub().continuation);
     }

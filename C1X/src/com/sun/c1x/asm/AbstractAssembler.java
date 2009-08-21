@@ -227,7 +227,7 @@ public abstract class AbstractAssembler {
     }
 
     protected Address recordObjectReferenceInCode(Object obj) {
-        assert obj != null;
+//        assert obj != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.print("Object reference in code: pos = %d, object= %s", codeBuffer.position(), obj);

@@ -38,41 +38,40 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Instruction {
+
     /**
      * An enumeration of flags on instructions.
      */
     public enum Flag {
-        NonNull,
-        NoNullCheck,
-        NoStoreCheck,
-        NoRangeCheck,
-        NoWriteBarrier,
+        NonNull,            // produces non-null value
+        NoNullCheck,        // does not require null check
+        NoStoreCheck,       // does not require store check
+        NoRangeCheck,       // does not require range (bounds) check
+        NoWriteBarrier,     // does not require write barrier
         DirectCompare,
-        IsLoaded,
-        IsSafepoint,
+        IsLoaded,           // field or method is resolved and class is loaded and initialized
+        IsStatic,           // field or method access is static
+        IsSafepoint,        // branch is backward (safepoint)
         IsStrictFP,
-        PreservesState,
+        PreservesState,     // intrinsic preserves state
         UnorderedIsTrue,
         NeedsPatching,
         ThrowIncompatibleClassChangeError,
-        ProfileMDO,
-        PinUnknown,
-        PinExplicitNullCheck,
-        PinStackForStateSplit,
-        PinStateSplitConstructor,
-        PinGlobalValueNumbering,
-        PhiCannotSimplify,
-        PhiVisited;
+        LiveValue,          // live because value is used
+        LiveDeopt,          // live for deoptimization
+        LiveControl,        // live for control dependencies
+        LiveSideEffect,     // live for possible side-effects only
+        PhiCannotSimplify,  // phi cannot be simplified
+        PhiVisited;         // phi has been visited during simplification
 
         public final int mask = 1 << ordinal();
     }
 
     private static final int BCI_NOT_APPENDED = -99;
-    private static final int PIN_FLAGS = Flag.PinUnknown.mask |
-                                         Flag.PinExplicitNullCheck.mask |
-                                         Flag.PinStackForStateSplit.mask |
-                                         Flag.PinStateSplitConstructor.mask |
-                                         Flag.PinGlobalValueNumbering.mask;
+    private static final int LIVE_FLAGS = Flag.LiveValue.mask |
+                                          Flag.LiveDeopt.mask |
+                                          Flag.LiveControl.mask |
+                                          Flag.LiveSideEffect.mask;
     public static final int INVOCATION_ENTRY_BCI = -1;
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
@@ -135,13 +134,22 @@ public abstract class Instruction {
     }
 
     /**
-     * Checks whether this instruction is pinned. Note that this method
-     * will return <code>true</code> if the appropriate global option in
-     * {@link com.sun.c1x.C1XOptions#PinAllInstructions} is set.
-     * @return <code>true</code> if this instruction has been pinned
+     * Checks whether this instruction is live (i.e. code should be generated for it).
+     * This is computed in a dedicated pass by {@link com.sun.c1x.opt.LivenessMarker}.
+     * An instruction be live because its value is needed by another live instruction,
+     * because its value is needed for deoptimization, or the program is control dependent
+     * upon it.
+     * @return {@code true} if this instruction should be considered live
      */
-    public final boolean isPinned() {
-        return C1XOptions.PinAllInstructions || (flags & PIN_FLAGS) != 0;
+    public boolean isLive() {
+        return C1XOptions.PinAllInstructions || (flags & LIVE_FLAGS) != 0;
+    }
+
+    /**
+     * Clears all liveness flags.
+     */
+    public void clearLive() {
+        flags = flags & ~ LIVE_FLAGS;
     }
 
     /**
@@ -173,6 +181,20 @@ public abstract class Instruction {
             assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
             this.next = next;
             next.setBCI(bci);
+        }
+        return next;
+    }
+
+    /**
+     * Re-sets the next instruction for this instruction. Note that it is illegal to
+     * set the next field of a phi, block end, or local instruction.
+     * @param next the next instruction
+     * @return the new next instruction
+     */
+    public final Instruction resetNext(Instruction next) {
+        if (next != null) {
+            assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
+            this.next = next;
         }
         return next;
     }
@@ -225,25 +247,6 @@ public abstract class Instruction {
             q = q.next();
         }
         return p;
-    }
-
-    /**
-     * Pin this instruction (with an unknown reason).
-     */
-    public final void pin() {
-        setFlag(Flag.PinUnknown);
-    }
-
-    /**
-     * Unpin an instruction that might have been pinned for the specified reason.
-     * Note that an instruction that has been pinned for an unknown reason cannot
-     * be unpinned.
-     * @param reason the reason this instruction might have been pinned
-     */
-    public final void unpin(Flag reason) {
-        if (reason != Flag.PinUnknown) {
-            clearFlag(reason);
-        }
     }
 
     public void clearNullCheck() {
@@ -439,35 +442,43 @@ public abstract class Instruction {
     }
 
     /**
-     * Apply the specified closure to all the state values of this instruction.
-     * @param closure the closure to apply
-     */
-    public void stateValuesDo(InstructionClosure closure) {
-        // default: do nothing.
-    }
-
-    /**
-     * Apply the specified closure to all the other values of this instruction.
-     * @param closure the closure to apply
-     */
-    public void otherValuesDo(InstructionClosure closure) {
-        // default: do nothing.
-    }
-
-    /**
      * Apply the specified closure to all the values of this instruction, including
      * input values, state values, and other values.
      * @param closure the closure to apply
      */
     public void allValuesDo(InstructionClosure closure) {
         inputValuesDo(closure);
-        stateValuesDo(closure);
-        otherValuesDo(closure);
+        ValueStack stateBefore = stateBefore();
+        if (stateBefore != null) {
+            stateBefore.valuesDo(closure);
+        }
+        ValueStack stateAfter = stateAfter();
+        if (stateAfter != null) {
+            stateAfter.valuesDo(closure);
+        }
     }
 
     @Override
     public String toString() {
-        return valueString(this);
+        StringBuilder builder = new StringBuilder();
+        builder.append(getClass().getSimpleName());
+        builder.append(" #");
+        builder.append(id);
+        builder.append(" @ ");
+        builder.append(bci);
+        builder.append(" [");
+        boolean hasFlag = false;
+        for (Flag f : Flag.values()) {
+            if (checkFlag(f)) {
+                if (hasFlag) {
+                    builder.append(' ');
+                }
+                builder.append(f.name());
+                hasFlag = true;
+            }
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
     /**
@@ -516,7 +527,15 @@ public abstract class Instruction {
      * Gets the lock stack of the instruction if one exists.
      * @return the lock stack
      */
-    public ValueStack lockStack() {
+    public ValueStack stateBefore() {
+        return null;
+    }
+
+    /**
+     * Gets the lock stack of the instruction if one exists.
+     * @return the lock stack
+     */
+    public ValueStack stateAfter() {
         return null;
     }
 

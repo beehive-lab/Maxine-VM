@@ -23,13 +23,9 @@ package com.sun.max.vm.runtime.sparc;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
@@ -69,17 +65,6 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public final class SPARCTrapStateAccess extends TrapStateAccess {
 
-    @PROTOTYPE_ONLY
-    public SPARCTrapStateAccess(VMConfiguration vmConfiguration) {
-    }
-
-    public static final Symbolizer<GPR> TRAP_SAVED_GLOBAL_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(GLOBAL_SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
-        private final Collection<SPARCEirRegister> reservedGlobalRegisters = SPARCEirABI.integerSystemReservedGlobalRegisters().toCollection();
-        public boolean evaluate(GPR register) {
-            return !reservedGlobalRegisters.contains(SPARCEirRegister.GeneralPurpose.from(register));
-        }
-    });
-
     public static final int TRAP_STATE_SIZE;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int TRAP_RETURN_VALUE_OFFSET;
@@ -88,7 +73,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     public static final int TRAP_LATCH_OFFSET;
 
     static {
-        final int globalRegisterWords = TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues(); // %g1 to %g5
+        final int globalRegisterWords = SPARCEirABI.integerNonSystemReservedGlobalRegisters.length(); // %g1 to %g5
         final int outRegisterWords = IN_SYMBOLIZER.numberOfValues();    // %o0 to %o7
         final int floatingPointRegisterWords = 32; // %f0-%f32
         final int stateRegisters = 2;
@@ -103,14 +88,19 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
         TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
     }
 
-    private static final Symbolizer<GPR> SIGNAL_INTEGER_REGISTER = Symbolizer.Static.fromSymbolizer(GPR.SYMBOLIZER, new Predicate<GPR>() {
-        public boolean evaluate(GPR register) {
-            return register.isOut() || (register.isGlobal() && register != G0);
-        }
-    });
-
     public static Pointer getCallAddressRegister(Pointer trapState) {
         return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
+    }
+
+    /**
+     * Gets the number of bytes needed for a bitmap covering the integer registers in a trap state.
+     */
+    public static int registerReferenceMapSize() {
+        return ByteArrayBitMap.computeBitMapSize(SPARCEirABI.integerNonSystemReservedGlobalRegisters.length() + SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length());
+    }
+
+    @PROTOTYPE_ONLY
+    public SPARCTrapStateAccess(VMConfiguration vmConfiguration) {
     }
 
     @Override
@@ -174,13 +164,23 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
 
     @Override
     public void logTrapState(Pointer trapState) {
-        Log.println("<logging of SPARC trap state is yet to be implemented>");
+        for (int i = 0; i < SPARCEirABI.integerNonSystemReservedGlobalRegisters.length(); ++i) {
+            SPARCEirRegister.GeneralPurpose register = SPARCEirABI.integerNonSystemReservedGlobalRegisters.get(i);
+            Log.print(register.toString());
+            Log.print(": ");
+            Log.println(trapState.readWord(register.trapStateIndex() * Word.size()));
+        }
+        for (int i = 0; i < SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length(); ++i) {
+            SPARCEirRegister.GeneralPurpose register = SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.get(i);
+            Log.print(register.toString());
+            Log.print(": ");
+            Log.println(trapState.readWord(register.trapStateIndex() * Word.size()));
+        }
+        final int trapNumber = getTrapNumber(trapState);
+        Log.print("Trap number: ");
+        Log.print(trapNumber);
+        Log.print(" == ");
+        Log.println(Trap.Number.getExceptionName(trapNumber));
     }
 
-    /**
-     * Gets the number of bytes needed for a bitmap covering the integer registers in a trap state.
-     */
-    public static int registerReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize(TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues() + SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length());
-    }
 }

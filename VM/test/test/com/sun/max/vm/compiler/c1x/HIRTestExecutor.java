@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.vm.compiler.c1x;
 
-import java.io.*;
 import java.lang.reflect.*;
 
 import com.sun.c1x.*;
@@ -51,8 +50,6 @@ public class HIRTestExecutor implements Executor {
         "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
-    private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
-        "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
@@ -68,7 +65,7 @@ public class HIRTestExecutor implements Executor {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "XX");
         // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+        options.addOption(new Option<Integer>("c1x-optlevel", 1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override
             public void setValue(Integer value) {
                 C1XOptions.setOptimizationLevel(value);
@@ -105,6 +102,7 @@ public class HIRTestExecutor implements Executor {
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
         c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
+        C1XOptions.setOptimizationLevel(0);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
@@ -142,8 +140,7 @@ public class HIRTestExecutor implements Executor {
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
             C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
-            compilation.compile();
-            return compilation.hir();
+            return compilation.emitHIR();
         }
     }
 }

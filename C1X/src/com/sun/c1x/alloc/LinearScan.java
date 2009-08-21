@@ -687,7 +687,7 @@ public class LinearScan {
         assert con == null || opr.isVirtual() || opr.isConstant() || opr.isIllegal() : "asumption: Constant instructions have only constant operands";
         assert con != null || opr.isVirtual() : "asumption: non-Constant instructions have only virtual operands";
 
-        if ((con == null || con.isPinned()) && opr.isRegister()) {
+        if ((con == null || con.isLive()) && opr.isRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
             int reg = opr.vregNumber();
             if (!liveKill.get(reg)) {
@@ -713,11 +713,10 @@ public class LinearScan {
             BitMap liveGen = new BitMap(liveSize);
             BitMap liveKill = new BitMap(liveSize);
 
-            if (block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry)) {
+            if (block.isExceptionEntry()) {
                 // Phi functions at the begin of an exception handler are
                 // implicitly defined (= killed) at the beginning of the block.
-
-                for (Phi phi : block.state().allPhis(block)) {
+                for (Phi phi : block.state().allLivePhis(block)) {
                     liveKill.set(phi.operand().vregNumber());
                 }
             }
@@ -765,7 +764,8 @@ public class LinearScan {
                     if (C1XOptions.DetailedAsserts) {
                         // fixed intervals are never live at block boundaries, so
                         // they need not be processed in live sets.
-                        // this is checked by these assert ons to be sure about it. // the entry block may have incoming
+                        // this is checked by these assertions to be sure about it.
+                        // the entry block may have incoming
                         // values in registers, which is ok.
                         if (!opr.isVirtualRegister() && block != ir().startBlock) {
                             reg = regNum(opr);
@@ -785,7 +785,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = visitor.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allStateValues()) {
+                    for (Instruction value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
                 }
@@ -1013,7 +1013,7 @@ public class LinearScan {
             con = (Constant) value;
         }
 
-        if ((con == null || con.isPinned()) && opr.isRegister()) {
+        if ((con == null || con.isLive()) && opr.isRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
             addUse(opr, from, to, useKind);
         }
@@ -1502,7 +1502,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = visitor.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allStateValues()) {
+                    for (Instruction value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
                 }
@@ -2007,7 +2007,7 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.state().allPhis(block)) {
+        for (Phi phi : block.state().allLivePhis(block)) {
             resolveExceptionEntry(block, phi.operand().vregNumber(), moveResolver);
         }
 
@@ -2044,7 +2044,7 @@ public class LinearScan {
             if (fromValue instanceof Constant) {
                 con = (Constant) fromValue;
             }
-            if (con != null && !con.isPinned()) {
+            if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
                 // unpinned constants may have no register, so add mapping from constant to interval
                 moveResolver.addMapping(LIROperandFactory.basicType(con), toInterval);
             } else {
@@ -2083,11 +2083,11 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.state().allPhis(block)) {
+        for (Phi phi : block.state().allLivePhis(block)) {
             resolveExceptionEdge(handler, throwingOpId, phi.operand().vregNumber(), phi, moveResolver);
         }
         if (moveResolver.hasMappings()) {
-            LIRList entryCode = new LIRList(compilation());
+            LIRList entryCode = new LIRList(gen);
             moveResolver.setInsertPosition(entryCode, 0);
             moveResolver.resolveAndAppendMoves();
 
@@ -2803,7 +2803,7 @@ public class LinearScan {
             assert con == null || opr.isVirtual() || opr.isConstant() || opr.isIllegal() : "asumption: Constant instructions have only constant operands (or illegal if constant is optimized away)";
             assert con != null || opr.isVirtual() : "asumption: non-Constant instructions have only virtual operands";
 
-            if (con != null && !con.isPinned() && !opr.isConstant()) {
+            if (con != null && !con.isLive() && !opr.isConstant()) {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand

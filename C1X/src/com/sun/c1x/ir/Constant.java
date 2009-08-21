@@ -119,6 +119,11 @@ public class Constant extends Instruction {
     }
 
     @Override
+    public String toString() {
+        return super.toString() + "(" + value + ")";
+    }
+
+    @Override
     public int valueNumber() {
         return 0x50000000 | value.hashCode();
     }

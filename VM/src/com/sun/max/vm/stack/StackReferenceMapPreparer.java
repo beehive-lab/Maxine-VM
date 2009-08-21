@@ -390,7 +390,7 @@ public final class StackReferenceMapPreparer {
                 FatalError.unexpected("Could not find safepoint index");
             }
 
-            // The register reference maps come after all the frame reference maps in _referenceMaps.
+            // The register reference maps come after all the frame reference maps in referenceMap.
             int byteIndex = targetMethod.frameReferenceMapsSize() + (targetMethod.registerReferenceMapSize() * safepointIndex);
 
             final int registersSlotIndex = referenceMapBitIndex(registerState);
