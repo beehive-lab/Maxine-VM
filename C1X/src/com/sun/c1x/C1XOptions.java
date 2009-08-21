@@ -124,6 +124,8 @@ public class C1XOptions {
     public static boolean DoBlockSkipping                    = ____;
     public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
+    public static boolean DoDeadCodeElimination1             = ____;
+    public static boolean DoDeadCodeElimination2             = ____;
     public static boolean DoProfileGuidedInlining            = ____;
     public static boolean DoTypeFlowAnalysis                 = ____;
     public static int     ReOptUnresolvedCount               = 4;
@@ -199,6 +201,7 @@ public class C1XOptions {
     public static boolean TraceRelocation                    = ____;
     public static boolean PrintAssembly                      = ____;
     public static int     BytesPerLine                       = 16;
+    public static boolean TraceLIRVisit                      = ____;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {
@@ -232,6 +235,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = ____;
+        DoDeadCodeElimination1 = ____;
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }
@@ -265,6 +269,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
+        DoDeadCodeElimination1 = ____;
         DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
@@ -300,6 +305,8 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
+        DoDeadCodeElimination1             = TRUE;
+        DoDeadCodeElimination2             = TRUE;
         DoIterativeNullCheckElimination    = TRUE;
         DoProfileGuidedInlining            = TRUE;
         DoTypeFlowAnalysis                 = TRUE;
