@@ -201,6 +201,7 @@ public class C1XOptions {
     public static boolean TraceRelocation                    = ____;
     public static boolean PrintAssembly                      = ____;
     public static int     BytesPerLine                       = 16;
+    public static boolean TraceLIRVisit                      = ____;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {

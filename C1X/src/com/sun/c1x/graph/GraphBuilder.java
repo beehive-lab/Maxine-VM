@@ -53,6 +53,7 @@ public class GraphBuilder {
     ValueStack initialState;               // The state for the start block
     ValueStack exceptionState;             // state that will be used by handleException
     boolean skipBlock;                     // skip processing of the rest of this block
+    private Instruction rootMethodSynchronizedObject;
 
     /**
      * Creates a new instance and builds the graph for a the specified IRScope.
@@ -136,7 +137,7 @@ public class GraphBuilder {
                 curBlock = syncHandler;
                 lastInstr = syncHandler;
                 curState = syncHandler.state().copy();
-                lock = synchronizedObject(initialState, method);
+                lock = rootMethodSynchronizedObject;
                 syncHandler.state().unlock(); // pop the null off the stack
                 syncHandler.state().lock(scope, lock);
             }
@@ -179,23 +180,19 @@ public class GraphBuilder {
             newHeaderBlock = headerBlock(stdEntry, BlockBegin.BlockFlag.StandardEntry, state);
         }
 
-        Base base = new Base(newHeaderBlock, osrEntry);
+        curBlock = start;
+        lastInstr = start;
+        curState = state;
 
-        if (false && method().isSynchronized()) {
-            Instruction synchronizedObject = synchronizedObject(initialState, method());
-
-            genMonitorEnter(synchronizedObject, 0);
-            /*Instruction monitorEnter = new MonitorEnter(synchronizedObject, curState.lock(scope(), synchronizedObject), lockStack());
-            start.setNext(monitorEnter, 0);
-            monitorEnter.setNext(base, 0);*/
-        } else {
-            start.setNext(base, 0);
+        start.setState(state.copy());
+        if (method().isSynchronized()) {
+            rootMethodSynchronizedObject = synchronizedObject(initialState, method());
+            genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         }
 
+        Base base = new Base(newHeaderBlock, osrEntry);
+        appendWithBCI(base, 0, false);
         start.setEnd(base);
-        // create and setup state for start block
-        start.setState(state.copy());
-        base.setStateAfter(state.copy());
 
         if (base.standardEntry().state() == null) {
             base.standardEntry().merge(state);
@@ -1019,7 +1016,11 @@ public class GraphBuilder {
                 assert C1XOptions.InlineSynchronizedMethods;
                 int i = curState.scope().callerState().locksSize();
                 assert curState.locksSize() == i + 1;
-                genMonitorExit(curState.lockAt(i), Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                Instruction object = curState.lockAt(i);
+                if (!object.isAppended()) {
+                    appendWithBCI(object, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+                }
+                genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
 
             // trim back stack to the caller's stack size
@@ -1235,6 +1236,7 @@ public class GraphBuilder {
         if (!(x instanceof Phi || x instanceof Local)) {
             // add instructions to the basic block (if not a phi or a local)
             assert x.next() == null : "instruction should not have been appended yet";
+            assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
             lastInstr = lastInstr.setNext(x, bci);
             if (++totalInstructions >= C1XOptions.MaximumInstructionCount) {
                 // bailout if we've exceeded the maximum inlining size
@@ -1620,11 +1622,18 @@ public class GraphBuilder {
     }
 
     private Instruction synchronizedObject(ValueStack state, RiMethod target) {
-        return target.isStatic() ? append(Constant.forObject(target.holder().javaClass())) : state.localAt(0);
+        if (target.isStatic()) {
+            Constant classConstant = Constant.forObject(target.holder().javaClass());
+            return appendWithBCI(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+        }
+        else {
+            return state.localAt(0);
+        }
     }
 
     void inlineSyncEntry(Instruction lock, BlockBegin syncHandler) {
         exceptionState = curState.copy();
+        assert lock.isAppended();
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         lastInstr.setFlag(Instruction.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
@@ -1641,6 +1650,10 @@ public class GraphBuilder {
         Instruction origLast = lastInstr;
 
         lastInstr = curBlock = syncHandler;
+        while (lastInstr.next() != null) {
+            // go forward to the end of the block
+            lastInstr = lastInstr.next();
+        }
         curState = syncHandler.state().copy();
 
         assert !syncHandler.wasVisited() : "synch handler already visited";

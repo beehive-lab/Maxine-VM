@@ -42,8 +42,8 @@ public class LivenessMarker {
     final Queue<Instruction> valueQueue = new LinkedList<Instruction>();
     final Queue<Instruction> deoptQueue = new LinkedList<Instruction>();
 
-    final InstrMarker deoptMarker = new InstrMarker(Instruction.Flag.LiveValue, deoptQueue);
-    final InstrMarker valueMarker = new InstrMarker(Instruction.Flag.LiveDeopt, valueQueue);
+    final InstrMarker deoptMarker = new InstrMarker(Instruction.Flag.LiveDeopt, deoptQueue);
+    final InstrMarker valueMarker = new InstrMarker(Instruction.Flag.LiveValue, valueQueue);
 
     boolean removeDeadCode;
     boolean clearLiveMarks;

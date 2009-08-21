@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Base</code> instruction represents the entry block of the procedure that has
+ * The <code>Base</code> instruction represents the end of the entry block of the procedure that has
  * both the standard entry and the OSR entry as successors.
  *
  * @author Ben L. Titzer

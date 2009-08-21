@@ -27,10 +27,7 @@ package jtt.except;
 
 public class Throw_Synchronized01 {
     public static synchronized boolean test(int i) throws Exception {
-        if (i == 0) {
-            return true;
-        }
-        return test2(i);
+        return i == 0 || test2(i);
     }
     public static boolean test2(int i) throws Exception {
         throw new Exception();

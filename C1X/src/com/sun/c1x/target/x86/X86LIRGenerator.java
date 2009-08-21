@@ -552,11 +552,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp x) {
-        // when an operand with use count 1 is the left operand, then it is
-        // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && useCount(x.x()) > useCount(x.y())) {
-            x.swapOperands();
-        }
+        trySwap(x);
 
         assert x.x().type().basicType == x.type().basicType && x.y().type().basicType == x.type().basicType : "wrong parameters";
         switch (x.type().basicType) {
@@ -595,11 +591,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitLogicOp(LogicOp x) {
-        // when an operand with use count 1 is the left operand, then it is
-        // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
-            x.swapOperands();
-        }
+        trySwap(x);
 
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
@@ -609,6 +601,17 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = rlockResult(x);
 
         logicOp(x.opcode(), reg, left.result(), right.result());
+    }
+
+    private void trySwap(Op2 x) {
+        // when an operand with use count 1 is the left operand, then it is
+        // likely that no move for 2-operand-LIR-form is necessary
+        // TODO: swap operands when it is profitable
+/*
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
+            x.swapOperands();
+        }
+*/
     }
 
     @Override

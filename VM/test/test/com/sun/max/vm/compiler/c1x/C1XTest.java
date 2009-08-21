@@ -87,16 +87,19 @@ public class C1XTest {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
 
+    private static final Option<Integer> optLevel;
+
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "XX");
         // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(new Option<Integer>("c1x-optlevel", -1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+        optLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override
             public void setValue(Integer value) {
                 C1XOptions.setOptimizationLevel(value);
             }
-        }, Syntax.REQUIRES_EQUALS);
+        };
+        options.addOption(optLevel, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -109,6 +112,8 @@ public class C1XTest {
     private static final double ONE_BILLION = 1000000000;
 
     public static void main(String[] args) {
+        // set the default optimization level before parsing options
+        C1XOptions.setOptimizationLevel(optLevel.getDefaultValue());
         options.parseArguments(args);
         reportC1XOptions();
         final String[] arguments = options.getArguments();

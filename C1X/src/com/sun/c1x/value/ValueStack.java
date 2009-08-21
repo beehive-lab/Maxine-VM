@@ -819,14 +819,14 @@ public class ValueStack {
      * This is a helper method for iterating over all stack values and local variables in this value stack.
      * @return an interator over all state values
      */
-    public Iterable<Instruction> allStateValues() {
+    public Iterable<Instruction> allLiveStateValues() {
         // TODO: implement a more efficient iterator for use in linear scan
         int max = this.valuesSize();
         List<Instruction> result = new ArrayList<Instruction>(max);
 
         for (int i = 0; i < max; i++) {
             Instruction instr = values[i];
-            if (instr != null) {
+            if (instr != null && instr.isLive()) {
                 result.add(instr);
             }
         }

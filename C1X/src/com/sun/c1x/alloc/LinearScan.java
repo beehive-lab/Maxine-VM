@@ -713,10 +713,9 @@ public class LinearScan {
             BitMap liveGen = new BitMap(liveSize);
             BitMap liveKill = new BitMap(liveSize);
 
-            if (block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry)) {
+            if (block.isExceptionEntry()) {
                 // Phi functions at the begin of an exception handler are
                 // implicitly defined (= killed) at the beginning of the block.
-
                 for (Phi phi : block.state().allLivePhis(block)) {
                     liveKill.set(phi.operand().vregNumber());
                 }
@@ -765,7 +764,8 @@ public class LinearScan {
                     if (C1XOptions.DetailedAsserts) {
                         // fixed intervals are never live at block boundaries, so
                         // they need not be processed in live sets.
-                        // this is checked by these assert ons to be sure about it. // the entry block may have incoming
+                        // this is checked by these assertions to be sure about it.
+                        // the entry block may have incoming
                         // values in registers, which is ok.
                         if (!opr.isVirtualRegister() && block != ir().startBlock) {
                             reg = regNum(opr);
@@ -785,7 +785,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = visitor.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allStateValues()) {
+                    for (Instruction value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
                 }
@@ -1502,7 +1502,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = visitor.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allStateValues()) {
+                    for (Instruction value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
                 }
@@ -2044,7 +2044,7 @@ public class LinearScan {
             if (fromValue instanceof Constant) {
                 con = (Constant) fromValue;
             }
-            if (con != null && !con.isLive()) {
+            if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
                 // unpinned constants may have no register, so add mapping from constant to interval
                 moveResolver.addMapping(LIROperandFactory.basicType(con), toInterval);
             } else {
