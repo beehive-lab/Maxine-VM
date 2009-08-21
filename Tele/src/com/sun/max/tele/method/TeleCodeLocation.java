@@ -103,6 +103,13 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
     }
 
     /**
+     * Does this location have a specific target code location?
+     */
+    public boolean isAtAddress(Address address) {
+        return targetCodeInstructionAddress == null ? false : targetCodeInstructionAddress.equals(address);
+    }
+
+    /**
      * Is there a bytecode representation for the code location.
      */
     public boolean hasBytecodeLocation() {

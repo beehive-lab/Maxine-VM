@@ -1279,6 +1279,17 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxVM#getCodeAddress(com.sun.max.vm.stack.StackFrame)
+     */
+    public Address getCodeAddress(StackFrame stackFrame) {
+        if (stackFrame.isTopFrame()) {
+            return stackFrame.instructionPointer;
+        }
+        // Add a platform-specific offset from the stored code address to the actual call return site.
+        return  stackFrame.instructionPointer.plus(offsetToReturnPC);
+    }
+
     public final TeleCodeLocation createCodeLocation(Address address) {
         return new TeleCodeLocation(this, address);
     }
@@ -1291,13 +1302,8 @@ public abstract class TeleVM implements MaxVM {
         return new TeleCodeLocation(this, address, teleClassMethodActor, position);
     }
 
-    public TeleCodeLocation getStackFrameReturnLocation(StackFrame stackFrame) {
-        assert !stackFrame.isTopFrame();
-        Address address = stackFrame.instructionPointer;
-        if (stackFrame.targetMethod() != null) {
-            address = address.plus(offsetToReturnPC);
-        }
-        return new TeleCodeLocation(this, address);
+    public TeleCodeLocation createCodeLocation(StackFrame stackFrame) {
+        return new TeleCodeLocation(this, getCodeAddress(stackFrame));
     }
 
     public final void addBreakpointObserver(Observer observer) {
