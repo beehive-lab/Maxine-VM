@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 
 
@@ -34,14 +34,14 @@ import com.sun.c1x.lir.*;
 public class SimpleExceptionStub extends CodeStub {
 
     public LIROperand obj;
-    public final CiRuntimeCall stub;
+    public final GlobalStub stub;
 
         /**
      * @param obj
      * @param stub
      * @param info
      */
-    public SimpleExceptionStub(LIROperand obj, CiRuntimeCall stub, CodeEmitInfo info) {
+    public SimpleExceptionStub(LIROperand obj, GlobalStub stub, CodeEmitInfo info) {
         super(info);
         this.obj = obj;
         this.stub = stub;

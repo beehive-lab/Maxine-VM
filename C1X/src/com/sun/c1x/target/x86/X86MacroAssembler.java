@@ -65,6 +65,10 @@ public class X86MacroAssembler extends X86Assembler {
         callGlobalStub(stub, result, rc);
     }
 
+    public final void callGlobalStub(GlobalStub stub) {
+        emitGlobalStubCall(compiler.lookupGlobalStub(stub));
+    }
+
     public final void callGlobalStub(GlobalStub stub, Register result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
@@ -73,7 +77,7 @@ public class X86MacroAssembler extends X86Assembler {
 
         assert args.length == stub.arguments.length;
 
-        callGlobalStub(compiler.lookupGlobalStub(stub));
+        emitGlobalStubCall(compiler.lookupGlobalStub(stub));
 
         if (result != Register.noreg) {
 

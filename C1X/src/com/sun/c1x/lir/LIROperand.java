@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
@@ -43,7 +42,7 @@ public abstract class LIROperand {
      */
     public static final LIROperand ILLEGAL = new LIRIllegal();
 
-    private static class LIRIllegal extends LIROperand {
+    private static final class LIRIllegal extends LIROperand {
         private LIRIllegal() {
             super(BasicType.Illegal);
         }

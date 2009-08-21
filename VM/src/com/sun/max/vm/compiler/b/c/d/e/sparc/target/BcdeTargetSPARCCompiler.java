@@ -268,7 +268,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer entryPoint;
         if (targetMethod.abi().callEntryPoint().equals(C_ENTRY_POINT)) {

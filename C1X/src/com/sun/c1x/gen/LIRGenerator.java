@@ -1009,9 +1009,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // LIROpr for unpinned constants shouldn't be referenced by other
         // blocks so clear them out after processing the block.
-        for (Instruction unpinnedConstant : unpinnedConstants) {
+//        for (Instruction unpinnedConstant : unpinnedConstants) {
 //            unpinnedConstant.clearOperand();
-        }
+//        }
         unpinnedConstants.clear();
 
         // clear our any registers for other local constants

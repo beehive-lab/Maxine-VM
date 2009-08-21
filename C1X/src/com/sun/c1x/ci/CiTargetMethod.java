@@ -169,6 +169,7 @@ public class CiTargetMethod {
 
     public int registerSize;
     public int frameSize;
+    public int registerRestoreEpilogueOffset;
     public byte[] targetCode;
     public int targetCodeSize;
     public byte[] data;
@@ -338,6 +339,10 @@ public class CiTargetMethod {
 
     public int totalInstructions() {
         return totalInstructions;
+    }
+
+    public void setRegisterRestoreEpilogueOffset(int registerRestoreEpilogueOffset) {
+        this.registerRestoreEpilogueOffset = registerRestoreEpilogueOffset;
     }
 
 }

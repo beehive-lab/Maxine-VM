@@ -116,11 +116,12 @@ public class C1XTargetMethod extends TargetMethod {
 
     public void setGenerated(int[] exceptionPositionsToCatchPositions, ClassActor[] exceptionClassActors, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees,
                     int indirectCalls, int safepoints, byte[] refMaps, byte[] data, Object[] refLiterals, byte[] targetCode, byte[] encodedInlineDataDescriptors, int frameSize, int stackRefMapSize,
-                    TargetABI abi) {
+                    TargetABI abi, int registerRestoreEpilogueOffset) {
 
         this.exceptionPositionsToCatchPositions = exceptionPositionsToCatchPositions;
         this.exceptionClassActors = exceptionClassActors;
         super.setGenerated(stopPositions, compressedJavaFrameDescriptors, directCallees, indirectCalls, safepoints, refMaps, data, refLiterals, targetCode, encodedInlineDataDescriptors, frameSize, stackRefMapSize, abi);
+        super.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
     }
 
     @Override
