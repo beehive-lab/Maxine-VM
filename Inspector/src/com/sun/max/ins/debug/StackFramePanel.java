@@ -29,6 +29,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
 
+/**
+ * Display panel for VM stack frames.
+ *
+ * @author Michael Van De Vanter
+ */
 abstract class StackFramePanel<StackFrame_Type extends StackFrame> extends InspectorPanel {
 
     protected StackFrame_Type stackFrame;
