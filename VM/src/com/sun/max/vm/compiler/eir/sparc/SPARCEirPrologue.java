@@ -169,11 +169,12 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
         asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister0);
 
-        for (GPR register :  SPARCTrapStateAccess.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
-            if (register == latchRegister) {
+        for (SPARCEirRegister.GeneralPurpose eirRegister : SPARCEirABI.integerNonSystemReservedGlobalRegisters) {
+            final GPR gpr = eirRegister.as();
+            if (gpr == latchRegister) {
                 asm.stx(scratchRegister0, stackPointer, offset);
             } else {
-                asm.stx(register, stackPointer, offset);
+                asm.stx(gpr, stackPointer, offset);
             }
             offset += wordSize;
         }
