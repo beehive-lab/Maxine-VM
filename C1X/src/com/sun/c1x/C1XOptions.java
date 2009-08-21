@@ -235,7 +235,7 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = ____;
-        DoDeadCodeElimination1 = ____;
+        DoDeadCodeElimination1             = ____;
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }
