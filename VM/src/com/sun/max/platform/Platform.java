@@ -27,11 +27,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.stack.sparc.*;
 
 /**
  * Platform-dependent information for VM configuration.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class Platform {
 
@@ -50,10 +52,24 @@ public final class Platform {
      */
     public final int pageSize;
 
+
+    /**
+     * Stack bias added to the stack pointer to obtain the actual top of the stack frame.
+     * <br>
+     * Normally 0, but see SPARC/SOLARIS.
+     */
+    public final int stackBias;
+
     public Platform(ProcessorKind processorKind, OperatingSystem operatingSystem, int pageSize) {
         this.processorKind = processorKind;
         this.operatingSystem = operatingSystem;
         this.pageSize = pageSize;
+
+        if (processorKind.processorModel == ProcessorModel.SPARCV9 && operatingSystem == OperatingSystem.SOLARIS) {
+            this.stackBias = SPARCStackFrameLayout.STACK_BIAS;
+        } else {
+            this.stackBias = 0;
+        }
     }
 
     public Platform(ProcessorModel processorModel, OperatingSystem operatingSystem, int pageSize) {
