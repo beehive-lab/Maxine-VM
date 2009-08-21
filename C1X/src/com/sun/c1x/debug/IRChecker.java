@@ -939,8 +939,18 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      * @param block the block with HIR instructions
      */
     public void apply(BlockBegin block) {
-        for (Instruction instr = block; instr != null; instr = instr.next()) {
+        Instruction instr = block;
+        Instruction prev = block;
+        while (instr != null) {
             instr.accept(this);
+            prev = instr;
+            instr = instr.next();
+        }
+        if (!(prev instanceof BlockEnd)) {
+            fail("Block should end with a BlockEnd " + block);
+        }
+        if (prev != block.end()) {
+            fail("Block refers to wrong block end " + block);
         }
     }
 
