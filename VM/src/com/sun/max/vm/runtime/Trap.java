@@ -71,6 +71,27 @@ public abstract class Trap {
         public static final int NULL_POINTER_EXCEPTION = 6;
         public static final int SAFEPOINT = 7;
 
+        public static String getExceptionName(int trapNumber) {
+            switch (trapNumber) {
+                case MEMORY_FAULT:
+                    return "MEMORY_FAULT";
+                case STACK_FAULT:
+                    return "STACK_FAULT";
+                case ILLEGAL_INSTRUCTION:
+                    return "ILLEGAL_INSTRUCTION";
+                case ARITHMETIC_EXCEPTION:
+                    return "ARITHMETIC_EXCEPTION";
+                case ASYNC_INTERRUPT:
+                    return "ASYNC_INTERRUPT";
+                case NULL_POINTER_EXCEPTION:
+                    return "NULL_POINTER_EXCEPTION";
+                case SAFEPOINT:
+                    return "SAFEPOINT";
+                default:
+                    return "unknown";
+            }
+        }
+
         public static boolean isImplicitException(int trapNumber) {
             return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
         }

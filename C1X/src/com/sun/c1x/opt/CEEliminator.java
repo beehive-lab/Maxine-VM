@@ -106,23 +106,23 @@ public class CEEliminator implements BlockClosure {
 
         // check that at least one word was pushed on suxState
         ValueStack suxState = sux.state();
-        if (suxState.stackSize() <= curIf.state().stackSize()) {
+        if (suxState.stackSize() <= curIf.stateAfter().stackSize()) {
             return;
         }
 
         // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
-        Instruction suxPhi = suxState.stackAt(curIf.state().stackSize());
+        Instruction suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
-        if (suxPhi.type().sizeInSlots() != suxState.stackSize() - curIf.state().stackSize()) {
+        if (suxPhi.type().sizeInSlots() != suxState.stackSize() - curIf.stateAfter().stackSize()) {
             return;
         }
 
         // get the values that were pushed in the true- and false-branch
-        Instruction tValue = tGoto.state().stackAt(curIf.state().stackSize());
-        Instruction fValue = fGoto.state().stackAt(curIf.state().stackSize());
+        Instruction tValue = tGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
+        Instruction fValue = fGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
 
         assert tValue.type() == fValue.type() : "incompatible types";
 
@@ -169,11 +169,11 @@ public class CEEliminator implements BlockClosure {
         ifPrev = ifPrev.setNext(result, bci);
 
         // append Goto to successor
-        ValueStack stateBefore = curIf.isSafepoint() ? curIf.stateBefore() : null;
+        ValueStack stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
         Goto newGoto = new Goto(sux, stateBefore, curIf.isSafepoint() || tGoto.isSafepoint() || fGoto.isSafepoint());
 
         // prepare state for Goto
-        ValueStack gotoState = curIf.state();
+        ValueStack gotoState = curIf.stateAfter();
         while (suxState.scope() != gotoState.scope()) {
             gotoState = gotoState.popScope();
             assert gotoState != null : "states do not match up";
@@ -181,7 +181,7 @@ public class CEEliminator implements BlockClosure {
         gotoState = gotoState.copy();
         gotoState.push(result.type().basicType, result);
         assert gotoState.isSameAcrossScopes(suxState) : "states must match now";
-        newGoto.setState(gotoState);
+        newGoto.setStateAfter(gotoState);
 
         // Steal the bci for the goto from the sux
         ifPrev = ifPrev.setNext(newGoto, sux.bci());

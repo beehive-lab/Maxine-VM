@@ -473,7 +473,7 @@ public class SPARCJitCompiler extends JitCompiler {
     }
 
     static class StackUnwindStub extends RuntimeStub {
-        static byte [] createStubCode(VMConfiguration vmConfiguration) {
+        static byte[] createStubCode(VMConfiguration vmConfiguration) {
             try {
                 final SPARCAssembler asm =  SPARCAssembler.createAssembler(vmConfiguration.wordWidth());
                 // The two nops are just to keep the invariant that the caller address is at 2 instructions after

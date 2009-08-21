@@ -92,22 +92,25 @@ public class IR {
         topScope = new IRScope(compilation, null, -1, compilation.method, compilation.osrBCI);
 
         // Graph builder must set the startBlock and the osrEntryBlock
+        Instruction.nextID = 0;
         GraphBuilder g = new GraphBuilder(compilation, topScope, this);
         totalInstructions += g.totalInstructions();
         assert startBlock != null;
-
     }
 
     private void optimize1() {
         // do basic optimizations
+        if (C1XOptions.DoNullCheckElimination) {
+            new NullCheckEliminator(this);
+        }
+        if (C1XOptions.DoDeadCodeElimination1) {
+            new LivenessMarker(this).removeDeadCode();
+        }
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
         }
         if (C1XOptions.DoBlockMerging) {
             new BlockMerger(this);
-        }
-        if (C1XOptions.DoNullCheckElimination) {
-            new NullCheckEliminator(this);
         }
     }
 
@@ -134,6 +137,9 @@ public class IR {
         if (C1XOptions.DoGlobalValueNumbering) {
             makeLinearScanOrder();
             new GlobalValueNumberer(this);
+        }
+        if (C1XOptions.DoDeadCodeElimination2) {
+            new LivenessMarker(this).removeDeadCode();
         }
     }
 
@@ -194,9 +200,9 @@ public class IR {
         newSucc.setNext(e, bci);
         newSucc.setEnd(e);
         // setup states
-        ValueStack s = source.end().state();
+        ValueStack s = source.end().stateAfter();
         newSucc.setState(s.copy());
-        e.setState(s.copy());
+        e.setStateAfter(s.copy());
         assert newSucc.state().localsSize() == s.localsSize();
         assert newSucc.state().stackSize() == s.stackSize();
         assert newSucc.state().locksSize() == s.locksSize();

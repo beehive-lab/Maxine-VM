@@ -54,14 +54,11 @@ public class C1XCompilation {
     boolean hasUnsafeAccess;
     Bailout bailout;
 
-    private Instruction currentInstruction;
-
     private FrameMap frameMap;
     private AbstractAssembler assembler;
 
     private IR hir;
 
-    private Instruction lastInstructionPrinted; // Debugging only
     private CFGPrinter cfgPrinter;
 
     private CodeOffsets codeOffsets;
@@ -244,41 +241,12 @@ public class C1XCompilation {
     }
 
     /**
-     * Updates the current instruction to a new value and returns the old one.
-     *
-     * @param instr
-     *            the new current instruction
-     * @return the old current instruction
-     */
-    public Instruction setCurrentInstruction(Instruction instr) {
-        final Instruction previous = currentInstruction;
-        currentInstruction = instr;
-        return previous;
-    }
-
-    /**
-     * Returns the current processed instruction. This method is used during HIR to LIR transformations.
-     *
-     * @return the current instruction
-     */
-    public Instruction currentInstruction() {
-        return currentInstruction;
-    }
-
-    /**
      * Returns the frame map of this compilation.
      *
      * @return the frame map
      */
     public FrameMap frameMap() {
         return frameMap;
-    }
-
-    public void maybePrintCurrentInstruction() {
-        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
-            lastInstructionPrinted = currentInstruction;
-            currentInstruction.printLine();
-        }
     }
 
     public CodeOffsets offsets() {
@@ -336,6 +304,21 @@ public class C1XCompilation {
         }
 
         return targetMethod;
+    }
+
+    public IR emitHIR() {
+        if (C1XOptions.PrintCompilation) {
+            TTY.println();
+            TTY.println("Compiling method: " + method.toString());
+        }
+        try {
+            hir = new IR(this);
+            hir.build();
+        } catch (Throwable t) {
+            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
+            throw bailout;
+        }
+        return hir;
     }
 
     private void emitLIR() {

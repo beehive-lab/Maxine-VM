@@ -32,7 +32,8 @@ public class System_nanoTime02 {
             delta = System.nanoTime() - start;
             // do nothing.
         }
-        // better get at least 5 microsecond resolution.
-        return delta > 1 && delta < 5000;
+
+        // better get at least 30 microsecond resolution.
+        return delta > 1 && delta < 30000;
     }
 }

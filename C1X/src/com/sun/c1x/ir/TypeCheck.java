@@ -32,7 +32,6 @@ public abstract class TypeCheck extends StateSplit {
 
     final RiType targetClass;
     Instruction object;
-    final ValueStack stateBefore;
 
     /**
      * Creates a new TypeCheck instruction.
@@ -42,18 +41,10 @@ public abstract class TypeCheck extends StateSplit {
      * @param stateBefore the state before this instruction is executed
      */
     public TypeCheck(RiType targetClass, Instruction object, BasicType type, ValueStack stateBefore) {
-        super(type);
+        super(type, stateBefore);
         this.targetClass = targetClass;
         this.object = object;
         this.stateBefore = stateBefore;
-    }
-
-    /**
-     * Gets the state before the execution of this instruction.
-     * @return the state before this instruction
-     */
-    public ValueStack stateBefore() {
-        return stateBefore;
     }
 
     /**
@@ -105,17 +96,6 @@ public abstract class TypeCheck extends StateSplit {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         object = closure.apply(object);
-    }
-
-    /**
-     * Iterates over the other values to this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (stateBefore != null) {
-            stateBefore.valuesDo(closure);
-        }
     }
 
     /**

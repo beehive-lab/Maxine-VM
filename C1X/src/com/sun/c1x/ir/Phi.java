@@ -98,7 +98,7 @@ public class Phi extends Instruction {
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
-            state = block.predecessors().get(i).end().state();
+            state = block.predecessors().get(i).end().stateAfter();
         }
         return operandIn(state);
     }

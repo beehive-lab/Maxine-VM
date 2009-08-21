@@ -180,12 +180,10 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     public void initializeForJitCompilations() {
     }
 
-    @Override
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, StackFrameWalker.Purpose purpose, Object context) {
         return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
     }
 
-    @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
         return stackPointer;
     }

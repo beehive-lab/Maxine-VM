@@ -18,30 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap;
+package jtt.micro;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
-
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = 4321; 1 = 2432; 10 = 2432;
  */
-public interface HeapRegion extends MemoryRegion {
+public class Loop04 {
 
-    /**
-     * Allocates a cell of a requested size from this heap region.
-     * In a {@linkplain MaxineVM#isDebug() debug} build of the VM,
-     * an extra word is reserved just below the cell for the
-     * {@linkplain DebugHeap#adjustForDebugTag(Pointer) debug tag word}.
-     *
-     * Thread safety considerations: The caller(s) are responsible for ensuring that calls to this
-     * method are synchronized. Failure to do so may put the allocation mark in an inconsistent state.
-     *
-     * @param size the requested allocation size which must be {@linkplain Size#isWordAligned() word aligned}
-     * @return the start of the allocated cell or zero if the allocation request could not be satisfied
-     */
-    Pointer allocateCell(Size size);
+    public static int test(int count) {
+        int i1 = 1;
+        int i2 = 2;
+        int i3 = 3;
+        int i4 = 4;
+
+        for (int i = 0; i < count; i++) {
+            i1 = i2;
+            i2 = i3;
+            i3 = i4;
+            i4 = i1;
+        }
+        return i1 + i2 * 10 + i3 * 100 + i4 * 1000;
+    }
 
 }

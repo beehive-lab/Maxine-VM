@@ -83,7 +83,7 @@ public abstract class CodeGen {
 
     abstract void genThrow(Location thrown);
 
-    abstract void genReturn(Location value);
+    abstract void genReturn(BasicType basicType, Location value);
 
     abstract void genTableswitch(BytecodeTableSwitch bytecodeTableSwitch, Location key);
 
