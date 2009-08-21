@@ -580,7 +580,7 @@ public interface MaxVM {
      * Returns the target code execution address in a stack frame, either IP (top frame) or call return address.
      * <br>
      * Note that a platform-specific offset is applied to the stored address in
-     * non-top frames (see SPARC).
+     * non-top frames (see SPARC), except at a trap, to produce the actual call return address.
      *
      * @param stackFrame a VM stack frame
      * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
@@ -619,7 +619,7 @@ public interface MaxVM {
     TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position);
 
     /**
-     * Creates a code location in the VM corresponding to the address in a stack frame, either IP (top frame) or call return address
+     * Creates a code location in the VM corresponding to the address in a stack frame, either IP (top frame) or call return address.
      *
      * @param stackFrame a VM stack frame
      * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
