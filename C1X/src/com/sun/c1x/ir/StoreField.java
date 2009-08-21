@@ -43,6 +43,7 @@ public class StoreField extends AccessField {
     public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
         super(object, field, isStatic, stateBefore, isLoaded);
         this.value = value;
+        setFlag(Flag.LiveStore);
     }
 
     /**

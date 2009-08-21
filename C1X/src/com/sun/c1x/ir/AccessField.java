@@ -49,7 +49,6 @@ public abstract class AccessField extends StateSplit {
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
-        this.stateBefore = stateBefore;
         if (!isLoaded || C1XOptions.TestPatching && !field.isVolatile()) {
             // require patching if the field is not loaded (i.e. resolved),
             // or if patch testing is turned on (but not if the field is volatile)
@@ -57,7 +56,7 @@ public abstract class AccessField extends StateSplit {
         }
         initFlag(Flag.IsLoaded, isLoaded);
         initFlag(Flag.IsStatic, isStatic);
-        if (object != null && object.isNonNull()) {
+        if (isLoaded && object != null && object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }

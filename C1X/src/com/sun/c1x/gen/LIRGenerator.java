@@ -1067,6 +1067,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     protected LIROperand loadConstant(LIRConstant c) {
         BasicType t = c.type();
         for (int i = 0; i < constants.size(); i++) {
+            // XXX: linear search might be kind of slow for big basic blocks
             LIRConstant other = constants.get(i);
             if (t == other.type()) {
                 switch (t) {
@@ -1845,7 +1846,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             Phi phi = (Phi) suxVal;
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
-                assert !phi.type().isIllegal() : "illegal phi cannot be marked as live";
+                assert !phi.isIllegal() : "illegal phi cannot be marked as live";
                 LIROperand operand = curVal.operand();
                 if (curVal.operand().isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
@@ -2011,7 +2012,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             for (int index = 0; index < s.localsSize(); index++) {
                 final Instruction value = s.localAt(index);
                 if (value != null) {
-                    if ((liveness == null || liveness.get(index)) && !value.type().isIllegal()) {
+                    if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
                         walkStateInstruction(value);
                     } else {
                         // null out this local so that linear scan can assume that all non-null values are live.
@@ -2028,7 +2029,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (value != null) {
             assert value.subst() == value : "missed substitution";
             assert value.isLive() : "value must be marked live in ValueStack";
-            if (value instanceof Phi && !value.type().isIllegal()) {
+            if (value instanceof Phi && !value.isIllegal()) {
                 // goddamnit, phi's are special
                 operandForPhi((Phi) value);
             } else if (value.operand().isIllegal()) {
