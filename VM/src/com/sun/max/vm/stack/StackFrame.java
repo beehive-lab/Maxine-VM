@@ -70,13 +70,19 @@ public abstract class StackFrame {
     }
 
     /**
-     * Computes the biased offset from the slot base to the ABI's frame pointer register. If the platform doesn't use any bias,
-     * it just returns the offset.
-     * Some platform (e.g., Solaris SPARC v9 in 64-bit mode) use a bias from the frame pointer to access stack slot.
-     * @param offset a offset relative to the address of the frame
+     * Computes the biased offset from the slot base to the ABI's frame pointer register.
+     * <br>
+     * Some platforms (e.g., Solaris SPARC v9 in 64-bit mode) use a bias from the frame pointer to access stack slot.
+     * <br>
+     * The default is no bias, but the offset must be adjusted by frame size to be relative to the frame pointer.
+     *
+     * @param offset a offset relative to the address of the stack pointer
      * @return the biased offset, relative to the frame pointer register.
      */
-    public int biasedOffset(int offset) {
+    public int biasedFPOffset(int offset) {
+        if (targetMethod() != null) {
+            return targetMethod().frameSize() - offset;
+        }
         return offset;
     }
 

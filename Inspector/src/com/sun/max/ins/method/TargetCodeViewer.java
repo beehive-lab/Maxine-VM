@@ -30,7 +30,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
@@ -294,13 +293,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
             final boolean isFrameForThisCode = frame instanceof JavaStackFrame ?
                             targetCodeRegion.overlaps(frame.targetMethod()) :
-                            targetCodeRegion.contains(frame.instructionPointer);
+                            targetCodeRegion.contains(maxVM().getCodeAddress(frame));
             if (isFrameForThisCode) {
                 int row = 0;
                 for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                    final Address instructionAddress = targetCodeInstruction.address;
-                    if ((stackPosition == 0 && instructionAddress.equals(frame.instructionPointer)) ||
-                                    (stackPosition > 0 && instructionAddress.equals(maxVM().getStackFrameReturnLocation(frame).targetCodeInstructionAddress()))) {
+                    if (targetCodeInstruction.address.equals(maxVM().getCodeAddress(frame))) {
                         rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
                         break;
                     }

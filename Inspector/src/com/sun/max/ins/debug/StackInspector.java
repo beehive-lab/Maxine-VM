@@ -97,6 +97,13 @@ public class StackInspector extends Inspector {
                         stackInspector.refreshView(true);
                     }
                 }
+                @Override
+                public void setBiasSlotOffsets(boolean biasSlotOffsets) {
+                    super.setBiasSlotOffsets(biasSlotOffsets);
+                    if (stackInspector != null) {
+                        stackInspector.refreshView(true);
+                    }
+                }
             };
         }
         return globalPreferences;

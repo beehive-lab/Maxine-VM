@@ -73,7 +73,7 @@ public class SPARCJitStackFrame extends JitStackFrame {
     }
 
     @Override
-    public int biasedOffset(int offset) {
+    public int biasedFPOffset(int offset) {
         // Stack slot offset are positive relative to the stack pointer. To convert them as offset to the frame pointer, we need the frame size.
         return SPARCStackFrameLayout.slotOffsetFromFrame(targetMethod().frameSize(), offset);
     }
