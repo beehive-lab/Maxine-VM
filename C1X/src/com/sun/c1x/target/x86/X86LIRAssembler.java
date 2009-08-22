@@ -511,9 +511,9 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
                         throw Util.shouldNotReachHere();
                     } else {
-                        masm().movptr(X86.r10, c.asLongBits());
+                        masm().movptr(rscratch1, c.asLongBits());
                         nullCheckHere = codeOffset();
-                        masm().movptr(asAddressLo(addr), X86.r10);
+                        masm().movptr(asAddressLo(addr), rscratch1);
                     }
                 } else {
                     // Always reachable in 32bit so this doesn't produce useless move literal
@@ -1845,13 +1845,13 @@ public class X86LIRAssembler extends LIRAssembler {
                 // cpu register - constant
                 if (compilation.target.arch.is64bit()) {
                     long c = right.asConstantPtr().asLongBits();
-                    masm().movptr(X86.r10, c);
+                    masm().movptr(rscratch1, c);
                     switch (code) {
                         case Add:
-                            masm().addptr(lregLo, X86.r10);
+                            masm().addptr(lregLo, rscratch1);
                             break;
                         case Sub:
-                            masm().subptr(lregLo, X86.r10);
+                            masm().subptr(lregLo, rscratch1);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
