@@ -327,7 +327,8 @@ public class SPARCJitCompiler extends JitCompiler {
             }
         }
         final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, (SPARCJitTargetMethod) targetMethod);
-        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
+        final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer());
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase, operandStackPointer);
     }
 
 
