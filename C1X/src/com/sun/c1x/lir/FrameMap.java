@@ -140,7 +140,8 @@ public abstract class FrameMap {
 
         if (location.isStackOffset()) {
             if (outgoing) {
-                int stackOffset = location.stackOffset * spillSlotSizeInBytes;
+                int stackOffset = (location.stackOffset - 1) * compilation.target.arch.wordSize; // TODO: Fix this hack! //spillSlotSizeInBytes;
+                reservedArgumentAreaSize = Math.max(reservedArgumentAreaSize, stackOffset + compilation.target.arch.wordSize);
                 return LIROperandFactory.address(LIROperandFactory.singleLocation(BasicType.Int, stackRegister()), stackOffset, t);
             } else {
                 return LIROperandFactory.stack(location.stackOffset, t);

@@ -2531,6 +2531,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    // TODO: remove?
     public final void popa() {
 
         if (target.arch.is64bit()) {
@@ -2561,6 +2562,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    // TODO: remove?
     public final void pusha() {
 
         if (target.arch.is32bit()) {
