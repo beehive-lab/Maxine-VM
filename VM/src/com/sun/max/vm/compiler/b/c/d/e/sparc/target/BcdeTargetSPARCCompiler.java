@@ -330,7 +330,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     final int trapNumber = trapStateAccess.getTrapNumber(trapStateInPreviousFrame);
                     if (Trap.Number.isImplicitException(trapNumber)) {
-                        Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapNumber);
+                        Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
                         final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
@@ -346,7 +346,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                         final int trapNumber = trapStateAccess.getTrapNumber(trapState);
                         if (Trap.Number.isImplicitException(trapNumber)) {
-                            Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapNumber);
+                            Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
                             final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
@@ -365,7 +365,9 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                         }
                     }
                 }
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, StackBias.SPARC_V9.unbias(stackPointer))) {
+
+                final Pointer ignoredOperandStackPointer = Pointer.zero();
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer), ignoredOperandStackPointer)) {
                     return false;
                 }
                 break;

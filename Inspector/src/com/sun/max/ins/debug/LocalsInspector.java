@@ -74,7 +74,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer.toLong()));
-        assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
+        assert jitStackFrame.targetMethod().compilerScheme == maxVM().vmConfiguration().jitScheme();
         this.thread = thread;
         this.jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();

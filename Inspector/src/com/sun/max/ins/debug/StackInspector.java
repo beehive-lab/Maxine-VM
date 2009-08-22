@@ -222,7 +222,7 @@ public class StackInspector extends Inspector {
                 }
                 if (javaStackFrame instanceof AdapterStackFrame) {
                     name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
+                    if (javaStackFrame.targetMethod().compilerScheme.equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
                     } else {
                         toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";

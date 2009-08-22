@@ -404,7 +404,7 @@ public class AMD64JitCompiler extends JitCompiler {
             }
         }
         final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
-        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase, stackFrameWalker.stackPointer());
     }
 
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {

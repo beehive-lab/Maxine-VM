@@ -137,7 +137,7 @@ public abstract class ExceptionRangeTargetMethod extends TargetMethod {
     }
 
     public final TargetMethod duplicate() {
-        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme();
+        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme;
         final ExceptionRangeTargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         Code.allocate(targetBundleLayout, duplicate);

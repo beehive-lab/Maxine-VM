@@ -551,7 +551,7 @@ public class CompiledPrototype extends Prototype {
             try {
                 final TargetMethod targetMethod = compilationCompletionService.take().get();
                 assert targetMethod != null;
-                processNewTargetMethod(targetMethod.compilerScheme(), targetMethod);
+                processNewTargetMethod(targetMethod.compilerScheme, targetMethod);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException executionException) {

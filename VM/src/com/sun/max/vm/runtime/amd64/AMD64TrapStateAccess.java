@@ -201,7 +201,7 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         Log.print("Trap number: ");
         Log.print(trapNumber);
         Log.print(" == ");
-        Log.println(Trap.Number.getExceptionName(trapNumber));
+        Log.println(Trap.Number.toExceptionName(trapNumber));
     }
 
     private static final String[] rflags = {
