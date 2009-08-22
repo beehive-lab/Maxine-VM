@@ -26,7 +26,7 @@ import com.sun.c1x.lir.*;
 
 /**
  * Converts the HIR program's Phi instructions into moves.
- * XXX: are we sure?
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */

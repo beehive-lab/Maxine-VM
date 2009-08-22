@@ -39,11 +39,11 @@ public class NewMultiArray extends NewArray {
      * @param elementType the element type of the array
      * @param dimensions the instructions which produce the dimensions for this array
      * @param stateBefore the state before this instruction
-     * @param cpi
-     * @param riConstantPool
+     * @param cpi the constant pool index for resolution
+     * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
-        super(null, stateBefore, ciConstantPool); // note that this instruction doesn't have a "length" per-se
+    public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
+        super(null, stateBefore, riConstantPool);
         this.elementType = elementType;
         this.dimensions = dimensions;
         this.cpi = cpi;

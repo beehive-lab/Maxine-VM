@@ -37,11 +37,12 @@ public class NewInstance extends StateSplit {
     /**
      * Constructs a NewInstance instruction.
      * @param theClass the class being allocated
-     * @param cpi
+     * @param cpi the constant pool index
+     * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool) {
-        super(BasicType.Object);
-        instanceClass = theClass;
+    public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+        super(BasicType.Object, stateBefore);
+        this.instanceClass = theClass;
         this.cpi = cpi;
         this.constantPool = constantPool;
         setFlag(Flag.NonNull);

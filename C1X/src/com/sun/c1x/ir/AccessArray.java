@@ -28,26 +28,23 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public abstract class AccessArray extends Instruction {
+public abstract class AccessArray extends StateSplit {
 
     Instruction array;
-    ValueStack lockStack;
 
     /**
      * Creates a new AccessArray instruction.
      * @param type the type of the result of this instruction
      * @param array the instruction that produces the array object value
-     * @param lockStack the lock stack
+     * @param stateBefore the lock stack
      */
-    public AccessArray(BasicType type, Instruction array, ValueStack lockStack) {
-        super(type);
+    public AccessArray(BasicType type, Instruction array, ValueStack stateBefore) {
+        super(type, stateBefore);
         this.array = array;
-        this.lockStack = lockStack;
         if (array.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
-        pin();
     }
 
     /**
@@ -56,23 +53,6 @@ public abstract class AccessArray extends Instruction {
      */
     public Instruction array() {
         return array;
-    }
-
-    /**
-     * Gets the lock stack.
-     * @return the lock stack
-     */
-    @Override
-    public ValueStack lockStack() {
-        return lockStack;
-    }
-
-    /**
-     * Sets the lock stack for this instruction.
-     * @param lockStack the lock stack
-     */
-    public void setLockStack(ValueStack lockStack) {
-        this.lockStack = lockStack;
     }
 
     /**
@@ -91,16 +71,5 @@ public abstract class AccessArray extends Instruction {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         array = closure.apply(array);
-    }
-
-    /**
-     * Iterates over the "other" values of this instruction.
-     * @param closure the closure to apply to each of the other values
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (lockStack != null) {
-            lockStack.valuesDo(closure);
-        }
     }
 }

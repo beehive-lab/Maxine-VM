@@ -247,7 +247,7 @@ public class CFGPrinter {
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
-                    i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
+                    i += value.isIllegal() ? 1 : value.type().sizeInSlots();
                 } else {
                     i++;
                 }
@@ -304,7 +304,7 @@ public class CFGPrinter {
      * @param i the instruction for which HIR will be printed
      */
     private void printInstructionHIR(Instruction i) {
-        if (i.isPinned()) {
+        if (i.isLive()) {
             out.print('.');
         }
         int useCount = 0;

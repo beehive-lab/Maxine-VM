@@ -73,7 +73,7 @@ public class PhiSimplifier implements BlockClosure {
         } else if (phi.checkFlag(Instruction.Flag.PhiVisited)) {
             // break cycles in phis
             return phi;
-        } else if (phi.type().isIllegal()) {
+        } else if (phi.isIllegal()) {
             // don't bother with illegals
             return phi;
         } else {
@@ -84,9 +84,9 @@ public class PhiSimplifier implements BlockClosure {
             for (int i = 0; i < max; i++) {
                 Instruction oldInstr = phi.operandAt(i);
 
-                if (oldInstr == null || oldInstr.type().isIllegal()) {
+                if (oldInstr == null || oldInstr.isIllegal()) {
                     // if one operand is illegal, make the entire phi illegal
-                    phi.makeIllegal();
+                    phi.makeDead();
                     phi.clearFlag(Instruction.Flag.PhiVisited);
                     return phi;
                 }

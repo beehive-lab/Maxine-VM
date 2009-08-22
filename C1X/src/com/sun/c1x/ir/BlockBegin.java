@@ -35,7 +35,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class BlockBegin extends StateSplit {
+public class BlockBegin extends Instruction {
     // XXX: could use a shared, empty ArrayList
     private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
 
@@ -64,8 +64,9 @@ public class BlockBegin extends StateSplit {
     public final int blockID;
 
     private int blockFlags;
-    private final List<BlockBegin> predecessors;
+    private ValueStack state;
     private BlockEnd end;
+    private final List<BlockBegin> predecessors;
 
     private int depthFirstNumber;
     private int linearScanNumber;
@@ -156,6 +157,23 @@ public class BlockBegin extends StateSplit {
      */
     public BlockEnd end() {
         return end;
+    }
+
+    /**
+     * Gets the state at the start of this block.
+     * @return the state at the start of this block
+     */
+    public ValueStack state() {
+        return state;
+    }
+
+    /**
+     * Sets the initial state for this block.
+     * @param state the state for this block
+     */
+    public void setState(ValueStack state) {
+        assert this.state == null;
+        this.state = state;
     }
 
     /**
@@ -341,7 +359,7 @@ public class BlockBegin extends StateSplit {
     }
 
     public void merge(ValueStack newState) {
-        ValueStack existingState = state();
+        ValueStack existingState = state;
 
         if (existingState == null) {
             // this is the first state for the block
@@ -364,7 +382,7 @@ public class BlockBegin extends StateSplit {
                 insertLoopPhis(newState);
             }
 
-            setState(newState);
+            state = newState;
         } else {
 
             if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
@@ -409,7 +427,7 @@ public class BlockBegin extends StateSplit {
         assert liveness.size() == max;
         for (int i = 0; i < max; i++) {
             Instruction x = newState.localAt(i);
-            if (x != null && (x.type().isIllegal() || !liveness.get(i))) {
+            if (x != null && (x.isIllegal() || !liveness.get(i))) {
                 // invalidate the local if it is not live
                 newState.invalidateLocal(i);
             }

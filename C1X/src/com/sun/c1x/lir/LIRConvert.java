@@ -39,7 +39,6 @@ public class LIRConvert extends LIROp1 {
      * @param bytecode the opcode of the bytecode for this conversion
      * @param operand the input operand for this instruction
      * @param result the result operand for this instruction
-     * @param stub the conversion stub for this instruction
      */
     public LIRConvert(int bytecode, LIROperand operand, LIROperand result) {
         super(LIROpcode.Convert, operand, result);

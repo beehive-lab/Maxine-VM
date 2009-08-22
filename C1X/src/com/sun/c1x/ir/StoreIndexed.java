@@ -38,15 +38,12 @@ public class StoreIndexed extends AccessIndexed {
      * @param length the instruction producing the length
      * @param elementType the element type
      * @param value the value to store into the array
-     * @param lockStack the lock stack
+     * @param stateBefore the state before executing this instruction
      */
-    public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack lockStack) {
-        super(array, index, length, elementType, lockStack);
+    public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack stateBefore) {
+        super(array, index, length, elementType, stateBefore);
         this.value = value;
-        if (elementType.stackType().isObject()) {
-            setFlag(Flag.NoWriteBarrier);
-            setFlag(Flag.NoStoreCheck);
-        }
+        setFlag(Flag.LiveStore);
     }
 
     /**
@@ -58,19 +55,11 @@ public class StoreIndexed extends AccessIndexed {
     }
 
     /**
-     * Gets the IR scope for this instruction.
-     * @return the IR scope associated with this instruction
-     */
-    public IRScope scope() {
-        return lockStack.scope();
-    }
-
-    /**
      * Checks if this instruction needs a write barrier.
      * @return <code>true</code> if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
-        return checkFlag(Flag.NoWriteBarrier);
+        return !checkFlag(Flag.NoWriteBarrier);
     }
 
     /**
@@ -78,7 +67,7 @@ public class StoreIndexed extends AccessIndexed {
      * @return <code>true</code> if this instruction needs a store check
      */
     public boolean needsStoreCheck() {
-        return checkFlag(Flag.NoStoreCheck);
+        return !checkFlag(Flag.NoStoreCheck);
     }
 
     /**

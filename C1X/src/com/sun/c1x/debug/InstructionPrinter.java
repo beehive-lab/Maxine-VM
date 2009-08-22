@@ -169,7 +169,7 @@ public class InstructionPrinter extends InstructionVisitor {
      * @param instruction the instruction to print
      */
     public void printInstructionListing(Instruction instruction) {
-        if (instruction.isPinned()) {
+        if (instruction.isLive()) {
             out.print('.');
         }
 
@@ -280,7 +280,7 @@ public class InstructionPrinter extends InstructionVisitor {
         boolean hasPhisInLocals = false;
         boolean hasPhisOnStack = false;
 
-        if (end != null && end.state() != null) {
+        if (end != null && end.stateAfter() != null) {
             ValueStack state = block.state();
 
             int i = 0;
@@ -295,7 +295,7 @@ public class InstructionPrinter extends InstructionVisitor {
                     Instruction value = state.localAt(i);
                     hasPhisInLocals = isPhiAtBlock(value, block);
                     // also ignore illegal HiWords
-                    if (value != null && !value.type().isIllegal()) {
+                    if (value != null && !value.isIllegal()) {
                         i += value.type().sizeInSlots();
                     } else {
                         i++;
@@ -318,7 +318,7 @@ public class InstructionPrinter extends InstructionVisitor {
                     if (value != null) {
                         out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
-                        i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
+                        i += value.isIllegal() ? 1 : value.type().sizeInSlots();
                     } else {
                         i++;
                     }
