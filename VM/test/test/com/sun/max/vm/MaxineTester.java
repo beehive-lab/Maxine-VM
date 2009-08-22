@@ -60,7 +60,7 @@ public class MaxineTester {
                     "Single threaded. Do not run any tests concurrently.");
     private static final Option<String> outputDirOption = options.newStringOption("output-dir", "maxine-tester",
                     "The output directory for the results of the maxine tester.");
-    private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 1200,
+    private static final Option<Integer> imageBuildTimeOutOption = options.newIntegerOption("image-build-timeout", 600,
                     "The number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
     private static final Option<String> javaExecutableOption = options.newStringOption("refvm", "java",
@@ -70,7 +70,7 @@ public class MaxineTester {
     private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 60,
+    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 8,
