@@ -18,33 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package jtt.optimize;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+import com.sun.max.annotate.NEVER_INLINE;
+
+/*
+ * @Harness: java
+ * @Runs: 0=8; 1=10; 2=12; 3=8; 4=10; 6=14
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int GlobalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
-    public static int InlineForbiddenMethods;
-    public static int NullCheckIterations;
-    public static int NullCheckEliminations;
-    public static int NullChecksRedundant;
-    public static int EquivalentConstantsMerged;
-    public static int EquivalentConstantsChecked;
-    public static int ConditionalEliminations;
-    public static int BlocksMerged;
-    public static int NestedIfOpsRemoved;
-    public static int BlocksSkipped;
-    public static int DeadCodeEliminated;
+public class Phi01 {
+    int f;
+
+    Phi01(int f) {
+        this.f = f;
+    }
+
+    public static int test(int arg) {
+        return test2(new Phi01(arg), arg);
+    }
+
+    @NEVER_INLINE
+    private static int test2(Phi01 p, int arg) {
+        if (arg > 2) {
+            p.f += 1;
+            arg += 1;
+        } else {
+            p.f += 2;
+            arg += 2;
+            if (arg > 3) {
+                p.f += 1;
+                arg += 1;
+                if (arg > 4) {
+                    p.f += 1;
+                    arg += 1;
+                } else {
+                    p.f += 2;
+                    arg += 2;
+                }
+            } else {
+                p.f += 2;
+                arg += 2;
+            }
+        }
+        return arg + p.f;
+    }
+
+    @NEVER_INLINE
+    private static void inc(Phi01 p, int inc) {
+        p.f += inc;
+    }
 }

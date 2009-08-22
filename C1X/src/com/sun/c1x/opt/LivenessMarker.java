@@ -144,6 +144,7 @@ public class LivenessMarker {
             i.inputValuesDo(valueMarker);
             i.setFlag(Instruction.Flag.LiveSideEffect);
         } else if (i.checkFlag(Instruction.Flag.LiveStore)) {
+            // instruction is a store that cannot be eliminated
             i.inputValuesDo(valueMarker);
             i.setFlag(Instruction.Flag.LiveSideEffect);
         }

@@ -64,7 +64,7 @@ public class BlockBegin extends Instruction {
     public final int blockID;
 
     private int blockFlags;
-    private ValueStack state;
+    private ValueStack stateBefore;
     private BlockEnd end;
     private final List<BlockBegin> predecessors;
 
@@ -163,17 +163,18 @@ public class BlockBegin extends Instruction {
      * Gets the state at the start of this block.
      * @return the state at the start of this block
      */
-    public ValueStack state() {
-        return state;
+    @Override
+    public ValueStack stateBefore() {
+        return stateBefore;
     }
 
     /**
      * Sets the initial state for this block.
-     * @param state the state for this block
+     * @param stateBefore the state for this block
      */
-    public void setState(ValueStack state) {
-        assert this.state == null;
-        this.state = state;
+    public void setStateBefore(ValueStack stateBefore) {
+        assert this.stateBefore == null;
+        this.stateBefore = stateBefore;
     }
 
     /**
@@ -359,7 +360,7 @@ public class BlockBegin extends Instruction {
     }
 
     public void merge(ValueStack newState) {
-        ValueStack existingState = state;
+        ValueStack existingState = stateBefore;
 
         if (existingState == null) {
             // this is the first state for the block
@@ -382,7 +383,7 @@ public class BlockBegin extends Instruction {
                 insertLoopPhis(newState);
             }
 
-            state = newState;
+            stateBefore = newState;
         } else {
 
             if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {

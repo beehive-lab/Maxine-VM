@@ -132,15 +132,15 @@ public class GraphBuilder {
             iterateAllBlocks();
         }
 
-        if (syncHandler != null && syncHandler.state() != null) {
+        if (syncHandler != null && syncHandler.stateBefore() != null) {
             Instruction lock = null;
             if (method.isSynchronized()) {
                 curBlock = syncHandler;
                 lastInstr = syncHandler;
-                curState = syncHandler.state().copy();
+                curState = syncHandler.stateBefore().copy();
                 lock = rootMethodSynchronizedObject;
-                syncHandler.state().unlock(); // pop the null off the stack
-                syncHandler.state().lock(scope, lock);
+                syncHandler.stateBefore().unlock(); // pop the null off the stack
+                syncHandler.stateBefore().lock(scope, lock);
             }
             fillSyncHandler(lock, syncHandler, true);
         }
@@ -154,7 +154,7 @@ public class GraphBuilder {
         if (osrBCI >= 0) {
             BlockBegin osrBlock = blockMap.get(osrBCI);
             assert osrBlock.wasVisited();
-            if (!osrBlock.state().stackEmpty()) {
+            if (!osrBlock.stateBefore().stackEmpty()) {
                 throw new Bailout("cannot OSR with non-empty stack");
             }
         }
@@ -185,20 +185,20 @@ public class GraphBuilder {
         lastInstr = start;
         curState = state;
 
-        start.setState(state.copy());
+        start.setStateBefore(state.copy());
         if (method().isSynchronized()) {
             rootMethodSynchronizedObject = synchronizedObject(initialState, method());
             genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         }
 
         Base base = new Base(newHeaderBlock, osrEntry);
-        appendWithBCI(base, 0, false);
+        appendWithoutOptimization(base, 0);
         start.setEnd(base);
 
-        if (base.standardEntry().state() == null) {
+        if (base.standardEntry().stateBefore() == null) {
             base.standardEntry().merge(state);
         }
-        assert base.standardEntry().state() != null;
+        assert base.standardEntry().stateBefore() != null;
         return start;
     }
 
@@ -434,7 +434,7 @@ public class GraphBuilder {
         }
         assert entry.bci() == h.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
-        assert entry.state() == null || s.locksSize() == entry.state().locksSize() : "locks do not match";
+        assert entry.stateBefore() == null || s.locksSize() == entry.stateBefore().locksSize() : "locks do not match";
 
         // exception handler starts with an empty expression stack
         s.truncateStack(curScopeData.callerStackSize());
@@ -685,7 +685,7 @@ public class GraphBuilder {
     void genThrow(int bci) {
         ValueStack stateBefore = curState.immutableCopy();
         Throw t = new Throw(apop(), stateBefore);
-        appendWithBCI(t, bci, false); // don't bother trying to canonicalize throws
+        appendWithoutOptimization(t, bci);
     }
 
     void genCheckCast() {
@@ -1017,7 +1017,7 @@ public class GraphBuilder {
                 assert curState.locksSize() == i + 1;
                 Instruction object = curState.lockAt(i);
                 if (!object.isAppended()) {
-                    appendWithBCI(object, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+                    appendWithoutOptimization(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
                 }
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
@@ -1044,7 +1044,7 @@ public class GraphBuilder {
 
             // The current bci() is in the wrong scope, so use the bci() of
             // the continuation point.
-            appendWithBCI(gotoCallee, scopeData.continuation().bci(), false);
+            appendWithoutOptimization(gotoCallee, scopeData.continuation().bci());
             scopeData.incrementNumberOfReturns();
             return;
         }
@@ -1060,7 +1060,7 @@ public class GraphBuilder {
 
     void genMonitorEnter(Instruction x, int bci) {
         ValueStack stateBefore = curState.immutableCopy();
-        appendWithBCI(new MonitorEnter(x, curState.lock(scope(), x), stateBefore), bci, false);
+        appendWithoutOptimization(new MonitorEnter(x, curState.lock(scope(), x), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1069,7 +1069,7 @@ public class GraphBuilder {
             throw new Bailout("monitor stack underflow");
         }
         ValueStack stateBefore = curState.immutableCopy();
-        appendWithBCI(new MonitorExit(x, curState.unlock(), stateBefore), bci, false);
+        appendWithoutOptimization(new MonitorExit(x, curState.unlock(), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1077,7 +1077,7 @@ public class GraphBuilder {
         if (curState.locksSize() < 1) {
             throw new Bailout("monitor stack underflow");
         }
-        appendWithBCI(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci, false);
+        appendWithoutOptimization(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
@@ -1198,11 +1198,15 @@ public class GraphBuilder {
     }
 
     private Instruction appendConstant(CiConstant type) {
-        return appendWithBCI(new Constant(type), bci(), false); // don't bother trying to canonicalize/lvn a constant
+        return appendWithBCI(new Constant(type), bci(), false);
     }
 
     private Instruction append(Instruction x) {
         return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
+    }
+
+    private Instruction appendWithoutOptimization(Instruction x, int bci) {
+        return appendWithBCI(x, bci, false);
     }
 
     private Instruction appendWithBCI(Instruction x, int bci, boolean canonicalize) {
@@ -1249,10 +1253,6 @@ public class GraphBuilder {
                 }
             }
 
-            if (x instanceof BlockEnd) {
-                ((BlockEnd) x).setStateAfter(curState.immutableCopy());
-            }
-
             if (x.canTrap()) {
                 // connect the instruction to any exception handlers
                 assert exceptionState != null || !hasHandler() : "must have setup exception state";
@@ -1285,8 +1285,8 @@ public class GraphBuilder {
         assert !jsrStartBlock.wasVisited();
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
         gotoSub.setStateAfter(curState);
-        assert jsrStartBlock.state() == null;
-        jsrStartBlock.setState(curState.copy());
+        assert jsrStartBlock.stateBefore() == null;
+        jsrStartBlock.setStateBefore(curState.copy());
         append(gotoSub);
         curBlock.setEnd(gotoSub);
         lastInstr = curBlock = jsrStartBlock;
@@ -1295,7 +1295,7 @@ public class GraphBuilder {
 
         iterateAllBlocks();
 
-        if (cont.state() != null) {
+        if (cont.stateBefore() != null) {
             if (!cont.wasVisited()) {
                 scopeData.parent.addToWorkList(cont);
             }
@@ -1450,6 +1450,7 @@ public class GraphBuilder {
             return cannotInline(target, "compilation already too big " + "(" + compilation.totalInstructions() + " insts)");
         }
         if (compilation.runtime.mustNotInline(target)) {
+            C1XMetrics.InlineForbiddenMethods++;
             return cannotInline(target, "inlining excluded by runtime");
         }
         if (compilation.runtime.mustNotCompile(target)) {
@@ -1560,7 +1561,7 @@ public class GraphBuilder {
             // the block is a loop header, so we have to insert a goto
             Goto gotoCallee = new Goto(calleeStartBlock, null, false);
             gotoCallee.setStateAfter(curState);
-            appendWithBCI(gotoCallee, 0, false);
+            appendWithoutOptimization(gotoCallee, 0);
             curBlock.setEnd(gotoCallee);
             calleeStartBlock.merge(calleeState);
             lastInstr = curBlock = calleeStartBlock;
@@ -1623,7 +1624,7 @@ public class GraphBuilder {
     private Instruction synchronizedObject(ValueStack state, RiMethod target) {
         if (target.isStatic()) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
-            return appendWithBCI(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+            return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         }
         else {
             return state.localAt(0);
@@ -1653,18 +1654,18 @@ public class GraphBuilder {
             // go forward to the end of the block
             lastInstr = lastInstr.next();
         }
-        curState = syncHandler.state().copy();
+        curState = syncHandler.stateBefore().copy();
 
         assert !syncHandler.wasVisited() : "synch handler already visited";
 
         curBlock.setWasVisited(true);
-        Instruction exception = appendWithBCI(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+        Instruction exception = appendWithoutOptimization(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI);
 
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
         if (lock != null) {
             assert curState.locksSize() > 0 && curState.lockAt(curState.locksSize() - 1) == lock;
             if (!lock.isAppended()) {
-                lock = appendWithBCI(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI, false);
+                lock = appendWithoutOptimization(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
             // exit the monitor
             genMonitorExit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -1708,7 +1709,7 @@ public class GraphBuilder {
                 // now parse the block
                 killMemoryMap();
                 curBlock = b;
-                curState = b.state().copy();
+                curState = b.stateBefore().copy();
                 lastInstr = b;
                 iterateBytecodesForBlock(b.bci());
             }
@@ -1743,8 +1744,8 @@ public class GraphBuilder {
         BlockBegin target = scopeData.blockAt(osrBCI);
         assert target != null && target.isOsrEntry();
 
-        ValueStack state = target.state().copy();
-        ir.osrEntryBlock.setState(state);
+        ValueStack state = target.stateBefore().copy();
+        ir.osrEntryBlock.setStateBefore(state);
 
         killMemoryMap();
         curBlock = ir.osrEntryBlock;
@@ -2057,13 +2058,14 @@ public class GraphBuilder {
 
         // connect to begin and set state
         // NOTE that inlining may have changed the block we are parsing
-        assert end != null;
+        assert end != null : "end should exist after iterating over bytecodes";
+        assert curBlock.end() == null : "block already has an end";
+        end.setStateAfter(curState.immutableCopy());
         curBlock.setEnd(end);
-        end.setStateAfter(curState);
         // propagate the state
         for (BlockBegin succ : end.successors()) {
             assert succ.predecessors().contains(curBlock);
-            succ.merge(curState);
+            succ.merge(end.stateAfter());
             scopeData.addToWorkList(succ);
         }
         return end;
@@ -2075,7 +2077,7 @@ public class GraphBuilder {
 
     private void genMonitorEnter(int bci, ValueStack stateBefore) {
         Instruction object = apop();
-        appendWithBCI(new MonitorEnter(object, curState.lock(scope(), object), stateBefore), bci, false);
+        appendWithoutOptimization(new MonitorEnter(object, curState.lock(scope(), object), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 

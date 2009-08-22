@@ -269,7 +269,8 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
-        DoDeadCodeElimination1 = ____;
+        DoDeadCodeElimination1             = ____;
+        DoDeadCodeElimination2             = ____;
         DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;

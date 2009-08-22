@@ -129,7 +129,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
         BlockBegin osrEntry = compilation.hir().osrEntryBlock;
-        ValueStack entryState = osrEntry.state();
+        ValueStack entryState = osrEntry.stateBefore();
         int numberOfLocks = entryState.locksSize();
 
         // we jump here if osr happens with the interpreter

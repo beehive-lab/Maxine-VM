@@ -102,15 +102,19 @@ public class IR {
         // do basic optimizations
         if (C1XOptions.DoNullCheckElimination) {
             new NullCheckEliminator(this);
+            verifyAndPrint("After null check elimination");
         }
         if (C1XOptions.DoDeadCodeElimination1) {
             new LivenessMarker(this).removeDeadCode();
+            verifyAndPrint("After dead code elimination");
         }
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
+            verifyAndPrint("After CEE elimination");
         }
         if (C1XOptions.DoBlockMerging) {
             new BlockMerger(this);
+            verifyAndPrint("After blockmerging");
         }
     }
 
@@ -201,11 +205,11 @@ public class IR {
         newSucc.setEnd(e);
         // setup states
         ValueStack s = source.end().stateAfter();
-        newSucc.setState(s.copy());
+        newSucc.setStateBefore(s.copy());
         e.setStateAfter(s.copy());
-        assert newSucc.state().localsSize() == s.localsSize();
-        assert newSucc.state().stackSize() == s.stackSize();
-        assert newSucc.state().locksSize() == s.locksSize();
+        assert newSucc.stateBefore().localsSize() == s.localsSize();
+        assert newSucc.stateBefore().stackSize() == s.stackSize();
+        assert newSucc.stateBefore().locksSize() == s.locksSize();
         // link predecessor to new block
         source.end().substituteSuccessor(target, newSucc);
 

@@ -181,7 +181,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // Emit moves from physical registers / stack slots to virtual registers
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.state(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
 
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
@@ -244,7 +244,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.state().allLivePhis(currentBlock)) {
+        for (Phi phi : currentBlock.stateBefore().allLivePhis(currentBlock)) {
             operandForPhi(phi);
         }
 
@@ -1868,7 +1868,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, virtualRegisterNumber + maxPhis * 2);
 
-                ValueStack suxState = sux.state();
+                ValueStack suxState = sux.stateBefore();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
                     moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));

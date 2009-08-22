@@ -50,7 +50,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param block the block to apply the simplification to
      */
     public void apply(BlockBegin block) {
-        ValueStack state = block.state();
+        ValueStack state = block.stateBefore();
         for (int i = 0; i < state.stackSize(); i++) {
             simplify(state.stackAt(i));
         }
@@ -84,7 +84,7 @@ public class PhiSimplifier implements BlockClosure {
             for (int i = 0; i < max; i++) {
                 Instruction oldInstr = phi.operandAt(i);
 
-                if (oldInstr == null || oldInstr.isIllegal()) {
+                if (oldInstr == null || oldInstr.isIllegal() || oldInstr.isDeadPhi()) {
                     // if one operand is illegal, make the entire phi illegal
                     phi.makeDead();
                     phi.clearFlag(Instruction.Flag.PhiVisited);
