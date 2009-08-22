@@ -65,7 +65,7 @@ public abstract class Instruction {
         LiveControl,        // live for control dependencies
         LiveSideEffect,     // live for possible side-effects only
         LiveStore,          // instruction is a store
-        PhiDead,         // phi is illegal because local is dead
+        PhiDead,            // phi is illegal because local is dead
         PhiCannotSimplify,  // phi cannot be simplified
         PhiVisited;         // phi has been visited during simplification
 

@@ -85,8 +85,8 @@ public class BlockMerger implements BlockClosure {
                 } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
                     // the successor has multiple predecessors, but this block is empty
                     // go through all phis in the successor block
-                    assert sux.state().scope() == oldEnd.stateAfter().scope();
-                    if (block.state().hasPhisFor(block)) {
+                    assert sux.stateBefore().scope() == oldEnd.stateAfter().scope();
+                    if (block.stateBefore().hasPhisFor(block)) {
                         // can't skip a block that has phis
                         return false;
                     }
@@ -174,7 +174,7 @@ public class BlockMerger implements BlockClosure {
     private void verifyStates(BlockBegin block, BlockBegin sux) {
         // verify that state at the end of block and at the beginning of sux are equal
         // no phi functions must be present at beginning of sux
-        ValueStack suxState = sux.state();
+        ValueStack suxState = sux.stateBefore();
         ValueStack endState = block.end().stateAfter();
         while (endState.scope() != suxState.scope()) {
             // match up inlining level

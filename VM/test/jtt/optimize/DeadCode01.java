@@ -18,33 +18,37 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package jtt.optimize;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0=4; 1=5; 2=6; 3=4; 4=5; 6=7
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int GlobalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int InlinedMethods;
-    public static int InlinedIntrinsics;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
-    public static int InlineForbiddenMethods;
-    public static int NullCheckIterations;
-    public static int NullCheckEliminations;
-    public static int NullChecksRedundant;
-    public static int EquivalentConstantsMerged;
-    public static int EquivalentConstantsChecked;
-    public static int ConditionalEliminations;
-    public static int BlocksMerged;
-    public static int NestedIfOpsRemoved;
-    public static int BlocksSkipped;
-    public static int DeadCodeEliminated;
+public class DeadCode01 {
+
+    public static int test(int arg) {
+        int p = arg;
+        if (p > 2) {
+            p += 1;
+            arg += 10;
+        } else {
+            p += 2;
+            arg += 20;
+            if (p > 3) {
+                p += 1;
+                arg += 10;
+                if (p > 4) {
+                    p += 1;
+                    arg += 10;
+                } else {
+                    p += 2;
+                    arg += 20;
+                }
+            } else {
+                p += 2;
+                arg += 20;
+            }
+        }
+        return p;
+    }
 }

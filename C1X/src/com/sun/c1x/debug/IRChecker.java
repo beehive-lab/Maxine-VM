@@ -53,6 +53,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     }
 
     private final IR ir;
+    private final BasicInstructionChecker basicChecker = new BasicInstructionChecker();
 
     /**
      * Creates a new IRChecker for the specified IR.
@@ -69,7 +70,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        checkInstruction(i);
         Instruction x = i.x();
         Instruction y = i.y();
 
@@ -126,7 +126,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitLogicOp(LogicOp i) {
-        checkInstruction(i);
         Instruction x = i.x();
         Instruction y = i.y();
 
@@ -157,7 +156,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNegateOp(NegateOp i) {
-        checkInstruction(i);
         assertBasicType(i, i.x().type().basicType);
     }
 
@@ -168,7 +166,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitCompareOp(CompareOp i) {
-        checkInstruction(i);
         Instruction x = i.x();
         Instruction y = i.y();
 
@@ -201,7 +198,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitIfOp(IfOp i) {
-        checkInstruction(i);
         if (i.opcode() != Bytecodes.ILLEGAL) {
             fail("Opcode for IfOp instruction must be ILLEGAL");
         }
@@ -220,7 +216,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitShiftOp(ShiftOp i) {
-        checkInstruction(i);
         switch (i.opcode()) {
             case Bytecodes.ISHL:
             case Bytecodes.ISHR:
@@ -249,7 +244,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitConvert(Convert i) {
-        checkInstruction(i);
         switch (i.opcode()) {
             case Bytecodes.I2L:
                 assertBasicType(i, BasicType.Long);
@@ -319,7 +313,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNullCheck(NullCheck i) {
-        checkInstruction(i);
         if (i.object() == null) {
             fail("There is no instruction producing the object to check against null");
         }
@@ -334,7 +327,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitLoadField(LoadField i) {
-        checkInstruction(i);
         assertBasicType(i, i.field().basicType().stackType());
         Instruction object = i.object();
         if (object != null) {
@@ -352,7 +344,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitStoreField(StoreField i) {
-        checkInstruction(i);
         assertBasicType(i.value(), i.field().basicType().stackType());
         Instruction object = i.object();
         if (object != null) {
@@ -370,7 +361,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitLoadIndexed(LoadIndexed i) {
-        checkInstruction(i);
         assertBasicType(i.array(), BasicType.Object);
         assertBasicType(i.index(), BasicType.Int);
         assertBasicType(i, i.elementType().stackType());
@@ -384,7 +374,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
-        checkInstruction(i);
         assertBasicType(i.array(), BasicType.Object);
         assertBasicType(i.index(), BasicType.Int);
         assertBasicType(i.value(), i.elementType().stackType());
@@ -399,7 +388,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitArrayLength(ArrayLength i) {
-        checkInstruction(i);
         assertBasicType(i.array(), BasicType.Object);
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
@@ -412,7 +400,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitConstant(Constant i) {
-        checkInstruction(i);
     }
 
     /**
@@ -421,7 +408,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitExceptionObject(ExceptionObject i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Object);
     }
 
@@ -431,7 +417,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     */
     @Override
     public void visitLocal(Local i) {
-        checkInstruction(i);
         if (i.javaIndex() < 0) {
             fail("Java index of Local instruction must be greater then or equal to zero");
         }
@@ -444,7 +429,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     */
     @Override
     public void visitOsrEntry(OsrEntry i) {
-        checkInstruction(i);
         // TODO: this type should probably be BasicType.Word in the future
         assertBasicType(i, BasicType.Jsr);
     }
@@ -456,14 +440,13 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitPhi(Phi i) {
-        checkInstruction(i);
         if (!i.isIllegal()) {
             for (int j = 0; j < i.operandCount(); j++) {
                 assertBasicType(i.operandAt(j), i.type().basicType);
             }
         }
         // if the phi instruction corresponds to a local variable, checks if the local index is valid
-        if (i.isLocal() && (i.localIndex() >= i.block().state().scope().method.maxLocals() || i.localIndex() < 0)) {
+        if (i.isLocal() && (i.localIndex() >= i.block().stateBefore().scope().method.maxLocals() || i.localIndex() < 0)) {
             fail("Phi refers to an invalid local variable");
         }
     }
@@ -474,7 +457,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitProfileCall(ProfileCall i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Void);
         assertNonNull(i.method(), "Method being profiled must not be null");
         if (i.bci() < 0) {
@@ -488,7 +470,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitProfileCounter(ProfileCounter i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Void);
         assertNonNull(i.mdo(), "Instruction that produces the method data object must not be null");
         if (i.increment() > 0) {
@@ -502,7 +483,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitRoundFP(RoundFP i) {
-        checkInstruction(i);
         switch (i.type().basicType) {
             case Float:
                 assertBasicType(i.value(), BasicType.Float);
@@ -521,7 +501,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitMonitorEnter(MonitorEnter i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.object(), BasicType.Object);
     }
@@ -532,7 +511,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitMonitorExit(MonitorExit i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.object(), BasicType.Object);
     }
@@ -543,14 +521,8 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitBlockBegin(BlockBegin i) {
-        checkInstruction(i);
-        if (i.state() == null) {
-            fail("Block must have initial state");
-        }
+        assertNonNull(i.stateBefore(), "Block must have initial state");
         assertBasicType(i, BasicType.Illegal);
-        if (i.type().basicType != BasicType.Illegal) {
-            fail("Instruction BlockBegin must have an Illegal type");
-        }
         if (i.depthFirstNumber() < -1) {
             fail("Block has an invalid depth first number");
         }
@@ -576,7 +548,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitBase(Base i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         if (i.isSafepoint()) {
             fail("Instruction Base is not a safepoint instruction ");
@@ -589,7 +560,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitGoto(Goto i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         if (i.successors().size() != 1) {
             fail("Goto instruction must have one successor");
@@ -603,7 +573,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitIf(If i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         if (!Instruction.sameBasicType(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
@@ -635,7 +604,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitInstanceOf(InstanceOf i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Int);
         assertBasicType(i.object(), BasicType.Object);
         assertNonNull(i.targetClass(), "targetClass in InsatanceOf instruction must be non null");
@@ -648,7 +616,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitReturn(Return i) {
-        checkInstruction(i);
         final Instruction result = i.result();
 
         BasicType retType = ir.compilation.method.signatureType().returnBasicType();
@@ -677,7 +644,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitLookupSwitch(LookupSwitch i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.value(), BasicType.Int);
 
@@ -699,7 +665,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitTableSwitch(TableSwitch i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.value(), BasicType.Int);
     }
@@ -710,7 +675,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitThrow(Throw i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.exception(), BasicType.Object);
         assertInstanceType(i.exception().declaredType());
@@ -723,7 +687,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitIntrinsic(Intrinsic i) {
-        checkInstruction(i);
         if (i.isIllegal()) {
             fail("Result type of Intrinsic instruction must not be Illegal");
         }
@@ -736,7 +699,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitInvoke(Invoke i) {
-        checkInstruction(i);
         assertNonNull(i.target(), "Target of invoke cannot be null");
         assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
         RiSignature signatureType = i.target().signatureType();
@@ -791,7 +753,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNewMultiArray(NewMultiArray i) {
-        checkInstruction(i);
         final Instruction[] dimensions = i.dimensions();
         assertBasicType(i, BasicType.Object);
 
@@ -810,7 +771,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNewObjectArray(NewObjectArray i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Object);
         assertBasicType(i.length(), BasicType.Int);
         assertNotPrimitive(i.elementClass());
@@ -822,7 +782,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNewTypeArray(NewTypeArray i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Object);
         assertBasicType(i.length(), BasicType.Int);
         assertPrimitive(i.elementType());
@@ -834,7 +793,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitNewInstance(NewInstance i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Object);
         assertInstanceType(i.instanceClass());
     }
@@ -845,7 +803,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitCheckCast(CheckCast i) {
-        checkInstruction(i);
         assertBasicType(i, BasicType.Object);
         assertBasicType(i.object(), BasicType.Object);
         if (i.targetClass().basicType() != BasicType.Object) {
@@ -859,7 +816,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject i) {
-        checkInstruction(i);
         assertBasicType(i.object(), BasicType.Object);
     }
 
@@ -869,7 +825,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
-        checkInstruction(i);
         assertBasicType(i.object(), BasicType.Object);
     }
 
@@ -879,7 +834,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
-        checkInstruction(i);
         assertBasicType(i.object(), BasicType.Object);
     }
 
@@ -889,7 +843,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafePutObject(UnsafePutObject i) {
-        checkInstruction(i);
         assertBasicType(i.object(), BasicType.Object);
         assertBasicType(i.offset(), BasicType.Int);
     }
@@ -900,7 +853,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-        checkInstruction(i);
         if (i.base() != null) {
             assertBasicType(i.base(), BasicType.Long);
         }
@@ -915,25 +867,11 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitUnsafePutRaw(UnsafePutRaw i) {
-        checkInstruction(i);
         if (i.base() != null) {
             assertBasicType(i.base(), BasicType.Long);
         }
         if (i.index() != null) {
             assertBasicType(i.index(), BasicType.Int);
-        }
-    }
-
-    private void checkInstruction(final Instruction i) {
-        if (!i.isIllegal()) {
-            // legal instructions must have legal instructions as inputs
-            i.inputValuesDo(new LegalInstructionChecker(i));
-        }
-        if (i.subst() != null && i.subst() != i) {
-            fail("instruction has unresolved substitution");
-        }
-        if (i instanceof BlockEnd) {
-            checkBlockEnd((BlockEnd) i);
         }
     }
 
@@ -946,6 +884,8 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         Instruction instr = block;
         Instruction prev = block;
         while (instr != null) {
+            basicChecker.apply(instr);
+            instr.allValuesDo(basicChecker);
             instr.accept(this);
             prev = instr;
             instr = instr.next();
@@ -1018,6 +958,33 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         throw new IRCheckException(msg);
     }
 
+    private class BasicInstructionChecker implements InstructionClosure {
+
+        public Instruction apply(Instruction i) {
+            if (!i.isDeadPhi()) {
+                // legal instructions must have legal instructions as inputs
+                LegalInstructionChecker legalChecker = new LegalInstructionChecker(i);
+                i.inputValuesDo(legalChecker);
+                if (i instanceof Phi) {
+                    // phis are special, once again
+                    Phi phi = (Phi) i;
+                    int j = 0;
+                    while (j < phi.operandCount()) {
+                        legalChecker.apply(phi.operandAt(j));
+                        j++;
+                    }
+                }
+            }
+            if (i.subst() != null && i.subst() != i) {
+                fail("instruction has unresolved substitution");
+            }
+            if (i instanceof BlockEnd) {
+                checkBlockEnd((BlockEnd) i);
+            }
+            return i;
+        }
+    }
+
     private class LegalInstructionChecker implements InstructionClosure {
         private final Instruction i;
 
@@ -1026,6 +993,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
 
         public Instruction apply(Instruction x) {
+            assertNonNull(x, "must have input value for " + i);
             if (x.isIllegal()) {
                 fail("Instruction has illegal input value " + i + " <- " + x);
             }

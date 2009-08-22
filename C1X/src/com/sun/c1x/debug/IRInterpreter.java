@@ -100,7 +100,7 @@ public class IRInterpreter {
         private class InstructionMapInitializer implements BlockClosure {
 
             public void apply(BlockBegin block) {
-                ValueStack valueStack = block.state();
+                ValueStack valueStack = block.stateBefore();
                 ArrayList<Phi> phis = (ArrayList<Phi>) valueStack.allPhis(block);
 
                 for (Phi phi : phis) {
@@ -231,7 +231,7 @@ public class IRInterpreter {
             block = hir.startBlock;
             currentInstruction = hir.startBlock;
             result = null;
-            environment = new Environment(hir.startBlock.state(), arguments, hir);
+            environment = new Environment(hir.startBlock.stateBefore(), arguments, hir);
             instructionCounter = 1;
             throwable = null;
         }
