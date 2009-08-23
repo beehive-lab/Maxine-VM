@@ -25,8 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.grip.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * A collection of methods used to perform {@link UNSAFE_CAST unchecked type casts}.
@@ -161,87 +159,5 @@ public final class UnsafeLoophole {
     public static long doubleToLong(double value) {
         assert MaxineVM.isPrototyping();
         return nativeDoubleToLong(value);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Word nativeReferenceToWord(Reference reference);
-
-    @UNSAFE_CAST
-    public static Word referenceToWord(Reference reference) {
-        assert MaxineVM.isPrototyping();
-        return nativeReferenceToWord(reference);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Reference nativeWordToReference(Word word);
-
-    @UNSAFE_CAST
-    public static Reference wordToReference(Word word) {
-        assert MaxineVM.isPrototyping();
-        return nativeWordToReference(word);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Word nativeObjectToWord(Object object);
-
-    @UNSAFE_CAST
-    public static Word objectToWord(Object object) {
-        assert MaxineVM.isPrototyping();
-        return nativeObjectToWord(object);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Reference nativeWordToObject(Word word);
-
-    @UNSAFE_CAST
-    public static Object wordToObject(Word word) {
-        assert MaxineVM.isPrototyping();
-        return nativeWordToObject(word);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Word nativeGripToWord(Grip grip);
-
-    @UNSAFE_CAST
-    public static Word gripToWord(Grip grip) {
-        assert MaxineVM.isPrototyping();
-        return nativeGripToWord(grip);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Grip nativeWordToGrip(Word word);
-
-    @UNSAFE_CAST
-    public static Grip wordToGrip(Word word) {
-        assert MaxineVM.isPrototyping();
-        return nativeWordToGrip(word);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Reference nativeGripToReference(Grip grip);
-
-    @UNSAFE_CAST
-    public static Reference gripToReference(Grip grip) {
-        assert MaxineVM.isPrototyping();
-        return nativeGripToReference(grip);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native Grip nativeReferenceToGrip(Reference reference);
-
-    @UNSAFE_CAST
-    public static Grip referenceToGrip(Reference reference) {
-        assert MaxineVM.isPrototyping();
-        return nativeReferenceToGrip(reference);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeWordCast(Word word);
-
-    @UNSAFE_CAST
-    public static <Word_Type extends Word> Word_Type castWord(Word word) {
-        assert MaxineVM.isPrototyping();
-        final Class<Word_Type> type = null;
-        return StaticLoophole.cast(type, nativeWordCast(word));
     }
 }

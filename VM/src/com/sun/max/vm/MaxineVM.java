@@ -135,9 +135,6 @@ public final class MaxineVM {
         return host != null;
     }
 
-    /**
-     * @return the host VM that is currently running on the underlying hardware or simulator
-     */
     public static MaxineVM host() {
         if (host == null) {
             Prototype.initializeHost();
@@ -256,14 +253,21 @@ public final class MaxineVM {
     private static MaxineVM globalHostOrTarget = null;
 
     /**
-     * The MaxineInspector uses this to direct all AWT event threads to use a certain VM without the need to wrap all
-     * event listeners in VM.usingTarget().
+     * Sets the single unique VM context. Subsequent to the call, all calls to {@link #hostOrTarget()} will return
+     * the {@code vm} value passed to this method.
+     *
+     * @param vm the global VM object that will be the answer to all subsequent requests for a hot or target VM context request
      */
     @PROTOTYPE_ONLY
     public static void setGlobalHostOrTarget(MaxineVM vm) {
         globalHostOrTarget = vm;
     }
 
+    /**
+     * Gets the current VM context. All {@linkplain VMConfiguration configurable} parts of the VM consult
+     * the current VM context via this method.
+     * @return
+     */
     @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
