@@ -215,7 +215,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
-        return UnsafeLoophole.wordToGrip(accessor.compareAndSwapWord(hubOffset, UnsafeLoophole.gripToWord(suspectedGrip), UnsafeLoophole.gripToWord(forwardGrip.marked())));
+        return Grip.fromOrigin(accessor.compareAndSwapWord(hubOffset, suspectedGrip.toOrigin(), forwardGrip.marked().toOrigin()).asPointer());
     }
 
     @PROTOTYPE_ONLY

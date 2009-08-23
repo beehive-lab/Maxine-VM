@@ -69,29 +69,29 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         return grip;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public Grip fromReference(Reference reference) {
-        return UnsafeLoophole.referenceToGrip(reference);
+        return toGrip(reference);
     }
+
+    @UNSAFE_CAST
+    private static native Grip toGrip(Reference reference);
 
     @INLINE
-    public Grip fromWord(Word word) {
-        return UnsafeLoophole.wordToGrip(word);
-    }
-
-    public Word toWord(Grip grip) {
-        return UnsafeLoophole.gripToWord(grip);
-    }
-
-    @INLINE(override = true)
     public Grip fromOrigin(Pointer origin) {
-        return UnsafeLoophole.wordToGrip(origin);
+        return toGrip(origin);
     }
 
-    @INLINE(override = true)
+    @UNSAFE_CAST
+    private static native Grip toGrip(Pointer origin);
+
+    @INLINE
     public Pointer toOrigin(Grip grip) {
-        return UnsafeLoophole.gripToWord(grip).asPointer();
+        return toWord(grip).asPointer();
     }
+
+    @UNSAFE_CAST
+    private static native Word toWord(Grip grip);
 
     @INLINE
     public Grip updateGrip(Grip grip, Pointer origin) {
@@ -132,14 +132,14 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE
     public Grip marked(Grip grip) {
-        final Pointer pointer = toOrigin(grip).bitSet(0);
-        return UnsafeLoophole.wordToGrip(pointer);
+        final Pointer origin = toOrigin(grip).bitSet(0);
+        return Grip.fromOrigin(origin);
     }
 
     @INLINE
     public Grip unmarked(Grip grip) {
-        final Pointer pointer = toOrigin(grip).bitClear(0);
-        return UnsafeLoophole.wordToGrip(pointer);
+        final Pointer origin = toOrigin(grip).bitClear(0);
+        return Grip.fromOrigin(origin);
     }
 
     @INLINE
@@ -279,17 +279,17 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE
     public Grip readGrip(Grip grip, Offset offset) {
-        return UnsafeLoophole.referenceToGrip(toOrigin(grip).readReference(offset));
+        return toOrigin(grip).readReference(offset).toGrip();
     }
 
     @INLINE
     public Grip readGrip(Grip grip, int offset) {
-        return UnsafeLoophole.referenceToGrip(toOrigin(grip).readReference(offset));
+        return toOrigin(grip).readReference(offset).toGrip();
     }
 
     @INLINE
     public Grip getGrip(Grip grip, int displacement, int index) {
-        return UnsafeLoophole.referenceToGrip(toOrigin(grip).getReference(displacement, index));
+        return toOrigin(grip).getReference(displacement, index).toGrip();
     }
 
     @INLINE
@@ -413,7 +413,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE
     public void writeGrip(Grip grip, Offset offset, Grip value) {
-        toOrigin(grip).writeReference(offset, UnsafeLoophole.gripToReference(value));
+        toOrigin(grip).writeReference(offset, value.toReference());
     }
 
     @INLINE
@@ -453,12 +453,12 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE
     public void writeGrip(Grip grip, int offset, Grip value) {
-        toOrigin(grip).writeReference(offset, UnsafeLoophole.gripToReference(value));
+        toOrigin(grip).writeReference(offset, value.toReference());
     }
 
     @INLINE
     public void setGrip(Grip grip, int displacement, int index, Grip value) {
-        toOrigin(grip).setReference(displacement, index, UnsafeLoophole.gripToReference(value));
+        toOrigin(grip).setReference(displacement, index, value.toReference());
     }
 
     @INLINE
