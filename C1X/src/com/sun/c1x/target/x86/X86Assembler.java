@@ -2684,7 +2684,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    private final void prefix(Address adr, Register reg) {
+    private void prefix(Address adr, Register reg) {
 
         if (reg.encoding < 8) {
             if (adr.base.encoding >= MinEncodingNeedsRex) {

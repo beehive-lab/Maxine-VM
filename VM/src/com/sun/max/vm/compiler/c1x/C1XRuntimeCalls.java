@@ -194,7 +194,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8; // TODO (tw): return word size here!
+        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
     }
 
     @INLINE

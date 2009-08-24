@@ -22,6 +22,7 @@ package com.sun.c1x.ci;
 
 import java.util.*;
 
+import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -200,4 +201,6 @@ public interface RiMethod {
      * @return the interface method id
      */
     int interfaceID();
+
+    int iIndexInInterface();
 }
