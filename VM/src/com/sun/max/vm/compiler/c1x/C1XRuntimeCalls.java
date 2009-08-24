@@ -252,7 +252,7 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowClassCastException)
-    public static void runtimeThrowClassCastException() {
+    public static void runtimeThrowClassCastException(Object o) {
         throw new ClassCastException();
     }
 

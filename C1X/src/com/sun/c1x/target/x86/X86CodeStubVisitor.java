@@ -393,7 +393,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(stub.stub, Register.noreg, stub.obj.asRegister());
+        if (stub.obj.isIllegal()) {
+            masm.callGlobalStub(stub.stub);
+        } else {
+            masm.callGlobalStub(stub.stub, Register.noreg, stub.obj.asRegister());
+        }
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call

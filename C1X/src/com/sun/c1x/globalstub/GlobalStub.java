@@ -37,7 +37,7 @@ public enum GlobalStub {
     ThrowDiv0Exception(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
-    ThrowClassCastException(Void),
+    ThrowClassCastException(Void, Object),
     ThrowIncompatibleClassChangeError,
     SlowSubtypeCheck(Boolean, Object, Object),
     NewObjectArray(Object, Object, Int),

@@ -161,8 +161,6 @@ public abstract class AbstractAssembler {
 
     protected abstract void bangStackWithOffset(int bangOffset);
 
-    protected abstract int codeFillByte();
-
     protected void emitByte(int x) {
         codeBuffer.emitByte(x);
     }
