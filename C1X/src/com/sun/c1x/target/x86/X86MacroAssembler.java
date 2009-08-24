@@ -2046,7 +2046,7 @@ public class X86MacroAssembler extends X86Assembler {
         // Load the array length. (Positive movl does right thing on LP64.)
         movl(X86.rcx, new Address(X86.rdi, runtime.arrayLengthOffsetInBytes()));
         // Skip to start of data.
-        addptr(X86.rdi, runtime.arrayBaseOffsetInBytes(BasicType.Object));
+        addptr(X86.rdi, runtime.firstArrayElementOffsetInBytes(BasicType.Object));
 
         // Scan RCX words at [RDI] for an occurrence of RAX.
         // Set NZ/Z based on last compare.
@@ -2453,7 +2453,7 @@ public class X86MacroAssembler extends X86Assembler {
             movptr(new Address(obj, runtime.markOffsetInBytes()), runtime.markOopDescPrototype());
         }
 
-        movptr(new Address(obj, runtime.klassOffsetInBytes()), klass);
+        movptr(new Address(obj, runtime.hubOffsetInBytes()), klass);
         if (len.isValid()) {
             movl(new Address(obj, runtime.arrayLengthOffsetInBytes()), len);
         }

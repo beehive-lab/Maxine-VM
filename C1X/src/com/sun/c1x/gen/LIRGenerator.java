@@ -768,10 +768,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIROperand exceptionOpr = exception.result();
         CodeEmitInfo info = stateFor(x, x.stateAfter());
 
-        if (C1XOptions.PrintMetrics) {
-            incrementCounter(compilation.runtime.throwCountAddress(), 1);
-        }
-
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
         if (info.exceptionHandlers().size() == 0) {
@@ -1169,7 +1165,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore().copyLocks());
         }
-        lir.move(new LIRAddress(rcvr.result(), compilation.runtime.klassOffsetInBytes(), BasicType.Object), result, info);
+        lir.move(new LIRAddress(rcvr.result(), compilation.runtime.hubOffsetInBytes(), BasicType.Object), result, info);
         lir.move(new LIRAddress(result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), BasicType.Object), result);
     }
 
