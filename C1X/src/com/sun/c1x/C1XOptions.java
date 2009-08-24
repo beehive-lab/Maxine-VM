@@ -62,7 +62,7 @@ public class C1XOptions {
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
-    public static boolean TypeChecking                       = ____;
+    public static boolean IRChecking                         = ____;
     public static boolean FatalUnimplemented                 = ____;
 
     // canonicalizer settings

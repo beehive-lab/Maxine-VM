@@ -54,7 +54,6 @@ public class GlobalValueNumberer {
         int substCount = 0;
         BlockBegin startBlock = blocks.get(0);
         assert startBlock == ir.startBlock && startBlock.numberOfPreds() == 0 && startBlock.dominator() == null : "start block incorrect";
-//        assert startBlock.next() instanceof Base && startBlock.next().next() != null : "start block must not have instructions";
 
         // initial value map, with nesting 0
         valueMaps.put(startBlock, new ValueMap());

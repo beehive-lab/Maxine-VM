@@ -36,7 +36,7 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends InstructionVisitor implements BlockClosure {
+public class IRChecker extends InstructionVisitor {
 
     /**
      * The <code>IRCheckException</code> class is thrown when the IRChecker detects
@@ -53,6 +53,7 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     }
 
     private final IR ir;
+    private final HashMap<Integer, BlockBegin> idMap = new HashMap<Integer, BlockBegin>();
     private final BasicInstructionChecker basicChecker = new BasicInstructionChecker();
 
     /**
@@ -61,6 +62,60 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     public IRChecker(IR ir) {
         this.ir = ir;
+    }
+
+    public void check() {
+        ir.startBlock.iterateAnyOrder(new CheckBlock(), false);
+        ir.startBlock.iterateAnyOrder(new CheckReachable(), true);
+        ir.startBlock.iterateAnyOrder(new CheckInstructions(), false);
+    }
+
+    private class CheckBlock implements BlockClosure {
+        public void apply(BlockBegin block) {
+            // check every instruction in the block top to bottom
+            BlockBegin b = idMap.get(block.id());
+            if (b != null && b != block) {
+                fail("Block id is not unique " + block + " and " + b);
+            }
+            idMap.put(block.id(), block);
+            Instruction instr = block;
+            Instruction prev = block;
+            while (instr != null) {
+                if (instr instanceof BlockEnd) {
+                    assertNull(instr.next(), "BlockEnd should not have next: " + instr);
+                }
+                prev = instr;
+                instr = instr.next();
+            }
+            if (!(prev instanceof BlockEnd)) {
+                fail("Block should end with a BlockEnd " + block);
+            }
+            if (prev != block.end()) {
+                fail("Block refers to wrong block end " + block);
+            }
+            checkBlockEnd(block.end());
+        }
+    }
+
+    private class CheckReachable implements BlockClosure {
+        public void apply(BlockBegin block) {
+            // check that the block was reachable in the first pass
+            if (idMap.get(block.id()) != block) {
+                fail("Block is not reachable from start block: " + block);
+            }
+        }
+    }
+
+    private class CheckInstructions implements BlockClosure {
+        public void apply(BlockBegin block) {
+            Instruction instr = block;
+            while (instr != null) {
+                basicChecker.apply(instr);
+                instr.allValuesDo(basicChecker);
+                instr.accept(IRChecker.this);
+                instr = instr.next();
+            }
+        }
     }
 
     /**
@@ -441,13 +496,21 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     @Override
     public void visitPhi(Phi i) {
         if (!i.isIllegal()) {
-            for (int j = 0; j < i.operandCount(); j++) {
-                assertBasicType(i.operandAt(j), i.type().basicType);
-            }
+            checkPhi(i);
+        }
+    }
+
+    private void checkPhi(Phi i) {
+        BlockBegin block = i.block();
+        if (idMap.get(block.id()) != block) {
+            fail("Phi refers to unreachable block " + i + " " + block);
         }
         // if the phi instruction corresponds to a local variable, checks if the local index is valid
-        if (i.isLocal() && (i.localIndex() >= i.block().stateBefore().scope().method.maxLocals() || i.localIndex() < 0)) {
+        if (i.isLocal() && (i.localIndex() >= block.stateBefore().scope().method.maxLocals() || i.localIndex() < 0)) {
             fail("Phi refers to an invalid local variable");
+        }
+        for (int j = 0; j < i.operandCount(); j++) {
+            assertBasicType(i.operandAt(j), i.type().basicType);
         }
     }
 
@@ -521,6 +584,11 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
      */
     @Override
     public void visitBlockBegin(BlockBegin i) {
+        BlockBegin b = idMap.get(i.id());
+        if (b != null && b != i) {
+            fail("Block id is not unique " + i + " and " + b);
+        }
+        idMap.put(i.id(), i);
         assertNonNull(i.stateBefore(), "Block must have initial state");
         assertBasicType(i, BasicType.Illegal);
         if (i.depthFirstNumber() < -1) {
@@ -875,29 +943,6 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
         }
     }
 
-    /**
-     * Iterates over the HIR instructions of a given block, using this instruction visitor to
-     * perform type checking and validation.
-     * @param block the block with HIR instructions
-     */
-    public void apply(BlockBegin block) {
-        Instruction instr = block;
-        Instruction prev = block;
-        while (instr != null) {
-            basicChecker.apply(instr);
-            instr.allValuesDo(basicChecker);
-            instr.accept(this);
-            prev = instr;
-            instr = instr.next();
-        }
-        if (!(prev instanceof BlockEnd)) {
-            fail("Block should end with a BlockEnd " + block);
-        }
-        if (prev != block.end()) {
-            fail("Block refers to wrong block end " + block);
-        }
-    }
-
     private void assertBasicType(Instruction i, BasicType basicType) {
         assertNonNull(i, "Instruction should not be null");
         if (i.type().basicType != basicType) {
@@ -961,22 +1006,17 @@ public class IRChecker extends InstructionVisitor implements BlockClosure {
     private class BasicInstructionChecker implements InstructionClosure {
 
         public Instruction apply(Instruction i) {
+            if (i.subst() != i) {
+                fail("instruction has unresolved substitution " + i + " -> " + i.subst());
+            }
             if (!i.isDeadPhi()) {
                 // legal instructions must have legal instructions as inputs
                 LegalInstructionChecker legalChecker = new LegalInstructionChecker(i);
                 i.inputValuesDo(legalChecker);
                 if (i instanceof Phi) {
                     // phis are special, once again
-                    Phi phi = (Phi) i;
-                    int j = 0;
-                    while (j < phi.operandCount()) {
-                        legalChecker.apply(phi.operandAt(j));
-                        j++;
-                    }
+                    checkPhi((Phi) i);
                 }
-            }
-            if (i.subst() != null && i.subst() != i) {
-                fail("instruction has unresolved substitution");
             }
             if (i instanceof BlockEnd) {
                 checkBlockEnd((BlockEnd) i);

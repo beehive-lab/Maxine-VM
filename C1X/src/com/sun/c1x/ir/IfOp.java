@@ -92,7 +92,7 @@ public class IfOp extends Op2 {
     public void inputValuesDo(InstructionClosure closure) {
         super.inputValuesDo(closure);
         trueVal = closure.apply(trueVal);
-        trueVal = closure.apply(falseVal);
+        falseVal = closure.apply(falseVal);
     }
 
     /**

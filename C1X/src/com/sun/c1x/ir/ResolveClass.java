@@ -23,29 +23,29 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
-
 /**
  * An instruction that represents the runtime resolution of a Java class object. For example, an
  * ldc of a class constant that is unresolved.
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
- *
  */
 public class ResolveClass extends StateSplit {
 
-    public final RiType riType;
+    public final RiType type;
+    public final RiType.Representation portion;
     public final RiConstantPool constantPool;
     public final char cpi;
-    public ResolveClass(RiType type, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
-        super(BasicType.Object, stateBefore);
-        this.riType = type;
-        assert stateBefore != null;
-        setFlag(Flag.NonNull);
+
+    public ResolveClass(RiType type, RiType.Representation r, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+        super(type.getBasicType(r), stateBefore);
+        this.portion = r;
+        this.type = type;
         this.cpi = cpi;
         this.constantPool = constantPool;
+        setFlag(Flag.NonNull);
+        assert stateBefore != null : "resolution must record state";
     }
-
 
     @Override
     public void accept(InstructionVisitor v) {
@@ -55,5 +55,19 @@ public class ResolveClass extends StateSplit {
     @Override
     public boolean canTrap() {
         return true;
+    }
+
+    @Override
+    public int valueNumber() {
+        return 0x50000000 | type.hashCode();
+    }
+
+    @Override
+    public boolean valueEqual(Instruction x) {
+        if (x instanceof ResolveClass) {
+            ResolveClass r = (ResolveClass) x;
+            return r.portion == portion && r.type.equals(type);
+        }
+        return false;
     }
 }

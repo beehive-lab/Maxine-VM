@@ -186,20 +186,12 @@ public class CEEliminator implements BlockClosure {
         // Steal the bci for the goto from the sux
         ifPrev = ifPrev.setNext(newGoto, sux.bci());
 
-        // Adjust control flow graph
-        BlockUtil.disconnectEdge(block, tBlock);
-        BlockUtil.disconnectEdge(block, fBlock);
-        if (tBlock.numberOfPreds() == 0) {
-            BlockUtil.disconnectEdge(tBlock, sux); // tBlock is now unreachable
-        }
-        adjustExceptionEdges(block, tBlock);
-        if (fBlock.numberOfPreds() == 0) {
-            BlockUtil.disconnectEdge(fBlock, sux); // fBlock is now unreachable
-        }
-        adjustExceptionEdges(block, fBlock);
-
-        // update block end
+        // update block end (will remove this block from tBlock and fBlock predecessors)
         block.setEnd(newGoto);
+
+        // remove blocks if they became unreachable
+        tryRemove(tBlock);
+        tryRemove(fBlock);
 
         // substitute the phi if possible
         Phi suxAsPhi = (Phi) suxPhi;
@@ -214,5 +206,13 @@ public class CEEliminator implements BlockClosure {
         }
     }
 
+    private void tryRemove(BlockBegin succ) {
+        if (succ.numberOfPreds() == 0) {
+            // block just became unreachable
+            for (BlockBegin s : succ.end().successors()) {
+                s.predecessors().remove(succ);
+            }
+        }
+    }
 
 }

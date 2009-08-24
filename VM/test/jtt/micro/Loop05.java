@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,46 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.optimize;
+package jtt.micro;
 
 /*
- * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=false
+ * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
  */
-public class VN_InstanceOf01 {
-    static final Object object = new VN_InstanceOf01();
-
-    public static boolean test(int arg) {
-        if (arg == 0) {
-            return foo1();
+public class Loop05 {
+    public static String test(int arg) {
+        int count = 0;
+        while (--arg > 0) {
+            count++;
+            new Object();
         }
-        if (arg == 1) {
-            return foo2();
-        }
-        if (arg == 2) {
-            return foo3();
-        }
-        // do nothing
-        return false;
-    }
-
-    private static boolean foo1() {
-        boolean a = object instanceof VN_InstanceOf01;
-        boolean b = object instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo2() {
-        Object obj = new VN_InstanceOf01();
-        boolean a = obj instanceof VN_InstanceOf01;
-        boolean b = obj instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo3() {
-        boolean a = null instanceof VN_InstanceOf01;
-        boolean b = null instanceof VN_InstanceOf01;
-        return a | b;
+        return "ok" + count;
     }
 }

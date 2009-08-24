@@ -1447,7 +1447,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-                masm().movoop(kRInfo, k.encoding().asObject());
+                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub));
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -1556,7 +1556,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
                 if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.encoding().asObject());
+                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
                 }
             }
             assert obj != kRInfo : "must be different";
@@ -2819,7 +2819,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // but not necessarily exactly of type defaultType.
                 Label knownOk = new Label();
                 Label halt = new Label();
-                masm().movoop(tmp, defaultType.encoding().asObject());
+                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub).asObject());
                 if (basicType != BasicType.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
@@ -2943,7 +2943,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     RiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.encoding().asObject());
+                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub).asObject());
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
                         return;
