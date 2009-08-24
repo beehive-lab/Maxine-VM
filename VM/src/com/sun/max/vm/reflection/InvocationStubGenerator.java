@@ -27,6 +27,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
@@ -675,7 +676,7 @@ public class InvocationStubGenerator<T> {
     static final int InvocationTargetException_init_Throwable = register(createClassMethodConstant(InvocationTargetException.class, Throwable.class));
 
     static final int Object_toString = register(createClassMethodConstant(Object.class, SymbolTable.makeSymbol("toString")));
-    static final int UnsafeLoophole_castWord_Word = register(createClassMethodConstant(UnsafeLoophole.class, SymbolTable.makeSymbol("castWord"), Word.class));
+    static final int Boxing_castWord_Word = register(createClassMethodConstant(Boxing.class, SymbolTable.makeSymbol("castWord"), Word.class));
 
     static final int StringBuilder_append_int = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), int.class));
     static final int StringBuilder_append_String = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), String.class));
@@ -696,6 +697,7 @@ public class InvocationStubGenerator<T> {
 
     static final PoolConstant[] PROTOTYPE_CONSTANTS;
 
+    @PROTOTYPE_ONLY
     public static Method findValueUnboxMethod(Kind kind) {
         final String kindName = kind.name.toString();
         if (kind == Kind.REFERENCE) {

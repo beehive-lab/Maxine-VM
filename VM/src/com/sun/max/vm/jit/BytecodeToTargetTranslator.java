@@ -47,6 +47,7 @@ import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.jit.Stops.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.TemplateChooser.*;
@@ -143,6 +144,9 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
 
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
+        if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
+            FatalError.unexpected("Cannot JIT compile method that uses Word types: " + classMethodActor.format("%H.%n(%p)"));
+        }
         this.isTraceInstrumented = trace;
         this.templateTable = templateTable;
         this.codeBuffer = codeBuffer;
