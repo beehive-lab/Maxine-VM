@@ -24,7 +24,6 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A code manager that reserves and allocates virtual memory at a fixed address.
@@ -34,53 +33,16 @@ import com.sun.max.vm.runtime.*;
 public class FixedAddressCodeManager extends CodeManager {
 
     /**
-     * Constructs a new code manager that allocates code at a particular fixed address in a
-     * fixed number of regions, with the total size fixed to the total size of the code cache.
-     */
-    FixedAddressCodeManager() {
-        super(NUMBER_OF_RUNTIME_CODE_REGIONS);
-        setSize(Size.fromInt(CODE_CACHE_SIZE));
-    }
-
-    /**
      * Initialize this code manager.
      */
     @Override
     void initialize() {
         setStart(Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize));
-    }
-
-    /**
-     * Creates a new code region. In this implementation, the next empty memory region is
-     * selected and virtual memory space is allocated for it.
-     *
-     * @return a reference to the next empty code region
-     */
-    @Override
-    protected CodeRegion makeFreeCodeRegion() {
-        for (int i = 0; i < NUMBER_OF_RUNTIME_CODE_REGIONS; i++) {
-            final CodeRegion codeRegion = getRuntimeCodeRegion(i);
-            if (codeRegion.size().isZero()) {
-                final Address address = start().plus(i * RUNTIME_CODE_REGION_SIZE);
-                final Size size = Size.fromInt(RUNTIME_CODE_REGION_SIZE);
-                if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-                    ProgramError.unexpected("could not allocate runtime code region");
-                }
-                codeRegion.bind(address, size);
-                return codeRegion;
-            }
+        final Address address = start();
+        final Size size = runtimeCodeRegionSize.getValue();
+        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
+            ProgramError.unexpected("could not allocate runtime code region");
         }
-        FatalError.unexpected("cannot free code regions");
-        return null;
-    }
-
-    @Override
-    protected CodeRegion codePointerToRuntimeCodeRegion(Address codePointer) {
-        final int index = codePointer.minus(start()).dividedBy(RUNTIME_CODE_REGION_SIZE).toInt();
-        final CodeRegion codeRegion = runtimeCodeRegions[index];
-        if (codeRegion == null) {
-            return null;
-        }
-        return codeRegion;
+        runtimeCodeRegion.bind(address, size);
     }
 }

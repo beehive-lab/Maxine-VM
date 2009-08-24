@@ -302,12 +302,11 @@ public interface MaxVM {
     TeleCodeRegion teleBootCodeRegion();
 
     /**
-     * @return surrogates for all code {@link MemoryRegion}s in the VM, including those not yet allocated.
-     * Sorted in order of allocation.  Does not include the boot code region.
+     * @return surrogate for the special code runtime {@link MemoryRegion} of the VM.
      * @see #teleBootCodeRegion()
      * @see #allocatedMemoryRegions()
      */
-    IndexedSequence<TeleCodeRegion> teleCodeRegions();
+    TeleCodeRegion teleRuntimeCodeRegion();
 
     /**
      * @param address a memory address in the VM.

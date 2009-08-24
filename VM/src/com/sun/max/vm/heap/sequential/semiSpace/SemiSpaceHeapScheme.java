@@ -934,11 +934,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 Log.println("Verifying code objects...");
             }
 
-            for (CodeRegion codeRegion : Code.getCodeManager().getCodeRegions()) {
-                if (!codeRegion.size().isZero()) {
-                    DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
-                }
+            CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
+            if (!codeRegion.size().isZero()) {
+                DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
             }
+
         }
 
         if (Heap.traceGCPhases()) {

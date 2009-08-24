@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.code;
 
+import static com.sun.max.vm.VMOptions.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,51 +44,29 @@ import com.sun.max.vm.thread.*;
  * each other. A concrete implementation of this class must enforce this invariant.
  *
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 public abstract class CodeManager extends RuntimeMemoryRegion {
 
     /**
-     * The default size of a runtime code region.
+     * A VM option for specifying amount of memory to be reserved for runtime code region cache.
      */
-    protected static final int RUNTIME_CODE_REGION_SIZE = Ints.M;
+    public static final VMSizeOption runtimeCodeRegionSize =
+        register(new VMSizeOption("-XX:ReservedCodeCacheSize=", Size.M.times(64),
+            "Memory allocated for runtime code region cache."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * The default number of runtime code regions.
-     */
-    protected static final int NUMBER_OF_RUNTIME_CODE_REGIONS = 64;
-
-    /**
-     * The maximum size of the code cache.
-     */
-    public static final int CODE_CACHE_SIZE = NUMBER_OF_RUNTIME_CODE_REGIONS * RUNTIME_CODE_REGION_SIZE;
-
-    /**
-     * An array of the code regions.
+     * The code regions.
      */
     @INSPECTED
-    protected final CodeRegion[] runtimeCodeRegions;
+    protected static final CodeRegion runtimeCodeRegion = new CodeRegion("Code-Runtime");
 
     /**
-     * Get the code region at the specified index.
-     *
-     * @param index the index into the code regions array
-     * @return the code region at the specified index
+     * Get the runtime code region.
+     * @return the runtime code region
      */
-    protected CodeRegion getRuntimeCodeRegion(int index) {
-        return runtimeCodeRegions[index];
-    }
-
-    /**
-     * Creates a code manager that can manage a given number of number of code regions. Populate the array with empty
-     * CodeRegion objects, whose description is "Code-N", where N is the index in the code region array.
-     *
-     * @param numberOfRuntimeCodeRegions the maximum number of code regions that this code manager should manage
-     */
-    CodeManager(int numberOfRuntimeCodeRegions) {
-        runtimeCodeRegions = new CodeRegion[numberOfRuntimeCodeRegions];
-        for (int i = 0; i < numberOfRuntimeCodeRegions; i++) {
-            runtimeCodeRegions[i] = new CodeRegion("Code-" + i);
-        }
+    public CodeRegion getRuntimeCodeRegion() {
+        return runtimeCodeRegion;
     }
 
     /**
@@ -95,20 +74,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     void initialize() {
     }
-
-    /**
-     * The current code region that is the default for allocating new target methods.
-     */
-    @INSPECTED
-    private CodeRegion currentCodeRegion = Code.bootCodeRegion;
-
-    /**
-     * Allocates a new code region with free space, if necessary.
-     *
-     * @return a new code region with free space
-     */
-    protected abstract CodeRegion makeFreeCodeRegion();
-
 
     /**
      * Allocates memory in a code region for the code-related arrays of a given target method
@@ -123,6 +88,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
         int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
         final Size allocationSize;
+        CodeRegion currentCodeRegion;
 
         allocationSize = bundleSize;
 
@@ -130,18 +96,16 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
             // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
+            currentCodeRegion = runtimeCodeRegion;
+        } else {
+            currentCodeRegion = Code.bootCodeRegion;
         }
 
         Object allocationTraceDescription = Code.traceAllocation.getValue() ? (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor()) : null;
         Pointer start = currentCodeRegion.allocate(allocationSize, false);
         traceChunkAllocation(allocationTraceDescription, allocationSize, start);
         if (start.isZero()) {
-            currentCodeRegion = makeFreeCodeRegion();
-            start = currentCodeRegion.allocate(allocationSize, false);
-            traceChunkAllocation(allocationTraceDescription, allocationSize, start);
-            if (start.isZero()) {
-                FatalError.unexpected("could not allocate code");
-            }
+            FatalError.unexpected("could not allocate code");
         }
 
         targetMethod.setStart(start);
@@ -223,11 +187,15 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     synchronized void allocateRuntimeStub(RuntimeStub stub) {
         assert !MaxineVM.isPrototyping() : "Relocation of runtime stubs not yet supported.";
+        CodeRegion currentCodeRegion;
 
         if (!MaxineVM.isPrototyping()) {
             // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
+            currentCodeRegion = runtimeCodeRegion;
+        } else {
+            currentCodeRegion = Code.bootCodeRegion;
         }
 
         String allocationTraceDescription = Code.traceAllocation.getValue() ? stub.name() : null;
@@ -236,12 +204,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         Pointer stubCell = currentCodeRegion.allocate(allocationSize, true);
         traceChunkAllocation(allocationTraceDescription, allocationSize, stubCell);
         if (stubCell.isZero()) {
-            currentCodeRegion = makeFreeCodeRegion();
-            stubCell = currentCodeRegion.allocate(allocationSize, true);
-            traceChunkAllocation(allocationTraceDescription, allocationSize, stubCell);
-            if (stubCell.isZero()) {
-                FatalError.unexpected("could not allocate runtime stub");
-            }
+            FatalError.unexpected("could not allocate runtime stub");
         }
         Cell.plantArray(stubCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), stubLength);
         stub.setStart(stubCell.plus(Layout.byteArrayLayout().getElementOffsetInCell(0)));
@@ -279,16 +242,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     }
 
     /**
-     * Looks up the runtime code region in which the specified code pointer lies. This lookup
-     * does not include the boot code region.
-     *
-     * @param codePointer the code pointer
-     * @return a reference to the code region that contains the specified code pointer, if one exists; {@code null} if
-     *         the code pointer lies outside of all runtime code regions
-     */
-    protected abstract CodeRegion codePointerToRuntimeCodeRegion(Address codePointer);
-
-    /**
      * Looks up the code region in which the specified code pointer lies. This lookup includes
      * the boot code region.
      *
@@ -300,10 +253,10 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         if (Code.bootCodeRegion.contains(codePointer)) {
             return Code.bootCodeRegion;
         }
-        if (!contains(codePointer)) {
-            return null;
+        if (runtimeCodeRegion.contains(codePointer)) {
+            return runtimeCodeRegion;
         }
-        return codePointerToRuntimeCodeRegion(codePointer);
+        return null;
     }
 
     /**
@@ -336,10 +289,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         return null;
     }
 
-    public CodeRegion[] getCodeRegions() {
-        return runtimeCodeRegions;
-    }
-
     /**
      * Visit the cells in all the code regions in this code manager.
      *
@@ -357,23 +306,20 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
                 cell = cellVisitor.visitCell(cell);
             }
         }
-        for (CodeRegion codeRegion : runtimeCodeRegions) {
-            if (codeRegion != null) {
-                Pointer firstCell = codeRegion.start().asPointer();
-                Pointer cell = firstCell;
-                while (cell.lessThan(codeRegion.getAllocationMark())) {
-                    cell = DebugHeap.checkDebugCellTag(firstCell, cell);
-                    cell = cellVisitor.visitCell(cell);
-                }
-            }
+
+        Pointer firstCell = runtimeCodeRegion.start().asPointer();
+        Pointer cell = firstCell;
+        while (cell.lessThan(runtimeCodeRegion.getAllocationMark())) {
+            cell = DebugHeap.checkDebugCellTag(firstCell, cell);
+            cell = cellVisitor.visitCell(cell);
         }
     }
 
-    public Size getSize() {
-        Size size = Size.zero();
-        for (int i = 0; i < runtimeCodeRegions.length; i++) {
-            size = size.plus(runtimeCodeRegions[i].size());
-        }
-        return size;
+    /**
+     * Return size of runtime code region.
+     * @return
+     */
+    public Size getRuntimeCodeRegionSize() {
+        return runtimeCodeRegionSize.getValue();
     }
 }
