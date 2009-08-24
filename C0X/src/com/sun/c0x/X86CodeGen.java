@@ -20,18 +20,24 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.bytecode.BytecodeTableSwitch;
-import com.sun.c1x.bytecode.BytecodeLookupSwitch;
-import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.target.Target;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.target.x86.*;
-import com.sun.c1x.util.Util;
+import com.sun.c0x.C0XCompilation.Location;
 import com.sun.c1x.asm.Address;
 import com.sun.c1x.asm.Label;
-import com.sun.c0x.C0XCompilation.Location;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.RiBytecodeExtension;
+import com.sun.c1x.ci.RiField;
+import com.sun.c1x.ci.RiMethod;
+import com.sun.c1x.ci.RiType;
+import com.sun.c1x.target.Register;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.target.x86.X86;
+import com.sun.c1x.target.x86.X86Assembler;
+import com.sun.c1x.target.x86.X86FrameMap;
+import com.sun.c1x.target.x86.X86MacroAssembler;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 
 /**
@@ -169,6 +175,7 @@ public class X86CodeGen extends CodeGen {
         BasicType basicType = field.basicType();
         Register valReg = allocSrc(value, basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
+            // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             Register objReg = allocSrc(l, BasicType.Object);
             // XXX: write barrier
@@ -184,6 +191,7 @@ public class X86CodeGen extends CodeGen {
         BasicType basicType = field.basicType();
         Register valReg = allocDst(basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
+            // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             Register objReg = allocSrc(l, BasicType.Object);
             emitLoad(basicType, valReg, new Address(objReg, field.offset()));

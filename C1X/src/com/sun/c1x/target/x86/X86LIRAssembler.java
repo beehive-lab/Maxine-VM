@@ -1447,7 +1447,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub));
+                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -2543,9 +2543,10 @@ public class X86LIRAssembler extends LIRAssembler {
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movl(rscratch1, method.interfaceID());
         masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+        masm.addq(rscratch1, method.iIndexInInterface() * 8);
         addCallInfoHere(info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
-        masm.call(new Address(rscratch1, method.vtableIndex() * compilation.target.arch.wordSize));
+        masm.call(new Address(rscratch1, 0));
         addCallInfoHere(info);
     }
 
