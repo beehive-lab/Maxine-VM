@@ -89,7 +89,6 @@ public class CFGPrinter {
      * @param method the method for which a timestamp will be printed
      */
     public void printCompilation(RiMethod method) {
-        currentMethod = method;
         begin("compilation");
         out.print("name \" ").print(Util.format("%H::%n", method, true)).println('"');
         out.print("method \"").print(Util.format("%f %r %H.%n(%p)", method, true)).println('"');
