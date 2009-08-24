@@ -62,10 +62,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @PROTOTYPE_ONLY
     public static boolean COLLECT_TARGET_METHOD_STATS;
 
-    private final DynamicCompilerScheme compilerScheme;
+    /**
+     *  The compiler scheme that produced this target method.
+     */
+    public final DynamicCompilerScheme compilerScheme;
 
     @INSPECTED
     private final ClassMethodActor classMethodActor;
+
     @INSPECTED
     protected byte[] compressedJavaFrameDescriptors;
 
@@ -143,7 +147,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public final void cleanup() {
     }
-
 
 
     /**
@@ -816,14 +819,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Return the compiler scheme that produced this target method.
-     * @return the compiler scheme that produced this method
-     */
-    public final DynamicCompilerScheme compilerScheme() {
-        return compilerScheme;
-    }
-
-    /**
      * Links all the calls from this target method to other methods for which the exact method actor is known. Linking a
      * call means patching the operand of a call instruction that specifies the address of the target code to call. In
      * the case of a callee for which there is no target code available (i.e. it has not yet been compiled or it has
@@ -1046,15 +1041,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return 0;
     }
 
-    /**
-     *
-     * @param stackReferenceMapPreparer
-     * @param instructionPointer
-     * @param operandStackPointer
-     * @param refmapFramePointer
-     * @return
-     */
-    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer operandStackPointer, Pointer refmapFramePointer) {
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, refmapFramePointer, operandStackPointer);
     }
 }

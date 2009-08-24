@@ -577,6 +577,17 @@ public interface MaxVM {
     MaxThread threadContaining(Address address);
 
     /**
+     * Returns the target code execution address in a stack frame, either IP (top frame) or call return address.
+     * <br>
+     * Note that a platform-specific offset is applied to the stored address in
+     * non-top frames (see SPARC), except at a trap, to produce the actual call return address.
+     *
+     * @param stackFrame a VM stack frame
+     * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
+     */
+    Address getCodeAddress(StackFrame stackFrame);
+
+    /**
      * Creates a code location in the VM based on a memory address,
      * and thus anchored at a specific compilation.
      *
@@ -608,12 +619,12 @@ public interface MaxVM {
     TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position);
 
     /**
-     * Gets the return address in a stack frame.
+     * Creates a code location in the VM corresponding to the address in a stack frame, either IP (top frame) or call return address.
      *
-     * @param stackFrame a VM stack frame, presumed not to be the current top.
-     * @return location of the next target instruction to be executed when control is returned to the frame.
+     * @param stackFrame a VM stack frame
+     * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
      */
-    TeleCodeLocation getStackFrameReturnLocation(StackFrame stackFrame);
+    TeleCodeLocation createCodeLocation(StackFrame stackFrame);
 
     /**
      * Adds a observer for breakpoint changes in the VM.

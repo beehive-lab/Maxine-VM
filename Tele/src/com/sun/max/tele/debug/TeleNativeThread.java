@@ -564,7 +564,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     public Pointer getReturnAddress() {
         final StackFrame topFrame = frames().first();
         final StackFrame topFrameCaller = topFrame.callerFrame();
-        return topFrameCaller == null ? null : topFrameCaller.instructionPointer;
+        return topFrameCaller == null ? null : teleVM.getCodeAddress(topFrameCaller).asPointer();
     }
 
     /* (non-Javadoc)

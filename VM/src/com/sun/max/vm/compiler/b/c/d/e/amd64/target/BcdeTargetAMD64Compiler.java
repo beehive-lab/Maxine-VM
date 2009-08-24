@@ -254,7 +254,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                        Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
+                        Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
                         final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
@@ -271,7 +271,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                            Class<? extends Throwable> throwableClass = Trap.Number.getImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
+                            Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
                             final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
@@ -290,7 +290,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         }
                     }
                 }
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, stackPointer)) {
+                final Pointer ignoredOperandStackPointer = Pointer.zero();
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, ignoredOperandStackPointer)) {
                     return false;
                 }
                 break;

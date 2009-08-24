@@ -233,8 +233,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         }
 
         @Override
-        protected  EirStackSlot.Purpose adapterArgumentPurpose() {
-            // We  need to override with LOCAL here to get the outgoing registers for the parameters.
+        protected EirStackSlot.Purpose adapterArgumentPurpose() {
+            // We need to override with LOCAL here to get the outgoing registers for the parameters.
             return EirStackSlot.Purpose.LOCAL;
         }
 
@@ -272,7 +272,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Amount to retract to the stack: the adapter frame plus the parameters of the call. The following gives exactly that.
             // Note that the adapter does not save the callee frame pointer nor the return address on the stack. Instead, it exploits the
             // pushing of a register window by the callee to save these in local registers:  the frame pointer is already in a local register;
-            // the caller's address is saved in the SAVED_CALLER_ADDRESS register. No that this is only for calls from JIT.
+            // the caller's address is saved in the SAVED_CALLER_ADDRESS register. Note that this is only for calls from JIT.
             final int stackAmountInBytes = jitCallerStackOffset - SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
 
             // Return to the JITed caller. The frame adapter saved the call address in local register SAVED_CALLER_ADDRESS.
@@ -285,10 +285,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
             final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                assembler().ldx(optimizedCodeFramePointer, jitStackOffset32, longScratchRegister);
+                assembler().ldx(optimizedCodeStackPointer, jitStackOffset32, longScratchRegister);
                 assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
             } else {
-                assembler().lduw(optimizedCodeFramePointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
+                assembler().lduw(optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
                 assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
             }
         }

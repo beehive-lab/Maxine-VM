@@ -139,7 +139,10 @@ public interface MaxThread {
     Pointer instructionPointer();
 
     /**
-     * Gets the return address of the next-to-top frame on the stack. This will be null in the case where this thread is
+     * Gets the return address of the next-to-top frame on the stack: the next instruction to be executed when execution
+     * returns from the current frame.
+     * <br>
+     * The result will be null in the case where this thread is
      * in native code that was entered via a native method annotated with {@link C_FUNCTION}. The stub for such methods
      * do not leave the bread crumbs on the stack that record how to find caller frames.
      */

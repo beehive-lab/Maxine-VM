@@ -97,6 +97,13 @@ public class StackInspector extends Inspector {
                         stackInspector.refreshView(true);
                     }
                 }
+                @Override
+                public void setBiasSlotOffsets(boolean biasSlotOffsets) {
+                    super.setBiasSlotOffsets(biasSlotOffsets);
+                    if (stackInspector != null) {
+                        stackInspector.refreshView(true);
+                    }
+                }
             };
         }
         return globalPreferences;
@@ -215,7 +222,7 @@ public class StackInspector extends Inspector {
                 }
                 if (javaStackFrame instanceof AdapterStackFrame) {
                     name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
+                    if (javaStackFrame.targetMethod().compilerScheme.equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
                     } else {
                         toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";
