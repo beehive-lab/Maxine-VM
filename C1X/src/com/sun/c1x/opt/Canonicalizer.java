@@ -395,7 +395,7 @@ public class Canonicalizer extends InstructionVisitor {
                 // limit this optimization to the current basic block
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
-                                                i.lockStack(), i.stateBefore(), i.isLoaded()));
+                                                i.stateBefore(), i.isLoaded()));
                 }
             }
         }
@@ -444,7 +444,7 @@ public class Canonicalizer extends InstructionVisitor {
             if (v instanceof Convert) {
                 Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.lockStack()));
+                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.stateBefore()));
                 }
             }
         }
@@ -898,7 +898,7 @@ public class Canonicalizer extends InstructionVisitor {
             // fold comparisons between constants and convert to Goto
             Boolean result = ifcond.foldCondition(l.asConstant(), r.asConstant());
             if (result != null) {
-                setCanonical(new Goto(i.successor(result), i.stateBefore(), i.isSafepoint()));
+                setCanonical(new Goto(i.successor(result), i.stateAfter(), i.isSafepoint()));
                 return;
             }
         }
@@ -915,10 +915,10 @@ public class Canonicalizer extends InstructionVisitor {
             // this is a comparison of null against something that is not null
             if (ifcond == Condition.eql) {
                 // new() == null is always false
-                setCanonical(new Goto(i.falseSuccessor(), i.stateBefore(), i.isSafepoint()));
+                setCanonical(new Goto(i.falseSuccessor(), i.stateAfter(), i.isSafepoint()));
             } else if (ifcond == Condition.neq) {
                 // new() != null is always true
-                setCanonical(new Goto(i.trueSuccessor(), i.stateBefore(), i.isSafepoint()));
+                setCanonical(new Goto(i.trueSuccessor(), i.stateAfter(), i.isSafepoint()));
             }
         }
     }
@@ -941,7 +941,7 @@ public class Canonicalizer extends InstructionVisitor {
         //       lssSucc or gtrSucc.
         if (lssSucc == eqlSucc && eqlSucc == gtrSucc) {
             // all successors identical => simplify to: Goto
-            setCanonical(new Goto(lssSucc, i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(lssSucc, i.stateAfter(), i.isSafepoint()));
         } else {
             // two successors differ and two successors are the same => simplify to: If (x cmp y)
             // determine new condition & successors
@@ -963,6 +963,7 @@ public class Canonicalizer extends InstructionVisitor {
             } else {
                 throw Util.shouldNotReachHere();
             }
+            // TODO: the state after is incorrect here: should it be preserved from the original if?
             If canon = new If(cmp.x(), cond, nanSucc == tsux, cmp.y(), tsux, fsux, cmp.stateBefore(), i.isSafepoint());
             if (cmp.x() == cmp.y()) {
                 // re-canonicalize the new if
@@ -986,7 +987,7 @@ public class Canonicalizer extends InstructionVisitor {
             default:
                 throw Util.shouldNotReachHere();
         }
-        setCanonical(new Goto(succ, i.stateBefore(), i.isSafepoint()));
+        setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
     }
 
     @Override
@@ -999,20 +1000,22 @@ public class Canonicalizer extends InstructionVisitor {
             if (val >= i.lowKey() && val <= i.highKey()) {
                 succ = i.successors().get(val - i.lowKey());
             }
-            setCanonical(new Goto(succ, i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
             return;
         }
         int max = i.numberOfCases();
         if (max == 0) {
             // replace switch with Goto
             addInstr(v); // the value expression may produce side effects
-            setCanonical(new Goto(i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
             return;
         }
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.lowKey());
-            setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
+            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            newIf.setStateAfter(i.stateAfter());
+            setCanonical(newIf);
         }
     }
 
@@ -1029,20 +1032,22 @@ public class Canonicalizer extends InstructionVisitor {
                     break;
                 }
             }
-            setCanonical(new Goto(succ, i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(succ, i.stateAfter(), i.isSafepoint()));
             return;
         }
         int max = i.numberOfCases();
         if (max == 1) {
             // replace switch with Goto
             addInstr(v); // the value expression may produce side effects
-            setCanonical(new Goto(i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
+            setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
             return;
         }
         if (max == 2) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
-            setCanonical(new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), i.stateBefore(), i.isSafepoint()));
+            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            newIf.setStateAfter(i.stateAfter());
+            setCanonical(newIf);
         }
     }
 
@@ -1050,7 +1055,7 @@ public class Canonicalizer extends InstructionVisitor {
         if (i.base() instanceof ArithmeticOp) {
             // if the base is an arithmetic op, try reducing
             ArithmeticOp root = (ArithmeticOp) i.base();
-            if (!root.isPinned() && root.opcode() == Bytecodes.LADD) {
+            if (!root.isLive() && root.opcode() == Bytecodes.LADD) {
                 // match unsafe(x + y) if the x + y is not pinned
                 // try reducing (x + y) and (y + x)
                 Instruction y = root.y();

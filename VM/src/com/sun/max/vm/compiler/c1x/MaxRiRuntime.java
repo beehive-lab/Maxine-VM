@@ -229,7 +229,6 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
-    @Override
     public int overflowArgumentsSize(BasicType basicType) {
         // TODO: Return wordSize
         // Currently must be a constant!!
@@ -281,10 +280,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int sunMiscAtomicLongCSImplValueOffset() {
         throw Util.unimplemented();
-    }
-
-    public int arrayElementSize(BasicType type) {
-        throw Util.unimplemented(); // TODO: move usages to BasicType.elementSize
     }
 
     public int arrayOopDescHeaderSize(BasicType type) {
@@ -616,12 +611,10 @@ public class MaxRiRuntime implements RiRuntime {
         return globalConstantPool.canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
     }
 
-    @Override
     public Register threadRegister() {
         return X86.r14;
     }
 
-    @Override
     public int getJITStackSlotSize() {
         return JitStackFrameLayout.JIT_SLOT_SIZE;
     }

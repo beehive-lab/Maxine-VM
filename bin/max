@@ -424,6 +424,7 @@ function run_build() {
             jtt_tests="jtt/bytecode"
             jtt_tests="$jtt_tests jtt/except"
             jtt_tests="$jtt_tests jtt/optimize"
+            jtt_tests="$jtt_tests jtt/directives"
             jtt_tests="$jtt_tests jtt/lang"
             jtt_tests="$jtt_tests jtt/hotpath"
             jtt_tests="$jtt_tests jtt/reflect"

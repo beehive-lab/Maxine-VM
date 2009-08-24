@@ -30,32 +30,32 @@ public class VN_InstanceOf01 {
 
     public static boolean test(int arg) {
         if (arg == 0) {
-            return test1();
+            return foo1();
         }
         if (arg == 1) {
-            return test2();
+            return foo2();
         }
         if (arg == 2) {
-            return test3();
+            return foo3();
         }
         // do nothing
         return false;
     }
 
-    private static boolean test1() {
+    private static boolean foo1() {
         boolean a = object instanceof VN_InstanceOf01;
         boolean b = object instanceof VN_InstanceOf01;
         return a | b;
     }
 
-    private static boolean test2() {
+    private static boolean foo2() {
         Object obj = new VN_InstanceOf01();
         boolean a = obj instanceof VN_InstanceOf01;
         boolean b = obj instanceof VN_InstanceOf01;
         return a | b;
     }
 
-    private static boolean test3() {
+    private static boolean foo3() {
         boolean a = null instanceof VN_InstanceOf01;
         boolean b = null instanceof VN_InstanceOf01;
         return a | b;

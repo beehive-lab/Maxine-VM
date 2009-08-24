@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.ir.*;
+import com.sun.c1x.value.ValueStack;
 
 /**
  * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces
@@ -36,15 +37,20 @@ public class SubstitutionResolver implements BlockClosure, InstructionClosure {
      * @param block the block from which to start substitution
      */
     public SubstitutionResolver(BlockBegin block) {
-        block.iteratePreOrder(this);
+        block.iterateAnyOrder(this, false);
     }
 
     public void apply(BlockBegin block) {
         Instruction last = null;
+        if (block.exceptionHandlerStates() != null) {
+            for (ValueStack s : block.exceptionHandlerStates()) {
+                s.valuesDo(this);
+            }
+        }
         for (Instruction n = block; n != null; n = last.next()) {
             n.allValuesDo(this);
             if (n.subst() != n && last != null) {
-                last.setNext(n.next(), n.next().bci());
+                last.resetNext(n.next());
             } else {
                 last = n;
             }

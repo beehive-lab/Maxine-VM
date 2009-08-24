@@ -38,7 +38,6 @@ public abstract class UnsafeOp extends Instruction {
     public UnsafeOp(BasicType basicType, boolean isStore) {
         super(isStore ? BasicType.Void : basicType.stackType());
         this.basicType = basicType;
-        pin();
     }
 
     public BasicType basicType() {

@@ -103,7 +103,7 @@ public class X86LIRAssembler extends LIRAssembler {
             return new Address(base, addr.displacement());
         } else if (addr.index().isCpuRegister()) {
             Register index = addr.index().asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromInt(addr.scale().ordinal()), addr.displacement());
+            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else if (addr.index().isConstant()) {
             long addrOffset = (addr.index().asConstantPtr().asInt() << addr.scale().ordinal()) + addr.displacement();
             assert X86Assembler.isSimm32(addrOffset) : "must be";
@@ -129,7 +129,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
         BlockBegin osrEntry = compilation.hir().osrEntryBlock;
-        ValueStack entryState = osrEntry.state();
+        ValueStack entryState = osrEntry.stateBefore();
         int numberOfLocks = entryState.locksSize();
 
         // we jump here if osr happens with the interpreter
@@ -1337,8 +1337,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().mov(tmp3, len);
             }
+            int elemSize = compilation.target.sizeInBytes(op.type());
             masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(compilation.runtime.arrayElementSize(op.type())), op.klass().asRegister(), op.stub().entry);
+                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
         }
         masm().bind(op.stub().continuation);
     }
@@ -1446,7 +1447,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-                masm().movoop(kRInfo, k.encoding().asObject());
+                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub));
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -1555,7 +1556,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
                 if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.encoding().asObject());
+                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
                 }
             }
             assert obj != kRInfo : "must be different";
@@ -2818,7 +2819,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // but not necessarily exactly of type defaultType.
                 Label knownOk = new Label();
                 Label halt = new Label();
-                masm().movoop(tmp, defaultType.encoding().asObject());
+                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub).asObject());
                 if (basicType != BasicType.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
@@ -2942,7 +2943,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     RiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.encoding().asObject());
+                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub).asObject());
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
                         return;

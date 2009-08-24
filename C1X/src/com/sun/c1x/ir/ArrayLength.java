@@ -35,10 +35,10 @@ public class ArrayLength extends AccessArray {
     /**
      * Constructs a new ArrayLength instruction.
      * @param array the instruction producing the array
-     * @param lockStack the lock stack
+     * @param stateBefore the state before executing this instruction
      */
-    public ArrayLength(Instruction array, ValueStack lockStack) {
-        super(BasicType.Int, array, lockStack);
+    public ArrayLength(Instruction array, ValueStack stateBefore) {
+        super(BasicType.Int, array, stateBefore);
         if (array.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
@@ -64,7 +64,7 @@ public class ArrayLength extends AccessArray {
 
     @Override
     public void clearNullCheck() {
-        lockStack = null;
+        stateBefore = null;
         setFlag(Flag.NoNullCheck);
     }
 

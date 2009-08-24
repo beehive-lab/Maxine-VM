@@ -47,20 +47,11 @@ public class CompareOp extends Op2 {
      * Gets the value stack representing the state before the comparison is performed.
      * @return the state before the comparison is performed
      */
+    @Override
     public ValueStack stateBefore() {
         return stateBefore;
     }
 
-    /**
-     * Iterates over the other values in this instruction.
-     * @param closure the closure to apply to each value
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (stateBefore != null) {
-            stateBefore.valuesDo(closure);
-        }
-    }
 
     /**
      * Implements this instruction's half of the visitor pattern.

@@ -98,7 +98,7 @@ public class Phi extends Instruction {
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
-            state = block.predecessors().get(i).end().state();
+            state = block.predecessors().get(i).end().stateAfter();
         }
         return operandIn(state);
     }
@@ -141,8 +141,9 @@ public class Phi extends Instruction {
     /**
      * Make this phi illegal if types were not merged correctly.
      */
-    public void makeIllegal() {
+    public void makeDead() {
         setFlag(Flag.PhiCannotSimplify);
-        valueType = BasicType.Illegal;
+        setFlag(Flag.PhiDead);
     }
+
 }

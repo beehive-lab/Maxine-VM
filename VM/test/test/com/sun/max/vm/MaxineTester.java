@@ -73,7 +73,7 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
-    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 8,
+    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 10,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
