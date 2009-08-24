@@ -376,7 +376,7 @@ public final class Classes {
         try {
             return clazz.getDeclaredMethod(name, parameterTypes);
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
+            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
         }
     }
 

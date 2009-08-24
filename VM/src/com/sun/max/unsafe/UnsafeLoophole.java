@@ -22,8 +22,6 @@ package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 
 /**
@@ -36,128 +34,62 @@ public final class UnsafeLoophole {
     private UnsafeLoophole() {
     }
 
-    @PROTOTYPE_ONLY
-    private static native <Type> Type nativeCastObject(Object object);
-
     @UNSAFE_CAST
     public static <Type> Type cast(Object object) {
-        assert MaxineVM.isPrototyping();
         assert !(object instanceof Word);
         final Class<Type> type = null;
-        return StaticLoophole.cast(type, nativeCastObject(object));
+        return StaticLoophole.cast(type, object);
     }
-
-    @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeIntToWord(int value);
 
     @UNSAFE_CAST
-    public static <Word_Type extends Word> Word_Type intToWord(int value) {
-        assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == 32);
-        final Class<Word_Type> type = null;
-        return StaticLoophole.cast(type, nativeIntToWord(value));
-    }
-
-    @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeLongToWord(long value);
+    public static native <Word_Type extends Word> Word_Type intToWord(int value);
 
     @UNSAFE_CAST
-    public static <Word_Type extends Word> Word_Type longToWord(long value) {
-        assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == 64);
-        final Class<Word_Type> type = null;
-        return StaticLoophole.cast(type, nativeLongToWord(value));
-    }
-
-    @PROTOTYPE_ONLY
-    private static native int nativeWordToInt(Word word);
+    public static native <Word_Type extends Word> Word_Type longToWord(long value);
 
     @UNSAFE_CAST
-    public static int wordToInt(Word word) {
-        assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == 32);
-        return nativeWordToInt(word);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native long nativeWordToLong(Word word);
+    public static native int wordToInt(Word word);
 
     @UNSAFE_CAST
-    public static long wordToLong(Word word) {
-        assert MaxineVM.isPrototyping();
-        ProgramError.check(Word.width() == 64);
-        return nativeWordToLong(word);
-    }
-
-    @PROTOTYPE_ONLY
-    private static native boolean nativeByteToBoolean(byte value);
+    public static native long wordToLong(Word word);
 
     @UNSAFE_CAST
     public static boolean byteToBoolean(byte value) {
-        assert MaxineVM.isPrototyping();
-        return nativeByteToBoolean(value);
+        return value != 0;
     }
-
-    @PROTOTYPE_ONLY
-    private static native byte nativeBooleanToByte(boolean value);
 
     @UNSAFE_CAST
     public static byte booleanToByte(boolean value) {
-        assert MaxineVM.isPrototyping();
-        return nativeBooleanToByte(value);
+        return value ? 1 : (byte) 0;
     }
-
-    @PROTOTYPE_ONLY
-    private static native char nativeShortToChar(short value);
 
     @UNSAFE_CAST
     public static char shortToChar(short value) {
-        assert MaxineVM.isPrototyping();
-        return nativeShortToChar(value);
+        return (char) value;
     }
-
-    @PROTOTYPE_ONLY
-    private static native short nativeCharToShort(char value);
 
     @UNSAFE_CAST
     public static short charToShort(char value) {
-        assert MaxineVM.isPrototyping();
-        return nativeCharToShort(value);
+        return (short) value;
     }
-
-    @PROTOTYPE_ONLY
-    private static native float nativeIntToFloat(int value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.IntToFloat.class)
     public static float intToFloat(int value) {
-        assert MaxineVM.isPrototyping();
-        return nativeIntToFloat(value);
+        return Float.intBitsToFloat(value);
     }
-
-    @PROTOTYPE_ONLY
-    private static native int nativeFloatToInt(float value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.FloatToInt.class)
     public static int floatToInt(float value) {
-        assert MaxineVM.isPrototyping();
-        return nativeFloatToInt(value);
+        return Float.floatToRawIntBits(value);
     }
-
-    @PROTOTYPE_ONLY
-    private static native double nativeLongToDouble(long value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.LongToDouble.class)
     public static double longToDouble(long value) {
-        assert MaxineVM.isPrototyping();
-        return nativeLongToDouble(value);
+        return Double.longBitsToDouble(value);
     }
-
-    @PROTOTYPE_ONLY
-    private static native long nativeDoubleToLong(double value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.DoubleToLong.class)
     public static long doubleToLong(double value) {
-        assert MaxineVM.isPrototyping();
-        return nativeDoubleToLong(value);
+        return Double.doubleToRawLongBits(value);
     }
 }

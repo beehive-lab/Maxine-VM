@@ -905,7 +905,13 @@ function run_inspect() {
 # 'jtest' command
 #=======================================
 
-jtest_help="run the Java Tester"
+jtest_usage="[VM options] -- [Java Tester options]"
+jtest_help="run the Java Tester
+    
+    Use \"max jtest -- -help\" to see what the JavaTester options are. These options
+    must be separated from the VM options with '--'.
+    
+    Use \"max jtest -help\" to see what the VM options are."
 
 function run_jtest() {
     vm_args=""
