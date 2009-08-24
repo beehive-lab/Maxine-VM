@@ -98,7 +98,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<Targe
         final AppendableSequence<MethodActor> directCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
-        targetMethod.compilerScheme().gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
+        targetMethod.compilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
         for (MethodActor methodActor : virtualCalls) {
             listMethodActor(methodActor, methodActors);
         }

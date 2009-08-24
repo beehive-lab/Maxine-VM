@@ -281,7 +281,7 @@ public class InstructionPrinter extends InstructionVisitor {
         boolean hasPhisOnStack = false;
 
         if (end != null && end.stateAfter() != null) {
-            ValueStack state = block.state();
+            ValueStack state = block.stateBefore();
 
             int i = 0;
             while (!hasPhisOnStack && i < state.stackSize()) {
@@ -310,7 +310,7 @@ public class InstructionPrinter extends InstructionVisitor {
             out.println();
             out.println("Locals:");
 
-            ValueStack state = block.state();
+            ValueStack state = block.stateBefore();
             do {
                 int i = 0;
                 while (i < state.localsSize()) {
@@ -333,8 +333,8 @@ public class InstructionPrinter extends InstructionVisitor {
             out.println();
             out.println("Stack:");
             int i = 0;
-            while (i < block.state().stackSize()) {
-                Instruction value = block.state().stackAt(i);
+            while (i < block.stateBefore().stackSize()) {
+                Instruction value = block.stateBefore().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value, block));
                     i += value.type().sizeInSlots();

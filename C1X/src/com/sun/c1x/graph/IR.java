@@ -79,13 +79,9 @@ public class IR {
      */
     public void build() {
         buildGraph();
-        verifyAndPrint("After graph building");
         optimize1();
-        verifyAndPrint("After optimizations");
         computeLinearScanOrder();
-        verifyAndPrint("After linear scan order");
         optimize2();
-        verifyAndPrint("After global optimizations");
     }
 
     private void buildGraph() {
@@ -96,27 +92,37 @@ public class IR {
         GraphBuilder g = new GraphBuilder(compilation, topScope, this);
         totalInstructions += g.totalInstructions();
         assert startBlock != null;
+        verifyAndPrint("After graph building");
     }
 
     private void optimize1() {
         // do basic optimizations
+        if (C1XOptions.SimplifyPhis) {
+            new PhiSimplifier(startBlock);
+            verifyAndPrint("After phi simplification");
+        }
         if (C1XOptions.DoNullCheckElimination) {
             new NullCheckEliminator(this);
+            verifyAndPrint("After null check elimination");
         }
         if (C1XOptions.DoDeadCodeElimination1) {
             new LivenessMarker(this).removeDeadCode();
+            verifyAndPrint("After dead code elimination 1");
         }
         if (C1XOptions.DoCEElimination) {
             new CEEliminator(this);
+            verifyAndPrint("After CEE elimination");
         }
         if (C1XOptions.DoBlockMerging) {
             new BlockMerger(this);
+            verifyAndPrint("After block merging");
         }
     }
 
     private void computeLinearScanOrder() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
             makeLinearScanOrder();
+            verifyAndPrint("After linear scan order");
         }
     }
 
@@ -137,9 +143,11 @@ public class IR {
         if (C1XOptions.DoGlobalValueNumbering) {
             makeLinearScanOrder();
             new GlobalValueNumberer(this);
+            verifyAndPrint("After global value numbering");
         }
         if (C1XOptions.DoDeadCodeElimination2) {
             new LivenessMarker(this).removeDeadCode();
+            verifyAndPrint("After dead code elimination 2");
         }
     }
 
@@ -163,8 +171,8 @@ public class IR {
      * @param phase the name of the phase for printing
      */
     public void verifyAndPrint(String phase) {
-        if (C1XOptions.TypeChecking) {
-            startBlock.iteratePreOrder(new IRChecker(this));
+        if (C1XOptions.IRChecking) {
+            new IRChecker(this).check();
         }
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
@@ -201,11 +209,11 @@ public class IR {
         newSucc.setEnd(e);
         // setup states
         ValueStack s = source.end().stateAfter();
-        newSucc.setState(s.copy());
-        e.setStateAfter(s.copy());
-        assert newSucc.state().localsSize() == s.localsSize();
-        assert newSucc.state().stackSize() == s.stackSize();
-        assert newSucc.state().locksSize() == s.locksSize();
+        newSucc.setStateBefore(s.copy());
+        e.setStateAfter(s.immutableCopy());
+        assert newSucc.stateBefore().localsSize() == s.localsSize();
+        assert newSucc.stateBefore().stackSize() == s.stackSize();
+        assert newSucc.stateBefore().locksSize() == s.locksSize();
         // link predecessor to new block
         source.end().substituteSuccessor(target, newSucc);
 

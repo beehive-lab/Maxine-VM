@@ -169,7 +169,7 @@ public class X86CodeGen extends CodeGen {
         BasicType basicType = field.basicType();
         Register valReg = allocSrc(value, basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
-            Location l = genObjectConstant(field.holder().encoding());
+            Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             Register objReg = allocSrc(l, BasicType.Object);
             // XXX: write barrier
             emitStore(basicType, new Address(objReg, field.offset()), valReg);
@@ -184,7 +184,7 @@ public class X86CodeGen extends CodeGen {
         BasicType basicType = field.basicType();
         Register valReg = allocDst(basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
-            Location l = genObjectConstant(field.holder().encoding());
+            Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             Register objReg = allocSrc(l, BasicType.Object);
             emitLoad(basicType, valReg, new Address(objReg, field.offset()));
             return location(valReg);

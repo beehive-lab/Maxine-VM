@@ -100,7 +100,7 @@ public final class Disassemble {
      * @param targetMethod the target method whose code is to be disassembled
      */
     public static void disassemble(OutputStream out, final TargetMethod targetMethod) {
-        final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind;
+        final ProcessorKind processorKind = targetMethod.compilerScheme.vmConfiguration().platform().processorKind;
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
         final Pointer startAddress = targetMethod.codeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {

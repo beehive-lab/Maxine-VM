@@ -181,7 +181,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // Emit moves from physical registers / stack slots to virtual registers
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.state(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
 
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
@@ -244,7 +244,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.state().allLivePhis(currentBlock)) {
+        for (Phi phi : currentBlock.stateBefore().allLivePhis(currentBlock)) {
             operandForPhi(phi);
         }
 
@@ -454,20 +454,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitLoadField(LoadField x) {
         boolean needsPatching = x.needsPatching();
-        boolean isVolatile = x.field().isVolatile();
+        boolean isVolatile = x.isVolatile();
         BasicType fieldType = x.field().basicType();
 
         CodeEmitInfo info = null;
         if (needsPatching) {
-            assert x.explicitNullCheck() == null : "can't fold null check into patching field access";
             info = stateFor(x, x.stateBefore());
         } else if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc == null) {
-                info = stateFor(x, x.stateBefore());
-            } else {
-                info = stateFor(nc);
-            }
+            info = stateFor(x, x.stateBefore());
         }
 
         LIRItem object = new LIRItem(x.object(), this);
@@ -496,7 +490,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (isVolatile) {
-            assert !needsPatching && x.isLoaded() : "how do we know it's volatile if it's not loaded";
             volatileFieldLoad(address, reg, info);
         } else {
             LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
@@ -663,21 +656,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitStoreField(StoreField x) {
         boolean needsPatching = x.needsPatching();
-        boolean isVolatile = x.field().isVolatile();
+        boolean isVolatile = x.isLoaded() && x.isVolatile();
         BasicType fieldType = x.field().basicType();
         boolean isOop = (fieldType == BasicType.Object);
 
         CodeEmitInfo info = null;
         if (needsPatching) {
-            assert x.explicitNullCheck() == null : "can't fold null check into patching field access";
             info = stateFor(x, x.stateBefore());
         } else if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc == null) {
-                info = stateFor(x, x.stateBefore());
-            } else {
-                info = stateFor(nc);
-            }
+            info = stateFor(x, x.stateBefore());
         }
 
         LIRItem object = new LIRItem(x.object(), this);
@@ -731,7 +718,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (isVolatile) {
-            assert !needsPatching && x.isLoaded() : "how do we know it's volatile if it's not loaded";
             volatileFieldStore(value.result(), address, info);
         } else {
             LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
@@ -1006,13 +992,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (C1XOptions.PrintIRWithLIR) {
             TTY.println();
         }
-
-        // LIROpr for unpinned constants shouldn't be referenced by other
-        // blocks so clear them out after processing the block.
-//        for (Instruction unpinnedConstant : unpinnedConstants) {
-//            unpinnedConstant.clearOperand();
-//        }
-        unpinnedConstants.clear();
 
         // clear our any registers for other local constants
         constants.clear();
@@ -1869,7 +1848,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, virtualRegisterNumber + maxPhis * 2);
 
-                ValueStack suxState = sux.state();
+                ValueStack suxState = sux.stateBefore();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
                     moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));

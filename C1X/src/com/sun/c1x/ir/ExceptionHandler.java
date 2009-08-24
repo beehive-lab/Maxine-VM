@@ -112,10 +112,6 @@ public class ExceptionHandler {
         return phiOperand;
     }
 
-    public final int scopeCount() {
-        return scopeCount;
-    }
-
     public final void setEntryBlock(BlockBegin entry) {
         entryBlock = entry;
     }

@@ -716,7 +716,7 @@ public class LinearScan {
             if (block.isExceptionEntry()) {
                 // Phi functions at the begin of an exception handler are
                 // implicitly defined (= killed) at the beginning of the block.
-                for (Phi phi : block.state().allLivePhis(block)) {
+                for (Phi phi : block.stateBefore().allLivePhis(block)) {
                     liveKill.set(phi.operand().vregNumber());
                 }
             }
@@ -2007,7 +2007,7 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.state().allLivePhis(block)) {
+        for (Phi phi : block.stateBefore().allLivePhis(block)) {
             resolveExceptionEntry(block, phi.operand().vregNumber(), moveResolver);
         }
 
@@ -2083,7 +2083,7 @@ public class LinearScan {
         }
 
         // the liveIn bits are not set for phi functions of the xhandler entry, so iterate them separately
-        for (Phi phi : block.state().allLivePhis(block)) {
+        for (Phi phi : block.stateBefore().allLivePhis(block)) {
             resolveExceptionEdge(handler, throwingOpId, phi.operand().vregNumber(), phi, moveResolver);
         }
         if (moveResolver.hasMappings()) {

@@ -448,6 +448,9 @@ public final class StackReferenceMapPreparer {
             Log.print("  Preparing reference map for ");
             Log.print(label);
             Log.print(" of ");
+            if (targetMethod instanceof JitTargetMethod) {
+                Log.print("JitTargetMethod ");
+            }
             Log.printMethodActor(targetMethod.classMethodActor(), false);
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));

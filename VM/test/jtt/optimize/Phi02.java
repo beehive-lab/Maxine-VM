@@ -20,55 +20,51 @@
  */
 package jtt.optimize;
 
+import com.sun.max.annotate.NEVER_INLINE;
+
 /*
- * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=false
+ * @Runs: 0=8; 1=10; 2=12; 3=8; 4=10; 6=14
  */
-public class VN_InstanceOf02 {
-    private static boolean cond = true;
+public class Phi02 {
+    int f;
 
-    static final Object object = new VN_InstanceOf02();
-
-    public static boolean test(int arg) {
-        if (arg == 0) {
-            return foo1();
-        }
-        if (arg == 1) {
-            return foo2();
-        }
-        if (arg == 2) {
-            return foo3();
-        }
-        // do nothing
-        return false;
+    Phi02(int f) {
+        this.f = f;
     }
 
-    private static boolean foo1() {
-        boolean a = object instanceof VN_InstanceOf02;
-        if (cond) {
-            boolean b = object instanceof VN_InstanceOf02;
-            return a | b;
-        }
-        return false;
+    public static int test(int arg) {
+        return test2(new Phi02(arg), arg);
     }
 
-    private static boolean foo2() {
-        Object obj = new VN_InstanceOf02();
-        boolean a = obj instanceof VN_InstanceOf02;
-        if (cond) {
-            boolean b = obj instanceof VN_InstanceOf02;
-            return a | b;
+    @NEVER_INLINE
+    private static int test2(Phi02 p, int arg) {
+        if (arg > 2) {
+            inc(p, 1);
+            arg += 1;
+        } else {
+            inc(p, 2);
+            arg += 2;
+            if (arg > 3) {
+                inc(p, 1);
+                arg += 1;
+                if (arg > 4) {
+                    inc(p, 1);
+                    arg += 1;
+                } else {
+                    inc(p, 2);
+                    arg += 2;
+                }
+            } else {
+                inc(p, 2);
+                arg += 2;
+            }
         }
-        return false;
+        return arg + p.f;
     }
 
-    private static boolean foo3() {
-        boolean a = null instanceof VN_InstanceOf02;
-        if (cond) {
-            boolean b = null instanceof VN_InstanceOf02;
-            return a | b;
-        }
-        return false;
+    @NEVER_INLINE
+    private static void inc(Phi02 p, int inc) {
+        p.f += inc;
     }
 }

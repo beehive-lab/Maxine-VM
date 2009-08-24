@@ -178,7 +178,7 @@ public abstract class StackFrameWalker {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme();
+                final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme;
 
                 TargetMethod oldLastJavaCallee = lastJavaCallee;
 

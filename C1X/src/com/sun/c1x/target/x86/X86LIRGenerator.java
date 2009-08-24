@@ -848,7 +848,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         RiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {
-            lir.oop2reg(klass.encoding().asObject(), klassReg);
+            lir.oop2reg(klass.getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
         } else {
             lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
         }
@@ -891,7 +891,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
         BasicType elemType = elementType;
 
-        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding().asObject(), klassReg);
+        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -924,7 +924,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
         RiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
-            Object obj = elementType.encoding().asObject();
+            Object obj = elementType.getEncoding(RiType.Representation.ObjectHub).asObject();
             lir.oop2reg(obj, klassReg);
         } else {
             lir.resolveArrayClassInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
@@ -973,7 +973,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
 
         if (x.elementType.isLoaded()) {
-            lir.oop2reg(x.elementType.encoding().asObject(), cc.args().get(0));
+            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.args().get(0));
         } else {
             lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
