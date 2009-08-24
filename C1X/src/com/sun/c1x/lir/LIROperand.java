@@ -43,7 +43,7 @@ public abstract class LIROperand {
      */
     public static final LIROperand ILLEGAL = new LIRIllegal();
 
-    private static class LIRIllegal extends LIROperand {
+    private static final class LIRIllegal extends LIROperand {
         private LIRIllegal() {
             super(BasicType.Illegal);
         }
