@@ -437,7 +437,7 @@ function run_jttgen() {
     
     pushd $maxine_dir/VM/test >/dev/null
     run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) test.com.sun.max.vm.compiler.JavaTester \
-        -scenario=target -run-scheme-package=all -native-tests jtt/*  
+        -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')  
     result=$?
     popd >/dev/null
     exit $result
