@@ -80,7 +80,7 @@ public class MaxineTesterConfiguration {
         output(test.output.StaticInitializers.class);
         output(test.output.LocalCatch.class);
         output(test.output.Printf.class);
-        output(test.output.GCTest0.class,                  FAIL_SPARC);
+        output(test.output.GCTest0.class,                  RAND_SPARC);
         output(test.output.GCTest1.class);
         output(test.output.GCTest2.class);
         output(test.output.GCTest3.class);
