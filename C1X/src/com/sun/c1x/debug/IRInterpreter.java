@@ -269,23 +269,25 @@ public class IRInterpreter {
 
         private void unexpected(Instruction i, Throwable e) {
             List<ExceptionHandler> exceptionHandlerList = i.exceptionHandlers();
+
             for (ExceptionHandler eh : exceptionHandlerList) {
-                if (eh.covers(i.bci())) {
+                if (eh.handler.isCatchAll() || toJavaClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
                     jump(eh.entryBlock());
                     // bind the exception object to e
                     environment.bind(eh.entryBlock().next(), new CiConstant(BasicType.Object, e), instructionCounter);
                     return;
                 }
             }
+
             environment.bind(i, new CiConstant(BasicType.Object, e), instructionCounter);
             throwable = e;
         }
 
         @Override
         public void visitLoadField(LoadField i) {
-            if (i.field().isConstant() && i.field().isLoaded()) {
-                environment.bind(i, CiConstant.fromBoxedJavaValue(i.field().constantValue().boxedValue()), instructionCounter);
-            } else {
+//            if (i.field().isConstant() && i.field().isLoaded()) {
+//                environment.bind(i, CiConstant.fromBoxedJavaValue(i.field().constantValue().boxedValue()), instructionCounter);
+//            } else {
                 try {
                     Class< ? > klass = toJavaClass(i.field().holder());
                     String name = i.field().name();
@@ -302,7 +304,7 @@ public class IRInterpreter {
                 } catch (Throwable e) {
                     unexpected(i, e);
                 }
-            }
+//            }
             jumpNextInstruction();
         }
 
@@ -673,8 +675,6 @@ public class IRInterpreter {
             final CiConstant x = environment.lookup(i.x());
             final CiConstant y = environment.lookup(i.y());
 
-            assertBasicType(x.basicType, y.basicType, i.type().basicType);
-
             switch (i.condition()) {
                 case eql:
                     if (x.equals(y)) {
@@ -717,7 +717,7 @@ public class IRInterpreter {
                     break;
 
                 case leq:
-                    if (x.asInt() >= y.asInt()) {
+                    if (x.asInt() <= y.asInt()) {
                         environment.bind(i, tval, instructionCounter);
                     } else {
                         environment.bind(i, fval, instructionCounter);
@@ -844,7 +844,11 @@ public class IRInterpreter {
                 try {
                     if (m != null) {
                         m.setAccessible(true);
-                        res = m.invoke(null, arglist);
+                        // TODO: need to fix this bug
+                        //       host vm crashes when calling this method
+                        if (!methodName.equals("longToWord")) {
+                            res = m.invoke(null, arglist);
+                        }
                     } else {
                         throw new Error();
                     }
@@ -887,23 +891,25 @@ public class IRInterpreter {
                 }
 
                 Method m = null;
-                try {
-                    m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature, nargs));
-                } catch (SecurityException e1) {
-                    throwable = e1.getCause();
-                } catch (NoSuchMethodException e1) {
+
+                while (m == null && methodClass != null) {
                     try {
-                        m = methodClass.getMethod(methodName, toJavaSignature(signature, nargs));
+                        m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature, nargs));
                     } catch (SecurityException e) {
-                        unexpected(i, e.getCause());
-                    } catch (NoSuchMethodException e) {
                         unexpected(i, e);
+                        return;
+                    } catch (NoSuchMethodException e) {
+                        methodClass = methodClass.getSuperclass();
                     }
+                }
+                if (methodClass == null) {
+                    unexpected(i, new NoSuchMethodException());
+                    return;
                 }
 
                 Object res = null;
                 try {
-                    if (objref instanceof Class< ? > && methodName.equals("newInstance")) {
+                    if (objref instanceof Class< ? > && (methodName.equals("newInstance") || methodName.equals("newInstance0"))) {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
@@ -939,12 +945,8 @@ public class IRInterpreter {
 
             try {
                 final Constructor< ? > constructor = javaClass.getDeclaredConstructor(partypes);
-              //  if (javaClass == Class.class) {
-               //     newReference = unsafe.allocateInstance(javaClass);
-              //  } else {
-                    constructor.setAccessible(true);
-                    newReference = constructor.newInstance(arglist);
-              //      }
+                constructor.setAccessible(true);
+                newReference = constructor.newInstance(arglist);
             } catch (InstantiationException e) {
                 unexpected(i, e);
             } catch (InvocationTargetException e) {
@@ -1320,6 +1322,14 @@ public class IRInterpreter {
         @Override
         public void visitReturn(Return i) {
             result = environment.lookup(i.result());
+            BasicType returnType = method.signatureType().returnBasicType();
+            if (returnType == BasicType.Boolean) {
+                result = CiConstant.forBoolean(result.asInt() != 0);
+            } else if (returnType == BasicType.Int) {
+                result = CiConstant.forInt(result.asInt());
+            } else if (returnType == BasicType.Char) {
+                result = CiConstant.forChar((char) result.asInt());
+            }
             jumpNextInstruction();
         }
 
@@ -1415,9 +1425,7 @@ public class IRInterpreter {
             if (result != null) {
                 assert method.signatureType().returnBasicType() != BasicType.Void;
                 // TODO: Need to improve this!
-                if (method.signatureType().returnBasicType() == BasicType.Boolean) {
-                    result = CiConstant.forBoolean(result.asInt() != 0);
-                }
+
                 return result;
             } else {
                 return CiConstant.NULL_OBJECT;
