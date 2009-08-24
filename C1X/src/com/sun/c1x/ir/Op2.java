@@ -77,7 +77,6 @@ public abstract class Op2 extends Instruction {
     /**
      * Swaps the operands of this instruction. This is only legal for commutative operations.
      */
-    @SuppressWarnings({"SuspiciousNameCombination"})
     public void swapOperands() {
         assert Bytecodes.isCommutative(opcode);
         Instruction t = x;

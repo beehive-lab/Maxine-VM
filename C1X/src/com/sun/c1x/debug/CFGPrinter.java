@@ -44,8 +44,6 @@ public class CFGPrinter {
 
     private static OutputStream cfgFileStream;
 
-    private RiMethod currentMethod;
-
     /**
      * Gets the output stream  on the file "output.cfg" in the current working directory.
      * This stream is first opened if necessary.

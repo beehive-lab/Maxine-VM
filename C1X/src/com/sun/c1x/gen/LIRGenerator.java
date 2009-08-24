@@ -992,13 +992,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
             TTY.println();
         }
 
-        // LIROpr for unpinned constants shouldn't be referenced by other
-        // blocks so clear them out after processing the block.
-        for (Instruction unpinnedConstant : unpinnedConstants) {
-//            unpinnedConstant.clearOperand();
-        }
-        unpinnedConstants.clear();
-
         // clear our any registers for other local constants
         constants.clear();
         regForConstants.clear();

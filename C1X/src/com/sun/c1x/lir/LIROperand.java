@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
