@@ -675,8 +675,6 @@ public class IRInterpreter {
             final CiConstant x = environment.lookup(i.x());
             final CiConstant y = environment.lookup(i.y());
 
-            assertBasicType(x.basicType, y.basicType, i.type().basicType);
-
             switch (i.condition()) {
                 case eql:
                     if (x.equals(y)) {
