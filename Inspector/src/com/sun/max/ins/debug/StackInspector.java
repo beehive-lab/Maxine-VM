@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.debug.JavaStackFramePanel.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -333,12 +334,13 @@ public class StackInspector extends Inspector {
 
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-
                     switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3:
-                            //final int index = stackFrameList.getSelectedIndex();
-                            //final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
-                            //inspection().focus().setStackFrame(thread, stackFrame, true);
+                            int index = stackFrameList.locationToIndex(mouseEvent.getPoint());
+                            if (index >= 0 && index < stackFrameList.getModel().getSize()) {
+                                final InspectorMenu menu = getDynamicMenu(index, mouseEvent);
+                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            }
                             break;
                     }
                 }
@@ -404,6 +406,44 @@ public class StackInspector extends Inspector {
                 new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
             }
         };
+    }
+
+    private String javaStackFrameName(JavaStackFrame javaStackFrame) {
+        final Address address = javaStackFrame.instructionPointer;
+        final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
+        String name;
+        if (teleTargetMethod != null) {
+            name = inspection().nameDisplay().veryShortName(teleTargetMethod);
+            final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+            }
+        } else {
+            final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
+            name = classMethodActor.format("%h.%n");
+        }
+        return name;
+    }
+
+    private InspectorMenu getDynamicMenu(int row, MouseEvent mouseEvent) {
+        final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(row);
+        final InspectorMenu menu = new InspectorMenu(null, "");
+        menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
+            @Override
+            protected void procedure() {
+                inspection().focus().setStackFrame(thread, stackFrame, true);
+            }
+        });
+        if (stackFrame instanceof JavaStackFrame) {
+            final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+            final int frameSize = javaStackFrame.layout.frameSize();
+            final Pointer stackPointer = javaStackFrame.stackPointer;
+            final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
+            final String frameName = javaStackFrameName(javaStackFrame);
+            menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
+
+        }
+        return menu;
     }
 
     @Override
