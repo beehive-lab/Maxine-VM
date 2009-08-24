@@ -47,4 +47,5 @@ public class C1XMetrics {
     public static int NestedIfOpsRemoved;
     public static int BlocksSkipped;
     public static int DeadCodeEliminated;
+    public static int ResolveCPEAttempts;
 }

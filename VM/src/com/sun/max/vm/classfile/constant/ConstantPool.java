@@ -678,20 +678,6 @@ public final class ConstantPool {
         return stringConstantAt(index).value;
     }
 
-    public Class[] resolveClassesAtToJava(char[] indexes) {
-        final Class[] classes = new Class[indexes.length];
-        for (int i = 0; i != indexes.length; ++i) {
-            final int index = indexes[i];
-            try {
-                final ClassActor classActor = classAt(index).resolve(this, index);
-                classes[i] = classActor.toJava();
-            } catch (ClassCastException e) {
-                throw unexpectedEntry(index, null, CLASS);
-            }
-        }
-        return classes;
-    }
-
     public void trace(int requiredLevel) {
         if (Trace.hasLevel(requiredLevel)) {
             Trace.begin(requiredLevel, "ConstantPool: " + numberOfConstants());
@@ -730,10 +716,10 @@ public final class ConstantPool {
     public synchronized ConstantPoolEditor edit(boolean allowAppending) {
         if (editor == null || editor.owner() != Thread.currentThread()) {
             while (editor != null) {
-                //if (_holder != null) System.err.printAddress(Thread.currentThread() + ": waiting to edit " + this);
                 try {
                     wait();
                 } catch (InterruptedException e) {
+                    // do nothing
                 }
             }
             editor = new ConstantPoolEditor(this, allowAppending);
@@ -744,7 +730,7 @@ public final class ConstantPool {
     }
 
     /**
-     * Invoking this method is equivalent to {@link #edit(com.sun.max.vm.classfile.constant.ConstantPool.ConstantPoolEditorClient, boolean) edit(client, true)}.
+     * Invoking this method is equivalent to {@link #edit(ConstantPoolEditorClient, boolean)}.
      */
     public void edit(ConstantPoolEditorClient client) {
         edit(client, true);

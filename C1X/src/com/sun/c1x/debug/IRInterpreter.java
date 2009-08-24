@@ -262,7 +262,7 @@ public class IRInterpreter {
 
         @Override
         public void visitResolveClass(ResolveClass i) {
-            Class <?> javaClass = toJavaClass(i.riType);
+            Class <?> javaClass = toJavaClass(i.type);
             environment.bind(i, CiConstant.forObject(javaClass), instructionCounter);
             jumpNextInstruction();
         }

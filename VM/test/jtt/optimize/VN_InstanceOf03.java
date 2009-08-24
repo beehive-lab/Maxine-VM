@@ -23,50 +23,22 @@ package jtt.optimize;
 /*
  * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=false
+ * @Runs: 0=true; 1=true; 2=true
  */
-public class VN_InstanceOf02 {
+public class VN_InstanceOf03 {
     private static boolean cond = true;
 
-    static final Object object = new VN_InstanceOf02();
+    static final Object object = new VN_InstanceOf03();
 
     public static boolean test(int arg) {
-        if (arg == 0) {
-            return foo1();
-        }
-        if (arg == 1) {
-            return foo2();
-        }
-        if (arg == 2) {
-            return foo3();
-        }
-        // do nothing
-        return false;
+        return foo();
     }
 
-    private static boolean foo1() {
-        boolean a = object instanceof VN_InstanceOf02;
+    private static boolean foo() {
+        Object obj = new VN_InstanceOf03();
+        boolean a = obj instanceof VN_InstanceOf03;
         if (cond) {
-            boolean b = object instanceof VN_InstanceOf02;
-            return a | b;
-        }
-        return false;
-    }
-
-    private static boolean foo2() {
-        Object obj = new VN_InstanceOf02();
-        boolean a = obj instanceof VN_InstanceOf02;
-        if (cond) {
-            boolean b = obj instanceof VN_InstanceOf02;
-            return a | b;
-        }
-        return false;
-    }
-
-    private static boolean foo3() {
-        boolean a = null instanceof VN_InstanceOf02;
-        if (cond) {
-            boolean b = null instanceof VN_InstanceOf02;
+            boolean b = obj instanceof VN_InstanceOf03;
             return a | b;
         }
         return false;

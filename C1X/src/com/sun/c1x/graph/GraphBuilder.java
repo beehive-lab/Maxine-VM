@@ -115,7 +115,7 @@ public class GraphBuilder {
                     genMethodReturn(result);
                     BlockEnd end = (BlockEnd) lastInstr;
                     curBlock.setEnd(end);
-                    end.setStateAfter(curState);
+                    end.setStateAfter(curState.immutableCopy());
                 }  else {
                     // try intrinsic failed; do the normal parsing
                     scopeData.addToWorkList(start);
@@ -146,10 +146,6 @@ public class GraphBuilder {
         }
 
         ir.startBlock = setupStartBlock(osrBCI, start, ir.osrEntryBlock, initialState);
-        // eliminate redundant phis
-        if (C1XOptions.SimplifyPhis) {
-            new PhiSimplifier(ir.startBlock);
-        }
 
         if (osrBCI >= 0) {
             BlockBegin osrBlock = blockMap.get(osrBCI);
@@ -193,6 +189,7 @@ public class GraphBuilder {
 
         Base base = new Base(newHeaderBlock, osrEntry);
         appendWithoutOptimization(base, 0);
+        base.setStateAfter(curState.immutableCopy());
         start.setEnd(base);
 
         if (base.standardEntry().stateBefore() == null) {
@@ -474,7 +471,7 @@ public class GraphBuilder {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             if (!ritype.isLoaded() || C1XOptions.TestPatching) {
-                push(BasicType.Object, append(new ResolveClass(ritype, stateBefore, cpi, constantPool())));
+                push(BasicType.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
             } else {
                 push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
             }
@@ -766,8 +763,8 @@ public class GraphBuilder {
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction holderConstant = getStaticContainer(holder, isInitialized);
-        LoadField load = new LoadField(holderConstant, field, true, stateBefore, isInitialized);
+        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
+        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -776,18 +773,20 @@ public class GraphBuilder {
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching &&field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction holderConstant = getStaticContainer(holder, isInitialized);
+        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(holderConstant, field, value, true, stateBefore, isInitialized);
+        StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized);
         appendOptimizedStoreField(store);
     }
 
-    private Instruction getStaticContainer(RiType holder, boolean isInitialized) {
-        Instruction holderConstant = null;
-        if (isInitialized) {
-            holderConstant = appendConstant(holder.getStaticContainer());
+    private Instruction genStaticFields(RiType holder, boolean initialized, char cpi, ValueStack stateBefore) {
+        Instruction holderInstr;
+        if (initialized) {
+            holderInstr = appendConstant(holder.getEncoding(RiType.Representation.StaticFields));
+        } else {
+            holderInstr = append(new ResolveClass(holder, RiType.Representation.StaticFields, stateBefore, cpi, constantPool()));
         }
-        return holderConstant;
+        return holderInstr;
     }
 
     private void appendOptimizedStoreField(StoreField store) {
@@ -1284,7 +1283,7 @@ public class GraphBuilder {
         assert jsrStartBlock != null;
         assert !jsrStartBlock.wasVisited();
         Goto gotoSub = new Goto(jsrStartBlock, null, false);
-        gotoSub.setStateAfter(curState);
+        gotoSub.setStateAfter(curState.immutableCopy());
         assert jsrStartBlock.stateBefore() == null;
         jsrStartBlock.setStateBefore(curState.copy());
         append(gotoSub);
@@ -1560,7 +1559,7 @@ public class GraphBuilder {
         if (calleeStartBlock.isParserLoopHeader()) {
             // the block is a loop header, so we have to insert a goto
             Goto gotoCallee = new Goto(calleeStartBlock, null, false);
-            gotoCallee.setStateAfter(curState);
+            gotoCallee.setStateAfter(curState.immutableCopy());
             appendWithoutOptimization(gotoCallee, 0);
             curBlock.setEnd(gotoCallee);
             calleeStartBlock.merge(calleeState);
@@ -2059,7 +2058,7 @@ public class GraphBuilder {
         // connect to begin and set state
         // NOTE that inlining may have changed the block we are parsing
         assert end != null : "end should exist after iterating over bytecodes";
-        assert curBlock.end() == null : "block already has an end";
+        // assert curBlock.end() == null : "block already has an end";
         end.setStateAfter(curState.immutableCopy());
         curBlock.setEnd(end);
         // propagate the state

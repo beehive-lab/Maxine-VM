@@ -60,6 +60,7 @@ public abstract class AccessField extends StateSplit {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
+        assert object != null : "every field access must reference some object";
     }
 
     /**
@@ -103,20 +104,20 @@ public abstract class AccessField extends StateSplit {
         return checkFlag(Flag.IsLoaded);
     }
 
+    /**
+     * Checks whether this field is declared volatile.
+     * @return {@code true} if the field is resolved and declared volatile
+     */
+    public boolean isVolatile() {
+        return isLoaded() && field.isVolatile();
+    }
+
     @Override
     public void clearNullCheck() {
         if (isLoaded()) {
             stateBefore = null;
         }
         setFlag(Flag.NoNullCheck);
-    }
-
-    /**
-     * Gets the instruction representing an explicit null check for this field access.
-     * @return the object representing an explicit null check
-     */
-    public NullCheck explicitNullCheck() {
-        return null;
     }
 
     /**
@@ -144,8 +145,6 @@ public abstract class AccessField extends StateSplit {
      */
     @Override
     public void inputValuesDo(InstructionClosure closure) {
-        if (object != null) {
-            object = closure.apply(object);
-        }
+        object = closure.apply(object);
     }
 }

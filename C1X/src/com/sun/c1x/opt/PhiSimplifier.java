@@ -38,7 +38,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param start the start block from which to start performing phi simplification
      */
     public PhiSimplifier(BlockBegin start) {
-        start.iteratePreOrder(this);
+        start.iterateAnyOrder(this, false);
         if (hasSubstitutions) {
             // perform substitutions
             new SubstitutionResolver(start);

@@ -280,12 +280,42 @@ public class BlockBegin extends Instruction {
     }
 
     /**
-     * Iterate over this block's exception handlers, its  , and itself, in that order.
+     * Iterate over this block's exception handlers, its successors, and itself, in that order.
      * @param closure the closure to apply to each block
      */
     public void iteratePostOrder(BlockClosure closure) {
         // XXX: identity hash map might be too slow, consider a boolean array or a mark field
         iterate(new IdentityHashMap<BlockBegin, BlockBegin>(), closure, false);
+    }
+
+    /**
+     * Iterate over all blocks transitively reachable from this block.
+     * @param closure the closure to apply to each block
+     * @param predecessors {@code true} if also to include this blocks predecessors
+     */
+    public void iterateAnyOrder(BlockClosure closure, boolean predecessors) {
+        IdentityHashMap<BlockBegin, BlockBegin> mark = new IdentityHashMap<BlockBegin, BlockBegin>();
+        LinkedList<BlockBegin> queue = new LinkedList<BlockBegin>();
+        queue.offer(this);
+        mark.put(this, this);
+        BlockBegin block;
+        while ((block = queue.poll()) != null) {
+            closure.apply(block);
+            queueBlocks(queue, block.exceptionHandlerBlocks(), mark);
+            queueBlocks(queue, block.end.successors(), mark);
+            queueBlocks(queue, predecessors ? block.predecessors : null, mark);
+        }
+    }
+
+    private void queueBlocks(LinkedList<BlockBegin> queue, List<BlockBegin> list, IdentityHashMap<BlockBegin, BlockBegin> mark) {
+        if (list != null) {
+            for (BlockBegin b : list) {
+                if (!mark.containsKey(b)) {
+                    queue.offer(b);
+                    mark.put(b, b);
+                }
+            }
+        }
     }
 
     private void iterate(IdentityHashMap<BlockBegin, BlockBegin> mark, BlockClosure closure, boolean pre) {
