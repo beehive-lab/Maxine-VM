@@ -37,6 +37,7 @@ public class Unsigned {
     /**
      * Performs unsigned integer division.
      */
+    @UNSAFE
     @INLINE
     public static int idiv(int dividend, int divisor) {
         return Address.fromUnsignedInt(dividend).dividedBy(divisor).toInt();
@@ -45,6 +46,7 @@ public class Unsigned {
     /**
      * Performs unsigned long division.
      */
+    @UNSAFE
     @INLINE
     public static long ldiv(long dividend, long divisor) {
         return Address.fromLong(dividend).dividedBy(Address.fromLong(divisor)).toLong();
