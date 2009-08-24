@@ -65,7 +65,7 @@ public class C0XCompilation {
         FrameState entryState; // state at (first) entry
     }
 
-    static abstract class Location {
+    abstract static class Location {
 
     }
 

@@ -772,7 +772,7 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
-        boolean isInitialized = !C1XOptions.TestPatching &&field.isLoaded() && holder.isLoaded() && holder.isInitialized();
+        boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
         Instruction value = pop(field.basicType().stackType());
         StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized);
@@ -1624,8 +1624,7 @@ public class GraphBuilder {
         if (target.isStatic()) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-        }
-        else {
+        } else {
             return state.localAt(0);
         }
     }

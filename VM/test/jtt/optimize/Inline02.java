@@ -35,5 +35,4 @@ public class Inline02 {
         }
         return 1;
     }
-
 }

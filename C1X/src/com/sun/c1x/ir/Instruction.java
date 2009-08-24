@@ -154,7 +154,7 @@ public abstract class Instruction {
      * Clears all liveness flags.
      */
     public void clearLive() {
-        flags = flags & ~ LIVE_FLAGS;
+        flags = flags & ~LIVE_FLAGS;
     }
 
     /**
