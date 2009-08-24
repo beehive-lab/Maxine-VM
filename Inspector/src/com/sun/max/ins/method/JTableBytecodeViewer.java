@@ -476,7 +476,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 toolTipText.append("Stack ");
                 toolTipText.append(stackFrameInfo.position());
                 toolTipText.append(":  0x");
-                toolTipText.append(stackFrameInfo.frame().instructionPointer.toHexString());
+                toolTipText.append(maxVM().getCodeAddress(stackFrameInfo.frame()).toHexString());
                 toolTipText.append(" thread=");
                 toolTipText.append(inspection.nameDisplay().longName(stackFrameInfo.thread()));
                 toolTipText.append("; ");

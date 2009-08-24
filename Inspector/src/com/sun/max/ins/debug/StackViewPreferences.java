@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -39,15 +40,18 @@ import com.sun.max.program.option.*;
  */
 public class StackViewPreferences extends AbstractInspectionHolder {
 
-    private static final String STACK_INSPECTION_SETTINGS_NAME = "stackInspectorPrefs";
+    private static final String STACK_INSPECTION_SETTINGS_NAME = "stackInspectorViewPrefs";
     private static final String SLOT_NAME_DISPLAY_MODE_PREFERENCE = "slotNameDisplay";
+    private static final String BIAS_SLOT_OFFSETS_PREFERENCE = "slotOffsetBias";
 
     private static SlotNameDisplayMode slotNameDisplayMode = SlotNameDisplayMode.NAME;
+    private static boolean biasSlotOffsets = false;
 
     private static final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(STACK_INSPECTION_SETTINGS_NAME) {
 
         public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             saveSettingsEvent.save(SLOT_NAME_DISPLAY_MODE_PREFERENCE, slotNameDisplayMode.name());
+            saveSettingsEvent.save(BIAS_SLOT_OFFSETS_PREFERENCE, biasSlotOffsets);
         }
     };
 
@@ -55,7 +59,10 @@ public class StackViewPreferences extends AbstractInspectionHolder {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
         settings.addSaveSettingsListener(saveSettingsListener);
-        slotNameDisplayMode = settings.get(saveSettingsListener, SLOT_NAME_DISPLAY_MODE_PREFERENCE, new OptionTypes.EnumType<SlotNameDisplayMode>(SlotNameDisplayMode.class), SlotNameDisplayMode.NAME);
+        slotNameDisplayMode =
+            settings.get(saveSettingsListener, SLOT_NAME_DISPLAY_MODE_PREFERENCE, new OptionTypes.EnumType<SlotNameDisplayMode>(SlotNameDisplayMode.class), SlotNameDisplayMode.NAME);
+        biasSlotOffsets =
+            settings.get(saveSettingsListener, BIAS_SLOT_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
     }
 
     public void setSlotNameDisplayMode(SlotNameDisplayMode slotNameDisplayMode) {
@@ -64,6 +71,14 @@ public class StackViewPreferences extends AbstractInspectionHolder {
 
     public SlotNameDisplayMode slotNameDisplayMode() {
         return slotNameDisplayMode;
+    }
+
+    public void setBiasSlotOffsets(boolean biasSlotOffsets) {
+        StackViewPreferences.biasSlotOffsets = biasSlotOffsets;
+    }
+
+    public boolean biasSlotOffsets() {
+        return biasSlotOffsets;
     }
 
     /**
@@ -98,6 +113,20 @@ public class StackViewPreferences extends AbstractInspectionHolder {
             group.add(radioButton);
             content.add(radioButton);
         }
+
+        if (maxVM().vmConfiguration().platform.stackBias > 0) {
+            content.add(new TextLabel(inspection(), "Offset values: "));
+            final InspectorCheckBox biasCheckBox = new InspectorCheckBox(inspection(), "Biased", "Should stack frame slot offset values be biased?", biasSlotOffsets);
+            biasCheckBox.addChangeListener(new ChangeListener() {
+
+                public void stateChanged(ChangeEvent e) {
+                    setBiasSlotOffsets(biasCheckBox.isSelected());
+                    inspection().settings().save();
+                }
+            });
+            content.add(biasCheckBox);
+        }
+
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         panel.add(content, BorderLayout.WEST);
         return panel;
