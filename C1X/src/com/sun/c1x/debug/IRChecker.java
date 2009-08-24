@@ -715,12 +715,14 @@ public class IRChecker extends InstructionVisitor {
         assertBasicType(i, BasicType.Illegal);
         assertBasicType(i.value(), BasicType.Int);
 
-        int min = i.keyAt(0);
-        for (int j = 1; j < i.numberOfCases(); j++) {
-            if (min >= i.keyAt(j)) {
-                fail("LookupSwitch keys must be ordered");
+        if (i.numberOfCases() > 1) {
+            int min = i.keyAt(0);
+            for (int j = 1; j < i.numberOfCases(); j++) {
+                if (min >= i.keyAt(j)) {
+                    fail("LookupSwitch keys must be ordered");
+                }
+                min = i.keyAt(j);
             }
-            min = i.keyAt(j);
         }
         if (i.numberOfCases() != i.keysLength()) {
             fail("Lookupswitch keys[] length does not match number of cases");
