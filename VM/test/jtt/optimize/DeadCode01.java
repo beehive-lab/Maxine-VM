@@ -21,43 +21,34 @@
 package jtt.optimize;
 
 /*
- * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=false
+ * @Runs: 0=4; 1=5; 2=6; 3=4; 4=5; 6=7
  */
-public class VN_InstanceOf01 {
-    static final Object object = new VN_InstanceOf01();
+public class DeadCode01 {
 
-    public static boolean test(int arg) {
-        if (arg == 0) {
-            return foo1();
+    public static int test(int arg) {
+        int p = arg;
+        if (p > 2) {
+            p += 1;
+            arg += 10;
+        } else {
+            p += 2;
+            arg += 20;
+            if (p > 3) {
+                p += 1;
+                arg += 10;
+                if (p > 4) {
+                    p += 1;
+                    arg += 10;
+                } else {
+                    p += 2;
+                    arg += 20;
+                }
+            } else {
+                p += 2;
+                arg += 20;
+            }
         }
-        if (arg == 1) {
-            return foo2();
-        }
-        if (arg == 2) {
-            return foo3();
-        }
-        // do nothing
-        return false;
-    }
-
-    private static boolean foo1() {
-        boolean a = object instanceof VN_InstanceOf01;
-        boolean b = object instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo2() {
-        Object obj = new VN_InstanceOf01();
-        boolean a = obj instanceof VN_InstanceOf01;
-        boolean b = obj instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo3() {
-        boolean a = null instanceof VN_InstanceOf01;
-        boolean b = null instanceof VN_InstanceOf01;
-        return a | b;
+        return p;
     }
 }

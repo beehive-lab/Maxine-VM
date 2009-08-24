@@ -71,7 +71,7 @@ public abstract class Trap {
         public static final int NULL_POINTER_EXCEPTION = 6;
         public static final int SAFEPOINT = 7;
 
-        public static String getExceptionName(int trapNumber) {
+        public static String toExceptionName(int trapNumber) {
             switch (trapNumber) {
                 case MEMORY_FAULT:
                     return "MEMORY_FAULT";
@@ -96,7 +96,7 @@ public abstract class Trap {
             return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
         }
 
-        public static Class<? extends Throwable> getImplicitExceptionClass(int trapNumber) {
+        public static Class<? extends Throwable> toImplicitExceptionClass(int trapNumber) {
             if (trapNumber == ARITHMETIC_EXCEPTION) {
                 return ArithmeticException.class;
             } else if (trapNumber == NULL_POINTER_EXCEPTION) {
@@ -106,6 +106,9 @@ public abstract class Trap {
             } else {
                 throw FatalError.unexpected("Should not be called, when there is no implicit exception that throws an exception object!");
             }
+        }
+
+        private Number() {
         }
     }
 

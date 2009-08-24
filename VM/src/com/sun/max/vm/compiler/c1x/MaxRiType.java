@@ -398,23 +398,34 @@ public class MaxRiType implements RiType {
         return typeDescriptor.toString() + " [unresolved]";
     }
 
-    public boolean layoutHelperNeedsSlowPath() {
-        throw Util.unimplemented();
-    }
-
-    public int sizeHelper() {
-        throw Util.unimplemented();
-    }
-
-    public CiConstant encoding() {
-        return CiConstant.forObject(asClassActor("encoding()").dynamicHub());
-    }
-
     public int superCheckOffset() {
         throw Util.unimplemented();
     }
 
-    public CiConstant getStaticContainer() {
-        return CiConstant.forObject(asClassActor("getStaticContainer()").staticTuple());
+    public CiConstant getEncoding(RiType.Representation r) {
+        switch (r) {
+            case StaticFields:
+                // static fields are stored in static tuple
+                // XXX: cache the constant for repeated accesses
+                return CiConstant.forObject(asClassActor("getEncoding()").staticTuple());
+            case JavaClass:
+                // java class object is the "mirror"
+                // XXX: cache the constant for repeated accesses
+                return CiConstant.forObject(asClassActor("getEncoding()").mirror());
+            case ObjectHub:
+                // hub is the dynamic hub
+                // XXX: cache the constant for repeated accesses
+                return CiConstant.forObject(asClassActor("getEncoding()").dynamicHub());
+            case TypeInfo:
+                // type info is represented by the class actor
+                // XXX: cache the constant for repeated accesses
+                return CiConstant.forObject(asClassActor("getEncoding()"));
+        }
+        throw ProgramError.unexpected();
+    }
+
+    public BasicType getBasicType(RiType.Representation r) {
+        // all portions of a type are represented by objects in Maxine
+        return BasicType.Object;
     }
 }

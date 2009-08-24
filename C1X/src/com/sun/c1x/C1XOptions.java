@@ -62,7 +62,7 @@ public class C1XOptions {
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
-    public static boolean TypeChecking                       = ____;
+    public static boolean IRChecking                         = ____;
     public static boolean FatalUnimplemented                 = ____;
 
     // canonicalizer settings
@@ -236,6 +236,7 @@ public class C1XOptions {
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = ____;
         DoDeadCodeElimination1             = ____;
+        DoDeadCodeElimination2             = ____;
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;
     }
@@ -269,7 +270,8 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
-        DoDeadCodeElimination1 = ____;
+        DoDeadCodeElimination1             = ____;
+        DoDeadCodeElimination2             = ____;
         DoIterativeNullCheckElimination    = ____; // don't iterate NCE
         DoProfileGuidedInlining            = ____;
         DoTypeFlowAnalysis                 = ____;

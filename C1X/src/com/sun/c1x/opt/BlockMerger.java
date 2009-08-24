@@ -84,11 +84,17 @@ public class BlockMerger implements BlockClosure {
                     C1XMetrics.BlocksMerged++;
                 } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
                     // the successor has multiple predecessors, but this block is empty
-                    // go through all phis in the successor block
-                    assert sux.state().scope() == oldEnd.stateAfter().scope();
-                    if (block.state().hasPhisFor(block)) {
+                    assert sux.stateBefore().scope() == oldEnd.stateAfter().scope();
+                    if (block.stateBefore().hasPhisFor(block)) {
                         // can't skip a block that has phis
                         return false;
+                    }
+                    for (BlockBegin pred : block.predecessors()) {
+                        if (pred.end().stateAfter().scope() != oldEnd.stateAfter().scope()) {
+                            // scopes would not match after skipping this block
+                            // XXX: if phi's were smarter about scopes, this would not be necessary
+                            return false;
+                        }
                     }
                     sux.removePredecessor(block); // remove this block from the successor
                     for (BlockBegin pred : block.predecessors()) {
@@ -159,7 +165,7 @@ public class BlockMerger implements BlockClosure {
                     if (tblock != fblock && !newEnd.isSafepoint()) {
                         // remove the IfOp and move its comparison into the if at the end
                         If newIf = new If(ifOp.x(), ifOp.condition(), false, ifOp.y(), tblock, fblock, null, newEnd.isSafepoint());
-                        newIf.setStateAfter(newEnd.stateAfter().copy());
+                        newIf.setStateAfter(newEnd.stateAfter().immutableCopy());
 
                         assert prev.next() == newEnd : "must be guaranteed by above search";
                         prev.setNext(newIf, newEnd.bci());
@@ -174,7 +180,7 @@ public class BlockMerger implements BlockClosure {
     private void verifyStates(BlockBegin block, BlockBegin sux) {
         // verify that state at the end of block and at the beginning of sux are equal
         // no phi functions must be present at beginning of sux
-        ValueStack suxState = sux.state();
+        ValueStack suxState = sux.stateBefore();
         ValueStack endState = block.end().stateAfter();
         while (endState.scope() != suxState.scope()) {
             // match up inlining level

@@ -18,46 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.optimize;
+package jtt.except;
 
 /*
- * Tests value numbering of instanceof operations.
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=false
+ * @Runs: 4 = -170; 5 = -150; 6 = -140; 7 = -240; 30 = -700
  */
-public class VN_InstanceOf01 {
-    static final Object object = new VN_InstanceOf01();
-
-    public static boolean test(int arg) {
-        if (arg == 0) {
-            return foo1();
+public class Catch_Loop01 {
+    public static int test(int arg) {
+        int accum = 0;
+        for (int i = 0; i < arg; i++) {
+            try {
+                accum += div(20, i);
+            } catch (ArithmeticException e) {
+                accum -= 100;
+            }
         }
-        if (arg == 1) {
-            return foo2();
-        }
-        if (arg == 2) {
-            return foo3();
-        }
-        // do nothing
-        return false;
+        return accum;
     }
 
-    private static boolean foo1() {
-        boolean a = object instanceof VN_InstanceOf01;
-        boolean b = object instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo2() {
-        Object obj = new VN_InstanceOf01();
-        boolean a = obj instanceof VN_InstanceOf01;
-        boolean b = obj instanceof VN_InstanceOf01;
-        return a | b;
-    }
-
-    private static boolean foo3() {
-        boolean a = null instanceof VN_InstanceOf01;
-        boolean b = null instanceof VN_InstanceOf01;
-        return a | b;
+    static int div(int a, int b) {
+        return a / (b % 3);
     }
 }
