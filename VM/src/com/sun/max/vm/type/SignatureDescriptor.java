@@ -112,6 +112,20 @@ public abstract class SignatureDescriptor extends Descriptor {
         return canonicalSignatureDescriptors.length();
     }
 
+    /**
+     * Determines if a given signature contains any word types.
+     *
+     * @param signature the signature to test
+     */
+    public static boolean containsWord(SignatureDescriptor signature) {
+        for (TypeDescriptor type : signature.typeDescriptors) {
+            if (type.toKind() == Kind.WORD) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static TypeDescriptor[] parse(String string, int startIndex) throws ClassFormatError {
         if ((startIndex > string.length() - 3) || string.charAt(startIndex) != '(') {
             throw classFormatError("Invalid method signature: " + string);

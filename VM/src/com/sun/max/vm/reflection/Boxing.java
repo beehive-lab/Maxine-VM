@@ -25,7 +25,9 @@ import static com.sun.max.vm.reflection.InvocationStubGenerator.*;
 
 import java.lang.reflect.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
@@ -174,9 +176,9 @@ public enum Boxing {
                 }
             } else if (parameterKind == Kind.WORD) {
                 /*
-                 * The optimizing compiler is supposed to eliminate all this:
+                 * The compiler eliminates this:
                  */
-                asm.invokestatic(UnsafeLoophole_castWord_Word, 1, 1);
+                asm.invokestatic(Boxing_castWord_Word, 1, 1);
                 asm.checkcast(parameterTypePoolConstantIndex);
             }
         }
@@ -213,11 +215,16 @@ public enum Boxing {
                 return "(" + parameterType.getSimpleName() + ") " + unboxedParameter;
             } else if (parameterKind == Kind.WORD) {
                 // The following instructions will be optimized away to nothing
-                return "UnsafeLoophole.castWord(" + parameterType.getSimpleName() + ", " + unboxedParameter + ")";
+                return "Boxing.castWord(" + parameterType.getSimpleName() + ", " + unboxedParameter + ")";
             }
             return unboxedParameter;
         }
     };
+
+    @UNSAFE_CAST
+    public static Word castWord(Word word) {
+        return word;
+    }
 
     public abstract SignatureDescriptor invokeSignature();
     public abstract SignatureDescriptor newInstanceSignature();

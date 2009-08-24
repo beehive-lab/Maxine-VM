@@ -76,15 +76,6 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         return fromJava(reference.toJava());
     }
 
-    @INLINE
-    public Grip fromWord(Word word) {
-        throw new UnsupportedOperationException();
-    }
-
-    public Word toWord(Grip grip) {
-        throw new UnsupportedOperationException();
-    }
-
     public Grip fromOrigin(Pointer origin) {
         throw ProgramError.unexpected();
     }
@@ -124,7 +115,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public Pointer toOrigin(Grip grip) {
-        return UnsafeLoophole.gripToWord(grip).asPointer();
+        throw ProgramError.unexpected();
     }
 
     private void setValue(Grip grip, int displacement, int index, Object wordOrBoxedJavaValue) {
