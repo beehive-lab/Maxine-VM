@@ -95,6 +95,10 @@ public class ValueStack {
         return copy(true, true, true);
     }
 
+    public ValueStack immutableCopy() {
+        return copy(true, true, true);
+    }
+
     public boolean isSame(ValueStack other) {
         assert scope() == other.scope();
         assert localsSize() == other.localsSize();
@@ -216,7 +220,7 @@ public class ValueStack {
     public Instruction loadLocal(int i) {
         Instruction x = values[i];
         if (x != null) {
-            if (x.type().isIllegal()) {
+            if (x.isIllegal()) {
                 return null;
             }
             assert x.type().isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
@@ -642,7 +646,7 @@ public class ValueStack {
         }
     }
 
-    private int valuesSize() {
+    public int valuesSize() {
         return maxLocals + stackIndex;
     }
 
@@ -775,6 +779,25 @@ public class ValueStack {
     }
 
     /**
+     * This is a helper method for iterating over all phis in this value stack.
+     * @return an iterator over all phis
+     */
+    public Iterable<Phi> allLivePhis(BlockBegin block) {
+        final List<Phi> phis = new ArrayList<Phi>();
+
+        int max = this.valuesSize();
+        for (int i = 0; i < max; i++) {
+            Instruction instr = values[i];
+            if (instr instanceof Phi && instr.isLive()) {
+                if (block == null || ((Phi) instr).block() == block) {
+                    phis.add((Phi) instr);
+                }
+            }
+        }
+
+        return phis;
+    }
+    /**
      * Checks whether this value stack has any phi statements that refer to the specified block.
      * @param block the block to check
      * @return {@code true} if this value stack has phis for the specified block
@@ -796,15 +819,14 @@ public class ValueStack {
      * This is a helper method for iterating over all stack values and local variables in this value stack.
      * @return an interator over all state values
      */
-    public Iterable<Instruction> allStateValues() {
-        // XXX: this can be implemented more efficiently with an iterator over the
-        // values in the array, instead of copying them into an array list
+    public Iterable<Instruction> allLiveStateValues() {
+        // TODO: implement a more efficient iterator for use in linear scan
         int max = this.valuesSize();
         List<Instruction> result = new ArrayList<Instruction>(max);
 
         for (int i = 0; i < max; i++) {
             Instruction instr = values[i];
-            if (instr != null) {
+            if (instr != null && instr.isLive()) {
                 result.add(instr);
             }
         }
@@ -812,11 +834,8 @@ public class ValueStack {
         return result;
     }
 
-    public void pinStackForLinearScan() {
-        for (Instruction i : allStateValues()) {
-           if (!(i instanceof Local) && !(i instanceof Constant)) {
-               i.pin();
-           }
-        }
+    @Override
+    public String toString() {
+        return "state [locals = " + maxLocals + ", stack = " + stackSize() + "] " + scope;
     }
 }

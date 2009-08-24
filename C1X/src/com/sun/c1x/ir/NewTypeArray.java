@@ -31,8 +31,8 @@ public class NewTypeArray extends NewArray {
 
     final BasicType elementType;
 
-    public NewTypeArray(Instruction length, BasicType elementType) {
-        super(length, null, null);
+    public NewTypeArray(Instruction length, BasicType elementType, ValueStack stateBefore) {
+        super(length, stateBefore, null);
         this.elementType = elementType;
     }
 

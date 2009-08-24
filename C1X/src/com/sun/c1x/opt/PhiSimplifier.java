@@ -38,7 +38,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param start the start block from which to start performing phi simplification
      */
     public PhiSimplifier(BlockBegin start) {
-        start.iteratePreOrder(this);
+        start.iterateAnyOrder(this, false);
         if (hasSubstitutions) {
             // perform substitutions
             new SubstitutionResolver(start);
@@ -50,7 +50,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param block the block to apply the simplification to
      */
     public void apply(BlockBegin block) {
-        ValueStack state = block.state();
+        ValueStack state = block.stateBefore();
         for (int i = 0; i < state.stackSize(); i++) {
             simplify(state.stackAt(i));
         }
@@ -73,7 +73,7 @@ public class PhiSimplifier implements BlockClosure {
         } else if (phi.checkFlag(Instruction.Flag.PhiVisited)) {
             // break cycles in phis
             return phi;
-        } else if (phi.type().isIllegal()) {
+        } else if (phi.isIllegal()) {
             // don't bother with illegals
             return phi;
         } else {
@@ -84,9 +84,9 @@ public class PhiSimplifier implements BlockClosure {
             for (int i = 0; i < max; i++) {
                 Instruction oldInstr = phi.operandAt(i);
 
-                if (oldInstr == null || oldInstr.type().isIllegal()) {
+                if (oldInstr == null || oldInstr.isIllegal() || oldInstr.isDeadPhi()) {
                     // if one operand is illegal, make the entire phi illegal
-                    phi.makeIllegal();
+                    phi.makeDead();
                     phi.clearFlag(Instruction.Flag.PhiVisited);
                     return phi;
                 }

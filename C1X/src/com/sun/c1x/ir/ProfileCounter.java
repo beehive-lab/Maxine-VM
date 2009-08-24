@@ -45,7 +45,6 @@ public class ProfileCounter extends Instruction {
         this.mdo = mdo;
         this.offset = offset;
         this.increment = increment;
-        pin();
     }
 
     /**

@@ -38,27 +38,22 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
     public static final BoxedPointer ZERO = new BoxedPointer(0);
     public static final BoxedPointer MAX = new BoxedPointer(-1L);
 
-    private static final class Cache {
-        private Cache() {
-        }
+    private static final int HIGHEST_CACHED_VALUE = 1000000;
 
-        static final int HIGHEST_VALUE = 1000000;
-
-        static final BoxedPointer[] cache = new BoxedPointer[HIGHEST_VALUE + 1];
-
-        static {
-            for (int i = 0; i < cache.length; i++) {
-                cache[i] = new BoxedPointer(i);
-            }
-        }
-    }
+    private static final BoxedPointer[] cache = new BoxedPointer[HIGHEST_CACHED_VALUE + 1];
 
     public static BoxedPointer from(long value) {
         if (value == 0) {
             return ZERO;
         }
-        if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
-            return Cache.cache[(int) value];
+        if (value >= 0 && value <= HIGHEST_CACHED_VALUE) {
+            int cacheIndex = (int) value;
+            BoxedPointer boxedPointer = cache[cacheIndex];
+            if (boxedPointer == null) {
+                boxedPointer = new BoxedPointer(value);
+                cache[cacheIndex] = boxedPointer;
+            }
+            return boxedPointer;
         }
         if (value == -1L) {
             return MAX;

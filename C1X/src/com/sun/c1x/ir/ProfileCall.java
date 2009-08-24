@@ -49,7 +49,6 @@ public class ProfileCall extends Instruction {
         this.bciOfInvoke = bci;
         this.object = object;
         this.knownHolder = knownHolder;
-        pin();
     }
 
     /**

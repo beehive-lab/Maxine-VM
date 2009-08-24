@@ -36,10 +36,10 @@ public class LoadIndexed extends AccessIndexed {
      * @param index the instruction producing the index
      * @param length the instruction producing the length
      * @param elementType the element type
-     * @param lockStack the lock stack
+     * @param stateBefore the state before executing this instruction
      */
-    public LoadIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack lockStack) {
-        super(array, index, length, elementType, lockStack);
+    public LoadIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack stateBefore) {
+        super(array, index, length, elementType, stateBefore);
     }
 
     /**

@@ -265,14 +265,6 @@ public enum BasicType {
     }
 
     /**
-     * Checks whether this value type is illegal.
-     * @return <code>true</code> if this type is illegal
-     */
-    public final boolean isIllegal() {
-        return this == BasicType.Illegal;
-    }
-
-    /**
      * Checks whether this type is represented by a single word.
      * @return true if this type is represented by a single word
      */

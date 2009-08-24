@@ -199,7 +199,7 @@ public class CFGPrinter {
     private void printState(BlockBegin block) {
         begin("states");
 
-        ValueStack state = block.state();
+        ValueStack state = block.stateBefore();
 
         if (state.stackSize() > 0) {
           begin("stack");
@@ -247,7 +247,7 @@ public class CFGPrinter {
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
-                    i += value.type().isIllegal() ? 1 : value.type().sizeInSlots();
+                    i += value.isIllegal() ? 1 : value.type().sizeInSlots();
                 } else {
                     i++;
                 }
@@ -304,7 +304,7 @@ public class CFGPrinter {
      * @param i the instruction for which HIR will be printed
      */
     private void printInstructionHIR(Instruction i) {
-        if (i.isPinned()) {
+        if (i.isLive()) {
             out.print('.');
         }
         int useCount = 0;
@@ -326,7 +326,6 @@ public class CFGPrinter {
      * @param printLIR if {@code true} the LIR for each instruction in the block will be printed
      */
     public void printCFG(RiMethod method, BlockMap blockMap, int codeSize, String label, boolean printHIR, boolean printLIR) {
-        assert method == currentMethod;
         begin("cfg");
         out.print("name \"").print(label).println('"');
         for (int bci = 0; bci < codeSize; ++bci) {

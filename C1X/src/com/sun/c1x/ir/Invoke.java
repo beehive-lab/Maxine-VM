@@ -35,7 +35,6 @@ public class Invoke extends StateSplit {
     final int opcode;
     final Instruction[] arguments;
     final int vtableIndex;
-    final boolean isStatic;
     final RiMethod target;
     public final char cpi;
     public final RiConstantPool constantPool;
@@ -49,14 +48,15 @@ public class Invoke extends StateSplit {
      * @param isStatic {@code true} if this call is static (no receiver object)
      * @param vtableIndex the vtable index for a virtual or interface call
      * @param target the target method being called
+     * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool) {
-        super(result);
+    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+        super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
-        this.isStatic = isStatic;
         this.vtableIndex = vtableIndex;
         this.target = target;
+        initFlag(Flag.IsStatic, isStatic);
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
@@ -64,13 +64,6 @@ public class Invoke extends StateSplit {
 
         this.cpi = cpi;
         this.constantPool = constantPool;
-
-        // TODO: Active this when there is no longer 2-slot concept (for long and doubles) in HIR
-        //        if (C1XOptions.DetailedAsserts) {
-        //            for (int i = 0; i < args.length; i++) {
-        //                assert args[i] != null;
-        //            }
-        //        }
     }
 
     /**
@@ -86,7 +79,7 @@ public class Invoke extends StateSplit {
      * @return {@code true} if the invocation is a static invocation
      */
     public boolean isStatic() {
-        return isStatic;
+        return checkFlag(Flag.IsStatic);
     }
 
     /**
@@ -95,7 +88,7 @@ public class Invoke extends StateSplit {
      *         invocation does not take a receiver object
      */
     public Instruction receiver() {
-        assert !isStatic;
+        assert !isStatic();
         return arguments[0];
     }
 
@@ -138,7 +131,7 @@ public class Invoke extends StateSplit {
      *         static call
      */
     public boolean hasReceiver() {
-        return !isStatic;
+        return !isStatic();
     }
 
     /**
@@ -167,6 +160,6 @@ public class Invoke extends StateSplit {
     }
 
     public BasicType[] signature() {
-        return Util.signatureToBasicTypes(target.signatureType(), !isStatic);
+        return Util.signatureToBasicTypes(target.signatureType(), !isStatic());
     }
 }

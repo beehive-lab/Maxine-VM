@@ -115,7 +115,7 @@ public class LIRItem {
     }
 
     public boolean isConstant() {
-        return value instanceof Constant;
+        return result.isConstant();
     }
 
     public boolean isStack() {
