@@ -37,7 +37,7 @@ public enum CiRuntimeCall {
     ThrowDiv0Exception(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
-    ThrowClassCastException(Void),
+    ThrowClassCastException(Void, Object),
     ThrowIncompatibleClassChangeError,
     RegisterFinalizer(Void),
     NewInstance(Object, Object),
