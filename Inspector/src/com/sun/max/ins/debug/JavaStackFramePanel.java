@@ -43,18 +43,22 @@ import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.value.*;
 
 
+/**
+ * Display panel specialized for displaying VM stack frames for Java methods.
+ *
+ * @author Michael Van De Vanter
+ */
 final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
 
     /**
      * Specifies the display mode for the left column of the frame, where the
      * location of the frame slot is identified.
-     *
      */
     public enum SlotNameDisplayMode {
         NAME ("Name", "The abstract name of the frame slot"),
         ADDRESS ("Address", "The absolute memory location of the frame slot"),
-        OFFSET ("Offset", "The offset in bytes from the base of the frame"),
-        BIASED_OFFSET ("Biased offset", "The offset in bytes from the base of the frame, biased in a platform-specific way");
+        OFFSET_SP ("Offset(SP)", "The offset in bytes from the Stack Pointer"),
+        OFFSET_FP ("Offset(FP)", "The offset in bytes from the Frame Pointer");
 
         private final String label;
         private final String description;
@@ -75,6 +79,9 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         public static final IndexedSequence<SlotNameDisplayMode> VALUES = new ArraySequence<SlotNameDisplayMode>(values());
     }
 
+    final int frameSize;
+    final Pointer framePointer;
+    final Pointer stackPointer;
 
     final WordValueLabel instructionPointerLabel;
     final Slots slots;
@@ -91,7 +98,7 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         targetMethod = javaStackFrame.targetMethod();
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
-        final int frameSize = javaStackFrame.layout.frameSize();
+        frameSize = javaStackFrame.layout.frameSize();
 
         final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
         instructionPointerLabel = new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, this) {
@@ -104,8 +111,8 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         header.add(new TextLabel(inspection(), "Frame size:", frameClassName));
         header.add(new DataLabel.IntAsDecimal(inspection(), frameSize));
 
-        final Pointer framePointer = javaStackFrame.framePointer;
-        final Pointer stackPointer = javaStackFrame.stackPointer;
+        framePointer = javaStackFrame.framePointer;
+        stackPointer = javaStackFrame.stackPointer;
         final StackBias bias = javaStackFrame.bias();
 
         header.add(new TextLabel(inspection(), "Frame pointer:", frameClassName));
@@ -213,15 +220,29 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         final StackBias bias = stackFrame.bias();
         //final SlotNameDisplayMode locationDisplayMode = (SlotNameDisplayMode) locationDisplay.getSelectedItem();
         String name;
-        switch (StackInspector.globalPreferences(inspection()).slotNameDisplayMode()) {
+        StackViewPreferences globalPreferences = StackInspector.globalPreferences(inspection());
+        switch (globalPreferences.slotNameDisplayMode()) {
             case ADDRESS:
                 name = stackFrame.slotBase().plus(offset).toHexString();
                 break;
-            case BIASED_OFFSET:
-                name = "+" + stackFrame.biasedOffset(offset);
+            case OFFSET_FP:
+                int offsetFP;
+                if (globalPreferences.biasSlotOffsets()) {
+                    offsetFP = stackFrame.biasedFPOffset(offset);
+                } else {
+                    offsetFP = offset - frameSize;
+                }
+                name = ((offsetFP >= 0) ? "+" : "") + Integer.toString(offsetFP);
                 break;
-            case OFFSET:
-                name = "+" + slot.offset;
+            case OFFSET_SP:
+                int offsetSP;
+                if (globalPreferences.biasSlotOffsets()) {
+                    offsetSP = stackFrame.biasedFPOffset(offset) + frameSize;
+                } else {
+                    offsetSP = offset;
+                }
+                // Stack pointer offsets are always non-zero
+                name = "+" +  offsetSP;
                 break;
             case NAME:
                 name = slot.name;
@@ -233,7 +254,7 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         slotLabel.setText(name + ":");
         String otherInfo = "";
         if (bias.isFramePointerBiased()) {
-            final int biasedOffset = stackFrame.biasedOffset(offset);
+            final int biasedOffset = stackFrame.biasedFPOffset(offset);
             otherInfo = String.format("(%%fp %+d)", biasedOffset);
         }
         slotLabel.setToolTipText(String.format("%+d%s%s", offset, otherInfo, sourceVariableName == null ? "" : " [" + sourceVariableName + "]"));

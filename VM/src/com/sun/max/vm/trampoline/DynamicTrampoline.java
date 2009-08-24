@@ -52,7 +52,7 @@ public abstract class DynamicTrampoline {
     }
 
     private DynamicTrampolineExit trampolineExit() {
-        return trampoline.compilerScheme().vmConfiguration().trampolineScheme().dynamicTrampolineExit();
+        return trampoline.compilerScheme.vmConfiguration().trampolineScheme().dynamicTrampolineExit();
     }
 
     /**
