@@ -89,8 +89,6 @@ public final class JavaTester {
             Arrays.sort(arguments);
         }
 
-        System.out.println(Arrays.toString(arguments));
-
         if (HELP.getValue()) {
             options.printHelp(System.out, 80);
             return;
