@@ -20,15 +20,26 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.Bailout;
-import com.sun.c1x.target.Target;
-
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
+
+import com.sun.c1x.Bailout;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeStream;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.RiBytecodeExtension;
+import com.sun.c1x.ci.RiConstantPool;
+import com.sun.c1x.ci.RiExceptionHandler;
+import com.sun.c1x.ci.RiField;
+import com.sun.c1x.ci.RiMethod;
+import com.sun.c1x.ci.RiRuntime;
+import com.sun.c1x.ci.RiSignature;
+import com.sun.c1x.ci.RiType;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows

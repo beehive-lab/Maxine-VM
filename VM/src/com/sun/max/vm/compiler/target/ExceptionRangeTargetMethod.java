@@ -161,10 +161,24 @@ public abstract class ExceptionRangeTargetMethod extends TargetMethod {
         return duplicate;
     }
 
+    /**
+     * Overwrite this method if the top frame instruction pointer must be adjusted for this target method.
+     * @return the value that should be added to the top frame instruction pointer
+     */
+    public int topFrameInstructionAdjustment() {
+        return 0;
+    }
+
     @Override
-    public final Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public final Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         if (catchRangePositions != null) {
+
+
             int throwOffset = throwAddress.minus(codeStart).toInt();
+
+
+            throwOffset += topFrameInstructionAdjustment();
+
             for (int i = catchRangePositions.length - 1; i >= 0; i--) {
                 if (throwOffset >= catchRangePositions[i]) {
                     final int catchBlockPosition = catchBlockPositions[i];

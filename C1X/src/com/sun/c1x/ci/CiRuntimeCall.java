@@ -36,14 +36,14 @@ public enum CiRuntimeCall {
     ThrowIndexException(Void, Int),
     ThrowDiv0Exception(Void),
     ThrowNullPointerException(Void),
+    ThrowArrayStoreException(Void),
+    ThrowClassCastException(Void, Object),
+    ThrowIncompatibleClassChangeError,
     RegisterFinalizer(Void),
     NewInstance(Object, Object),
     NewArray(Object, Object, Int),
     NewMultiArray(Object, Object, Object),
     HandleException(Void, Object),
-    ThrowArrayStoreException(Void),
-    ThrowClassCastException(Void),
-    ThrowIncompatibleClassChangeError,
     SlowSubtypeCheck(Boolean, Object, Object),
     Monitorenter(Void, Object, Int),
     Monitorexit(Void, Object, Int),
@@ -69,6 +69,7 @@ public enum CiRuntimeCall {
     ArithmeticLog10(Double, Double),
     ArithmeticSin(Double, Double),
     ResolveClass(Object, Int, Object),
+    ResolveArrayClass(Object, Int, Object),
     ResolveVTableIndex(Int, Int, Object);
 
     public final BasicType resultType;

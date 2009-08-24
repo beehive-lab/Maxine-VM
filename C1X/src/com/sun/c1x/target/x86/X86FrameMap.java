@@ -143,7 +143,9 @@ public class X86FrameMap extends FrameMap {
     }
 
     public static Register rscratch1(Architecture arch) {
-        return (arch.is32bit()) ? Register.noreg : X86.r10;
+
+        // TODO: assert that this register is never allocated!
+        return (arch.is32bit()) ? Register.noreg : X86.r11;
     }
 
     public X86FrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
@@ -153,7 +155,7 @@ public class X86FrameMap extends FrameMap {
     @Override
     public boolean allocatableRegister(Register r) {
         // TODO: (tw) Remove this hack
-        return r != X86.rsp && r != X86.rbp;
+        return r != X86.rsp && r != X86.rbp && r != X86.r11;
     }
 
 }

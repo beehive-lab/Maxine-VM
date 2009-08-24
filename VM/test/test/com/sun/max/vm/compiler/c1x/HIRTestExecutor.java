@@ -102,7 +102,6 @@ public class HIRTestExecutor implements Executor {
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
         c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
-        C1XOptions.setOptimizationLevel(0);
     }
 
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
