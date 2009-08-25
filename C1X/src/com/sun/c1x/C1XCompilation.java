@@ -46,9 +46,9 @@ public class C1XCompilation {
     public final Target target;
     public final RiRuntime runtime;
     public final RiMethod method;
+    public final CiStatistics stats;
     public final int osrBCI;
 
-    int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
     boolean hasUnsafeAccess;
@@ -80,6 +80,7 @@ public class C1XCompilation {
         this.runtime = runtime;
         this.method = method;
         this.osrBCI = osrBCI;
+        this.stats = new CiStatistics();
     }
 
     /**
@@ -211,7 +212,7 @@ public class C1XCompilation {
      * @return the block map for the specified method
      */
     public BlockMap getBlockMap(RiMethod method, int osrBCI) {
-        // XXX: cache the block map for methods that are compiled or inlined often
+        // PERF: cache the block map for methods that are compiled or inlined often
         BlockMap map = new BlockMap(method, hir.numberOfBlocks());
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {
@@ -227,17 +228,9 @@ public class C1XCompilation {
             }
         }
         map.cleanup();
-        hir.incrementNumberOfBlocks(map.numberOfBlocks());
+        stats.byteCount += map.numberOfBytes();
+        stats.blockCount += map.numberOfBlocks();
         return map;
-    }
-
-    /**
-     * Returns the number of bytecodes inlined into the compilation.
-     *
-     * @return the number of bytecodes
-     */
-    public int totalInstructions() {
-        return hir.totalInstructions();
     }
 
     /**
@@ -279,7 +272,7 @@ public class C1XCompilation {
         return hasExceptionHandlers;
     }
 
-    public CiTargetMethod compile() {
+    public CiResult compile() {
 
         Instruction.nextID = 0;
 
@@ -288,22 +281,19 @@ public class C1XCompilation {
             TTY.println("Compiling method: " + method.toString());
         }
 
-        CiTargetMethod targetMethod = null;
+        CiTargetMethod targetMethod;
         try {
             hir = new IR(this);
             hir.build();
             emitLIR();
             targetMethod = emitCode();
+        } catch (Bailout b) {
+            return new CiResult(null, b, stats);
         } catch (Throwable t) {
-            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
-            throw bailout;
+            return new CiResult(null, new Bailout("Exception while compiling: " + this.method(), t), stats);
         }
 
-        if (targetMethod != null) {
-            targetMethod.totalInstructions = this.totalInstructions();
-        }
-
-        return targetMethod;
+        return new CiResult(targetMethod, null, stats);
     }
 
     public IR emitHIR() {
