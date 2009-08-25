@@ -235,6 +235,10 @@ public class BlockMap {
         return blockNum - firstBlock;
     }
 
+    public int numberOfBytes() {
+        return code.length;
+    }
+
     /**
      * Gets the bitmap that indicates which local variables are assigned in loops.
      * @return a bitmap which indicates the locals stored in loops

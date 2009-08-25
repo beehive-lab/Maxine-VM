@@ -20,42 +20,39 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.target.Target;
+import com.sun.c1x.Bailout;
 
 /**
- * The <code>CiCompiler</code> class represents a compiler instance which has been
- * configured for a particular runtime system and target machine.
+ * The <code>CiResult</code> class represents the result of compiling a method. The result
+ * can include a target method with machine code and metadata, and/or statistics. If the
+ * compiler bailed out due to malformed bytecode, an internal error, or other cause,
+ * it will supply the bailout object.
  *
  * @author Ben L. Titzer
  */
-public abstract class CiCompiler {
-    /**
-     * The target that this compiler has been configured for.
-     */
-    public final Target target;
+public class CiResult {
+    private final CiTargetMethod targetMethod;
+    private final Bailout bailout;
+    private final CiStatistics stats;
 
-    /**
-     * The runtime that this compiler has been configured for.
-     */
-    public final RiRuntime runtime;
-
-    protected CiCompiler(RiRuntime runtime, Target target) {
-        this.runtime = runtime;
-        this.target = target;
+    public CiResult(CiTargetMethod targetMethod, Bailout bailout, CiStatistics stats) {
+        this.targetMethod = targetMethod;
+        this.bailout = bailout;
+        this.stats = stats;
     }
 
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method);
+    public CiTargetMethod targetMethod() {
+        if (bailout != null) {
+            throw bailout;
+        }
+        return targetMethod;
+    }
 
-    /**
-     * Compile the specified method.
-     * @param method the method to compile
-     * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link CiResult result} representing the compilation result
-     */
-    public abstract CiResult compileMethod(RiMethod method, int osrBCI);
+    public CiStatistics statistics() {
+        return stats;
+    }
+
+    public Bailout bailout() {
+        return bailout;
+    }
 }

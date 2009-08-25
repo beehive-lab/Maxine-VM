@@ -149,7 +149,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-        CiTargetMethod compiledMethod = compiler.compileMethod(method);
+        CiTargetMethod compiledMethod = compiler.compileMethod(method).targetMethod();
         if (compiledMethod != null) {
 
             C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);

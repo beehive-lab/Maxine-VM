@@ -106,6 +106,7 @@ public class C1XTest {
 
     private static PrintStream out = System.out;
     private static int totalBytes;
+    private static int totalInlinedBytes;
     private static int totalInstrs;
     private static long totalNs;
     private static long lastRunNs;
@@ -198,6 +199,7 @@ public class C1XTest {
     private static void doTimingRun(CiCompiler compiler, List<MethodActor> methods) {
         long start = System.nanoTime();
         totalBytes = 0;
+        totalInlinedBytes = 0;
         totalNs = 0;
         totalInstrs = 0;
         for (MethodActor methodActor : methods) {
@@ -225,20 +227,13 @@ public class C1XTest {
 
     private static boolean compile(CiCompiler compiler, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
-        final long startNs = System.nanoTime();
 
-        CiTargetMethod result;
-        try {
-            result = compiler.compileMethod(((MaxRiRuntime) compiler.runtime).getRiMethod((ClassMethodActor) method));
-            if (timing) {
-                long timeNs = System.nanoTime() - startNs;
-                recordTime(method, result == null ? 0 : result.totalInstructions(), timeNs);
-            }
-        } catch (Bailout bailout) {
-            if (printBailout) {
-                bailout.printStackTrace();
-            }
-            return false;
+        RiMethod riMethod = ((MaxRiRuntime) compiler.runtime).getRiMethod((ClassMethodActor) method);
+        final long startNs = System.nanoTime();
+        CiResult result = compiler.compileMethod(riMethod);
+        if (timing && result.bailout() == null) {
+            long timeNs = System.nanoTime() - startNs;
+            recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
         }
 
         return true;
@@ -430,11 +425,12 @@ public class C1XTest {
         }
     }
 
-    private static void recordTime(MethodActor method, int instructions, long ns) {
+    private static void recordTime(MethodActor method, int inlinedBytes, int instructions, long ns) {
         if (!averageOption.getValue()) {
             timings.add(new Timing((ClassMethodActor) method, instructions, ns));
         }
         totalBytes += ((ClassMethodActor) method).rawCodeAttribute().code().length;
+        totalInlinedBytes += inlinedBytes;
         totalInstrs += instructions;
         totalNs += ns;
     }
@@ -472,8 +468,10 @@ public class C1XTest {
     private static void reportAverage() {
         out.print("Time: " + formatDouble(lastRunNs / ONE_BILLION, 14, 6) + " seconds   ");
         double totalBcps = ONE_BILLION * (totalBytes / (double) totalNs);
+        double totalIBcps = ONE_BILLION * (totalInlinedBytes / (double) totalNs);
         double totalIps = ONE_BILLION * (totalInstrs / (double) totalNs);
         out.print(formatDouble(totalBcps, 12, 2) + " bytes/s   ");
+        out.print(formatDouble(totalIBcps, 12, 2) + " bytes/s   ");
         out.print(formatDouble(totalIps, 12, 2) + " insts/s");
         out.println();
     }

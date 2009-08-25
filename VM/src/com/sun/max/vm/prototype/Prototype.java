@@ -129,7 +129,6 @@ public abstract class Prototype {
             final File workspacePath = projectPath.getParentFile();
             final String[] usrPaths = (String[]) WithoutAccessCheck.getStaticField(ClassLoader.class, "usr_paths");
             final String libraryPath = new File(workspacePath, LIBRARY_BUILD_PATH).getPath() + File.pathSeparator + Arrays.toString(usrPaths, File.pathSeparator);
-            System.out.println("Library path: " + libraryPath);
             JDKInterceptor.setLibraryPath(libraryPath);
             isPathHacked = true;
         }

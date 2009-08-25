@@ -40,7 +40,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiTargetMethod compileMethod(RiMethod method) {
+    public CiResult compileMethod(RiMethod method) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;
@@ -54,7 +54,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
+    public CiResult compileMethod(RiMethod method, int osrBCI) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;
