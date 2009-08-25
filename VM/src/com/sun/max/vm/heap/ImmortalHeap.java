@@ -18,30 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
+/**
+ * @author Hannes Payer
+ */
+package com.sun.max.vm.heap;
+
+import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
-/**
- * A code manager that reserves and allocates virtual memory at a fixed address.
- *
- * @author Bernd Mathiske
- */
-public class FixedAddressCodeManager extends CodeManager {
 
-    /**
-     * Initialize this code manager.
-     */
-    @Override
-    void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
-        }
-        runtimeCodeRegion.bind(address, size);
+public final class ImmortalHeap {
+
+    public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceImmortalHeapAllocation", "Trace allocation from the immortal heap."), MaxineVM.Phase.STARTING);
+
+    private ImmortalHeap() {
+    }
+
+    public static final VMSizeOption maxPermSize =
+        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(32),
+            "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
+
+    private static ImmortalMemoryRegion createImmortalHeap() {
+        return new ImmortalMemoryRegion();
+    }
+
+    private static final ImmortalMemoryRegion immortalHeap = createImmortalHeap();
+
+    public static ImmortalMemoryRegion getImmortalHeap() {
+        return immortalHeap;
+    }
+
+    public static void initialize() {
+        immortalHeap.initialize(maxPermSize.getValue().toInt());
+    }
+
+    public static void visitCells(CellVisitor cellVisitor) {
+        immortalHeap.visitCells(cellVisitor);
     }
 }

@@ -46,13 +46,13 @@ import com.sun.max.vm.thread.*;
  * @author Bernd Mathiske
  * @author Hannes Payer
  */
-public abstract class CodeManager extends RuntimeMemoryRegion {
+public abstract class CodeManager {
 
     /**
      * A VM option for specifying amount of memory to be reserved for runtime code region cache.
      */
     public static final VMSizeOption runtimeCodeRegionSize =
-        register(new VMSizeOption("-XX:ReservedCodeCacheSize=", Size.M.times(64),
+        register(new VMSizeOption("-XX:ReservedCodeCacheSize=", Size.M.times(32),
             "Memory allocated for runtime code region cache."), MaxineVM.Phase.PRISTINE);
 
     /**
@@ -222,9 +222,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         if (!cell.isZero() && purpose != null) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.printVmThread(VmThread.current(), false);
-            Log.print(": Allocated chunk in region ");
-            Log.print(description());
-            Log.print(" for ");
+            Log.print(": Allocated chunk in CodeManager for ");
             if (purpose instanceof MethodActor) {
                 Log.printMethodActor((MethodActor) purpose, false);
             } else {
@@ -317,7 +315,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
 
     /**
      * Return size of runtime code region.
-     * @return
+     * @return size of runtime code region
      */
     public Size getRuntimeCodeRegionSize() {
         return runtimeCodeRegionSize.getValue();
