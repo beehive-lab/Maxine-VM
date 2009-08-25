@@ -58,7 +58,6 @@ public class NullCheckEliminator extends InstructionVisitor {
         final BlockBegin ifBlock;
         final BlockBegin succ;
         final Instruction checked;
-        BitMap bitMap;
 
         IfEdge(BlockBegin i, BlockBegin s, Instruction c) {
             this.ifBlock = i;
@@ -392,7 +391,7 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        if (i.opcode() == Bytecodes.INVOKEVIRTUAL || i.opcode() == Bytecodes.INVOKEINTERFACE) {
+        if (!i.isStatic()) {
             processUse(i, i.receiver(), true);
         }
     }
@@ -424,9 +423,9 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     @Override
     public void visitIf(If i) {
-        Instruction x = i.x();
         if (C1XOptions.DoFlowSensitiveNCE) {
             if (i.trueSuccessor() != i.falseSuccessor()) {
+                Instruction x = i.x();
                 // if the two successors are different, then we may learn something on one branch
                 if (x.type() == BasicType.Object) {
                     // this is a comparison of object references
@@ -445,7 +444,7 @@ public class NullCheckEliminator extends InstructionVisitor {
                         compareAgainstNull(i, x);
                     }
                 }
-                // XXX: also check (x instanceof T) tests 
+                // XXX: also check (x instanceof T) tests
             }
         }
     }

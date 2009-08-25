@@ -35,8 +35,11 @@ import com.sun.c1x.value.*;
  */
 public class BlockMerger implements BlockClosure {
 
+    final BlockBegin startBlock;
+
     public BlockMerger(IR ir) {
-        ir.startBlock.iteratePreOrder(this);
+        startBlock = ir.startBlock;
+        startBlock.iteratePreOrder(this);
     }
 
     public void apply(BlockBegin block) {
@@ -48,13 +51,13 @@ public class BlockMerger implements BlockClosure {
     private boolean tryMerge(BlockBegin block) {
         BlockEnd oldEnd = block.end();
         BlockEnd newEnd = oldEnd;
-        if (oldEnd instanceof Goto) {
+        if (oldEnd instanceof Goto && block != startBlock) {
             BlockBegin sux = oldEnd.defaultSuccessor();
 
             assert oldEnd.successors().size() == 1 : "end must have exactly one successor";
             assert !sux.isExceptionEntry() : "should not have Goto to exception entry";
 
-            if (!oldEnd.isSafepoint() && !sux.isEntryBlock()) {
+            if (!oldEnd.isSafepoint()) {
                 if (sux.numberOfPreds() == 1) {
                     // the successor has only one predecessor, merge it into this block
                     if (C1XOptions.DetailedAsserts) {
