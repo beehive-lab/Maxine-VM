@@ -53,8 +53,11 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
 
     @INLINE
     public Reference fromGrip(Grip grip) {
-        return UnsafeLoophole.gripToReference(grip);
+        return toReference(grip);
     }
+
+    @UNSAFE_CAST
+    private static native Reference toReference(Grip grip);
 
     @INLINE
     public Reference fromJava(Object object) {

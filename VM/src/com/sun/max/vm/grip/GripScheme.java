@@ -30,9 +30,9 @@ import com.sun.max.vm.reference.*;
  * A "grip" is a runtime value of type 'java.lang.Object'.
  * It can be stored in fields and array elements of other objects.
  * The GC uses grips instead of references to avoid barrier code.
- * 
+ *
  * @see ReferenceScheme
- * 
+ *
  * @author Matthew Seidl
  * @author Bernd Mathiske
  */
@@ -51,13 +51,9 @@ public interface GripScheme extends VMScheme {
 
     Grip fromReference(Reference reference);
 
-    Grip fromWord(Word word);
-
-    Word toWord(Grip grip);
-
     /**
      * Create a new reference using the origin pointer to a newly created object.
-     * 
+     *
      * @param origin the origin pointer of an object
      * @return a reference for the given object
      */
@@ -69,7 +65,7 @@ public interface GripScheme extends VMScheme {
      * Make use of a new origin.
      * Either change the old grip to refer to a new origin
      * or create a completely new grip that uses the new origin.
-     * 
+     *
      * @param grip the old grip
      * @param origin the new origin pointer
      * @return the changed grip, potentially a new one
