@@ -85,6 +85,9 @@ public final class JavaTester {
         Trace.addTo(options);
         // parse the arguments
         final String[] arguments = options.parseArguments(args).getArguments();
+        if (SORT_OPTION.getValue()) {
+            Arrays.sort(arguments);
+        }
 
         if (HELP.getValue()) {
             options.printHelp(System.out, 80);

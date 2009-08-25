@@ -68,7 +68,7 @@ public class ExceptionDispatcher {
      * if being executed by an {@link IrInterpreter}.
      */
     @NEVER_INLINE
-    private static Throwable safepointAndLoadExceptionObject() {
+    public static Throwable safepointAndLoadExceptionObject() {
         if (MaxineVM.isPrototyping()) {
             return prototypeSafepointAndLoadExceptionObject();
         }

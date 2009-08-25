@@ -51,6 +51,7 @@ public abstract class Instruction {
         NoStoreCheck,       // does not require store check
         NoRangeCheck,       // does not require range (bounds) check
         NoWriteBarrier,     // does not require write barrier
+        NoZeroCheck,        // divide or modulus cannot cause exception
         DirectCompare,
         IsLoaded,           // field or method is resolved and class is loaded and initialized
         IsStatic,           // field or method access is static
