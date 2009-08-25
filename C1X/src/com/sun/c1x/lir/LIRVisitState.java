@@ -309,6 +309,9 @@ public class LIRVisitState {
             case Shl:
             case Shr:
             case Ushr:
+            case ResolveJavaClass:
+            case ResolveStaticFields:
+            case ResolveFieldOffset:
             case ResolveArrayClass:
             case Resolve: {
                 LIROp2 op2 = (LIROp2) op;
@@ -570,7 +573,12 @@ public class LIRVisitState {
                     opTypeCheck.array = doInput(opTypeCheck.array);
                 }
                 if (opTypeCheck.tmp1.isValid()) {
-                    opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
+                    if (op.code == LIROpcode.InstanceOf || op.code == LIROpcode.CheckCast) {
+                        // (tw) For instanceOf or checkcast the first temporary is used as an input operand (the hub).
+                        opTypeCheck.tmp1 = doInput(opTypeCheck.tmp1);
+                    } else {
+                        opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
+                    }
                 }
                 if (opTypeCheck.tmp2.isValid()) {
                     opTypeCheck.tmp2 = doTemp(opTypeCheck.tmp2);

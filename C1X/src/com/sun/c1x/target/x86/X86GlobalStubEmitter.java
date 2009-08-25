@@ -133,12 +133,28 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 emitStandardForward(stub, CiRuntimeCall.ResolveArrayClass);
                 break;
 
+            case ResolveStaticFields:
+                emitStandardForward(stub, CiRuntimeCall.ResolveStaticFields);
+                break;
+
+            case ResolveJavaClass:
+                emitStandardForward(stub, CiRuntimeCall.ResolveJavaClass);
+                break;
+
+            case ResolveFieldOffset:
+                emitStandardForward(stub, CiRuntimeCall.ResolveFieldOffset);
+                break;
+
             case ResolveVTableIndex:
                 emitStandardForward(stub, CiRuntimeCall.ResolveVTableIndex);
                 break;
 
             case RetrieveInterfaceIndex:
                 emitStandardForward(stub, CiRuntimeCall.RetrieveInterfaceIndex);
+                break;
+
+            case ResolveInterfaceIndex:
+                emitStandardForward(stub, CiRuntimeCall.ResolveInterfaceIndex);
                 break;
 
             case ResolveOptVirtualCall:

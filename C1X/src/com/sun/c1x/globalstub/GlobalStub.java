@@ -61,12 +61,12 @@ public enum GlobalStub {
     RetrieveInterfaceIndex(Int, Object, Int),
     ResolveClass(Object, Int, Object),
     ResolveArrayClass(Object, Int, Object),
+    ResolveInterfaceIndex(Int, Object, Int, Object),
+    ResolveStaticFields(Object, Int, Object),
+    ResolveJavaClass(Object, Int, Object),
+    ResolveFieldOffset(Int, Int, Object),
     ResolveVTableIndex(Int, Int, Object);
 
-    /**
-     * Maximum number of arguments, determines how many stack words are reserved on the top of the stack.
-     */
-    public static final int MaxNumberOfArguments = 2;
 
     public final BasicType resultType;
     public final BasicType[] arguments;
@@ -79,6 +79,5 @@ public enum GlobalStub {
     private GlobalStub(BasicType resultType, BasicType... args) {
         this.resultType = resultType;
         this.arguments = args;
-        assert args.length <= MaxNumberOfArguments;
     }
 }

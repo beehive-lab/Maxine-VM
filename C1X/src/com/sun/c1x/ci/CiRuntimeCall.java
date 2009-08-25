@@ -57,6 +57,7 @@ public enum CiRuntimeCall {
     ResolveOptVirtualCall(Word, Int, Object),
     ResolveStaticCall(Word, Int, Object),
     Debug(Void),
+    ResolveInterfaceIndex(Int, Int, Object),
     RetrieveInterfaceIndex(Int, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
@@ -70,6 +71,9 @@ public enum CiRuntimeCall {
     ArithmeticSin(Double, Double),
     ResolveClass(Object, Int, Object),
     ResolveArrayClass(Object, Int, Object),
+    ResolveStaticFields(Object, Int, Object),
+    ResolveJavaClass(Object, Int, Object),
+    ResolveFieldOffset(Int, Int, Object),
     ResolveVTableIndex(Int, Int, Object);
 
     public final BasicType resultType;

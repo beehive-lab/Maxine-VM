@@ -38,8 +38,8 @@ public class LoadField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
-        super(object, field, isStatic, stateBefore, isLoaded);
+    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+        super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
     }
 
     /**

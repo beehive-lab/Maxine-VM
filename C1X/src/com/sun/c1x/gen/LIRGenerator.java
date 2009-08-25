@@ -216,7 +216,16 @@ public abstract class LIRGenerator extends InstructionVisitor {
     public void visitResolveClass(ResolveClass i) {
         assert i.stateBefore() != null;
         LIROperand result = rlockResult(i);
-        lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+        if (i.portion == RiType.Representation.ObjectHub) {
+            lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+        } else if (i.portion == RiType.Representation.StaticFields) {
+            lir.resolveStaticFieldsInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+        } else if (i.portion == RiType.Representation.JavaClass) {
+            lir.resolveJavaClass(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+
+        } else {
+            Util.shouldNotReachHere();
+        }
     }
 
     @Override
@@ -480,11 +489,18 @@ public abstract class LIRGenerator extends InstructionVisitor {
         LIROperand reg = rlockResult(x, fieldType);
         LIRAddress address;
         if (needsPatching) {
+
+
+            LIROperand tempResult = this.newRegister(BasicType.Int);
+            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
+            address = new LIRAddress(object.result(), tempResult, fieldType);
+
+
             // we need to patch the offset in the instruction so don't allow
             // generateAddress to try to be smart about emitting the -1.
             // Otherwise the patching code won't know how to find the
             // instruction to patch.
-            address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
+            //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
             address = generateAddress(object.result(), LIROperandFactory.IllegalOperand, 0, x.offset(), fieldType);
         }
@@ -492,7 +508,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (isVolatile) {
             volatileFieldLoad(address, reg, info);
         } else {
-            LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
+            LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
             lir.load(address, reg, info, patchCode);
         }
 
@@ -699,11 +715,18 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         LIRAddress address;
         if (needsPatching) {
+
+
+            LIROperand tempResult = this.newRegister(BasicType.Int);
+            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
+            address = new LIRAddress(object.result(), tempResult, fieldType);
+
+
             // we need to patch the offset in the instruction so don't allow
             // generateAddress to try to be smart about emitting the -1.
             // Otherwise the patching code won't know how to find the
             // instruction to patch.
-            address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
+            //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
             address = generateAddress(object.result(), LIROperandFactory.IllegalOperand, 0, x.offset(), fieldType);
         }
@@ -720,7 +743,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         if (isVolatile) {
             volatileFieldStore(value.result(), address, info);
         } else {
-            LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
+            LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
             lir.store(value.result(), address, info, patchCode);
         }
 
@@ -781,7 +804,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 typeIsExact = false;
                 throwType = x.exception().declaredType();
             }
-            if (throwType != null && throwType.isInstanceClass()) {
+            if (throwType != null && throwType.isLoaded() && throwType.isInstanceClass()) {
                 unwind = !ExceptionHandler.couldCatch(x.exceptionHandlers(), throwType, typeIsExact);
             }
         }

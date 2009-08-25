@@ -90,6 +90,9 @@ public enum LIROpcode {
         , Unwind
         , CompareTo
         , Resolve
+        , ResolveStaticFields
+        , ResolveJavaClass
+        , ResolveFieldOffset
         , ResolveArrayClass
     , EndOp2
     , BeginOp3

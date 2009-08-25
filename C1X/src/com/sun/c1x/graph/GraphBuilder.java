@@ -687,8 +687,10 @@ public class GraphBuilder {
 
     void genCheckCast() {
         ValueStack stateBefore = curState.immutableCopy();
-        RiType type = constantPool().lookupType(stream().readCPI());
-        CheckCast c = new CheckCast(type, apop(), stateBefore);
+        char cpi = stream().readCPI();
+        RiType type = constantPool().lookupType(cpi);
+        Instruction typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
         if (assumeLeafClass(type)) {
             c.setDirectCompare();
@@ -700,8 +702,10 @@ public class GraphBuilder {
 
     void genInstanceOf() {
         ValueStack stateBefore = curState.immutableCopy();
-        RiType type = constantPool().lookupType(stream().readCPI());
-        InstanceOf i = new InstanceOf(type, apop(), stateBefore);
+        char cpi = stream().readCPI();
+        RiType type = constantPool().lookupType(cpi);
+        Instruction typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
         if (assumeLeafClass(type)) {
             i.setDirectCompare();
@@ -746,7 +750,7 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
+        LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded, cpi, constantPool());
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -755,7 +759,7 @@ public class GraphBuilder {
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
         Instruction value = pop(field.basicType().stackType());
-        appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
+        appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
     void genGetStatic(char cpi) {
@@ -763,8 +767,8 @@ public class GraphBuilder {
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
-        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
+        Instruction container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
+        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -773,18 +777,18 @@ public class GraphBuilder {
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
+        Instruction container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized);
+        StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedStoreField(store);
     }
 
-    private Instruction genStaticFields(RiType holder, boolean initialized, char cpi, ValueStack stateBefore) {
+    private Instruction genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, char cpi, ValueStack stateBefore) {
         Instruction holderInstr;
         if (initialized) {
-            holderInstr = appendConstant(holder.getEncoding(RiType.Representation.StaticFields));
+            holderInstr = appendConstant(holder.getEncoding(representation));
         } else {
-            holderInstr = append(new ResolveClass(holder, RiType.Representation.StaticFields, stateBefore, cpi, constantPool()));
+            holderInstr = append(new ResolveClass(holder, representation, stateBefore, cpi, constantPool()));
         }
         return holderInstr;
     }

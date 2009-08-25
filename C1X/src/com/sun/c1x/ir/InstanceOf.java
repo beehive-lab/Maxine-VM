@@ -39,8 +39,8 @@ public class InstanceOf extends TypeCheck {
      * @param object the instruction producing the object input to this instruction
      * @param stateBefore the state before this instruction
      */
-    public InstanceOf(RiType targetClass, Instruction object, ValueStack stateBefore) {
-        super(targetClass, object, BasicType.Int, stateBefore);
+    public InstanceOf(RiType targetClass, Instruction targetClassInstruction, Instruction object, ValueStack stateBefore) {
+        super(targetClass, targetClassInstruction, object, BasicType.Int, stateBefore);
         if (object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;

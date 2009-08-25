@@ -191,6 +191,28 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
     public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
+
+        if (receiver == null) {
+            return 0;
+        }
+
+        final Class receiverClass = receiver.getClass();
+        final ClassActor classActor = ClassActor.fromJava(receiverClass);
+        final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
+        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
+    }
+
+
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveInterfaceIndex)
+    public static int retrieveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
+
+        if (receiver == null) {
+            return 0;
+        }
+
+        final InterfaceMethodActor methodActor = (InterfaceMethodActor) constantPool.interfaceMethodAt(index).resolve(constantPool, index);
+        final InterfaceActor interfaceActor = (InterfaceActor) methodActor.holder();
+        int interfaceId = interfaceActor.id;
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
@@ -404,12 +426,32 @@ public class C1XRuntimeCalls {
         return ArrayClassActor.forComponentClassActor(classActor).dynamicHub();
     }
 
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveStaticFields)
+    public static Object resolveStaticFields(int index, ConstantPool constantPool) {
+        // Here the reference to the field cp entry is given
+        final ClassActor classActor = constantPool.fieldAt(index).resolve(constantPool, index).holder();
+        return classActor.staticTuple();
+    }
+
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveJavaClass)
+    public static Object resolveJavaClass(int index, ConstantPool constantPool) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        return classActor.toJava();
+    }
+
+    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveFieldOffset)
+    public static int resolveFieldOffset(int index, ConstantPool constantPool) {
+        final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
+        return fieldActor.offset();
+    }
+
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {
         final VirtualMethodActor dynamicMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return dynamicMethodActor.vTableIndex();
     }
+
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticSin)

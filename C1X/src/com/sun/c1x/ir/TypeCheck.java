@@ -31,6 +31,7 @@ import com.sun.c1x.value.*;
 public abstract class TypeCheck extends StateSplit {
 
     final RiType targetClass;
+    public Instruction targetClassInstruction;
     Instruction object;
 
     /**
@@ -40,9 +41,10 @@ public abstract class TypeCheck extends StateSplit {
      * @param type the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(RiType targetClass, Instruction object, BasicType type, ValueStack stateBefore) {
+    public TypeCheck(RiType targetClass, Instruction targetClassInstruction, Instruction object, BasicType type, ValueStack stateBefore) {
         super(type, stateBefore);
         this.targetClass = targetClass;
+        this.targetClassInstruction = targetClassInstruction;
         this.object = object;
         this.stateBefore = stateBefore;
     }
@@ -96,6 +98,7 @@ public abstract class TypeCheck extends StateSplit {
     @Override
     public void inputValuesDo(InstructionClosure closure) {
         object = closure.apply(object);
+        targetClassInstruction = closure.apply(targetClassInstruction);
     }
 
     /**

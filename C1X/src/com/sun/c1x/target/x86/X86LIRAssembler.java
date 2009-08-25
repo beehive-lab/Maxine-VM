@@ -1417,7 +1417,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Register klassRInfo = op.tmp2().asRegister();
             Register dst = op.result().asRegister();
             RiType k = op.klass();
-            Register rtmp1 = Register.noreg;
+            //Register rtmp1 = Register.noreg;
 
             Label done = new Label();
             if (obj == kRInfo) {
@@ -1425,7 +1425,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (obj == klassRInfo) {
                 klassRInfo = dst;
             }
-            if (k.isLoaded()) {
+            /*if (k.isLoaded()) {
                 // TODO: out params?!
                 Register[] tmp1 = {kRInfo};
                 Register[] tmp2 = {klassRInfo};
@@ -1441,14 +1441,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 kRInfo = tmp1[0];
                 klassRInfo = tmp2[0];
                 rtmp1 = tmp3[0];
-            }
+            }*/
 
-            assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
-            if (!k.isLoaded()) {
-                jobject2regWithPatching(kRInfo, op.infoForPatch());
-            } else {
-                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-            }
+            //assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
+            //if (!k.isLoaded()) {
+            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
+            //} else {
+            //    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
+            //}
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
             if (op.profiledMethod() != null) {
@@ -1546,20 +1546,27 @@ public class X86LIRAssembler extends LIRAssembler {
             Label done = new Label();
             Label zero = new Label();
             Label one = new Label();
-            if (obj == kRInfo) {
-                kRInfo = klassRInfo;
-                klassRInfo = obj;
-            }
+//            if (obj == kRInfo) {
+//                kRInfo = klassRInfo;
+//                klassRInfo = obj;
+//            }
             // patching may screw with our temporaries on sparc :
             // so let's do it before loading the class
-            if (!k.isLoaded()) {
-                jobject2regWithPatching(kRInfo, op.infoForPatch());
-            } else {
-                if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-                }
+            //if (!k.isLoaded()) {
+            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
+            //} else {
+//                if (compilation.target.arch.is64bit()) {
+//                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
+//                }
+//            }
+
+            if (klassRInfo == kRInfo || klassRInfo == obj) {
+                klassRInfo = dst;
             }
             assert obj != kRInfo : "must be different";
+            assert obj != kRInfo : "must be different";
+
+            assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
 
             masm().verifyOop(obj);
             if (op.isFastCheck()) {
@@ -1582,7 +1589,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().jcc(X86Assembler.Condition.equal, zero);
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
                 // next block is unconditional if LP64:
-                assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
+
+
+                // TODO: Check if this is really necessary
+                //assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
 
                 // perform the fast part of the checking logic
                 //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
@@ -2513,9 +2523,7 @@ public class X86LIRAssembler extends LIRAssembler {
             assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
             assert receiver.isRegister() : "Receiver must be in a register";
             addCallInfoHere(info);
-
             assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffsetInBytes());
-
             masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
         } else {
@@ -2526,6 +2534,7 @@ public class X86LIRAssembler extends LIRAssembler {
             assert Util.isPowerOf2(vtableEntrySize);
             masm.shlq(rscratch1, Util.log2(vtableEntrySize));
             masm.addq(rscratch1, compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset());
+            addCallInfoHere(info);
             masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1);
         }
@@ -2539,10 +2548,18 @@ public class X86LIRAssembler extends LIRAssembler {
      */
     @Override
     protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-        assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
+        assert receiver != null : "Invalid receiver!";
         assert receiver.isRegister() : "Receiver must be in a register";
-        masm.movl(rscratch1, method.interfaceID());
-        masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+
+        if (method.vtableIndex() == -1) {
+            // Unresolved method
+            this.masm.callGlobalStub(GlobalStub.ResolveInterfaceIndex, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+        } else {
+            // Resolved method
+            masm.movl(rscratch1, method.interfaceID());
+            masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+        }
+
         masm.addq(rscratch1, method.iIndexInInterface() * 8);
         addCallInfoHere(info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
@@ -3242,16 +3259,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void resolve(LIROperand dest, LIROperand index, LIROperand cp) {
-
-        // TODO:
-        masm.callGlobalStub(GlobalStub.ResolveClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
-    }
-
-    @Override
-    protected void resolveArrayClass(LIROperand dest, LIROperand index, LIROperand cp) {
-
-        // TODO:
-        masm.callGlobalStub(GlobalStub.ResolveArrayClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
+    protected void resolve(GlobalStub stub, LIROperand dest, LIROperand index, LIROperand cp) {
+        masm.callGlobalStub(stub, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
     }
 }

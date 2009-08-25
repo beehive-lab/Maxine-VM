@@ -297,7 +297,7 @@ public class MaxRiMethod implements RiMethod {
                 catchType = null;
             } else {
                 RiConstantPool riConstantPool = constantPool.runtime.getConstantPool(this);
-                catchType = riConstantPool.lookupType((char) entry.catchTypeIndex());
+                catchType = riConstantPool.resolveType((char) entry.catchTypeIndex());
             }
             exceptionHandlers.add(new MaxRiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),

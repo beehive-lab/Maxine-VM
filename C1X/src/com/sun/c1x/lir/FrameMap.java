@@ -62,7 +62,7 @@ public abstract class FrameMap {
 
         assert monitors >= 0 : "not set";
         numMonitors = monitors;
-        reservedArgumentAreaSize = GlobalStub.MaxNumberOfArguments * compilation.target.arch.wordSize;
+        reservedArgumentAreaSize = 0;
 
         argcount = method.signatureType().argumentSlots(!method.isStatic());
         argumentLocations = new int[argcount];

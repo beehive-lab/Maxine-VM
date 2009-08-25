@@ -998,11 +998,11 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem obj = new LIRItem(x.object(), this);
 
         CodeEmitInfo patchingInfo = null;
-        if (!x.targetClass().isLoaded() || (C1XOptions.TestPatching && !x.isIncompatibleClassChangeCheck())) {
-            // must do this before locking the destination register as an oop register,
-            // and before the obj is loaded (the latter is for deoptimization)
-            patchingInfo = stateFor(x, x.stateBefore());
-        }
+//        if (!x.targetClass().isLoaded() || (C1XOptions.TestPatching && !x.isIncompatibleClassChangeCheck())) {
+//            // must do this before locking the destination register as an oop register,
+//            // and before the obj is loaded (the latter is for deoptimization)
+//            patchingInfo = stateFor(x, x.stateBefore());
+//        }
         obj.loadItem();
 
         // info for exceptions
@@ -1010,14 +1010,14 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
-            assert patchingInfo == null : "can't patch this";
+            //assert patchingInfo == null : "can't patch this";
             stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, GlobalStub.ThrowIncompatibleClassChangeError, infoForException);
         } else {
             stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
-        lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),
-                        !x.targetClass().isLoaded() ? newRegister(BasicType.Object) : LIROperandFactory.IllegalOperand, x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
+        lir().checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(BasicType.Object), newRegister(BasicType.Object),
+                        x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
                         x.profiledBCI());
     }
 
@@ -1032,13 +1032,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         // result and test object may not be in same register
         LIROperand reg = rlockResult(x);
         CodeEmitInfo patchingInfo = null;
-        if ((!x.targetClass().isLoaded() || C1XOptions.TestPatching)) {
-            // must do this before locking the destination register as an oop register
-            patchingInfo = stateFor(x, x.stateBefore());
-        }
+//        if ((!x.targetClass().isLoaded() || C1XOptions.TestPatching)) {
+//            // must do this before locking the destination register as an oop register
+//            patchingInfo = stateFor(x, x.stateBefore());
+//        }
         obj.loadItem();
-        LIROperand tmp = newRegister(BasicType.Object);
-        lir().genInstanceof(reg, obj.result(), x.targetClass(), tmp, newRegister(BasicType.Object), LIROperandFactory.IllegalOperand, x.directCompare(), patchingInfo);
+       // LIROperand tmp = newRegister(BasicType.Object);
+        lir().genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(BasicType.Object), LIROperandFactory.IllegalOperand, x.directCompare(), patchingInfo);
     }
 
     @Override
