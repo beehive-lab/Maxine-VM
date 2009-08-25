@@ -295,7 +295,7 @@ public class C1XOptions {
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
         DoIterativeNCE                     = TRUE;
-        DoFlowSensitiveNCE                 = ____; // not debugged yet
+        DoFlowSensitiveNCE                 = TRUE;
         DoDeadCodeElimination1             = TRUE;
         DoDeadCodeElimination2             = TRUE;
     }
