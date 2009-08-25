@@ -471,6 +471,7 @@ public class JavaPrototype extends Prototype {
             if (methodActor == null) {
                 final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
                 final ClassActor holder = ClassActor.fromJava(javaMethod.getDeclaringClass());
+                ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
                 methodActor = holder.findLocalMethodActor(name, signature);
                 ProgramError.check(methodActor != null, "Could not find " + name + signature + " in " + holder);

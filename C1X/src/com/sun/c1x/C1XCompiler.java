@@ -41,12 +41,12 @@ public class C1XCompiler extends CiCompiler {
     }
 
     @Override
-    public CiTargetMethod compileMethod(RiMethod method) {
+    public CiResult compileMethod(RiMethod method) {
         return compileMethod(method, -1);
     }
 
     @Override
-    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
+    public CiResult compileMethod(RiMethod method, int osrBCI) {
 
 
         if (!initialized) {

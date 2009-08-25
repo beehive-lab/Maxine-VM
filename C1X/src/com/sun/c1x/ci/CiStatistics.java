@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,49 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.grip;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+package com.sun.c1x.ci;
 
 /**
- * A pointer to a pointer to an object.
+ * The <code>CiStatistics</code> class gathers statistics gathered during the compilation of
+ * a method.
  *
- * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
-public abstract class Handle extends Word {
+public class CiStatistics {
 
-    @UNSAFE_CAST
-    public static native Handle from(Word word);
+    /**
+     * The total number of bytes of bytecode parsed during this compilation, including any inlined methods.
+     */
+    public int byteCount;
 
-    @Override
-    public String toString() {
-        return "^H" + toHexString();
-    }
+    /**
+     * The number of internal graph nodes created during this compilation.
+     */
+    public int nodeCount;
 
-    @INLINE
-    public final Pointer getPointer() {
-        return asPointer().readWord(0).asPointer();
-    }
+    /**
+     * The number of basic blocks created during this compilation.
+     */
+    public int blockCount;
 
-    @INLINE
-    public final void setPointer(Pointer origin) {
-        asPointer().writeWord(0, origin);
-    }
+    /**
+     * The number of loops in the compiled method.
+     */
+    public int loopCount;
 
-    @UNSAFE_CAST
-    public static native Handle fromGrip(Grip grip);
+    /**
+     * The number of methods inlined.
+     */
+    public int inlineCount;
 
-    @UNSAFE_CAST
-    public final Grip toGrip() {
-        return UnsafeLoophole.wordToGrip(this);
-    }
+    /**
+     * The number of methods folded (i.e. evaluated).
+     */
+    public int foldCount;
+
+    /**
+     * The number of intrinsics inlined in this compilation.
+     */
+    public int intrinsicCount;
 
 }

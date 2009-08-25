@@ -215,6 +215,7 @@ public @interface UNSAFE {
             }
         }
 
+        private static final String unsafePackageName = new com.sun.max.unsafe.Package().name();
         private static final String vmPackageName = new com.sun.max.vm.Package().name();
         private static final String asmPackageName = new com.sun.max.vm.asm.Package().name();
 
@@ -225,7 +226,9 @@ public @interface UNSAFE {
         public static void determineMethods() {
             Trace.begin(1, "determining unsafe methods");
             for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-                if (classActor.packageName().startsWith(vmPackageName) && !classActor.packageName().startsWith(asmPackageName)) {
+
+                if (classActor.packageName().startsWith(unsafePackageName) ||
+                    (classActor.packageName().startsWith(vmPackageName) && !classActor.packageName().startsWith(asmPackageName))) {
                     for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                         determine(classMethodActor);
                     }

@@ -41,14 +41,15 @@ public class GraphBuilder {
 
     final IR ir;
     final C1XCompilation compilation;
+    final CiStatistics stats;
 
     final ValueMap localValueMap;          // map of values for local value numbering
     final MemoryMap memoryMap;             // map of field values for local load elimination
+    final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
     ValueStack curState;                   // the current execution state
     Instruction lastInstr;                 // the last instruction added
-    int totalInstructions;                 // for bailing out in pathological jsr/ret cases
 
     ValueStack initialState;               // The state for the start block
     ValueStack exceptionState;             // state that will be used by handleException
@@ -65,8 +66,10 @@ public class GraphBuilder {
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
         this.ir = ir;
+        this.stats = compilation.stats;
         this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
+        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer() : null;
         int osrBCI = compilation.osrBCI;
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
@@ -1215,15 +1218,16 @@ public class GraphBuilder {
     private Instruction appendWithBCI(Instruction x, int bci, boolean canonicalize) {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
-            Canonicalizer canon = new Canonicalizer(x, bci);
-            List<Instruction> extra = canon.extra();
+            // Canonicalizer canon = new Canonicalizer(x, bci);
+            canonicalizer.canonicalize(x, bci);
+            List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this
                 for (Instruction i : extra) {
                     appendWithBCI(i, bci, false); // don't try to canonicalize the new instructions
                 }
             }
-            x = canon.canonical();
+            x = canonicalizer.canonical();
         }
         if (x.isAppended()) {
             // the instruction has already been added
@@ -1244,7 +1248,7 @@ public class GraphBuilder {
             assert x.next() == null : "instruction should not have been appended yet";
             assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
             lastInstr = lastInstr.setNext(x, bci);
-            if (++totalInstructions >= C1XOptions.MaximumInstructionCount) {
+            if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
                 // bailout if we've exceeded the maximum inlining size
                 throw new Bailout("Method and/or inlining is too large");
             }
@@ -1412,7 +1416,7 @@ public class GraphBuilder {
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
-        C1XMetrics.InlinedIntrinsics++;
+        stats.intrinsicCount++;
         return true;
     }
 
@@ -1449,8 +1453,8 @@ public class GraphBuilder {
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
-        if (totalInstructions > C1XOptions.MaximumDesiredSize) {
-            return cannotInline(target, "compilation already too big " + "(" + compilation.totalInstructions() + " insts)");
+        if (stats.nodeCount > C1XOptions.MaximumDesiredSize) {
+            return cannotInline(target, "compilation already too big " + "(" + compilation.stats.nodeCount + " nodes)");
         }
         if (compilation.runtime.mustNotInline(target)) {
             C1XMetrics.InlineForbiddenMethods++;
@@ -1620,7 +1624,7 @@ public class GraphBuilder {
             popScope();
         }
 
-        C1XMetrics.InlinedMethods++;
+        stats.inlineCount++;
         return true;
     }
 
@@ -2135,14 +2139,5 @@ public class GraphBuilder {
 
     RiConstantPool constantPool() {
         return scopeData.constantPool;
-    }
-
-    /**
-     * Returns the number of instructions parsed into this graph.
-     *
-     * @return the number of instructions parsed into the graph
-     */
-    public int totalInstructions() {
-        return totalInstructions;
     }
 }

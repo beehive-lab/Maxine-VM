@@ -42,26 +42,18 @@ public class Canonicalizer extends InstructionVisitor {
     private static final Object[] NO_ARGUMENTS = {};
 
     Instruction canonical;
+    int bci;
     List<Instruction> extra;
-    final int bci;
 
-    /**
-     * Creates a new Canonicalizer for the specified instruction.
-     * @param original the original instruction to be canonicalized
-     * @param bci the bytecode index of the original instruction
-     */
-    public Canonicalizer(Instruction original, int bci) {
-        // XXX: reusing a canonicalizer instance for each operation would reduce allocation
-        canonical = original;
-        this.bci = bci;
-        original.accept(this);
+    public Canonicalizer() {
     }
 
-    public static Instruction canonicalize(Instruction i, int bci) {
-        if (C1XOptions.CanonicalizeInstructions) {
-            return new Canonicalizer(i, bci).canonical();
-        }
-        return i;
+    public Instruction canonicalize(Instruction original, int bci) {
+        this.canonical = original;
+        this.bci = bci;
+        this.extra = null;
+        original.accept(this);
+        return this.canonical;
     }
 
     /**
