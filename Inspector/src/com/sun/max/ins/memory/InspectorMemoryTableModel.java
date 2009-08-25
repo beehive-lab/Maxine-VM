@@ -22,6 +22,7 @@ package com.sun.max.ins.memory;
 
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -51,13 +52,13 @@ public interface InspectorMemoryTableModel extends TableModel {
     MemoryRegion getMemoryRegion(int row);
 
     /**
-     * Returns a memory watchpoint, if any, whose coverage intersects memory corresponding
+     * Returns all memory watchpoints, if any, whose coverage intersects memory corresponding
      * to a row in the model of VM memory.
      *
      * @param row a row in the table model of memory
-     * @return a memory watchpoint whose region intersects the memory for this row in the model, null if none.
+     * @return memory watchpoints whose region intersects the memory for this row in the model, null if none.
      */
-    MaxWatchpoint getWatchpoint(int row);
+    Sequence<MaxWatchpoint> getWatchpoints(int row);
 
     /**
      * Returns an address in VM memory from which offsets for this model are computed.

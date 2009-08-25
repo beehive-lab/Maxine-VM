@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
@@ -72,7 +73,7 @@ public final class MemoryWordsTable extends InspectorTable {
         if (maxVM().watchpointsEnabled()) {
             final MemoryRegion memoryRegion = model.getMemoryRegion(row);
             menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoints(row)));
             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
         }
         menu.add(actions().inspectMemoryBytes(model.getAddress(row), "Inspect this memory as bytes"));
@@ -265,16 +266,27 @@ public final class MemoryWordsTable extends InspectorTable {
             return rowMemoryRegion;
         }
 
+
         /**
-         * @return the memory watchpoint, if any, that is active at a row
+         * @return the memory watchpoints, if any, that are active at a row
          */
-        public MaxWatchpoint getWatchpoint(int row) {
+        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    return watchpoint;
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
         public Address getOrigin() {
@@ -319,7 +331,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             renderer.setBackground(getRowBackgroundColor(row));
             return renderer;

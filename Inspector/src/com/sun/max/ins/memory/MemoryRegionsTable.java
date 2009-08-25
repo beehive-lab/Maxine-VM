@@ -235,37 +235,41 @@ public final class MemoryRegionsTable extends InspectorTable {
             return MemoryRegionDisplay.class;
         }
 
-        @Override
         public Address getAddress(int row) {
             return getMemoryRegion(row).start();
         }
 
-        @Override
         public MemoryRegion getMemoryRegion(int row) {
             return (MemoryRegion) getValueAt(row, 0);
         }
 
-        @Override
-        public MaxWatchpoint getWatchpoint(int row) {
+        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    return watchpoint;
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
-        @Override
         public Address getOrigin() {
             return Address.zero();
         }
 
-        @Override
         public Offset getOffset(int row) {
             return Offset.fromLong(getAddress(row).toLong());
         }
 
-        @Override
         public int findRow(Address address) {
             int row = 0;
             for (MemoryRegionDisplay memoryRegionData : sortedMemoryRegions.memoryRegions()) {
@@ -326,7 +330,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             renderer.setBackground(getRowBackgroundColor(row));
             return renderer;

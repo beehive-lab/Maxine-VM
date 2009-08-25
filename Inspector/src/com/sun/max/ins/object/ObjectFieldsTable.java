@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -78,12 +79,14 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
-            if (watchpoint == null) {
+            final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
+            if (watchpoints == null || watchpoints.isEmpty()) {
                 final FieldActor fieldActor = model.rowToFieldActor(row);
                 actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory").perform();
             } else {
-                watchpoint.dispose();
+                for (MaxWatchpoint watchpoint : watchpoints) {
+                    watchpoint.dispose();
+                }
             }
         }
     }
@@ -142,7 +145,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             final FieldActor fieldActor = model.rowToFieldActor(row);
             menu.add(actions().setFieldWatchpoint(teleObject, fieldActor, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoints(row)));
             menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(fieldActor), "Remove memory watchpoint"));
             return menu;
         }
@@ -274,16 +277,23 @@ public final class ObjectFieldsTable extends InspectorTable {
             return teleObject.getCurrentMemoryRegion(fieldActors[row]);
         }
 
-        /**
-         * @return the memory watchpoint, if any, that is active at a row
-         */
-        public MaxWatchpoint getWatchpoint(int row) {
+        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    return watchpoint;
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
         public Address getOrigin() {
@@ -342,7 +352,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
