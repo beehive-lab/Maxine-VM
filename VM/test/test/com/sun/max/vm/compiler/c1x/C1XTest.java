@@ -174,6 +174,8 @@ public class C1XTest {
             out.println("Timing...");
             for (int i = 0; i < max; i++) {
                 doTimingRun(compiler, methods);
+                // only aggressively resolve on the first run
+                C1XOptions.AggressivelyResolveCPEs = false;
             }
         } else {
             // compile all the methods and report progress

@@ -83,7 +83,7 @@ public class MaxRiField implements RiField {
      */
     public RiType type() {
         if (fieldActor != null) {
-            return constantPool.canonicalRiType(fieldActor.type());
+            return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool);
         }
         return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool));
     }
@@ -102,7 +102,7 @@ public class MaxRiField implements RiField {
      */
     public RiType holder() {
         if (fieldActor != null) {
-            return constantPool.canonicalRiType(fieldActor.holder());
+            return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool);
         }
         return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool));
     }
