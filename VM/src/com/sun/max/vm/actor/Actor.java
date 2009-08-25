@@ -162,14 +162,11 @@ public abstract class Actor {
     @INSPECTED
     public final Utf8Constant name;
 
+    public Object ciObject;
+
     protected Actor(Utf8Constant name, int flags) {
         this.flags = flags;
         this.name = name;
-    }
-
-    @Override
-    public final boolean equals(Object other) {
-        return this == other;
     }
 
     /**
@@ -229,77 +226,77 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static final boolean isPublic(int flags) {
+    public static boolean isPublic(int flags) {
         return (flags & ACC_PUBLIC) != 0;
     }
 
     @INLINE
-    public static final boolean isPrivate(int flags) {
+    public static boolean isPrivate(int flags) {
         return (flags & ACC_PRIVATE) != 0;
     }
 
     @INLINE
-    public static final boolean isProtected(int flags) {
+    public static boolean isProtected(int flags) {
         return (flags & ACC_PROTECTED) != 0;
     }
 
     @INLINE
-    public static final boolean isStatic(int flags) {
+    public static boolean isStatic(int flags) {
         return (flags & ACC_STATIC) != 0;
     }
 
     @INLINE
-    public static final boolean isFinal(int flags) {
+    public static boolean isFinal(int flags) {
         return (flags & ACC_FINAL) != 0;
     }
 
     @INLINE
-    public static final boolean isSynthetic(int flags) {
+    public static boolean isSynthetic(int flags) {
         return (flags & ACC_SYNTHETIC) != 0;
     }
 
     @INLINE
-    public static final boolean isEnum(int flags) {
+    public static boolean isEnum(int flags) {
         return (flags & ACC_ENUM) != 0;
     }
 
     @INLINE
-    public static final boolean isAbstract(int flags) {
+    public static boolean isAbstract(int flags) {
         return (flags & ACC_ABSTRACT) != 0;
     }
 
     @INLINE
-    public static final boolean isInterface(int flags) {
+    public static boolean isInterface(int flags) {
         return (flags & ACC_INTERFACE) != 0;
     }
 
     @INLINE
-    public static final boolean isInnerClass(int flags) {
+    public static boolean isInnerClass(int flags) {
         return (flags & INNER_CLASS) != 0;
     }
 
     @INLINE
-    public static final boolean isDeprecated(int flags) {
+    public static boolean isDeprecated(int flags) {
         return (flags & DEPRECATED) != 0;
     }
 
     @INLINE
-    public static final boolean isSuper(int flags) {
+    public static boolean isSuper(int flags) {
         return (flags & ACC_SUPER) != 0;
     }
 
     @INLINE
-    public static final boolean isAnnotation(int flags) {
+    public static boolean isAnnotation(int flags) {
         return (flags & ACC_ANNOTATION) != 0;
     }
 
     @INLINE
-    public static final boolean isBridge(int flags) {
+    public static boolean isBridge(int flags) {
         return (flags & ACC_BRIDGE) != 0;
     }
 
     @INLINE
-    public static final boolean isVarArgs(int flags) {
+    public static boolean isVarArgs(int flags) {
         return (flags & ACC_VARARGS) != 0;
     }
 
@@ -353,9 +350,6 @@ public abstract class Actor {
         return (flags & TEMPLATE) != 0;
     }
 
-    /**
-     * Determines if a given flags value includes {@link #GENERATED}.
-     */
     @INLINE
     public static boolean isGenerated(int flags) {
         return (flags & GENERATED) != 0;
@@ -465,7 +459,7 @@ public abstract class Actor {
 
     /**
      * Gets the name of this actor qualified by it's declaring class (if known).
-     * @return
+     * @return the qualified name of this actor
      */
     public abstract String qualifiedName();
 
@@ -502,103 +496,41 @@ public abstract class Actor {
     public static String flagsString(int flags) {
         final StringBuilder sb = new StringBuilder();
 
-        if (isPublic(flags)) {
-            sb.append("public ");
-        }
-        if (isProtected(flags)) {
-            sb.append("protected ");
-        }
-        if (isPrivate(flags)) {
-            sb.append("private ");
-        }
+        appendFlag(sb, isPublic(flags), "public ");
+        appendFlag(sb, isProtected(flags), "protected ");
+        appendFlag(sb, isPrivate(flags), "private ");
 
         /* Canonical order */
-        if (isAbstract(flags)) {
-            sb.append("abstract ");
-        }
-        if (isStatic(flags)) {
-            sb.append("static ");
-        }
-        if (isFinal(flags)) {
-            sb.append("final ");
-        }
-        if (isTransient(flags) || isVarArgs(flags)) {
-            sb.append("transient/varargs ");
-        }
-        if (isVolatile(flags) || isBridge(flags)) {
-            sb.append("volatile/bridge ");
-        }
-        if (isSynchronized(flags) || isSuper(flags)) {
-            sb.append("synchronized/super ");
-        }
-        if (isNative(flags)) {
-            sb.append("native ");
-        }
-        if (isStrict(flags)) {
-            sb.append("strictfp ");
-        }
-        if (isInterface(flags)) {
-            sb.append("interface ");
-        }
-        if (isSynthetic(flags)) {
-            sb.append("synthetic ");
-        }
-        if (isEnum(flags)) {
-            sb.append("enum ");
-        }
-        if (isDeprecated(flags)) {
-            sb.append("deprecated ");
-        }
-        if (isAnnotation(flags)) {
-            sb.append("annotation ");
-        }
+        appendFlag(sb, isAbstract(flags), "abstract ");
+        appendFlag(sb, isStatic(flags), "static ");
+        appendFlag(sb, isFinal(flags), "final ");
+        appendFlag(sb, isTransient(flags) || isVarArgs(flags), "transient/varargs ");
+        appendFlag(sb, isVolatile(flags) || isBridge(flags), "volatile/bridge ");
+        appendFlag(sb, isSynchronized(flags) || isSuper(flags), "synchronized/super ");
+        appendFlag(sb, isNative(flags), "native ");
+        appendFlag(sb, isStrict(flags), "strictfp ");
+        appendFlag(sb, isInterface(flags), "interface ");
+        appendFlag(sb, isSynthetic(flags), "synthetic ");
+        appendFlag(sb, isEnum(flags), "enum ");
+        appendFlag(sb, isDeprecated(flags), "deprecated ");
+        appendFlag(sb, isAnnotation(flags), "annotation ");
 
         // Implementation specific flags
-        if (isInjected(flags)) {
-            sb.append("injected ");
-        }
-        if (isConstant(flags)) {
-            sb.append("constant ");
-        }
-        if (isConstantWhenNotZero(flags)) {
-            sb.append("constantWhenNotZero ");
-        }
-        if (isInnerClass(flags)) {
-            sb.append("innerClass ");
-        }
-        if (isTemplate(flags)) {
-            sb.append("template ");
-        }
-        if (isGenerated(flags)) {
-            sb.append("generated ");
-        }
-        if (isClassInitializer(flags)) {
-            sb.append("<clinit> ");
-        }
-        if (isInstanceInitializer(flags)) {
-            sb.append("<init> ");
-        }
-        if (isCFunction(flags)) {
-            sb.append("c_function ");
-        }
-        if (isJniFunction(flags)) {
-            sb.append("jni_function ");
-        }
-        if (isDeclaredFoldable(flags)) {
-            sb.append("fold ");
-        }
-        if (isBuiltin(flags)) {
-            sb.append("builtin ");
-        }
-        if (isSurrogate(flags)) {
-            sb.append("surrogate ");
-        }
-        if (isWrapper(flags)) {
-            sb.append("wrapper ");
-        }
-        if (isReset(flags)) {
-            sb.append("reset ");
-        }
+        appendFlag(sb, isInjected(flags), "injected ");
+        appendFlag(sb, isConstant(flags), "constant ");
+        appendFlag(sb, isConstantWhenNotZero(flags), "constantWhenNotZero ");
+        appendFlag(sb, isInnerClass(flags), "innerClass ");
+        appendFlag(sb, isTemplate(flags), "template ");
+        appendFlag(sb, isGenerated(flags), "generated ");
+        appendFlag(sb, isClassInitializer(flags), "<clinit> ");
+        appendFlag(sb, isInstanceInitializer(flags), "<init> ");
+        appendFlag(sb, isCFunction(flags), "c_function ");
+        appendFlag(sb, isJniFunction(flags), "jni_function ");
+        appendFlag(sb, isDeclaredFoldable(flags), "fold ");
+        appendFlag(sb, isBuiltin(flags), "builtin ");
+        appendFlag(sb, isSurrogate(flags), "surrogate ");
+        appendFlag(sb, isWrapper(flags), "wrapper ");
+        appendFlag(sb, isReset(flags), "reset ");
 
         if (sb.length() > 0) {
             /* trim trailing space */
@@ -606,6 +538,12 @@ public abstract class Actor {
             return sb.toString();
         }
         return "";
+    }
+
+    private static void appendFlag(StringBuilder sb, boolean flag, String string) {
+        if (flag) {
+            sb.append(string);
+        }
     }
 
     /**
