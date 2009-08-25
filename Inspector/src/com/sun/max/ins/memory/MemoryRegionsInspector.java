@@ -128,6 +128,11 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         reconstructView();
     }
 
+    @Override
+    public void watchpointSetChanged() {
+        refreshView(true);
+    }
+
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
