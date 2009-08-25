@@ -158,6 +158,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric immortalSpaceScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -320,6 +321,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
+
+                startTimer(immortalSpaceScanTimer);
+                scanImmortalHeap();
+                stopTimer(immortalSpaceScanTimer);
 
                 if (Heap.traceGCPhases()) {
                     Log.println("Moving reachable...");
@@ -590,6 +595,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         // to objects in the boot heap region.
         boolean includeBootCode = false;
         Code.visitCells(this, includeBootCode);
+    }
+
+    void scanImmortalHeap() {
+        ImmortalHeap.visitCells(this);
     }
 
     private boolean cannotGrow() {

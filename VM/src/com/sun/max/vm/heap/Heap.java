@@ -269,7 +269,7 @@ public final class Heap {
     }
 
     @NEVER_INLINE
-    private static void traceCreateArray(DynamicHub hub, int length, final Object array) {
+    public static void traceCreateArray(DynamicHub hub, int length, final Object array) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.printVmThread(VmThread.current(), false);
         Log.print(": Allocated array ");
@@ -294,7 +294,7 @@ public final class Heap {
     }
 
     @NEVER_INLINE
-    private static void traceCreateTuple(Hub hub, final Object object) {
+    public static void traceCreateTuple(Hub hub, final Object object) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.printVmThread(VmThread.current(), false);
         Log.print(": Allocated tuple ");

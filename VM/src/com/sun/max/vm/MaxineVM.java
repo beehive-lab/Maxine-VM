@@ -501,6 +501,8 @@ public final class MaxineVM {
 
         Code.initialize();
 
+        ImmortalHeap.initialize();
+
         JniNativeInterface.initialize();
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
