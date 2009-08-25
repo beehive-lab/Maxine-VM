@@ -24,6 +24,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 
 
@@ -34,49 +35,62 @@ import com.sun.max.tele.*;
  */
 public class WatchpointSettingsMenu extends JMenu {
 
-
-    public WatchpointSettingsMenu(final MaxWatchpoint watchpoint, String title) {
+    public WatchpointSettingsMenu(final Sequence<MaxWatchpoint> watchpoints, String title) {
         super(title);
-        if (watchpoint == null) {
+        if (watchpoints == null || watchpoints.isEmpty()) {
             setEnabled(false);
+        } else if (watchpoints.length() == 1) {
+            buildWatchpointMenu(this, watchpoints.first());
         } else {
-            final JCheckBoxMenuItem readItem = new JCheckBoxMenuItem("Trap on read", watchpoint.isRead());
-            readItem.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                    watchpoint.setRead(item.getState());
-                }
-            });
-            add(readItem);
-            final JCheckBoxMenuItem writeItem = new JCheckBoxMenuItem("Trap on write", watchpoint.isWrite());
-            writeItem.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                    watchpoint.setWrite(item.getState());
-                }
-            });
-            add(writeItem);
-            final JCheckBoxMenuItem execItem = new JCheckBoxMenuItem("Trap on exec", watchpoint.isExec());
-            execItem.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                    watchpoint.setExec(item.getState());
-                }
-            });
-            add(execItem);
-            final JCheckBoxMenuItem enabledDuringGCItem = new JCheckBoxMenuItem("Enabled during GC", watchpoint.isEnabledDuringGC());
-            enabledDuringGCItem.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                    watchpoint.setEnabledDuringGC(item.getState());
-                }
-            });
-            add(enabledDuringGCItem);
+            for (MaxWatchpoint watchpoint : watchpoints) {
+                final JMenu menu = new JMenu(watchpoint.description());
+                buildWatchpointMenu(menu, watchpoint);
+                add(menu);
+            }
         }
     }
 
-    public WatchpointSettingsMenu(MaxWatchpoint watchpoint) {
-        this(watchpoint, "Change memory watchpoint settings");
+    /**
+     * Populates a menu for editing settings of a single watchpoint.
+     */
+    private void buildWatchpointMenu(JMenu menu, final MaxWatchpoint watchpoint) {
+        assert watchpoint != null;
+        final JCheckBoxMenuItem readItem = new JCheckBoxMenuItem("Trap on read", watchpoint.isRead());
+        readItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
+                watchpoint.setRead(item.getState());
+            }
+        });
+        menu.add(readItem);
+        final JCheckBoxMenuItem writeItem = new JCheckBoxMenuItem("Trap on write", watchpoint.isWrite());
+        writeItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
+                watchpoint.setWrite(item.getState());
+            }
+        });
+        menu.add(writeItem);
+        final JCheckBoxMenuItem execItem = new JCheckBoxMenuItem("Trap on exec", watchpoint.isExec());
+        execItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
+                watchpoint.setExec(item.getState());
+            }
+        });
+        menu.add(execItem);
+        final JCheckBoxMenuItem enabledDuringGCItem = new JCheckBoxMenuItem("Enabled during GC", watchpoint.isEnabledDuringGC());
+        enabledDuringGCItem.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
+                watchpoint.setEnabledDuringGC(item.getState());
+            }
+        });
+        menu.add(enabledDuringGCItem);
+    }
+
+    public WatchpointSettingsMenu(Sequence<MaxWatchpoint> watchpoints) {
+        this(watchpoints, "Change memory watchpoint settings");
     }
 
 

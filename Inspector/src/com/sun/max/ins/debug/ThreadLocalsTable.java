@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -70,11 +71,13 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
-            if (watchpoint == null) {
+            final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
+            if (watchpoints == null || watchpoints.isEmpty()) {
                 actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
             } else {
-                watchpoint.dispose();
+                for (MaxWatchpoint watchpoint : watchpoints) {
+                    watchpoint.dispose();
+                }
             }
         }
     }
@@ -106,7 +109,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final MemoryRegion memoryRegion = model.getMemoryRegion(row);
             menu.add(new ToggleThreadLocalsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             menu.add(actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, "Watch this memory location"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoints(row)));
             menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
             return menu;
         }
@@ -223,15 +226,25 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         /**
-         * @return the memory watchpoint, if any, that is active at a row
+         * @return the memory watchpoints, if any, that are active at a row
          */
-        public MaxWatchpoint getWatchpoint(int row) {
+        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    return watchpoint;
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
         public Address getOrigin() {
@@ -308,7 +321,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), model.getThread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), model.getThread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }

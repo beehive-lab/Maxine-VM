@@ -75,12 +75,14 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
-            if (watchpoint == null) {
+            final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
+            if (watchpoints == null || watchpoints.isEmpty()) {
                 final HeaderField headerField = headerFields.get(row);
                 actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
             } else {
-                watchpoint.dispose();
+                for (MaxWatchpoint watchpoint : watchpoints) {
+                    watchpoint.dispose();
+                }
             }
         }
     }
@@ -119,7 +121,7 @@ public final class ObjectHeaderTable extends InspectorTable {
             final HeaderField headerField = headerFields.get(row);
             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
+            menu.add(new WatchpointSettingsMenu(model.getWatchpoints(row)));
             menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(headerField), "Remove memory watchpoint"));
             return menu;
         }
@@ -220,14 +222,23 @@ public final class ObjectHeaderTable extends InspectorTable {
             return teleObject.getCurrentMemoryRegion(headerFields.get(row));
         }
 
-        public MaxWatchpoint getWatchpoint(int row) {
-            final MemoryRegion memoryRegion = getMemoryRegion(row);
+        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.overlaps(memoryRegion)) {
-                    return watchpoint;
+                if (watchpoint.overlaps(getMemoryRegion(row))) {
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
         public Address getOrigin() {
@@ -302,7 +313,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
