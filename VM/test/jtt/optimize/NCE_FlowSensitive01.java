@@ -18,33 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x;
+package jtt.optimize;
 
-/**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: null=null; "x"="x"; "yay"="yay"
  */
-public class C1XMetrics {
-    public static int LocalValueNumberHits;
-    public static int GlobalValueNumberHits;
-    public static int ValueMapResizes;
-    public static int InlinedFinalizerChecks;
-    public static int FoldableMethodsRegistered;
-    public static int MethodsFolded;
-    public static int InlineForcedMethods;
-    public static int InlineForbiddenMethods;
-    public static int NullCheckIterations;
-    public static int NullCheckEliminations;
-    public static int NullChecksRedundant;
-    public static int ZeroChecksRedundant;
-    public static int EquivalentConstantsMerged;
-    public static int EquivalentConstantsChecked;
-    public static int ConditionalEliminations;
-    public static int BlocksMerged;
-    public static int NestedIfOpsRemoved;
-    public static int BlocksSkipped;
-    public static int DeadCodeEliminated;
-    public static int ResolveCPEAttempts;
+public class NCE_FlowSensitive01 {
+
+    public static String test(String arg) {
+        if (arg != null) {
+            return arg.toString();
+        }
+        return null;
+    }
 }
