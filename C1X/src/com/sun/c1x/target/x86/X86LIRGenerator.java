@@ -129,7 +129,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.arrayBaseOffsetInBytes(type);
+        int offsetInBytes = compilation.runtime.firstArrayElementOffsetInBytes(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
             int elemSize = type.elementSizeInBytes(compilation.target.referenceSize, compilation.target.arch.wordSize);
@@ -305,11 +305,12 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         CodeEmitInfo infoForException = null;
         if (x.needsNullCheck()) {
-            infoForException = stateFor(x, x.lockStackBefore());
+            // TODO: lockStackBefore()
+            infoForException = stateFor(x, x.stateBefore());
         }
         // this CodeEmitInfo must not have the xhandlers because here the
         // object is already locked (xhandlers expect object to be unlocked)
-        CodeEmitInfo info = stateFor(x, x.state(), true);
+        CodeEmitInfo info = stateFor(x, x.stateBefore(), true);
         monitorEnter(obj.result(), lock, syncTempOpr(), scratch, x.lockNumber(), infoForException, info);
     }
 
@@ -551,11 +552,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp x) {
-        // when an operand with use count 1 is the left operand, then it is
-        // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && !(x.y() instanceof Constant) && useCount(x.x()) > useCount(x.y())) {
-            x.swapOperands();
-        }
+        trySwap(x);
 
         assert x.x().type().basicType == x.type().basicType && x.y().type().basicType == x.type().basicType : "wrong parameters";
         switch (x.type().basicType) {
@@ -594,11 +591,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitLogicOp(LogicOp x) {
-        // when an operand with use count 1 is the left operand, then it is
-        // likely that no move for 2-operand-LIR-form is necessary
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
-            x.swapOperands();
-        }
+        trySwap(x);
 
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
@@ -608,6 +601,17 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = rlockResult(x);
 
         logicOp(x.opcode(), reg, left.result(), right.result());
+    }
+
+    private void trySwap(Op2 x) {
+        // when an operand with use count 1 is the left operand, then it is
+        // likely that no move for 2-operand-LIR-form is necessary
+        // TODO: swap operands when it is profitable
+/*
+        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
+            x.swapOperands();
+        }
+*/
     }
 
     @Override
@@ -809,7 +813,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         RiType[] expectedType = new RiType[1];
         arraycopyHelper(x, flags, expectedType);
 
-        CodeEmitInfo info = stateFor(x, x.state()); // we may want to have stack (deoptimization?)
+        CodeEmitInfo info = stateFor(x, x.stateBefore()); // we may want to have stack (deoptimization?)
         lir().arraycopy(src.result(), srcPos.result(), dst.result(), dstPos.result(), length.result(), tmp, expectedType[0], flags[0], info); // does
         // addSafepoint
     }
@@ -833,7 +837,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     public void visitNewInstance(NewInstance x) {
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
 
@@ -844,9 +848,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         RiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {
-            lir.oop2reg(klass.encoding().asObject(), klassReg);
+            lir.oop2reg(klass.getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), info);
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
@@ -869,7 +873,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitNewTypeArray(NewTypeArray x) {
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(X86FrameMap.rbxOpr);
         LIROperand reg = emitNewTypeArray(x.type().basicType, x.elementType(), length.result(), info);
@@ -887,7 +891,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand klassReg = X86FrameMap.rdxOopOpr;
         BasicType elemType = elementType;
 
-        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).encoding().asObject(), klassReg);
+        lir().oop2reg(compilation.runtime.primitiveArrayType(elemType).getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
 
         CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
@@ -905,7 +909,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             patchingInfo = stateFor(x, x.stateBefore());
         }
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
 
         LIROperand reg = resultRegisterFor(x.type().basicType);
         LIROperand tmp1 = X86FrameMap.rcxOopOpr;
@@ -920,10 +924,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
         RiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
-            Object obj = elementType.encoding().asObject();
+            Object obj = elementType.getEncoding(RiType.Representation.ObjectHub).asObject();
             lir.oop2reg(obj, klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveArrayClassInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
@@ -953,7 +957,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             x.setExceptionHandlers(new ArrayList<ExceptionHandler>(x.exceptionHandlers()));
         }
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         CallingConvention cc = compilation.frameMap().runtimeCallingConvention(CiRuntimeCall.NewMultiArray.arguments);
 
         LIROperand length = X86FrameMap.rbxOpr;
@@ -969,13 +973,13 @@ public final class X86LIRGenerator extends LIRGenerator {
 
 
         if (x.elementType.isLoaded()) {
-            lir.oop2reg(x.elementType.encoding().asObject(), cc.args().get(0));
+            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.args().get(0));
         } else {
-            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         // Create a new code emit info as they must not be shared!
-        CodeEmitInfo info2 = stateFor(x, x.state());
+        CodeEmitInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
         lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info2);
 
@@ -1002,14 +1006,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         obj.loadItem();
 
         // info for exceptions
-        CodeEmitInfo infoForException = stateFor(x, x.state().copyLocks());
+        CodeEmitInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
             assert patchingInfo == null : "can't patch this";
-            stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, CiRuntimeCall.ThrowIncompatibleClassChangeError, infoForException);
+            stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, GlobalStub.ThrowIncompatibleClassChangeError, infoForException);
         } else {
-            stub = new SimpleExceptionStub(obj.result(), CiRuntimeCall.ThrowClassCastException, infoForException);
+            stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
         lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),
@@ -1074,9 +1078,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         // add safepoint before generating condition code so it can be recomputed
         if (x.isSafepoint()) {
             // increment backedge counter if needed
-            incrementBackedgeCounter(stateFor(x, x.stateBefore()));
+            incrementBackedgeCounter(stateFor(x, x.stateAfter()));
 
-            lir().safepoint(LIROperandFactory.IllegalOperand, stateFor(x, x.stateBefore()));
+            lir().safepoint(LIROperandFactory.IllegalOperand, stateFor(x, x.stateAfter()));
         }
         setNoResult(x);
 
@@ -1084,7 +1088,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand right = yin.result();
         lir().cmp(lirCond(cond), left, right);
         profileBranch(x, cond);
-        moveToPhi(x.state());
+        moveToPhi(x.stateAfter());
         if (x.x().type().isFloat() || x.x().type().isDouble()) {
             lir().branch(lirCond(cond), right.type(), x.trueSuccessor(), x.unorderedSuccessor());
         } else {

@@ -68,15 +68,6 @@ public class Throw extends BlockEnd {
     }
 
     /**
-     * Iterates over the state values of this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void stateValuesDo(InstructionClosure closure) {
-        stateBefore.valuesDo(closure);
-    }
-
-    /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */

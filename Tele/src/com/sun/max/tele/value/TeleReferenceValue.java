@@ -148,7 +148,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public Word toWord() {
-        return teleVM.vmConfiguration().gripScheme().toWord(reference.grip());
+        return teleVM.vmConfiguration().gripScheme().toOrigin(reference.grip());
     }
 
     @Override
@@ -163,7 +163,7 @@ public final class TeleReferenceValue extends ReferenceValue {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(UnsafeLoophole.referenceToWord(reference));
+        return dataModel.toBytes(reference.toOrigin());
     }
 
     @Override

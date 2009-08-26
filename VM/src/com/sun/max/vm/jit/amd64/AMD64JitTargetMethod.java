@@ -40,6 +40,11 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     }
 
     @Override
+    public int topFrameInstructionAdjustment() {
+        return -1;
+    }
+
+    @Override
     public InstructionSet instructionSet() {
         return InstructionSet.AMD64;
     }

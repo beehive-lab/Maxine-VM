@@ -20,15 +20,26 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.Bailout;
-import com.sun.c1x.target.Target;
-
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
+
+import com.sun.c1x.Bailout;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeStream;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.RiBytecodeExtension;
+import com.sun.c1x.ci.RiConstantPool;
+import com.sun.c1x.ci.RiExceptionHandler;
+import com.sun.c1x.ci.RiField;
+import com.sun.c1x.ci.RiMethod;
+import com.sun.c1x.ci.RiRuntime;
+import com.sun.c1x.ci.RiSignature;
+import com.sun.c1x.ci.RiType;
+import com.sun.c1x.target.Target;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.BasicType;
 
 /**
  * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows
@@ -65,11 +76,11 @@ public class C0XCompilation {
         FrameState entryState; // state at (first) entry
     }
 
-    abstract class Location {
+    abstract static class Location {
 
     }
 
-    class Register extends Location {
+    static class Register extends Location {
         final int num;
         final BasicType type;
 
@@ -174,6 +185,7 @@ public class C0XCompilation {
         this.handlers = hlist == null || hlist.size() == 0 ? null : hlist;
         this.maxLocals = method.maxLocals();
         this.maxStack = method.maxStackSize();
+        codeGen = new X86CodeGen(this, target); // TODO: make portable
     }
 
     void compile() {
@@ -481,12 +493,12 @@ public class C0XCompilation {
                 case Bytecodes.RET            : doRet(stream.readLocalIndex());  break bytecodeLoop;
                 case Bytecodes.TABLESWITCH    : doTableswitch(new BytecodeTableSwitch(bytecode, bci)); break bytecodeLoop;
                 case Bytecodes.LOOKUPSWITCH   : doLookupswitch(new BytecodeLookupSwitch(bytecode, bci)); break bytecodeLoop;
-                case Bytecodes.IRETURN        : // fall through
-                case Bytecodes.FRETURN        : // fall through
-                case Bytecodes.ARETURN        : doReturn(pop1()); break bytecodeLoop;
-                case Bytecodes.LRETURN        : // fall through
-                case Bytecodes.DRETURN        : doReturn(pop2()); break bytecodeLoop;
-                case Bytecodes.RETURN         : doReturn(null  ); break bytecodeLoop;
+                case Bytecodes.IRETURN        : doReturn(BasicType.Int, pop1()); break bytecodeLoop;
+                case Bytecodes.FRETURN        : doReturn(BasicType.Float, pop1()); break bytecodeLoop;
+                case Bytecodes.ARETURN        : doReturn(BasicType.Object, pop1()); break bytecodeLoop;
+                case Bytecodes.LRETURN        : doReturn(BasicType.Long, pop2()); break bytecodeLoop;
+                case Bytecodes.DRETURN        : doReturn(BasicType.Double, pop2()); break bytecodeLoop;
+                case Bytecodes.RETURN         : doReturn(BasicType.Void, null); break bytecodeLoop;
                 case Bytecodes.ATHROW         : doThrow(bci); break bytecodeLoop;
                 case Bytecodes.GETSTATIC      : doGetStatic(constantPool().lookupGetStatic(stream.readCPI())); break;
                 case Bytecodes.PUTSTATIC      : doPutStatic(constantPool().lookupPutStatic(stream.readCPI())); break;
@@ -675,8 +687,8 @@ public class C0XCompilation {
         codeGen.genThrow(thrown);
     }
 
-    private void doReturn(Location value) {
-        codeGen.genReturn(value);
+    private void doReturn(BasicType basicType, Location value) {
+        codeGen.genReturn(basicType, value);
     }
 
     private void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {

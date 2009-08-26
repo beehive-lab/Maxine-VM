@@ -205,11 +205,11 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
-        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, purpose, context);
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
+        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
     }
 
-    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;
@@ -255,7 +255,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                     if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
                         Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                         if (catchAddress.isZero()) {
                             // An implicit exception occurred but not in the scope of a local exception handler.
                             // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -272,7 +272,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         stackFrameWalker.setTrapState(trapState);
                         if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
                             Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(trapStateAccess.getInstructionPointer(trapState), throwableClass);
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
                             if (catchAddress.isZero()) {
                                 // An implicit exception occurred but not in the scope of a local exception handler.
                                 // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
@@ -297,10 +297,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                // if not at the top frame, subtract 1 to get an address that is _inside_ the call instruction of the caller
-                final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
+                final Address throwAddress = instructionPointer;
                 final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress, stackUnwindingContext.throwable.getClass());
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
                     if (StackFrameWalker.traceStackWalk.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");
@@ -308,13 +307,18 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         Log.print(" is ");
                         Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
                     }
+
                     final Throwable throwable = stackUnwindingContext.throwable;
                     // Reset the stack walker
                     stackFrameWalker.reset();
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
                     Safepoint.enable();
 
-                    unwind(throwable, catchAddress, stackPointer);
+                    if (lastJavaCallee != null && lastJavaCallee.registerRestoreEpilogueOffset() != -1) {
+                        unwindToCalleeEpilogue(throwable, catchAddress, stackPointer, lastJavaCallee);
+                    } else {
+                        unwind(throwable, catchAddress, stackPointer);
+                    }
                     ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
                 }
                 break;
@@ -370,6 +374,21 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         }
         return unwindFrameSize;
     }
+
+    @NEVER_INLINE
+    private static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+
+        // Overwrite return address of callee with catch address
+        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        returnAddressPointer.setWord(catchAddress);
+
+        assert lastJavaCallee.registerRestoreEpilogueOffset() != -1;
+        Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
+
+        final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
+        unwind(throwable, epilogueAddress, calleeStackPointer);
+    }
+
 
     /**
      * Unwinds a thread's stack to an exception handler.

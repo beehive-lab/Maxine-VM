@@ -58,16 +58,15 @@ public class BlockPrinter implements BlockClosure {
         ip.printInstruction(block);
         LogStream out = ip.out();
         out.println();
-        printStack(block.state(), out);
+        printStack(block.stateBefore(), out);
         out.println();
 
-        out.println("inlining depth " + block.scope().level);
+        out.println("inlining depth " + block.stateBefore().scope().level);
 
         ip.printInstructionListingHeader();
 
         for (Instruction i = block.next(); i != null; i = i.next()) {
-            if (!liveOnly || i.isPinned() || true) {
-                // TODO: only print if use count > 0, which is only known in LIR generator
+            if (!liveOnly || i.isLive()) {
                 ip.printInstructionListing(i);
             }
         }

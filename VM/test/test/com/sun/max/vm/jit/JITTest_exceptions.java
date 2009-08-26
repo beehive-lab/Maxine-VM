@@ -162,7 +162,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
         while (throwOffset < targetMethod.codeLength()) {
             final Address throwAddress = targetMethod.codeStart().plus(throwOffset);
             for (Throwable throwable : THROWABLES) {
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress, throwable.getClass());
+                final Address catchAddress = targetMethod.throwAddressToCatchAddress(false, throwAddress, throwable.getClass());
                 Trace.line(1, throwable.getClass().getName() + " thrown at " + throwOffset + (catchAddress.isZero() ? " uncaught" :
                     " caught at " + (catchAddress.minus(targetMethod.codeStart())).toInt()));
             }

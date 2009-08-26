@@ -23,6 +23,7 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.gen.LIRGenerator;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
@@ -41,26 +42,26 @@ import com.sun.c1x.value.*;
 public class LIRList {
 
     private List<LIRInstruction> operations;
-    private final C1XCompilation compilation;
+    private final LIRGenerator generator;
     private final BlockBegin block;
 
-    public LIRList(C1XCompilation compilation) {
-        this(compilation, null);
+    public LIRList(LIRGenerator generator) {
+        this(generator, null);
     }
 
-    public LIRList(C1XCompilation compilation, BlockBegin block) {
-        this.compilation = compilation;
+    public LIRList(LIRGenerator generator, BlockBegin block) {
+        this.generator = generator;
         this.block = block;
         this.operations = new ArrayList<LIRInstruction>(8);
     }
 
     private void append(LIRInstruction op) {
         if (op.source() == null) {
-            op.setSource(compilation.currentInstruction());
+            op.setSource(generator.currentInstruction());
         }
 
         if (C1XOptions.PrintIRWithLIR) {
-            compilation.maybePrintCurrentInstruction();
+            generator.maybePrintCurrentInstruction();
             op.printOn(TTY.out);
             TTY.println();
         }
@@ -207,6 +208,10 @@ public class LIRList {
 
     public void resolveInstruction(LIROperand result, LIROperand index, LIROperand cp, CodeEmitInfo info) {
         append(new LIROp2(LIROpcode.Resolve, index, cp, result));
+    }
+
+    public void resolveArrayClassInstruction(LIROperand result, LIROperand index, LIROperand cp, CodeEmitInfo info) {
+        append(new LIROp2(LIROpcode.ResolveArrayClass, index, cp, result));
     }
 
     public void returnOp(LIROperand result) {

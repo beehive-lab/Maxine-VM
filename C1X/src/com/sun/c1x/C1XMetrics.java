@@ -36,6 +36,7 @@ public class C1XMetrics {
     public static int FoldableMethodsRegistered;
     public static int MethodsFolded;
     public static int InlineForcedMethods;
+    public static int InlineForbiddenMethods;
     public static int NullCheckIterations;
     public static int NullCheckEliminations;
     public static int NullChecksRedundant;
@@ -45,4 +46,6 @@ public class C1XMetrics {
     public static int BlocksMerged;
     public static int NestedIfOpsRemoved;
     public static int BlocksSkipped;
+    public static int DeadCodeEliminated;
+    public static int ResolveCPEAttempts;
 }

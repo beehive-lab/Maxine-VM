@@ -18,42 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.grip;
+package jtt.micro;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-
-/**
- * A pointer to a pointer to an object.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
  */
-public abstract class Handle extends Word {
-
-    @UNSAFE_CAST
-    public static native Handle from(Word word);
-
-    @Override
-    public String toString() {
-        return "^H" + toHexString();
+public class Loop06 {
+    public static String test(int arg) {
+        int count = 0;
+        while (--arg > 0) {
+            count++;
+            foo();
+        }
+        return "ok" + count;
     }
 
-    @INLINE
-    public final Pointer getPointer() {
-        return asPointer().readWord(0).asPointer();
+    static void foo() {
     }
-
-    @INLINE
-    public final void setPointer(Pointer origin) {
-        asPointer().writeWord(0, origin);
-    }
-
-    @UNSAFE_CAST
-    public static native Handle fromGrip(Grip grip);
-
-    @UNSAFE_CAST
-    public final Grip toGrip() {
-        return UnsafeLoophole.wordToGrip(this);
-    }
-
 }

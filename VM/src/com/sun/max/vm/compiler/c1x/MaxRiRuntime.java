@@ -40,7 +40,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -225,11 +224,10 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int klassOffsetInBytes() {
+    public int hubOffsetInBytes() {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
-    @Override
     public int overflowArgumentsSize(BasicType basicType) {
         // TODO: Return wordSize
         // Currently must be a constant!!
@@ -245,15 +243,7 @@ public class MaxRiRuntime implements RiRuntime {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
-    public int threadExceptionPcOffset() {
-        throw Util.unimplemented();
-    }
-
     public int threadObjOffset() {
-        throw Util.unimplemented();
-    }
-
-    public long throwCountAddress() {
         throw Util.unimplemented();
     }
 
@@ -271,39 +261,15 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
-    public int arrayBaseOffsetInBytes(BasicType type) {
+    public int firstArrayElementOffsetInBytes(BasicType type) {
         return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
-    }
-
-    public Register callerSaveFpuRegAt(int i) {
-        throw Util.unimplemented();
     }
 
     public int sunMiscAtomicLongCSImplValueOffset() {
         throw Util.unimplemented();
     }
 
-    public int arrayElementSize(BasicType type) {
-        throw Util.unimplemented(); // TODO: move usages to BasicType.elementSize
-    }
-
-    public int arrayOopDescHeaderSize(BasicType type) {
-        throw Util.unimplemented();
-    }
-
-    public void vmExitOutOfMemory1(int i, String string, String name) {
-        throw Util.unimplemented();
-    }
-
-    public int vmPageSize() {
-        return Integer.getInteger(Prototype.PAGE_SIZE_PROPERTY, Prototype.nativeGetPageSize());
-    }
-
-    public int argRegSaveAreaBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int basicLockDisplacedHeaderOffsetInBytes() {
+    public int arrayHeaderSize(BasicType type) {
         throw Util.unimplemented();
     }
 
@@ -315,20 +281,8 @@ public class MaxRiRuntime implements RiRuntime {
         return Util.nonFatalUnimplemented(0);
     }
 
-    public int basicObjectObjOffsetInBytes() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    public long doubleSignmaskPoolAddress() {
-        throw Util.unimplemented();
-    }
-
     public int elementKlassOffsetInBytes() {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
-    }
-
-    public long getPollingPage() {
-        throw Util.unimplemented();
     }
 
     public int initStateOffsetInBytes() {
@@ -355,10 +309,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int nativeMovConstRegInstructionSize() {
-        throw Util.unimplemented();
-    }
-
     public int secondarySuperCacheOffsetInBytes() {
         throw Util.unimplemented();
     }
@@ -368,10 +318,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int superCheckOffsetOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int threadPendingExceptionOffset() {
         throw Util.unimplemented();
     }
 
@@ -391,17 +337,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    // Special object whose integer representation must look as different as possible from a real oop
-    private final Object nonOopWord = new Object();
-
-    public Object universeNonOopWord() {
-        return nonOopWord;
-    }
-
-    public boolean universeSupportsInlineContigAlloc() {
-        throw Util.unimplemented();
-    }
-
     public int biasedLockMaskInPlace() {
         throw Util.unimplemented();
     }
@@ -411,10 +346,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public boolean dtraceAllocProbes() {
-        throw Util.unimplemented();
-    }
-
-    public long getMemorySerializePage() {
         throw Util.unimplemented();
     }
 
@@ -455,10 +386,6 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int prototypeHeaderOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int unlockedValue() {
         throw Util.unimplemented();
     }
 
@@ -526,11 +453,6 @@ public class MaxRiRuntime implements RiRuntime {
         return currentStackSlot - 1;
     }
 
-    public int outPreserveStackSlots() {
-        // This is probably correct for now.
-        return 0;
-    }
-
     public CiLocation receiverLocation() {
         return new CiLocation(generalParameterRegisters[0]);
     }
@@ -577,16 +499,6 @@ public class MaxRiRuntime implements RiRuntime {
         return "";
     }
 
-    public int initThreadOffsetInBytes() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public int sizeofKlassOopDesc() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
     public Register returnRegister(BasicType object) {
 
         if (object == BasicType.Void) {
@@ -616,12 +528,10 @@ public class MaxRiRuntime implements RiRuntime {
         return globalConstantPool.canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()));
     }
 
-    @Override
     public Register threadRegister() {
         return X86.r14;
     }
 
-    @Override
     public int getJITStackSlotSize() {
         return JitStackFrameLayout.JIT_SLOT_SIZE;
     }

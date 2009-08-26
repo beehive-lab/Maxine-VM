@@ -38,11 +38,11 @@ public class NewObjectArray extends NewArray {
      * @param elementClass the class of elements in this array
      * @param length the instruction producing the length of the array
      * @param stateBefore the state before the allocation
-     * @param cpi
-     * @param riConstantPool
+     * @param cpi the constant pool index
+     * @param constantPool the constant pool
      */
-    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool ciConstantPool) {
-        super(length, stateBefore, ciConstantPool);
+    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+        super(length, stateBefore, constantPool);
         this.elementClass = elementClass;
         this.cpi = cpi;
     }

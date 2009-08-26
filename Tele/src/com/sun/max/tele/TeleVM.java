@@ -957,7 +957,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Reference wordToReference(Word word) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromWord(word));
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(word.asPointer()));
     }
 
     /**

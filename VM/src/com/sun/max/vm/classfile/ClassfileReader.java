@@ -656,6 +656,21 @@ public final class ClassfileReader {
         ProgramError.check(descriptor.resultKind() != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference return type: " + this);
     }
 
+    /**
+     * Gets the declaration-like string for a field or method.
+     *
+     * @param name the name of the field or method
+     * @param descriptor the type/signature of the field/method
+     */
+    private String memberString(Utf8Constant name, Descriptor descriptor) {
+        if (descriptor instanceof TypeDescriptor) {
+            // A field
+            return classDescriptor.toJavaString() + "." + name + ' ' + ((TypeDescriptor) descriptor).toJavaString();
+        }
+        // A method
+        return classDescriptor.toJavaString() + "." + name + ((SignatureDescriptor) descriptor).toJavaString(false, true);
+    }
+
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = classfileStream.readUnsigned2();
         if (numberOfMethods == 0) {
@@ -828,15 +843,16 @@ public final class ClassfileReader {
                                     }
                                 }
                             } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
-                                ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method");
-                                ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() + " to a method with exactly one parameter");
+                                ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method: " + memberString(name, descriptor));
+                                ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
+                                    " to a method with exactly one parameter: " + memberString(name, descriptor));
                                 flags |= UNSAFE_CAST;
                                 codeAttribute = null;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {
                                 ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);
-                                ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method");
-                                ProgramError.check(!isNative(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to native method");
-                                ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method");
+                                ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method: " + memberString(name, descriptor));
+                                ProgramError.check(!isNative(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to native method: " + memberString(name, descriptor));
+                                ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method: " + memberString(name, descriptor));
                                 flags |= JNI_FUNCTION;
                                 flags |= C_FUNCTION;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
@@ -865,7 +881,7 @@ public final class ClassfileReader {
                                         }
                                     }
                                 }
-                                ProgramError.check(substituteeIndex != -1, "Could not find substitutee for surrogate method: " + name + " " + descriptor);
+                                ProgramError.check(substituteeIndex != -1, "Could not find substitutee for surrogate method: " + memberString(name, descriptor));
                             }
                         }
                     }

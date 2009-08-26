@@ -23,6 +23,7 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
@@ -33,9 +34,17 @@ import com.sun.c1x.util.*;
  */
 public abstract class X86Assembler extends AbstractAssembler {
 
-    // The x86 condition codes used for conditional jumps/moves.
-    enum Condition {
-        zero(0x4), notZero(0x5), equal(0x4), notEqual(0x5), less(0xc), lessEqual(0xe), greater(0xf), greaterEqual(0xd), below(0x2), belowEqual(0x6), above(0x7), aboveEqual(0x3), overflow(0x0), noOverflow(
+    /**
+     * The x86 condition codes used for conditional jumps/moves.
+     */
+    public enum Condition {
+        zero(0x4),
+        notZero(0x5),
+        equal(0x4),
+        notEqual(0x5),
+        less(0xc),
+        lessEqual(0xe),
+        greater(0xf), greaterEqual(0xd), below(0x2), belowEqual(0x6), above(0x7), aboveEqual(0x3), overflow(0x0), noOverflow(
                         0x1), carrySet(0x2), carryClear(0x3), negative(0x8), positive(0x9), parity(0xa), noParity(0xb);
 
         public final int value;
@@ -43,98 +52,37 @@ public abstract class X86Assembler extends AbstractAssembler {
         private Condition(int value) {
             this.value = value;
         }
-
-        public Condition negate() {
-            switch (this) {
-                // Note some conditions are synonyms for others
-                case zero:
-                    return notZero;
-                case notZero:
-                    return zero;
-                case equal:
-                    return notEqual;
-                case notEqual:
-                    return equal;
-                case less:
-                    return greaterEqual;
-                case lessEqual:
-                    return greater;
-                case greater:
-                    return lessEqual;
-                case greaterEqual:
-                    return less;
-                case below:
-                    return aboveEqual;
-                case belowEqual:
-                    return above;
-                case above:
-                    return belowEqual;
-                case aboveEqual:
-                    return below;
-                case overflow:
-                    return noOverflow;
-                case noOverflow:
-                    return overflow;
-                case negative:
-                    return positive;
-                case positive:
-                    return negative;
-                case parity:
-                    return noParity;
-                case noParity:
-                    return parity;
-                case carryClear:
-                    return carrySet;
-                case carrySet:
-                    return carryClear;
-
-            }
-            throw Util.shouldNotReachHere();
-        }
     }
 
-    class Prefix {
-
-        // segment overrides
-        public static final int CSSegment = 0x2e;
-        public static final int SSSegment = 0x36;
-        public static final int DSSegment = 0x3e;
-        public static final int ESSegment = 0x26;
-        public static final int FSSegment = 0x64;
-        public static final int GSSegment = 0x65;
-        public static final int REX = 0x40;
-        public static final int REXB = 0x41;
-        public static final int REXX = 0x42;
-        public static final int REXXB = 0x43;
-        public static final int REXR = 0x44;
-        public static final int REXRB = 0x45;
-        public static final int REXRX = 0x46;
-        public static final int REXRXB = 0x47;
-        public static final int REXW = 0x48;
-        public static final int REXWB = 0x49;
-        public static final int REXWX = 0x4A;
-        public static final int REXWXB = 0x4B;
-        public static final int REXWR = 0x4C;
-        public static final int REXWRB = 0x4D;
-        public static final int REXWRX = 0x4E;
-        public static final int REXWRXB = 0x4F;
+    /**
+     * Constants for X86 prefix bytes.
+     */
+    private class Prefix {
+        private static final int REX = 0x40;
+        private static final int REXB = 0x41;
+        private static final int REXX = 0x42;
+        private static final int REXXB = 0x43;
+        private static final int REXR = 0x44;
+        private static final int REXRB = 0x45;
+        private static final int REXRX = 0x46;
+        private static final int REXRXB = 0x47;
+        private static final int REXW = 0x48;
+        private static final int REXWB = 0x49;
+        private static final int REXWX = 0x4A;
+        private static final int REXWXB = 0x4B;
+        private static final int REXWR = 0x4C;
+        private static final int REXWRB = 0x4D;
+        private static final int REXWRX = 0x4E;
+        private static final int REXWRXB = 0x4F;
     }
 
     public X86Assembler(Target target) {
         super(target);
     }
 
-    @Override
-    protected int codeFillByte() {
-        return 0xF4;
-    }
-
-    static int encode(Register r) {
-        int enc = r.encoding;
-        if (enc >= 8) {
-            enc -= 8;
-        }
-        return enc;
+    private static int encode(Register r) {
+        assert r.encoding < 16;
+        return r.encoding & 0x7;
     }
 
     void emitArithB(int op1, int op2, Register dst, int imm8) {
@@ -301,7 +249,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void emitOperand32(Register reg, Address adr) {
         assert reg.encoding < 8 : "no extended registers";
-        assert !needsRex(adr.base) && !needsRex(adr.index) : "no extended registers";
+        assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
     }
 
@@ -315,7 +263,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void emitOperand(Address adr, Register reg) {
         assert reg.isXMM();
-        assert !needsRex(adr.base) && !needsRex(adr.index) : "no extended registers";
+        assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
     }
 
@@ -521,6 +469,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xD0 | encode);
     }
 
+    public final void call(RiMethod method) {
+        recordDirectCall(codeBuffer.position(), method, new boolean[0]);
+        emitByte(0xE8);
+        emitInt(0);
+
+    }
     public final void call(Address adr) {
 
         prefix(adr);
@@ -529,7 +483,8 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void callGlobalStub(Object globalStubID) {
+    protected final void emitGlobalStubCall(Object globalStubID) {
+        assert !(globalStubID instanceof GlobalStub);
         recordGlobalStubCall(codeBuffer.position(), globalStubID, new boolean[0]);
         emitByte(0xE8);
         emitInt(0);
@@ -615,12 +570,10 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    private boolean needsRex(Register r) {
-        return r != Register.noreg && r.encoding >= 8;
-    }
+    private static final int MinEncodingNeedsRex = 8;
 
     public final void cmpw(Address dst, int imm16) {
-        assert !needsRex(dst.base) && !needsRex(dst.index) : "no extended registers";
+        assert !(dst.base.encoding >= MinEncodingNeedsRex) && !(dst.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitByte(0x66);
         emitByte(0x81);
         emitOperand(X86.rdi, dst, 2);
@@ -2523,6 +2476,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    // TODO: remove?
     public final void popa() {
 
         if (target.arch.is64bit()) {
@@ -2553,6 +2507,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    // TODO: remove?
     public final void pusha() {
 
         if (target.arch.is32bit()) {
@@ -2693,35 +2648,35 @@ public abstract class X86Assembler extends AbstractAssembler {
         return regEnc << 3 | rmEnc;
     }
 
-    void prefix(Register reg) {
+    private void prefix(Register reg) {
         if (reg.encoding >= 8) {
             emitByte(Prefix.REXB);
         }
     }
 
     void prefix(Address adr) {
-        if (needsRex(adr.base)) {
-            if (needsRex(adr.index)) {
+        if (adr.base.encoding >= MinEncodingNeedsRex) {
+            if (adr.index.encoding >= MinEncodingNeedsRex) {
                 emitByte(Prefix.REXXB);
             } else {
                 emitByte(Prefix.REXB);
             }
         } else {
-            if (needsRex(adr.index)) {
+            if (adr.index.encoding >= MinEncodingNeedsRex) {
                 emitByte(Prefix.REXX);
             }
         }
     }
 
     void prefixq(Address adr) {
-        if (needsRex(adr.base)) {
-            if (needsRex(adr.index)) {
+        if (adr.base.encoding >= MinEncodingNeedsRex) {
+            if (adr.index.encoding >= MinEncodingNeedsRex) {
                 emitByte(Prefix.REXWXB);
             } else {
                 emitByte(Prefix.REXWB);
             }
         } else {
-            if (needsRex(adr.index)) {
+            if (adr.index.encoding >= MinEncodingNeedsRex) {
                 emitByte(Prefix.REXWX);
             } else {
                 emitByte(Prefix.REXW);
@@ -2729,31 +2684,31 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void prefix(Address adr, Register reg) {
+    private void prefix(Address adr, Register reg) {
 
         if (reg.encoding < 8) {
-            if (needsRex(adr.base)) {
-                if (needsRex(adr.index)) {
+            if (adr.base.encoding >= MinEncodingNeedsRex) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXXB);
                 } else {
                     emitByte(Prefix.REXB);
                 }
             } else {
-                if (needsRex(adr.index)) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXX);
                 } else if (reg.encoding >= 4) {
                     emitByte(Prefix.REX);
                 }
             }
         } else {
-            if (needsRex(adr.base)) {
-                if (needsRex(adr.index)) {
+            if (adr.base.encoding >= MinEncodingNeedsRex) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXRXB);
                 } else {
                     emitByte(Prefix.REXRB);
                 }
             } else {
-                if (needsRex(adr.index)) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXRX);
                 } else {
                     emitByte(Prefix.REXR);
@@ -2764,28 +2719,28 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     void prefixq(Address adr, Register src) {
         if (src.encoding < 8) {
-            if (needsRex(adr.base)) {
-                if (needsRex(adr.index)) {
+            if (adr.base.encoding >= MinEncodingNeedsRex) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXWXB);
                 } else {
                     emitByte(Prefix.REXWB);
                 }
             } else {
-                if (needsRex(adr.index)) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXWX);
                 } else {
                     emitByte(Prefix.REXW);
                 }
             }
         } else {
-            if (needsRex(adr.base)) {
-                if (needsRex(adr.index)) {
+            if (adr.base.encoding >= MinEncodingNeedsRex) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXWRXB);
                 } else {
                     emitByte(Prefix.REXWRB);
                 }
             } else {
-                if (needsRex(adr.index)) {
+                if (adr.index.encoding >= MinEncodingNeedsRex) {
                     emitByte(Prefix.REXWRX);
                 } else {
                     emitByte(Prefix.REXWR);

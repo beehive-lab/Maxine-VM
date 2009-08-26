@@ -56,7 +56,7 @@ public class PrototypeJitCompiler extends JitCompiler {
         throw ProgramError.unexpected();
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         throw ProgramError.unexpected();
     }
 

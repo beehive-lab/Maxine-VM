@@ -309,6 +309,7 @@ public class LIRVisitState {
             case Shl:
             case Shr:
             case Ushr:
+            case ResolveArrayClass:
             case Resolve: {
                 LIROp2 op2 = (LIROp2) op;
 

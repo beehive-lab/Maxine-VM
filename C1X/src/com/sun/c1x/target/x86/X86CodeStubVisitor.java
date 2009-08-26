@@ -22,7 +22,6 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
@@ -53,7 +52,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         return result;
     }
 
-    @Override
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
 
@@ -153,14 +151,16 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         ce.alignCall(LIROpcode.StaticCall);
 
         ce.emitStaticCallStub();
-        masm.callRuntime(CiRuntimeCall.ResolveStaticCall);
+
+        // TODO: What is meant to be called here?
+        //masm.callGlobalStub(GlobalStub.ResolveStaticCall);
         ce.addCallInfoHere(stub.info);
         masm.jmp(stub.continuation);
     }
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
-        masm.callRuntime(CiRuntimeCall.ThrowArrayStoreException);
+        masm.callGlobalStub(GlobalStub.ThrowArrayStoreException);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -177,7 +177,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        masm.callRuntime(CiRuntimeCall.ThrowDiv0Exception);
+        masm.callGlobalStub(GlobalStub.ThrowDiv0Exception);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -191,7 +191,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
-        masm.callRuntime(CiRuntimeCall.ThrowNullPointerException);
+        masm.callGlobalStub(GlobalStub.ThrowNullPointerException);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -368,19 +368,19 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitRangeCheckStub(RangeCheckStub stub) {
         masm.bind(stub.entry);
-        // pass the array index on stack because all registers must be preserved
-        if (stub.index.isCpuRegister()) {
-            masm.storeParameter(stub.index.asRegister(), 0);
-        } else {
-            masm.storeParameter(stub.index.asInt(), 0);
-        }
-        CiRuntimeCall stubId;
+        GlobalStub stubId;
         if (stub.throwIndexOutOfBoundsException) {
-            stubId = CiRuntimeCall.ThrowIndexException;
+            stubId = GlobalStub.ThrowIndexException;
         } else {
-            stubId = CiRuntimeCall.ThrowRangeCheckFailed;
+            stubId = GlobalStub.ThrowRangeCheckFailed;
         }
-        masm.callRuntime(stubId);
+
+        if (stub.index.isCpuRegister()) {
+            masm.callGlobalStub(stubId, Register.noreg, stub.index.asRegister());
+        } else {
+            masm.callGlobalStub(stubId, Register.noreg, new RegisterOrConstant(stub.index.asInt()));
+        }
+
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -393,11 +393,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         masm.bind(stub.entry);
-        // pass the object on stack because all registers must be preserved
-        if (stub.obj.isCpuRegister()) {
-            masm.storeParameter(stub.obj.asRegister(), 0);
+        if (stub.obj.isIllegal()) {
+            masm.callGlobalStub(stub.stub);
+        } else {
+            masm.callGlobalStub(stub.stub, Register.noreg, stub.obj.asRegister());
         }
-        masm.callRuntime(stub.stub);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call

@@ -30,29 +30,18 @@ import com.sun.c1x.value.*;
  */
 public class MonitorEnter extends AccessMonitor {
 
-    final ValueStack lockStackBefore;
-
     /**
      * Creates a new MonitorEnter instruction.
      * @param object the instruction producing the object
      * @param lockNumber the number of the lock
-     * @param lockStackBefore the state before
+     * @param stateBefore the state before
      */
-    public MonitorEnter(Instruction object, int lockNumber, ValueStack lockStackBefore) {
-        super(object, lockNumber);
-        this.lockStackBefore = lockStackBefore;
+    public MonitorEnter(Instruction object, int lockNumber, ValueStack stateBefore) {
+        super(object, stateBefore, lockNumber);
         if (object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
         }
-    }
-
-    /**
-     * Gets the lock stack before this instruction.
-     * @return the lock stack
-     */
-    public ValueStack lockStackBefore() {
-        return lockStackBefore;
     }
 
     /**
@@ -62,16 +51,6 @@ public class MonitorEnter extends AccessMonitor {
     @Override
     public boolean canTrap() {
         return true;
-    }
-
-    /**
-     * Iterates over all the state values in this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void stateValuesDo(InstructionClosure closure) {
-        super.stateValuesDo(closure);
-        lockStackBefore.valuesDo(closure);
     }
 
     /**

@@ -31,33 +31,39 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public abstract class BlockEnd extends StateSplit {
+public abstract class BlockEnd extends Instruction {
 
     BlockBegin begin;
     List<BlockBegin> successors;
-    final ValueStack stateBefore;
+    ValueStack stateAfter;
 
     /**
      * Constructs a new block end with the specified value type.
      * @param type the type of the value produced by this instruction
-     * @param stateBefore the value stack before the this instruction
+     * @param stateAfter the value stack after the end of this block
      * @param isSafepoint <code>true</code> if this instruction is a safepoint instruction
      */
-    public BlockEnd(BasicType type, ValueStack stateBefore, boolean isSafepoint) {
+    public BlockEnd(BasicType type, ValueStack stateAfter, boolean isSafepoint) {
         super(type);
         this.successors = new ArrayList<BlockBegin>(2);
-        this.stateBefore = stateBefore;
+        this.stateAfter = stateAfter;
         if (isSafepoint) {
             setFlag(Instruction.Flag.IsSafepoint);
         }
     }
 
     /**
-     * Get the state before the end of this block.
+     * Get the state after the end of this block.
      * @return the value stack representing the state
      */
-    public ValueStack stateBefore() {
-        return stateBefore;
+    @Override
+    public ValueStack stateAfter() {
+        return stateAfter;
+    }
+
+
+    public void setStateAfter(ValueStack valueStack) {
+        stateAfter = valueStack;
     }
 
     /**
@@ -126,13 +132,6 @@ public abstract class BlockEnd extends StateSplit {
      */
     public List<BlockBegin> successors() {
         return successors;
-    }
-
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        if (stateBefore != null) {
-            stateBefore.valuesDo(closure);
-        }
     }
 
     /**

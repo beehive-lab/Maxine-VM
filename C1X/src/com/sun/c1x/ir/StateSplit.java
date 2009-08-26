@@ -30,31 +30,32 @@ import com.sun.c1x.value.*;
  */
 public abstract class StateSplit extends Instruction {
 
-    private ValueStack state;
+    protected ValueStack stateBefore;
 
     /**
      * Creates a new state split with the specified value type.
      * @param type the type of the value that this instruction produces
      */
-    public StateSplit(BasicType type) {
+    public StateSplit(BasicType type, ValueStack stateBefore) {
         super(type);
-        pin();
+        this.stateBefore = stateBefore;
     }
 
     /**
-     * Sets the state for this instruction.
-     * @param state the state
+     * Sets the state after this instruction has executed.
+     * @param stateBefore the state
      */
-    public void setState(ValueStack state) {
-        this.state = state;
+    public void setStateBefore(ValueStack stateBefore) {
+        this.stateBefore = stateBefore;
     }
 
     /**
      * Gets the state for this instruction.
      * @return the state
      */
-    public ValueStack state() {
-        return state;
+    @Override
+    public ValueStack stateBefore() {
+        return stateBefore;
     }
 
     /**
@@ -62,18 +63,7 @@ public abstract class StateSplit extends Instruction {
      * @return the IR scope
      */
     public IRScope scope() {
-        return state.scope();
+        return stateBefore.scope();
     }
 
-    /**
-     * Iterates over the values in this instruction. This implementation
-     * iterates over all the values in the value stack.
-     * @param closure the closure to apply to each value
-     */
-    @Override
-    public void stateValuesDo(InstructionClosure closure) {
-        if (state != null) {
-            state.valuesDo(closure);
-        }
-    }
 }

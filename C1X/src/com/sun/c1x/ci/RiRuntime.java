@@ -88,19 +88,13 @@ public interface RiRuntime {
      * Byte offset of the field of an object that contains the pointer to the internal class representation of the type of the object.
      * @return the byte offset of the class field
      */
-    int klassOffsetInBytes();
+    int hubOffsetInBytes();
 
     /**
      * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
      * @return the byte offset of the exception object field
      */
     int threadExceptionOopOffset();
-
-    /**
-     * Byte offset of the field of the internal thread representation that contains the exception pc.
-     * @return the byte offset of the exception pc
-     */
-    int threadExceptionPcOffset();
 
     /**
      * Byte offset of the field of the internal thread representation that contains the pointer to the Java thread object.
@@ -135,12 +129,6 @@ public interface RiRuntime {
     int javaNioBufferLimitOffset();
 
     /**
-     * Returns the address of the throw counter. This is used for counting the number of throws.
-     * @return the address of the throw counter
-     */
-    long throwCountAddress();
-
-    /**
      * Checks whether jvmti can post exceptions.
      * @return true if jvmti can post exceptions, false otherwise.
      */
@@ -171,21 +159,11 @@ public interface RiRuntime {
      */
     RiType resolveType(String string);
 
-    int arrayBaseOffsetInBytes(BasicType type);
+    int firstArrayElementOffsetInBytes(BasicType type);
 
     int sunMiscAtomicLongCSImplValueOffset();
 
-    Register callerSaveFpuRegAt(int i);
-
-    int arrayOopDescHeaderSize(BasicType type);
-
-    int arrayElementSize(BasicType type);
-
-    void vmExitOutOfMemory1(int i, String string, String name);
-
-    int vmPageSize();
-
-    long getPollingPage();
+    int arrayHeaderSize(BasicType type);
 
     Register javaCallingConventionReceiverRegister();
 
@@ -194,10 +172,6 @@ public interface RiRuntime {
     int basicObjectLockSize();
 
     int basicObjectLockOffsetInBytes();
-
-    int basicObjectObjOffsetInBytes();
-
-    int basicLockDisplacedHeaderOffsetInBytes();
 
     int initStateOffsetInBytes();
 
@@ -209,23 +183,11 @@ public interface RiRuntime {
 
     int secondarySuperCacheOffsetInBytes();
 
-    long doubleSignmaskPoolAddress();
-
-    Object universeNonOopWord();
-
-    int nativeMovConstRegInstructionSize();
-
     Register getCRarg(int i); // TODO: appears only used for array copy intrinsic
 
     Register getJRarg(int i); // TODO: appears only used for array copy intrinsic
 
     int markOffsetInBytes();
-
-    int argRegSaveAreaBytes();
-
-    int threadPendingExceptionOffset();
-
-    boolean universeSupportsInlineContigAlloc();
 
     int threadTlabTopOffset();
 
@@ -249,13 +211,9 @@ public interface RiRuntime {
 
     int itableOffsetOffsetInBytes();
 
-    long getMemorySerializePage();
-
     int biasedLockMaskInPlace();
 
     int biasedLockPattern();
-
-    int unlockedValue();
 
     int maxArrayAllocationLength();
 
@@ -269,8 +227,6 @@ public interface RiRuntime {
 
     int instanceOopDescBaseOffsetInBytes();
 
-    int outPreserveStackSlots();
-
     // TODO: why not pass the RiSignature instead?
     int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing);
 
@@ -281,10 +237,6 @@ public interface RiRuntime {
     String disassemble(byte[] copyOf);
 
     CiLocation receiverLocation();
-
-    int sizeofKlassOopDesc();
-
-    int initThreadOffsetInBytes();
 
     Register returnRegister(BasicType object);
 
