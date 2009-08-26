@@ -23,6 +23,7 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.value.BasicType;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -46,12 +47,24 @@ import com.sun.c1x.util.*;
  * a second time.
  *
  * Note that the iterative phase is actually optional, because the first pass is conservative.
- * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#DoIterativeNullCheckElimination} to
+ * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#DoIterativeNCE} to
  * {@code false}. Iteration is rarely necessary for acyclic graphs.
  *
  * @author Ben L. Titzer
  */
 public class NullCheckEliminator extends InstructionVisitor {
+
+    static class IfEdge {
+        final BlockBegin ifBlock;
+        final BlockBegin succ;
+        final Instruction checked;
+
+        IfEdge(BlockBegin i, BlockBegin s, Instruction c) {
+            this.ifBlock = i;
+            this.succ = s;
+            this.checked = c;
+        }
+    }
 
     final IR ir;
     final BlockWorkList workList = new BlockWorkList();
@@ -63,6 +76,7 @@ public class NullCheckEliminator extends InstructionVisitor {
     final HashMap<BlockBegin, HashSet<Instruction>> localOut = new HashMap<BlockBegin, HashSet<Instruction>>();
     final HashMap<BlockBegin, HashSet<Instruction>> localExcept = new HashMap<BlockBegin, HashSet<Instruction>>();
     final HashMap<BlockBegin, List<Instruction>> localUses = new HashMap<BlockBegin, List<Instruction>>();
+    final HashMap<BlockBegin, IfEdge> ifEdges = new HashMap<BlockBegin, IfEdge>();
 
     // maps used only in iteration
     HashMap<Instruction, Integer> index;
@@ -91,7 +105,7 @@ public class NullCheckEliminator extends InstructionVisitor {
         while (!workList.isEmpty()) {
             processBlock(workList.removeFromWorkList());
         }
-        if (requiresIteration && C1XOptions.DoIterativeNullCheckElimination) {
+        if (requiresIteration && C1XOptions.DoIterativeNCE) {
             // there was a loop, or blocks were not visited in reverse post-order;
             // iteration is required to compute the in sets for a second pass
             iterate();
@@ -143,9 +157,8 @@ public class NullCheckEliminator extends InstructionVisitor {
             }
             if (currentNonNulls == null) {
                 // all the predecessors have been visited, compute the intersection of their {localOut} sets
-                currentNonNulls = Util.uncheckedCast(map.get(block.predAt(0)).clone());
                 for (BlockBegin pred : block.predecessors()) {
-                    currentNonNulls.retainAll(map.get(pred));
+                    currentNonNulls = intersectLocalOut(pred, currentNonNulls, map.get(pred), block);
                 }
             }
         }
@@ -156,6 +169,29 @@ public class NullCheckEliminator extends InstructionVisitor {
             localExcept.put(block, e);
         }
         localOut.put(block, currentNonNulls);
+    }
+
+    private HashSet<Instruction> intersectLocalOut(BlockBegin pred, HashSet<Instruction> current, HashSet<Instruction> n, BlockBegin succ) {
+        n = intersectFlowSensitive(pred, n, succ);
+        if (current == null) {
+            current = Util.uncheckedCast(n.clone());
+        } else {
+            current.retainAll(n);
+        }
+        return current;
+    }
+
+    private HashSet<Instruction> intersectFlowSensitive(BlockBegin pred, HashSet<Instruction> n, BlockBegin succ) {
+        if (C1XOptions.DoFlowSensitiveNCE) {
+            // check to see if there is an if edge between these two blocks
+            IfEdge e = ifEdges.get(pred);
+            if (e != null && e.succ == succ) {
+                // if there is a special edge between pred and block, add the checked instruction
+                n = Util.uncheckedCast(n.clone());
+                n.add(e.checked);
+            }
+        }
+        return n;
     }
 
     private void iterate() {
@@ -169,7 +205,7 @@ public class NullCheckEliminator extends InstructionVisitor {
             outBitmaps = new HashMap<BlockBegin, BitMap>();
             marked.clear();
             // start off by propagating a new set to the start block
-            propagate(new BitMap(32), ir.startBlock);
+            propagate(ir.startBlock, new BitMap(32), ir.startBlock);
             while (!workList.isEmpty()) {
                 BlockBegin begin = workList.removeFromWorkList();
                 marked.remove(begin);
@@ -206,31 +242,44 @@ public class NullCheckEliminator extends InstructionVisitor {
             out = prevMap.copy();
             out.setUnion(localOut);
         }
-        propagateSuccessors(out, block.end().successors()); // propagate {in} U {localOut} to successors
-        propagateSuccessors(prevMap, block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
+        propagateSuccessors(block, out, block.end().successors()); // propagate {in} U {localOut} to successors
+        propagateSuccessors(block, prevMap, block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
     }
 
-    private void propagateSuccessors(BitMap out, List<BlockBegin> successorList) {
+    private void propagateSuccessors(BlockBegin block, BitMap out, List<BlockBegin> successorList) {
         for (BlockBegin succ : successorList) {
-            propagate(out, succ);
+            propagate(block, out, succ);
         }
     }
 
-    private void propagate(BitMap bitMap, BlockBegin block) {
+    private void propagate(BlockBegin pred, BitMap bitMap, BlockBegin succ) {
         boolean changed;
-        BitMap prevMap = inBitmaps.get(block);
+        propagateFlowSensitive(pred, bitMap, succ);
+        BitMap prevMap = inBitmaps.get(succ);
         if (prevMap == null) {
             // this is the first time this block is being iterated
             prevMap = bitMap.copy();
-            inBitmaps.put(block, prevMap);
+            inBitmaps.put(succ, prevMap);
             changed = true;
         } else {
             // perform intersection with previous map
             changed = prevMap.setIntersect(bitMap);
         }
-        if (changed && !marked.contains(block)) {
-            marked.add(block);
-            workList.addSorted(block, block.depthFirstNumber());
+        if (changed && !marked.contains(succ)) {
+            marked.add(succ);
+            workList.addSorted(succ, succ.depthFirstNumber());
+        }
+    }
+
+    private void propagateFlowSensitive(BlockBegin pred, BitMap bitMap, BlockBegin succ) {
+        if (C1XOptions.DoFlowSensitiveNCE) {
+            IfEdge e = ifEdges.get(pred);
+            if (e != null && e.succ == succ) {
+                // there is a special if edge between these blocks, add the checked instruction
+                int index = makeIndex(e.checked);
+                bitMap.grow(index + 1);
+                bitMap.set(index);
+            }
         }
     }
 
@@ -342,7 +391,7 @@ public class NullCheckEliminator extends InstructionVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        if (i.opcode() == Bytecodes.INVOKEVIRTUAL || i.opcode() == Bytecodes.INVOKEINTERFACE) {
+        if (!i.isStatic()) {
             processUse(i, i.receiver(), true);
         }
     }
@@ -370,5 +419,52 @@ public class NullCheckEliminator extends InstructionVisitor {
         if (!i.isStatic()) {
             processUse(i, i.receiver(), true);
         }
+    }
+
+    @Override
+    public void visitIf(If i) {
+        if (C1XOptions.DoFlowSensitiveNCE) {
+            if (i.trueSuccessor() != i.falseSuccessor()) {
+                Instruction x = i.x();
+                // if the two successors are different, then we may learn something on one branch
+                if (x.type() == BasicType.Object) {
+                    // this is a comparison of object references
+                    Instruction y = i.y();
+                    if (processUse(i, x, false)) {
+                        // x is known to be non-null
+                        compareAgainstNonNull(i, y);
+                    } else if (processUse(i, y, false)) {
+                        // y is known to be non-null
+                        compareAgainstNonNull(i, x);
+                    } else if (x.isConstant() && x.asConstant().asObject() == null) {
+                        // x is the null constant
+                        compareAgainstNull(i, y);
+                    } else if (y.isConstant() && y.asConstant().asObject() == null) {
+                        // y is the null constaint
+                        compareAgainstNull(i, x);
+                    }
+                }
+                // XXX: also check (x instanceof T) tests
+            }
+        }
+    }
+
+    private void compareAgainstNonNull(If i, Instruction use) {
+        if (i.condition() == Condition.eql) {
+            propagateNonNull(i, use, i.trueSuccessor());
+        }
+    }
+
+    private void compareAgainstNull(If i, Instruction use) {
+        if (i.condition() == Condition.eql) {
+            propagateNonNull(i, use, i.falseSuccessor());
+        }
+        if (i.condition() == Condition.neq) {
+            propagateNonNull(i, use, i.trueSuccessor());
+        }
+    }
+
+    private void propagateNonNull(If i, Instruction use, BlockBegin succ) {
+        ifEdges.put(i.begin(), new IfEdge(i.begin(), succ, use));
     }
 }
