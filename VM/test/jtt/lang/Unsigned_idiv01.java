@@ -18,14 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
- */
 package jtt.lang;
 
 import com.sun.max.lang.*;
 
+/*
+ * @Harness: java
+ * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
+ */
 public final class Unsigned_idiv01 {
     private Unsigned_idiv01() {
     }

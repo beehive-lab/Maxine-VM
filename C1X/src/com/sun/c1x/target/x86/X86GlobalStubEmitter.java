@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.target.x86;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
@@ -34,6 +36,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private X86MacroAssembler asm;
     private final Target target;
     private int frameSize;
+    private int registerRestoreEpilogueOffset;
     private RiRuntime runtime;
     private C1XCompiler compiler;
     private Register[] registersSaved;
@@ -53,8 +56,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public CiTargetMethod emit(GlobalStub stub) {
-        asm = new X86MacroAssembler(compiler);
+        asm = new X86MacroAssembler(compiler, compiler.target);
         this.frameSize = 0;
+        this.registerRestoreEpilogueOffset = -1;
 
         switch (stub) {
             case SlowSubtypeCheck:
@@ -71,6 +75,34 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
             case NewInstance:
                 emitStandardForward(stub, CiRuntimeCall.NewInstance);
+                break;
+
+            case ThrowRangeCheckFailed:
+                emitStandardForward(stub, CiRuntimeCall.ThrowRangeCheckFailed);
+                break;
+
+            case ThrowIndexException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowIndexException);
+                break;
+
+            case ThrowDiv0Exception:
+                emitStandardForward(stub, CiRuntimeCall.ThrowDiv0Exception);
+                break;
+
+            case ThrowNullPointerException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowNullPointerException);
+                break;
+
+            case ThrowArrayStoreException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowArrayStoreException);
+                break;
+
+            case ThrowClassCastException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowClassCastException);
+                break;
+
+            case ThrowIncompatibleClassChangeError:
+                emitStandardForward(stub, CiRuntimeCall.ThrowIncompatibleClassChangeError);
                 break;
 
             case ArithmethicLrem:
@@ -95,6 +127,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
             case ResolveClass:
                 emitStandardForward(stub, CiRuntimeCall.ResolveClass);
+                break;
+
+            case ResolveArrayClass:
+                emitStandardForward(stub, CiRuntimeCall.ResolveArrayClass);
                 break;
 
             case ResolveVTableIndex:
@@ -149,7 +185,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 throw Util.shouldNotReachHere();
         }
 
-        return asm.finishTargetMethod(runtime, frameSize, null);
+        return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
     }
 
     private void negatePrologue() {
@@ -256,36 +292,19 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             registers = X86.allRegisters64;
         }
 
+        List<Register> savedRegistersList = new ArrayList<Register>();
         int index = 0;
         for (Register r : registers) {
             if (r != X86.rsp) {
+                savedRegistersList.add(r);
                 asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
                 index++;
             }
         }
+        this.registersSaved = savedRegistersList.toArray(new Register[savedRegistersList.size()]);
 
         int frameSize = index * target.arch.wordSize;
         assert this.frameSize >= frameSize;
-    }
-
-    private void restoreRegisters() {
-
-        Register[] registers = X86.allRegisters;
-        if (target.arch.is64bit()) {
-            registers = X86.allRegisters64;
-        }
-
-        int index = 0;
-        for (Register r : registers) {
-
-            if (r == X86.rsp) {
-                continue;
-            }
-
-            asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
-
-            index++;
-        }
     }
 
     private void partialSavePrologue(Register... registersToSave) {
@@ -321,12 +340,16 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void epilogue() {
 
+        assert registerRestoreEpilogueOffset == -1;
+        registerRestoreEpilogueOffset = asm.codeBuffer.position();
+
         if (registersSaved != null) {
             int index = 0;
             for (Register r : registersSaved) {
                 asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
                 index++;
             }
+            registersSaved = null;
         }
 
         // Restore rsp
@@ -353,9 +376,5 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         if (call.resultType != BasicType.Void) {
             this.storeArgument(0, runtime.returnRegister(call.resultType));
         }
-
-        // Restore registers including rsp
-        restoreRegisters();
     }
-
 }

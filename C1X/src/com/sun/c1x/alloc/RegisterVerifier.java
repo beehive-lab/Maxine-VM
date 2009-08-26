@@ -219,8 +219,7 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                TTY.println("!! Error in register allocation: register %d does not contain interval %d but interval %d", reg, interval.regNum(), inputState.get(reg));
-                return false;
+                throw new Bailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.regNum() + " but interval " + inputState.get(reg));
             }
         }
         return true;

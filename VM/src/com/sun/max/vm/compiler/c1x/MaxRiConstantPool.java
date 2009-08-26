@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.C1XOptions;
+import com.sun.c1x.C1XMetrics;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -340,7 +341,11 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {
-        return C1XOptions.AggressivelyResolveCPEs && constant.isResolvableWithoutClassLoading(constantPool);
+        if (C1XOptions.AggressivelyResolveCPEs) {
+            C1XMetrics.ResolveCPEAttempts++;
+            return constant.isResolvableWithoutClassLoading(constantPool);
+        }
+        return false;
     }
 
     /**
@@ -431,7 +436,7 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     @Override
-    public Object encoding() {
-        return this.constantPool;
+    public CiConstant encoding() {
+        return CiConstant.forObject(this.constantPool);
     }
 }

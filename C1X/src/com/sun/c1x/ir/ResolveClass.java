@@ -23,38 +23,28 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
-
 /**
- * An instruction that represents the runtime resolution of a Java class object. For example, an ldc of a class constant that is unresolved.
+ * An instruction that represents the runtime resolution of a Java class object. For example, an
+ * ldc of a class constant that is unresolved.
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
- *
  */
-public class ResolveClass extends Instruction {
+public class ResolveClass extends StateSplit {
 
-    public final RiType riType;
-    private final ValueStack state;
+    public final RiType type;
+    public final RiType.Representation portion;
     public final RiConstantPool constantPool;
     public final char cpi;
 
-    public ResolveClass(RiType type, ValueStack stack, char cpi, RiConstantPool constantPool) {
-        super(BasicType.Object);
-        this.riType = type;
-        assert stack != null;
-        this.state = stack;
-        setFlag(Flag.NonNull);
+    public ResolveClass(RiType type, RiType.Representation r, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+        super(type.getBasicType(r), stateBefore);
+        this.portion = r;
+        this.type = type;
         this.cpi = cpi;
         this.constantPool = constantPool;
-    }
-
-    /**
-     * Gets the lock stack of the instruction if one exists.
-     * @return the lock stack
-     */
-    @Override
-    public ValueStack lockStack() {
-        return state;
+        setFlag(Flag.NonNull);
+        assert stateBefore != null : "resolution must record state";
     }
 
     @Override
@@ -62,35 +52,21 @@ public class ResolveClass extends Instruction {
         v.visitResolveClass(this);
     }
 
-    public ValueStack state() {
-        return state;
-    }
-
     @Override
     public boolean canTrap() {
         return true;
     }
 
-    /**
-     * Iterates over the "other" values in this instruction. In the case of constants,
-     * this method iterates over any values in the state if this constant may need patching.
-     * @param closure the closure to apply to each value
-     */
-    @Override
-    public void otherValuesDo(InstructionClosure closure) {
-        state.valuesDo(closure);
-    }
-
     @Override
     public int valueNumber() {
-        return riType.hashCode() | 0x50000000;
+        return 0x50000000 | type.hashCode();
     }
 
     @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof ResolveClass) {
-            final ResolveClass other = (ResolveClass) i;
-            return other.riType.equals(riType);
+    public boolean valueEqual(Instruction x) {
+        if (x instanceof ResolveClass) {
+            ResolveClass r = (ResolveClass) x;
+            return r.portion == portion && r.type.equals(type);
         }
         return false;
     }

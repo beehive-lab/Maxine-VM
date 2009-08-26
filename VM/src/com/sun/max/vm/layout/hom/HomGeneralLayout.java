@@ -218,7 +218,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     public final Grip compareAndSwapForwardGrip(Accessor accessor, Grip suspectedGrip, Grip forwardGrip) {
-        return UnsafeLoophole.referenceToGrip(accessor.compareAndSwapReference(hubOffset, UnsafeLoophole.gripToReference(suspectedGrip), UnsafeLoophole.gripToReference(forwardGrip.marked())));
+        return accessor.compareAndSwapReference(hubOffset, suspectedGrip.toReference(), forwardGrip.marked().toReference()).toGrip();
     }
 
     @PROTOTYPE_ONLY

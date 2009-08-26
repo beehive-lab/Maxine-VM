@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Abstracts access to an inflated lock word's bit fields.
@@ -93,7 +94,7 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public static final InflatedMonitorLockWord64 boundFromMonitor(JavaMonitor monitor) {
-        return from(UnsafeLoophole.objectToWord(monitor).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     /**
@@ -103,7 +104,7 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public final JavaMonitor getBoundMonitor() {
-        return (JavaMonitor) UnsafeLoophole.wordToObject(asAddress().and(MONITOR_MASK).asPointer());
+        return (JavaMonitor) Reference.fromOrigin(asAddress().and(MONITOR_MASK).asPointer()).toJava();
     }
 
     /**

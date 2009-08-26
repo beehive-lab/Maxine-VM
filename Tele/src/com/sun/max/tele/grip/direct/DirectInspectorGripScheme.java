@@ -84,14 +84,6 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
         return createTemporaryRemoteTeleGrip(origin.asAddress());
     }
 
-    public Grip fromWord(Word word) {
-        return makeTeleGrip(word.asAddress());
-    }
-
-    public Word toWord(Grip grip) {
-        return toOrigin(grip);
-    }
-
     public Grip fromReference(Reference reference) {
         final TeleReference teleReference = (TeleReference) reference;
         return teleReference.grip();

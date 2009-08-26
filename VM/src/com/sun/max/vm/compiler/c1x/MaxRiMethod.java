@@ -290,11 +290,19 @@ public class MaxRiMethod implements RiMethod {
         }
         final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         exceptionHandlers = new ArrayList<RiExceptionHandler>();
-        for (ExceptionHandlerEntry entry : classMethodActor.rawCodeAttribute().exceptionHandlerTable()) {
+        CodeAttribute codeAttribute = classMethodActor.rawCodeAttribute();
+        for (ExceptionHandlerEntry entry : codeAttribute.exceptionHandlerTable()) {
+            RiType catchType;
+            if (entry.catchTypeIndex() == 0) {
+                catchType = null;
+            } else {
+                RiConstantPool riConstantPool = constantPool.runtime.getConstantPool(this);
+                catchType = riConstantPool.lookupType((char) entry.catchTypeIndex());
+            }
             exceptionHandlers.add(new MaxRiExceptionHandler((char) entry.startPosition(),
                                                              (char) entry.endPosition(),
                                                              (char) entry.handlerPosition(),
-                                                             (char) entry.catchTypeIndex(), (entry.catchTypeIndex() == 0) ? null : constantPool.resolveType((char) entry.catchTypeIndex())));
+                                                             (char) entry.catchTypeIndex(), catchType));
         }
         return exceptionHandlers;
     }
@@ -373,6 +381,15 @@ public class MaxRiMethod implements RiMethod {
 
         if (methodActor.holder() instanceof InterfaceActor) {
             return ((InterfaceActor) methodActor.holder()).id;
+        }
+
+        return -1;
+    }
+
+    @Override
+    public int iIndexInInterface() {
+        if (methodActor instanceof InterfaceMethodActor) {
+            return ((InterfaceMethodActor) methodActor).iIndexInInterface();
         }
 
         return -1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,28 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.optimize;
+
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+ * @Harness: java
+ * @Runs: 0 = 2; 1 = 5; 2 = 8
  */
-package test.com.sun.max.vm.jtrun.c1x;
-
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.run.*;
-
-/**
- * @see MaxPackage
- *
- * @author Ben L. Titzer
- */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-        registerScheme(RunScheme.class, JavaTesterRunScheme.class);
+public class Inline02 {
+    public static int test(int arg) {
+        return arg + nobranch(true, arg) + nobranch(false, arg) + nobranch(true, arg) + nobranch(false, arg);
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.runPackage.equals(this);
+    static int nobranch(boolean f, int v) {
+        if (f) {
+            return v;
+        }
+        return 1;
     }
 }

@@ -566,6 +566,6 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
 #elif os_GUESTVMXEN
     guestvmXen_set_priority((void *) nativeThread, priority);
 #else
-    log_println("nativeSetPriority %d ignored!", priority);
+    //    log_println("nativeSetPriority %d ignored!", priority);
 #endif
 }

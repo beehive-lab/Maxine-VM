@@ -65,6 +65,7 @@ public enum IDE {
             if (classesDirectory.getName().equals("bin")) {
                 return classesDirectory.getAbsoluteFile().getParentFile();
             }
+
             return null;
         }
     },

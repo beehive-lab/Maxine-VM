@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
@@ -41,7 +40,17 @@ public abstract class LIROperand {
     /**
      * The illegal operand singleton instance.
      */
-    public static final LIROperand ILLEGAL = new LIRConstant(new CiConstant(BasicType.Illegal, 0));
+    public static final LIROperand ILLEGAL = new LIRIllegal();
+
+    private static final class LIRIllegal extends LIROperand {
+        private LIRIllegal() {
+            super(BasicType.Illegal);
+        }
+        @Override
+        public String toString() {
+            return "illegal";
+        }
+    }
 
     /**
      * The basic type of this operand.
@@ -213,39 +222,39 @@ public abstract class LIROperand {
     }
 
     public LIROperand makeLastUse() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a makeLastUse");
     }
 
     public LIROperand makeFpuStackOffset() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a makeFpuStackOffset");
     }
 
     public int stackIx() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a stackIx");
     }
 
     public int singleStackIx() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a singleStackIx");
     }
 
     public int doubleStackIx() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a doubleStackIx");
     }
 
     public int cpuRegnr() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnr");
     }
 
     public int cpuRegnrLo() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnrLo");
     }
 
     public int cpuRegnrHi() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnrHi");
     }
 
     public int vregNumber() {
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " does not have a vregNumber");
     }
 
     public LIRConstant asConstantPtr() {

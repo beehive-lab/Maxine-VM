@@ -689,11 +689,11 @@ public final class Log {
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
             }
-            print(fieldActor.holder().name.string, withNewline);
+            print(fieldActor.holder().name.string);
             print('.');
             print(fieldActor.name.string);
             print(":");
-            print(fieldActor.descriptor().string);
+            print(fieldActor.descriptor().string, withNewline);
             if (!MaxineVM.isPrototyping()) {
                 unlock(lockDisabledSafepoints);
             }
@@ -719,11 +719,10 @@ public final class Log {
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
             }
-            print(methodActor.holder().name.string, withNewline);
+            print(methodActor.holder().name.string);
             print('.');
             print(methodActor.name.string);
-            print(methodActor.descriptor().string);
-            print(methodActor.holder().name.string, withNewline);
+            print(methodActor.descriptor().string, withNewline);
             if (!MaxineVM.isPrototyping()) {
                 unlock(lockDisabledSafepoints);
             }

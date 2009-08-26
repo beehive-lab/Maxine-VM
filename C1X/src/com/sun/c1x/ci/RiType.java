@@ -32,6 +32,36 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public interface RiType {
+
+    /**
+     * This enum represents each of the several different parts of the runtime representation of
+     * a type which compiled code may need to reference individually. These may or may not be
+     * different objects or data structures, depending on the runtime system.
+     */
+    enum Representation {
+        /**
+         * The runtime representation of the data structure containing the static fields of this type.
+         */
+        StaticFields,
+
+        /**
+         * The runtime representation of the Java class object of this type.
+         */
+        JavaClass,
+
+        /**
+         * The runtime representation of the "hub" of this type--i.e. the closest part of the type
+         * representation which is typically stored in the object header.
+         */
+        ObjectHub,
+
+        /**
+         * The runtime representation of the type information for an object, which is typically used
+         * for subtype tests.
+         */
+        TypeInfo
+    }
+
     /**
      * Gets the name of this type in internal form. The following are examples of strings returned by this method:
      * <pre>
@@ -175,23 +205,19 @@ public interface RiType {
      */
     BasicType basicType();
 
-    /**
-     * The instance size of an object of this type.
-     * XXX: this is a dumb name
-     * @return the instance size in bytes
-     */
-    int sizeHelper();
-
-    /**
-     * Determines whether the slow path should always be taken when creating new instances of this type.
-     * XXX: this is a dumb name
-     * @return true if the slow path should always be taken, false otherwise
-     */
-    boolean layoutHelperNeedsSlowPath();
-
     int superCheckOffset();
 
-    CiConstant encoding();
+    /**
+     * Gets the encoding of (i.e. a constant representing the value of) the specified part of this type.
+     * @param r the part of the this type
+     * @return a constant representing a reference to the specified part of this type
+     */
+    CiConstant getEncoding(Representation r);
 
-    CiConstant getStaticContainer();
+    /**
+     * Gets the basic type used to represent the specified part of this type.
+     * @param r the part of the this type
+     * @return the basic type of constants for the specified part of the type
+     */
+    BasicType getBasicType(Representation r);
 }

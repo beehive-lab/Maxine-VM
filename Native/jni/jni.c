@@ -84,9 +84,8 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
                 break;
             }
             default: {
-	      fprintf(stderr, "callObjectMethodV: unknown kind = %d\n", kinds[i]);
-                exit(1);
-            }
+	            log_exit(1, "callObjectMethodV: unknown kind = %d\n", kinds[i]);
+             }
         }
     }
 }

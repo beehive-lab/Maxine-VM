@@ -23,6 +23,7 @@ package com.sun.c1x.gen;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.opt.LivenessMarker;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
@@ -66,10 +67,12 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     protected final C1XCompilation compilation;
-    protected final HashMap<Instruction, Integer> useCounts = new HashMap<Instruction, Integer>(30);
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
+    private Instruction currentInstruction;
+    private Instruction lastInstructionPrinted; // Debugging only
+
     ArrayMap<Instruction> instructionForOperand;
     // XXX: refactor this to use 3 one dimensional bitmaps
     private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
@@ -97,20 +100,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return lir;
     }
 
-    public int useCount(Instruction x) {
-        Integer result = useCounts.get(x);
-        if (result != null) {
-            return result;
-        }
-        return 0;
-    }
-
-    public boolean hasUses(Instruction x) {
-        return useCount(x) > 0;
-    }
-
     public boolean isRoot(Instruction x) {
-        return x.isPinned() || useCount(x) > 1;
+        return x.isLive();
     }
 
     public void visitBlock(BlockBegin block) {
@@ -118,7 +109,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
         this.currentBlock = block;
 
         for (Instruction instr = block; instr != null; instr = instr.next()) {
-            if (instr.isPinned()) {
+            if (instr.isLive()) {
+                walkState(instr, instr.stateBefore());
                 doRoot(instr);
             }
         }
@@ -186,111 +178,62 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitBase(Base x) {
-        lir.stdEntry(LIROperandFactory.IllegalOperand);
         // Emit moves from physical registers / stack slots to virtual registers
-        CallingConvention args = compilation.frameMap().incomingArguments();
-        int javaIndex = 0;
-        for (int i = 0; i < args.length(); i++) {
-            LIROperand src = args.at(i);
-            assert !src.isIllegal() : "check";
-            BasicType t = src.type();
-
-            // Types which are smaller than int are passed as int, so
-            // correct the type which passed.
-            switch (t) {
-                case Byte:
-                case Boolean:
-                case Short:
-                case Char:
-                    t = BasicType.Int;
-                    break;
-            }
-
-            LIROperand dest = newRegister(t);
-            lir.move(src, dest);
-
-            // Assign new location to Local instruction for this local
-            Local local = ((Local) x.state().localAt(javaIndex));
-            assert local != null : "Locals for incoming arguments must have been created";
-            assert t == local.type().basicType : "check";
-            local.setOperand(dest);
-            instructionForOperand.put(dest.vregNumber(), local);
-            javaIndex += t.size;
-        }
-
-        final RiMethod method = compilation.method;
-
-        if (method.isSynchronized()) {
-            LIROperand obj;
-            if (method.isStatic()) {
-                obj = newRegister(BasicType.Object);
-                lir.oop2reg(method.holder().javaClass(), obj);
-            } else {
-                Local receiver = (Local) x.state().localAt(0);
-                obj = receiver.operand();
-            }
-            assert !obj.isIllegal() : "must be valid";
-
-            // TODO: C1X generates this already => remove?
-            if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
-                LIROperand lock = newRegister(BasicType.Int);
-                lir.loadStackAddressMonitor(0, lock);
-
-                CodeEmitInfo info = new CodeEmitInfo(Instruction.SYNCHRONIZATION_ENTRY_BCI, compilation.hir().startBlock.state(), null);
-                CodeStub slowPath = new MonitorEnterStub(obj, lock, info);
-
-                // receiver is guaranteed non-null so don't need CodeEmitInfo
-                lir.lockObject(syncTempOpr(), obj, lock, newRegister(BasicType.Object), slowPath, null);
-            }
-        }
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.state(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
 
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
         lir.jump(x.defaultSuccessor());
     }
 
+    private void setOperandsForLocals(ValueStack state) {
+        CallingConvention args = compilation.frameMap().incomingArguments();
+        int javaIndex = 0;
+        for (int i = 0; i < args.length(); i++) {
+            LIROperand src = args.at(i);
+            assert !src.isIllegal() : "check";
+            BasicType t = src.type().stackType();
+
+            LIROperand dest = newRegister(t);
+            lir.move(src, dest);
+
+            // Assign new location to Local instruction for this local
+            Instruction instr = state.localAt(javaIndex);
+            assert instr instanceof Local;
+            Local local = ((Local) instr);
+            assert t == local.type().basicType : "check";
+            if (local.isLive()) {
+                local.setOperand(dest);
+                instructionForOperand.put(dest.vregNumber(), local);
+            }
+            javaIndex += t.size;
+        }
+    }
+
     @Override
     public void visitResolveClass(ResolveClass i) {
-        assert i.state() != null;
+        assert i.stateBefore() != null;
         LIROperand result = rlockResult(i);
-        lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding()), stateFor(i));
+        lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
     }
 
     @Override
     public void visitConstant(Constant x) {
-//        if (x.state() != null) {
-//            // XXX: in the future, no constants will require patching; there will be a ResolveClass instruction
-//            // Any constant with a ValueStack requires patching so emit the patch here
-//            LIROperand reg = rlockResult(x);
-//            CodeEmitInfo info = stateFor(x, x.state());
-//            lir.oop2regPatch(null, reg, info);
-//        } else
-
-
-        if (useCount(x) > 1 && !canInlineAsConstant(x)) {
-            if (!x.isPinned()) {
-                // unpinned constants are handled specially so that they can be
-                // put into registers when they are used multiple times within a
-                // block. After the block completes their operand will be
-                // cleared so that other blocks can't refer to that register.
-                setResult(x, loadConstant(x));
-            } else {
-                LIROperand res = x.operand();
-                if (!res.isValid()) {
-                    res = LIROperandFactory.basicType(x);
-                }
-                if (res.isConstant()) {
-                    LIROperand reg = rlockResult(x);
-                    lir.move(res, reg);
-                } else {
-                    setResult(x, res);
-                }
-            }
+        if (canInlineAsConstant(x)) {
+            setResult(x, loadConstant(x));
         } else {
-            setResult(x, LIROperandFactory.basicType(x));
+            LIROperand res = x.operand();
+            if (!res.isValid()) {
+                res = LIROperandFactory.basicType(x);
+            }
+            if (res.isConstant()) {
+                LIROperand reg = rlockResult(x);
+                lir.move(res, reg);
+            } else {
+                setResult(x, res);
+            }
         }
     }
 
@@ -301,8 +244,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.state().allPhis(currentBlock)) {
-            operandForInstruction(phi);
+        for (Phi phi : currentBlock.stateBefore().allLivePhis(currentBlock)) {
+            operandForPhi(phi);
         }
 
         LIROperand result = newRegister(BasicType.Object);
@@ -321,7 +264,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             BasicType[] signature = new BasicType[] {BasicType.Int};
             this.callRuntime(signature, Arrays.asList(osrBuffer), CiRuntimeCall.OSRMigrationEnd, BasicType.Void, null);
 
-            ValueStack state = (x.stateBefore() != null) ? x.stateBefore() : x.state();
+            ValueStack state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
 
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, state));
@@ -332,7 +275,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state as the safepoint.
-        moveToPhi(x.state());
+        moveToPhi(x.stateAfter());
 
         lir.jump(x.defaultSuccessor());
     }
@@ -462,7 +405,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             resultRegister = resultRegisterFor(x.type().basicType);
         }
 
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
 
         assert args.size() == argList.size();
         loadInvokeArguments(x, args, argList);
@@ -478,6 +421,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
+
                 lir.callStatic(x.target(), resultRegister, GlobalStub.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
                 break;
             case Bytecodes.INVOKESPECIAL:
@@ -510,20 +454,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitLoadField(LoadField x) {
         boolean needsPatching = x.needsPatching();
-        boolean isVolatile = x.field().isVolatile();
+        boolean isVolatile = x.isVolatile();
         BasicType fieldType = x.field().basicType();
 
         CodeEmitInfo info = null;
         if (needsPatching) {
-            assert x.explicitNullCheck() == null : "can't fold null check into patching field access";
             info = stateFor(x, x.stateBefore());
         } else if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc == null) {
-                info = stateFor(x, x.lockStack());
-            } else {
-                info = stateFor(nc);
-            }
+            info = stateFor(x, x.stateBefore());
         }
 
         LIRItem object = new LIRItem(x.object(), this);
@@ -552,7 +490,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (isVolatile) {
-            assert !needsPatching && x.isLoaded() : "how do we know it's volatile if it's not loaded";
             volatileFieldLoad(address, reg, info);
         } else {
             LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
@@ -616,9 +553,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     @Override
     public void visitLocal(Local x) {
-        // operandForInstruction has the side effect of setting the result
-        // so there's no need to do it here.
-        operandForInstruction(x);
+        if (x.operand().isIllegal()) {
+            // allocate a virtual register for this local
+            x.setOperand(rlock(x));
+            instructionForOperand.put(x.operand().vregNumber(), x);
+        }
     }
 
     @Override
@@ -628,11 +567,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
         setNoResult(x);
 
         if (x.isSafepoint()) {
-            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateBefore()));
+            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateAfter()));
         }
 
         // move values into phi locations
-        moveToPhi(x.state());
+        moveToPhi(x.stateAfter());
 
         LIROperand value = tag.result();
         if (C1XOptions.UseTableRanges) {
@@ -717,21 +656,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
     @Override
     public void visitStoreField(StoreField x) {
         boolean needsPatching = x.needsPatching();
-        boolean isVolatile = x.field().isVolatile();
+        boolean isVolatile = x.isLoaded() && x.isVolatile();
         BasicType fieldType = x.field().basicType();
         boolean isOop = (fieldType == BasicType.Object);
 
         CodeEmitInfo info = null;
         if (needsPatching) {
-            assert x.explicitNullCheck() == null : "can't fold null check into patching field access";
             info = stateFor(x, x.stateBefore());
         } else if (x.needsNullCheck()) {
-            NullCheck nc = x.explicitNullCheck();
-            if (nc == null) {
-                info = stateFor(x, x.lockStack());
-            } else {
-                info = stateFor(nc);
-            }
+            info = stateFor(x, x.stateBefore());
         }
 
         LIRItem object = new LIRItem(x.object(), this);
@@ -785,7 +718,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
 
         if (isVolatile) {
-            assert !needsPatching && x.isLoaded() : "how do we know it's volatile if it's not loaded";
             volatileFieldStore(value.result(), address, info);
         } else {
             LIRPatchCode patchCode = needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
@@ -808,11 +740,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
         setNoResult(x);
 
         if (x.isSafepoint()) {
-            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateBefore()));
+            lir.safepoint(safepointPollRegister(), stateFor(x, x.stateAfter()));
         }
 
         // move values into phi locations
-        moveToPhi(x.state());
+        moveToPhi(x.stateAfter());
 
         int loKey = x.lowKey();
         int len = x.numberOfCases();
@@ -834,11 +766,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         exception.loadItem();
         setNoResult(x);
         LIROperand exceptionOpr = exception.result();
-        CodeEmitInfo info = stateFor(x, x.state());
-
-        if (C1XOptions.PrintMetrics) {
-            incrementCounter(compilation.runtime.throwCountAddress(), 1);
-        }
+        CodeEmitInfo info = stateFor(x, x.stateAfter());
 
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
@@ -862,7 +790,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // to avoid a fixed interval with an oop during the null check.
         // Use a copy of the CodeEmitInfo because debug information is
         // different for nullCheck and throw.
-        if (C1XOptions.GenerateCompilerNullChecks && (!(x.exception() instanceof NewInstance) && !(x.exception() instanceof ExceptionObject))) {
+        if (C1XOptions.GenerateCompilerNullChecks && !(x.exception().isNonNull())) {
             // if the exception object wasn't created using new then it might be null.
             lir.nullCheck(exceptionOpr, new CodeEmitInfo(info, true));
         }
@@ -880,7 +808,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         lir.move(exceptionOpr, argumentOperand);
 
         if (unwind) {
-            lir.unwindException(LIROperandFactory.IllegalOperand, exceptionOpr, info);
+            lir.unwindException(exceptionPcOpr(), exceptionOpr, info);
         } else {
             lir.throwException(exceptionPcOpr(), argumentOperand, info);
         }
@@ -1061,13 +989,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
             TTY.println();
         }
 
-        // LIROpr for unpinned constants shouldn't be referenced by other
-        // blocks so clear them out after processing the block.
-        for (Instruction unpinnedConstant : unpinnedConstants) {
-            unpinnedConstant.clearOperand();
-        }
-        unpinnedConstants.clear();
-
         // clear our any registers for other local constants
         constants.clear();
         regForConstants.clear();
@@ -1079,12 +1000,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
         // set up the list of LIR instructions
         assert block.lir() == null : "LIR list already computed for this block";
-        lir = new LIRList(compilation, block);
+        lir = new LIRList(this, block);
         block.setLir(lir);
 
         lir.branchDestination(block.label());
+        if (block == ir.startBlock) {
+            lir.stdEntry(LIROperandFactory.IllegalOperand);
+            setOperandsForLocals(block.end().stateAfter());
+        }
 
-        // Removed condition: Compilation::current_compilation()->hir()->start()->block_id() != block->block_id()
         if (C1XOptions.LIRTraceExecution && !block.isExceptionEntry()) {
             assert block.lir().instructionsList().size() == 1 : "should come right after brDst";
             traceBlockEntry(block);
@@ -1111,7 +1035,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        assert !x.isPinned() : "only for unpinned constants";
         unpinnedConstants.add(x);
         return loadConstant(LIROperandFactory.basicType(x).asConstantPtr());
     }
@@ -1119,6 +1042,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     protected LIROperand loadConstant(LIRConstant c) {
         BasicType t = c.type();
         for (int i = 0; i < constants.size(); i++) {
+            // XXX: linear search might be kind of slow for big basic blocks
             LIRConstant other = constants.get(i);
             if (t == other.type()) {
                 switch (t) {
@@ -1164,7 +1088,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
                 int notTakenCountOffset = md.branchNotTakenCountOffset(ifInstr.profiledBCI());
                 LIROperand mdReg = newRegister(BasicType.Object);
-                lir.move(LIROperandFactory.oopConst(md), mdReg);
+                lir.move(LIROperandFactory.oopConst(md.encoding().asObject()), mdReg);
                 LIROperand dataOffsetReg = newRegister(BasicType.Int);
                 lir.cmove(lirCond(cond), LIROperandFactory.intConst(takenCountOffset), LIROperandFactory.intConst(notTakenCountOffset), dataOffsetReg);
                 LIROperand dataReg = newRegister(BasicType.Int);
@@ -1239,9 +1163,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // need to perform the null check on the rcvr
         CodeEmitInfo info = null;
         if (x.needsNullCheck()) {
-            info = stateFor(x, x.state().copyLocks());
+            info = stateFor(x, x.stateBefore().copyLocks());
         }
-        lir.move(new LIRAddress(rcvr.result(), compilation.runtime.klassOffsetInBytes(), BasicType.Object), result, info);
+        lir.move(new LIRAddress(rcvr.result(), compilation.runtime.hubOffsetInBytes(), BasicType.Object), result, info);
         lir.move(new LIRAddress(result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), BasicType.Object), result);
     }
 
@@ -1280,7 +1204,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         receiver.loadItem();
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
-        CodeEmitInfo info = stateFor(x, x.state());
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
         callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, BasicType.Void, info);
 
         setNoResult(x);
@@ -1762,18 +1686,28 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     void doRoot(Instruction instr) {
         // This is where the tree-walk starts; instr must be root;
-        // XXX: why the current instruction stored in the Compilation?
-        Instruction prev = compilation.setCurrentInstruction(instr);
+        Instruction prev = currentInstruction;
+        currentInstruction = instr;
         try {
-            assert instr.isPinned() : "use only with roots";
+            assert instr.isLive() : "use only with roots";
             assert instr.subst() == instr : "shouldn't have missed substitution";
 
+            if (C1XOptions.TraceLIRVisit) {
+                TTY.println("Visiting    " + instr);
+            }
             instr.accept(this);
+            if (C1XOptions.TraceLIRVisit) {
+                TTY.println("Operand for " + instr + " = " + instr.operand());
+            }
 
-            assert !hasUses(instr) || instr.operand().isValid() || instr instanceof Constant || compilation.bailout() != null : "invalid item set";
+            assert instr.operand().isValid() || !isUsedForValue(instr) : "operand was not set for live instruction";
         } finally {
-            compilation.setCurrentInstruction(prev);
+            currentInstruction = prev;
         }
+    }
+
+    private boolean isUsedForValue(Instruction instr) {
+        return instr.checkFlag(Instruction.Flag.LiveValue);
     }
 
     // increment a counter returning the incremented value
@@ -1797,15 +1731,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     void init() {
-
-        for (BlockBegin begin : ir.linearScanOrder()) {
-            begin.end().state().pinStackForLinearScan();
-        }
-
-        UseCountComputer useCountComputer = new UseCountComputer(useCounts);
-        for (BlockBegin begin : ir.linearScanOrder()) {
-            useCountComputer.visitBlock(begin);
-        }
+        // mark the liveness of all instructions if it hasn't already been done by the optimizer
+        new LivenessMarker(ir);
     }
 
     void loadInvokeArguments(Invoke x, List<LIRItem> args, List<LIROperand> argList) {
@@ -1890,23 +1817,23 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     void moveToPhi(PhiResolver resolver, Instruction curVal, Instruction suxVal) {
         // move current value to referenced phi function
-        Phi phi = null;
         if (suxVal instanceof Phi) {
-            phi = (Phi) suxVal;
-        }
-        // curVal can be null without phi being null in conjunction with inlining
-        if (phi != null && curVal != null && curVal != phi && !phi.type().isIllegal()) {
-            LIROperand operand = curVal.operand();
-            if (curVal.operand().isIllegal()) {
-                assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
-                operand = operandForInstruction(curVal);
+            Phi phi = (Phi) suxVal;
+            // curVal can be null without phi being null in conjunction with inlining
+            if (phi.isLive() && curVal != null && curVal != phi) {
+                assert !phi.isIllegal() : "illegal phi cannot be marked as live";
+                LIROperand operand = curVal.operand();
+                if (curVal.operand().isIllegal()) {
+                    assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
+                    operand = operandForInstruction(curVal);
+                }
+                resolver.move(operand, operandForPhi(phi));
             }
-            resolver.move(operand, operandForInstruction(phi));
         }
     }
 
     protected void moveToPhi(ValueStack curState) {
-        // Moves all stack values into their PHI position
+        // Moves all stack values into their phi position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
             BlockBegin sux = bb.suxAt(0);
@@ -1914,27 +1841,23 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
             // a block with only one predecessor never has phi functions
             if (sux.numberOfPreds() > 1) {
-                int maxPhis = curState.stackSize() + curState.localsSize();
+                int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, virtualRegisterNumber + maxPhis * 2);
 
-                ValueStack suxState = sux.state();
+                ValueStack suxState = sux.stateBefore();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
-                    Instruction suxValue = suxState.stackAt(index);
-                    moveToPhi(resolver, curState.stackAt(index), suxValue);
+                    moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));
                 }
 
-                // Inlining may cause the local state not to match up, so walk up
-                // the caller state until we get to the same scope as the
-                // successor and then start processing from there.
+                // walk up the inlined scopes until locals match
                 while (curState.scope() != suxState.scope()) {
                     curState = curState.scope().callerState();
                     assert curState != null : "scopes don't match up";
                 }
 
                 for (int index = 0; index < suxState.localsSize(); index++) {
-                    Instruction suxValue = suxState.localAt(index);
-                    moveToPhi(resolver, curState.localAt(index), suxValue);
+                    moveToPhi(resolver, curState.localAt(index), suxState.localAt(index));
                 }
 
                 assert curState.scope().callerState() == suxState.scope().callerState() : "caller states must be equal";
@@ -1977,6 +1900,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return x.operand();
     }
 
+    private LIROperand operandForPhi(Phi phi) {
+        if (phi.operand().isIllegal()) {
+            // allocate a virtual register for this phi
+            phi.setOperand(rlock(phi));
+            instructionForOperand.put(phi.operand().vregNumber(), phi);
+        }
+        return phi.operand();
+    }
+
     protected void postBarrier(LIROperand addr, LIROperand newVal) {
     }
 
@@ -1984,7 +1916,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     protected void setNoResult(Instruction x) {
-        assert !hasUses(x) : "can't have use";
+        assert !isUsedForValue(x) : "can't have use";
         x.clearOperand();
     }
 
@@ -2025,31 +1957,17 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected CodeEmitInfo stateFor(Instruction x) {
-        return stateFor(x, x.lockStack());
-    }
-
-    protected CodeEmitInfo stateFor(Instruction x, ValueStack state) {
-        return stateFor(x, state, false);
-    }
-
-    protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
-
+    protected void walkState(Instruction x, ValueStack state) {
+        if (state == null) {
+            return;
+        }
         for (int index = 0; index < state.stackSize(); index++) {
-            final Instruction value = state.stackAt(index);
-            if (value != null) {
-                assert value.subst() == value : "missed substitution";
-                if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
-                    walk(value);
-                    assert value.operand().isValid() : "must be evaluated now";
-                }
-            }
+            walkStateInstruction(state.stackAt(index));
         }
         ValueStack s = state;
         int bci = x.bci();
 
         while (s != null) {
-
             IRScope scope = s.scope();
             RiMethod method = scope.method;
 
@@ -2061,7 +1979,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
                         liveness.clearAll();
                     }
                 } else {
-                    assert x instanceof MonitorEnter : "only other case is MonitorEnter";
+                    assert x instanceof MonitorEnter || x instanceof MonitorExit : "only other case is MonitorEnter";
                 }
             }
             assert liveness == null || liveness.size() == s.localsSize() : "error in use of liveness";
@@ -2069,12 +1987,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
             for (int index = 0; index < s.localsSize(); index++) {
                 final Instruction value = s.localAt(index);
                 if (value != null) {
-                    assert value.subst() == value : "missed substition";
-                    if ((liveness == null || liveness.get(index)) && !value.type().isIllegal()) {
-                        if (!value.isPinned() && (!(value instanceof Constant)) && (!(value instanceof Local))) {
-                            walk(value);
-                            assert value.operand().isValid() : "must be evaluated now";
-                        }
+                    if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
+                        walkStateInstruction(value);
                     } else {
                         // null out this local so that linear scan can assume that all non-null values are live.
                         s.invalidateLocal(index);
@@ -2084,7 +1998,32 @@ public abstract class LIRGenerator extends InstructionVisitor {
             bci = scope.callerBCI();
             s = s.scope().callerState();
         }
+    }
 
+    private void walkStateInstruction(Instruction value) {
+        if (value != null) {
+            assert value.subst() == value : "missed substitution";
+            assert value.isLive() : "value must be marked live in ValueStack";
+            if (value instanceof Phi && !value.isIllegal()) {
+                // goddamnit, phi's are special
+                operandForPhi((Phi) value);
+            } else if (value.operand().isIllegal()) {
+                // instruction doesn't have an operand yet
+                walk(value);
+                assert value.operand().isValid() : "must be evaluated now";
+            }
+        }
+    }
+
+    protected CodeEmitInfo stateFor(Instruction x) {
+        return stateFor(x, x.stateBefore());
+    }
+
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state) {
+        return stateFor(x, state, false);
+    }
+
+    protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
         return new CodeEmitInfo(x.bci(), state, ignoreXhandler ? null : x.exceptionHandlers());
     }
 
@@ -2102,17 +2041,21 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     // This is called for each node in tree; the walk stops if a root is reached
     protected void walk(Instruction instr) {
-        Instruction prev = compilation.setCurrentInstruction(instr);
+        Instruction prev = currentInstruction;
+        currentInstruction = instr;
         try {
+            if (instr instanceof Phi) {
+                assert instr.isLive() || !instr.operand().isValid() : "phi must be pinned or illegal";
+            }
             // stop walk when encounter a root
-            if (instr.isPinned() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
-                assert instr.operand() != LIROperandFactory.IllegalOperand || instr instanceof Constant : "this root has not yet been visited";
+            if (instr.isLive() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
+                assert instr.operand().isValid() || instr instanceof Constant : "this root has not yet been visited";
             } else {
                 assert instr.subst() == instr : "shouldn't have missed substitution";
                 instr.accept(this);
             }
         } finally {
-            compilation.setCurrentInstruction(prev);
+            currentInstruction = prev;
         }
     }
 
@@ -2133,9 +2076,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     /**
      * Returns a LIRAddress for an array location. This method may also emit some code
      * as part of the address calculation.  If
-     * {@link com.sun.c1x.C1XOptions#NeedsCardMark} is true then compute the full address for use by
-     * both the store and the card mark.
-     * XXX: NeedsCardMark is probably part of an instruction (i.e. due to write barrier elision optimization)
      *
      * @param base the base address
      * @param index the array index
@@ -2248,5 +2188,17 @@ public abstract class LIRGenerator extends InstructionVisitor {
     public int maxVirtualRegisterNumber() {
         return virtualRegisterNumber;
     }
+
+    public Instruction currentInstruction() {
+        return currentInstruction;
+    }
+
+    public void maybePrintCurrentInstruction() {
+        if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
+            lastInstructionPrinted = currentInstruction;
+            currentInstruction.printLine();
+        }
+    }
+
 
 }

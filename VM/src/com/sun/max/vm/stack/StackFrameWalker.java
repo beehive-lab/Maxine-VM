@@ -112,6 +112,9 @@ public abstract class StackFrameWalker {
     private Pointer stackPointer = Pointer.zero();
     private Pointer framePointer;
     private Pointer instructionPointer;
+    private Pointer calleeStackPointer = Pointer.zero();
+    private Pointer calleeFramePointer;
+    private Pointer calleeInstructionPointer;
     private StackFrame calleeStackFrame;
     private Pointer trapState;
 
@@ -152,6 +155,8 @@ public abstract class StackFrameWalker {
         TargetMethod lastJavaCallee = null;
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
         Pointer lastJavaCalleeFramePointer = Pointer.zero();
+
+
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
@@ -174,13 +179,16 @@ public abstract class StackFrameWalker {
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
                 final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme;
+
+                TargetMethod oldLastJavaCallee = lastJavaCallee;
+
                 // Record the last Java callee to be the current frame *before* the compiler scheme
                 // updates the current frame during the call to walkJavaFrame()
                 lastJavaCalleeStackPointer = this.stackPointer;
                 lastJavaCalleeFramePointer = this.framePointer;
                 lastJavaCallee = targetMethod;
 
-                if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
+                if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, oldLastJavaCallee, purpose, context)) {
                     break;
                 }
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
@@ -510,6 +518,11 @@ public abstract class StackFrameWalker {
 
     @INLINE
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
+
+        this.calleeInstructionPointer = this.instructionPointer;
+        this.calleeFramePointer = this.framePointer;
+        this.calleeStackPointer = this.stackPointer;
+
         this.instructionPointer = instructionPointer.asPointer();
         this.stackPointer = stackPointer.asPointer();
         this.framePointer = framePointer.asPointer();

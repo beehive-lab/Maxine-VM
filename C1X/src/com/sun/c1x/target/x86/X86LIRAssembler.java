@@ -103,7 +103,7 @@ public class X86LIRAssembler extends LIRAssembler {
             return new Address(base, addr.displacement());
         } else if (addr.index().isCpuRegister()) {
             Register index = addr.index().asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromInt(addr.scale().ordinal()), addr.displacement());
+            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else if (addr.index().isConstant()) {
             long addrOffset = (addr.index().asConstantPtr().asInt() << addr.scale().ordinal()) + addr.displacement();
             assert X86Assembler.isSimm32(addrOffset) : "must be";
@@ -129,7 +129,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
         BlockBegin osrEntry = compilation.hir().osrEntryBlock;
-        ValueStack entryState = osrEntry.state();
+        ValueStack entryState = osrEntry.stateBefore();
         int numberOfLocks = entryState.locksSize();
 
         // we jump here if osr happens with the interpreter
@@ -511,9 +511,9 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
                         throw Util.shouldNotReachHere();
                     } else {
-                        masm().movptr(X86.r10, c.asLongBits());
+                        masm().movptr(rscratch1, c.asLongBits());
                         nullCheckHere = codeOffset();
-                        masm().movptr(asAddressLo(addr), X86.r10);
+                        masm().movptr(asAddressLo(addr), rscratch1);
                     }
                 } else {
                     // Always reachable in 32bit so this doesn't produce useless move literal
@@ -1337,8 +1337,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 masm().mov(tmp3, len);
             }
-            masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayOopDescHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(compilation.runtime.arrayElementSize(op.type())), op.klass().asRegister(), op.stub().entry);
+            int elemSize = compilation.target.sizeInBytes(op.type());
+            masm().allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayHeaderSize(op.type()),
+                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
         }
         masm().bind(op.stub().continuation);
     }
@@ -1391,8 +1392,8 @@ public class X86LIRAssembler extends LIRAssembler {
             addDebugInfoForNullCheckHere(op.infoForException());
 
 
-            masm().movptr(kRInfo, new Address(array, compilation.runtime.klassOffsetInBytes()));
-            masm().movptr(klassRInfo, new Address(value, compilation.runtime.klassOffsetInBytes()));
+            masm().movptr(kRInfo, new Address(array, compilation.runtime.hubOffsetInBytes()));
+            masm().movptr(klassRInfo, new Address(value, compilation.runtime.hubOffsetInBytes()));
 
             // get instance klass
             masm().movptr(kRInfo, new Address(kRInfo, compilation.runtime.elementKlassOffsetInBytes()));
@@ -1446,7 +1447,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (!k.isLoaded()) {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
-                masm().movoop(kRInfo, k.encoding().asObject());
+                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
             }
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
@@ -1484,12 +1485,12 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (k.isLoaded()) {
 
                     if (compilation.target.arch.is64bit()) {
-                        masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
+                        masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
                     } else {
-                        masm().cmpoop(new Address(obj, compilation.runtime.klassOffsetInBytes()), k);
+                        masm().cmpoop(new Address(obj, compilation.runtime.hubOffsetInBytes()), k);
                     }
                 } else {
-                    masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
+                    masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
 
                 }
                 masm().jcc(X86Assembler.Condition.notEqual, stub.entry);
@@ -1497,7 +1498,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else {
                 // get object class
                 // not a safepoint as obj null check happens earlier
-                masm().movptr(klassRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
+                masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
                 if (k.isLoaded() && C1XOptions.FastPathTypeCheck) {
                     // See if we get an immediate positive hit
                     masm().cmpptr(kRInfo, new Address(klassRInfo, k.superCheckOffset()));
@@ -1555,7 +1556,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 jobject2regWithPatching(kRInfo, op.infoForPatch());
             } else {
                 if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.encoding().asObject());
+                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
                 }
             }
             assert obj != kRInfo : "must be different";
@@ -1567,10 +1568,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 // get object class
                 // not a safepoint as obj null check happens earlier
                 if (!compilation.target.arch.is64bit() && k.isLoaded()) {
-                    masm().cmpoop(new Address(obj, compilation.runtime.klassOffsetInBytes()), k);
+                    masm().cmpoop(new Address(obj, compilation.runtime.hubOffsetInBytes()), k);
                     kRInfo = Register.noreg;
                 } else {
-                    masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
+                    masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
 
                 }
                 masm().jcc(X86Assembler.Condition.equal, one);
@@ -1579,7 +1580,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // not a safepoint as obj null check happens earlier
                 masm().cmpptr(obj, (int) NULLWORD);
                 masm().jcc(X86Assembler.Condition.equal, zero);
-                masm().movptr(klassRInfo, new Address(obj, compilation.runtime.klassOffsetInBytes()));
+                masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
                 // next block is unconditional if LP64:
                 assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
 
@@ -1844,13 +1845,13 @@ public class X86LIRAssembler extends LIRAssembler {
                 // cpu register - constant
                 if (compilation.target.arch.is64bit()) {
                     long c = right.asConstantPtr().asLongBits();
-                    masm().movptr(X86.r10, c);
+                    masm().movptr(rscratch1, c);
                     switch (code) {
                         case Add:
-                            masm().addptr(lregLo, X86.r10);
+                            masm().addptr(lregLo, rscratch1);
                             break;
                         case Sub:
-                            masm().subptr(lregLo, X86.r10);
+                            masm().subptr(lregLo, rscratch1);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -2425,16 +2426,21 @@ public class X86LIRAssembler extends LIRAssembler {
             assert code == LIROpcode.Cmpl2i;
             if (compilation.target.arch.is64bit()) {
                 Register dest = dst.asRegister();
-                masm().xorptr(dest, dest);
                 Label high = new Label();
                 Label done = new Label();
+                Label isEqual = new Label();
                 masm().cmpptr(left.asRegisterLo(), right.asRegisterLo());
-                masm().jcc(X86Assembler.Condition.equal, done);
+                masm().jcc(X86Assembler.Condition.equal, isEqual);
                 masm().jcc(X86Assembler.Condition.greater, high);
+                masm().xorptr(dest, dest);
                 masm().decrement(dest, 1);
                 masm().jmp(done);
                 masm().bind(high);
+                masm().xorptr(dest, dest);
                 masm().increment(dest, 1);
+                masm().jmp(done);
+                masm().bind(isEqual);
+                masm().xorptr(dest, dest);
 
                 masm().bind(done);
 
@@ -2474,10 +2480,14 @@ public class X86LIRAssembler extends LIRAssembler {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
 
-        assert entry != null;
-        masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
 
-        masm().call(rscratch1);
+        if (method.isLoaded()) {
+            masm.call(method);
+        } else {
+            assert entry != null;
+            masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm().call(rscratch1);
+        }
         addCallInfoHere(info);
     }
 
@@ -2504,14 +2514,19 @@ public class X86LIRAssembler extends LIRAssembler {
             assert receiver.isRegister() : "Receiver must be in a register";
             addCallInfoHere(info);
 
-            assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes());
+            assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffsetInBytes());
 
-            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
+            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding()));
+            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
             addCallInfoHere(info);
+            int vtableEntrySize = compilation.runtime.vtableEntrySize();
+            assert Util.isPowerOf2(vtableEntrySize);
+            masm.shlq(rscratch1, Util.log2(vtableEntrySize));
+            masm.addq(rscratch1, compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset());
+            masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1);
         }
 
@@ -2528,9 +2543,10 @@ public class X86LIRAssembler extends LIRAssembler {
         assert receiver.isRegister() : "Receiver must be in a register";
         masm.movl(rscratch1, method.interfaceID());
         masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+        masm.addq(rscratch1, method.iIndexInInterface() * 8);
         addCallInfoHere(info);
-        masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.klassOffsetInBytes()));
-        masm.call(new Address(rscratch1, method.vtableIndex() * compilation.target.arch.wordSize));
+        masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
+        masm.call(new Address(rscratch1, 0));
         addCallInfoHere(info);
     }
 
@@ -2761,8 +2777,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
         Address srcLengthAddr = new Address(src, compilation.runtime.arrayLengthOffsetInBytes());
         Address dstLengthAddr = new Address(dst, compilation.runtime.arrayLengthOffsetInBytes());
-        Address srcKlassAddr = new Address(src, compilation.runtime.klassOffsetInBytes());
-        Address dstKlassAddr = new Address(dst, compilation.runtime.klassOffsetInBytes());
+        Address srcKlassAddr = new Address(src, compilation.runtime.hubOffsetInBytes());
+        Address dstKlassAddr = new Address(dst, compilation.runtime.hubOffsetInBytes());
 
         // length and pos's are all sign extended at this point on 64bit
 
@@ -2818,7 +2834,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // but not necessarily exactly of type defaultType.
                 Label knownOk = new Label();
                 Label halt = new Label();
-                masm().movoop(tmp, defaultType.encoding().asObject());
+                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub).asObject());
                 if (basicType != BasicType.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
@@ -2842,9 +2858,9 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (compilation.target.arch.is64bit()) {
             assert Register.assertDifferentRegisters(cRarg0, dst, dstPos, length);
-            masm().lea(cRarg0, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+            masm().lea(cRarg0, new Address(src, srcPos, scale, compilation.runtime.firstArrayElementOffsetInBytes(basicType)));
             assert Register.assertDifferentRegisters(cRarg1, length);
-            masm().lea(cRarg1, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
+            masm().lea(cRarg1, new Address(dst, dstPos, scale, compilation.runtime.firstArrayElementOffsetInBytes(basicType)));
             masm().mov(cRarg2, length);
 
         } else {
@@ -2877,7 +2893,6 @@ public class X86LIRAssembler extends LIRAssembler {
             if (C1XOptions.UseBiasedLocking) {
                 scratch = op.scratchOpr().asRegister();
             }
-            assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
             // add debug info for NullPointerException only if one is possible
             int nullCheckOffset = masm().lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub().entry);
             if (op.info() != null) {
@@ -2885,7 +2900,6 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             // done
         } else if (op.code() == LIROpcode.Unlock) {
-            assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
             masm().unlockObject(compilation.runtime, hdr, obj, lock, op.stub().entry);
         } else {
             throw Util.shouldNotReachHere();
@@ -2942,14 +2956,14 @@ public class X86LIRAssembler extends LIRAssembler {
                     RiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.encoding().asObject());
+                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub).asObject());
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
                         return;
                     }
                 }
             } else {
-                masm().movptr(recv, new Address(recv, compilation.runtime.klassOffsetInBytes()));
+                masm().movptr(recv, new Address(recv, compilation.runtime.hubOffsetInBytes()));
                 Label updateDone = new Label();
                 for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
                     Label nextTest = new Label();
@@ -3232,5 +3246,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // TODO:
         masm.callGlobalStub(GlobalStub.ResolveClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
+    }
+
+    @Override
+    protected void resolveArrayClass(LIROperand dest, LIROperand index, LIROperand cp) {
+
+        // TODO:
+        masm.callGlobalStub(GlobalStub.ResolveArrayClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
     }
 }
