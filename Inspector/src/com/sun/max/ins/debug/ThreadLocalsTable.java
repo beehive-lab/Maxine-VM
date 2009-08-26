@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -55,32 +54,7 @@ public final class ThreadLocalsTable extends InspectorTable {
     private final ThreadLocalsTableColumnModel columnModel;
     private final TableColumn[] columns;
 
-
-
     private MaxVMState lastRefreshedState = null;
-
-
-    private final class ToggleThreadLocalsWatchpointAction extends InspectorAction {
-
-        private final int row;
-
-        public ToggleThreadLocalsWatchpointAction(Inspection inspection, String name, int row) {
-            super(inspection, name);
-            this.row = row;
-        }
-
-        @Override
-        protected void procedure() {
-            final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
-            if (watchpoints == null || watchpoints.isEmpty()) {
-                actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
-            } else {
-                for (MaxWatchpoint watchpoint : watchpoints) {
-                    watchpoint.dispose();
-                }
-            }
-        }
-    }
 
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
@@ -88,29 +62,40 @@ public final class ThreadLocalsTable extends InspectorTable {
     public ThreadLocalsTable(Inspection inspection, final TeleThreadLocalValues threadLocalValues, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         this.preferences = preferences;
-        this.model = new ThreadLocalsTableModel(threadLocalValues);
+        this.model = new ThreadLocalsTableModel(inspection, threadLocalValues);
         this.columns = new TableColumn[ThreadLocalsColumnKind.VALUES.length()];
         this.columnModel = new ThreadLocalsTableColumnModel(inspection);
         configureMemoryTable(model, columnModel);
     }
 
     @Override
-    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+    protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
-            final InspectorAction action = new ToggleThreadLocalsWatchpointAction(inspection(), null, row);
-            action.perform();
+            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint") {
+
+                @Override
+                public void setWatchpoint() {
+                    actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
+                }
+            };
+            toggleAction.perform();
         }
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled() && col == ThreadLocalsColumnKind.TAG.ordinal()) {
             final InspectorMenu menu = new InspectorMenu();
-            final MemoryRegion memoryRegion = model.getMemoryRegion(row);
-            menu.add(new ToggleThreadLocalsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
+            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {
+
+                @Override
+                public void setWatchpoint() {
+                    actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
+                }
+            });
             menu.add(actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, "Watch this memory location"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoints(row)));
-            menu.add(actions().removeWatchpoint(memoryRegion, "Remove memory watchpoint"));
+            menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
+            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
             return menu;
         }
         return null;
@@ -158,14 +143,10 @@ public final class ThreadLocalsTable extends InspectorTable {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(force);
             }
+            model.refresh();
         }
     }
 
-     /**
-     * Add tool tip text to the column headers, as specified by {@link ThreadLocalsColumnKind}.
-     *
-     * @see javax.swing.JTable#createDefaultTableHeader()
-     */
     @Override
     protected JTableHeader createDefaultTableHeader() {
         final JTableHeader header = new JTableHeader(columnModel) {
@@ -184,11 +165,12 @@ public final class ThreadLocalsTable extends InspectorTable {
      * Models the name/value pairs in a VM thread local storage area.
      * Each row displays a variable with index equal to the row number.
      */
-    private final class ThreadLocalsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
+    private final class ThreadLocalsTableModel extends InspectorMemoryTableModel {
 
         private final TeleThreadLocalValues teleThreadLocalValues;
 
-        public ThreadLocalsTableModel(TeleThreadLocalValues teleThreadLocalValues) {
+        public ThreadLocalsTableModel(Inspection inspection, TeleThreadLocalValues teleThreadLocalValues) {
+            super(inspection, teleThreadLocalValues.start());
             this.teleThreadLocalValues = teleThreadLocalValues;
         }
 
@@ -217,47 +199,22 @@ public final class ThreadLocalsTable extends InspectorTable {
             return VmThreadLocal.class;
         }
 
+        @Override
         public Address getAddress(int row) {
             return teleThreadLocalValues.getAddress(row);
         }
 
+        @Override
         public MemoryRegion getMemoryRegion(int row) {
             return teleThreadLocalValues.getMemoryRegion(row);
         }
 
-        /**
-         * @return the memory watchpoints, if any, that are active at a row
-         */
-        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
-            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    if (watchpoints.isEmpty()) {
-                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
-                    } else if (watchpoints.length() == 1) {
-                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
-                        newSet.add(watchpoint);
-                        watchpoints = newSet;
-                    } else {
-                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
-                        growableSet.add(watchpoint);
-                    }
-                }
-            }
-            return watchpoints;
-        }
-
-        public Address getOrigin() {
-            return teleThreadLocalValues.start();
-        }
-
+        @Override
         public Offset getOffset(int row) {
             return Offset.fromInt(teleThreadLocalValues.getVmThreadLocal(row).offset);
         }
 
-        /**
-         * @return the row containing a thread local variable stored at the specified address, null if none.
-         */
+        @Override
         public int findRow(Address address) {
             final VmThreadLocal vmThreadLocal = teleThreadLocalValues.findVmThreadLocal(address);
             return vmThreadLocal == null ? -1 : vmThreadLocal.index;
@@ -335,7 +292,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
-            setValue(Offset.fromInt(vmThreadLocal.offset), model.getTeleThreadLocalValues().start());
+            setValue(Offset.fromInt(vmThreadLocal.offset), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -349,7 +306,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
-            setValue(Offset.fromInt(vmThreadLocal.offset), model.getTeleThreadLocalValues().start());
+            setValue(Offset.fromInt(vmThreadLocal.offset), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }
