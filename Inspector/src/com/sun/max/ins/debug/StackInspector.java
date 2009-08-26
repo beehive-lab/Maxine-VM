@@ -33,6 +33,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.debug.JavaStackFramePanel.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -164,37 +165,6 @@ public class StackInspector extends Inspector {
     private boolean stateChanged = true;  // conservative assessment of possible stack change
     private StackFramePanel<? extends StackFrame> selectedFramePanel;
 
-    @Override
-    public void threadStateChanged(MaxThread thread) {
-        if (thread.equals(this.thread)) {
-            stateChanged = thread.framesChanged();
-        }
-        super.threadStateChanged(thread);
-    }
-
-    @Override
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
-        if (threadForStackFrame == thread) {
-            final int oldIndex = stackFrameList.getSelectedIndex();
-            for (int index = 0; index < stackFrameListModel.getSize(); index++) {
-                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
-                if (stackFrame.isSameFrame(newStackFrame)) {
-                    if (index != oldIndex) {
-                        stackFrameList.setSelectedIndex(index);
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        if (selectedFramePanel != null) {
-            selectedFramePanel.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
-        }
-    }
-
     private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
 
         @Override
@@ -264,6 +234,60 @@ public class StackInspector extends Inspector {
         }
     }
 
+    /**
+     * Responds to a new selection in the display of stack frames.
+     * <br>
+     * With each call, you get a bunch of events for which the selection index is -1, followed
+     * by one more such event for which the selection index is 0.
+     * <br>
+     * When the new selection is legitimate, update all state related to the newly selected
+     * frame.
+     */
+    private class FrameSelectionListener implements ListSelectionListener {
+
+        public void valueChanged(ListSelectionEvent listSelectionEvent) {
+            if (listSelectionEvent.getValueIsAdjusting()) {
+                return;
+            }
+            final int index = stackFrameList.getSelectedIndex();
+            selectedFramePanel = null;
+            final int dividerLocation = splitPane.getDividerLocation();
+
+            final Component oldRightComponent = splitPane.getRightComponent();
+            Component newRightComponent = oldRightComponent;
+
+            if (index >= 0 && index < stackFrameListModel.getSize()) {
+                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
+                // New stack frame selection; set the global focus.
+                inspection().focus().setStackFrame(thread, stackFrame, true);
+                if (stackFrame instanceof JavaStackFrame) {
+                    if (stackFrame instanceof AdapterStackFrame) {
+                        final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
+                        selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
+                    } else {
+                        final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+                        selectedFramePanel = new JavaStackFramePanel(inspection(), javaStackFrame);
+                    }
+                    newRightComponent = selectedFramePanel;
+                } else if (stackFrame instanceof TruncatedStackFrame) {
+                    maxFramesDisplay *= 2;
+                    stateChanged = true;
+                    refreshView(true);
+                } else {
+                    newRightComponent = nativeFrame;
+                }
+            }
+            if (oldRightComponent != newRightComponent) {
+                splitPane.setRightComponent(newRightComponent);
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        splitPane.setDividerLocation(dividerLocation);
+                    }
+                });
+            }
+        }
+    }
+
     public StackInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
@@ -311,11 +335,13 @@ public class StackInspector extends Inspector {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
                     switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
-                        case MouseEvent.BUTTON1: {
-                            final int index = stackFrameList.getSelectedIndex();
-                            final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
-                            inspection().focus().setStackFrame(thread, stackFrame, true);
-                        }
+                        case MouseEvent.BUTTON3:
+                            int index = stackFrameList.locationToIndex(mouseEvent.getPoint());
+                            if (index >= 0 && index < stackFrameList.getModel().getSize()) {
+                                final InspectorMenu menu = getDynamicMenu(index, mouseEvent);
+                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            }
+                            break;
                     }
                 }
             });
@@ -351,6 +377,8 @@ public class StackInspector extends Inspector {
         }
         frame().setContentPane(contentPane);
         refreshView(true);
+        // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
+        updateFocusSelection(inspection().focus().stackFrame());
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -378,6 +406,44 @@ public class StackInspector extends Inspector {
                 new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
             }
         };
+    }
+
+    private String javaStackFrameName(JavaStackFrame javaStackFrame) {
+        final Address address = javaStackFrame.instructionPointer;
+        final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
+        String name;
+        if (teleTargetMethod != null) {
+            name = inspection().nameDisplay().veryShortName(teleTargetMethod);
+            final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+            }
+        } else {
+            final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
+            name = classMethodActor.format("%h.%n");
+        }
+        return name;
+    }
+
+    private InspectorMenu getDynamicMenu(int row, MouseEvent mouseEvent) {
+        final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(row);
+        final InspectorMenu menu = new InspectorMenu(null, "");
+        menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
+            @Override
+            protected void procedure() {
+                inspection().focus().setStackFrame(thread, stackFrame, true);
+            }
+        });
+        if (stackFrame instanceof JavaStackFrame) {
+            final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+            final int frameSize = javaStackFrame.layout.frameSize();
+            final Pointer stackPointer = javaStackFrame.stackPointer;
+            final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
+            final String frameName = javaStackFrameName(javaStackFrame);
+            menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
+
+        }
+        return menu;
     }
 
     @Override
@@ -411,13 +477,54 @@ public class StackInspector extends Inspector {
         return true;
     }
 
-    public void viewConfigurationChanged() {
-        reconstructView();
+    @Override
+    public void threadStateChanged(MaxThread thread) {
+        if (thread.equals(this.thread)) {
+            stateChanged = thread.framesChanged();
+        }
+        super.threadStateChanged(thread);
     }
 
+    @Override
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
+        if (threadForStackFrame == thread) {
+            updateFocusSelection(newStackFrame);
+        }
+    }
+
+    /**
+     * Updates list selection state to agree with focus on a particular stack frame.
+     */
+    private void updateFocusSelection(StackFrame newStackFrame) {
+        if (newStackFrame != null) {
+            final int oldIndex = stackFrameList.getSelectedIndex();
+            for (int index = 0; index < stackFrameListModel.getSize(); index++) {
+                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
+                if (stackFrame.isSameFrame(newStackFrame)) {
+                    // The frame is in the list; we may or may not have to update the current selection.
+                    if (index != oldIndex) {
+                        stackFrameList.setSelectedIndex(index);
+                    }
+                    return;
+                }
+            }
+        }
+        stackFrameList.clearSelection();
+    }
+
+    @Override
+    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+        if (selectedFramePanel != null) {
+            selectedFramePanel.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
+        }
+    }
 
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
+        reconstructView();
+    }
+
+    public void viewConfigurationChanged() {
         reconstructView();
     }
 
@@ -439,52 +546,6 @@ public class StackInspector extends Inspector {
         }
     }
 
-
-
-    // With each call, you get a bunch of events for which the selection index is -1, followed
-    // by one more such event for which the selection index is 0.
-    private class FrameSelectionListener implements ListSelectionListener {
-
-        public void valueChanged(ListSelectionEvent listSelectionEvent) {
-            if (listSelectionEvent.getValueIsAdjusting()) {
-                return;
-            }
-            final int index = stackFrameList.getSelectedIndex();
-            selectedFramePanel = null;
-            final int dividerLocation = splitPane.getDividerLocation();
-
-            final Component oldRightComponent = splitPane.getRightComponent();
-            Component newRightComponent = oldRightComponent;
-
-            if (index >= 0 && index < stackFrameListModel.getSize()) {
-                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
-                if (stackFrame instanceof JavaStackFrame) {
-                    if (stackFrame instanceof AdapterStackFrame) {
-                        final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
-                        selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
-                    } else {
-                        final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                        selectedFramePanel = new JavaStackFramePanel(inspection(), javaStackFrame);
-                    }
-                    newRightComponent = selectedFramePanel;
-                } else if (stackFrame instanceof TruncatedStackFrame) {
-                    maxFramesDisplay *= 2;
-                    stateChanged = true;
-                    refreshView(true);
-                } else {
-                    newRightComponent = nativeFrame;
-                }
-            }
-            if (oldRightComponent != newRightComponent) {
-                splitPane.setRightComponent(newRightComponent);
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        splitPane.setDividerLocation(dividerLocation);
-                    }
-                });
-            }
-        }
-    }
 
     /**
      * Watch for shift key being released to display the selected activation's stack frame.

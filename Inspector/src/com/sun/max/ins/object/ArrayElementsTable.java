@@ -42,7 +42,9 @@ import com.sun.max.vm.value.*;
 
 /**
  * A table that displays Maxine array elements; for use in an instance of {@link ObjectInspector}.
+ * <br>
  * Null array elements can be hidden from the display.
+ * <br>
  * This table is somewhat complex so that it can serve for both ordinary array elements
  * as well as the various array subsets (tables) in hybrid objects (hubs).  They are distinguished
  * by a string prefix appearing before any mention of elements, e.g. [3] for an ordinary
@@ -56,7 +58,6 @@ public final class ArrayElementsTable extends InspectorTable {
     private final Inspection inspection;
     private final TeleObject teleObject;
     private final Reference objectReference;  // Reference to an object is canonical; doesn't change
-    private Pointer objectOrigin;  // Origin may change via GC
     private final Kind elementKind;
     private final int elementSize;
     private final Offset startOffset;
@@ -75,25 +76,6 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private MaxVMState lastRefreshedState = null;
 
-    private final class ToggleArrayElementsWatchpointAction extends InspectorAction {
-
-        private final int row;
-
-        public ToggleArrayElementsWatchpointAction(Inspection inspection, String name, int row) {
-            super(inspection, name);
-            this.row = row;
-        }
-
-        @Override
-        protected void procedure() {
-            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
-            if (watchpoint == null) {
-                actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
-            } else {
-                watchpoint.dispose();
-            }
-        }
-    }
 
     /**
      * A {@link JTable} specialized to display Maxine array elements.
@@ -129,7 +111,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
         this.visibleElementCount = arrayLength;
 
-        this.model = new ArrayElementsTableModel();
+        this.model = new ArrayElementsTableModel(inspection, teleObject.getCurrentOrigin());
         this.columns = new TableColumn[ArrayElementColumnKind.VALUES.length()];
         this.columnModel = new ArrayElementsTableColumnModel(objectInspector);
         configureMemoryTable(model, columnModel);
@@ -137,22 +119,34 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     @Override
-    protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
+    protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
-            final InspectorAction action = new ToggleArrayElementsWatchpointAction(inspection(), null, row);
-            action.perform();
+            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint") {
+
+                @Override
+                public void setWatchpoint() {
+                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
+                }
+            };
+            toggleAction.perform();
         }
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
             final InspectorMenu menu = new InspectorMenu();
-            menu.add(new ToggleArrayElementsWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
+            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {
+
+                @Override
+                public void setWatchpoint() {
+                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
+                }
+            });
             menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, "Watch this array element"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
-            menu.add(actions().removeWatchpoint(model.getMemoryRegion(row), "Remove memory watchpoint"));
+            menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
+            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
             return menu;
         }
         return null;
@@ -174,7 +168,7 @@ public final class ArrayElementsTable extends InspectorTable {
     public void refresh(boolean force) {
         if (maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
-            objectOrigin = teleObject.getCurrentOrigin();
+            model.setOrigin(teleObject.getCurrentOrigin());
             // Update the mapping between array elements and displayed rows.
             if (teleObject.isLive()) {
                 if (objectInspector.hideNullArrayElements()) {
@@ -186,7 +180,7 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     }
                     if (previousVisibleCount != visibleElementCount) {
-                        model.fireTableDataChanged();
+                        model.refresh();
                     }
                 } else {
                     if (visibleElementCount != arrayLength) {
@@ -247,8 +241,15 @@ public final class ArrayElementsTable extends InspectorTable {
      * Models (a possible subset of) words/rows in a sequence of array elements;
      * the value of each cell is simply the index into the array
      * elements being displayed.
+     * <br>
+     * The origin of the model is the current origin of the object in memory that includes these elements,
+     * which may change after GC.
      */
-    private final class ArrayElementsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
+    private final class ArrayElementsTableModel extends InspectorMemoryTableModel {
+
+        public ArrayElementsTableModel(Inspection inspection, Address origin) {
+            super(inspection, origin);
+        }
 
         public int getColumnCount() {
             return ArrayElementColumnKind.VALUES.length();
@@ -267,38 +268,17 @@ public final class ArrayElementsTable extends InspectorTable {
             return Integer.class;
         }
 
-        /**
-         * @param row index of a displayed row in the table
-         * @return the memory location of the displayed element in the VM.
-         */
+        @Override
         public Address getAddress(int row) {
-            return objectOrigin.plus(getOffset(row)).asAddress();
+            return getOrigin().plus(getOffset(row)).asAddress();
         }
 
+        @Override
         public MemoryRegion getMemoryRegion(int row) {
             return new FixedMemoryRegion(getAddress(row), Size.fromInt(elementSize), "");
         }
 
-        /**
-         * @return the memory watchpoint, if any, that is active at a row
-         */
-        public MaxWatchpoint getWatchpoint(int row) {
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.contains(getAddress(row))) {
-                    return watchpoint;
-                }
-            }
-            return null;
-        }
-
-        public Address getOrigin() {
-            return objectOrigin;
-        }
-
-        /**
-         * @param row index of a displayed row in the table
-         * @return the offset in memory of the displayed element, relative to the object origin.
-         */
+        @Override
         public Offset getOffset(int row) {
             return startOffset.plus(rowToElementIndex[row] * elementSize);
         }
@@ -308,9 +288,10 @@ public final class ArrayElementsTable extends InspectorTable {
          * @return the displayed table row that shows the array element at an address;
          * -1 if the address is not in the array, or if that element is currently hidden..
          */
+        @Override
         public int findRow(Address address) {
             if (!address.isZero()) {
-                final int offset = address.minus(objectOrigin).minus(startOffset).toInt();
+                final int offset = address.minus(getOrigin()).minus(startOffset).toInt();
                 if (offset >= 0 && offset < arrayLength * elementSize) {
                     final int elementRow = offset / elementSize;
                     for (int row = 0; row < visibleElementCount; row++) {
@@ -374,7 +355,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
@@ -387,7 +368,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), objectOrigin);
+            setValue(model.getOffset(row), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -400,7 +381,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), objectOrigin);
+            setValue(model.getOffset(row), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -413,7 +394,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(row, model.getOffset(row), objectOrigin);
+            setValue(row, model.getOffset(row), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }

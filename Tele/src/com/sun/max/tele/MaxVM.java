@@ -815,10 +815,12 @@ public interface MaxVM {
         throws TooManyWatchpointsException, DuplicateWatchpointException;
 
     /**
+     * Finds all VM memory watchpoints that overlap a specified memory region.
+     *
      * @param memoryRegion an area of memory in the VM
-     * @return the watchpoint whose memory region overlaps, null if none.
+     * @return the watchpoints whose memory region overlaps, empty sequence if none.
      */
-    MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion);
+    Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion);
 
     /**
      * All existing memory watchpoints set in the VM.
