@@ -442,7 +442,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.lang.String_intern03.class,
         jtt.lang.String_valueOf01.class,
         jtt.lang.System_identityHashCode01.class,
-        jtt.lang.Unsigned_idiv01.class,
+        jtt.max.Unsigned_idiv01.class,
         jtt.hotpath.HP_allocate01.class,
         jtt.hotpath.HP_allocate02.class,
         jtt.hotpath.HP_allocate03.class,

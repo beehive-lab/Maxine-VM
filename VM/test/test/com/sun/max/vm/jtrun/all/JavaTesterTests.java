@@ -11852,98 +11852,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_directives_Fold01() {
-        JavaTesterRunScheme.begin("jtt.directives.Fold01");
-        String runString = null;
-        try {
-        // (0) == true
-            runString = "(0)";
-            if (true != jtt.directives.Fold01.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_directives_Fold02() {
-        JavaTesterRunScheme.begin("jtt.directives.Fold02");
-        String runString = null;
-        try {
-        // (0) == true
-            runString = "(0)";
-            if (true != jtt.directives.Fold02.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_directives_Fold03() {
-        JavaTesterRunScheme.begin("jtt.directives.Fold03");
-        String runString = null;
-        try {
-        // (0) == true
-            runString = "(0)";
-            if (true != jtt.directives.Fold03.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_directives_Inline01() {
-        JavaTesterRunScheme.begin("jtt.directives.Inline01");
-        String runString = null;
-        try {
-        // (0) == true
-            runString = "(0)";
-            if (true != jtt.directives.Inline01.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (1) == true
-            runString = "(1)";
-            if (true != jtt.directives.Inline01.test(1)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_directives_Prototyping01() {
-        JavaTesterRunScheme.begin("jtt.directives.Prototyping01");
-        String runString = null;
-        try {
-        // (0) == 1
-            runString = "(0)";
-            if (1 != jtt.directives.Prototyping01.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (1) == 2
-            runString = "(1)";
-            if (2 != jtt.directives.Prototyping01.test(1)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
     static void jtt_lang_Boxed_TYPE_01() {
         JavaTesterRunScheme.begin("jtt.lang.Boxed_TYPE_01");
         String runString = null;
@@ -15381,34 +15289,6 @@ public class JavaTesterTests {
         // (3) == false
             runString = "(3)";
             if (false != jtt.lang.System_identityHashCode01.test(3)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_lang_Unsigned_idiv01() {
-        JavaTesterRunScheme.begin("jtt.lang.Unsigned_idiv01");
-        String runString = null;
-        try {
-        // (-1,4) == 1073741823
-            runString = "(-1,4)";
-            if (1073741823 != jtt.lang.Unsigned_idiv01.test(-1, 4)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (6,3) == 2
-            runString = "(6,3)";
-            if (2 != jtt.lang.Unsigned_idiv01.test(6, 3)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (65535,16) == 4095
-            runString = "(65535,16)";
-            if (4095 != jtt.lang.Unsigned_idiv01.test(65535, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

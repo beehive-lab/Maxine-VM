@@ -373,11 +373,6 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.optimize.VN_Long02.class,
         jtt.optimize.VN_Long03.class,
         jtt.optimize.VN_Loop01.class,
-        jtt.directives.Fold01.class,
-        jtt.directives.Fold02.class,
-        jtt.directives.Fold03.class,
-        jtt.directives.Inline01.class,
-        jtt.directives.Prototyping01.class,
         jtt.lang.Boxed_TYPE_01.class,
         jtt.lang.Bridge_method01.class,
         jtt.lang.ClassLoader_loadClass01.class,
@@ -458,7 +453,6 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.lang.String_intern03.class,
         jtt.lang.String_valueOf01.class,
         jtt.lang.System_identityHashCode01.class,
-        jtt.lang.Unsigned_idiv01.class,
         jtt.hotpath.HP_allocate01.class,
         jtt.hotpath.HP_allocate02.class,
         jtt.hotpath.HP_allocate03.class,
@@ -1626,750 +1620,732 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.jtt_optimize_VN_Loop01();
                     break;
                 case 332:
-                    JavaTesterTests.jtt_directives_Fold01();
-                    break;
-                case 333:
-                    JavaTesterTests.jtt_directives_Fold02();
-                    break;
-                case 334:
-                    JavaTesterTests.jtt_directives_Fold03();
-                    break;
-                case 335:
-                    JavaTesterTests.jtt_directives_Inline01();
-                    break;
-                case 336:
-                    JavaTesterTests.jtt_directives_Prototyping01();
-                    break;
-                case 337:
                     JavaTesterTests.jtt_lang_Boxed_TYPE_01();
                     break;
-                case 338:
+                case 333:
                     JavaTesterTests.jtt_lang_Bridge_method01();
                     break;
-                case 339:
+                case 334:
                     JavaTesterTests.jtt_lang_ClassLoader_loadClass01();
                     break;
-                case 340:
+                case 335:
                     JavaTesterTests.jtt_lang_Class_Literal01();
                     break;
-                case 341:
+                case 336:
                     JavaTesterTests.jtt_lang_Class_asSubclass01();
                     break;
-                case 342:
+                case 337:
                     JavaTesterTests.jtt_lang_Class_cast01();
                     break;
-                case 343:
+                case 338:
                     JavaTesterTests.jtt_lang_Class_cast02();
                     break;
-                case 344:
+                case 339:
                     JavaTesterTests.jtt_lang_Class_forName01();
                     break;
-                case 345:
+                case 340:
                     JavaTesterTests.jtt_lang_Class_forName02();
                     break;
-                case 346:
+                case 341:
                     JavaTesterTests.jtt_lang_Class_forName03();
                     break;
-                case 347:
+                case 342:
                     JavaTesterTests.jtt_lang_Class_forName04();
                     break;
-                case 348:
+                case 343:
                     JavaTesterTests.jtt_lang_Class_forName05();
                     break;
-                case 349:
+                case 344:
                     JavaTesterTests.jtt_lang_Class_getComponentType01();
                     break;
-                case 350:
+                case 345:
                     JavaTesterTests.jtt_lang_Class_getName01();
                     break;
-                case 351:
+                case 346:
                     JavaTesterTests.jtt_lang_Class_getName02();
                     break;
-                case 352:
+                case 347:
                     JavaTesterTests.jtt_lang_Class_getSimpleName01();
                     break;
-                case 353:
+                case 348:
                     JavaTesterTests.jtt_lang_Class_getSimpleName02();
                     break;
-                case 354:
+                case 349:
                     JavaTesterTests.jtt_lang_Class_getSuperClass01();
                     break;
-                case 355:
+                case 350:
                     JavaTesterTests.jtt_lang_Class_isArray01();
                     break;
-                case 356:
+                case 351:
                     JavaTesterTests.jtt_lang_Class_isAssignableFrom01();
                     break;
-                case 357:
+                case 352:
                     JavaTesterTests.jtt_lang_Class_isAssignableFrom02();
                     break;
-                case 358:
+                case 353:
                     JavaTesterTests.jtt_lang_Class_isAssignableFrom03();
                     break;
-                case 359:
+                case 354:
                     JavaTesterTests.jtt_lang_Class_isInstance01();
                     break;
-                case 360:
+                case 355:
                     JavaTesterTests.jtt_lang_Class_isInstance02();
                     break;
-                case 361:
+                case 356:
                     JavaTesterTests.jtt_lang_Class_isInstance03();
                     break;
-                case 362:
+                case 357:
                     JavaTesterTests.jtt_lang_Class_isInstance04();
                     break;
-                case 363:
+                case 358:
                     JavaTesterTests.jtt_lang_Class_isInstance05();
                     break;
-                case 364:
+                case 359:
                     JavaTesterTests.jtt_lang_Class_isInstance06();
                     break;
-                case 365:
+                case 360:
                     JavaTesterTests.jtt_lang_Class_isInterface01();
                     break;
-                case 366:
+                case 361:
                     JavaTesterTests.jtt_lang_Class_isPrimitive01();
                     break;
-                case 367:
+                case 362:
                     JavaTesterTests.jtt_lang_Double_toString();
                     break;
-                case 368:
+                case 363:
                     JavaTesterTests.jtt_lang_Int_greater01();
                     break;
-                case 369:
+                case 364:
                     JavaTesterTests.jtt_lang_Int_greater02();
                     break;
-                case 370:
+                case 365:
                     JavaTesterTests.jtt_lang_Int_greater03();
                     break;
-                case 371:
+                case 366:
                     JavaTesterTests.jtt_lang_Int_greaterEqual01();
                     break;
-                case 372:
+                case 367:
                     JavaTesterTests.jtt_lang_Int_greaterEqual02();
                     break;
-                case 373:
+                case 368:
                     JavaTesterTests.jtt_lang_Int_greaterEqual03();
                     break;
-                case 374:
+                case 369:
                     JavaTesterTests.jtt_lang_Int_less01();
                     break;
-                case 375:
+                case 370:
                     JavaTesterTests.jtt_lang_Int_less02();
                     break;
-                case 376:
+                case 371:
                     JavaTesterTests.jtt_lang_Int_less03();
                     break;
-                case 377:
+                case 372:
                     JavaTesterTests.jtt_lang_Int_lessEqual01();
                     break;
-                case 378:
+                case 373:
                     JavaTesterTests.jtt_lang_Int_lessEqual02();
                     break;
-                case 379:
+                case 374:
                     JavaTesterTests.jtt_lang_Int_lessEqual03();
                     break;
-                case 380:
+                case 375:
                     JavaTesterTests.jtt_lang_JDK_ClassLoaders01();
                     break;
-                case 381:
+                case 376:
                     JavaTesterTests.jtt_lang_JDK_ClassLoaders02();
                     break;
-                case 382:
+                case 377:
                     JavaTesterTests.jtt_lang_Long_greater01();
                     break;
-                case 383:
+                case 378:
                     JavaTesterTests.jtt_lang_Long_greater02();
                     break;
-                case 384:
+                case 379:
                     JavaTesterTests.jtt_lang_Long_greater03();
                     break;
-                case 385:
+                case 380:
                     JavaTesterTests.jtt_lang_Long_greaterEqual01();
                     break;
-                case 386:
+                case 381:
                     JavaTesterTests.jtt_lang_Long_greaterEqual02();
                     break;
-                case 387:
+                case 382:
                     JavaTesterTests.jtt_lang_Long_greaterEqual03();
                     break;
-                case 388:
+                case 383:
                     JavaTesterTests.jtt_lang_Long_less01();
                     break;
-                case 389:
+                case 384:
                     JavaTesterTests.jtt_lang_Long_less02();
                     break;
-                case 390:
+                case 385:
                     JavaTesterTests.jtt_lang_Long_less03();
                     break;
-                case 391:
+                case 386:
                     JavaTesterTests.jtt_lang_Long_lessEqual01();
                     break;
-                case 392:
+                case 387:
                     JavaTesterTests.jtt_lang_Long_lessEqual02();
                     break;
-                case 393:
+                case 388:
                     JavaTesterTests.jtt_lang_Long_lessEqual03();
                     break;
-                case 394:
+                case 389:
                     JavaTesterTests.jtt_lang_Long_reverseBytes01();
                     break;
-                case 395:
+                case 390:
                     JavaTesterTests.jtt_lang_Long_reverseBytes02();
                     break;
-                case 396:
+                case 391:
                     JavaTesterTests.jtt_lang_Math_pow();
                     break;
-                case 397:
+                case 392:
                     JavaTesterTests.jtt_lang_Object_clone01();
                     break;
-                case 398:
+                case 393:
                     JavaTesterTests.jtt_lang_Object_clone02();
                     break;
-                case 399:
+                case 394:
                     JavaTesterTests.jtt_lang_Object_equals01();
                     break;
-                case 400:
+                case 395:
                     JavaTesterTests.jtt_lang_Object_getClass01();
                     break;
-                case 401:
+                case 396:
                     JavaTesterTests.jtt_lang_Object_hashCode01();
                     break;
-                case 402:
+                case 397:
                     JavaTesterTests.jtt_lang_Object_notify01();
                     break;
-                case 403:
+                case 398:
                     JavaTesterTests.jtt_lang_Object_notify02();
                     break;
-                case 404:
+                case 399:
                     JavaTesterTests.jtt_lang_Object_notifyAll01();
                     break;
-                case 405:
+                case 400:
                     JavaTesterTests.jtt_lang_Object_notifyAll02();
                     break;
-                case 406:
+                case 401:
                     JavaTesterTests.jtt_lang_Object_toString01();
                     break;
-                case 407:
+                case 402:
                     JavaTesterTests.jtt_lang_Object_toString02();
                     break;
-                case 408:
+                case 403:
                     JavaTesterTests.jtt_lang_Object_wait01();
                     break;
-                case 409:
+                case 404:
                     JavaTesterTests.jtt_lang_Object_wait02();
                     break;
-                case 410:
+                case 405:
                     JavaTesterTests.jtt_lang_Object_wait03();
                     break;
-                case 411:
+                case 406:
                     JavaTesterTests.jtt_lang_StringCoding_Scale();
                     break;
-                case 412:
+                case 407:
                     JavaTesterTests.jtt_lang_String_intern01();
                     break;
-                case 413:
+                case 408:
                     JavaTesterTests.jtt_lang_String_intern02();
                     break;
-                case 414:
+                case 409:
                     JavaTesterTests.jtt_lang_String_intern03();
                     break;
-                case 415:
+                case 410:
                     JavaTesterTests.jtt_lang_String_valueOf01();
                     break;
-                case 416:
+                case 411:
                     JavaTesterTests.jtt_lang_System_identityHashCode01();
                     break;
-                case 417:
-                    JavaTesterTests.jtt_lang_Unsigned_idiv01();
-                    break;
-                case 418:
+                case 412:
                     JavaTesterTests.jtt_hotpath_HP_allocate01();
                     break;
-                case 419:
+                case 413:
                     JavaTesterTests.jtt_hotpath_HP_allocate02();
                     break;
-                case 420:
+                case 414:
                     JavaTesterTests.jtt_hotpath_HP_allocate03();
                     break;
-                case 421:
+                case 415:
                     JavaTesterTests.jtt_hotpath_HP_array01();
                     break;
-                case 422:
+                case 416:
                     JavaTesterTests.jtt_hotpath_HP_array02();
                     break;
-                case 423:
+                case 417:
                     JavaTesterTests.jtt_hotpath_HP_array03();
                     break;
-                case 424:
+                case 418:
                     JavaTesterTests.jtt_hotpath_HP_array04();
                     break;
-                case 425:
+                case 419:
                     JavaTesterTests.jtt_hotpath_HP_control01();
                     break;
-                case 426:
+                case 420:
                     JavaTesterTests.jtt_hotpath_HP_control02();
                     break;
-                case 427:
+                case 421:
                     JavaTesterTests.jtt_hotpath_HP_convert01();
                     break;
-                case 428:
+                case 422:
                     JavaTesterTests.jtt_hotpath_HP_count();
                     break;
-                case 429:
+                case 423:
                     JavaTesterTests.jtt_hotpath_HP_dead01();
                     break;
-                case 430:
+                case 424:
                     JavaTesterTests.jtt_hotpath_HP_demo01();
                     break;
-                case 431:
+                case 425:
                     JavaTesterTests.jtt_hotpath_HP_field01();
                     break;
-                case 432:
+                case 426:
                     JavaTesterTests.jtt_hotpath_HP_field02();
                     break;
-                case 433:
+                case 427:
                     JavaTesterTests.jtt_hotpath_HP_field03();
                     break;
-                case 434:
+                case 428:
                     JavaTesterTests.jtt_hotpath_HP_field04();
                     break;
-                case 435:
+                case 429:
                     JavaTesterTests.jtt_hotpath_HP_idea();
                     break;
-                case 436:
+                case 430:
                     JavaTesterTests.jtt_hotpath_HP_inline01();
                     break;
-                case 437:
+                case 431:
                     JavaTesterTests.jtt_hotpath_HP_inline02();
                     break;
-                case 438:
+                case 432:
                     JavaTesterTests.jtt_hotpath_HP_invoke01();
                     break;
-                case 439:
+                case 433:
                     JavaTesterTests.jtt_hotpath_HP_life();
                     break;
-                case 440:
+                case 434:
                     JavaTesterTests.jtt_hotpath_HP_nest01();
                     break;
-                case 441:
+                case 435:
                     JavaTesterTests.jtt_hotpath_HP_nest02();
                     break;
-                case 442:
+                case 436:
                     JavaTesterTests.jtt_hotpath_HP_scope01();
                     break;
-                case 443:
+                case 437:
                     JavaTesterTests.jtt_hotpath_HP_scope02();
                     break;
-                case 444:
+                case 438:
                     JavaTesterTests.jtt_hotpath_HP_series();
                     break;
-                case 445:
+                case 439:
                     JavaTesterTests.jtt_hotpath_HP_trees01();
                     break;
-                case 446:
+                case 440:
                     JavaTesterTests.jtt_reflect_Array_get01();
                     break;
-                case 447:
+                case 441:
                     JavaTesterTests.jtt_reflect_Array_get02();
                     break;
-                case 448:
+                case 442:
                     JavaTesterTests.jtt_reflect_Array_get03();
                     break;
-                case 449:
+                case 443:
                     JavaTesterTests.jtt_reflect_Array_getBoolean01();
                     break;
-                case 450:
+                case 444:
                     JavaTesterTests.jtt_reflect_Array_getByte01();
                     break;
-                case 451:
+                case 445:
                     JavaTesterTests.jtt_reflect_Array_getChar01();
                     break;
-                case 452:
+                case 446:
                     JavaTesterTests.jtt_reflect_Array_getDouble01();
                     break;
-                case 453:
+                case 447:
                     JavaTesterTests.jtt_reflect_Array_getFloat01();
                     break;
-                case 454:
+                case 448:
                     JavaTesterTests.jtt_reflect_Array_getInt01();
                     break;
-                case 455:
+                case 449:
                     JavaTesterTests.jtt_reflect_Array_getLength01();
                     break;
-                case 456:
+                case 450:
                     JavaTesterTests.jtt_reflect_Array_getLong01();
                     break;
-                case 457:
+                case 451:
                     JavaTesterTests.jtt_reflect_Array_getShort01();
                     break;
-                case 458:
+                case 452:
                     JavaTesterTests.jtt_reflect_Array_newInstance01();
                     break;
-                case 459:
+                case 453:
                     JavaTesterTests.jtt_reflect_Array_newInstance02();
                     break;
-                case 460:
+                case 454:
                     JavaTesterTests.jtt_reflect_Array_newInstance03();
                     break;
-                case 461:
+                case 455:
                     JavaTesterTests.jtt_reflect_Array_newInstance04();
                     break;
-                case 462:
+                case 456:
                     JavaTesterTests.jtt_reflect_Array_newInstance05();
                     break;
-                case 463:
+                case 457:
                     JavaTesterTests.jtt_reflect_Array_newInstance06();
                     break;
-                case 464:
+                case 458:
                     JavaTesterTests.jtt_reflect_Array_set01();
                     break;
-                case 465:
+                case 459:
                     JavaTesterTests.jtt_reflect_Array_set02();
                     break;
-                case 466:
+                case 460:
                     JavaTesterTests.jtt_reflect_Array_set03();
                     break;
-                case 467:
+                case 461:
                     JavaTesterTests.jtt_reflect_Array_setBoolean01();
                     break;
-                case 468:
+                case 462:
                     JavaTesterTests.jtt_reflect_Array_setByte01();
                     break;
-                case 469:
+                case 463:
                     JavaTesterTests.jtt_reflect_Array_setChar01();
                     break;
-                case 470:
+                case 464:
                     JavaTesterTests.jtt_reflect_Array_setDouble01();
                     break;
-                case 471:
+                case 465:
                     JavaTesterTests.jtt_reflect_Array_setFloat01();
                     break;
-                case 472:
+                case 466:
                     JavaTesterTests.jtt_reflect_Array_setInt01();
                     break;
-                case 473:
+                case 467:
                     JavaTesterTests.jtt_reflect_Array_setLong01();
                     break;
-                case 474:
+                case 468:
                     JavaTesterTests.jtt_reflect_Array_setShort01();
                     break;
-                case 475:
+                case 469:
                     JavaTesterTests.jtt_reflect_Class_getDeclaredField01();
                     break;
-                case 476:
+                case 470:
                     JavaTesterTests.jtt_reflect_Class_getDeclaredMethod01();
                     break;
-                case 477:
+                case 471:
                     JavaTesterTests.jtt_reflect_Class_getField01();
                     break;
-                case 478:
+                case 472:
                     JavaTesterTests.jtt_reflect_Class_getField02();
                     break;
-                case 479:
+                case 473:
                     JavaTesterTests.jtt_reflect_Class_getMethod01();
                     break;
-                case 480:
+                case 474:
                     JavaTesterTests.jtt_reflect_Class_getMethod02();
                     break;
-                case 481:
+                case 475:
                     JavaTesterTests.jtt_reflect_Class_newInstance01();
                     break;
-                case 482:
+                case 476:
                     JavaTesterTests.jtt_reflect_Class_newInstance02();
                     break;
-                case 483:
+                case 477:
                     JavaTesterTests.jtt_reflect_Class_newInstance03();
                     break;
-                case 484:
+                case 478:
                     JavaTesterTests.jtt_reflect_Class_newInstance06();
                     break;
-                case 485:
+                case 479:
                     JavaTesterTests.jtt_reflect_Class_newInstance07();
                     break;
-                case 486:
+                case 480:
                     JavaTesterTests.jtt_reflect_Field_get01();
                     break;
-                case 487:
+                case 481:
                     JavaTesterTests.jtt_reflect_Field_get02();
                     break;
-                case 488:
+                case 482:
                     JavaTesterTests.jtt_reflect_Field_get03();
                     break;
-                case 489:
+                case 483:
                     JavaTesterTests.jtt_reflect_Field_get04();
                     break;
-                case 490:
+                case 484:
                     JavaTesterTests.jtt_reflect_Field_getType01();
                     break;
-                case 491:
+                case 485:
                     JavaTesterTests.jtt_reflect_Field_set01();
                     break;
-                case 492:
+                case 486:
                     JavaTesterTests.jtt_reflect_Field_set02();
                     break;
-                case 493:
+                case 487:
                     JavaTesterTests.jtt_reflect_Field_set03();
                     break;
-                case 494:
+                case 488:
                     JavaTesterTests.jtt_reflect_Invoke_main01();
                     break;
-                case 495:
+                case 489:
                     JavaTesterTests.jtt_reflect_Invoke_main02();
                     break;
-                case 496:
+                case 490:
                     JavaTesterTests.jtt_reflect_Invoke_main03();
                     break;
-                case 497:
+                case 491:
                     JavaTesterTests.jtt_reflect_Invoke_virtual01();
                     break;
-                case 498:
+                case 492:
                     JavaTesterTests.jtt_reflect_Method_getParameterTypes01();
                     break;
-                case 499:
+                case 493:
                     JavaTesterTests.jtt_reflect_Method_getReturnType01();
                     break;
-                case 500:
+                case 494:
                     JavaTesterTests.jtt_reflect_Reflection_getCallerClass01();
                     break;
-                case 501:
+                case 495:
                     JavaTesterTests.jtt_jdk_Class_getName();
                     break;
-                case 502:
+                case 496:
                     JavaTesterTests.jtt_jdk_EnumMap01();
                     break;
-                case 503:
+                case 497:
                     JavaTesterTests.jtt_jdk_EnumMap02();
                     break;
-                case 504:
+                case 498:
                     JavaTesterTests.jtt_jdk_System_currentTimeMillis01();
                     break;
-                case 505:
+                case 499:
                     JavaTesterTests.jtt_jdk_System_currentTimeMillis02();
                     break;
-                case 506:
+                case 500:
                     JavaTesterTests.jtt_jdk_System_nanoTime01();
                     break;
-                case 507:
+                case 501:
                     JavaTesterTests.jtt_jdk_System_nanoTime02();
                     break;
-                case 508:
+                case 502:
                     JavaTesterTests.jtt_jdk_UnsafeAccess01();
                     break;
-                case 509:
+                case 503:
                     JavaTesterTests.jtt_threads_Monitor_contended01();
                     break;
-                case 510:
+                case 504:
                     JavaTesterTests.jtt_threads_Monitor_notowner01();
                     break;
-                case 511:
+                case 505:
                     JavaTesterTests.jtt_threads_Monitorenter01();
                     break;
-                case 512:
+                case 506:
                     JavaTesterTests.jtt_threads_Monitorenter02();
                     break;
-                case 513:
+                case 507:
                     JavaTesterTests.jtt_threads_Object_wait01();
                     break;
-                case 514:
+                case 508:
                     JavaTesterTests.jtt_threads_Object_wait02();
                     break;
-                case 515:
+                case 509:
                     JavaTesterTests.jtt_threads_Object_wait03();
                     break;
-                case 516:
+                case 510:
                     JavaTesterTests.jtt_threads_Object_wait04();
                     break;
-                case 517:
+                case 511:
                     JavaTesterTests.jtt_threads_Thread_currentThread01();
                     break;
-                case 518:
+                case 512:
                     JavaTesterTests.jtt_threads_Thread_getState01();
                     break;
-                case 519:
+                case 513:
                     JavaTesterTests.jtt_threads_Thread_getState02();
                     break;
-                case 520:
+                case 514:
                     JavaTesterTests.jtt_threads_Thread_holdsLock01();
                     break;
-                case 521:
+                case 515:
                     JavaTesterTests.jtt_threads_Thread_isAlive01();
                     break;
-                case 522:
+                case 516:
                     JavaTesterTests.jtt_threads_Thread_isInterrupted01();
                     break;
-                case 523:
+                case 517:
                     JavaTesterTests.jtt_threads_Thread_isInterrupted02();
                     break;
-                case 524:
+                case 518:
                     JavaTesterTests.jtt_threads_Thread_isInterrupted03();
                     break;
-                case 525:
+                case 519:
                     JavaTesterTests.jtt_threads_Thread_isInterrupted04();
                     break;
-                case 526:
+                case 520:
                     JavaTesterTests.jtt_threads_Thread_join01();
                     break;
-                case 527:
+                case 521:
                     JavaTesterTests.jtt_threads_Thread_join02();
                     break;
-                case 528:
+                case 522:
                     JavaTesterTests.jtt_threads_Thread_join03();
                     break;
-                case 529:
+                case 523:
                     JavaTesterTests.jtt_threads_Thread_new01();
                     break;
-                case 530:
+                case 524:
                     JavaTesterTests.jtt_threads_Thread_new02();
                     break;
-                case 531:
+                case 525:
                     JavaTesterTests.jtt_threads_Thread_setPriority01();
                     break;
-                case 532:
+                case 526:
                     JavaTesterTests.jtt_threads_Thread_sleep01();
                     break;
-                case 533:
+                case 527:
                     JavaTesterTests.jtt_threads_Thread_start01();
                     break;
-                case 534:
+                case 528:
                     JavaTesterTests.jtt_threads_Thread_yield01();
                     break;
-                case 535:
+                case 529:
                     JavaTesterTests.jtt_micro_ArrayCompare01();
                     break;
-                case 536:
+                case 530:
                     JavaTesterTests.jtt_micro_ArrayCompare02();
                     break;
-                case 537:
+                case 531:
                     JavaTesterTests.jtt_micro_BC_invokevirtual2();
                     break;
-                case 538:
+                case 532:
                     JavaTesterTests.jtt_micro_BigDoubleParams02();
                     break;
-                case 539:
+                case 533:
                     JavaTesterTests.jtt_micro_BigFloatParams01();
                     break;
-                case 540:
+                case 534:
                     JavaTesterTests.jtt_micro_BigFloatParams02();
                     break;
-                case 541:
+                case 535:
                     JavaTesterTests.jtt_micro_BigIntParams01();
                     break;
-                case 542:
+                case 536:
                     JavaTesterTests.jtt_micro_BigIntParams02();
                     break;
-                case 543:
+                case 537:
                     JavaTesterTests.jtt_micro_BigLongParams02();
                     break;
-                case 544:
+                case 538:
                     JavaTesterTests.jtt_micro_BigMixedParams01();
                     break;
-                case 545:
+                case 539:
                     JavaTesterTests.jtt_micro_BigMixedParams02();
                     break;
-                case 546:
+                case 540:
                     JavaTesterTests.jtt_micro_BigMixedParams03();
                     break;
-                case 547:
+                case 541:
                     JavaTesterTests.jtt_micro_BigObjectParams01();
                     break;
-                case 548:
+                case 542:
                     JavaTesterTests.jtt_micro_BigObjectParams02();
                     break;
-                case 549:
+                case 543:
                     JavaTesterTests.jtt_micro_BigParamsAlignment();
                     break;
-                case 550:
+                case 544:
                     JavaTesterTests.jtt_micro_Bubblesort();
                     break;
-                case 551:
+                case 545:
                     JavaTesterTests.jtt_micro_Fibonacci();
                     break;
-                case 552:
+                case 546:
                     JavaTesterTests.jtt_micro_InvokeVirtual_01();
                     break;
-                case 553:
+                case 547:
                     JavaTesterTests.jtt_micro_InvokeVirtual_02();
                     break;
-                case 554:
+                case 548:
                     JavaTesterTests.jtt_micro_Loop01();
                     break;
-                case 555:
+                case 549:
                     JavaTesterTests.jtt_micro_Loop02();
                     break;
-                case 556:
+                case 550:
                     JavaTesterTests.jtt_micro_Loop03();
                     break;
-                case 557:
+                case 551:
                     JavaTesterTests.jtt_micro_Loop04();
                     break;
-                case 558:
+                case 552:
                     JavaTesterTests.jtt_micro_Loop05();
                     break;
-                case 559:
+                case 553:
                     JavaTesterTests.jtt_micro_Loop06();
                     break;
-                case 560:
+                case 554:
                     JavaTesterTests.jtt_micro_LoopSwitch01();
                     break;
-                case 561:
+                case 555:
                     JavaTesterTests.jtt_micro_StrangeFrames();
                     break;
-                case 562:
+                case 556:
                     JavaTesterTests.jtt_micro_String_format01();
                     break;
-                case 563:
+                case 557:
                     JavaTesterTests.jtt_micro_String_format02();
                     break;
-                case 564:
+                case 558:
                     JavaTesterTests.jtt_micro_VarArgs_String01();
                     break;
-                case 565:
+                case 559:
                     JavaTesterTests.jtt_micro_VarArgs_boolean01();
                     break;
-                case 566:
+                case 560:
                     JavaTesterTests.jtt_micro_VarArgs_byte01();
                     break;
-                case 567:
+                case 561:
                     JavaTesterTests.jtt_micro_VarArgs_char01();
                     break;
-                case 568:
+                case 562:
                     JavaTesterTests.jtt_micro_VarArgs_double01();
                     break;
-                case 569:
+                case 563:
                     JavaTesterTests.jtt_micro_VarArgs_float01();
                     break;
-                case 570:
+                case 564:
                     JavaTesterTests.jtt_micro_VarArgs_int01();
                     break;
-                case 571:
+                case 565:
                     JavaTesterTests.jtt_micro_VarArgs_long01();
                     break;
-                case 572:
+                case 566:
                     JavaTesterTests.jtt_micro_VarArgs_short01();
                     break;
-                case 573:
+                case 567:
                     JavaTesterTests.jtt_jvmni_JVM_ArrayCopy01();
                     break;
-                case 574:
+                case 568:
                     JavaTesterTests.jtt_jvmni_JVM_GetClassContext01();
                     break;
-                case 575:
+                case 569:
                     JavaTesterTests.jtt_jvmni_JVM_GetClassContext02();
                     break;
-                case 576:
+                case 570:
                     JavaTesterTests.jtt_jvmni_JVM_GetFreeMemory01();
                     break;
-                case 577:
+                case 571:
                     JavaTesterTests.jtt_jvmni_JVM_GetMaxMemory01();
                     break;
-                case 578:
+                case 572:
                     JavaTesterTests.jtt_jvmni_JVM_GetTotalMemory01();
                     break;
-                case 579:
+                case 573:
                     JavaTesterTests.jtt_jvmni_JVM_IsNaN01();
                     break;
-                case 580:
+                case 574:
                     JavaTesterTests.jtt_jni_JNI_OverflowArguments();
             }
         }
