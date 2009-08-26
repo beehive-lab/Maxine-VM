@@ -78,7 +78,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @return {@code true} if a range check is required for this instruction
      */
     public boolean needsRangeCheck() {
-        return !checkFlag(Instruction.Flag.NoRangeCheck);
+        return !checkFlag(Instruction.Flag.NoBoundsCheck);
     }
 
     /**

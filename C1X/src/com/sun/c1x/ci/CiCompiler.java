@@ -47,15 +47,15 @@ public abstract class CiCompiler {
     /**
      * Compile the specified method.
      * @param method the method to compile
-     * @return a {@link CiTargetMethod target method} representing the compiled method
+     * @return a {@link CiResult result} representing the compilation result
      */
-    public abstract CiTargetMethod compileMethod(RiMethod method);
+    public abstract CiResult compileMethod(RiMethod method);
 
     /**
      * Compile the specified method.
      * @param method the method to compile
      * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
-     * @return a {@link CiTargetMethod target method} representing the compiled method
+     * @return a {@link CiResult result} representing the compilation result
      */
-    public abstract CiTargetMethod compileMethod(RiMethod method, int osrBCI);
+    public abstract CiResult compileMethod(RiMethod method, int osrBCI);
 }

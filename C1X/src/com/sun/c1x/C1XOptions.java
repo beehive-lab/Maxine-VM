@@ -50,8 +50,6 @@ public class C1XOptions {
     public static int     SSEVersion                         = 2;
     public static boolean RoundFPResults                     = ____;
 
-    // debugging settings
-    public static boolean GatherMetrics                      = TRUE;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
@@ -62,6 +60,7 @@ public class C1XOptions {
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
+    public static boolean PrintNotLoaded                     = ____;
     public static boolean IRChecking                         = ____;
     public static boolean FatalUnimplemented                 = ____;
 
@@ -91,7 +90,6 @@ public class C1XOptions {
     public static boolean OptimizeVirtualCallProfiling       = ____;
     public static boolean ProfileVirtualCalls                = ____;
     public static int     ProfileTypeWidth                   = 0;
-    public static boolean TestCompressedStreamEnabled        = ____;
 
     // optimistic optimization settings
     public static boolean UseCHA                             = ____;
@@ -114,21 +112,24 @@ public class C1XOptions {
 
     // global optimization settings
     public static boolean DoGlobalValueNumbering             = ____;
-    public static int     MaximumGVNLoopSize                 = 8;
-    public static boolean DoIterativeNullCheckElimination    = ____;
-
-    // future settings
-    public static boolean DoArrayBoundsCheckElimination      = ____;
     public static boolean DoCEElimination                    = ____;
     public static boolean DoBlockMerging                     = ____;
     public static boolean DoBlockSkipping                    = ____;
-    public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoNullCheckElimination             = ____;
+    public static boolean DoIterativeNCE                     = ____;
+    public static boolean DoFlowSensitiveNCE                 = ____;
     public static boolean DoDeadCodeElimination1             = ____;
     public static boolean DoDeadCodeElimination2             = ____;
+
+    // backend optimization settings
+    public static boolean OptimizeControlFlow                = ____;
+    public static boolean OptimizeMoves                      = ____;
+
+    // future settings
+    public static boolean DoArrayBoundsCheckElimination      = ____;
+    public static boolean DistinguishExceptionHandlerCode    = ____;
     public static boolean DoProfileGuidedInlining            = ____;
     public static boolean DoTypeFlowAnalysis                 = ____;
-    public static int     ReOptUnresolvedCount               = 4;
     public static boolean DetectCascadingInstanceOf          = ____;
     public static float   MonomorphicProfileRatio            = 0.85f;
     public static float   BimorphicProfileRatio              = 0.90f;
@@ -144,8 +145,6 @@ public class C1XOptions {
     public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = TRUE; // This flag is false for SPARC => probably move it to target
-    public static boolean PatchALot                          = ____;
-    public static boolean PrintNotLoaded                     = ____;
     public static boolean GenerateSynchronizationCode        = TRUE;
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean GenerateBoundsChecks               = TRUE;
@@ -154,17 +153,11 @@ public class C1XOptions {
     public static boolean DetailedAsserts                    = ____;
     public static boolean FastPathTypeCheck                  = ____;
 
-    public static boolean ImplicitDiv0Checks                 = ____;
-
     public static boolean PrintLIR                           = ____;
     public static boolean Verbose                            = ____;
     public static boolean LIRTracePeephole                   = ____;
 
-    public static boolean AvoidUnsupported                   = TRUE; // Bails out when reaching code that is currently not supported
-
-    // backend optimization settings
-    public static boolean OptimizeControlFlow                = ____;
-    public static boolean OptimizeMoves                      = ____;
+    public static boolean TestCompressedStreamEnabled        = ____;
 
     // Runtime settings
     public static boolean UseBiasedLocking                   = ____;
@@ -186,16 +179,13 @@ public class C1XOptions {
     public static boolean PrintLIRWithAssembly               = ____;
     public static boolean VerifyOopMaps                      = ____;
     public static boolean VerifyOops                         = ____;
-    public static int     SafepointPollOffset                = 256; // x86 only?
     public static int     Atomics                            = 0;
     public static boolean UseNormalNop                       = TRUE;
     public static boolean UseAddressNop                      = TRUE;
-    public static boolean ForceUnreachable                   = ____;
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
     public static boolean CMSIncrementalMode                 = ____;
-    public static boolean TLABStats                          = ____;
     public static boolean GenerateAssertionCode              = ____;
     public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
@@ -237,8 +227,6 @@ public class C1XOptions {
         DoNullCheckElimination             = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
-        DoProfileGuidedInlining            = ____;
-        DoTypeFlowAnalysis                 = ____;
     }
 
     private static void setOptimizationLevel1() {
@@ -270,11 +258,10 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = ____;
         DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = TRUE;
+        DoIterativeNCE                     = ____; // don't iterate NCE
+        DoFlowSensitiveNCE                 = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
-        DoIterativeNullCheckElimination    = ____; // don't iterate NCE
-        DoProfileGuidedInlining            = ____;
-        DoTypeFlowAnalysis                 = ____;
     }
 
     private static void setOptimizationLevel2() {
@@ -307,11 +294,9 @@ public class C1XOptions {
         DoArrayBoundsCheckElimination      = TRUE;
         DistinguishExceptionHandlerCode    = TRUE;
         DoNullCheckElimination             = TRUE;
+        DoIterativeNCE                     = TRUE;
+        DoFlowSensitiveNCE                 = TRUE;
         DoDeadCodeElimination1             = TRUE;
         DoDeadCodeElimination2             = TRUE;
-        DoIterativeNullCheckElimination    = TRUE;
-        DoProfileGuidedInlining            = TRUE;
-        DoTypeFlowAnalysis                 = TRUE;
-        DetectCascadingInstanceOf          = TRUE;
     }
 }
