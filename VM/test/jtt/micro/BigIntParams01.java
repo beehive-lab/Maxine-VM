@@ -18,15 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
+package jtt.micro;
+
 /*
  * @Harness: java
  * @Runs: 0=45; 1=45; 2=45; 3=45; 4=0
  */
-package jtt.micro;
-
 public class BigIntParams01 {
 
     public static int test(int num) {

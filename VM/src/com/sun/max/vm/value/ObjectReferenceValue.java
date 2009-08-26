@@ -124,9 +124,12 @@ public final class ObjectReferenceValue extends ReferenceValue {
         return value;
     }
 
+    @UNSAFE_CAST
+    private static native Word toWord(Object value);
+
     @Override
     public Word unboxWord() {
-        return UnsafeLoophole.referenceToWord(Reference.fromJava(value));
+        return toWord(value);
     }
 
     @Override
@@ -141,7 +144,7 @@ public final class ObjectReferenceValue extends ReferenceValue {
 
     @Override
     public byte[] toBytes(DataModel dataModel) {
-        return dataModel.toBytes(UnsafeLoophole.referenceToWord(Reference.fromJava(value)));
+        return dataModel.toBytes(Reference.fromJava(value).toOrigin());
     }
 
     @Override

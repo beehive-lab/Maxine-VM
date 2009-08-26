@@ -84,7 +84,7 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         throw ProgramError.unexpected();
     }
 

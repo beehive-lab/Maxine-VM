@@ -133,7 +133,8 @@ public class C1XTargetMethodGenerator {
             encodedInlineDataDescriptors,
             ciTargetMethod.frameSize,
             stackRefMapSize(),
-            abi
+            abi,
+            ciTargetMethod.registerRestoreEpilogueOffset
         );
         processDataPatches(targetBundleLayout);
         processRefPatches(targetBundleLayout, targetMethod.referenceLiterals());

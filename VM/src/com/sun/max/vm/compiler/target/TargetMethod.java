@@ -111,6 +111,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     private int frameSize;
 
+    private int registerRestoreEpilogueOffset = -1;
+
     @INSPECTED
     private int frameReferenceMapSize;
 
@@ -129,6 +131,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         this.classMethodActor = classMethodActor;
         this.compilerScheme = compilerScheme;
         setDescription("Target-" + name());
+    }
+
+    public int registerRestoreEpilogueOffset() {
+        return registerRestoreEpilogueOffset;
+    }
+
+    protected void setRegisterRestoreEpilogueOffset(int x) {
+        registerRestoreEpilogueOffset = x;
     }
 
     public final ClassMethodActor classMethodActor() {
@@ -652,7 +662,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public abstract Address throwAddressToCatchAddress(Address throwAddress, Class<? extends Throwable> throwableClass);
+    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
     /**
      * Traces the metadata of the compiled code represented by this object. In particular, the
