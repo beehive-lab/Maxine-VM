@@ -115,71 +115,7 @@ public class BlockMerger implements BlockClosure {
                 }
             }
         }
-        if (newEnd instanceof If) {
-            reduceNestedIfOp(block, (If) newEnd);
-        }
         return newEnd != oldEnd;
-    }
-
-    private void reduceNestedIfOp(BlockBegin block, If newEnd) {
-        IfOp ifOp = asIfOp(newEnd.x());
-        CiConstant k1 = newEnd.y().asConstant();
-        Condition cond = newEnd.condition();
-
-        if (k1 == null || ifOp == null) {
-            ifOp = asIfOp(newEnd.y());
-            k1 = newEnd.x().asConstant();
-            cond = cond.mirror();
-        }
-        if (k1 != null && ifOp != null) {
-            // this matches:
-            // if (cond, ifOp(a, b, c, d), k1, tsux, fsux)   -or-
-            // if (cond, k1, ifOp(a, b, c, d), tsux, fsux)
-
-            if (ifOp.trueValue().isConstant() && ifOp.falseValue().isConstant()) {
-                // this matches:
-                // if (cond, ifOp(a, b, kT, kF), k1, tsux, fsux)  -or-
-                // if (cond, k1, ifOp(a, b, kT, kF), tsux, fsux)
-                CiConstant kT = ifOp.trueValue().asConstant();
-                CiConstant kF = ifOp.falseValue().asConstant();
-                // Find the instruction before newEnd, starting with ifOp.
-                // When newEnd and ifOp are not in the same block, prev
-                // becomes null. In such (rare) cases it is not
-                // profitable to perform the optimization.
-                Instruction prev = ifOp;
-                while (prev != null && prev.next() != newEnd) {
-                    prev = prev.next();
-                }
-
-                if (prev != null) {
-                    BlockBegin tsux = newEnd.trueSuccessor();
-                    BlockBegin fsux = newEnd.falseSuccessor();
-
-                    // see where we would go in the true and false cases
-                    Boolean tres = cond.foldCondition(kT, k1);
-                    Boolean fres = cond.foldCondition(kF, k1);
-
-                    if (tres == null || fres == null) {
-                        // could not fold the comparison for some reason
-                        return;
-                    }
-
-                    BlockBegin tblock = tres ? tsux : fsux;
-                    BlockBegin fblock = fres ? fsux : tsux;
-
-                    if (tblock != fblock && !newEnd.isSafepoint()) {
-                        // remove the IfOp and move its comparison into the if at the end
-                        If newIf = new If(ifOp.x(), ifOp.condition(), false, ifOp.y(), tblock, fblock, null, newEnd.isSafepoint());
-                        newIf.setStateAfter(newEnd.stateAfter().immutableCopy());
-
-                        assert prev.next() == newEnd : "must be guaranteed by above search";
-                        prev.setNext(newIf, newEnd.bci());
-                        block.setEnd(newIf);
-                        C1XMetrics.NestedIfOpsRemoved++;
-                    }
-                }
-            }
-        }
     }
 
     private void verifyStates(BlockBegin block, BlockBegin sux) {

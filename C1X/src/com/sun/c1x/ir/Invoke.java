@@ -58,8 +58,7 @@ public class Invoke extends StateSplit {
         this.target = target;
         initFlag(Flag.IsStatic, isStatic);
         if (!isStatic && args[0].isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
 
         this.cpi = cpi;
@@ -125,6 +124,11 @@ public class Invoke extends StateSplit {
         return true;
     }
 
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
+    
     /**
      * Checks whether this invocation has a receiver object.
      * @return <code>true</code> if this invocation has a receiver object; <code>false</code> otherwise, if this is a

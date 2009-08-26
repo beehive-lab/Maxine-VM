@@ -1502,7 +1502,7 @@ public class GraphBuilder {
             // the receiver object must be nullchecked for instance methods
             receiver = args[0];
             if (!receiver.isNonNull()) {
-                append(new NullCheck(receiver, stateBefore));
+                append(receiver = args[0] = new NullCheck(receiver, stateBefore));
             }
         }
 

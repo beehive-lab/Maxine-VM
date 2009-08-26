@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.value.BasicType;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -115,8 +114,12 @@ public class NullCheckEliminator extends InstructionVisitor {
     private void processBlock(BlockBegin block) {
         // first pass on a block
         computeLocalInSet(block);
+        // process any phis in the block
+        for (Phi phi : block.stateBefore().allPhis(block)) {
+            visitPhi(phi);
+        }
+        // now visit the instructions in order
         for (Instruction i = block.next(); i != null; i = i.next()) {
-            // now visit the instructions in order
             i.accept(this);
         }
         if (!currentUses.isEmpty()) {
@@ -320,14 +323,13 @@ public class NullCheckEliminator extends InstructionVisitor {
             // the object itself is known for sure to be non-null, so clear the flag.
             // the flag is usually cleared in the constructor of the using instruction, but
             // later optimizations may more reveal more non-null objects
-            use.clearNullCheck();
+            use.eliminateNullCheck();
             return true;
         } else {
             // check if the object is non-null in the bitmap or hashset
             if (isNonNull(currentBitMap, currentNonNulls, object)) {
                 // the object is non-null at this site
-                use.clearNullCheck();
-                C1XMetrics.NullCheckEliminations++;
+                use.eliminateNullCheck();
                 return true;
             } else {
                 if (implicitCheck) {
@@ -342,15 +344,33 @@ public class NullCheckEliminator extends InstructionVisitor {
         return false;
     }
 
-    @Override
-    public void visitPhi(Phi i) {
-        for (int j = 0; j < i.operandCount(); j++) {
-            if (!processUse(i, i.operandAt(j), false)) {
-                return;
+    private boolean isNonNullOnEdge(BlockBegin pred, BlockBegin succ, Instruction i) {
+        if (C1XOptions.DoFlowSensitiveNCE) {
+            IfEdge e = ifEdges.get(pred);
+            if (e != null && e.succ == succ && e.checked == i) {
+                return true;
             }
         }
+        return false;
+    }
+
+    @Override
+    public void visitPhi(Phi phi) {
+        for (int j = 0; j < phi.operandCount(); j++) {
+            Instruction operand = phi.operandAt(j);
+            if (processUse(phi, operand, false)) {
+                continue;
+            }
+            if (C1XOptions.DoFlowSensitiveNCE) {
+                BlockBegin phiBlock = phi.block();
+                if (!phiBlock.isExceptionEntry() && isNonNullOnEdge(phiBlock.predecessors().get(j), phiBlock, operand)) {
+                    continue;
+                }
+            }
+            return;
+        }
         // all inputs are non-null
-        i.setFlag(Instruction.Flag.NonNull);
+        phi.setFlag(Instruction.Flag.NonNull);
     }
 
     @Override

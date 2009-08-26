@@ -83,6 +83,11 @@ public class ProfileCall extends Instruction {
         return knownHolder;
     }
 
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
+            
     /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
