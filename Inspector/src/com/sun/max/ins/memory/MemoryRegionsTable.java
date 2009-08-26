@@ -42,8 +42,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv)  Rework this; model architecture is bogus
-
 /**
  * A table specialized for displaying the memory regions in the VM.
  *
@@ -69,7 +67,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), -1);
         heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
-        model = new MemoryRegionsTableModel();
+        model = new MemoryRegionsTableModel(inspection);
         columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
         configureDefaultTable(model, columnModel);
@@ -78,9 +76,12 @@ public final class MemoryRegionsTable extends InspectorTable {
     @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
-        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getValueAt(row, col);
+        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getMemoryRegion(row);
         final String regionName = memoryRegionDisplay.description();
         menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));
+        //menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
+        menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
+        menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
         return menu;
     }
 
@@ -172,15 +173,17 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
     }
 
-    private final class MemoryRegionsTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
+    private final class MemoryRegionsTableModel extends InspectorMemoryTableModel {
 
         private SortedMemoryRegionList<MemoryRegionDisplay> sortedMemoryRegions;
 
-        public MemoryRegionsTableModel() {
+        public MemoryRegionsTableModel(Inspection inspection) {
+            super(inspection, Address.zero());
             refresh();
         }
 
-        void refresh() {
+        @Override
+        public void refresh() {
             sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             sortedMemoryRegions.add(bootHeapRegionDisplay);
@@ -207,8 +210,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
             }
-
-            fireTableDataChanged();
+            super.refresh();
         }
 
         public int getColumnCount() {
@@ -220,6 +222,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public Object getValueAt(int row, int col) {
+            return getMemoryRegion(row);
+        }
+
+        @Override
+        public Class< ? > getColumnClass(int c) {
+            return MemoryRegionDisplay.class;
+        }
+
+        @Override
+        public MemoryRegion getMemoryRegion(int row) {
             int count = 0;
             for (MemoryRegionDisplay memoryRegionDisplay : sortedMemoryRegions.memoryRegions()) {
                 if (count == row) {
@@ -231,45 +243,11 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Class< ? > getColumnClass(int c) {
-            return MemoryRegionDisplay.class;
-        }
-
-        public Address getAddress(int row) {
-            return getMemoryRegion(row).start();
-        }
-
-        public MemoryRegion getMemoryRegion(int row) {
-            return (MemoryRegion) getValueAt(row, 0);
-        }
-
-        public Sequence<MaxWatchpoint> getWatchpoints(int row) {
-            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.overlaps(getMemoryRegion(row))) {
-                    if (watchpoints.isEmpty()) {
-                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
-                    } else if (watchpoints.length() == 1) {
-                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
-                        newSet.add(watchpoint);
-                        watchpoints = newSet;
-                    } else {
-                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
-                        growableSet.add(watchpoint);
-                    }
-                }
-            }
-            return watchpoints;
-        }
-
-        public Address getOrigin() {
-            return Address.zero();
-        }
-
         public Offset getOffset(int row) {
             return Offset.fromLong(getAddress(row).toLong());
         }
 
+        @Override
         public int findRow(Address address) {
             int row = 0;
             for (MemoryRegionDisplay memoryRegionData : sortedMemoryRegions.memoryRegions()) {

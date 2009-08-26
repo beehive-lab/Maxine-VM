@@ -89,7 +89,7 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
             label.setIcon(null);
             label.setForeground(inspection.style().defaultTextColor());
         }
-        if (watchpoints != null && !watchpoints.isEmpty()) {
+        if (!watchpoints.isEmpty()) {
             toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");
             label.setText(labelText);
             label.setToolTipText(toolTipText);

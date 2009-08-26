@@ -2627,7 +2627,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetWordWatchpointAction(Address address, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.memoryRegion = new MemoryWordRegion(address, 1, maxVM().wordSize());
-            setEnabled(maxVM().findWatchpoint(memoryRegion) == null);
+            setEnabled(maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
 
         @Override
@@ -2705,7 +2705,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetRegionWatchpointAction(MemoryRegion memoryRegion, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.memoryRegion = memoryRegion;
-            setEnabled(maxVM().findWatchpoint(memoryRegion) == null);
+            setEnabled(maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
 
         @Override
@@ -2806,7 +2806,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) == null);
+                && maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -2863,7 +2863,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) == null);
+                && maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -2928,7 +2928,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) == null);
+                && maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -2989,7 +2989,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) == null);
+                && maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3050,7 +3050,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) == null);
+                && maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3068,23 +3068,20 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: remove a memory watchpoint.
+     * Action: remove a specified memory watchpoint.
      */
     final class RemoveWatchpointAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Un-watch memory";
-        private final MemoryRegion memoryRegion;
+        private static final String DEFAULT_TITLE = "Remove memory watchpoint";
+        private final MaxWatchpoint watchpoint;
 
-        RemoveWatchpointAction(MemoryRegion memoryRegion, String title) {
+        RemoveWatchpointAction(MaxWatchpoint watchpoint, String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.memoryRegion = memoryRegion;
-            refresh(true);
+            this.watchpoint = watchpoint;
         }
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = maxVM().findWatchpoint(memoryRegion);
-            ProgramError.check(watchpoint != null, "Unable to locate field watchpoint for removal");
             if (watchpoint.dispose()) {
                 inspection().focus().setWatchpoint(null);
             }  else {
@@ -3092,23 +3089,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
         }
 
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess()
-                && maxVM().watchpointsEnabled()
-                && maxVM().findWatchpoint(memoryRegion) != null);
-        }
     }
 
     /**
      * Creates an action that will remove a watchpoint.
      *
-     * @param memoryRegion area of memory
+     * @param watchpoint an existing VM memory watchpoint
      * @param title a title for the action, use default name if null
      * @return an Action that will remove a watchpoint, if present at memory location.
      */
-    public final InspectorAction removeWatchpoint(MemoryRegion memoryRegion, String title) {
-        return new RemoveWatchpointAction(memoryRegion, title);
+    public final InspectorAction removeWatchpoint(MaxWatchpoint watchpoint, String title) {
+        return new RemoveWatchpointAction(watchpoint, title);
     }
 
 
@@ -3157,63 +3148,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction removeSelectedWatchpoint() {
         return removeSelectedWatchpoint;
-    }
-
-    /**
-     * Action:  toggles watchpoint at a location in VM memory.
-     */
-    final class ToggleWatchpointAtLocationAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Toggle watchpoint at location";
-
-        private final MemoryRegion memoryRegion;
-        private final String description;
-
-        ToggleWatchpointAtLocationAction(MemoryRegion memoryRegion, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            this.memoryRegion = memoryRegion;
-            this.description = null;
-            refreshableActions.append(this);
-            inspection().addInspectionListener(new InspectionListenerAdapter() {
-                @Override
-                public void watchpointSetChanged() {
-                    refresh(true);
-                }
-            });
-            refresh(true);
-        }
-
-        @Override
-        protected void procedure() {
-            MaxWatchpoint watchpoint = maxVM().findWatchpoint(memoryRegion);
-            if (watchpoint == null) {
-                final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
-                try {
-                    watchpoint
-                        = maxVM().setRegionWatchpoint(description, memoryRegion, true, prefs.read(), prefs.write(), prefs.exec(), prefs.enableDuringGC());
-                    if (watchpoint == null) {
-                        gui().errorMessage("Watchpoint creation failed");
-                    } else {
-                        inspection().focus().setWatchpoint(watchpoint);
-                    }
-                } catch (TooManyWatchpointsException tooManyWatchpointsException) {
-                    gui().errorMessage(tooManyWatchpointsException.getMessage());
-                } catch (DuplicateWatchpointException duplicateWatchpointException) {
-                    gui().errorMessage(duplicateWatchpointException.getMessage());
-                }
-            } else {
-                watchpoint.dispose();
-            }
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess()  && maxVM().watchpointsEnabled());
-        }
-    }
-
-    public InspectorAction toggleWatchpointAtLocation(MemoryRegion memoryRegion, String title) {
-        return new ToggleWatchpointAtLocationAction(memoryRegion, title);
     }
 
 

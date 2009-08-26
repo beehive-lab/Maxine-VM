@@ -1433,10 +1433,10 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#findWatchpoint(com.sun.max.memory.MemoryRegion)
+     * @see com.sun.max.tele.MaxVM#findWatchpoints(com.sun.max.memory.MemoryRegion)
      */
-    public final MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion) {
-        return teleProcess.watchpointFactory().findWatchpoint(memoryRegion);
+    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
+        return teleProcess.watchpointFactory().findWatchpoints(memoryRegion);
     }
 
     /* (non-Javadoc)
