@@ -200,4 +200,6 @@ public interface RiMethod {
      * @return the interface method id
      */
     int interfaceID();
+
+    int iIndexInInterface();
 }

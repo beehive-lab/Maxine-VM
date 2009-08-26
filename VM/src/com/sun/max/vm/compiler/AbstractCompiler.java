@@ -132,7 +132,7 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
     public void initializeForJitCompilations() {
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         throw new UnsupportedOperationException();
     }
 

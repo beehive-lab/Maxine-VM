@@ -28,7 +28,6 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
@@ -59,7 +58,7 @@ public abstract class Word {
             BoxedAddress.class, BoxedOffset.class, BoxedPointer.class, BoxedSize.class, BoxedWord.class,
             MemberID.class, FieldID.class, MethodID.class,
             BoxedFieldID.class, BoxedMethodID.class,
-            JniHandle.class, Handle.class,
+            JniHandle.class,
             ModalLockWord64.class, HashableLockWord64.class, LightweightLockWord64.class, ThinLockWord64.class, BiasedLockWord64.class,
             BoxedModalLockWord64.class, BoxedHashableLockWord64.class, BoxedLightweightLockWord64.class, BoxedThinLockWord64.class, BoxedBiasedLockWord64.class,
             BiasedLockEpoch.class, BoxedBiasedLockEpoch64.class,

@@ -222,12 +222,12 @@ public interface HeapScheme extends VMScheme {
      *
      * Should be used like:
      *      try {
-     *          enableImmortalMemoryAllocation();
+     *          Heap.enableImmortalMemoryAllocation();
      *          ...
      *          <allocations which should happen on the immortal heap>
      *          ...
      *      } finally {
-     *          disableImmortalMemoryAllocation();
+     *          Heap.disableImmortalMemoryAllocation();
      *      }
      *
      */

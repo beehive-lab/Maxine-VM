@@ -399,7 +399,7 @@ public final class HostTupleAccess {
         try {
             final Field field = wordFieldActor.toJava();
             field.setAccessible(true);
-            final Object object = UnsafeLoophole.wordToObject(value);
+            final Object object = value;
             field.set(tuple, object);
         } catch (IllegalAccessException illegalAccessException) {
             accessError(wordFieldActor);

@@ -31,7 +31,7 @@ import com.sun.max.vm.classfile.constant.*;
  * {@link sun.reflect.MagicAccessorImpl}). Secondly, it provides static methods for generating stubs that are used to
  * implement {@link Method#invoke(Object, Object...)} and {@link Constructor#newInstance(Object...)}.
  *
- * The bytecode generation is derived from the JDK 1.4+ mechanism for the same purpose.
+ * The bytecode generation is derived from the JDK 1.4 mechanism for the same purpose.
  *
  * @author Doug Simon
  * @see sun.reflect.MethodAccessorGenerator

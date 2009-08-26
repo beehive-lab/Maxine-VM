@@ -398,7 +398,7 @@ public abstract class Trap {
         }
 
         final Address throwAddress = instructionPointer;
-        final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress, throwable.getClass());
+        final Address catchAddress = targetMethod.throwAddressToCatchAddress(false, throwAddress, throwable.getClass());
         if (!catchAddress.isZero()) {
             final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
             trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());

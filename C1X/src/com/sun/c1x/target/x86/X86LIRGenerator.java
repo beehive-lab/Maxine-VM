@@ -129,7 +129,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, BasicType type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.arrayBaseOffsetInBytes(type);
+        int offsetInBytes = compilation.runtime.firstArrayElementOffsetInBytes(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
             int elemSize = type.elementSizeInBytes(compilation.target.referenceSize, compilation.target.arch.wordSize);
@@ -850,7 +850,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (x.instanceClass().isLoaded()) {
             lir.oop2reg(klass.getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool), info);
+            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
@@ -927,7 +927,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             Object obj = elementType.getEncoding(RiType.Representation.ObjectHub).asObject();
             lir.oop2reg(obj, klassReg);
         } else {
-            lir.resolveInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveArrayClassInstruction(klassReg, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         lir().allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, BasicType.Object, klassReg, slowPath);
@@ -975,7 +975,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (x.elementType.isLoaded()) {
             lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.args().get(0));
         } else {
-            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding()), patchingInfo);
+            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         // Create a new code emit info as they must not be shared!
@@ -1011,9 +1011,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
             assert patchingInfo == null : "can't patch this";
-            stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, CiRuntimeCall.ThrowIncompatibleClassChangeError, infoForException);
+            stub = new SimpleExceptionStub(LIROperandFactory.IllegalOperand, GlobalStub.ThrowIncompatibleClassChangeError, infoForException);
         } else {
-            stub = new SimpleExceptionStub(obj.result(), CiRuntimeCall.ThrowClassCastException, infoForException);
+            stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
         lir().checkcast(reg, obj.result(), x.targetClass(), newRegister(BasicType.Object), newRegister(BasicType.Object),

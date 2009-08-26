@@ -113,5 +113,5 @@ public interface DynamicCompilerScheme extends VMScheme {
      * @param context the context for the stack walk
      * @return whether stack walking may continue after executing this method
      */
-    boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Purpose purpose, Object context); // TODO: why is the compiler involved in stack walking at all?
+    boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context); // TODO: why is the compiler involved in stack walking at all?
 }

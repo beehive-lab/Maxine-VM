@@ -282,17 +282,23 @@ public class Canonicalizer extends InstructionVisitor {
                 }
                 if (s.opcode() == reverse && y == z) {
                     // this is a chained shift of the form (e >> K << K)
-                    long mask = -1;
-                    if (opcode == Bytecodes.IUSHR || opcode == Bytecodes.LUSHR) {
-                        mask = mask >>> y;
-                    } else {
-                        mask = mask << y;
-                    }
-                    // reduce to (e & mask)
                     if (islong) {
+                        long mask = -1;
+                        if (opcode == Bytecodes.LUSHR) {
+                            mask = mask >>> y;
+                        } else {
+                            mask = mask << y;
+                        }
+                        // reduce to (e & mask)
                         return setCanonical(new LogicOp(Bytecodes.LAND, s.x(), longInstr(mask)));
                     } else {
-                        return setCanonical(new LogicOp(Bytecodes.IAND, s.x(), intInstr((int) mask)));
+                        int mask = -1;
+                        if (opcode == Bytecodes.IUSHR) {
+                            mask = mask >>> y;
+                        } else {
+                            mask = mask << y;
+                        }
+                        return setCanonical(new LogicOp(Bytecodes.IAND, s.x(), intInstr(mask)));
                     }
                 }
             }
