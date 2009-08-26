@@ -25,6 +25,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
@@ -55,10 +56,10 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
      *
      * @param memoryRegion a memory location in the VM
      * @param thread the thread from which to read registers
-     * @param watchpoint the watchpoint at this location, null if none.
+     * @param watchpoints the watchpoints at this location, null if none.
      * @return a component for displaying the cell
      */
-    public Component getRenderer(MemoryRegion memoryRegion, MaxThread thread, MaxWatchpoint watchpoint) {
+    public Component getRenderer(MemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";
@@ -88,14 +89,16 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
             label.setIcon(null);
             label.setForeground(inspection.style().defaultTextColor());
         }
-        if (watchpoint != null) {
-            toolTipText += "  " + watchpoint.toString();
+        if (!watchpoints.isEmpty()) {
+            toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            if (watchpoint.isEnabled()) {
-                label.setBorder(inspection.style().debugEnabledTargetBreakpointTagBorder());
-            } else {
-                label.setBorder(inspection.style().debugDisabledTargetBreakpointTagBorder());
+            label.setBorder(inspection.style().debugDisabledTargetBreakpointTagBorder());
+            for (MaxWatchpoint watchpoint : watchpoints) {
+                if (watchpoint.isEnabled()) {
+                    label.setBorder(inspection.style().debugEnabledTargetBreakpointTagBorder());
+                    break;
+                }
             }
         } else {
             label.setBorder(null);

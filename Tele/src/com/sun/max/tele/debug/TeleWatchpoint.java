@@ -1060,20 +1060,30 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Find an existing watchpoint set in the VM.
+         * Find existing memory watchpoints in the VM by location.
          * <br>
          * thread-safe
          *
          * @param memoryRegion a memory region in the VM
-         * @return the watchpoint whose memory region overlaps the specified region, null if none.
+         * @return all watchpoints whose memory regions overlap the specified region, empty sequence if none.
          */
-        public MaxWatchpoint findWatchpoint(MemoryRegion memoryRegion) {
+        public Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
+            DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
                 if (maxWatchpoint.overlaps(memoryRegion)) {
-                    return maxWatchpoint;
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(maxWatchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(maxWatchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(maxWatchpoint);
+                    }
                 }
             }
-            return null;
+            return watchpoints;
         }
 
         /**

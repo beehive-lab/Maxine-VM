@@ -42,8 +42,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv)  Rework this; model architecture is bogus
-
 /**
  * A table specialized for displaying the memory regions in the VM.
  *
@@ -69,7 +67,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), -1);
         heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
-        model = new MemoryRegionsTableModel();
+        model = new MemoryRegionsTableModel(inspection);
         columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
         configureDefaultTable(model, columnModel);
@@ -78,9 +76,12 @@ public final class MemoryRegionsTable extends InspectorTable {
     @Override
     protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
-        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getValueAt(row, col);
+        final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getMemoryRegion(row);
         final String regionName = memoryRegionDisplay.description();
         menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));
+        //menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
+        menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
+        menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
         return menu;
     }
 
@@ -152,6 +153,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
             this.viewPreferences = viewPreferences;
+            createColumn(MemoryRegionsColumnKind.TAG, new TagCellRenderer(inspection()));
             createColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(inspection()));
             createColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer());
             createColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer());
@@ -171,15 +173,17 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
     }
 
-    private final class MemoryRegionsTableModel extends AbstractTableModel {
+    private final class MemoryRegionsTableModel extends InspectorMemoryTableModel {
 
         private SortedMemoryRegionList<MemoryRegionDisplay> sortedMemoryRegions;
 
-        public MemoryRegionsTableModel() {
+        public MemoryRegionsTableModel(Inspection inspection) {
+            super(inspection, Address.zero());
             refresh();
         }
 
-        void refresh() {
+        @Override
+        public void refresh() {
             sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             sortedMemoryRegions.add(bootHeapRegionDisplay);
@@ -206,8 +210,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
             }
-
-            fireTableDataChanged();
+            super.refresh();
         }
 
         public int getColumnCount() {
@@ -219,6 +222,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public Object getValueAt(int row, int col) {
+            return getMemoryRegion(row);
+        }
+
+        @Override
+        public Class< ? > getColumnClass(int c) {
+            return MemoryRegionDisplay.class;
+        }
+
+        @Override
+        public MemoryRegion getMemoryRegion(int row) {
             int count = 0;
             for (MemoryRegionDisplay memoryRegionDisplay : sortedMemoryRegions.memoryRegions()) {
                 if (count == row) {
@@ -230,8 +243,20 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Class< ? > getColumnClass(int c) {
-            return MemoryRegionDisplay.class;
+        public Offset getOffset(int row) {
+            return Offset.fromLong(getAddress(row).toLong());
+        }
+
+        @Override
+        public int findRow(Address address) {
+            int row = 0;
+            for (MemoryRegionDisplay memoryRegionData : sortedMemoryRegions.memoryRegions()) {
+                if (memoryRegionData.contains(address)) {
+                    return row;
+                }
+                row++;
+            }
+            return -1;
         }
 
         int findRow(MemoryRegion memoryRegion) {
@@ -255,6 +280,42 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     }
 
+    /**
+     * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
+     */
+    private Color getRowTextColor(int row) {
+        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        if (watchpointEvent != null && model.getMemoryRegion(row).contains(watchpointEvent.address())) {
+            return style().debugIPTagColor();
+        }
+        return style().defaultTextColor();
+    }
+
+    /**
+     * @return background color for row, using alternate color for object origins.
+     */
+    private Color getRowBackgroundColor(int row) {
+        if (row == getSelectionModel().getMinSelectionIndex()) {
+            return style().defaultCodeAlternateBackgroundColor();
+        }
+        return style().defaultTextBackgroundColor();
+    }
+
+    private final class TagCellRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
+
+        TagCellRenderer(Inspection inspection) {
+            super(inspection);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
+            renderer.setForeground(getRowTextColor(row));
+            renderer.setBackground(getRowBackgroundColor(row));
+            return renderer;
+        }
+
+    }
+
     private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
 
         NameCellRenderer(Inspection inspection) {
@@ -265,11 +326,8 @@ public final class MemoryRegionsTable extends InspectorTable {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             setText(memoryRegionData.description());
             setToolTipText(memoryRegionData.toolTipText());
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
+            setForeground(getRowTextColor(row));
+            setBackground(getRowBackgroundColor(row));
             return this;
         }
 
@@ -279,11 +337,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.startLabel();
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                label.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                label.setBackground(style().defaultTextBackgroundColor());
-            }
+            label.setBackground(getRowBackgroundColor(row));
             return label;
         }
 
@@ -298,11 +352,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
             final WordValueLabel label = memoryRegionData.endLabel();
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                label.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                label.setBackground(style().defaultTextBackgroundColor());
-            }
+            label.setBackground(getRowBackgroundColor(row));
             return label;
         }
 
@@ -317,13 +367,10 @@ public final class MemoryRegionsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            final DataLabel.LongAsHex sizeDataLabel = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                sizeDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                sizeDataLabel.setBackground(style().defaultTextBackgroundColor());
-            }
-            return sizeDataLabel;
+            final DataLabel.LongAsHex label = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
+            label.setForeground(getRowTextColor(row));
+            label.setBackground(getRowBackgroundColor(row));
+            return label;
         }
 
         public void redisplay() {
@@ -342,14 +389,11 @@ public final class MemoryRegionsTable extends InspectorTable {
             if (size == 0) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
-            final DataLabel.Percent percentDataLabel = new DataLabel.Percent(inspection(), allocated, size);
-            percentDataLabel.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                percentDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                percentDataLabel.setBackground(style().defaultTextBackgroundColor());
-            }
-            return  percentDataLabel;
+            final DataLabel.Percent label = new DataLabel.Percent(inspection(), allocated, size);
+            label.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
+            label.setForeground(getRowTextColor(row));
+            label.setBackground(getRowBackgroundColor(row));
+            return  label;
         }
 
         public void redisplay() {
