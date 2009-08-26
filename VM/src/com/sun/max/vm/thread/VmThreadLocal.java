@@ -274,6 +274,8 @@ public class VmThreadLocal {
     public static final VmThreadLocal STACK_REFERENCE_MAP
         = new VmThreadLocal("STACK_REFERENCE_MAP", false, "points to stack reference map");
 
+    public static final VmThreadLocal IMMORTAL_ALLOCATION = new VmThreadLocal("GLOBAL_IMMORTAL_ALLOCATION", false, "Non-zero if thread is allocation on its immortal heap");
+
     /**
      * This is address of the object before it got relocated by the GC.
      */

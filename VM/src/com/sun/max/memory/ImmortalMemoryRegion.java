@@ -24,13 +24,6 @@
 package com.sun.max.memory;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
-import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -48,66 +41,5 @@ public class ImmortalMemoryRegion extends RuntimeMemoryRegion{
         this.size = Size.fromInt(size);
         this.start = region;
         this.mark.set(region);
-    }
-
-    public synchronized Object allocate(Class javaClass) {
-        if (ImmortalHeap.traceAllocation.getValue()) {
-            Log.print("Allocation on immortal heap: ");
-        }
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
-        MakeClassInitialized.makeClassInitialized(classActor);
-        if (classActor.isArrayClassActor()) {
-            Object object =  createArray(classActor.dynamicHub(), 0);
-            if (ImmortalHeap.traceAllocation.getValue()) {
-                Heap.traceCreateArray(classActor.dynamicHub(), 0, object);
-            }
-            return object;
-        }
-        if (classActor.isTupleClassActor()) {
-            Object object = createTuple(classActor.dynamicHub());
-            if (ImmortalHeap.traceAllocation.getValue()) {
-                Heap.traceCreateTuple(classActor.dynamicHub(), object);
-            }
-            return object;
-        }
-        return null;
-    }
-
-    private Object createArray(DynamicHub dynamicHub, int length) {
-        final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
-        final Pointer cell = immortalMemoryAllocate(size);
-        return Cell.plantArray(cell, size, dynamicHub, length);
-    }
-
-    public final Object createTuple(Hub hub) {
-        final Pointer cell = immortalMemoryAllocate(hub.tupleSize);
-        return Cell.plantTuple(cell, hub);
-    }
-
-    private Pointer immortalMemoryAllocate(Size size) {
-        final Pointer allocation = mark().asPointer();
-        final Pointer newMark = mark().plus(size.toInt());
-        if (mark().asPointer().equals(Pointer.zero()) || newMark.greaterThan(start().plus(size().toInt()))) {
-            FatalError.unexpected("Out of memory error in immortal memory region");
-        }
-        mark.set(newMark);
-        return allocation;
-    }
-
-    /**
-     * Visit the cells in all the code regions in this code manager.
-     *
-     * @param cellVisitor the visitor to call back for each cell in each region
-     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
-     *            also be visited
-     */
-    public void visitCells(CellVisitor cellVisitor) {
-        Pointer firstCell = start().asPointer();
-        Pointer cell = firstCell;
-        while (cell.lessThan(mark())) {
-            cell = DebugHeap.checkDebugCellTag(firstCell, cell);
-            cell = cellVisitor.visitCell(cell);
-        }
-        Log.println();
     }
 }

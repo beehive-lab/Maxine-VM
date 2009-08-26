@@ -323,7 +323,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 stopTimer(codeScanTimer);
 
                 startTimer(immortalSpaceScanTimer);
-                scanImmortalHeap();
+                //scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
 
                 if (Heap.traceGCPhases()) {
@@ -783,12 +783,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+        // Immortal heap allocation
+        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+        if (!immortalAllocation.isZero()) {
+            return ImmortalHeap.allocate(size, true);
+        }
+
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
-            if (!useTLAB()) {
+
+            if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return retryAllocate(size, true);
@@ -1106,6 +1113,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
         void setAmount(Size amount) {
             this.amount = amount.toInt();
+        }
+    }
+
+    @Override
+    public void disableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
+        if (usesTLAB()) {
+            super.disableImmortalMemoryAllocation();
+        }
+    }
+
+    @Override
+    public void enableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
+        if (usesTLAB()) {
+            super.enableImmortalMemoryAllocation();
         }
     }
 }
