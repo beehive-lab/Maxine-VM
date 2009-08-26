@@ -162,7 +162,7 @@ static void readStringInfo(int fd) {
 
     // TODO: this check is not correct, as it depends on the order of fields appear in the string info section
     //    if (s != nextString(_stringInfo->runPackageName)) {
-    //        fprintf(stderr, "inconsistent string info size\n");
+    //        log_println("inconsistent string info size");
     //        exit(3);
     //    }
 }
@@ -250,7 +250,7 @@ static void checkTrailer(int fd) {
         log_exit(2, "truncated file");
     }
     if (fileSize - (off_t) sizeof(trailerStruct) > trailerOffset) {
-        fprintf(stderr, "WARNING: file too large - expected: %d,  found %d\n", (int) (trailerOffset + sizeof(trailerStruct)), (int) fileSize);
+        log_println("WARNING: file too large - expected: %d,  found %d", (int) (trailerOffset + sizeof(trailerStruct)), (int) fileSize);
     }
     offset = lseek(fd, trailerOffset, SEEK_SET);
     if (offset != trailerOffset) {
@@ -268,7 +268,7 @@ static void checkTrailer(int fd) {
 #endif
 
     if (trailerStructPtr->identification != theImageHeader->identification || trailerStructPtr->version != theImageHeader->version || trailerStructPtr->randomID != theImageHeader->randomID) {
-        fprintf(stderr, "inconsistent trailer\n");
+        log_println("inconsistent trailer");
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
         if (offset != fileSize - (off_t) sizeof(trailerStruct)) {
@@ -282,7 +282,7 @@ static void checkTrailer(int fd) {
         trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_end) - sizeof(trailerStruct));
 #endif
         if (trailerStructPtr->identification == theImageHeader->identification && trailerStructPtr->version == theImageHeader->version && trailerStructPtr->randomID == theImageHeader->randomID) {
-            fprintf(stderr, "FYI, found valid trailer at end of file\n");
+            log_println("FYI, found valid trailer at end of file");
         }
         exit(2);
     }

@@ -39,6 +39,20 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
 
     private static final int TRACE_VALUE = 1;
 
+    /**
+     * Creates a disabled, impotent action.
+     */
+    public static InspectorAction dummyAction(Inspection inspection, String title) {
+        final InspectorAction action = new InspectorAction(inspection, title) {
+
+            @Override
+            protected void procedure() {
+            }
+        };
+        action.setEnabled(false);
+        return action;
+    }
+
     private String tracePrefix() {
         return "[InspectorAction] ";
     }
