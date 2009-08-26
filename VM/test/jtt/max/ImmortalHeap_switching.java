@@ -25,6 +25,7 @@
 
 package jtt.max;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -33,6 +34,7 @@ public final class ImmortalHeap_switching {
     private ImmortalHeap_switching() {
     }
 
+    @UNSAFE
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
