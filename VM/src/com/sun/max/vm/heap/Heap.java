@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -262,6 +263,15 @@ public final class Heap {
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
         final Object array = heapScheme().createArray(hub, length);
+        if (ImmortalHeap.traceAllocation()) {
+            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+            if (immortalAllocation.equals(Word.allOnes())) {
+                Log.print("Immortal heap allocation: ");
+                traceCreateArray(hub, length, array);
+                return array;
+            }
+        }
         if (Heap.traceAllocation()) {
             traceCreateArray(hub, length, array);
         }
@@ -287,6 +297,15 @@ public final class Heap {
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
+        if (ImmortalHeap.traceAllocation()) {
+            final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+            final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+            if (immortalAllocation.equals(Word.allOnes())) {
+                Log.print("Immortal heap allocation: ");
+                traceCreateTuple(hub, object);
+                return object;
+            }
+        }
         if (Heap.traceAllocation()) {
             traceCreateTuple(hub, object);
         }
@@ -450,5 +469,21 @@ public final class Heap {
     @INLINE
     public static boolean isPinned(Object object) {
         return heapScheme().isPinned(object);
+    }
+
+    public static void enableImmortalMemoryAllocation() {
+        heapScheme().enableImmortalMemoryAllocation();
+        if (ImmortalHeap.traceAllocation()) {
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(": immortal heap allocation enabled");
+        }
+    }
+
+    public static void disableImmortalMemoryAllocation() {
+        heapScheme().disableImmortalMemoryAllocation();
+        if (ImmortalHeap.traceAllocation()) {
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(": immortal heap allocation disabled");
+        }
     }
 }

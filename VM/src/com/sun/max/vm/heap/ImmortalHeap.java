@@ -28,34 +28,119 @@ import static com.sun.max.vm.VMOptions.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.debug.*;
+import com.sun.max.vm.runtime.*;
 
-
+/**
+ * Immortal Heap management.
+ *
+ * @author Hannes Payer
+ */
 public final class ImmortalHeap {
 
-    public static final VMBooleanXXOption traceAllocation = register(new VMBooleanXXOption("-XX:-TraceImmortalHeapAllocation", "Trace allocation from the immortal heap."), MaxineVM.Phase.STARTING);
+    /**
+     * VM option to trace immortal heap allocations.
+     */
+    public static final VMBooleanXXOption traceAllocation
+        = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.STARTING);
 
     private ImmortalHeap() {
     }
 
+    /**
+     * VM option to set the size of the immortal heap (MaxPermSize called in Hotspot).
+     */
     public static final VMSizeOption maxPermSize =
         register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(32),
             "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
 
-    private static ImmortalMemoryRegion createImmortalHeap() {
-        return new ImmortalMemoryRegion();
+    private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion();
+
+    /**
+     * Is immortal heap tracing turned on?
+     * @return
+     */
+    public static boolean traceAllocation() {
+        return traceAllocation.getValue();
     }
 
-    private static final ImmortalMemoryRegion immortalHeap = createImmortalHeap();
-
+    /**
+     * Returns the immortal heap memory.
+     * @return immortal heap
+     */
     public static ImmortalMemoryRegion getImmortalHeap() {
         return immortalHeap;
     }
 
+    /**
+     * This method is called by the allocator when immortal allocation is turned on.
+     *
+     * @param size
+     * @param adjustForDebugTag
+     * @return pointer to allocated object
+     */
+    public static Pointer allocate(Size size, boolean adjustForDebugTag) {
+        Pointer oldAllocationMark;
+        Pointer cell;
+        Address end;
+        do {
+            oldAllocationMark = immortalHeap.mark().asPointer();
+            cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
+            end = cell.plus(size);
+
+            if (end.greaterThan(immortalHeap.end())) {
+                FatalError.unexpected("Out of memory error in immortal memory region");
+            }
+        } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+
+        return oldAllocationMark;
+    }
+
+    /**
+     * This method should be called to allocate an object on the immortal heap.
+     * !!! Attention !!!
+     * This method is like a plain allocation method for a class. Just memory is allocated for a given class,
+     * but no constructor is called.
+     * This method is probably removed in the future if it is not used.
+     * @param javaClass
+     * @return allocated object
+     */
+    public static Object allocate(Class javaClass) {
+        Heap.enableImmortalMemoryAllocation();
+        final ClassActor classActor = ClassActor.fromJava(javaClass);
+        MakeClassInitialized.makeClassInitialized(classActor);
+        Object object;
+        if (classActor.isArrayClassActor()) {
+            object = Heap.createArray(classActor.dynamicHub(), 0);
+        } else if (classActor.isTupleClassActor()) {
+            object = Heap.createTuple(classActor.dynamicHub());
+        } else {
+            object = null;
+        }
+        Heap.disableImmortalMemoryAllocation();
+        return object;
+    }
+
+    /**
+     * Initialize the immortal heap memory.
+     */
     public static void initialize() {
         immortalHeap.initialize(maxPermSize.getValue().toInt());
     }
 
+    /**
+     * Visit the cells in the immortal heap.
+     *
+     * @param cellVisitor the visitor to call back for each cell in each region
+     */
     public static void visitCells(CellVisitor cellVisitor) {
-        immortalHeap.visitCells(cellVisitor);
+        Pointer firstCell = immortalHeap.start().asPointer();
+        Pointer cell = firstCell;
+        while (cell.lessThan(immortalHeap.mark())) {
+            cell = DebugHeap.checkDebugCellTag(firstCell, cell);
+            cell = cellVisitor.visitCell(cell);
+        }
     }
 }
