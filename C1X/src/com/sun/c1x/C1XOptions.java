@@ -143,11 +143,19 @@ public class C1XOptions {
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;
+<<<<<<< local
     public static boolean TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target
     public static boolean GenerateSynchronizationCode        = true;
     public static boolean GenerateArrayStoreCheck            = true;
     public static boolean GenerateBoundsChecks               = true;
     public static boolean GenerateCompilerNullChecks         = ____;
+=======
+    public static boolean TwoOperandLIRForm                  = TRUE; // This flag is false for SPARC => probably move it to target
+    public static boolean GenerateSynchronizationCode        = TRUE;
+    public static boolean GenerateArrayStoreCheck            = TRUE;
+    public static boolean GenerateBoundsChecks               = TRUE;
+    public static boolean GenerateCompilerNullChecks         = TRUE;
+>>>>>>> other
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
     public static boolean FastPathTypeCheck                  = ____;

@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>IfInstanceOf</code> instruction represents a branch on the outcome of an instanceof test.
@@ -45,7 +45,7 @@ public class IfInstanceOf extends BlockEnd {
      * @param falseSucc the block representing the false successor
      */
     public IfInstanceOf(RiType targetClass, Instruction object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
-        super(BasicType.Illegal, null, false); // XXX: why don't we need the state before??
+        super(CiKind.Illegal, null, false); // XXX: why don't we need the state before??
         this.targetClass = targetClass;
         this.object = object;
         this.testIsInstance = testIsInstance;

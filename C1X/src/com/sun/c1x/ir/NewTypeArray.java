@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -29,14 +30,14 @@ import com.sun.c1x.value.*;
  */
 public class NewTypeArray extends NewArray {
 
-    final BasicType elementType;
+    final CiKind elementType;
 
-    public NewTypeArray(Instruction length, BasicType elementType, ValueStack stateBefore) {
+    public NewTypeArray(Instruction length, CiKind elementType, ValueStack stateBefore) {
         super(length, stateBefore, null);
         this.elementType = elementType;
     }
 
-    public BasicType elementType() {
+    public CiKind elementType() {
         return elementType;
     }
 

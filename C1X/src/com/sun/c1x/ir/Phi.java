@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -39,7 +40,7 @@ public class Phi extends Instruction {
      * @param block the join point
      * @param index the index into the stack (if < 0) or local variables
      */
-    public Phi(BasicType type, BlockBegin block, int index) {
+    public Phi(CiKind type, BlockBegin block, int index) {
         super(type);
         this.block = block;
         this.index = index;

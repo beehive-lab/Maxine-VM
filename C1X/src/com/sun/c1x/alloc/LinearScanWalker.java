@@ -24,12 +24,12 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.alloc.Interval.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  *
@@ -875,7 +875,7 @@ public class LinearScanWalker extends IntervalWalker {
           assert false : "cannot spill interval that is used in first instruction (possible reason: no register found)";
           // assign a reasonable register and do a bailout in product mode to avoid errors
           allocator().assignSpillSlot(cur);
-          throw new Bailout("LinearScan: no register found");
+          throw new CiBailout("LinearScan: no register found");
         }
 
         splitAndSpillInterval(cur);
@@ -922,13 +922,13 @@ public class LinearScanWalker extends IntervalWalker {
     }
 
     void initVarsForAlloc(Interval cur) {
-        BasicType type = cur.type();
+        CiKind type = cur.type();
         numPhysRegs = allocator.numPhysicalRegs(type);
         adjacentRegs = allocator.requiresAdjacentRegs(type);
 
         if (pdInitRegsForAlloc(cur)) {
             // the appropriate register range was selected.
-        } else if (type == BasicType.Float || type == BasicType.Double) {
+        } else if (type == CiKind.Float || type == CiKind.Double) {
             assert false : "should not reach here!";
         } else {
             firstReg = allocator.pdFirstCpuReg;
@@ -943,11 +943,11 @@ public class LinearScanWalker extends IntervalWalker {
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
         if (allocator().gen().isVregFlagSet(cur.regNum(), LIRGenerator.VregFlag.ByteReg)) {
-            assert cur.type() != BasicType.Float && cur.type() != BasicType.Double : "cpu regs only";
+            assert cur.type() != CiKind.Float && cur.type() != CiKind.Double : "cpu regs only";
             firstReg = allocator.pdFirstByteReg;
             lastReg = allocator.pdLastByteReg;
             return true;
-        } else if (cur.type() == BasicType.Float || cur.type() == BasicType.Double) {
+        } else if (cur.type() == CiKind.Float || cur.type() == CiKind.Double) {
             firstReg = allocator.pdFirstXmmReg;
             lastReg = allocator.pdLastXmmReg;
             return true;

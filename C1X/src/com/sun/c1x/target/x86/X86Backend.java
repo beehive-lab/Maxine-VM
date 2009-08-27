@@ -26,17 +26,18 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,
- * i.e. {@link com.sun.c1x.target.Architecture#AMD64} and {@link com.sun.c1x.target.Architecture#IA32}.
+ * i.e. {@link com.sun.c1x.ci.CiArchitecture#AMD64} and {@link com.sun.c1x.ci.CiArchitecture#IA32}.
  *
  * @author Ben L. Titzer
  */
 public class X86Backend extends Backend {
 
-    public X86Backend(Target target) {
+    public X86Backend(CiTarget target) {
         super(target);
     }
     /**

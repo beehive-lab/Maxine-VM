@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -36,7 +37,7 @@ public abstract class StateSplit extends Instruction {
      * Creates a new state split with the specified value type.
      * @param type the type of the value that this instruction produces
      */
-    public StateSplit(BasicType type, ValueStack stateBefore) {
+    public StateSplit(CiKind type, ValueStack stateBefore) {
         super(type);
         this.stateBefore = stateBefore;
     }

@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
@@ -33,7 +33,7 @@ import com.sun.c1x.value.*;
 public class LIROp1 extends LIRInstruction {
 
     protected LIROperand opr; // the input operand
-    protected BasicType type; // the operand type
+    protected CiKind type; // the operand type
     protected LIRPatchCode patch; // only required for patching (TODO:NEEDS_CLEANUP: do we want a special instruction
                                   // for patching?)
 
@@ -75,7 +75,7 @@ public class LIROp1 extends LIRInstruction {
      * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info) {
         super(opcode, result, info);
         this.opr = opr;
         this.type = type;
@@ -92,7 +92,7 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      * @param patch the patching code for this instruction
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch) {
         this(opcode, opr, result, type, patch, null);
     }
 
@@ -104,7 +104,7 @@ public class LIROp1 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      * @param type the basic type of this instruction
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type) {
         this(opcode, opr, result, type, LIRPatchCode.PatchNone);
     }
 
@@ -116,7 +116,7 @@ public class LIROp1 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result) {
-        this(opcode, opr, result, BasicType.Illegal);
+        this(opcode, opr, result, CiKind.Illegal);
     }
 
     /**
@@ -140,7 +140,7 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      * @param unaligned the kind of move the instruction represents
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, BasicType type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
         super(opcode, result, info);
         this.opr = opr;
         this.type = type;
@@ -159,7 +159,7 @@ public class LIROp1 extends LIRInstruction {
     public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
         super(opcode, LIROperandFactory.IllegalOperand, info);
         this.opr = opr;
-        this.type = BasicType.Illegal;
+        this.type = CiKind.Illegal;
         this.patch = LIRPatchCode.PatchNone;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
@@ -187,7 +187,7 @@ public class LIROp1 extends LIRInstruction {
      *
      * @return type the instruction's type.
      */
-    public BasicType type() {
+    public CiKind type() {
         return type;
     }
 

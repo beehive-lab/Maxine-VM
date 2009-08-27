@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -338,7 +339,7 @@ public class ValueStack {
      * @param type the type expected for this instruction
      * @param x the instruction to push onto the stack
      */
-    public void push(BasicType type, Instruction x) {
+    public void push(CiKind type, Instruction x) {
         xpush(assertType(type, x));
         if (type.sizeInSlots() == 2) {
             xpush(null);
@@ -417,7 +418,7 @@ public class ValueStack {
      * @param basicType the tag of the expected type
      * @return the instruction on the top of the stack
      */
-    public Instruction pop(BasicType basicType) {
+    public Instruction pop(CiKind basicType) {
         if (basicType.sizeInSlots() == 2) {
             xpop();
         }
@@ -638,7 +639,7 @@ public class ValueStack {
                         if (x instanceof Phi && ((Phi) x).block() == block) {
                             values[i] = null;
                         } else {
-                            throw new Bailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
+                            throw new CiBailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
                         }
                     }
                 }
@@ -659,7 +660,7 @@ public class ValueStack {
             if (x != null && x != y) {
                 if (!(x instanceof Phi) || ((Phi) x).block() != block) {
                     // x is not a phi, or is not a phi for this block
-                    throw new Bailout("instruction is not a phi or null at " + i);
+                    throw new CiBailout("instruction is not a phi or null at " + i);
                 }
             }
         }
@@ -667,9 +668,9 @@ public class ValueStack {
 
     private void checkSize(ValueStack other) {
         if (other.stackIndex != stackIndex) {
-            throw new Bailout("stack sizes do not match");
+            throw new CiBailout("stack sizes do not match");
         } else if (other.maxLocals != maxLocals) {
-            throw new Bailout("local sizes do not match");
+            throw new CiBailout("local sizes do not match");
         }
     }
 
@@ -715,38 +716,38 @@ public class ValueStack {
         return y == null || x.type().basicType != y.type().basicType;
     }
 
-    private static Instruction assertType(BasicType basicType, Instruction x) {
+    private static Instruction assertType(CiKind basicType, Instruction x) {
         assert x != null && x.type().basicType == basicType;
         return x;
     }
 
     private static Instruction assertLong(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Long;
+        assert x != null && x.type().basicType == CiKind.Long;
         return x;
     }
 
     private static Instruction assertJsr(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Jsr;
+        assert x != null && x.type().basicType == CiKind.Jsr;
         return x;
     }
 
     private static Instruction assertInt(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Int;
+        assert x != null && x.type().basicType == CiKind.Int;
         return x;
     }
 
     private static Instruction assertFloat(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Float;
+        assert x != null && x.type().basicType == CiKind.Float;
         return x;
     }
 
     private static Instruction assertObject(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Object;
+        assert x != null && x.type().basicType == CiKind.Object;
         return x;
     }
 
     private static Instruction assertDouble(Instruction x) {
-        assert x != null && x.type().basicType == BasicType.Double;
+        assert x != null && x.type().basicType == CiKind.Double;
         return x;
     }
 

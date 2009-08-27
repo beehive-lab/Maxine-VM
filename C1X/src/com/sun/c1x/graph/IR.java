@@ -85,7 +85,7 @@ public class IR {
 
         // Graph builder must set the startBlock and the osrEntryBlock
         Instruction.nextID = 0;
-        GraphBuilder g = new GraphBuilder(compilation, topScope, this);
+        new GraphBuilder(compilation, topScope, this);
         assert startBlock != null;
         verifyAndPrint("After graph building");
     }

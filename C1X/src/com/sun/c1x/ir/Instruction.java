@@ -26,6 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -84,7 +85,7 @@ public abstract class Instruction {
     public static int nextID;
 
     private final int id;
-    protected final BasicType valueType;
+    protected final CiKind valueType;
     private int bci;
     private int flags;
     private Instruction next;
@@ -98,7 +99,7 @@ public abstract class Instruction {
      * Constructs a new instruction with the specified value type.
      * @param type the value type for this instruction
      */
-    public Instruction(BasicType type) {
+    public Instruction(CiKind type) {
         id = nextID++;
         bci = BCI_NOT_APPENDED;
         valueType = type;
@@ -162,7 +163,7 @@ public abstract class Instruction {
      * Gets the type of the value pushed to the stack by this instruction.
      * @return the value type of this instruction
      */
-    public final BasicType type() {
+    public final CiKind type() {
         return valueType;
     }
 
@@ -548,7 +549,7 @@ public abstract class Instruction {
 
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.value.BasicType#tchar() character} denoting its
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#tchar() character} denoting its
      * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
      * "i13".
      *

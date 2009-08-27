@@ -24,10 +24,9 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
@@ -54,8 +53,8 @@ import com.sun.max.vm.type.*;
  */
 public class MaxRiRuntime implements RiRuntime {
 
-    private static final Register[] generalParameterRegisters = new Register[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
-    private static final Register[] xmmParameterRegisters = new Register[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
+    private static final CiRegister[] generalParameterRegisters = new CiRegister[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
+    private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
 
     public static final MaxRiRuntime globalRuntime = new MaxRiRuntime();
 
@@ -136,7 +135,7 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**
@@ -149,7 +148,7 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    public Register getCRarg(int i) {
+    public CiRegister getCRarg(int i) {
         // TODO: move this out of the compiler interface
         switch(i) {
             case 0:
@@ -169,7 +168,7 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.shouldNotReachHere();
     }
 
-    public Register getJRarg(int i) {
+    public CiRegister getJRarg(int i) {
         // TODO: move this out of the compiler interface
         if (i == 5) {
             return getCRarg(0);
@@ -225,7 +224,7 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
 
-    public int overflowArgumentsSize(BasicType basicType) {
+    public int overflowArgumentsSize(CiKind basicType) {
         // TODO: Return wordSize
         // Currently must be a constant!!
         return 8;
@@ -258,7 +257,7 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
-    public int firstArrayElementOffsetInBytes(BasicType type) {
+    public int firstArrayElementOffsetInBytes(CiKind type) {
         return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
@@ -266,7 +265,7 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int arrayHeaderSize(BasicType type) {
+    public int arrayHeaderSize(CiKind type) {
         throw Util.unimplemented();
     }
 
@@ -294,7 +293,7 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public Register javaCallingConventionReceiverRegister() {
+    public CiRegister javaCallingConventionReceiverRegister() {
         return X86.rax;
     }
 
@@ -390,11 +389,11 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int runtimeCallingConvention(BasicType[] signature, CiLocation[] regs) {
+    public int runtimeCallingConvention(CiKind[] signature, CiLocation[] regs) {
         return javaCallingConvention(signature, regs, true);
     }
 
-    public int javaCallingConvention(BasicType[] types, CiLocation[] result, boolean outgoing) {
+    public int javaCallingConvention(CiKind[] types, CiLocation[] result, boolean outgoing) {
 
         assert result.length == types.length;
 
@@ -404,7 +403,7 @@ public class MaxRiRuntime implements RiRuntime {
 
         for (int i = 0; i < types.length; i++) {
 
-            final BasicType kind = types[i];
+            final CiKind kind = types[i];
 
             switch (kind) {
                 case Byte:
@@ -416,8 +415,8 @@ public class MaxRiRuntime implements RiRuntime {
                 case Word:
                 case Object:
                     if (currentGeneral < generalParameterRegisters.length) {
-                        Register register = generalParameterRegisters[currentGeneral++];
-                        if (kind == BasicType.Long) {
+                        CiRegister register = generalParameterRegisters[currentGeneral++];
+                        if (kind == CiKind.Long) {
                             result[i] = new CiLocation(register, register);
                         } else {
                             result[i] = new CiLocation(register);
@@ -428,8 +427,8 @@ public class MaxRiRuntime implements RiRuntime {
                 case Float:
                 case Double:
                     if (currentXMM < xmmParameterRegisters.length) {
-                        Register register = xmmParameterRegisters[currentXMM++];
-                        if (kind == BasicType.Float) {
+                        CiRegister register = xmmParameterRegisters[currentXMM++];
+                        if (kind == CiKind.Float) {
                             result[i] = new CiLocation(register);
                         } else {
                             result[i] = new CiLocation(register, register);
@@ -496,13 +495,13 @@ public class MaxRiRuntime implements RiRuntime {
         return "";
     }
 
-    public Register returnRegister(BasicType object) {
+    public CiRegister returnRegister(CiKind object) {
 
-        if (object == BasicType.Void) {
-            return Register.noreg;
+        if (object == CiKind.Void) {
+            return CiRegister.noreg;
         }
 
-        if (object == BasicType.Float || object == BasicType.Double) {
+        if (object == CiKind.Float || object == CiKind.Double) {
             return X86.xmm0;
         }
         return X86.rax;
@@ -514,11 +513,11 @@ public class MaxRiRuntime implements RiRuntime {
         return new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod).finish();
     }
 
-    public RiType primitiveArrayType(BasicType elemType) {
+    public RiType primitiveArrayType(CiKind elemType) {
         return canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()), globalConstantPool);
     }
 
-    public Register threadRegister() {
+    public CiRegister threadRegister() {
         return X86.r14;
     }
 
@@ -535,7 +534,11 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface method for the method actor
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool) {
+<<<<<<< local
 //        synchronized (runtime) {
+=======
+// synchronized (runtime) {
+>>>>>>> other
         // all resolved methods are canonicalized per runtime instance
         final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
         if (previous == null) {
@@ -544,7 +547,11 @@ public class MaxRiRuntime implements RiRuntime {
             return method;
         }
         return previous;
+<<<<<<< local
 //        }
+=======
+// }
+>>>>>>> other
     }
 
     /**
@@ -556,7 +563,11 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface field for the field actor
      */
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool) {
+<<<<<<< local
 //        synchronized (runtime) {
+=======
+// synchronized (runtime) {
+>>>>>>> other
         // all resolved field are canonicalized per runtime instance
         final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
         if (previous == null) {
@@ -565,7 +576,11 @@ public class MaxRiRuntime implements RiRuntime {
             return field;
         }
         return previous;
+<<<<<<< local
 //        }
+=======
+// }
+>>>>>>> other
     }
 
     /**
@@ -577,7 +592,11 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface type for the class actor
      */
     public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool) {
+<<<<<<< local
 //        synchronized (runtime) {
+=======
+// synchronized (runtime) {
+>>>>>>> other
         // all resolved types are canonicalized per runtime instance
         final MaxRiType previous = (MaxRiType) classActor.ciObject;
         if (previous == null) {
@@ -586,6 +605,10 @@ public class MaxRiRuntime implements RiRuntime {
             return type;
         }
         return previous;
+<<<<<<< local
 //        }
+=======
+// }
+>>>>>>> other
     }
 }
