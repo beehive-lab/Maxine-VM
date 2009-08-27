@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -38,7 +39,7 @@ public abstract class AccessArray extends StateSplit {
      * @param array the instruction that produces the array object value
      * @param stateBefore the lock stack
      */
-    public AccessArray(BasicType type, Instruction array, ValueStack stateBefore) {
+    public AccessArray(CiKind type, Instruction array, ValueStack stateBefore) {
         super(type, stateBefore);
         this.array = array;
         if (array.isNonNull()) {

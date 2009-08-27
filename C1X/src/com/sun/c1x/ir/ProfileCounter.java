@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>ProfileCounter</code> instruction represents instrumentation inserted by the compiler
@@ -41,7 +41,7 @@ public class ProfileCounter extends Instruction {
      * @param increment the increment by which to increase the counter
      */
     public ProfileCounter(Instruction mdo, int offset, int increment) {
-        super(BasicType.Void);
+        super(CiKind.Void);
         this.mdo = mdo;
         this.offset = offset;
         this.increment = increment;

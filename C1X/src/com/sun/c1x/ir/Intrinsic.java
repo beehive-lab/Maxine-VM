@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -46,7 +47,7 @@ public class Intrinsic extends StateSplit {
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(BasicType type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
+    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
                      ValueStack stateBefore, boolean preservesState, boolean canTrap) {
         super(type, stateBefore);
         this.intrinsic = intrinsic;

@@ -21,11 +21,11 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra
@@ -35,7 +35,7 @@ import com.sun.c1x.value.*;
 public class LIRBranch extends LIRInstruction {
 
     private LIRCondition cond;
-    private BasicType type;
+    private CiKind type;
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
@@ -62,7 +62,7 @@ public class LIRBranch extends LIRInstruction {
      * @param stub
      *
      */
-    public LIRBranch(LIRCondition cond, BasicType type, CodeStub stub) {
+    public LIRBranch(LIRCondition cond, CiKind type, CodeStub stub) {
         super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.label = stub.entry;
@@ -78,7 +78,7 @@ public class LIRBranch extends LIRInstruction {
      * @param block
      *
      */
-    public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block) {
+    public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block) {
         super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.type = type;
@@ -87,7 +87,7 @@ public class LIRBranch extends LIRInstruction {
         this.ublock = null;
     }
 
-    public LIRBranch(LIRCondition cond, BasicType type, BlockBegin block, BlockBegin ublock) {
+    public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
         super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null);
         this.cond = cond;
         this.type = type;
@@ -106,7 +106,7 @@ public class LIRBranch extends LIRInstruction {
     /**
      * @return the type of this condition
      */
-    BasicType type() {
+    CiKind type() {
         return type;
     }
 

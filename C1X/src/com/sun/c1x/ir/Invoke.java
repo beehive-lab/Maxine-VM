@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -50,7 +51,7 @@ public class Invoke extends StateSplit {
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    public Invoke(int opcode, CiKind result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
@@ -60,6 +61,8 @@ public class Invoke extends StateSplit {
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
+        } else if (isStatic) {
+            clearNullCheck();
         }
 
         this.cpi = cpi;
@@ -159,7 +162,7 @@ public class Invoke extends StateSplit {
         v.visitInvoke(this);
     }
 
-    public BasicType[] signature() {
+    public CiKind[] signature() {
         return Util.signatureToBasicTypes(target.signatureType(), !isStatic());
     }
 }

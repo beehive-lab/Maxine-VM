@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>Convert</code> class represents a conversion between primitive types.
@@ -39,7 +39,7 @@ public class Convert extends Instruction {
      * @param value the instruction producing the input value
      * @param type the result type of this instruction
      */
-    public Convert(int opcode, Instruction value, BasicType type) {
+    public Convert(int opcode, Instruction value, CiKind type) {
         super(type);
         this.opcode = opcode;
         this.value = value;

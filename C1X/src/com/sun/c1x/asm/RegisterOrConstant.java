@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.ci.*;
 
 /**
  *
@@ -28,19 +28,19 @@ import com.sun.c1x.target.*;
  */
 public class RegisterOrConstant {
 
-    public final Register register;
+    public final CiRegister register;
     public final int constant;
     public final Object object;
 
 
     public RegisterOrConstant(int i) {
         this.constant = i;
-        this.register = Register.noreg;
+        this.register = CiRegister.noreg;
         object = null;
     }
 
-    public RegisterOrConstant(Register r) {
-        assert r != Register.noreg;
+    public RegisterOrConstant(CiRegister r) {
+        assert r != CiRegister.noreg;
         this.constant = 0;
         this.register = r;
         object = null;
@@ -49,16 +49,16 @@ public class RegisterOrConstant {
     public RegisterOrConstant(Object o) {
         assert o != null;
         this.constant = 0;
-        this.register = Register.noreg;
+        this.register = CiRegister.noreg;
         object = o;
 
     }
 
     public boolean isConstant() {
-        return register == Register.noreg && object == null;
+        return register == CiRegister.noreg && object == null;
     }
 
-    public Register asRegister() {
+    public CiRegister asRegister() {
         return register;
     }
 
@@ -67,7 +67,7 @@ public class RegisterOrConstant {
     }
 
     public boolean isRegister() {
-        return register != Register.noreg;
+        return register != CiRegister.noreg;
     }
 
     public int asConstant() {
@@ -75,7 +75,7 @@ public class RegisterOrConstant {
         return constant;
     }
 
-    public Register registerOrNoReg() {
+    public CiRegister registerOrNoReg() {
         return register;
     }
 

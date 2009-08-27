@@ -21,7 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -34,8 +34,8 @@ public class MaxRiSignature implements RiSignature {
 
     final MaxRiConstantPool constantPool;
     final SignatureDescriptor descriptor;
-    BasicType[] basicTypes;
-    BasicType basicReturnType;
+    CiKind[] basicTypes;
+    CiKind basicReturnType;
     MaxRiType[] riTypes;
     MaxRiType ciReturnType;
 
@@ -82,10 +82,10 @@ public class MaxRiSignature implements RiSignature {
      * @param index the index of the argument
      * @return the basic type of the argument
      */
-    public BasicType argumentBasicTypeAt(int index) {
+    public CiKind argumentBasicTypeAt(int index) {
         if (basicTypes == null) {
             final int max = descriptor.numberOfParameters();
-            basicTypes = new BasicType[max];
+            basicTypes = new CiKind[max];
             for (int i = 0; i < max; i++) {
                 basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
             }
@@ -109,7 +109,7 @@ public class MaxRiSignature implements RiSignature {
      * This is typically implemented more efficiently than getting the actual type.
      * @return the basic return type
      */
-    public BasicType returnBasicType() {
+    public CiKind returnBasicType() {
         if (basicReturnType == null) {
             basicReturnType = descriptorToBasicType(descriptor.resultDescriptor());
         }
@@ -139,7 +139,7 @@ public class MaxRiSignature implements RiSignature {
         return descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
     }
 
-    private BasicType descriptorToBasicType(TypeDescriptor typeDescriptor) {
+    private CiKind descriptorToBasicType(TypeDescriptor typeDescriptor) {
         return MaxRiType.kindToBasicType(typeDescriptor.toKind());
     }
 

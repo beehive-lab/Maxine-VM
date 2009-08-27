@@ -24,7 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>LIRJavaCall</code> class definition.
@@ -51,7 +51,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         super(opcode, address, result, arguments, info);
         this.method = method;
         this.receiver = receiver;

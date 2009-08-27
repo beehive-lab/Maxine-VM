@@ -148,7 +148,7 @@ public class C1XOptions {
     public static boolean GenerateSynchronizationCode        = TRUE;
     public static boolean GenerateArrayStoreCheck            = TRUE;
     public static boolean GenerateBoundsChecks               = TRUE;
-    public static boolean GenerateCompilerNullChecks         = ____;
+    public static boolean GenerateCompilerNullChecks         = TRUE;
     public static boolean UseTableRanges                     = ____;
     public static boolean DetailedAsserts                    = ____;
     public static boolean FastPathTypeCheck                  = ____;

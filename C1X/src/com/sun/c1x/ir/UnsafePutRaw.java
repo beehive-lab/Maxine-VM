@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafePutRaw</code> instruction represents an unsafe store operation.
@@ -37,7 +37,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param addr the instruction generating the base address
      * @param value the instruction generating the value to store
      */
-    public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction value) {
+    public UnsafePutRaw(CiKind basicType, Instruction addr, Instruction value) {
         super(basicType, addr, false);
         this.value = value;
     }
@@ -50,7 +50,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param log2scale the log base 2 of the scaling factor
      * @param value the instruction generating the value to store
      */
-    public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction index, int log2scale, Instruction value) {
+    public UnsafePutRaw(CiKind basicType, Instruction addr, Instruction index, int log2scale, Instruction value) {
         super(basicType, addr, index, log2scale, false);
         this.value = value;
     }

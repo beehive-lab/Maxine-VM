@@ -22,8 +22,8 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.

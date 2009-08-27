@@ -20,13 +20,12 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.C1XMetrics;
+import java.util.*;
 
-import java.util.Queue;
-import java.util.LinkedList;
+import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LivenessMarker</code> class walks over an IR graph and marks instructions

@@ -26,18 +26,18 @@ import com.sun.c1x.asm.Label;
 import com.sun.c1x.bytecode.BytecodeLookupSwitch;
 import com.sun.c1x.bytecode.BytecodeTableSwitch;
 import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.RiBytecodeExtension;
-import com.sun.c1x.ci.RiField;
-import com.sun.c1x.ci.RiMethod;
-import com.sun.c1x.ci.RiType;
-import com.sun.c1x.target.Register;
-import com.sun.c1x.target.Target;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.CiTarget;
+import com.sun.c1x.ri.RiBytecodeExtension;
+import com.sun.c1x.ri.RiField;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiType;
 import com.sun.c1x.target.x86.X86;
 import com.sun.c1x.target.x86.X86Assembler;
 import com.sun.c1x.target.x86.X86FrameMap;
 import com.sun.c1x.target.x86.X86MacroAssembler;
 import com.sun.c1x.util.Util;
-import com.sun.c1x.value.BasicType;
 
 
 /**
@@ -53,7 +53,7 @@ public class X86CodeGen extends CodeGen {
     final boolean is64bit;
     int fakeRegisterNum = -1;
 
-    public X86CodeGen(C0XCompilation compilation, Target target) {
+    public X86CodeGen(C0XCompilation compilation, CiTarget target) {
         super(compilation, target);
         asm = new X86MacroAssembler(null, target);
         is64bit = target.arch.is64bit();
@@ -61,12 +61,12 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genBreakpoint(int bci) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     Location genNewMultiArray(RiType type, Location[] lengths) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
@@ -76,28 +76,28 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genMonitorExit(Location object) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genMonitorEnter(Location object) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     Location genInstanceOf(RiType type, Location object) {
-        return unimplemented(BasicType.Int);
+        return unimplemented(CiKind.Int);
     }
 
     @Override
     Location genCheckCast(RiType type, Location object) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
     Location genArrayLength(Location object) {
-        Register objReg = allocSrc(object, BasicType.Object);
-        Register lenReg = allocDst(BasicType.Int);
+        CiRegister objReg = allocSrc(object, CiKind.Object);
+        CiRegister lenReg = allocDst(CiKind.Int);
         recordImplicitExceptionPoint(NullPointerException.class);
         asm.movl(lenReg, new Address(objReg, runtime.arrayLengthOffsetInBytes()));
         return location(lenReg);
@@ -105,17 +105,17 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genNewObjectArray(RiType type, Location length) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
-    Location genNewTypeArray(BasicType elemType, Location length) {
-        return unimplemented(BasicType.Object);
+    Location genNewTypeArray(CiKind elemType, Location length) {
+        return unimplemented(CiKind.Object);
     }
 
     @Override
     Location genNewInstance(RiType type) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
@@ -140,9 +140,9 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genPutField(RiField field, Location object, Location value) {
-        BasicType basicType = field.basicType();
-        Register objReg = allocSrc(object, BasicType.Object);
-        Register valReg = allocSrc(value, basicType);
+        CiKind basicType = field.basicType();
+        CiRegister objReg = allocSrc(object, CiKind.Object);
+        CiRegister valReg = allocSrc(value, basicType);
         if (field.isLoaded()) {
             // the field is loaded, emit a single store instruction
             recordImplicitExceptionPoint(NullPointerException.class);
@@ -150,17 +150,17 @@ public class X86CodeGen extends CodeGen {
             emitStore(basicType, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
-            unimplemented(BasicType.Void);
+            unimplemented(CiKind.Void);
         }
     }
 
     @Override
     Location genGetField(RiField field, Location object) {
-        BasicType basicType = field.basicType();
-        Register objReg = allocSrc(object, BasicType.Object);
+        CiKind basicType = field.basicType();
+        CiRegister objReg = allocSrc(object, CiKind.Object);
         if (field.isLoaded()) {
             // the field is loaded, emit a single load instruction
-            Register valReg = allocDst(basicType);
+            CiRegister valReg = allocDst(basicType);
             recordImplicitExceptionPoint(NullPointerException.class);
             emitLoad(basicType, valReg, new Address(objReg, field.offset()));
             return location(valReg);
@@ -172,28 +172,28 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void getPutStatic(RiField field, Location value) {
-        BasicType basicType = field.basicType();
-        Register valReg = allocSrc(value, basicType);
+        CiKind basicType = field.basicType();
+        CiRegister valReg = allocSrc(value, basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
-            Register objReg = allocSrc(l, BasicType.Object);
+            CiRegister objReg = allocSrc(l, CiKind.Object);
             // XXX: write barrier
             emitStore(basicType, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
-            unimplemented(BasicType.Void);
+            unimplemented(CiKind.Void);
         }
     }
 
     @Override
     Location genGetStatic(RiField field) {
-        BasicType basicType = field.basicType();
-        Register valReg = allocDst(basicType);
+        CiKind basicType = field.basicType();
+        CiRegister valReg = allocDst(basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
-            Register objReg = allocSrc(l, BasicType.Object);
+            CiRegister objReg = allocSrc(l, CiKind.Object);
             emitLoad(basicType, valReg, new Address(objReg, field.offset()));
             return location(valReg);
         } else {
@@ -204,11 +204,11 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genThrow(Location thrown) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
-    void genReturn(BasicType basicType, Location value) {
+    void genReturn(CiKind basicType, Location value) {
         allocDst(runtime.returnRegister(basicType), basicType);
         // TODO: adjust stack pointer
         asm.ret(0);
@@ -216,61 +216,61 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genTableswitch(BytecodeTableSwitch bytecodeTableSwitch, Location key) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genLookupswitch(BytecodeLookupSwitch bytecodeLookupSwitch, Location key) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genRet(Location r) {
-        Register dst = allocSrc(r, BasicType.Word);
+        CiRegister dst = allocSrc(r, CiKind.Word);
         asm.jmp(dst);
     }
 
     @Override
     Location genJsr(int bci, int targetBCI) {
-        return unimplemented(BasicType.Word);
+        return unimplemented(CiKind.Word);
     }
 
     @Override
     void genGoto(int bci, int targetBCI) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genIfNull(C0XCompilation.Condition cond, Location obj, int nextBCI, int targetBCI) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genIfSame(C0XCompilation.Condition cond, Location x, Location y, int nextBCI, int targetBCI) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     void genIfZero(C0XCompilation.Condition cond, Location val, int nextBCI, int targetBCI) {
-        unimplemented(BasicType.Void);
+        unimplemented(CiKind.Void);
     }
 
     @Override
     Location genIncrement(Location l) {
-        Register dst = allocSrcDst(l, BasicType.Int);
+        CiRegister dst = allocSrcDst(l, CiKind.Int);
         asm.incl(dst);
         return location(dst);
     }
 
     @Override
-    Location genCompareOp(BasicType basicType, int opcode, Location x, Location y) {
-        return unimplemented(BasicType.Int);
+    Location genCompareOp(CiKind basicType, int opcode, Location x, Location y) {
+        return unimplemented(CiKind.Int);
     }
 
     @Override
-    Location genConvert(int opcode, BasicType from, BasicType to, Location value) {
-        Register src = allocSrc(value, from);
-        Register dst = allocDst(to);
+    Location genConvert(int opcode, CiKind from, CiKind to, Location value) {
+        CiRegister src = allocSrc(value, from);
+        CiRegister dst = allocDst(to);
         switch (opcode) {
             case Bytecodes.I2B:
                 asm.movsbl(dst, src);
@@ -315,7 +315,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.F2L: {
                 Label endLabel = new Label();
-                Register rscratch1 = X86FrameMap.rscratch1(target.arch);
+                CiRegister rscratch1 = X86FrameMap.rscratch1(target.arch);
                 asm.cvttss2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
@@ -338,7 +338,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.D2L: {
                 Label endLabel = new Label();
-                Register rscratch1 = X86FrameMap.rscratch1(target.arch);
+                CiRegister rscratch1 = X86FrameMap.rscratch1(target.arch);
                 asm.cvttsd2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
@@ -355,34 +355,34 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genArrayLoad(BasicType basicType, Location array, Location index) {
+    Location genArrayLoad(CiKind basicType, Location array, Location index) {
         int arrayElemSize = target.sizeInBytes(basicType);
         int arrayBaseOffset = runtime.firstArrayElementOffsetInBytes(basicType);
-        Register objReg = allocSrc(array, BasicType.Object);
-        Register indReg = allocSrc(index, BasicType.Int);
+        CiRegister objReg = allocSrc(array, CiKind.Object);
+        CiRegister indReg = allocSrc(index, CiKind.Int);
         genBoundsCheck(objReg, indReg);
-        Register dst = allocDst(basicType);
+        CiRegister dst = allocDst(basicType);
         Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
         emitLoad(basicType, dst, elemAddress);
         return location(dst);
     }
 
     @Override
-    void genArrayStore(BasicType basicType, Location array, Location index, Location value) {
+    void genArrayStore(CiKind basicType, Location array, Location index, Location value) {
         int arrayElemSize = target.sizeInBytes(basicType);
         int arrayBaseOffset = runtime.firstArrayElementOffsetInBytes(basicType);
-        Register objReg = allocSrc(array, BasicType.Object);
-        Register indReg = allocSrc(index, BasicType.Int);
-        Register valReg = allocSrc(value, basicType);
+        CiRegister objReg = allocSrc(array, CiKind.Object);
+        CiRegister indReg = allocSrc(index, CiKind.Int);
+        CiRegister valReg = allocSrc(value, basicType);
         genBoundsCheck(objReg, indReg);
         Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
         emitStore(basicType, elemAddress, valReg);
     }
 
-    private void genBoundsCheck(Register objReg, Register indReg) {
+    private void genBoundsCheck(CiRegister objReg, CiRegister indReg) {
         if (GenBoundsCheck) {
             // TODO: finish bounds check
-            Register lenReg = allocTmp(BasicType.Int);
+            CiRegister lenReg = allocTmp(CiKind.Int);
             recordImplicitExceptionPoint(NullPointerException.class);
             asm.movl(lenReg, new Address(objReg, runtime.arrayLengthOffsetInBytes()));
             asm.cmpl(indReg, lenReg);
@@ -393,67 +393,67 @@ public class X86CodeGen extends CodeGen {
     Location genIntOp2(int opcode, Location x, Location y) {
         switch (opcode) {
             case Bytecodes.IADD: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.addl(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.addl(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.ISUB: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.subl(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.subl(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IMUL: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.imull(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.imull(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IDIV: {
-                Register dst = allocSrcDst(x, X86.rax, BasicType.Int);
-                Register edx = allocTmp(X86.rdx, BasicType.Int);
+                CiRegister dst = allocSrcDst(x, X86.rax, CiKind.Int);
+                CiRegister edx = allocTmp(X86.rdx, CiKind.Int);
                 asm.xorl(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
-                asm.idivl(allocSrc(y, BasicType.Int));
+                asm.idivl(allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IREM: {
-                allocSrc(x, X86.rax, BasicType.Int);
-                Register edx = allocDst(X86.rdx, BasicType.Int);
+                allocSrc(x, X86.rax, CiKind.Int);
+                CiRegister edx = allocDst(X86.rdx, CiKind.Int);
                 asm.xorl(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
-                asm.idivl(allocSrc(y, BasicType.Int));
+                asm.idivl(allocSrc(y, CiKind.Int));
                 return location(edx);
             }
             case Bytecodes.ISHL: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Int);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.shll(dst);
                 return location(dst);
             }
             case Bytecodes.ISHR: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Int);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.sarl(dst);
                 return location(dst);
             }
             case Bytecodes.IUSHR: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Int);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
                 asm.shrl(dst);
                 return location(dst);
             }
             case Bytecodes.IAND: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.andl(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.andl(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IOR: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.orl(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.orl(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.IXOR: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.xorl(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.xorl(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
         }
@@ -465,67 +465,67 @@ public class X86CodeGen extends CodeGen {
         assert is64bit : "32-bit mode not supported yet";
         switch (opcode) {
             case Bytecodes.LADD: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.addq(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.addq(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.LSUB: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.subq(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.subq(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.LMUL: {
-                Register dst = allocSrcDst(x, BasicType.Int);
-                asm.imulq(dst, allocSrc(y, BasicType.Int));
+                CiRegister dst = allocSrcDst(x, CiKind.Int);
+                asm.imulq(dst, allocSrc(y, CiKind.Int));
                 return location(dst);
             }
             case Bytecodes.LDIV: {
-                Register dst = allocSrcDst(x, X86.rax, BasicType.Long);
-                Register edx = allocTmp(X86.rdx, BasicType.Long);
+                CiRegister dst = allocSrcDst(x, X86.rax, CiKind.Long);
+                CiRegister edx = allocTmp(X86.rdx, CiKind.Long);
                 asm.xorq(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
-                asm.idivq(allocSrc(y, BasicType.Long));
+                asm.idivq(allocSrc(y, CiKind.Long));
                 return location(dst);
             }
             case Bytecodes.LREM: {
-                allocSrc(x, X86.rax, BasicType.Long);
-                Register edx = allocDst(X86.rdx, BasicType.Long);
+                allocSrc(x, X86.rax, CiKind.Long);
+                CiRegister edx = allocDst(X86.rdx, CiKind.Long);
                 asm.xorq(edx, edx);
                 recordImplicitExceptionPoint(ArithmeticException.class);
-                asm.idivq(allocSrc(y, BasicType.Long));
+                asm.idivq(allocSrc(y, CiKind.Long));
                 return location(edx);
             }
             case Bytecodes.LSHL: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Long);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.shlq(dst);
                 return location(dst);
             }
             case Bytecodes.LSHR: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Long);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.sarq(dst);
                 return location(dst);
             }
             case Bytecodes.LUSHR: {
-                allocSrc(y, X86.rcx, BasicType.Int);
-                Register dst = allocSrcDst(x, BasicType.Long);
+                allocSrc(y, X86.rcx, CiKind.Int);
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
                 asm.shrq(dst);
                 return location(dst);
             }
             case Bytecodes.LAND: {
-                Register dst = allocSrcDst(x, BasicType.Long);
-                asm.andq(dst, allocSrc(y, BasicType.Long));
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
+                asm.andq(dst, allocSrc(y, CiKind.Long));
                 return location(dst);
             }
             case Bytecodes.LOR : {
-                Register dst = allocSrcDst(x, BasicType.Long);
-                asm.orq(dst, allocSrc(y, BasicType.Long));
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
+                asm.orq(dst, allocSrc(y, CiKind.Long));
                 return location(dst);
             }
             case Bytecodes.LXOR: {
-                Register dst = allocSrcDst(x, BasicType.Long);
-                asm.xorq(dst, allocSrc(y, BasicType.Long));
+                CiRegister dst = allocSrcDst(x, CiKind.Long);
+                asm.xorq(dst, allocSrc(y, CiKind.Long));
                 return location(dst);
             }
         }
@@ -536,28 +536,28 @@ public class X86CodeGen extends CodeGen {
     Location genFloatOp2(int opcode, Location x, Location y) {
         switch (opcode) {
             case Bytecodes.FADD: {
-                Register dst = allocSrcDst(x, BasicType.Float);
-                asm.addss(dst, allocSrc(y, BasicType.Float));
+                CiRegister dst = allocSrcDst(x, CiKind.Float);
+                asm.addss(dst, allocSrc(y, CiKind.Float));
                 return location(dst);
             }
             case Bytecodes.FSUB: {
-                Register dst = allocSrcDst(x, BasicType.Float);
-                asm.subss(dst, allocSrc(y, BasicType.Float));
+                CiRegister dst = allocSrcDst(x, CiKind.Float);
+                asm.subss(dst, allocSrc(y, CiKind.Float));
                 return location(dst);
             }
             case Bytecodes.FMUL: {
-                Register dst = allocSrcDst(x, BasicType.Float);
-                asm.mulss(dst, allocSrc(y, BasicType.Float));
+                CiRegister dst = allocSrcDst(x, CiKind.Float);
+                asm.mulss(dst, allocSrc(y, CiKind.Float));
                 return location(dst);
             }
             case Bytecodes.FDIV: {
-                Register dst = allocSrcDst(x, BasicType.Float);
-                asm.divss(dst, allocSrc(y, BasicType.Float));
+                CiRegister dst = allocSrcDst(x, CiKind.Float);
+                asm.divss(dst, allocSrc(y, CiKind.Float));
                 return location(dst);
             }
             case Bytecodes.FREM:
                 // TODO: this has to be done with a runtime call or global stub
-                return unimplemented(BasicType.Float);
+                return unimplemented(CiKind.Float);
         }
         throw Util.shouldNotReachHere();
     }
@@ -566,73 +566,73 @@ public class X86CodeGen extends CodeGen {
     Location genDoubleOp2(int opcode, Location x, Location y) {
         switch (opcode) {
             case Bytecodes.DADD: {
-                Register dst = allocSrcDst(x, BasicType.Double);
-                asm.addsd(dst, allocSrc(y, BasicType.Double));
+                CiRegister dst = allocSrcDst(x, CiKind.Double);
+                asm.addsd(dst, allocSrc(y, CiKind.Double));
                 return location(dst);
             }
             case Bytecodes.DSUB: {
-                Register dst = allocSrcDst(x, BasicType.Double);
-                asm.subsd(dst, allocSrc(y, BasicType.Double));
+                CiRegister dst = allocSrcDst(x, CiKind.Double);
+                asm.subsd(dst, allocSrc(y, CiKind.Double));
                 return location(dst);
             }
             case Bytecodes.DMUL: {
-                Register dst = allocSrcDst(x, BasicType.Double);
-                asm.mulsd(dst, allocSrc(y, BasicType.Double));
+                CiRegister dst = allocSrcDst(x, CiKind.Double);
+                asm.mulsd(dst, allocSrc(y, CiKind.Double));
                 return location(dst);
             }
             case Bytecodes.DDIV: {
-                Register dst = allocSrcDst(x, BasicType.Double);
-                asm.divsd(dst, allocSrc(y, BasicType.Double));
+                CiRegister dst = allocSrcDst(x, CiKind.Double);
+                asm.divsd(dst, allocSrc(y, CiKind.Double));
                 return location(dst);
             }
             case Bytecodes.DREM:
                 // TODO: this has to be done with a runtime call or global stub
-                return unimplemented(BasicType.Double);
+                return unimplemented(CiKind.Double);
         }
         throw Util.shouldNotReachHere();
     }
 
     @Override
     Location genIntNeg(int opcode, Location x) {
-        Register dst = allocSrcDst(x, BasicType.Int);
+        CiRegister dst = allocSrcDst(x, CiKind.Int);
         asm.negl(dst);
         return location(dst);
     }
 
     @Override
     Location genLongNeg(int opcode, Location x) {
-        Register dst = allocSrcDst(x, BasicType.Long);
+        CiRegister dst = allocSrcDst(x, CiKind.Long);
         if (is64bit) {
             asm.negq(dst);
         } else {
-            return unimplemented(BasicType.Long);
+            return unimplemented(CiKind.Long);
         }
         return location(dst);
     }
 
     @Override
     Location genFloatNeg(int opcode, Location x) {
-        return unimplemented(BasicType.Float);
+        return unimplemented(CiKind.Float);
     }
 
     @Override
     Location genDoubleNeg(int opcode, Location x) {
-        return unimplemented(BasicType.Double);
+        return unimplemented(CiKind.Double);
     }
 
     @Override
     Location genResolveClass(RiType type) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
     Location genObjectConstant(Object aClass) {
-        return unimplemented(BasicType.Object);
+        return unimplemented(CiKind.Object);
     }
 
     @Override
     Location genIntConstant(int val) {
-        Register dst = allocDst(BasicType.Int);
+        CiRegister dst = allocDst(CiKind.Int);
         if (val == 0) {
             asm.xorl(dst, dst);
         } else {
@@ -643,17 +643,17 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genDoubleConstant(double val) {
-        return unimplemented(BasicType.Double);
+        return unimplemented(CiKind.Double);
     }
 
     @Override
     Location genFloatConstant(float val) {
-        return unimplemented(BasicType.Float);
+        return unimplemented(CiKind.Float);
     }
 
     @Override
     Location genLongConstant(long val) {
-        Register dst = allocDst(BasicType.Long);
+        CiRegister dst = allocDst(CiKind.Long);
         assert is64bit;
         if (val == 0) {
             asm.xorq(dst, dst);
@@ -663,7 +663,7 @@ public class X86CodeGen extends CodeGen {
         return location(dst);
     }
 
-    private void emitLoad(BasicType basicType, Register dst, Address elemAddress) {
+    private void emitLoad(CiKind basicType, CiRegister dst, Address elemAddress) {
         switch (basicType) {
             case Byte:
             case Boolean:
@@ -704,7 +704,7 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    private void emitStore(BasicType basicType, Address elemAddress, Register valReg) {
+    private void emitStore(CiKind basicType, Address elemAddress, CiRegister valReg) {
         switch (basicType) {
             case Byte:
             case Boolean:
@@ -745,51 +745,51 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    Location unimplemented(BasicType basicType) {
+    Location unimplemented(CiKind basicType) {
         return new C0XCompilation.Register(fakeRegisterNum--, basicType);
     }
 
-    Location unimplemented(BasicType basicType, String msg) {
+    Location unimplemented(CiKind basicType, String msg) {
         return new C0XCompilation.Register(fakeRegisterNum--, basicType);
     }
 
-    Register allocDst(BasicType basicType) {
+    CiRegister allocDst(CiKind basicType) {
         return defaultRegister(basicType);
     }
 
-    Register allocDst(Register r, BasicType basicType) {
+    CiRegister allocDst(CiRegister r, CiKind basicType) {
         return r;
     }
 
-    Register allocSrc(Location l, BasicType basicType) {
+    CiRegister allocSrc(Location l, CiKind basicType) {
         return defaultRegister(basicType);
     }
 
-    Register allocSrc(Location l, Register r, BasicType basicType) {
+    CiRegister allocSrc(Location l, CiRegister r, CiKind basicType) {
         return r;
     }
 
-    Register allocSrcDst(Location l, BasicType basicType) {
+    CiRegister allocSrcDst(Location l, CiKind basicType) {
         return defaultRegister(basicType);
     }
 
-    Register allocSrcDst(Location l, Register r, BasicType basicType) {
+    CiRegister allocSrcDst(Location l, CiRegister r, CiKind basicType) {
         return r;
     }
 
-    Register allocTmp(BasicType basicType) {
+    CiRegister allocTmp(CiKind basicType) {
         return defaultRegister(basicType);
     }
 
-    Register allocTmp(Register r, BasicType basicType) {
+    CiRegister allocTmp(CiRegister r, CiKind basicType) {
         return r;
     }
 
-    private Register defaultRegister(BasicType basicType) {
-        return basicType == BasicType.Float || basicType == BasicType.Double ? X86.xmm0 : X86.rax;
+    private CiRegister defaultRegister(CiKind basicType) {
+        return basicType == CiKind.Float || basicType == CiKind.Double ? X86.xmm0 : X86.rax;
     }
 
-    Location location(Register r) {
+    Location location(CiRegister r) {
         return new C0XCompilation.Register(r.number, null);
     }
 

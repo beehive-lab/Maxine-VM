@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -39,7 +40,7 @@ public class CompareOp extends Op2 {
      * @param stateBefore the state before the comparison is performed
      */
     public CompareOp(int opcode, Instruction x, Instruction y, ValueStack stateBefore) {
-        super(BasicType.Int, opcode, x, y);
+        super(CiKind.Int, opcode, x, y);
         this.stateBefore = stateBefore;
     }
 

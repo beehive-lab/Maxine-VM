@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -40,8 +40,8 @@ public class StoreField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
-        super(object, field, isStatic, stateBefore, isLoaded);
+    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+        super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
         this.value = value;
         setFlag(Flag.LiveStore);
     }

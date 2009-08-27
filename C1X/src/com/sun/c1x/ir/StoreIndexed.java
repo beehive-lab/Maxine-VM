@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -40,7 +41,7 @@ public class StoreIndexed extends AccessIndexed {
      * @param value the value to store into the array
      * @param stateBefore the state before executing this instruction
      */
-    public StoreIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, Instruction value, ValueStack stateBefore) {
+    public StoreIndexed(Instruction array, Instruction index, Instruction length, CiKind elementType, Instruction value, ValueStack stateBefore) {
         super(array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);

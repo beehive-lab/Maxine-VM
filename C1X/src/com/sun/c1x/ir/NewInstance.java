@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -41,7 +42,7 @@ public class NewInstance extends StateSplit {
      * @param stateBefore the state before executing this instruction
      */
     public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        super(BasicType.Object, stateBefore);
+        super(CiKind.Object, stateBefore);
         this.instanceClass = theClass;
         this.cpi = cpi;
         this.constantPool = constantPool;
