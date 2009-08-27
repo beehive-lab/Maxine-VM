@@ -47,7 +47,7 @@ import com.sun.max.util.*;
  */
 public final class MemoryWordsInspector extends Inspector {
 
-    private static final int TRACE_VALUE = 1;
+    private static final int TRACE_VALUE = 2;
 
     public static enum ViewMode {
         WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",

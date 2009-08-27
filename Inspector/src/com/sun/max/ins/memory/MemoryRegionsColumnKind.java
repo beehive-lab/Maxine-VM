@@ -29,6 +29,7 @@ import com.sun.max.collect.*;
  */
 public enum MemoryRegionsColumnKind {
 
+    TAG("Tag", "Additional information", true, -1),
     NAME("Name", "Role played by the region", true, -1) {
 
         @Override
