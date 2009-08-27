@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.program.*;
 
 /**
  * A menu that can be manifest in the GUI by a {@linkplain JPopupMenu pop-up menu} or a {@linkplain JMenu standard menu}.
@@ -73,6 +74,22 @@ public final class InspectorMenu implements Prober {
 
     public int length() {
         return standardMenu.getItemCount();
+    }
+
+    /**
+     * Adds to the menu an untyped object that can be either an {@link InspectorAction}
+     * or a {@link JMenu}.
+     */
+    public void add(Object object) {
+        if (object instanceof InspectorAction) {
+            final InspectorAction action = (InspectorAction) object;
+            this.add(action);
+        } else if (object instanceof JMenu) {
+            final JMenu menu = (JMenu) object;
+            this.add(menu);
+        } else {
+            ProgramError.unexpected("Inappropriate argument");
+        }
     }
 
     public void add(InspectorAction action) {
