@@ -109,8 +109,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private final RuntimeMemoryRegion fromSpace = new RuntimeMemoryRegion("Heap-From");
-    private final RuntimeMemoryRegion toSpace = new RuntimeMemoryRegion("Heap-To");
+    private RuntimeMemoryRegion fromSpace = null;
+    private RuntimeMemoryRegion toSpace = null;
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -172,13 +172,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
+
+
+                Heap.enableImmortalMemoryAllocation();
+                fromSpace = new RuntimeMemoryRegion("Heap-From");
+                toSpace = new RuntimeMemoryRegion("Heap-To");
+
+                Heap.disableImmortalMemoryAllocation();
+
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
