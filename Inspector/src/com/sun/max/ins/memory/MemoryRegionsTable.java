@@ -64,7 +64,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
         bootHeapRegionDisplay = new HeapRegionDisplay(maxVM().teleBootHeapRegion());
-        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), -1);
+        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), true);
         heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
         model = new MemoryRegionsTableModel(inspection);
@@ -195,13 +195,9 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);
-            final IndexedSequence<TeleCodeRegion> teleCodeRegions = maxVM().teleCodeRegions();
-            for (int index = 0; index < teleCodeRegions.length(); index++) {
-                final TeleCodeRegion teleCodeRegion = teleCodeRegions.get(index);
-                // Only display regions that have memory allocated to them, but that could be a view option.
-                if (teleCodeRegion.isAllocated()) {
-                    sortedMemoryRegions.add(new CodeRegionDisplay(teleCodeRegion, index));
-                }
+            final TeleCodeRegion teleRuntimeCodeRegion = maxVM().teleRuntimeCodeRegion();
+            if (teleRuntimeCodeRegion.isAllocated()) {
+                sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion, false));
             }
 
             for (MaxThread thread : maxVMState().threads()) {
@@ -541,16 +537,16 @@ public final class MemoryRegionsTable extends InspectorTable {
         /**
          * Position of this region in the {@link CodeManager}'s allocation array, -1 for the boot region.
          */
-        private final int index;
+        private final boolean bootCodeRegion;
 
         @Override
         MemoryRegion memoryRegion() {
             return teleCodeRegion;
         }
 
-        CodeRegionDisplay(TeleCodeRegion teleCodeRegion, int index) {
+        CodeRegionDisplay(TeleCodeRegion teleCodeRegion, boolean bootCodeRegion) {
             this.teleCodeRegion = teleCodeRegion;
-            this.index = index;
+            this.bootCodeRegion = bootCodeRegion;
         }
 
         @Override
@@ -565,7 +561,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         @Override
         String toolTipText() {
-            if (index < 0) {
+            if (bootCodeRegion) {
                 return "Boot code region";
             }
             return "Dynamic region:  " + description();

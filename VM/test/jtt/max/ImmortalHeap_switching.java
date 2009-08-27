@@ -18,30 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
-
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-
-/**
- * A code manager that reserves and allocates virtual memory at a fixed address.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: (10)=true; (20)=true;
  */
-public class FixedAddressCodeManager extends CodeManager {
 
-    /**
-     * Initialize this code manager.
-     */
-    @Override
-    void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
+package jtt.max;
+
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
+
+public final class ImmortalHeap_switching {
+    private ImmortalHeap_switching() {
+    }
+
+    @UNSAFE
+    public static boolean test(int size) {
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+        new Object();
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
         }
-        runtimeCodeRegion.bind(address, size);
+        try {
+            Heap.enableImmortalMemoryAllocation();
+            new Object();
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
+        }
+        if (immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+        oldMark = immortalMemoryRegion.mark();
+        new Object();
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+        return true;
     }
 }

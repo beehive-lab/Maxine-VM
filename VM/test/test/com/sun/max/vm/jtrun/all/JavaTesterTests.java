@@ -12838,25 +12838,81 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_lang_Unsigned_idiv01() {
-        JavaTesterRunScheme.begin("jtt.lang.Unsigned_idiv01");
+    static void jtt_max_ImmortalHeap_allocation() {
+        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_allocation");
+        String runString = null;
+        try {
+        // (4) == true
+            runString = "(4)";
+            if (true != jtt.max.ImmortalHeap_allocation.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (8) == true
+            runString = "(8)";
+            if (true != jtt.max.ImmortalHeap_allocation.test(8)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (10) == true
+            runString = "(10)";
+            if (true != jtt.max.ImmortalHeap_allocation.test(10)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (100) == true
+            runString = "(100)";
+            if (true != jtt.max.ImmortalHeap_allocation.test(100)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_max_ImmortalHeap_switching() {
+        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_switching");
+        String runString = null;
+        try {
+        // (10) == true
+            runString = "(10)";
+            if (true != jtt.max.ImmortalHeap_switching.test(10)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (20) == true
+            runString = "(20)";
+            if (true != jtt.max.ImmortalHeap_switching.test(20)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_max_Unsigned_idiv01() {
+        JavaTesterRunScheme.begin("jtt.max.Unsigned_idiv01");
         String runString = null;
         try {
         // (-1,4) == 1073741823
             runString = "(-1,4)";
-            if (1073741823 != jtt.lang.Unsigned_idiv01.test(-1, 4)) {
+            if (1073741823 != jtt.max.Unsigned_idiv01.test(-1, 4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // (6,3) == 2
             runString = "(6,3)";
-            if (2 != jtt.lang.Unsigned_idiv01.test(6, 3)) {
+            if (2 != jtt.max.Unsigned_idiv01.test(6, 3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // (65535,16) == 4095
             runString = "(65535,16)";
-            if (4095 != jtt.lang.Unsigned_idiv01.test(65535, 16)) {
+            if (4095 != jtt.max.Unsigned_idiv01.test(65535, 16)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

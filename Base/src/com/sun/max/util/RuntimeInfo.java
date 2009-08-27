@@ -23,8 +23,6 @@ package com.sun.max.util;
 import java.io.*;
 import java.util.regex.*;
 
-import com.sun.max.lang.*;
-
 /**
  * Class for run-time system information.
  *

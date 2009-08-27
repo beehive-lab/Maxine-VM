@@ -174,7 +174,7 @@ public final class DebugHeap {
             checkNonNullGripTag(grip);
         }
         final Pointer origin = grip.toOrigin();
-        if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin)) {
+        if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin)) {
             return;
         }
         if (space1 != null && space1.contains(origin)) {

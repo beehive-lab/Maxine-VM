@@ -18,30 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
-
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-
-/**
- * A code manager that reserves and allocates virtual memory at a fixed address.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: (4)=true; (8)=true; (10)=true; (100)=true;
  */
-public class FixedAddressCodeManager extends CodeManager {
+package jtt.max;
 
-    /**
-     * Initialize this code manager.
-     */
-    @Override
-    void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
-        }
-        runtimeCodeRegion.bind(address, size);
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+
+
+public final class ImmortalHeap_allocation {
+    private ImmortalHeap_allocation() {
     }
+
+    @UNSAFE
+    public static boolean test(int size) {
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+        ImmortalHeap.allocate(Size.fromInt(size), true);
+        if (MaxineVM.isDebug()) {
+            size += Word.size();
+        }
+        if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
+            return true;
+        }
+        return false;
+    }
+
 }
