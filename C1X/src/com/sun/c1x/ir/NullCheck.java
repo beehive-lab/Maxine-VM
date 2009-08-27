@@ -124,5 +124,5 @@ public class NullCheck extends StateSplit {
     @Override
     public boolean internalClearNullCheck() {
         return true;
-    }        
+    }
 }

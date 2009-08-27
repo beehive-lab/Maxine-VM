@@ -128,7 +128,7 @@ public class Invoke extends StateSplit {
     public boolean internalClearNullCheck() {
         return true;
     }
-    
+
     /**
      * Checks whether this invocation has a receiver object.
      * @return <code>true</code> if this invocation has a receiver object; <code>false</code> otherwise, if this is a
