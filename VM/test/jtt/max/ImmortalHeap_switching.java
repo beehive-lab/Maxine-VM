@@ -18,30 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.bytecode.graft;
-
-
-/**
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (10)=true; (20)=true;
  */
-class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
 
-    private final int classConstantIndex;
+package jtt.max;
 
-    public StaticSynchronizedMethodTransformer(BytecodeAssembler assembler, int constantIndex) {
-        super(assembler);
-        classConstantIndex = constantIndex;
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
+
+public final class ImmortalHeap_switching {
+    private ImmortalHeap_switching() {
     }
 
-    @Override
-    void acquireMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorenter();
-    }
-
-    @Override
-    void releaseMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorexit();
+    @UNSAFE
+    public static boolean test(int size) {
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+        new Object();
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+        try {
+            Heap.enableImmortalMemoryAllocation();
+            new Object();
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
+        }
+        if (immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+        oldMark = immortalMemoryRegion.mark();
+        new Object();
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+        return true;
     }
 }

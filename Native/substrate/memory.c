@@ -38,10 +38,13 @@ long total_memory = -1;
 long max_memory = -1;
 long free_memory = -1;
 
+
 Address memory_allocate(Size size)
 {
     Address mem = (Address) calloc(1, (size_t) size);
-    //log_println("MEMORY ALLOCATED of size:%d at address:%x", size, mem);
+    if (mem % sizeof(void *)) {
+        log_println("MEMORY ALLOCATED NOT WORD-ALIGNED (size:%d at address:%x, void* size: %d)", size, mem, sizeof(void *));
+    }
     return mem;
 }
 

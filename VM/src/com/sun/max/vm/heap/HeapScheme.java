@@ -209,4 +209,33 @@ public interface HeapScheme extends VMScheme {
 
     @INLINE
     void writeBarrier(Reference from, Reference to);
+
+    /**
+     * Is TLAB used in this heap scheme or not.
+     * @return true if TLAB is used
+     */
+    @INLINE
+    boolean usesTLAB();
+
+    /**
+     * Turns immortal memory allocation on for a heap scheme. All performed memory allocations happen in the immortal space.
+     *
+     * Should be used like:
+     *      try {
+     *          Heap.enableImmortalMemoryAllocation();
+     *          ...
+     *          <allocations which should happen on the immortal heap>
+     *          ...
+     *      } finally {
+     *          Heap.disableImmortalMemoryAllocation();
+     *      }
+     *
+     */
+    void enableImmortalMemoryAllocation();
+
+    /**
+     * Turns immortal memory allocation off for a heap scheme. All performed memory allocations happen in the garbage collected
+     * heap.
+     */
+    void disableImmortalMemoryAllocation();
 }

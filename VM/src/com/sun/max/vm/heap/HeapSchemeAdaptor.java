@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -56,6 +57,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public void enableAllocationForCurrentThread() {
         FatalError.unimplemented();
+    }
+
+    @INLINE(override = true)
+    public boolean usesTLAB() {
+        return false;
     }
 
     /**

@@ -252,9 +252,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      */
     private Address allocateHeapStorage(Size size) {
         Address endOfCodeRegion = Code.bootCodeRegion.end().roundedUpBy(Platform.target().pageSize);
-        RuntimeMemoryRegion codeManager = Code.getCodeManager();
-        if (codeManager instanceof FixedAddressCodeManager && codeManager.start().equals(endOfCodeRegion)) {
-            endOfCodeRegion = codeManager.end();
+        CodeManager codeManager = Code.getCodeManager();
+        if (codeManager instanceof FixedAddressCodeManager && codeManager.getRuntimeCodeRegion().start().equals(endOfCodeRegion)) {
+            endOfCodeRegion = codeManager.getRuntimeCodeRegion().end();
         }
         final Address tlabAlignedEndOfCodeRegion = endOfCodeRegion.roundedUpBy(BeltwayHeapSchemeConfiguration.TLAB_SIZE.toInt());
         assert tlabAlignedEndOfCodeRegion.isAligned(Platform.target().pageSize);
@@ -486,7 +486,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
-            if (!useTLAB()) {
+            if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return tlabAllocationBelt.allocate(size);

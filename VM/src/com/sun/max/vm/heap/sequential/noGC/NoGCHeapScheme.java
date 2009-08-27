@@ -33,6 +33,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 
 
@@ -228,16 +229,21 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @NO_SAFEPOINTS("TODO")
     public Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = allocationMark().asPointer();
-        if (MaxineVM.isDebug()) {
-            cell = oldAllocationMark.plusWords(1);
-        } else {
-            cell = oldAllocationMark;
-        }
-        final Pointer end = cell.plus(size);
-        if (end.greaterThan(top) || allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark) {
-            return fail();
-        }
+        Pointer end;
+        Pointer oldAllocationMark;
+
+        do {
+            oldAllocationMark = allocationMark().asPointer();
+            if (MaxineVM.isDebug()) {
+                cell = oldAllocationMark.plusWords(1);
+            } else {
+                cell = oldAllocationMark;
+            }
+            end = cell.plus(size);
+            if (end.greaterThan(top)) {
+                return fail();
+            }
+        } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         // For debugging
         space.mark.set(end);
         return cell;
@@ -331,6 +337,16 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    @Override
+    public void disableImmortalMemoryAllocation() {
+        FatalError.unexpected("Non implemented");
+    }
+
+    @Override
+    public void enableImmortalMemoryAllocation() {
+        FatalError.unexpected("Non implemented");
     }
 
 }
