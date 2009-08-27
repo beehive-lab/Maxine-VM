@@ -18,30 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
-
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-
-/**
- * A code manager that reserves and allocates virtual memory at a fixed address.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
  */
-public class FixedAddressCodeManager extends CodeManager {
+package jtt.max;
 
-    /**
-     * Initialize this code manager.
-     */
-    @Override
-    void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
-        }
-        runtimeCodeRegion.bind(address, size);
+import com.sun.max.lang.*;
+
+public final class Unsigned_idiv01 {
+    private Unsigned_idiv01() {
+    }
+
+    public static int test(int dividend, int divisor) {
+        return Unsigned.idiv(dividend, divisor);
     }
 }

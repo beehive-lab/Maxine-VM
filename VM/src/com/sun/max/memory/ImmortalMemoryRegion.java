@@ -18,19 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.lang;
-
-import com.sun.max.lang.*;
-
-/*
- * @Harness: java
- * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
+/**
+ * @author Hannes Payer
  */
-public final class Unsigned_idiv01 {
-    private Unsigned_idiv01() {
-    }
+package com.sun.max.memory;
 
-    public static int test(int dividend, int divisor) {
-        return Unsigned.idiv(dividend, divisor);
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
+
+/**
+ * Immortal memory region can be used for objects, which are not collected by the GC.
+ *
+ * @author Hannes Payer
+ */
+public class ImmortalMemoryRegion extends RuntimeMemoryRegion{
+
+    public void initialize(Size size) {
+        Pointer region = Memory.allocate(size);
+        if (region.equals(Pointer.zero())) {
+            FatalError.unexpected("Initialization of immortal memory region failed");
+        }
+        this.size = size;
+        this.start = region;
+        this.mark.set(region);
     }
 }

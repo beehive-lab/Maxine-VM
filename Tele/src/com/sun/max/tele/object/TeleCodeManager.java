@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -32,6 +31,7 @@ import com.sun.max.vm.reference.*;
  * Canonical surrogate for the singleton {@link CodeManager} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
 
@@ -59,7 +59,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      * Assume that the regions are all created at startup, and that their identity doesn't change, just their
      * address as they have memory allocated for them.
      */
-    private TeleCodeRegion[] teleCodeRegions = new TeleCodeRegion[0];
+    private TeleCodeRegion teleRuntimeCodeRegion = null;
 
     TeleCodeManager(TeleVM teleVM, Reference codeManagerReference) {
         super(teleVM, codeManagerReference);
@@ -74,14 +74,10 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         final Reference bootCodeRegionReference = teleVM().fields().Code_bootCodeRegion.readReference(teleVM());
         teleBootCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(bootCodeRegionReference);
 
-        final Reference runtimeCodeRegionsArrayReference = teleVM().fields().CodeManager_runtimeCodeRegions.readReference(reference());
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeCodeRegionsArrayReference);
-        final Reference[] codeRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
-        teleCodeRegions = new TeleCodeRegion[codeRegionReferences.length];
-        for (int i = 0; i < codeRegionReferences.length; i++) {
-            teleCodeRegions[i] = (TeleCodeRegion) teleVM().makeTeleObject(codeRegionReferences[i]);
-        }
-        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + teleCodeRegions.length + " regions", startTimeMillis);
+        final Reference runtimeCodeRegionReference = teleVM().fields().CodeManager_runtimeCodeRegion.readReference(teleVM());
+        teleRuntimeCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(runtimeCodeRegionReference);
+
+        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
     }
 
     @Override
@@ -97,11 +93,10 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
     }
 
     /**
-     * @return surrogates for all {@link CodeRegion}s in the {@link TeleVM}, including those not yet allocated.
-     * Sorted in order of allocation.  Does not include the boot code region.
+     * @return surrogates for the special Runtime {@link CodeRegion} of the {@link TeleVM}.
      */
-    public IndexedSequence<TeleCodeRegion> teleCodeRegions() {
-        return new ArraySequence<TeleCodeRegion>(teleCodeRegions);
+    public TeleCodeRegion teleRuntimeCodeRegion() {
+        return teleRuntimeCodeRegion;
     }
 
     /**
@@ -112,10 +107,8 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         if (teleBootCodeRegion.contains(address)) {
             return teleBootCodeRegion;
         }
-        for (TeleCodeRegion teleCodeRegion : teleCodeRegions) {
-            if (teleCodeRegion.contains(address)) {
-                return teleCodeRegion;
-            }
+        if (teleRuntimeCodeRegion.contains(address)) {
+            return teleRuntimeCodeRegion;
         }
         return null;
     }
