@@ -426,6 +426,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             receiver = args.get(0).result();
         }
 
+
         // emit invoke code
         boolean optimized = x.target().isLoaded() && x.target().isFinalMethod();
         assert receiver.isIllegal() || receiver.equals(receiverOpr()) : "must match";
@@ -441,6 +442,10 @@ public abstract class LIRGenerator extends InstructionVisitor {
                 // for final target we still produce an inline cache, in order
                 // to be able to call mixed mode
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
+                    if (x.needsNullCheck()) {
+                        assert x.hasReceiver();
+                        lir.nullCheck(receiver, new CodeEmitInfo(info));
+                    }
                     lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                 } else {
 
@@ -872,10 +877,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
         // to avoid a fixed interval with an oop during the null check.
         // Use a copy of the CodeEmitInfo because debug information is
         // different for nullCheck and throw.
-        if (C1XOptions.GenerateCompilerNullChecks && !(x.exception().isNonNull())) {
+        // (tw) Maxine probably does not need this as unwind/throw checks for the exception not being null!
+        /*if (C1XOptions.GenerateCompilerNullChecks && !(x.exception().isNonNull())) {
             // if the exception object wasn't created using new then it might be null.
             lir.nullCheck(exceptionOpr, new CodeEmitInfo(info, true));
-        }
+        }*/
 
         if (compilation.runtime.jvmtiCanPostExceptions() && !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler)) {
             // we need to go through the exception lookup path to get JVMTI

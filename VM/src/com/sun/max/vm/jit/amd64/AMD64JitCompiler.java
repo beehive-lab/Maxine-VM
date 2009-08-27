@@ -304,7 +304,7 @@ public class AMD64JitCompiler extends JitCompiler {
         abstract Pointer callerFramePointer(StackFrameWalker stackFrameWalker, TargetMethod targetMethod);
 
         int sizeOfNonParameterLocals(TargetMethod targetMethod) {
-            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().rawCodeAttribute().maxLocals() - targetMethod.classMethodActor().numberOfParameterSlots());
+            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().originalCodeAttribute().maxLocals() - targetMethod.classMethodActor().numberOfParameterSlots());
         }
     }
 

@@ -92,7 +92,9 @@ public class CodeEmitInfo {
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
             exceptionHandlers = new ArrayList<ExceptionHandler>();
-            exceptionHandlers.addAll(info.exceptionHandlers);
+            for (ExceptionHandler h : info.exceptionHandlers) {
+                exceptionHandlers.add(new ExceptionHandler(h));
+            }
         }
     }
 

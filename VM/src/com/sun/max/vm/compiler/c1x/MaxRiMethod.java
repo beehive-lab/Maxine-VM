@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import java.util.*;
 
 import com.sun.c1x.ri.*;
+import com.sun.c1x.*;
 import com.sun.c1x.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -44,7 +45,7 @@ public class MaxRiMethod implements RiMethod {
 
     final MaxRiConstantPool constantPool;
     MethodRefConstant methodRef;
-    MethodActor methodActor;
+    final MethodActor methodActor;
     List<RiExceptionHandler> exceptionHandlers;
 
     /**
@@ -55,6 +56,9 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
+        if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
+            C1XIntrinsic.registerFoldableMethod(this, methodActor.toJava());
+        }
     }
 
     /**
@@ -65,6 +69,7 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef) {
         this.constantPool = constantPool;
         this.methodRef = methodRef;
+        this.methodActor = null;
     }
 
     /**
@@ -106,7 +111,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public byte[] code() {
-        return asClassMethodActor("code()").rawCodeAttribute().code();
+        return asClassMethodActor("code()").originalCodeAttribute().code();
     }
 
     /**
@@ -115,7 +120,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxLocals() {
-        return asClassMethodActor("maxLocals()").rawCodeAttribute().maxLocals();
+        return asClassMethodActor("maxLocals()").originalCodeAttribute().maxLocals();
     }
 
     /**
@@ -124,7 +129,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxStackSize() {
-        return asClassMethodActor("maxStackSize()").rawCodeAttribute().maxStack();
+        return asClassMethodActor("maxStackSize()").originalCodeAttribute().maxStack();
     }
 
     /**
@@ -143,7 +148,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
-        final CodeAttribute codeAttribute = asClassMethodActor("hasExceptionHandlers()").rawCodeAttribute();
+        final CodeAttribute codeAttribute = asClassMethodActor("hasExceptionHandlers()").originalCodeAttribute();
         if (codeAttribute != null) {
             final Sequence<ExceptionHandlerEntry> handlerTable = codeAttribute.exceptionHandlerTable();
             return handlerTable != null && handlerTable.length() > 0;
@@ -275,7 +280,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int codeSize() {
-        return asClassMethodActor("codeSize()").rawCodeAttribute().code().length;
+        return asClassMethodActor("codeSize()").originalCodeAttribute().code().length;
     }
 
     /**
@@ -290,7 +295,7 @@ public class MaxRiMethod implements RiMethod {
         }
         final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         exceptionHandlers = new ArrayList<RiExceptionHandler>();
-        CodeAttribute codeAttribute = classMethodActor.rawCodeAttribute();
+        CodeAttribute codeAttribute = classMethodActor.originalCodeAttribute();
         for (ExceptionHandlerEntry entry : codeAttribute.exceptionHandlerTable()) {
             RiType catchType;
             if (entry.catchTypeIndex() == 0) {

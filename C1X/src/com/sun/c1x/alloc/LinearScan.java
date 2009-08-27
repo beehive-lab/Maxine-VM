@@ -3293,7 +3293,7 @@ public class LinearScan {
 
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
-                int opId = op.id();
+                //int opId = op.id();
 
                 visitor.visit(op);
 
@@ -3346,7 +3346,10 @@ public class LinearScan {
                     }
 
                     // TODO: (tw) Check whether this should also be asserted when visitor.infoCount() == 0 (to me this seems wrong in C1)
+                    // With register oop-maps this probably need not be true...
 
+
+                    /*
                     // oop-maps at calls do not contain registers, so check is not needed
                     if (!visitor.hasCall()) {
 
@@ -3379,7 +3382,7 @@ public class LinearScan {
                                 }
                             }
                         }
-                    }
+                    }*/
                 }
             }
         }

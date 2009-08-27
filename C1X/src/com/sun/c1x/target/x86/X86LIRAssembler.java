@@ -2527,8 +2527,8 @@ public class X86LIRAssembler extends LIRAssembler {
             assert receiver.isRegister() : "Receiver must be in a register";
             addCallInfoHere(info);
             assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffsetInBytes());
-            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
+            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
             this.masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));

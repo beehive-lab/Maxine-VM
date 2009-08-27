@@ -135,7 +135,7 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.rawCodeAttribute() == null || classMethodActor.isNeverInline();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**

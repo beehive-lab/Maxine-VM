@@ -61,6 +61,8 @@ public class Invoke extends StateSplit {
         if (!isStatic && args[0].isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;
+        } else if (isStatic) {
+            clearNullCheck();
         }
 
         this.cpi = cpi;

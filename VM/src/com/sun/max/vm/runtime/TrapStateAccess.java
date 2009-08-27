@@ -54,12 +54,13 @@ public abstract class TrapStateAccess {
     public static TrapStateAccess create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
-            final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name() + "." + isa + TrapStateAccess.class.getSimpleName());
-            final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
+            final Class<?> trapStateAccessClass = Class.forName(MaxPackage.fromClass(TrapStateAccess.class).subPackage(isa.toLowerCase()).name()
+                                                  + "." + isa + TrapStateAccess.class.getSimpleName());
+            final Constructor<?> constructor = trapStateAccessClass.getConstructor(VMConfiguration.class);
             return (TrapStateAccess) constructor.newInstance(vmConfiguration);
         } catch (Exception exception) {
             exception.printStackTrace();
-            throw ProgramError.unexpected("could not create safepoint: " + exception);
+            throw ProgramError.unexpected("could not create TrapStateAccess: " + exception);
         }
     }
 

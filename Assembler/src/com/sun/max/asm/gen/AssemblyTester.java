@@ -21,7 +21,6 @@
 package com.sun.max.asm.gen;
 
 import java.io.*;
-import java.lang.management.*;
 import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -712,7 +711,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
             // Don't go parallel when using ssh as the max number of ssh connections on the remote host will most likely be a problem
             numberOfWorkerThreads = 1;
         } else {
-            numberOfWorkerThreads = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+            numberOfWorkerThreads = Runtime.getRuntime().availableProcessors();
         }
         final ThreadPoolExecutor compilerService = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfWorkerThreads);
 
