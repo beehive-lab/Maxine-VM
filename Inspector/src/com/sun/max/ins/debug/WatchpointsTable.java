@@ -34,6 +34,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
@@ -124,6 +125,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
             this.viewPreferences = viewPreferences;
+            createColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
             createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
@@ -171,6 +173,7 @@ public final class WatchpointsTable extends InspectorTable {
         public Object getValueAt(int row, int col) {
             final MaxWatchpoint watchpoint = rowToWatchpoint(row);
             switch (WatchpointsColumnKind.VALUES.get(col)) {
+                case TAG:
                 case START:
                 case SIZE:
                 case END:
@@ -307,6 +310,62 @@ public final class WatchpointsTable extends InspectorTable {
         return style().defaultTextBackgroundColor();
     }
 
+    private final class TagCellRenderer extends JLabel implements TableCellRenderer, Prober {
+
+        TagCellRenderer(Inspection inspection) {
+            super("");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
+            JLabel label = this;
+            String labelText = "";
+            String toolTipText = "";
+            setFont(inspection().style().defaultTextFont());
+            // See if any registers point here
+            final MaxThread thread = inspection().focus().thread();
+            if (thread != null) {
+                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
+                if (teleIntegerRegisters == null) {
+                    // Return a specialized renderer with its own content.
+                    label = inspection().gui().getUnavailableDataTableCellRenderer();
+                } else {
+                    final String registerNameList = teleIntegerRegisters.findAsNameList(watchpoint);
+                    if (registerNameList.isEmpty()) {
+                        label.setForeground(inspection().style().memoryDefaultTagTextColor());
+                    } else {
+                        labelText += registerNameList + "-->";
+                        toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
+                        setForeground(inspection().style().memoryRegisterTagTextColor());
+                    }
+                }
+            }
+            // If a watchpoint is currently triggered here, add a pointer icon.
+            final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+            if (watchpointEvent != null && model.rowToWatchpoint(row).contains(watchpointEvent.address())) {
+                label.setIcon(inspection().style().debugIPTagIcon());
+                label.setForeground(inspection().style().debugIPTagColor());
+            } else {
+                label.setIcon(null);
+                label.setForeground(inspection().style().defaultTextColor());
+            }
+            label.setText(labelText);
+            label.setToolTipText(toolTipText);
+            return label;
+        }
+
+        @Override
+        public void redisplay() {
+        }
+
+        @Override
+        public void refresh(boolean force) {
+        }
+
+    }
+
+
+
     private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 
         private final Inspection inspection;
@@ -378,6 +437,7 @@ public final class WatchpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(watchpoint.size().toInt());
+            setForeground(getRowTextColor(row));
             setBackground(getRowBackgroundColor(row));
             return this;
         }

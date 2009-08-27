@@ -41,7 +41,6 @@ import com.sun.max.util.*;
  * Contains multiple instances of {@link Inspector} in a {@link JDesktopPane}.
  *
  * @author Michael Van De Vanter
- *
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
@@ -67,7 +66,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * @param inspection the inspection's main state: {@link Inspection#actions()} and
      * {@link Inspection#settings()} must already be initialized.
      * @param inspectorName the name to display on the window.
-     * @param nameDisplay TODO
+     * @param nameDisplay provides standard naming service
      * @param settings settings manager for the session, already initialized
      * @param actions available for the session, already initialized
      */
@@ -167,9 +166,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         repaint();
     }
 
-    /**
-     * Removes and disposes all top-level instances of {@link Inspector} in the GUI display.
-     */
     public void removeInspectors(Predicate<Inspector> predicate) {
         for (int i = desktopPane.getComponentCount() - 1; i >= 0; i--) {
             // Delete backwards so that the indices don't change
@@ -226,41 +222,22 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         }
     }
 
-    /**
-     * Displays an information message in a modal dialog with specified frame title.
-     */
     public void informationMessage(String message, String title) {
         JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
-    /**
-     * Displays an information message in a modal dialog with default frame title.
-     */
     public void informationMessage(String message) {
         informationMessage(message, inspection.currentActionTitle());
     }
 
-    /**
-     * Displays an error message in a modal dialog with specified frame title.
-     */
     public void errorMessage(String message, String title) {
         JOptionPane.showMessageDialog(desktopPane, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    /**
-     * Displays an error message in a modal dialog with default frame title.
-     */
     public void errorMessage(String message) {
         errorMessage(message, inspection.currentActionTitle());
     }
 
-    /**
-     * Collects textual input from user.
-     *
-     * @param message a prompt
-     * @param initialValue an initial value
-     * @return text typed by user
-     */
     public String inputDialog(String message, String initialValue) {
         return JOptionPane.showInputDialog(desktopPane, message, initialValue);
     }
@@ -269,11 +246,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return JOptionPane.showConfirmDialog(this, message, inspection.currentActionTitle(), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
-    /**
-     * Displays a message and invites text input from user in a modal dialog.
-     *
-     * @return text typed by user.
-     */
     public String questionMessage(String message) {
         return JOptionPane.showInputDialog(desktopPane, message, inspection.currentActionTitle(), JOptionPane.QUESTION_MESSAGE);
     }
@@ -287,9 +259,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         setLocationRelativeToMouse(inspector, inspection.geometry().defaultNewFrameXOffset(), inspection.geometry().defaultNewFrameYOffset());
     }
 
-    /**
-     * Set frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
-     */
     public void setLocationRelativeToMouse(Inspector inspector, int offset) {
         setLocationRelativeToMouse(inspector, offset, offset);
     }
