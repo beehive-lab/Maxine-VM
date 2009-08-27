@@ -152,7 +152,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         usesRegisterWindow = abi.targetABI().usesRegisterWindows();
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling().minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
+        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
         stack.setSP(topSP);
         writeRegister(abi.stackPointer(), new WordValue(topSP));
 
@@ -221,7 +221,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
             final Address sp = stack().sp();
             int undefinedSlots = 0;
 
-            for (Address address = stack().ceiling().minus(stackSlotSize()); address.greaterEqual(stack().sp()); address = address.minus(stackSlotSize())) {
+            for (Address address = stack().ceiling.minus(stackSlotSize()); address.greaterEqual(stack().sp()); address = address.minus(stackSlotSize())) {
                 final Value value = stack().read(address);
                 if (value == null) {
                     undefinedSlots++;
