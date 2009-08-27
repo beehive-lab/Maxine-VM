@@ -479,23 +479,30 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // their literal base. Instead, they can blindly load at  FP - 8. When the caller is an adapter, this is harmless (it loads
             // an arbitrary value off the floating point temp area).
             assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
-
             final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
+            if (largeFrame) {
+                try {
+                    assembler().setuw(jitedCodeFrameSize, jitScratchRegister);
+                } catch (AssemblyException e) {
+                    FatalError.unexpected("AssemblerException emitting setuw.");
+                }
+            }
             assembler().call(methodEntryPoint);
             if (jitedCodeFrameSize > 0) {
                 if (largeFrame) {
-                    assembler().sethi(assembler().hi(jitedCodeFrameSize), jitScratchRegister);
+                    assembler().sub(optimizedCodeStackPointer, jitScratchRegister, optimizedCodeStackPointer);
                 } else {
                     assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
                 }
             } else {
-                assembler().nop();
+                assembler().nop();  // delay slot
             }
+
             // Return from the adapter frame
             assembler().bindLabel(adapterReturnPoint);
             // The %i7 and %i6 were untouched by JIT-ed code and still comprises, respectively, the caller's PC and stack pointer.
-            // Results by the JITed code follows the JIT calling convention and are stored in  %o0 and %f0.
-            // We need to move %o0 in the %o0 of the caller's window.
+            // Results by the JITed code follows the JIT calling convention and are stored in %o0 and %f0.
+            // We need to move %o0 to the %o0 of the caller's window.
             assembler().ret();
             assembler().restore(GPR.O0, GPR.G0, GPR.O0);
             assembler().bindLabel(jitEntryPoint);

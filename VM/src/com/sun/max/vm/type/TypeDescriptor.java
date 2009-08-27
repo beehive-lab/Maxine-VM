@@ -245,7 +245,7 @@ public abstract class TypeDescriptor extends Descriptor {
             }
 
             final boolean result = !MaxineVM.isPrototypeOnly(javaClass) &&
-                                   MaxineVM.target().configuration().isMaxineVMPackage(MaxPackage.fromClass(javaClass));
+                                   MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass));
 //            if (!result) {
 //                if (com.sun.max.Package.contains(javaClass)) {
 //                    if (_suspiciousReferencesByHolder == null) {
