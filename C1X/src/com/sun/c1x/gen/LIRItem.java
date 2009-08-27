@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.gen;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra
@@ -80,13 +80,13 @@ public class LIRItem {
         }
     }
 
-    public void loadForStore(BasicType type) {
+    public void loadForStore(CiKind type) {
         if (gen.canStoreAsConstant(value(), type)) {
             result = value().operand();
             if (!result.isConstant()) {
                 result = LIROperandFactory.basicType(value());
             }
-        } else if (type == BasicType.Byte || type == BasicType.Boolean) {
+        } else if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();
@@ -138,7 +138,7 @@ public class LIRItem {
             if (!res.isVirtual() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
                 // make sure that it is a byte register
                 assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
-                LIROperand reg = gen.rlockByte(BasicType.Byte);
+                LIROperand reg = gen.rlockByte(CiKind.Byte);
                 lir().move(res, reg);
                 result = reg;
             }

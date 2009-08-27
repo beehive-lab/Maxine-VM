@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>OsrEntry</code> instruction represents the entrypoint for an OSR.
@@ -34,7 +34,7 @@ public class OsrEntry extends Instruction {
      */
     public OsrEntry() {
         // TODO: this should be a BasicType.Word
-        super(BasicType.Jsr);
+        super(CiKind.Jsr);
     }
 
     /**

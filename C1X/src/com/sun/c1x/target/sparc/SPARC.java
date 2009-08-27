@@ -20,23 +20,16 @@
  */
 package com.sun.c1x.target.sparc;
 
-import com.sun.c1x.target.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.ci.*;
 
 /**
  *
  * @author Thomas Wuerthinger
  *
  */
-public class SPARC extends Architecture {
+public class SPARC extends CiArchitecture {
 
-    protected SPARC(String name, int wordSize, Register[] registers) {
+    protected SPARC(String name, int wordSize, CiRegister[] registers) {
         super(name, wordSize, "sparc", BitOrdering.BigEndian, registers, 0, 0, 8);
     }
-
-    @Override
-    public Backend getBackend(Target target) {
-        throw Util.unimplemented();
-    }
-
 }

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafeObjectOp</code> class is the base of all unsafe object instructions.
@@ -41,7 +41,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @param isStore <code>true</code> if this is a store operation
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafeObjectOp(BasicType basicType, Instruction object, Instruction offset, boolean isStore, boolean isVolatile) {
+    public UnsafeObjectOp(CiKind basicType, Instruction object, Instruction offset, boolean isStore, boolean isVolatile) {
         super(basicType, isStore);
         this.object = object;
         this.offset = offset;

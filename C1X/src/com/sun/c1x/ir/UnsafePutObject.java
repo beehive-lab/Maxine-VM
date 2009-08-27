@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafePutObject</code> instruction represents a unsafe write operation.
@@ -39,7 +39,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * @param value the instruction generating the value
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafePutObject(BasicType basicType, Instruction object, Instruction offset, Instruction value, boolean isVolatile) {
+    public UnsafePutObject(CiKind basicType, Instruction object, Instruction offset, Instruction value, boolean isVolatile) {
         super(basicType, object, offset, true, isVolatile);
         this.value = value;
     }

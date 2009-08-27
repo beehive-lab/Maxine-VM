@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -43,7 +44,7 @@ public abstract class BlockEnd extends Instruction {
      * @param stateAfter the value stack after the end of this block
      * @param isSafepoint <code>true</code> if this instruction is a safepoint instruction
      */
-    public BlockEnd(BasicType type, ValueStack stateAfter, boolean isSafepoint) {
+    public BlockEnd(CiKind type, ValueStack stateAfter, boolean isSafepoint) {
         super(type);
         this.successors = new ArrayList<BlockBegin>(2);
         this.stateAfter = stateAfter;

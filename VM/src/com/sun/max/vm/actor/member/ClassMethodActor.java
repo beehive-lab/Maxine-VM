@@ -69,6 +69,8 @@ public abstract class ClassMethodActor extends MethodActor {
     @INSPECTED
     public volatile Object targetState;
 
+    private CodeAttribute originalCodeAttribute;
+
     private ClassMethodActor compilee;
 
     /**
@@ -79,6 +81,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
         super(name, descriptor, flags);
+        this.originalCodeAttribute = codeAttribute;
         this.codeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
     }
@@ -132,8 +135,8 @@ public abstract class ClassMethodActor extends MethodActor {
      * Note: This method must not be synchronized as it is called by a GC thread during stack walking.
      * @return the raw code attribute
      */
-    public final CodeAttribute rawCodeAttribute() {
-        return codeAttribute;
+    public final CodeAttribute originalCodeAttribute() {
+        return originalCodeAttribute;
     }
 
     /**

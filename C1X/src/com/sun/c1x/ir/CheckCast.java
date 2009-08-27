@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -41,8 +42,8 @@ public class CheckCast extends TypeCheck {
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(RiType targetClass, Instruction object, ValueStack stateBefore) {
-        super(targetClass, object, BasicType.Object, stateBefore);
+    public CheckCast(RiType targetClass, Instruction targetClassInstruction, Instruction object, ValueStack stateBefore) {
+        super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }
 

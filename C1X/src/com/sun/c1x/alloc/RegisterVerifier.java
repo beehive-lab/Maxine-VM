@@ -23,10 +23,10 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -219,7 +219,7 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                throw new Bailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.regNum() + " but interval " + inputState.get(reg));
+                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.regNum() + " but interval " + inputState.get(reg));
             }
         }
         return true;
@@ -255,7 +255,7 @@ public class RegisterVerifier {
 
             // invalidate all caller save registers at calls
             if (visitor.hasCall()) {
-                for (Register r : allocator.compilation.target.callerSavedRegisters) {
+                for (CiRegister r : allocator.compilation.target.callerSavedRegisters) {
                     statePut(inputState, r.number, null);
                 }
             }

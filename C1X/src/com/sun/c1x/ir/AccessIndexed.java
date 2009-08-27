@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -32,7 +33,7 @@ public abstract class AccessIndexed extends AccessArray {
 
     Instruction index;
     Instruction length;
-    final BasicType elementType;
+    final CiKind elementType;
 
     /**
      * Create an new AccessIndexed instruction.
@@ -42,7 +43,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param elementType the type of the elements of the array
      * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack stateBefore) {
+    AccessIndexed(Instruction array, Instruction index, Instruction length, CiKind elementType, ValueStack stateBefore) {
         super(elementType.stackType(), array, stateBefore);
         this.index = index;
         this.length = length;
@@ -69,7 +70,7 @@ public abstract class AccessIndexed extends AccessArray {
      * Gets the element type of the array.
      * @return the element type
      */
-    public BasicType elementType() {
+    public CiKind elementType() {
         return elementType;
     }
 

@@ -8288,6 +8288,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_except_Except_Synchronized00() {
+        JavaTesterRunScheme.begin("jtt.except.Except_Synchronized00");
+        String runString = null;
+        try {
+        // (0) == 0
+            runString = "(0)";
+            if (0 != jtt.except.Except_Synchronized00.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 2
+            runString = "(1)";
+            if (2 != jtt.except.Except_Synchronized00.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_except_Except_Synchronized01() {
         JavaTesterRunScheme.begin("jtt.except.Except_Synchronized01");
         String runString = null;
@@ -12838,90 +12860,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_max_ImmortalHeap_allocation() {
-        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_allocation");
-        String runString = null;
-        try {
-        // (4) == true
-            runString = "(4)";
-            if (true != jtt.max.ImmortalHeap_allocation.test(4)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (8) == true
-            runString = "(8)";
-            if (true != jtt.max.ImmortalHeap_allocation.test(8)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (10) == true
-            runString = "(10)";
-            if (true != jtt.max.ImmortalHeap_allocation.test(10)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (100) == true
-            runString = "(100)";
-            if (true != jtt.max.ImmortalHeap_allocation.test(100)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_max_ImmortalHeap_switching() {
-        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_switching");
-        String runString = null;
-        try {
-        // (10) == true
-            runString = "(10)";
-            if (true != jtt.max.ImmortalHeap_switching.test(10)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (20) == true
-            runString = "(20)";
-            if (true != jtt.max.ImmortalHeap_switching.test(20)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_max_Unsigned_idiv01() {
-        JavaTesterRunScheme.begin("jtt.max.Unsigned_idiv01");
-        String runString = null;
-        try {
-        // (-1,4) == 1073741823
-            runString = "(-1,4)";
-            if (1073741823 != jtt.max.Unsigned_idiv01.test(-1, 4)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (6,3) == 2
-            runString = "(6,3)";
-            if (2 != jtt.max.Unsigned_idiv01.test(6, 3)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (65535,16) == 4095
-            runString = "(65535,16)";
-            if (4095 != jtt.max.Unsigned_idiv01.test(65535, 16)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
     static void jtt_micro_ArrayCompare01() {
         JavaTesterRunScheme.begin("jtt.micro.ArrayCompare01");
         String runString = null;
@@ -15905,6 +15843,68 @@ public class JavaTesterTests {
         // (0) == 23
             runString = "(0)";
             if (23 != jtt.optimize.NCE_04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive01() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive01");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (null != jtt.optimize.NCE_FlowSensitive01.test(null)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive01.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive01.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive02() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive02");
+        String runString = null;
+        try {
+        // (null) == !java.lang.NullPointerException
+            try {
+                runString = "(null)";
+                jtt.optimize.NCE_FlowSensitive02.test(null);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive02.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive02.test("yay"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

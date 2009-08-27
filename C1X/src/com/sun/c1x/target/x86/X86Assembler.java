@@ -24,7 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -76,16 +76,16 @@ public abstract class X86Assembler extends AbstractAssembler {
         private static final int REXWRXB = 0x4F;
     }
 
-    public X86Assembler(Target target) {
+    public X86Assembler(CiTarget target) {
         super(target);
     }
 
-    private static int encode(Register r) {
+    private static int encode(CiRegister r) {
         assert r.encoding < 16;
         return r.encoding & 0x7;
     }
 
-    void emitArithB(int op1, int op2, Register dst, int imm8) {
+    void emitArithB(int op1, int op2, CiRegister dst, int imm8) {
         assert dst.isByte() : "must have byte register";
         assert Util.isByte(op1) && Util.isByte(op2) : "wrong opcode";
         assert Util.isByte(imm8) : "not a byte";
@@ -95,7 +95,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(imm8);
     }
 
-    void emitArith(int op1, int op2, Register dst, int imm32) {
+    void emitArith(int op1, int op2, CiRegister dst, int imm32) {
         assert Util.isByte(op1) && Util.isByte(op2) : "wrong opcode";
         assert (op1 & 0x01) == 1 : "should be 32bit operation";
         assert (op1 & 0x02) == 0 : "sign-extension bit should not be set";
@@ -111,7 +111,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     // immediate-to-memory forms
-    void emitArithOperand(int op1, Register rm, Address adr, int imm32) {
+    void emitArithOperand(int op1, CiRegister rm, Address adr, int imm32) {
         assert (op1 & 0x01) == 1 : "should be 32bit operation";
         assert (op1 & 0x02) == 0 : "sign-extension bit should not be set";
         if (Util.is8bit(imm32)) {
@@ -125,7 +125,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public void testptr(Register src, int imm32) {
+    public void testptr(CiRegister src, int imm32) {
         if (target.arch.is64bit()) {
             testq(src, imm32);
         } else {
@@ -133,22 +133,22 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void emitArith(int op1, int op2, Register dst, Register src) {
+    void emitArith(int op1, int op2, CiRegister dst, CiRegister src) {
         assert Util.isByte(op1) && Util.isByte(op2) : "wrong opcode";
         emitByte(op1);
         emitByte(op2 | encode(dst) << 3 | encode(src));
     }
 
-    void emitOperandHelper(Register reg, Address addr) {
+    void emitOperandHelper(CiRegister reg, Address addr) {
 
-        Register base = addr.base;
-        Register index = addr.index;
+        CiRegister base = addr.base;
+        CiRegister index = addr.index;
         Address.ScaleFactor scale = addr.scale;
         int disp = addr.disp;
 
         // Encode the registers as needed in the fields they are used in
 
-        assert reg != Register.noreg;
+        assert reg != CiRegister.noreg;
 
         int regenc = encode(reg) << 3;
         int indexenc = index.isValid() ? encode(index) << 3 : 0;
@@ -247,21 +247,21 @@ public abstract class X86Assembler extends AbstractAssembler {
         return adjusted == (int) adjusted;
     }
 
-    void emitOperand32(Register reg, Address adr) {
+    void emitOperand32(CiRegister reg, Address adr) {
         assert reg.encoding < 8 : "no extended registers";
         assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
     }
 
-    void emitOperand(Register reg, Address adr, int ripRelativeCorrection) {
+    void emitOperand(CiRegister reg, Address adr, int ripRelativeCorrection) {
         emitOperand(reg, adr);
     }
 
-    void emitOperand(Register reg, Address adr) {
+    void emitOperand(CiRegister reg, Address adr) {
         emitOperandHelper(reg, adr);
     }
 
-    void emitOperand(Address adr, Register reg) {
+    void emitOperand(Address adr, CiRegister reg) {
         assert reg.isXMM();
         assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
@@ -276,18 +276,18 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     // Now the Assembler instruction (identical for 32/64 bits)
 
-    public final void adcl(Register dst, int imm32) {
+    public final void adcl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xD0, dst, imm32);
     }
 
-    public final void adcl(Register dst, Address src) {
+    public final void adcl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x13);
         emitOperand(dst, src);
     }
 
-    public final void adcl(Register dst, Register src) {
+    public final void adcl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x13, 0xC0, dst, src);
     }
@@ -297,24 +297,24 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitArithOperand(0x81, X86.rax, dst, imm32);
     }
 
-    public final void addl(Address dst, Register src) {
+    public final void addl(Address dst, CiRegister src) {
         prefix(dst, src);
         emitByte(0x01);
         emitOperand(src, dst);
     }
 
-    public final void addl(Register dst, int imm32) {
+    public final void addl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xC0, dst, imm32);
     }
 
-    public final void addl(Register dst, Address src) {
+    public final void addl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x03);
         emitOperand(dst, src);
     }
 
-    public final void addl(Register dst, Register src) {
+    public final void addl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x03, 0xC0, dst, src);
     }
@@ -353,7 +353,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(0); // 32-bits offset (4 bytes)
     }
 
-    public final void addsd(Register dst, Register src) {
+    public final void addsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM() && src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -363,7 +363,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void addsd(Register dst, Address src) {
+    public final void addsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -373,7 +373,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void addss(Register dst, Register src) {
+    public final void addss(CiRegister dst, CiRegister src) {
         assert dst.isXMM() && src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -383,7 +383,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void addss(Register dst, Address src) {
+    public final void addss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -393,23 +393,23 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void andl(Register dst, int imm32) {
+    public final void andl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xE0, dst, imm32);
     }
 
-    public final void andl(Register dst, Address src) {
+    public final void andl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x23);
         emitOperand(dst, src);
     }
 
-    public final void andl(Register dst, Register src) {
+    public final void andl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x23, 0xC0, dst, src);
     }
 
-    public final void andpd(Register dst, Address src) {
+    public final void andpd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0x66);
@@ -419,14 +419,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void bsfl(Register dst, Register src) {
+    public final void bsfl(CiRegister dst, CiRegister src) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBC);
         emitByte(0xC0 | encode);
     }
 
-    public final void bsrl(Register dst, Register src) {
+    public final void bsrl(CiRegister dst, CiRegister src) {
         assert !target.supportsLzcnt() : "encoding is treated as LZCNT";
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -434,7 +434,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void bswapl(Register reg) { // bswap
+    public final void bswapl(CiRegister reg) { // bswap
         int encode = prefixAndEncode(reg.encoding);
         emitByte(0x0F);
         emitByte(0xC8 | encode);
@@ -458,7 +458,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void call(Register dst) {
+    public final void call(CiRegister dst) {
         // this may be true but dbx disassembles it as if it
         // were 32bits...
         // int encode = prefixAndEncode(dst.encoding());
@@ -524,7 +524,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x99);
     }
 
-    public final void cmovl(Condition cc, Register dst, Register src) {
+    public final void cmovl(Condition cc, CiRegister dst, CiRegister src) {
         assert target.arch.is64bit() || target.supportsCmov() : "illegal instruction";
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -532,7 +532,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cmovl(Condition cc, Register dst, Address src) {
+    public final void cmovl(Condition cc, CiRegister dst, Address src) {
         assert target.arch.is64bit() || target.supportsCmov() : "illegal instruction";
         prefix(src, dst);
         emitByte(0x0F);
@@ -554,17 +554,17 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void cmpl(Register dst, int imm32) {
+    public final void cmpl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xF8, dst, imm32);
     }
 
-    public final void cmpl(Register dst, Register src) {
+    public final void cmpl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x3B, 0xC0, dst, src);
     }
 
-    public final void cmpl(Register dst, Address src) {
+    public final void cmpl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x3B);
         emitOperand(dst, src);
@@ -583,7 +583,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     // The 32-bit cmpxchg compares the value at adr with the contents of X86.rax,
     // and stores reg into adr if so; otherwise, the value at adr is loaded into X86.rax,.
     // The ZF is set if the compared values were equal, and cleared otherwise.
-    public final void cmpxchgl(Register reg, Address adr) { // cmpxchg
+    public final void cmpxchgl(CiRegister reg, Address adr) { // cmpxchg
         if ((C1XOptions.Atomics & 2) != 0) {
             // caveat: no instructionmark, so this isn't relocatable.
             // Emit a synthetic, non-atomic, CAS equivalent.
@@ -606,7 +606,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void comisd(Register dst, Address src) {
+    public final void comisd(CiRegister dst, Address src) {
         assert dst.isXMM();
         // NOTE: dbx seems to decode this as comiss even though the
         // 0x66 is there. Strangly ucomisd comes out correct
@@ -615,7 +615,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         comiss(dst, src);
     }
 
-    public final void comiss(Register dst, Address src) {
+    public final void comiss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
 
@@ -625,7 +625,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void cvtdq2pd(Register dst, Register src) {
+    public final void cvtdq2pd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -636,7 +636,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtdq2ps(Register dst, Register src) {
+    public final void cvtdq2ps(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -646,7 +646,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtsd2ss(Register dst, Register src) {
+    public final void cvtsd2ss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -657,7 +657,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtsi2sdl(Register dst, Register src) {
+    public final void cvtsi2sdl(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -667,7 +667,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtsi2ssl(Register dst, Register src) {
+    public final void cvtsi2ssl(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -677,7 +677,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtss2sd(Register dst, Register src) {
+    public final void cvtss2sd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -688,7 +688,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvttsd2sil(Register dst, Register src) {
+    public final void cvttsd2sil(CiRegister dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -698,7 +698,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvttss2sil(Register dst, Register src) {
+    public final void cvttss2sil(CiRegister dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -715,7 +715,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rcx, dst);
     }
 
-    public final void divsd(Register dst, Address src) {
+    public final void divsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -725,7 +725,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void divsd(Register dst, Register src) {
+    public final void divsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -736,7 +736,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void divss(Register dst, Address src) {
+    public final void divss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -746,7 +746,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void divss(Register dst, Register src) {
+    public final void divss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
@@ -767,20 +767,20 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xF4);
     }
 
-    public final void idivl(Register src) {
+    public final void idivl(CiRegister src) {
         int encode = prefixAndEncode(src.encoding);
         emitByte(0xF7);
         emitByte(0xF8 | encode);
     }
 
-    public final void imull(Register dst, Register src) {
+    public final void imull(CiRegister dst, CiRegister src) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xAF);
         emitByte(0xC0 | encode);
     }
 
-    public final void imull(Register dst, Register src, int value) {
+    public final void imull(CiRegister dst, CiRegister src, int value) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         if (Util.is8bit(value)) {
             emitByte(0x6B);
@@ -882,7 +882,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void jmp(Register entry) {
+    public final void jmp(CiRegister entry) {
         int encode = prefixAndEncode(entry.encoding);
         emitByte(0xFF);
         emitByte(0xE0 | encode);
@@ -904,7 +904,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void leal(Register dst, Address src) {
+    public final void leal(CiRegister dst, Address src) {
         if (target.arch.is64bit()) {
             emitByte(0x67); // addr32
             prefix(src, dst);
@@ -922,7 +922,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void lzcntl(Register dst, Register src) {
+    public final void lzcntl(CiRegister dst, CiRegister src) {
         assert target.supportsLzcnt() : "encoding is treated as BSR";
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -939,7 +939,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xF0);
     }
 
-    public final void mov(Register dst, Register src) {
+    public final void mov(CiRegister dst, CiRegister src) {
         if (target.arch.is64bit()) {
             movq(dst, src);
         } else {
@@ -947,7 +947,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movapd(Register dst, Register src) {
+    public final void movapd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
@@ -973,7 +973,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | dstenc << 3 | srcenc);
     }
 
-    public final void movaps(Register dst, Register src) {
+    public final void movaps(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
@@ -998,7 +998,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | dstenc << 3 | srcenc);
     }
 
-    public final void movb(Register dst, Address src) {
+    public final void movb(CiRegister dst, Address src) {
         assert target.arch.is64bit() || dst.isByte() : "must have byte register";
         prefix(src, dst); // , true)
         emitByte(0x8A);
@@ -1012,14 +1012,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(imm8);
     }
 
-    public final void movb(Address dst, Register src) {
+    public final void movb(Address dst, CiRegister src) {
         assert src.isByte() : "must have byte register";
         prefix(dst, src); // , true)
         emitByte(0x88);
         emitOperand(src, dst);
     }
 
-    public final void movdl(Register dst, Register src) {
+    public final void movdl(CiRegister dst, CiRegister src) {
         if (dst.isXMM()) {
             assert dst.isXMM();
             assert !src.isXMM() : "does this hold?";
@@ -1042,7 +1042,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movdqa(Register dst, Address src) {
+    public final void movdqa(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0x66);
@@ -1052,7 +1052,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void movdqa(Register dst, Register src) {
+    public final void movdqa(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0x66);
@@ -1062,7 +1062,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movdqa(Address dst, Register src) {
+    public final void movdqa(Address dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0x66);
@@ -1072,7 +1072,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(src, dst);
     }
 
-    public final void movdqu(Register dst, Address src) {
+    public final void movdqu(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0xF3);
@@ -1082,7 +1082,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void movdqu(Register dst, Register src) {
+    public final void movdqu(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
@@ -1094,7 +1094,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movdqu(Address dst, Register src) {
+    public final void movdqu(Address dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
 
@@ -1105,19 +1105,19 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(src, dst);
     }
 
-    public final void movl(Register dst, int imm32) {
+    public final void movl(CiRegister dst, int imm32) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xB8 | encode);
         emitInt(imm32);
     }
 
-    public final void movl(Register dst, Register src) {
+    public final void movl(CiRegister dst, CiRegister src) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x8B);
         emitByte(0xC0 | encode);
     }
 
-    public final void movl(Register dst, Address src) {
+    public final void movl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x8B);
         emitOperand(dst, src);
@@ -1130,7 +1130,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void movl(Address dst, Register src) {
+    public final void movl(Address dst, CiRegister src) {
         prefix(dst, src);
         emitByte(0x89);
         emitOperand(src, dst);
@@ -1139,7 +1139,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     // New cpus require to use movsd and movss to avoid partial register stall
     // when loading from memory. But for old Opteron use movlpd instead of movsd.
     // The selection is done in Macromovdbl() and movflt().
-    public final void movlpd(Register dst, Address src) {
+    public final void movlpd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
 
@@ -1151,7 +1151,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void movq(Register dst, Address src) {
+    public final void movq(CiRegister dst, Address src) {
         if (dst.isMMX()) {
             assert dst.isMMX();
             assert target.supportsMMX() : "unsupported";
@@ -1173,13 +1173,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movq(Register dst, Register src) {
+    public final void movq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x8B);
         emitByte(0xC0 | encode);
     }
 
-    public final void movq(Address dst, Register src) {
+    public final void movq(Address dst, CiRegister src) {
         if (src.isMMX()) {
             assert src.isMMX();
             assert target.supportsMMX() : "unsupported";
@@ -1209,14 +1209,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movsbl(Register dst, Address src) { // movsxb
+    public final void movsbl(CiRegister dst, Address src) { // movsxb
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xBE);
         emitOperand(dst, src);
     }
 
-    public final void movsbl(Register dst, Register src) { // movsxb
+    public final void movsbl(CiRegister dst, CiRegister src) { // movsxb
         assert target.arch.is64bit() || src.isByte() : "must have byte register";
         int encode = prefixAndEncode(dst.encoding, src.encoding, true);
         emitByte(0x0F);
@@ -1224,7 +1224,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movsd(Register dst, Register src) {
+    public final void movsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
@@ -1235,7 +1235,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movsd(Register dst, Address src) {
+    public final void movsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0xF2);
@@ -1245,7 +1245,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void movsd(Address dst, Register src) {
+    public final void movsd(Address dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0xF2);
@@ -1255,7 +1255,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(src, dst);
     }
 
-    public final void movss(Register dst, Register src) {
+    public final void movss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
@@ -1266,7 +1266,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movss(Register dst, Address src) {
+    public final void movss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
         emitByte(0xF3);
@@ -1276,7 +1276,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void movss(Address dst, Register src) {
+    public final void movss(Address dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
         emitByte(0xF3);
@@ -1286,14 +1286,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(src, dst);
     }
 
-    public final void movswl(Register dst, Address src) {
+    public final void movswl(CiRegister dst, Address src) {
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xBF);
         emitOperand(dst, src);
     }
 
-    public final void movswl(Register dst, Register src) { // movsxw
+    public final void movswl(CiRegister dst, CiRegister src) { // movsxw
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBF);
@@ -1308,28 +1308,28 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitShort(imm16);
     }
 
-    public final void movw(Register dst, Address src) {
+    public final void movw(CiRegister dst, Address src) {
         emitByte(0x66);
         prefix(src, dst);
         emitByte(0x8B);
         emitOperand(dst, src);
     }
 
-    public final void movw(Address dst, Register src) {
+    public final void movw(Address dst, CiRegister src) {
         emitByte(0x66);
         prefix(dst, src);
         emitByte(0x89);
         emitOperand(src, dst);
     }
 
-    public final void movzbl(Register dst, Address src) { // movzxb
+    public final void movzbl(CiRegister dst, Address src) { // movzxb
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xB6);
         emitOperand(dst, src);
     }
 
-    public final void movzbl(Register dst, Register src) { // movzxb
+    public final void movzbl(CiRegister dst, CiRegister src) { // movzxb
         assert target.arch.is64bit() || src.isByte() : "must have byte register";
         int encode = prefixAndEncode(dst.encoding, src.encoding, true);
         emitByte(0x0F);
@@ -1337,14 +1337,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movzwl(Register dst, Address src) { // movzxw
+    public final void movzwl(CiRegister dst, Address src) { // movzxw
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xB7);
         emitOperand(dst, src);
     }
 
-    public final void movzwl(Register dst, Register src) { // movzxw
+    public final void movzwl(CiRegister dst, CiRegister src) { // movzxw
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xB7);
@@ -1357,13 +1357,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rsp, src);
     }
 
-    public final void mull(Register src) {
+    public final void mull(CiRegister src) {
         int encode = prefixAndEncode(src.encoding);
         emitByte(0xF7);
         emitByte(0xE0 | encode);
     }
 
-    public final void mulsd(Register dst, Address src) {
+    public final void mulsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
         emitByte(0xF2);
@@ -1373,7 +1373,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void mulsd(Register dst, Register src) {
+    public final void mulsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2() : "unsupported";
@@ -1385,7 +1385,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void mulss(Register dst, Address src) {
+    public final void mulss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
 
@@ -1396,7 +1396,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void mulss(Register dst, Register src) {
+    public final void mulss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE() : "unsupported";
@@ -1407,7 +1407,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void negl(Register dst) {
+    public final void negl(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xF7);
         emitByte(0xD8 | encode);
@@ -1707,7 +1707,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void notl(Register dst) {
+    public final void notl(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xF7);
         emitByte(0xD0 | encode);
@@ -1722,12 +1722,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void orl(Register dst, int imm32) {
+    public final void orl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xC8, dst, imm32);
     }
 
-    public final void orl(Register dst, Address src) {
+    public final void orl(CiRegister dst, Address src) {
 
         prefix(src, dst);
         emitByte(0x0B);
@@ -1735,12 +1735,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void orl(Register dst, Register src) {
+    public final void orl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x0B, 0xC0, dst, src);
     }
 
-    public final void pcmpestri(Register dst, Address src, int imm8) {
+    public final void pcmpestri(CiRegister dst, Address src, int imm8) {
         assert dst.isXMM();
         assert target.supportsSse42() : "";
 
@@ -1754,7 +1754,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void pcmpestri(Register dst, Register src, int imm8) {
+    public final void pcmpestri(CiRegister dst, CiRegister src, int imm8) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.supportsSse42() : "";
@@ -1769,12 +1769,12 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     // generic
-    public final void pop(Register dst) {
+    public final void pop(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0x58 | encode);
     }
 
-    public final void popcntl(Register dst, Address src) {
+    public final void popcntl(CiRegister dst, Address src) {
         assert target.supportsPopcnt() : "must support";
         emitByte(0xF3);
         prefix(src, dst);
@@ -1783,7 +1783,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void popcntl(Register dst, Register src) {
+    public final void popcntl(CiRegister dst, CiRegister src) {
         assert target.supportsPopcnt() : "must support";
         emitByte(0xF3);
         int encode = prefixAndEncode(dst.encoding, src.encoding);
@@ -1851,7 +1851,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rcx, src); // 1, src
     }
 
-    public final void pshufd(Register dst, Register src, int mode) {
+    public final void pshufd(CiRegister dst, CiRegister src, int mode) {
         assert dst.isXMM();
         assert src.isXMM();
         assert Util.isByte(mode) : "invalid value";
@@ -1865,7 +1865,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(mode & 0xFF);
     }
 
-    public final void pshufd(Register dst, Address src, int mode) {
+    public final void pshufd(CiRegister dst, Address src, int mode) {
         assert dst.isXMM();
         assert Util.isByte(mode) : "invalid value";
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -1879,7 +1879,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void pshuflw(Register dst, Register src, int mode) {
+    public final void pshuflw(CiRegister dst, CiRegister src, int mode) {
         assert dst.isXMM();
         assert src.isXMM();
         assert Util.isByte(mode) : "invalid value";
@@ -1893,7 +1893,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(mode & 0xFF);
     }
 
-    public final void pshuflw(Register dst, Address src, int mode) {
+    public final void pshuflw(CiRegister dst, Address src, int mode) {
         assert dst.isXMM();
         assert Util.isByte(mode) : "invalid value";
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -1906,7 +1906,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(mode & 0xFF);
     }
 
-    public final void psrlq(Register dst, int shift) {
+    public final void psrlq(CiRegister dst, int shift) {
         assert dst.isXMM();
         // HMM Table D-1 says sse2 or mmx
         assert target.arch.is64bit() || target.supportsSSE();
@@ -1919,7 +1919,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(shift);
     }
 
-    public final void ptest(Register dst, Address src) {
+    public final void ptest(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.supportsSse41() : "";
 
@@ -1932,7 +1932,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void ptest(Register dst, Register src) {
+    public final void ptest(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.supportsSse41() : "";
@@ -1945,7 +1945,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void punpcklbw(Register dst, Register src) {
+    public final void punpcklbw(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -1963,7 +1963,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void push(Register src) {
+    public final void push(CiRegister src) {
         int encode = prefixAndEncode(src.encoding);
         emitByte(0x50 | encode);
     }
@@ -1981,7 +1981,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void pxor(Register dst, Address src) {
+    public final void pxor(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
 
@@ -1993,7 +1993,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void pxor(Register dst, Register src) {
+    public final void pxor(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -2006,7 +2006,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void rcll(Register dst, int imm8) {
+    public final void rcll(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         if (imm8 == 1) {
@@ -2078,7 +2078,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x9E);
     }
 
-    public final void sarl(Register dst, int imm8) {
+    public final void sarl(CiRegister dst, int imm8) {
         int encode = prefixAndEncode(dst.encoding);
         assert Util.isShiftCount(imm8) : "illegal shift count";
         if (imm8 == 1) {
@@ -2091,7 +2091,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void sarl(Register dst) {
+    public final void sarl(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xF8 | encode);
@@ -2104,12 +2104,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void sbbl(Register dst, int imm32) {
+    public final void sbbl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xD8, dst, imm32);
     }
 
-    public final void sbbl(Register dst, Address src) {
+    public final void sbbl(CiRegister dst, Address src) {
 
         prefix(src, dst);
         emitByte(0x1B);
@@ -2117,12 +2117,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void sbbl(Register dst, Register src) {
+    public final void sbbl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x1B, 0xC0, dst, src);
     }
 
-    public final void setb(Condition cc, Register dst) {
+    public final void setb(Condition cc, CiRegister dst) {
         assert 0 <= cc.value && cc.value < 16 : "illegal cc";
         int encode = prefixAndEncode(dst.encoding, true);
         emitByte(0x0F);
@@ -2130,7 +2130,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void shll(Register dst, int imm8) {
+    public final void shll(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         if (imm8 == 1) {
@@ -2143,13 +2143,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void shll(Register dst) {
+    public final void shll(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xE0 | encode);
     }
 
-    public final void shrl(Register dst, int imm8) {
+    public final void shrl(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8) : "illegal shift count";
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xC1);
@@ -2157,7 +2157,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(imm8);
     }
 
-    public final void shrl(Register dst) {
+    public final void shrl(CiRegister dst) {
         int encode = prefixAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xE8 | encode);
@@ -2168,7 +2168,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xA5);
     }
 
-    public final void sqrtsd(Register dst, Register src) {
+    public final void sqrtsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         // HMM Table D-1 says sse2
@@ -2196,12 +2196,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void subl(Register dst, int imm32) {
+    public final void subl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xE8, dst, imm32);
     }
 
-    public final void subl(Address dst, Register src) {
+    public final void subl(Address dst, CiRegister src) {
 
         prefix(dst, src);
         emitByte(0x29);
@@ -2209,7 +2209,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void subl(Register dst, Address src) {
+    public final void subl(CiRegister dst, Address src) {
 
         prefix(src, dst);
         emitByte(0x2B);
@@ -2217,12 +2217,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void subl(Register dst, Register src) {
+    public final void subl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x2B, 0xC0, dst, src);
     }
 
-    public final void subsd(Register dst, Register src) {
+    public final void subsd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -2233,7 +2233,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void subsd(Register dst, Address src) {
+    public final void subsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
 
@@ -2245,7 +2245,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void subss(Register dst, Register src) {
+    public final void subss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
@@ -2256,7 +2256,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void subss(Register dst, Address src) {
+    public final void subss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
 
@@ -2268,13 +2268,13 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void testb(Register dst, int imm8) {
+    public final void testb(CiRegister dst, int imm8) {
         assert target.arch.is64bit() || dst.isByte() : "must have byte register";
         prefixAndEncode(dst.encoding, true);
         emitArithB(0xF6, 0xC0, dst, imm8);
     }
 
-    public final void testl(Register dst, int imm32) {
+    public final void testl(CiRegister dst, int imm32) {
         // not using emitArith because test
         // doesn't support sign-extension of
         // 8bit operands
@@ -2289,12 +2289,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void testl(Register dst, Register src) {
+    public final void testl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x85, 0xC0, dst, src);
     }
 
-    public final void testl(Register dst, Address src) {
+    public final void testl(CiRegister dst, Address src) {
 
         prefix(src, dst);
         emitByte(0x85);
@@ -2302,14 +2302,14 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void ucomisd(Register dst, Address src) {
+    public final void ucomisd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0x66);
         ucomiss(dst, src);
     }
 
-    public final void ucomisd(Register dst, Register src) {
+    public final void ucomisd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -2317,7 +2317,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         ucomiss(dst, src);
     }
 
-    public final void ucomiss(Register dst, Address src) {
+    public final void ucomiss(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
 
@@ -2328,7 +2328,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void ucomiss(Register dst, Register src) {
+    public final void ucomiss(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
@@ -2338,7 +2338,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void xaddl(Address dst, Register src) {
+    public final void xaddl(Address dst, CiRegister src) {
         assert src.isXMM();
 
         prefix(dst, src);
@@ -2348,7 +2348,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void xchgl(Register dst, Address src) { // xchg
+    public final void xchgl(CiRegister dst, Address src) { // xchg
 
         prefix(src, dst);
         emitByte(0x87);
@@ -2356,18 +2356,18 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void xchgl(Register dst, Register src) {
+    public final void xchgl(CiRegister dst, CiRegister src) {
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x87);
         emitByte(0xc0 | encode);
     }
 
-    public final void xorl(Register dst, int imm32) {
+    public final void xorl(CiRegister dst, int imm32) {
         prefix(dst);
         emitArith(0x81, 0xF0, dst, imm32);
     }
 
-    public final void xorl(Register dst, Address src) {
+    public final void xorl(CiRegister dst, Address src) {
 
         prefix(src, dst);
         emitByte(0x33);
@@ -2375,12 +2375,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void xorl(Register dst, Register src) {
+    public final void xorl(CiRegister dst, CiRegister src) {
         prefixAndEncode(dst.encoding, src.encoding);
         emitArith(0x33, 0xC0, dst, src);
     }
 
-    public final void xorpd(Register dst, Register src) {
+    public final void xorpd(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
@@ -2388,7 +2388,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         xorps(dst, src);
     }
 
-    public final void xorpd(Register dst, Address src) {
+    public final void xorpd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
 
@@ -2400,7 +2400,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void xorps(Register dst, Register src) {
+    public final void xorps(CiRegister dst, CiRegister src) {
 
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
@@ -2410,7 +2410,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void xorps(Register dst, Address src) {
+    public final void xorps(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
 
@@ -2436,7 +2436,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void decl(Register dst) {
+    public final void decl(CiRegister dst) {
         if (target.arch.is32bit()) {
             assert target.arch.is32bit();
             // Don't use it directly. Use Macrodecrementl() instead.
@@ -2453,7 +2453,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void incl(Register dst) {
+    public final void incl(CiRegister dst) {
         if (target.arch.is32bit()) {
             assert target.arch.is32bit();
             // Don't use it directly. Use Macroincrementl() instead.
@@ -2467,7 +2467,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void lea(Register dst, Address src) {
+    public final void lea(CiRegister dst, Address src) {
         if (target.arch.is32bit()) {
             assert target.arch.is32bit();
             leal(dst, src);
@@ -2543,21 +2543,21 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void setByteIfNotZero(Register dst) {
+    public final void setByteIfNotZero(CiRegister dst) {
         assert target.arch.is32bit();
         emitByte(0x0F);
         emitByte(0x95);
         emitByte(0xE0 | dst.encoding);
     }
 
-    public final void shldl(Register dst, Register src) {
+    public final void shldl(CiRegister dst, CiRegister src) {
         assert target.arch.is32bit();
         emitByte(0x0F);
         emitByte(0xA5);
         emitByte(0xC0 | src.encoding << 3 | dst.encoding);
     }
 
-    public final void shrdl(Register dst, Register src) {
+    public final void shrdl(CiRegister dst, CiRegister src) {
         assert target.arch.is32bit();
         emitByte(0x0F);
         emitByte(0xAD);
@@ -2648,7 +2648,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         return regEnc << 3 | rmEnc;
     }
 
-    private void prefix(Register reg) {
+    private void prefix(CiRegister reg) {
         if (reg.encoding >= 8) {
             emitByte(Prefix.REXB);
         }
@@ -2684,7 +2684,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    private void prefix(Address adr, Register reg) {
+    private void prefix(Address adr, CiRegister reg) {
 
         if (reg.encoding < 8) {
             if (adr.base.encoding >= MinEncodingNeedsRex) {
@@ -2717,7 +2717,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    void prefixq(Address adr, Register src) {
+    void prefixq(Address adr, CiRegister src) {
         if (src.encoding < 8) {
             if (adr.base.encoding >= MinEncodingNeedsRex) {
                 if (adr.index.encoding >= MinEncodingNeedsRex) {
@@ -2749,18 +2749,18 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void adcq(Register dst, int imm32) {
+    public final void adcq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xD0, dst, imm32);
     }
 
-    public final void adcq(Register dst, Address src) {
+    public final void adcq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x13);
         emitOperand(dst, src);
     }
 
-    public final void adcq(Register dst, Register src) {
+    public final void adcq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x13, 0xC0, dst, src);
     }
@@ -2770,52 +2770,52 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitArithOperand(0x81, X86.rax, dst, imm32);
     }
 
-    public final void addq(Address dst, Register src) {
+    public final void addq(Address dst, CiRegister src) {
         prefixq(dst, src);
         emitByte(0x01);
         emitOperand(src, dst);
     }
 
-    public final void addq(Register dst, int imm32) {
+    public final void addq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xC0, dst, imm32);
     }
 
-    public final void addq(Register dst, Address src) {
+    public final void addq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x03);
         emitOperand(dst, src);
     }
 
-    public final void addq(Register dst, Register src) {
+    public final void addq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x03, 0xC0, dst, src);
     }
 
-    public final void andq(Register dst, int imm32) {
+    public final void andq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xE0, dst, imm32);
     }
 
-    public final void andq(Register dst, Address src) {
+    public final void andq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x23);
         emitOperand(dst, src);
     }
 
-    public final void andq(Register dst, Register src) {
+    public final void andq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x23, 0xC0, dst, src);
     }
 
-    public final void bsfq(Register dst, Register src) {
+    public final void bsfq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBC);
         emitByte(0xC0 | encode);
     }
 
-    public final void bsrq(Register dst, Register src) {
+    public final void bsrq(CiRegister dst, CiRegister src) {
         assert !target.supportsLzcnt() : "encoding is treated as LZCNT";
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
@@ -2823,7 +2823,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void bswapq(Register reg) {
+    public final void bswapq(CiRegister reg) {
         int encode = prefixqAndEncode(reg.encoding);
         emitByte(0x0F);
         emitByte(0xC8 | encode);
@@ -2841,14 +2841,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rdi, adr);
     }
 
-    public final void cmovq(Condition cc, Register dst, Register src) {
+    public final void cmovq(Condition cc, CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0x40 | cc.value);
         emitByte(0xC0 | encode);
     }
 
-    public final void cmovq(Condition cc, Register dst, Address src) {
+    public final void cmovq(Condition cc, CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0F);
         emitByte(0x40 | cc.value);
@@ -2862,36 +2862,36 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void cmpq(Register dst, int imm32) {
+    public final void cmpq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xF8, dst, imm32);
     }
 
-    public final void cmpq(Address dst, Register src) {
+    public final void cmpq(Address dst, CiRegister src) {
         prefixq(dst, src);
         emitByte(0x3B);
         emitOperand(src, dst);
     }
 
-    public final void cmpq(Register dst, Register src) {
+    public final void cmpq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x3B, 0xC0, dst, src);
     }
 
-    public final void cmpq(Register dst, Address src) {
+    public final void cmpq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x3B);
         emitOperand(dst, src);
     }
 
-    public final void cmpxchgq(Register reg, Address adr) {
+    public final void cmpxchgq(CiRegister reg, Address adr) {
         prefixq(adr, reg);
         emitByte(0x0F);
         emitByte(0xB1);
         emitOperand(reg, adr);
     }
 
-    public final void cvtsi2sdq(Register dst, Register src) {
+    public final void cvtsi2sdq(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -2901,7 +2901,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvtsi2ssq(Register dst, Register src) {
+    public final void cvtsi2ssq(CiRegister dst, CiRegister src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -2911,7 +2911,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvttsd2siq(Register dst, Register src) {
+    public final void cvttsd2siq(CiRegister dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
         emitByte(0xF2);
@@ -2921,7 +2921,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void cvttss2siq(Register dst, Register src) {
+    public final void cvttss2siq(CiRegister dst, CiRegister src) {
         assert src.isXMM();
         assert target.arch.is64bit() || target.supportsSSE();
         emitByte(0xF3);
@@ -2931,7 +2931,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void decq(Register dst) {
+    public final void decq(CiRegister dst) {
         // Don't use it directly. Use Macrodecrementq() instead.
         // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
         int encode = prefixqAndEncode(dst.encoding);
@@ -2946,20 +2946,20 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rcx, dst);
     }
 
-    public final void idivq(Register src) {
+    public final void idivq(CiRegister src) {
         int encode = prefixqAndEncode(src.encoding);
         emitByte(0xF7);
         emitByte(0xF8 | encode);
     }
 
-    public final void imulq(Register dst, Register src) {
+    public final void imulq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xAF);
         emitByte(0xC0 | encode);
     }
 
-    public final void imulq(Register dst, Register src, int value) {
+    public final void imulq(CiRegister dst, CiRegister src, int value) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         if (Util.is8bit(value)) {
             emitByte(0x6B);
@@ -2972,7 +2972,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void incq(Register dst) {
+    public final void incq(CiRegister dst) {
         // Don't use it directly. Use Macroincrementq() instead.
         // Use two-byte form (one-byte from is a REX prefix in 64-bit mode)
         int encode = prefixqAndEncode(dst.encoding);
@@ -2987,19 +2987,19 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rax, dst);
     }
 
-    public final void leaq(Register dst, Address src) {
+    public final void leaq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x8D);
         emitOperand(dst, src);
     }
 
-    public final void mov64(Register dst, long imm64) {
+    public final void mov64(CiRegister dst, long imm64) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xB8 | encode);
         emitLong(imm64);
     }
 
-    public final void lzcntq(Register dst, Register src) {
+    public final void lzcntq(CiRegister dst, CiRegister src) {
         assert target.supportsLzcnt() : "encoding is treated as BSR";
         emitByte(0xF3);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
@@ -3008,7 +3008,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movdq(Register dst, Register src) {
+    public final void movdq(CiRegister dst, CiRegister src) {
 
         // table D-1 says MMX/SSE2
         assert target.arch.is64bit() || target.supportsSSE2() || target.supportsMMX();
@@ -3032,21 +3032,21 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movsbq(Register dst, Address src) {
+    public final void movsbq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0F);
         emitByte(0xBE);
         emitOperand(dst, src);
     }
 
-    public final void movsbq(Register dst, Register src) {
+    public final void movsbq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBE);
         emitByte(0xC0 | encode);
     }
 
-    public final void movslq(Register dst, int imm32) {
+    public final void movslq(CiRegister dst, int imm32) {
         // dbx shows movslq(X86.rcx, 3) as movq $0x0000000049000000,(%X86.rbx)
         // and movslq(X86.r8, 3); as movl $0x0000000048000000,(%X86.rbx)
         // as a result we shouldn't use until tested at runtime...
@@ -3069,67 +3069,67 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void movslq(Register dst, Address src) {
+    public final void movslq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x63);
         emitOperand(dst, src);
     }
 
-    public final void movslq(Register dst, Register src) {
+    public final void movslq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x63);
         emitByte(0xC0 | encode);
     }
 
-    public final void movswq(Register dst, Address src) {
+    public final void movswq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0F);
         emitByte(0xBF);
         emitOperand(dst, src);
     }
 
-    public final void movswq(Register dst, Register src) {
+    public final void movswq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBF);
         emitByte(0xC0 | encode);
     }
 
-    public final void movzbq(Register dst, Address src) {
+    public final void movzbq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0F);
         emitByte(0xB6);
         emitOperand(dst, src);
     }
 
-    public final void movzbq(Register dst, Register src) {
+    public final void movzbq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xB6);
         emitByte(0xC0 | encode);
     }
 
-    public final void movzwq(Register dst, Address src) {
+    public final void movzwq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0F);
         emitByte(0xB7);
         emitOperand(dst, src);
     }
 
-    public final void movzwq(Register dst, Register src) {
+    public final void movzwq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xB7);
         emitByte(0xC0 | encode);
     }
 
-    public final void negq(Register dst) {
+    public final void negq(CiRegister dst) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xF7);
         emitByte(0xD8 | encode);
     }
 
-    public final void notq(Register dst) {
+    public final void notq(CiRegister dst) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xF7);
         emitByte(0xD0 | encode);
@@ -3142,23 +3142,23 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void orq(Register dst, int imm32) {
+    public final void orq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xC8, dst, imm32);
     }
 
-    public final void orq(Register dst, Address src) {
+    public final void orq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x0B);
         emitOperand(dst, src);
     }
 
-    public final void orq(Register dst, Register src) {
+    public final void orq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x0B, 0xC0, dst, src);
     }
 
-    public final void popcntq(Register dst, Address src) {
+    public final void popcntq(CiRegister dst, Address src) {
         assert target.supportsPopcnt() : "must support";
         emitByte(0xF3);
         prefixq(src, dst);
@@ -3167,7 +3167,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void popcntq(Register dst, Register src) {
+    public final void popcntq(CiRegister dst, CiRegister src) {
         assert target.supportsPopcnt() : "must support";
         emitByte(0xF3);
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
@@ -3188,7 +3188,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rsi, src);
     }
 
-    public final void rclq(Register dst, int imm8) {
+    public final void rclq(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
@@ -3201,7 +3201,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void sarq(Register dst, int imm8) {
+    public final void sarq(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
@@ -3214,7 +3214,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void sarq(Register dst) {
+    public final void sarq(CiRegister dst) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xF8 | encode);
@@ -3225,12 +3225,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitArithOperand(0x81, X86.rbx, dst, imm32);
     }
 
-    public final void sbbq(Register dst, int imm32) {
+    public final void sbbq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xD8, dst, imm32);
     }
 
-    public final void sbbq(Register dst, Address src) {
+    public final void sbbq(CiRegister dst, Address src) {
 
         prefixq(src, dst);
         emitByte(0x1B);
@@ -3238,12 +3238,12 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     }
 
-    public final void sbbq(Register dst, Register src) {
+    public final void sbbq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x1B, 0xC0, dst, src);
     }
 
-    public final void shlq(Register dst, int imm8) {
+    public final void shlq(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         if (imm8 == 1) {
@@ -3256,13 +3256,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void shlq(Register dst) {
+    public final void shlq(CiRegister dst) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xE0 | encode);
     }
 
-    public final void shrq(Register dst, int imm8) {
+    public final void shrq(CiRegister dst, int imm8) {
         assert Util.isShiftCount(imm8 >> 1) : "illegal shift count";
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xC1);
@@ -3270,13 +3270,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(imm8);
     }
 
-    public final void shrq(Register dst) {
+    public final void shrq(CiRegister dst) {
         int encode = prefixqAndEncode(dst.encoding);
         emitByte(0xD3);
         emitByte(0xE8 | encode);
     }
 
-    public final void sqrtsd(Register dst, Address src) {
+    public final void sqrtsd(CiRegister dst, Address src) {
         assert dst.isXMM();
         assert target.arch.is64bit() || target.supportsSSE2();
 
@@ -3300,29 +3300,29 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void subq(Register dst, int imm32) {
+    public final void subq(CiRegister dst, int imm32) {
         prefixqAndEncode(dst.encoding);
         emitArith(0x81, 0xE8, dst, imm32);
     }
 
-    public final void subq(Address dst, Register src) {
+    public final void subq(Address dst, CiRegister src) {
         prefixq(dst, src);
         emitByte(0x29);
         emitOperand(src, dst);
     }
 
-    public final void subq(Register dst, Address src) {
+    public final void subq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x2B);
         emitOperand(dst, src);
     }
 
-    public final void subq(Register dst, Register src) {
+    public final void subq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x2B, 0xC0, dst, src);
     }
 
-    public final void testq(Register dst, int imm32) {
+    public final void testq(CiRegister dst, int imm32) {
         // not using emitArith because test
         // doesn't support sign-extension of
         // 8bit operands
@@ -3338,36 +3338,36 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(imm32);
     }
 
-    public final void testq(Register dst, Register src) {
+    public final void testq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x85, 0xC0, dst, src);
     }
 
-    public final void xaddq(Address dst, Register src) {
+    public final void xaddq(Address dst, CiRegister src) {
         prefixq(dst, src);
         emitByte(0x0F);
         emitByte(0xC1);
         emitOperand(src, dst);
     }
 
-    public final void xchgq(Register dst, Address src) {
+    public final void xchgq(CiRegister dst, Address src) {
         prefixq(src, dst);
         emitByte(0x87);
         emitOperand(dst, src);
     }
 
-    public final void xchgq(Register dst, Register src) {
+    public final void xchgq(CiRegister dst, CiRegister src) {
         int encode = prefixqAndEncode(dst.encoding, src.encoding);
         emitByte(0x87);
         emitByte(0xc0 | encode);
     }
 
-    public final void xorq(Register dst, Register src) {
+    public final void xorq(CiRegister dst, CiRegister src) {
         prefixqAndEncode(dst.encoding, src.encoding);
         emitArith(0x33, 0xC0, dst, src);
     }
 
-    public final void xorq(Register dst, Address src) {
+    public final void xorq(CiRegister dst, Address src) {
 
         prefixq(src, dst);
         emitByte(0x33);

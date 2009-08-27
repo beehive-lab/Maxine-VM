@@ -26,25 +26,25 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.X86Assembler.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private X86MacroAssembler asm;
-    private final Target target;
+    private final CiTarget target;
     private int frameSize;
     private int registerRestoreEpilogueOffset;
     private RiRuntime runtime;
     private C1XCompiler compiler;
-    private Register[] registersSaved;
+    private CiRegister[] registersSaved;
+    private static final int ReservedArgumentSlots = 4;
 
-    private final Register convertArgument = X86.xmm0;
-    private final Register convertResult = X86.rax;
-    private final Register negateArgument = X86.xmm0;
-    private final Register negateTemp = X86.xmm1;
+    private final CiRegister convertArgument = X86.xmm0;
+    private final CiRegister convertResult = X86.rax;
+    private final CiRegister negateArgument = X86.xmm0;
+    private final CiRegister negateTemp = X86.xmm1;
 
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
@@ -55,134 +55,113 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         this.runtime = compiler.runtime;
     }
 
+    @Override
+    public CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall) {
+        return emitHelper(null, runtimeCall);
+    }
+
+    @Override
     public CiTargetMethod emit(GlobalStub stub) {
+        return emitHelper(stub, null);
+    }
+
+    public CiTargetMethod emitHelper(GlobalStub stub, CiRuntimeCall runtimeCall) {
         asm = new X86MacroAssembler(compiler, compiler.target);
         this.frameSize = 0;
         this.registerRestoreEpilogueOffset = -1;
 
-        switch (stub) {
-            case SlowSubtypeCheck:
-                emitStandardForward(stub, CiRuntimeCall.SlowSubtypeCheck);
-                break;
+        if (stub == null) {
+            emitStandardForward(null, runtimeCall);
+        } else {
+            switch (stub) {
 
-            case NewObjectArray:
-                emitStandardForward(stub, CiRuntimeCall.NewArray);
-                break;
+                case NewInstance:
+                    emitStandardForward(stub, CiRuntimeCall.NewInstance);
+                    break;
 
-            case NewTypeArray:
-                emitStandardForward(stub, CiRuntimeCall.NewArray);
-                break;
+                case ThrowRangeCheckFailed:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowRangeCheckFailed);
+                    break;
 
-            case NewInstance:
-                emitStandardForward(stub, CiRuntimeCall.NewInstance);
-                break;
+                case ThrowIndexException:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowIndexException);
+                    break;
 
-            case ThrowRangeCheckFailed:
-                emitStandardForward(stub, CiRuntimeCall.ThrowRangeCheckFailed);
-                break;
+                case ThrowDiv0Exception:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowDiv0Exception);
+                    break;
 
-            case ThrowIndexException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowIndexException);
-                break;
+                case ThrowNullPointerException:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowNullPointerException);
+                    break;
 
-            case ThrowDiv0Exception:
-                emitStandardForward(stub, CiRuntimeCall.ThrowDiv0Exception);
-                break;
+                case ThrowArrayStoreException:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowArrayStoreException);
+                    break;
 
-            case ThrowNullPointerException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowNullPointerException);
-                break;
+                case ThrowClassCastException:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowClassCastException);
+                    break;
 
-            case ThrowArrayStoreException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowArrayStoreException);
-                break;
+                case ThrowIncompatibleClassChangeError:
+                    emitStandardForward(stub, CiRuntimeCall.ThrowIncompatibleClassChangeError);
+                    break;
 
-            case ThrowClassCastException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowClassCastException);
-                break;
+                case ArithmethicLrem:
+                    emitStandardForward(stub, CiRuntimeCall.ArithmethicLrem);
+                    break;
 
-            case ThrowIncompatibleClassChangeError:
-                emitStandardForward(stub, CiRuntimeCall.ThrowIncompatibleClassChangeError);
-                break;
+                case ArithmeticDrem:
+                    emitStandardForward(stub, CiRuntimeCall.ArithmeticDrem);
+                    break;
 
-            case ArithmethicLrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmethicLrem);
-                break;
+                case ArithmeticFrem:
+                    emitStandardForward(stub, CiRuntimeCall.ArithmeticFrem);
+                    break;
 
-            case ArithmeticDrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticDrem);
-                break;
+                case ArithmeticLdiv:
+                    emitStandardForward(stub, CiRuntimeCall.ArithmeticLdiv);
+                    break;
 
-            case ArithmeticFrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticFrem);
-                break;
+                case ArithmeticLmul:
+                    emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
+                    break;
 
-            case ArithmeticLdiv:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticLdiv);
-                break;
+                case MonitorEnter:
+                    emitStandardForward(stub, CiRuntimeCall.Monitorenter);
+                    break;
 
-            case ArithmeticLmul:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
-                break;
+                case MonitorExit:
+                    emitStandardForward(stub, CiRuntimeCall.Monitorexit);
+                    break;
 
-            case ResolveClass:
-                emitStandardForward(stub, CiRuntimeCall.ResolveClass);
-                break;
+                case f2i:
+                    emitF2I();
+                    break;
 
-            case ResolveArrayClass:
-                emitStandardForward(stub, CiRuntimeCall.ResolveArrayClass);
-                break;
+                case f2l:
+                    emitF2L();
+                    break;
 
-            case ResolveVTableIndex:
-                emitStandardForward(stub, CiRuntimeCall.ResolveVTableIndex);
-                break;
+                case d2i:
+                    emitD2I();
+                    break;
 
-            case RetrieveInterfaceIndex:
-                emitStandardForward(stub, CiRuntimeCall.RetrieveInterfaceIndex);
-                break;
+                case d2l:
+                    emitD2L();
+                    break;
 
-            case ResolveOptVirtualCall:
-                emitStandardForward(stub, CiRuntimeCall.ResolveOptVirtualCall);
-                break;
+                case fneg:
+                    emitFNEG();
+                    break;
 
-            case ResolveStaticCall:
-                emitStandardForward(stub, CiRuntimeCall.ResolveStaticCall);
-                break;
+                case dneg:
+                    emitDNEG();
+                    break;
 
-            case MonitorEnter:
-                emitStandardForward(stub, CiRuntimeCall.Monitorenter);
-                break;
-
-            case MonitorExit:
-                emitStandardForward(stub, CiRuntimeCall.Monitorexit);
-                break;
-
-            case f2i:
-                emitF2I();
-                break;
-
-            case f2l:
-                emitF2L();
-                break;
-
-            case d2i:
-                emitD2I();
-                break;
-
-            case d2l:
-                emitD2L();
-                break;
-
-            case fneg:
-                emitFNEG();
-                break;
-
-            case dneg:
-                emitDNEG();
-                break;
-
-            default:
-                throw Util.shouldNotReachHere();
+                default:
+                    throw Util.shouldNotReachHere();
+            }
         }
 
         return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
@@ -256,10 +235,12 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void emitStandardForward(GlobalStub stub, CiRuntimeCall call) {
-        assert stub.resultType == call.resultType;
-        assert stub.arguments.length == call.arguments.length;
-        for (int i = 0; i < stub.arguments.length; i++) {
-            assert stub.arguments[i] == call.arguments[i];
+        if (stub != null) {
+            assert stub.resultType == call.resultType;
+            assert stub.arguments.length == call.arguments.length;
+            for (int i = 0; i < stub.arguments.length; i++) {
+                assert stub.arguments[i] == call.arguments[i];
+            }
         }
 
         prologue(true);
@@ -267,17 +248,22 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         epilogue();
     }
 
-    private void loadArgument(int index, Register register) {
-        asm.movptr(register, new Address(X86.rsp, (index + 1) * target.arch.wordSize + frameSize));
+    private int argumentIndexToStackOffset(int index) {
+        assert index < ReservedArgumentSlots;
+        return frameSize - (index + 1) * target.arch.wordSize;
     }
 
-    private void storeArgument(int index, Register register) {
-        asm.movptr(new Address(X86.rsp, (index + 1) * target.arch.wordSize + frameSize), register);
+    private void loadArgument(int index, CiRegister register) {
+        asm.movptr(register, new Address(X86.rsp, argumentIndexToStackOffset(index)));
+    }
+
+    private void storeArgument(int index, CiRegister register) {
+        asm.movptr(new Address(X86.rsp, argumentIndexToStackOffset(index)), register);
     }
 
     private int savedRegistersSize() {
 
-        Register[] registers = X86.allRegisters;
+        CiRegister[] registers = X86.allRegisters;
         if (target.arch.is64bit()) {
             registers = X86.allRegisters64;
         }
@@ -287,31 +273,31 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void saveRegisters() {
 
-        Register[] registers = X86.allRegisters;
+        CiRegister[] registers = X86.allRegisters;
         if (target.arch.is64bit()) {
             registers = X86.allRegisters64;
         }
 
-        List<Register> savedRegistersList = new ArrayList<Register>();
+        List<CiRegister> savedRegistersList = new ArrayList<CiRegister>();
         int index = 0;
-        for (Register r : registers) {
+        for (CiRegister r : registers) {
             if (r != X86.rsp) {
                 savedRegistersList.add(r);
                 asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
                 index++;
             }
         }
-        this.registersSaved = savedRegistersList.toArray(new Register[savedRegistersList.size()]);
+        this.registersSaved = savedRegistersList.toArray(new CiRegister[savedRegistersList.size()]);
 
-        int frameSize = index * target.arch.wordSize;
+        int frameSize = (index + ReservedArgumentSlots) * target.arch.wordSize;
         assert this.frameSize >= frameSize;
     }
 
-    private void partialSavePrologue(Register... registersToSave) {
+    private void partialSavePrologue(CiRegister... registersToSave) {
 
         this.registersSaved = registersToSave;
 
-        this.frameSize = target.arch.wordSize * registersToSave.length;
+        this.frameSize = (target.arch.wordSize + ReservedArgumentSlots) * registersToSave.length;
 
         asm.makeOffset(runtime.codeOffset());
 
@@ -319,7 +305,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.subq(X86.rsp, this.frameSize);
 
         int index = 0;
-        for (Register r : registersToSave) {
+        for (CiRegister r : registersToSave) {
             asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
             index++;
         }
@@ -331,6 +317,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         } else {
             this.frameSize = 0;
         }
+
+        this.frameSize += ReservedArgumentSlots * target.arch.wordSize;
 
         asm.makeOffset(runtime.codeOffset());
 
@@ -345,7 +333,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         if (registersSaved != null) {
             int index = 0;
-            for (Register r : registersSaved) {
+            for (CiRegister r : registersSaved) {
                 asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
                 index++;
             }
@@ -373,7 +361,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         // Call to the runtime
         asm.callRuntime(call);
 
-        if (call.resultType != BasicType.Void) {
+        if (call.resultType != CiKind.Void) {
             this.storeArgument(0, runtime.returnRegister(call.resultType));
         }
     }

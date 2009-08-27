@@ -24,7 +24,8 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
+import com.sun.c1x.xir.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -46,9 +47,10 @@ import com.sun.max.vm.stack.*;
  */
 public class C1XCompilerScheme extends AbstractVMScheme implements CompilerScheme {
 
-    private Target c1xTarget;
+    private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
+    private XirRuntime xirRuntime;
 
     @PROTOTYPE_ONLY
     private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
@@ -70,7 +72,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             // create the Target object passed to C1X
             InstructionSet isa = vmConfiguration().platform().processorKind.instructionSet;
-            Architecture arch = Architecture.findArchitecture(isa.name().toLowerCase());
+            CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
             TargetABI targetABI = vmConfiguration().targetABIsScheme().optimizedJavaABI();
 
             // get the unallocatable registers
@@ -85,17 +87,19 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
 
+            xirRuntime = new MaxXirRuntime();
+
             // configure the allocatable registers
-            List<Register> allocatable = new ArrayList<Register>(arch.registers.length);
-            for (Register r : arch.registers) {
+            List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
+            for (CiRegister r : arch.registers) {
                 if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.threadRegister()) {
                     allocatable.add(r);
                 }
             }
-            Register[] allocRegs = allocatable.toArray(new Register[allocatable.size()]);
+            CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
 
             // TODO (tw): Initialize target differently
-            c1xTarget = new Target(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
+            c1xTarget = new CiTarget(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
 
 
@@ -149,7 +153,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-        CiTargetMethod compiledMethod = compiler.compileMethod(method).targetMethod();
+        CiTargetMethod compiledMethod = compiler.compileMethod(method, xirRuntime).targetMethod();
         if (compiledMethod != null) {
 
             C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);
