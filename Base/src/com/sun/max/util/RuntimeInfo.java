@@ -49,16 +49,16 @@ public final class RuntimeInfo {
                 final String line = in.readLine();
                 final String[] fields = line.split("\\s+");
                 freeMemory = Long.parseLong(fields[3]);
-                freeMemory = 0L;
             } else if (os.equals("SunOS")) {
-                final Process process = runtime.exec(new String[] {"/bin/vmstat", "1", "2"});
-                final BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                in.readLine();
-                in.readLine();
-                in.readLine();
-                final String line = in.readLine();
-                final String[] fields = line.split("\\s+");
-                freeMemory = Long.parseLong(fields[5]) * Longs.K;
+                Process process = runtime.exec(new String[] {"/bin/kstat", "-p", "-nsystem_pages", "-sfreemem"});
+                BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = in.readLine();
+                String[] fields = line.split("\\s+");
+                freeMemory = Long.parseLong(fields[1]);
+                process = runtime.exec(new String[] {"/bin/getconf", "PAGESIZE"});
+                in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                line = in.readLine();
+                freeMemory *= Long.parseLong(line);
             } else if (os.equals("Mac OS X") || os.equals("Darwin")) {
                 final Process process = runtime.exec("/usr/bin/vm_stat");
                 final BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -76,12 +76,11 @@ public final class RuntimeInfo {
         } catch (Exception e) {
             freeMemory = 0L;
         }
-        final long memLimit = freeMemory / requestedMemorySize;
-        final int cpuLimit = runtime.availableProcessors();
-        if (memLimit > 0L && memLimit < cpuLimit) {
-            return (int) memLimit;
+        final int processors = runtime.availableProcessors();
+        if (freeMemory <= 0L || freeMemory >= requestedMemorySize * processors) {
+            return processors;
         }
-        return cpuLimit;
+        return Math.max(1, (int) (freeMemory / requestedMemorySize));
     }
 
     private RuntimeInfo() {
