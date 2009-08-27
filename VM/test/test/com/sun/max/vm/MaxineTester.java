@@ -33,7 +33,6 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
-import sun.management.*;
 import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 
 import com.sun.max.collect.*;
@@ -43,6 +42,7 @@ import com.sun.max.lang.Arrays;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.prototype.*;
 
 /**
@@ -1017,8 +1017,15 @@ public class MaxineTester {
                     }
                 }
             } else {
-                final int availableProcessors = Math.min(4, ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
-                final ExecutorService junitTesterService = Executors.newFixedThreadPool(availableProcessors);
+                final int threadCount;
+                final Matcher matcher = Pattern.compile(".*-Xmx([0-9]+[KkMmGgTtPp]).*").matcher(javaVMArgsOption.getValue());
+                if (matcher.matches()) {
+                    long memSize = Longs.parseScaledValue(matcher.group(1)) + (128 * Longs.M);
+                    threadCount = RuntimeInfo.getSuggestedMaximumProcesses(memSize);
+                } else {
+                    threadCount = Runtime.getRuntime().availableProcessors();
+                }
+                final ExecutorService junitTesterService = Executors.newFixedThreadPool(threadCount);
                 final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<Void>(junitTesterService);
                 for (final String junitTest : junitTests) {
                     junitTesterCompletionService.submit(new Runnable() {
