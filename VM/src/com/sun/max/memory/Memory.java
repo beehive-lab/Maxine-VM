@@ -45,43 +45,16 @@ public final class Memory {
     private static native Pointer memory_allocate(Size size);
 
     /**
-     * Allocates a chunk of memory using a malloc(3)-like facility.
+     * Allocates an alligned chunk of memory using a malloc(3)-like facility.
      *
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
      */
     public static Pointer allocate(Size size) {
-        return Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
-    }
-
-    /**
-     * Allocates a chunk of memory using a malloc(3)-like facility. Allows to allocate the memory word-aligned.
-     *
-     * @param size the size of the chunk of memory to be allocated
-     * @param wordAligned should the allocated chunk of memory start at a word aligned memory address
-     * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
-     */
-    public static Pointer allocate(Size size, boolean wordAligned) {
-        Pointer memory = allocate(size.plus(Word.size()));
-        if (wordAligned) {
-            int offset = memory.getInt() % Word.size();
-            if (offset != 0) {
-                memory = memory.plus(Word.size() - offset);
-            }
-        }
-        return memory;
-    }
-
-    /**
-     * @param size the size of the chunk of memory to be allocated
-     * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
-     * @throws IllegalArgumentException if size is negative
-     */
-    public static Pointer allocate(int size) throws IllegalArgumentException {
-        if (size < 0) {
+        if (size.toInt() < 0) {
             throw new IllegalArgumentException();
         }
-        return allocate(Size.fromInt(size));
+        return Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
     }
 
     /**

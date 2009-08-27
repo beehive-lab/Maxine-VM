@@ -43,7 +43,7 @@ public final class ImmortalHeap_allocation {
         if (MaxineVM.isDebug()) {
             size += Word.size();
         }
-        if (immortalMemoryRegion.mark().equals(oldMark.plus(size))) {
+        if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
             return true;
         }
         return false;

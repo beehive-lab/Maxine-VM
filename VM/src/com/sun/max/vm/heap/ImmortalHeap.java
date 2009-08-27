@@ -25,6 +25,7 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -40,14 +41,17 @@ import com.sun.max.vm.runtime.*;
  */
 public final class ImmortalHeap {
 
+    private ImmortalHeap() {
+    }
+
+    @INSPECTED
+    private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion();
+
     /**
      * VM option to trace immortal heap allocations.
      */
     public static final VMBooleanXXOption traceAllocation
         = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.STARTING);
-
-    private ImmortalHeap() {
-    }
 
     /**
      * VM option to set the size of the immortal heap (MaxPermSize called in Hotspot).
@@ -55,8 +59,6 @@ public final class ImmortalHeap {
     public static final VMSizeOption maxPermSize =
         register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(32),
             "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
-
-    private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion();
 
     /**
      * Is immortal heap tracing turned on?
@@ -85,6 +87,7 @@ public final class ImmortalHeap {
         Pointer oldAllocationMark;
         Pointer cell;
         Address end;
+        size = size.wordAligned();
         do {
             oldAllocationMark = immortalHeap.mark().asPointer();
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
@@ -95,7 +98,7 @@ public final class ImmortalHeap {
             }
         } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
 
-        return oldAllocationMark;
+        return cell;
     }
 
     /**

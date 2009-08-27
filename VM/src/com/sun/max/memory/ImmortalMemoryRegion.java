@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 public class ImmortalMemoryRegion extends RuntimeMemoryRegion{
 
     public void initialize(Size size) {
-        Pointer region = Memory.allocate(size, true);
+        Pointer region = Memory.allocate(size);
         if (region.equals(Pointer.zero())) {
             FatalError.unexpected("Initialization of immortal memory region failed");
         }
