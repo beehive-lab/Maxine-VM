@@ -127,7 +127,7 @@ public final class ImmortalHeap {
      * Initialize the immortal heap memory.
      */
     public static void initialize() {
-        immortalHeap.initialize(maxPermSize.getValue().toInt());
+        immortalHeap.initialize(maxPermSize.getValue());
     }
 
     /**

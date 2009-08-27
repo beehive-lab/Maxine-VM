@@ -55,6 +55,24 @@ public final class Memory {
     }
 
     /**
+     * Allocates a chunk of memory using a malloc(3)-like facility. Allows to allocate the memory word-aligned.
+     *
+     * @param size the size of the chunk of memory to be allocated
+     * @param wordAligned should the allocated chunk of memory start at a word aligned memory address
+     * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
+     */
+    public static Pointer allocate(Size size, boolean wordAligned) {
+        Pointer memory = allocate(size.plus(Word.size()));
+        if (wordAligned) {
+            int offset = memory.getInt() % Word.size();
+            if (offset != 0) {
+                memory = memory.plus(Word.size() - offset);
+            }
+        }
+        return memory;
+    }
+
+    /**
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
      * @throws IllegalArgumentException if size is negative
