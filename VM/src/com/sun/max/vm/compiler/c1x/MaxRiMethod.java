@@ -89,7 +89,7 @@ public class MaxRiMethod implements RiMethod {
      */
     public RiType holder() {
         if (methodActor != null) {
-            return constantPool.canonicalRiType(methodActor.holder());
+            return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool);
         }
         return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool));
     }
@@ -391,7 +391,6 @@ public class MaxRiMethod implements RiMethod {
         return -1;
     }
 
-    @Override
     public int iIndexInInterface() {
         if (methodActor instanceof InterfaceMethodActor) {
             return ((InterfaceMethodActor) methodActor).iIndexInInterface();

@@ -58,8 +58,7 @@ public class Invoke extends StateSplit {
         this.target = target;
         initFlag(Flag.IsStatic, isStatic);
         if (!isStatic && args[0].isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
 
         this.cpi = cpi;
@@ -122,6 +121,11 @@ public class Invoke extends StateSplit {
      */
     @Override
     public boolean canTrap() {
+        return true;
+    }
+
+    @Override
+    public boolean internalClearNullCheck() {
         return true;
     }
 

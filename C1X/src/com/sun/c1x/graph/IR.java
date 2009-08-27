@@ -62,10 +62,6 @@ public class IR {
      */
     private List<BlockBegin> orderedBlocks;
 
-    int totalBlocks = 1;
-    int totalInstructions;
-    int numLoops = -1;
-
     /**
      * Creates a new IR instance for the specified compilation.
      * @param compilation the compilation
@@ -90,7 +86,6 @@ public class IR {
         // Graph builder must set the startBlock and the osrEntryBlock
         Instruction.nextID = 0;
         GraphBuilder g = new GraphBuilder(compilation, topScope, this);
-        totalInstructions += g.totalInstructions();
         assert startBlock != null;
         verifyAndPrint("After graph building");
     }
@@ -131,9 +126,9 @@ public class IR {
             CriticalEdgeFinder finder = new CriticalEdgeFinder(this);
             startBlock.iteratePreOrder(finder);
             finder.splitCriticalEdges();
-            ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(totalBlocks, startBlock);
+            ComputeLinearScanOrder computeLinearScanOrder = new ComputeLinearScanOrder(compilation.stats.blockCount, startBlock);
             orderedBlocks = computeLinearScanOrder.linearScanOrder();
-            numLoops = computeLinearScanOrder.numLoops();
+            compilation.stats.loopCount = computeLinearScanOrder.numLoops();
             computeLinearScanOrder.printBlocks();
         }
     }
@@ -254,22 +249,14 @@ public class IR {
     }
 
     public int nextBlockNumber() {
-        return totalBlocks++;
+        return compilation.stats.blockCount++;
     }
 
     public int numberOfBlocks() {
-        return totalBlocks;
-    }
-
-    public int totalInstructions() {
-        return totalInstructions;
-    }
-
-    public void incrementNumberOfBlocks(int i) {
-        totalBlocks += i;
+        return compilation.stats.blockCount;
     }
 
     public int numLoops() {
-        return numLoops;
+        return compilation.stats.loopCount;
     }
 }

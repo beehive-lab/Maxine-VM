@@ -15914,6 +15914,124 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_optimize_NCE_FlowSensitive01() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive01");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (null != jtt.optimize.NCE_FlowSensitive01.test(null)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive01.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive01.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive02() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive02");
+        String runString = null;
+        try {
+        // (null) == !java.lang.NullPointerException
+            try {
+                runString = "(null)";
+                jtt.optimize.NCE_FlowSensitive02.test(null);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive02.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive02.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive03() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive03");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (!"null".equals(jtt.optimize.NCE_FlowSensitive03.test(null))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive03.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive03.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive04() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive04");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (!"null".equals(jtt.optimize.NCE_FlowSensitive04.test(null))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive04.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive04.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_optimize_Narrow_byte01() {
         JavaTesterRunScheme.begin("jtt.optimize.Narrow_byte01");
         String runString = null;

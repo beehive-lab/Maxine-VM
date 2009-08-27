@@ -68,4 +68,9 @@ public abstract class AccessMonitor extends StateSplit {
     public void inputValuesDo(InstructionClosure closure) {
         object = closure.apply(object);
     }
+
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
 }

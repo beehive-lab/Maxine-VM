@@ -39,9 +39,9 @@ public class ArrayLength extends AccessArray {
      */
     public ArrayLength(Instruction array, ValueStack stateBefore) {
         super(BasicType.Int, array, stateBefore);
+        setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -60,12 +60,6 @@ public class ArrayLength extends AccessArray {
     @Override
     public void accept(InstructionVisitor v) {
         v.visitArrayLength(this);
-    }
-
-    @Override
-    public void clearNullCheck() {
-        stateBefore = null;
-        setFlag(Flag.NoNullCheck);
     }
 
     @Override
