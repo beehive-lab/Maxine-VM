@@ -23,9 +23,8 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  *
@@ -34,7 +33,7 @@ import com.sun.c1x.value.*;
  */
 public class X86FrameMap extends FrameMap {
 
-    static final Register r15thread = X86.r15;
+    static final CiRegister r15thread = X86.r15;
 
     static final LIROperand rsiOopOpr = asOopOpr(X86.rsi);
     static final LIROperand rdiOopOpr = asOopOpr(X86.rdi);
@@ -54,12 +53,12 @@ public class X86FrameMap extends FrameMap {
 
 
     @Override
-    public Register stackRegister() {
+    public CiRegister stackRegister() {
         // TODO Retrieve this from target or runtime!
         return X86.rsp;
     }
 
-    static LIROperand rspOpr(Architecture arch) {
+    static LIROperand rspOpr(CiArchitecture arch) {
         if (arch.is32bit()) {
             return rspOpr32;
         } else if (arch.is64bit()) {
@@ -83,10 +82,10 @@ public class X86FrameMap extends FrameMap {
     static final LIROperand r14oopOpr = asOopOpr(X86.r14);
 
 
-    private static final LIROperand long0Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86.rax, X86.rdx);
-    private static final LIROperand long0Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86.rax, X86.rax);
+    private static final LIROperand long0Opr32 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rax, X86.rdx);
+    private static final LIROperand long0Opr64 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rax, X86.rax);
 
-    static LIROperand long0Opr(Architecture arch) {
+    static LIROperand long0Opr(CiArchitecture arch) {
         if (arch.is32bit()) {
             return long0Opr32;
         } else if (arch.is64bit()) {
@@ -96,9 +95,9 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    private static final LIROperand long1Opr32 = LIROperandFactory.doubleLocation(BasicType.Long, X86.rbx, X86.rcx);
-    private static final LIROperand long1Opr64 = LIROperandFactory.doubleLocation(BasicType.Long, X86.rbx, X86.rbx);
-    static LIROperand long1Opr(Architecture arch) {
+    private static final LIROperand long1Opr32 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rbx, X86.rcx);
+    private static final LIROperand long1Opr64 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rbx, X86.rbx);
+    static LIROperand long1Opr(CiArchitecture arch) {
         if (arch.is32bit()) {
             return long1Opr32;
         } else if (arch.is64bit()) {
@@ -108,26 +107,26 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    static final LIROperand xmm0floatOpr = LIROperandFactory.singleLocation(BasicType.Float, X86.xmm0);
-    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleLocation(BasicType.Double, X86.xmm0, X86.xmm0);
+    static final LIROperand xmm0floatOpr = LIROperandFactory.singleLocation(CiKind.Float, X86.xmm0);
+    static final LIROperand xmm0doubleOpr = LIROperandFactory.doubleLocation(CiKind.Double, X86.xmm0, X86.xmm0);
 
-    static LIROperand asOopOpr(Register reg) {
-        return LIROperandFactory.singleLocation(BasicType.Object, reg);
+    static LIROperand asOopOpr(CiRegister reg) {
+        return LIROperandFactory.singleLocation(CiKind.Object, reg);
     }
 
-    private static LIROperand asPointerOpr32(Register reg) {
+    private static LIROperand asPointerOpr32(CiRegister reg) {
         return asOpr(reg);
     }
 
-    private static LIROperand asLongOpr(Register reg) {
-        return LIROperandFactory.doubleLocation(BasicType.Long, reg, reg);
+    private static LIROperand asLongOpr(CiRegister reg) {
+        return LIROperandFactory.doubleLocation(CiKind.Long, reg, reg);
     }
 
-    private static LIROperand asPointerOpr64(Register reg) {
+    private static LIROperand asPointerOpr64(CiRegister reg) {
         return asLongOpr(reg);
     }
 
-    static LIROperand asPointerOpr(Register reg, Architecture arch) {
+    static LIROperand asPointerOpr(CiRegister reg, CiArchitecture arch) {
         assert reg != null;
         if (arch.is32bit()) {
             return asPointerOpr32(reg);
@@ -138,14 +137,14 @@ public class X86FrameMap extends FrameMap {
         }
     }
 
-    static LIROperand asOpr(Register reg) {
-        return LIROperandFactory.singleLocation(BasicType.Int, reg);
+    static LIROperand asOpr(CiRegister reg) {
+        return LIROperandFactory.singleLocation(CiKind.Int, reg);
     }
 
-    public static Register rscratch1(Architecture arch) {
+    public static CiRegister rscratch1(CiArchitecture arch) {
 
         // TODO: assert that this register is never allocated!
-        return (arch.is32bit()) ? Register.noreg : X86.r11;
+        return (arch.is32bit()) ? CiRegister.noreg : X86.r11;
     }
 
     public X86FrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
@@ -153,7 +152,7 @@ public class X86FrameMap extends FrameMap {
     }
 
     @Override
-    public boolean allocatableRegister(Register r) {
+    public boolean allocatableRegister(CiRegister r) {
         // TODO: (tw) Remove this hack
         return r != X86.rsp && r != X86.rbp && r != X86.r11;
     }

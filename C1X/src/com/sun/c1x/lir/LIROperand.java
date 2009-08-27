@@ -21,10 +21,9 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -44,7 +43,7 @@ public abstract class LIROperand {
 
     private static final class LIRIllegal extends LIROperand {
         private LIRIllegal() {
-            super(BasicType.Illegal);
+            super(CiKind.Illegal);
         }
         @Override
         public String toString() {
@@ -55,9 +54,9 @@ public abstract class LIROperand {
     /**
      * The basic type of this operand.
      */
-    public final BasicType basicType;
+    public final CiKind basicType;
 
-    protected LIROperand(BasicType basicType) {
+    protected LIROperand(CiKind basicType) {
         this.basicType = basicType;
     }
 
@@ -73,7 +72,7 @@ public abstract class LIROperand {
         return ILLEGAL;
     }
 
-    public BasicType type() {
+    public CiKind type() {
         return basicType;
     }
 
@@ -154,11 +153,11 @@ public abstract class LIROperand {
     }
 
     public boolean isFloatKind() {
-        return basicType == BasicType.Float || basicType == BasicType.Double;
+        return basicType == CiKind.Float || basicType == CiKind.Double;
     }
 
     public boolean isOop() {
-        return basicType == BasicType.Object;
+        return basicType == CiKind.Object;
     }
 
     public boolean isStack() {
@@ -273,23 +272,23 @@ public abstract class LIROperand {
         }
     }
 
-    public Register asRegister() {
+    public CiRegister asRegister() {
         if (this == LIROperand.ILLEGAL) {
-            return Register.noreg;
+            return CiRegister.noreg;
         }
 
         throw Util.shouldNotReachHere();
     }
 
-    public Register asRegisterLo() {
+    public CiRegister asRegisterLo() {
         throw Util.shouldNotReachHere();
     }
 
-    public Register asRegisterHi() {
+    public CiRegister asRegisterHi() {
         throw Util.shouldNotReachHere();
     }
 
-    public Register asPointerRegister(Architecture architecture) {
+    public CiRegister asPointerRegister(CiArchitecture architecture) {
         if (architecture.is64bit() && isDoubleCpu()) {
             assert asRegisterLo() == asRegisterHi() : "should be a single register";
             return asRegisterLo();
@@ -306,12 +305,12 @@ public abstract class LIROperand {
     }
 
     boolean isOopPointer() {
-        return type() == BasicType.Object;
+        return type() == CiKind.Object;
     }
 
     boolean isFloat() {
-        BasicType t = type();
-        return (t == BasicType.Float) || (t == BasicType.Double);
+        CiKind t = type();
+        return (t == CiKind.Float) || (t == CiKind.Double);
     }
 
     public LIRAddress asAddress() {
@@ -321,11 +320,11 @@ public abstract class LIROperand {
         return null;
     }
 
-    public BasicType typeRegister() {
+    public CiKind typeRegister() {
         assert this.isRegister();
 
-        if (type() == BasicType.Boolean || type() == BasicType.Char || type() == BasicType.Byte) {
-            return BasicType.Int;
+        if (type() == CiKind.Boolean || type() == CiKind.Char || type() == CiKind.Byte) {
+            return CiKind.Int;
         }
 
         return type();
@@ -340,9 +339,9 @@ public abstract class LIROperand {
             return new RegisterOrConstant(asRegister());
         } else if (this.isConstant()) {
             final LIRConstant c = (LIRConstant) this;
-            if (c.value.basicType == BasicType.Int) {
+            if (c.value.basicType == CiKind.Int) {
                 return new RegisterOrConstant(c.value.asInt());
-            } else if (c.value.basicType == BasicType.Object) {
+            } else if (c.value.basicType == CiKind.Object) {
                 return new RegisterOrConstant(c.value.asObject());
             } else {
                 throw Util.shouldNotReachHere();

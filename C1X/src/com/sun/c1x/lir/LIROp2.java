@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.value.*;
 
 
 /**
@@ -34,7 +34,7 @@ public class LIROp2 extends LIRInstruction {
 
     protected LIROperand opr1;
     LIROperand opr2;
-    BasicType type;
+    CiKind type;
     LIROperand tmp;
     LIRCondition condition;
 
@@ -51,7 +51,7 @@ public class LIROp2 extends LIRInstruction {
         super(opcode, LIROperandFactory.IllegalOperand, info);
         this.opr1 = opr1;
         this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        this.type = CiKind.Illegal;
         this.condition = condition;
         this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
@@ -70,7 +70,7 @@ public class LIROp2 extends LIRInstruction {
         super(opcode, result, null);
         this.opr1 = opr1;
         this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        this.type = CiKind.Illegal;
         this.condition = condition;
         this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmove : "Instruction opcode should be of type LIROpcode.Cmove";
@@ -86,7 +86,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      * @param type
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info, BasicType type) {
+    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info, CiKind type) {
         super(opcode, result, info);
         this.opr1 = opr1;
         this.opr2 = opr2;
@@ -106,7 +106,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info) {
-        this(opcode, opr1, opr2, result, info, BasicType.Illegal);
+        this(opcode, opr1, opr2, result, info, CiKind.Illegal);
     }
 
     /**
@@ -145,7 +145,7 @@ public class LIROp2 extends LIRInstruction {
         super(opcode, result, null);
         this.opr1 = opr1;
         this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        this.type = CiKind.Illegal;
         this.condition = LIRCondition.Unknown;
         this.tmp = tmp;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
@@ -175,7 +175,7 @@ public class LIROp2 extends LIRInstruction {
      * @return type the resulting type
      *
      */
-    public BasicType type() {
+    public CiKind type() {
         return type;
     }
 

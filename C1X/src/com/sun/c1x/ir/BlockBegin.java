@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -86,7 +87,7 @@ public class BlockBegin extends Instruction {
      * @param blockID the ID of the block
      */
     public BlockBegin(int bci, int blockID) {
-        super(BasicType.Illegal);
+        super(CiKind.Illegal);
         this.blockID = blockID;
         depthFirstNumber = -1;
         linearScanNumber = -1;
@@ -396,14 +397,14 @@ public class BlockBegin extends Instruction {
             // this is the first state for the block
             if (wasVisited()) {
                 // this can happen for complex jsr/ret patterns; just bail out
-                throw new Bailout("jsr/ret too complex");
+                throw new CiBailout("jsr/ret too complex");
             }
 
             // copy state because it is modified
             newState = newState.copy();
 
             // if a liveness map is available, use it to invalidate dead locals
-            BitMap liveness = newState.scope().method.liveness(bci());
+            BitMap liveness = (BitMap) newState.scope().method.liveness(bci());
             if (liveness != null) {
                 invalidateDeadLocals(newState, liveness);
             }
@@ -418,7 +419,7 @@ public class BlockBegin extends Instruction {
 
             if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
                 // stacks or locks do not match--bytecodes would not verify
-                throw new Bailout("stack or locks do not match");
+                throw new CiBailout("stack or locks do not match");
             }
 
             while (existingState.scope() != newState.scope()) {
@@ -433,7 +434,7 @@ public class BlockBegin extends Instruction {
             if (wasVisited()) {
                 if (!isParserLoopHeader()) {
                     // not a loop header => jsr/ret structure too complicated
-                    throw new Bailout("jsr/ret too complicated");
+                    throw new CiBailout("jsr/ret too complicated");
                 }
 
                 if (!C1XOptions.AssumeVerifiedBytecode) {

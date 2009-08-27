@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>ProfileCall</code> instruction representings profiling instruction inserted in the
@@ -44,7 +44,7 @@ public class ProfileCall extends Instruction {
      * @param knownHolder the static type known at the call site
      */
     public ProfileCall(RiMethod method, int bci, Instruction object, RiType knownHolder) {
-        super(BasicType.Void);
+        super(CiKind.Void);
         this.method = method;
         this.bciOfInvoke = bci;
         this.object = object;

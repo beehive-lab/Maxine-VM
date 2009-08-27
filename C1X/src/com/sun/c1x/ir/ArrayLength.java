@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -38,8 +39,12 @@ public class ArrayLength extends AccessArray {
      * @param stateBefore the state before executing this instruction
      */
     public ArrayLength(Instruction array, ValueStack stateBefore) {
+<<<<<<< local
         super(BasicType.Int, array, stateBefore);
         setFlag(Flag.NoBoundsCheck);
+=======
+        super(CiKind.Int, array, stateBefore);
+>>>>>>> other
         if (array.isNonNull()) {
             redundantNullCheck();
         }

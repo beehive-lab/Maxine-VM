@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -35,6 +35,8 @@ public abstract class AccessField extends StateSplit {
     Instruction object;
     final int offset;
     final RiField field;
+    public final char cpi;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new access field object.
@@ -44,8 +46,10 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
+    public AccessField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(field.basicType().stackType(), stateBefore);
+        this.cpi = cpi;
+        this.constantPool = constantPool;
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;

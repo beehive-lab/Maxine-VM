@@ -435,7 +435,7 @@ public final class BinaryImageGenerator {
                 AppendableSequence.Static.appendAll(allClassMethodActors, classActor.localVirtualMethodActors());
                 AppendableSequence.Static.appendAll(allClassMethodActors, classActor.localStaticMethodActors());
                 for (ClassMethodActor classMethodActor : allClassMethodActors) {
-                    final CodeAttribute codeAttribute = classMethodActor.rawCodeAttribute();
+                    final CodeAttribute codeAttribute = classMethodActor.originalCodeAttribute();
                     if (codeAttribute != null) {
                         birBytecodeTotal += codeAttribute.code().length;
                     }

@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -37,7 +38,7 @@ public class Throw extends BlockEnd {
      * @param stateBefore the state before the exception is thrown
      */
     public Throw(Instruction exception, ValueStack stateBefore) {
-        super(BasicType.Illegal, stateBefore, true);
+        super(CiKind.Illegal, stateBefore, true);
         this.exception = exception;
     }
 

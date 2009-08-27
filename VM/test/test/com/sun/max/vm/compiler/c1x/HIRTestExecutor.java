@@ -26,7 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.max.program.option.*;
 import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
@@ -76,22 +76,21 @@ public class HIRTestExecutor implements Executor {
     private static HIRGenerator generator;
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
     public static final MaxRiRuntime runtime = new MaxRiRuntime();
-    public static final MaxInterpreterInterface interpreterInterface = new MaxInterpreterInterface(runtime);
 
     private static void initialize(boolean loadingPackages) {
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
-        final Target target = createTarget();
+        final CiTarget target = createTarget();
         final C1XCompiler compiler = new C1XCompiler(runtime, target);
 
         // create MaxineRuntime
         generator = new HIRGenerator(runtime, target, compiler);
     }
 
-    private static Target createTarget() {
+    private static CiTarget createTarget() {
         // TODO: configure architecture according to host platform
-        final Architecture arch = Architecture.findArchitecture("amd64");
-        return new Target(arch, arch.registers, arch.registers, 4096, true);
+        final CiArchitecture arch = CiArchitecture.findArchitecture("amd64");
+        return new CiTarget(arch, arch.registers, arch.registers, 4096, true);
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
@@ -111,14 +110,14 @@ public class HIRTestExecutor implements Executor {
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
-        final IRInterpreter interpreter = new IRInterpreter(runtime, interpreterInterface);
+        final IRInterpreter interpreter = new IRInterpreter(runtime);
         final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();
     }
 
     public static class HIRGenerator {
         private RiRuntime riRuntime;
-        private Target target;
+        private CiTarget target;
         private C1XCompiler compiler;
 
         /**
@@ -127,7 +126,7 @@ public class HIRTestExecutor implements Executor {
          * @param target the target
          * @param compiler the compiler
          */
-        public HIRGenerator(RiRuntime runtime, Target target, C1XCompiler compiler) {
+        public HIRGenerator(RiRuntime runtime, CiTarget target, C1XCompiler compiler) {
             this.riRuntime = runtime;
             this.target = target;
             this.compiler = compiler;
@@ -138,7 +137,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
+            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, null, classMethodActor);
             return compilation.emitHIR();
         }
     }

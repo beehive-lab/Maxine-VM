@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafeRawOp</code> class is the base class of all unsafe raw operations.
@@ -39,9 +39,9 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param addr the instruction generating the base address (a long)
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(BasicType basicType, Instruction addr, boolean isStore) {
+    public UnsafeRawOp(CiKind basicType, Instruction addr, boolean isStore) {
         super(basicType, isStore);
-        assert addr == null || addr.type() == BasicType.Long;
+        assert addr == null || addr.type() == CiKind.Long;
         base = addr;
     }
 
@@ -53,7 +53,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param log2scale the log base 2 of the scaling factor
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(BasicType basicType, Instruction addr, Instruction index, int log2scale, boolean isStore) {
+    public UnsafeRawOp(CiKind basicType, Instruction addr, Instruction index, int log2scale, boolean isStore) {
         this(basicType, addr, isStore);
         this.base = addr;
         this.index = index;

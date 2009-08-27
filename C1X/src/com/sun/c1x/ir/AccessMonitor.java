@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -39,7 +40,7 @@ public abstract class AccessMonitor extends StateSplit {
      * @param lockNumber the number of the lock being acquired
      */
     public AccessMonitor(Instruction object, ValueStack stateBefore, int lockNumber) {
-        super(BasicType.Illegal, stateBefore);
+        super(CiKind.Illegal, stateBefore);
         this.object = object;
         this.lockNumber = lockNumber;
     }

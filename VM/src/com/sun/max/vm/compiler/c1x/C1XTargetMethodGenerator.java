@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiTargetMethod.*;
+import com.sun.c1x.ri.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
