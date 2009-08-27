@@ -97,7 +97,8 @@ public class CiTargetMethod {
                 sb.append(globalStubID);
             } else {
                 assert method != null;
-                sb.append("Method call to " + method.toString());
+                sb.append("Method call to ");
+                sb.append(method.toString());
             }
 
             sb.append(" at pos ");
@@ -161,6 +162,8 @@ public class CiTargetMethod {
         }
     }
 
+    public Bailout bailout;
+
     public final List<SafepointRefMap> safepointRefMaps = new ArrayList<SafepointRefMap>();
     public final List<CallSite> callSites = new ArrayList<CallSite>();
     public final List<DataPatchSite> dataPatchSites = new ArrayList<DataPatchSite>();
@@ -174,13 +177,9 @@ public class CiTargetMethod {
     public int targetCodeSize;
     public byte[] data;
     public int dataSize;
-    CiDeoptimizer deoptimizer;
+
     int directCalls;
     int indirectCalls;
-    public Bailout bailout;
-
-    // For statistics
-    public int totalInstructions;
 
     /**
      * Sets the frame size in bytes. Does not include the return address pushed onto the
@@ -230,7 +229,6 @@ public class CiTargetMethod {
      *
      * @param codePosition the position in the code where the data reference occurs
      * @param dataPosition the position in the data which is referred to
-     * @param relative {@code true} if the reference is instruction-relative
      */
     public void recordDataReferenceInCode(int codePosition, int dataPosition) {
         assert codePosition >= 0 && dataPosition >= 0;
@@ -318,27 +316,12 @@ public class CiTargetMethod {
         assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
     }
 
-
-    /**
-     * Attaches a {@link com.sun.c1x.ci.CiDeoptimizer deoptimizer} object to this method that will
-     * handle deoptimization requests by the VM.
-     *
-     * @param deoptimizer the deoptimizer object for this method
-     */
-    public void attachDeoptimizer(CiDeoptimizer deoptimizer) {
-        this.deoptimizer = deoptimizer;
-    }
-
     public int directCalls() {
         return directCalls;
     }
 
     public int indirectCalls() {
         return indirectCalls;
-    }
-
-    public int totalInstructions() {
-        return totalInstructions;
     }
 
     public void setRegisterRestoreEpilogueOffset(int registerRestoreEpilogueOffset) {

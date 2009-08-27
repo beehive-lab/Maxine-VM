@@ -18,45 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package com.sun.c1x.ci;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.Bailout;
 
 /**
- * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.
+ * The <code>CiResult</code> class represents the result of compiling a method. The result
+ * can include a target method with machine code and metadata, and/or statistics. If the
+ * compiler bailed out due to malformed bytecode, an internal error, or other cause,
+ * it will supply the bailout object.
  *
  * @author Ben L. Titzer
  */
-public class MonitorEnter extends AccessMonitor {
+public class CiResult {
+    private final CiTargetMethod targetMethod;
+    private final Bailout bailout;
+    private final CiStatistics stats;
 
-    /**
-     * Creates a new MonitorEnter instruction.
-     * @param object the instruction producing the object
-     * @param lockNumber the number of the lock
-     * @param stateBefore the state before
-     */
-    public MonitorEnter(Instruction object, int lockNumber, ValueStack stateBefore) {
-        super(object, stateBefore, lockNumber);
-        if (object.isNonNull()) {
-            redundantNullCheck();
+    public CiResult(CiTargetMethod targetMethod, Bailout bailout, CiStatistics stats) {
+        this.targetMethod = targetMethod;
+        this.bailout = bailout;
+        this.stats = stats;
+    }
+
+    public CiTargetMethod targetMethod() {
+        if (bailout != null) {
+            throw bailout;
         }
+        return targetMethod;
     }
 
-    /**
-     * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the instruction may cause an exception
-     */
-    @Override
-    public boolean canTrap() {
-        return true;
+    public CiStatistics statistics() {
+        return stats;
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(InstructionVisitor v) {
-        v.visitMonitorEnter(this);
+    public Bailout bailout() {
+        return bailout;
     }
 }

@@ -58,8 +58,7 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         this.canTrap = canTrap;
         if (!isStatic && args[0].isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -115,6 +114,11 @@ public class Intrinsic extends StateSplit {
     @Override
     public boolean canTrap() {
         return canTrap;
+    }
+
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
     }
 
     /**

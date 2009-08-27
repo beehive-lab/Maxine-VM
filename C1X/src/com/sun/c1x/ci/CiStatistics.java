@@ -21,12 +21,46 @@
 package com.sun.c1x.ci;
 
 /**
- * This class is implemented by the C1X compiler to implement deoptimization of a compiled
- * method at a particular code position when requested by the VM.
- * 
- * @author Thomas Wuerthinger
+ * The <code>CiStatistics</code> class gathers statistics gathered during the compilation of
+ * a method.
+ *
  * @author Ben L. Titzer
  */
-public interface CiDeoptimizer {
-    void deoptimize(int codePosition);
+public class CiStatistics {
+
+    /**
+     * The total number of bytes of bytecode parsed during this compilation, including any inlined methods.
+     */
+    public int byteCount;
+
+    /**
+     * The number of internal graph nodes created during this compilation.
+     */
+    public int nodeCount;
+
+    /**
+     * The number of basic blocks created during this compilation.
+     */
+    public int blockCount;
+
+    /**
+     * The number of loops in the compiled method.
+     */
+    public int loopCount;
+
+    /**
+     * The number of methods inlined.
+     */
+    public int inlineCount;
+
+    /**
+     * The number of methods folded (i.e. evaluated).
+     */
+    public int foldCount;
+
+    /**
+     * The number of intrinsics inlined in this compilation.
+     */
+    public int intrinsicCount;
+
 }

@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>ArithmeticOp</code> class represents arithmetic operations such as addition, subtraction, etc.
@@ -43,7 +44,16 @@ public class ArithmeticOp extends Op2 {
     public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack stateBefore) {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
-        this.stateBefore = stateBefore;
+        if (stateBefore != null) {
+            // state before is only used in the case of a division or remainder,
+            // and isn't needed if the zero check is redundant
+            if (y.isConstant() && y.asConstant().asLong() != 0) {
+                C1XMetrics.ZeroChecksRedundant++;
+                setFlag(Flag.NoZeroCheck);
+            } else {
+                this.stateBefore = stateBefore;
+            }
+        }
     }
 
     /**
@@ -70,14 +80,7 @@ public class ArithmeticOp extends Op2 {
      */
     @Override
     public boolean canTrap() {
-        switch (opcode) {
-            case Bytecodes.IDIV:
-            case Bytecodes.IREM:
-            case Bytecodes.LDIV:
-            case Bytecodes.LREM:
-                return true;
-        }
-        return false;
+        return stateBefore != null;
     }
 
     /**

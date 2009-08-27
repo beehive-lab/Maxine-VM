@@ -89,6 +89,11 @@ public abstract class TypeCheck extends StateSplit {
         return true;
     }
 
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
+
     /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply

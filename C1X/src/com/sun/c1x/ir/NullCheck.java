@@ -120,4 +120,9 @@ public class NullCheck extends StateSplit {
         // null check does not alter the type of the object
         return object.exactType();
     }
+
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
 }
