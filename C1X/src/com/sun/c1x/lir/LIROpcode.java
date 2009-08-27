@@ -128,6 +128,9 @@ public enum LIROpcode {
     , EndOpCompareAndSwap
         , BeginOpMDOProfile
         , ProfileCall
-    , EndOpMDOProfile
+    , EndOpMDOProfile,
+    Xir
+
    // Checkstyle: resume
+,
 }

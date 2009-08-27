@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
@@ -69,7 +70,7 @@ public class CEEliminator implements BlockClosure {
         If curIf = (If) block.end();
 
         // check that the if's operands are of int or object type
-        BasicType ifType = curIf.x().type();
+        CiKind ifType = curIf.x().type();
         if (!ifType.isInt() && !ifType.isObject()) {
             return;
         }

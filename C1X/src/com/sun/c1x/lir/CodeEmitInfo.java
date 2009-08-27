@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**

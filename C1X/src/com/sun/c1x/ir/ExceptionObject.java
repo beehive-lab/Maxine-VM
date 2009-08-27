@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>ExceptionObject</code> instruction represents the incoming exception object to an exception handler.
@@ -33,7 +33,7 @@ public class ExceptionObject extends Instruction {
      * Constructs a new ExceptionObject instruction.
      */
     public ExceptionObject() {
-        super(BasicType.Object);
+        super(CiKind.Object);
     }
 
     /**

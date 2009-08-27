@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -40,7 +41,7 @@ public class InstanceOf extends TypeCheck {
      * @param stateBefore the state before this instruction
      */
     public InstanceOf(RiType targetClass, Instruction targetClassInstruction, Instruction object, ValueStack stateBefore) {
-        super(targetClass, targetClassInstruction, object, BasicType.Int, stateBefore);
+        super(targetClass, targetClassInstruction, object, CiKind.Int, stateBefore);
         if (object.isNonNull()) {
             clearNullCheck();
             C1XMetrics.NullChecksRedundant++;

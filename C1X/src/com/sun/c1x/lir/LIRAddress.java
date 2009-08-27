@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 
 /**
@@ -58,7 +57,7 @@ public class LIRAddress extends LIROperand {
      * @param index the LIROperand representing the index
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, LIROperand index, BasicType basicType) {
+    public LIRAddress(LIROperand base, LIROperand index, CiKind basicType) {
         super(basicType);
         this.base = base;
         this.index = index;
@@ -73,7 +72,7 @@ public class LIRAddress extends LIROperand {
      * @param displacement the constant displacement from the base address
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, int displacement, BasicType basicType) {
+    public LIRAddress(LIROperand base, int displacement, CiKind basicType) {
         super(basicType);
         this.base = base;
         this.index = LIROperand.ILLEGAL;
@@ -90,7 +89,7 @@ public class LIRAddress extends LIROperand {
      * @param displacement the constant displacement from the base address
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, LIROperand index, Scale scale, int displacement, BasicType basicType) {
+    public LIRAddress(LIROperand base, LIROperand index, Scale scale, int displacement, CiKind basicType) {
         super(basicType);
         this.base = base;
         this.index = index;
@@ -161,18 +160,18 @@ public class LIRAddress extends LIROperand {
      * Verifies the address is valid on the specified architecture.
      * @param architecture the architecture to validate on
      */
-    public void verify(Architecture architecture) {
+    public void verify(CiArchitecture architecture) {
         if (architecture.isSPARC()) {
             assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
             assert displacement == 0 || index.isIllegal() : "can't have both";
         } else if (architecture.is64bit()) {
             assert base.isCpuRegister() : "wrong base operand";
             assert index.isIllegal() || index.isDoubleCpu() : "wrong index operand";
-            assert base.type() == BasicType.Object || base.type() == BasicType.Long : "wrong type for addresses";
+            assert base.type() == CiKind.Object || base.type() == CiKind.Long : "wrong type for addresses";
         } else {
             assert base.isSingleCpu() : "wrong base operand";
             assert index.isIllegal() || index.isSingleCpu() : "wrong index operand";
-            assert base.type() == BasicType.Object || base.type() == BasicType.Int : "wrong type for addresses";
+            assert base.type() == CiKind.Object || base.type() == CiKind.Int : "wrong type for addresses";
         }
     }
 

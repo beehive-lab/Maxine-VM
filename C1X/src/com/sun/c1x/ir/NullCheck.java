@@ -21,9 +21,9 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.ci.RiType;
 
 /**
  * The <code>NullCheck</code> class represents an explicit null check instruction.

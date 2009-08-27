@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -41,7 +42,7 @@ public abstract class Switch extends BlockEnd {
      * @param isSafepoint <code>true</code> if this switch is a safepoint
      */
     public Switch(Instruction value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
-        super(BasicType.Illegal, stateBefore, isSafepoint);
+        super(CiKind.Illegal, stateBefore, isSafepoint);
         this.successors = successors;
         this.value = value;
     }

@@ -35,6 +35,7 @@ public class LIRRTCall extends LIRCall {
 
     LIROperand tmp;
     public final CiRuntimeCall runtimeEntry;
+    public final boolean calleeSaved;
 
     /**
      * Creates a new LIRRTCall instruction.
@@ -45,8 +46,9 @@ public class LIRRTCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
+    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
         super(LIROpcode.RtCall, null, result, arguments, info);
+        this.calleeSaved = calleeSaved;
         this.tmp = tmp;
         this.runtimeEntry = entry;
     }

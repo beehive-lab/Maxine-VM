@@ -21,8 +21,8 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>Op2</code> class is the base of arithmetic and logic operations with two inputs.
@@ -41,7 +41,7 @@ public abstract class Op2 extends Instruction {
      * @param x the first input instruction
      * @param y the second input instruction
      */
-    public Op2(BasicType type, int opcode, Instruction x, Instruction y) {
+    public Op2(CiKind type, int opcode, Instruction x, Instruction y) {
         super(type);
         this.opcode = opcode;
         this.x = x;
