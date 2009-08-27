@@ -182,13 +182,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
 
-
+            try {
                 Heap.enableImmortalMemoryAllocation();
                 fromSpace = new RuntimeMemoryRegion("Heap-From");
                 toSpace = new RuntimeMemoryRegion("Heap-To");
-
+            } finally {
                 Heap.disableImmortalMemoryAllocation();
-
+            }
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
