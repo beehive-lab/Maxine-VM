@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.c1x;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -44,7 +45,7 @@ public class MaxRiMethod implements RiMethod {
 
     final MaxRiConstantPool constantPool;
     MethodRefConstant methodRef;
-    MethodActor methodActor;
+    final MethodActor methodActor;
     List<RiExceptionHandler> exceptionHandlers;
 
     /**
@@ -55,6 +56,9 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
+        if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
+            C1XIntrinsic.registerFoldableMethod(this, methodActor.toJava());
+        }
     }
 
     /**
@@ -65,6 +69,7 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef) {
         this.constantPool = constantPool;
         this.methodRef = methodRef;
+        this.methodActor = null;
     }
 
     /**

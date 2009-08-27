@@ -35,7 +35,7 @@ import com.sun.c1x.value.*;
  */
 public class BlockMerger implements BlockClosure {
 
-    final BlockBegin startBlock;
+    private final BlockBegin startBlock;
 
     public BlockMerger(IR ir) {
         startBlock = ir.startBlock;

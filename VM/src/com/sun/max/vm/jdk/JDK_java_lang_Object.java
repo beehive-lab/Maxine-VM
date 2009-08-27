@@ -87,7 +87,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("notify")
     public void notify_SUBSTITUTE() {
-        MaxineVM.target().configuration().monitorScheme().monitorNotify(this);
+        MaxineVM.target().configuration.monitorScheme().monitorNotify(this);
     }
 
     /**
@@ -96,7 +96,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("notifyAll")
     public void notifyAll_SUBSTITUTE() {
-        MaxineVM.target().configuration().monitorScheme().monitorNotifyAll(this);
+        MaxineVM.target().configuration.monitorScheme().monitorNotifyAll(this);
     }
 
     /**
@@ -108,7 +108,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("wait")
     public void wait_SUBSTITUTE(long timeout) throws InterruptedException {
-        MaxineVM.target().configuration().monitorScheme().monitorWait(this, timeout);
+        MaxineVM.target().configuration.monitorScheme().monitorWait(this, timeout);
     }
 
 }

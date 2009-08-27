@@ -308,9 +308,9 @@ public class JavaPrototype extends Prototype {
         vmConfiguration.loadAndInstantiateSchemes();
 
         Trace.line(1, "Host VM configuration:");
-        Trace.line(1, MaxineVM.host().configuration());
+        Trace.line(1, MaxineVM.host().configuration);
         Trace.line(1, "Target VM configuration:");
-        Trace.line(1, MaxineVM.target().configuration());
+        Trace.line(1, MaxineVM.target().configuration);
         Trace.line(1, "JDK: " + System.getProperty("java.version"));
         Trace.line(1);
 
