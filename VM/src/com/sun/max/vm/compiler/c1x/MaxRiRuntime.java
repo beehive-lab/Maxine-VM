@@ -536,14 +536,14 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool) {
 //        synchronized (runtime) {
-            // all resolved methods are canonicalized per runtime instance
-            final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
-            if (previous == null) {
-                final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor);
-                methodActor.ciObject = method;
-                return method;
-            }
-            return previous;
+        // all resolved methods are canonicalized per runtime instance
+        final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
+        if (previous == null) {
+            final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor);
+            methodActor.ciObject = method;
+            return method;
+        }
+        return previous;
 //        }
     }
 
@@ -557,14 +557,14 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool) {
 //        synchronized (runtime) {
-            // all resolved field are canonicalized per runtime instance
-            final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
-            if (previous == null) {
-                final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor);
-                fieldActor.ciObject = field;
-                return field;
-            }
-            return previous;
+        // all resolved field are canonicalized per runtime instance
+        final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
+        if (previous == null) {
+            final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor);
+            fieldActor.ciObject = field;
+            return field;
+        }
+        return previous;
 //        }
     }
 
@@ -578,14 +578,14 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool) {
 //        synchronized (runtime) {
-            // all resolved types are canonicalized per runtime instance
-            final MaxRiType previous = (MaxRiType) classActor.ciObject;
-            if (previous == null) {
-                final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor);
-                classActor.ciObject = type;
-                return type;
-            }
-            return previous;
+        // all resolved types are canonicalized per runtime instance
+        final MaxRiType previous = (MaxRiType) classActor.ciObject;
+        if (previous == null) {
+            final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor);
+            classActor.ciObject = type;
+            return type;
+        }
+        return previous;
 //        }
     }
 }
