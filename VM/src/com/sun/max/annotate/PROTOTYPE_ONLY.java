@@ -30,18 +30,18 @@ import java.lang.annotation.*;
  *
  * <pre>
  * @PROTOTYPE_ONLY
- * private int _counter;
+ * private int counter;
  *
  * public void getValue() {
  *     if (VM.isPrototyping()) {
- *         _counter++;
+ *         counter++;
  *     }
- *     return _value;
+ *     return value;
  * }
  *
  * @PROTOTYPE_ONLY
  * public int counter() {
- *     return _counter;
+ *     return counter;
  * }
  * </pre>
  * <p>

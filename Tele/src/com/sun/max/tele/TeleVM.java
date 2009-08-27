@@ -278,7 +278,7 @@ public abstract class TeleVM implements MaxVM {
         final MaxineVM vm = new MaxineVM(vmConfiguration);
         MaxineVM.setTarget(vm);
         MaxineVM.setGlobalHostOrTarget(vm);
-        new JavaPrototype(vm.configuration(), false);
+        new JavaPrototype(vm.configuration, false);
         return vm;
     }
 
@@ -291,7 +291,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public String getVersion() {
-        return MaxineVM.version();
+        return MaxineVM.VERSION;
     }
 
     public String getDescription() {
@@ -448,7 +448,7 @@ public abstract class TeleVM implements MaxVM {
         this.sourcepath = sourcepath;
         nativeInitialize(bootImage.header().threadLocalsSize);
         final MaxineVM vm = createVM(this.bootImage);
-        this.vmConfiguration = vm.configuration();
+        this.vmConfiguration = vm.configuration;
 
         // Pre-initialize an appropriate disassembler to save time.
         TeleDisassembler.initialize(vmConfiguration.platform().processorKind);

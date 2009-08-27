@@ -35,7 +35,7 @@ public class OptoStackFrameLayout extends JavaStackFrameLayout {
     private final boolean isReturnAddressPushedByCall;
 
     public OptoStackFrameLayout(int frameSize) {
-        this(frameSize, MaxineVM.target().configuration().platform().processorKind.instructionSet.callsPushReturnAddressOnStack());
+        this(frameSize, MaxineVM.target().configuration.platform().processorKind.instructionSet.callsPushReturnAddressOnStack());
     }
 
     public OptoStackFrameLayout(int frameSize, boolean isReturnAddressPushedByCall) {
