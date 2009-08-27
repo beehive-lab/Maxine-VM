@@ -54,7 +54,6 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final Inspection inspection;
     private final TeleObject teleObject;
     private final IndexedSequence<Layout.HeaderField> headerFields;
-    private Pointer objectOrigin;
     private TeleHub teleHub;
 
     private final ObjectHeaderTableModel model;
@@ -75,12 +74,14 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         protected void procedure() {
-            final MaxWatchpoint watchpoint = model.getWatchpoint(row);
-            if (watchpoint == null) {
+            final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
+            if (watchpoints.isEmpty()) {
                 final HeaderField headerField = headerFields.get(row);
                 actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
             } else {
-                watchpoint.dispose();
+                for (MaxWatchpoint watchpoint : watchpoints) {
+                    watchpoint.dispose();
+                }
             }
         }
     }
@@ -96,7 +97,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.inspection = objectInspector.inspection();
         this.teleObject = objectInspector.teleObject();
         headerFields = new ArrayListSequence<Layout.HeaderField>(teleObject.getHeaderFields());
-        this.model = new ObjectHeaderTableModel();
+        this.model = new ObjectHeaderTableModel(inspection, teleObject.getCurrentOrigin());
         this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         this.columnModel = new ObjectHeaderTableColumnModel(objectInspector);
         configureMemoryTable(model, columnModel);
@@ -119,8 +120,8 @@ public final class ObjectHeaderTable extends InspectorTable {
             final HeaderField headerField = headerFields.get(row);
             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
-            menu.add(new WatchpointSettingsMenu(model.getWatchpoint(row)));
-            menu.add(actions().removeWatchpoint(teleObject.getCurrentMemoryRegion(headerField), "Remove memory watchpoint"));
+            menu.add(Watchpoints.createEditMenu(inspection, model.getWatchpoints(row)));
+            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
             return menu;
         }
         return null;
@@ -142,7 +143,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     public void refresh(boolean force) {
         if (maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
-            objectOrigin = teleObject.getCurrentOrigin();
+            model.setOrigin(teleObject.getCurrentOrigin());
             if (teleObject.isLive()) {
                 teleHub = teleObject.getTeleHub();
                 final int oldSelectedRow = getSelectedRow();
@@ -159,6 +160,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                     prober.refresh(force);
                 }
             }
+            model.refresh();
         }
     }
 
@@ -192,8 +194,14 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     /**
      * Models the words/rows in an object header; the value of each cell is simply the word/row number.
+     * <br>
+     * The origin of the model is the current origin of the object in memory, which can change due to GC.
      */
-    private final class ObjectHeaderTableModel extends AbstractTableModel implements InspectorMemoryTableModel {
+    private final class ObjectHeaderTableModel extends InspectorMemoryTableModel {
+
+        public ObjectHeaderTableModel(Inspection inspection, Address origin) {
+            super(inspection, origin);
+        }
 
         public int getColumnCount() {
             return ObjectFieldColumnKind.VALUES.length();
@@ -212,35 +220,25 @@ public final class ObjectHeaderTable extends InspectorTable {
             return Integer.class;
         }
 
+        @Override
         public Address getAddress(int row) {
-            return objectOrigin.plus(teleObject.getHeaderOffset(headerFields.get(row)));
+            return getOrigin().plus(getOffset(row));
         }
 
+        @Override
         public MemoryRegion getMemoryRegion(int row) {
             return teleObject.getCurrentMemoryRegion(headerFields.get(row));
         }
 
-        public MaxWatchpoint getWatchpoint(int row) {
-            final MemoryRegion memoryRegion = getMemoryRegion(row);
-            for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (watchpoint.overlaps(memoryRegion)) {
-                    return watchpoint;
-                }
-            }
-            return null;
-        }
-
-        public Address getOrigin() {
-            return objectOrigin;
-        }
-
+        @Override
         public Offset getOffset(int row) {
             return teleObject.getHeaderOffset(headerFields.get(row));
         }
 
+        @Override
         public int findRow(Address address) {
             for (int row = 0; row < headerFields.length(); row++) {
-                if (objectOrigin.plus(teleObject.getHeaderOffset(headerFields.get(row))).equals(address)) {
+                if (getAddress(row).equals(address)) {
                     return row;
                 }
             }
@@ -302,7 +300,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoint(row));
+            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
             return renderer;
         }
@@ -315,7 +313,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), objectOrigin);
+            setValue(model.getOffset(row), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -328,7 +326,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), objectOrigin);
+            setValue(model.getOffset(row), model.getOrigin());
             setForeground(getRowTextColor(row));
             return this;
         }

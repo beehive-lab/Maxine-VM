@@ -85,6 +85,12 @@ public interface InspectorGUI {
      */
     String inputDialog(String message, String initialValue);
 
+    /**
+     * Solicits a yes/no response from user.
+     *
+     * @param message a prompt
+     * @return a yes or no decision
+     */
     boolean yesNoDialog(String message);
 
     /**
