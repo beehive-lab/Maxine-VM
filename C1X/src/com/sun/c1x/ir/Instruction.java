@@ -49,8 +49,9 @@ public abstract class Instruction {
         NonNull,            // produces non-null value
         NoNullCheck,        // does not require null check
         NoStoreCheck,       // does not require store check
-        NoRangeCheck,       // does not require range (bounds) check
+        NoBoundsCheck,       // does not require range (bounds) check
         NoWriteBarrier,     // does not require write barrier
+        NoZeroCheck,        // divide or modulus cannot cause exception
         DirectCompare,
         IsLoaded,           // field or method is resolved and class is loaded and initialized
         IsStatic,           // field or method access is static
@@ -254,8 +255,29 @@ public abstract class Instruction {
         return p;
     }
 
-    public void clearNullCheck() {
-        clearFlag(Flag.NoNullCheck);
+    public final void redundantNullCheck() {
+        if (clearNullCheck()) {
+            C1XMetrics.NullChecksRedundant++;
+        }
+    }
+
+    public final void eliminateNullCheck() {
+        if (clearNullCheck()) {
+            C1XMetrics.NullCheckEliminations++;
+        }
+    }
+
+    private boolean clearNullCheck() {
+        if (!checkFlag(Flag.NoNullCheck)) {
+            setFlag(Flag.NoNullCheck);
+            return internalClearNullCheck();
+        }
+        return false;
+    }
+
+    protected boolean internalClearNullCheck() {
+        // most instructions don't care about clearing of their null checks
+        return false;
     }
 
     /**

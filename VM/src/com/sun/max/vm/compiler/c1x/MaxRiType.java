@@ -228,7 +228,7 @@ public class MaxRiType implements RiType {
     public RiType componentType() {
         if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
-            return constantPool.canonicalRiType(classActor.componentClassActor());
+            return constantPool.runtime.canonicalRiType(classActor.componentClassActor(), constantPool);
         }
         // the type is not resolved, but we can get the type of the elements
         return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor());
@@ -263,7 +263,7 @@ public class MaxRiType implements RiType {
                     return ArrayClassActor.forComponentClassActor(classActor);
                 }
             });
-            return constantPool.canonicalRiType(arrayClassActor);
+            return constantPool.runtime.canonicalRiType(arrayClassActor, constantPool);
         }
         return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
     }
@@ -283,12 +283,12 @@ public class MaxRiType implements RiType {
             // resolve the actual method implementation in this class
             final int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByIIndex(index);
-            return constantPool.canonicalRiMethod(implementation);
+            return constantPool.runtime.canonicalRiMethod(implementation, constantPool);
         } else if (methodActor instanceof VirtualMethodActor) {
             // resolve the actual method implementation in this class
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByVTableIndex(index);
-            return constantPool.canonicalRiMethod(implementation);
+            return constantPool.runtime.canonicalRiMethod(implementation, constantPool);
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
             return method;

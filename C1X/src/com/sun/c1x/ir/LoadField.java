@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadField</code> instruction a read of a static or instance field.
+ * The <code>LoadField</code> instruction represents a read of a static or instance field.
  *
  * @author Ben L. Titzer
  */

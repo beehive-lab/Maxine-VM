@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
+
 import com.sun.c1x.value.*;
 
 /**
@@ -42,8 +42,7 @@ public abstract class AccessArray extends StateSplit {
         super(type, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -53,6 +52,18 @@ public abstract class AccessArray extends StateSplit {
      */
     public Instruction array() {
         return array;
+    }
+
+    @Override
+    public boolean internalClearNullCheck() {
+        if (!needsNullCheck() && !needsBoundsCheck()) {
+            stateBefore = null;
+        }
+        return true;
+    }
+
+    public boolean needsBoundsCheck() {
+        return !checkFlag(Flag.NoBoundsCheck);
     }
 
     /**

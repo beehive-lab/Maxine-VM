@@ -18,15 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package jtt.optimize;
 
-/**
- * This class is implemented by the C1X compiler to implement deoptimization of a compiled
- * method at a particular code position when requested by the VM.
- * 
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: null="null"; "x"="x"; "yay"="yay"
  */
-public interface CiDeoptimizer {
-    void deoptimize(int codePosition);
+public class NCE_FlowSensitive04 {
+
+    public static String test(String arg) {
+        if (arg == null) {
+            arg = "null";
+        }
+        // arg cannot be null here
+        return arg.toString();
+    }
 }

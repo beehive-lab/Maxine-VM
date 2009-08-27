@@ -18,45 +18,49 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
-
-import com.sun.c1x.value.*;
+package com.sun.c1x.ci;
 
 /**
- * The <code>MonitorEnter</code> instruction represents the acquisition of a monitor.
+ * The <code>CiStatistics</code> class gathers statistics gathered during the compilation of
+ * a method.
  *
  * @author Ben L. Titzer
  */
-public class MonitorEnter extends AccessMonitor {
+public class CiStatistics {
 
     /**
-     * Creates a new MonitorEnter instruction.
-     * @param object the instruction producing the object
-     * @param lockNumber the number of the lock
-     * @param stateBefore the state before
+     * The total number of bytes of bytecode parsed during this compilation, including any inlined methods.
      */
-    public MonitorEnter(Instruction object, int lockNumber, ValueStack stateBefore) {
-        super(object, stateBefore, lockNumber);
-        if (object.isNonNull()) {
-            redundantNullCheck();
-        }
-    }
+    public int byteCount;
 
     /**
-     * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the instruction may cause an exception
+     * The number of internal graph nodes created during this compilation.
      */
-    @Override
-    public boolean canTrap() {
-        return true;
-    }
+    public int nodeCount;
 
     /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
+     * The number of basic blocks created during this compilation.
      */
-    @Override
-    public void accept(InstructionVisitor v) {
-        v.visitMonitorEnter(this);
-    }
+    public int blockCount;
+
+    /**
+     * The number of loops in the compiled method.
+     */
+    public int loopCount;
+
+    /**
+     * The number of methods inlined.
+     */
+    public int inlineCount;
+
+    /**
+     * The number of methods folded (i.e. evaluated).
+     */
+    public int foldCount;
+
+    /**
+     * The number of intrinsics inlined in this compilation.
+     */
+    public int intrinsicCount;
+
 }

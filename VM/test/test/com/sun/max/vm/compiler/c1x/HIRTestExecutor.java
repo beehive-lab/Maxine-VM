@@ -91,7 +91,7 @@ public class HIRTestExecutor implements Executor {
     private static Target createTarget() {
         // TODO: configure architecture according to host platform
         final Architecture arch = Architecture.findArchitecture("amd64");
-        return new Target(arch, arch.registers, arch.registers, 1024, true);
+        return new Target(arch, arch.registers, arch.registers, 4096, true);
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {
