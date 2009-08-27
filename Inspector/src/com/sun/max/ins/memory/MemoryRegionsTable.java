@@ -64,6 +64,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
         bootHeapRegionDisplay = new HeapRegionDisplay(maxVM().teleBootHeapRegion());
+
         bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), true);
         heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
@@ -192,6 +193,10 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
             if (maxVM().teleRootsRegion() != null) {
                 sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleRootsRegion()));
+            }
+
+            if (maxVM().teleImmortalHeapRegion() != null) {
+                sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleImmortalHeapRegion()));
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);
