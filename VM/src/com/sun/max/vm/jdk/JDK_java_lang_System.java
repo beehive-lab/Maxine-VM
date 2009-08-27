@@ -632,10 +632,10 @@ public final class JDK_java_lang_System {
 
         // 2. set up basic Maxine configuration information
         setIfAbsent(properties, "java.runtime.name", MaxineVM.name());
-        setIfAbsent(properties, "java.runtime.version", MaxineVM.version());
+        setIfAbsent(properties, "java.runtime.version", MaxineVM.VERSION);
 
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
-        setIfAbsent(properties, "java.vm.version", MaxineVM.version());
+        setIfAbsent(properties, "java.vm.version", MaxineVM.VERSION);
         setIfAbsent(properties, "java.vm.info", VMConfiguration.hostOrTarget().compilationScheme().mode().name().toLowerCase() + " mode");
 
         setIfAbsent(properties, "sun.arch.data.model", Integer.toString(Word.width()));

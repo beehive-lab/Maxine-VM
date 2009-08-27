@@ -77,18 +77,18 @@ public final class Platform {
     }
 
     public static Platform host() {
-        return MaxineVM.host().configuration().platform();
+        return MaxineVM.host().configuration.platform();
     }
 
     @FOLD
     public static Platform target() {
-        return MaxineVM.target().configuration().platform();
+        return MaxineVM.target().configuration.platform();
     }
 
     @UNSAFE
     @FOLD
     public static Platform hostOrTarget() {
-        return MaxineVM.hostOrTarget().configuration().platform();
+        return MaxineVM.hostOrTarget().configuration.platform();
     }
 
     public Platform constrainedByInstructionSet(InstructionSet instructionSet) {

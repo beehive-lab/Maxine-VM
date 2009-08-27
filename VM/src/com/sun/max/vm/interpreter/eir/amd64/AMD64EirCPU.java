@@ -57,7 +57,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         conditionFlags = new boolean[ConditionFlag.VALUES.length()];
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling().minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
+        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
         stack.setSP(topSP);
         write(AMD64EirRegister.General.RSP, new WordValue(topSP));
 
@@ -250,7 +250,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
         final TextTableColumn stack = new TextTableColumn("Stack");
         final Address sp = stack().sp();
-        for (Address address = stack().ceiling().minus(stackSlotSize()); address.greaterEqual(stack().sp()); address = address.minus(stackSlotSize())) {
+        for (Address address = stack().ceiling.minus(stackSlotSize()); address.greaterEqual(stack().sp()); address = address.minus(stackSlotSize())) {
             final Value value = stack().read(address);
             stack.add(Strings.padLengthWithSpaces("[SP+" + address.minus(sp).toString() + "]", 7) + address.toString() + ": " + valueToString(value));
         }

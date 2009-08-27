@@ -21,7 +21,6 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
-import java.lang.management.*;
 import java.lang.ref.*;
 import java.util.*;
 import java.util.Arrays;
@@ -781,7 +780,7 @@ public final class DataPrototype extends Prototype {
         }
     }
 
-    private final int numberOfProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+    private final int threadCount = Runtime.getRuntime().availableProcessors();
     private static final int BATCH = 10000;
 
     /**
@@ -796,7 +795,7 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, "createData: " + regionName);
         final byte[] tagBytes = DebugHeap.tagBytes(dataModel);
 
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         for (int n = 0; n < objects.length(); n += BATCH) {
@@ -998,7 +997,7 @@ public final class DataPrototype extends Prototype {
      */
     private void assignObjectRelocationFlags(final IndexedSequence<Object> objects, String name) {
         Trace.begin(1, "assignObjectRelocationFlags: " + name);
-        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numberOfProcessors);
+        final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         int numberOfRelocations = 0;

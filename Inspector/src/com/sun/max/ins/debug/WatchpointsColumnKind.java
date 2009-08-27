@@ -31,6 +31,7 @@ import com.sun.max.collect.*;
  */
 public enum WatchpointsColumnKind implements ColumnKind{
 
+    TAG("Tag", "Additional information", true, -1),
     START("Start", "Starting address", true, 20),
     SIZE("Size", "Size of watched region, in bytes", true, 6),
     END("End", "Ending address", false, 20),

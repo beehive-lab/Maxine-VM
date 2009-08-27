@@ -74,7 +74,7 @@ public class MaxineTesterConfiguration {
         output(test.output.FloatNanTest.class);
         output(test.output.GetResource.class,              FAIL_SPARC);
         output(test.output.SafepointWhileInNative.class);
-        output(test.output.SafepointWhileInJava.class,     FAIL_SPARC);
+        output(test.output.SafepointWhileInJava.class);
         output(test.output.BlockingQueue.class);
         output(test.output.Recursion.class);
         output(test.output.StaticInitializers.class);
@@ -85,7 +85,7 @@ public class MaxineTesterConfiguration {
         output(test.output.GCTest2.class);
         output(test.output.GCTest3.class);
         output(test.output.GCTest4.class);
-        output(test.output.GCTest5.class,                  FAIL_SPARC);
+        output(test.output.GCTest5.class);
         output(test.output.GCTest6.class);
         output(test.output.HelloWorldReflect.class);
         output(test.output.JREJarLoadTest.class);
