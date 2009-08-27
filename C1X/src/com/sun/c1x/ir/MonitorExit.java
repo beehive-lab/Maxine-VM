@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.ValueStack;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>MonitorExit</code> instruction represents a monitor release.

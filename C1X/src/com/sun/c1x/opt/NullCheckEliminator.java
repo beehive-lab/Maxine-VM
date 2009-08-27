@@ -23,8 +23,7 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.value.BasicType;
-import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
@@ -427,7 +426,7 @@ public class NullCheckEliminator extends InstructionVisitor {
             if (i.trueSuccessor() != i.falseSuccessor()) {
                 Instruction x = i.x();
                 // if the two successors are different, then we may learn something on one branch
-                if (x.type() == BasicType.Object) {
+                if (x.type() == CiKind.Object) {
                     // this is a comparison of object references
                     Instruction y = i.y();
                     if (processUse(i, x, false)) {

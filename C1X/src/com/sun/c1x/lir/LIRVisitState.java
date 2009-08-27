@@ -478,7 +478,10 @@ public class LIRVisitState {
                 if (opRTCall.tmp.isValid()) {
                     opRTCall.tmp = doTemp(opRTCall.tmp);
                 }
-                doCall();
+
+                if (!opRTCall.calleeSaved) {
+                    doCall();
+                }
                 if (opRTCall.result.isValid()) {
                     opRTCall.result = doOutput(opRTCall.result);
                 }
@@ -517,6 +520,35 @@ public class LIRVisitState {
 
                 break;
             }
+
+            // XIR
+            case Xir:
+
+                LIRXirInstruction xir = (LIRXirInstruction) op;
+                for (int i = 0; i < xir.operands.length; i++) {
+
+                    final OperandMode mode = xir.modes[i];
+                    if (mode != null) {
+                        switch (mode) {
+                            case InputMode:
+                                xir.operands[i] = doInput(xir.operands[i]);
+                                break;
+
+                            case OutputMode:
+                                xir.operands[i] = doOutput(xir.operands[i]);
+                                break;
+
+                            case TempMode:
+                                xir.operands[i] = doTemp(xir.operands[i]);
+                                break;
+
+                        }
+                    }
+                }
+
+                // TODO: Calls and debug info and stubs!!
+
+                break;
 
                 // LIROpLock
             case Lock:

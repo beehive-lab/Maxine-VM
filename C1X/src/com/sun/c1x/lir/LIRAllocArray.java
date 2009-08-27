@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>LIRAllocArray</code> class definition.
@@ -38,7 +38,7 @@ public class LIRAllocArray extends LIRInstruction {
     LIROperand tmp2;
     LIROperand tmp3;
     LIROperand tmp4;
-    BasicType type;
+    CiKind type;
     CodeStub stub;
 
     /**
@@ -53,7 +53,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @param type
      * @param stub
      */
-    public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, BasicType type, CodeStub stub) {
+    public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, CiKind type, CodeStub stub) {
         super(LIROpcode.AllocArray, result, null);
         this.klass = klass;
         this.len = len;
@@ -135,7 +135,7 @@ public class LIRAllocArray extends LIRInstruction {
      *
      * @return the type
      */
-    public BasicType type() {
+    public CiKind type() {
         return type;
     }
 

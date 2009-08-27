@@ -27,6 +27,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -110,9 +111,9 @@ public class GraphBuilder {
                 }
                 if (tryInlineIntrinsic(method, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    BasicType rt = returnBasicType(method);
+                    CiKind rt = returnBasicType(method);
                     Instruction result = null;
-                    if (rt != BasicType.Void) {
+                    if (rt != CiKind.Void) {
                         result = pop(rt);
                     }
                     genMethodReturn(result);
@@ -154,7 +155,7 @@ public class GraphBuilder {
             BlockBegin osrBlock = blockMap.get(osrBCI);
             assert osrBlock.wasVisited();
             if (!osrBlock.stateBefore().stackEmpty()) {
-                throw new Bailout("cannot OSR with non-empty stack");
+                throw new CiBailout("cannot OSR with non-empty stack");
             }
         }
     }
@@ -282,12 +283,12 @@ public class GraphBuilder {
         curState.apush(x);
     }
 
-    void push(BasicType basicType, Instruction x) {
+    void push(CiKind basicType, Instruction x) {
         curState.push(basicType, x);
     }
 
-    void pushReturn(BasicType basicType, Instruction x) {
-        if (basicType != BasicType.Void) {
+    void pushReturn(CiKind basicType, Instruction x) {
+        if (basicType != CiKind.Void) {
             curState.push(basicType.stackType(), x);
         }
     }
@@ -312,21 +313,21 @@ public class GraphBuilder {
         return curState.apop();
     }
 
-    Instruction pop(BasicType basicType) {
+    Instruction pop(CiKind basicType) {
         return curState.pop(basicType);
     }
 
-    void loadLocal(int index, BasicType basicType) {
+    void loadLocal(int index, CiKind basicType) {
         push(basicType, curState.loadLocal(index));
     }
 
-    void storeLocal(BasicType basicType, int index) {
+    void storeLocal(CiKind basicType, int index) {
         if (scopeData.parsingJsr()) {
             // We need to do additional tracking of the location of the return
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (basicType == BasicType.Object) {
+            if (basicType == CiKind.Object) {
                 // might be storing the JSR return address
                 Instruction x = curState.xpop();
                 if (x.type().isJsr()) {
@@ -362,7 +363,7 @@ public class GraphBuilder {
         // ret.
         for (ScopeData cur = scopeData.parent; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryReturnAddressLocal() == index) {
-                throw new Bailout("subroutine overwrites return address from previous subroutine");
+                throw new CiBailout("subroutine overwrites return address from previous subroutine");
             }
         }
     }
@@ -430,7 +431,7 @@ public class GraphBuilder {
 
         BlockBegin entry = h.entryBlock();
         if (entry == curBlock) {
-            throw new Bailout("Exception handler covers itself");
+            throw new CiBailout("Exception handler covers itself");
         }
         assert entry.bci() == h.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
@@ -474,9 +475,9 @@ public class GraphBuilder {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             if (!ritype.isLoaded() || C1XOptions.TestPatching) {
-                push(BasicType.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
+                push(CiKind.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
             } else {
-                push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
+                push(CiKind.Object, append(Constant.forObject(ritype.javaClass())));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -486,7 +487,7 @@ public class GraphBuilder {
         }
     }
 
-    void genLoadIndexed(BasicType type) {
+    void genLoadIndexed(CiKind type) {
         ValueStack stateBefore = curState.immutableCopy();
         Instruction index = ipop();
         Instruction array = apop();
@@ -497,7 +498,7 @@ public class GraphBuilder {
         push(type.stackType(), append(new LoadIndexed(array, index, length, type, stateBefore)));
     }
 
-    void genStoreIndexed(BasicType type) {
+    void genStoreIndexed(CiKind type) {
         ValueStack stateBefore = curState.immutableCopy();
         Instruction value = pop(type.stackType());
         Instruction index = ipop();
@@ -594,11 +595,11 @@ public class GraphBuilder {
 
     }
 
-    void genArithmeticOp(BasicType basicType, int opcode) {
+    void genArithmeticOp(CiKind basicType, int opcode) {
         genArithmeticOp(basicType, opcode, null);
     }
 
-    void genArithmeticOp(BasicType basicType, int opcode, ValueStack stack) {
+    void genArithmeticOp(CiKind basicType, int opcode, ValueStack stack) {
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         Instruction result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
@@ -608,32 +609,32 @@ public class GraphBuilder {
         push(basicType, result);
     }
 
-    void genNegateOp(BasicType basicType) {
+    void genNegateOp(CiKind basicType) {
         push(basicType, append(new NegateOp(pop(basicType))));
     }
 
-    void genShiftOp(BasicType basicType, int opcode) {
+    void genShiftOp(CiKind basicType, int opcode) {
         Instruction s = ipop();
         Instruction x = pop(basicType);
         // note that strength reduction of e << K >>> K is correctly handled in canonicalizer now
         push(basicType, append(new ShiftOp(opcode, x, s)));
     }
 
-    void genLogicOp(BasicType basicType, int opcode) {
+    void genLogicOp(CiKind basicType, int opcode) {
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         push(basicType, append(new LogicOp(opcode, x, y)));
     }
 
-    void genCompareOp(BasicType basicType, int opcode) {
+    void genCompareOp(CiKind basicType, int opcode) {
         ValueStack stateBefore = curState.immutableCopy();
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
-    void genConvert(int opcode, BasicType from, BasicType to) {
-        BasicType tt = to.stackType();
+    void genConvert(int opcode, CiKind from, CiKind to) {
+        CiKind tt = to.stackType();
         push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
@@ -675,7 +676,7 @@ public class GraphBuilder {
         ifNode(x, cond, y, stateBefore);
     }
 
-    void genIfSame(BasicType basicType, Condition cond) {
+    void genIfSame(CiKind basicType, Condition cond) {
         ValueStack stateBefore = curState.immutableCopy();
         Instruction y = pop(basicType);
         Instruction x = pop(basicType);
@@ -727,7 +728,7 @@ public class GraphBuilder {
 
     void genNewTypeArray(int typeCode) {
         ValueStack stateBefore = curState.immutableCopy();
-        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(typeCode), stateBefore)));
+        apush(append(new NewTypeArray(ipop(), CiKind.fromArrayTypeCode(typeCode), stateBefore)));
     }
 
     void genNewObjectArray(char cpi) {
@@ -807,7 +808,7 @@ public class GraphBuilder {
         append(store);
     }
 
-    private void appendOptimizedLoadField(BasicType basicType, LoadField load) {
+    private void appendOptimizedLoadField(CiKind basicType, LoadField load) {
         if (memoryMap != null) {
             Instruction replacement = memoryMap.load(load);
             if (replacement != load) {
@@ -887,7 +888,7 @@ public class GraphBuilder {
         }
     }
 
-    private BasicType returnBasicType(RiMethod target) {
+    private CiKind returnBasicType(RiMethod target) {
         return target.signatureType().returnBasicType();
     }
 
@@ -909,7 +910,7 @@ public class GraphBuilder {
     }
 
     private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        BasicType resultType = returnBasicType(target);
+        CiKind resultType = returnBasicType(target);
         Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
@@ -997,8 +998,8 @@ public class GraphBuilder {
 
         if (needsCheck) {
             // append a call to the registration intrinsic
-            loadLocal(0, BasicType.Object);
-            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
+            loadLocal(0, CiKind.Object);
+            append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
                                           curState.popArguments(1), false, curState.immutableCopy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
@@ -1072,7 +1073,7 @@ public class GraphBuilder {
 
     void genMonitorExit(Instruction x, int bci) {
         if (curState.locksSize() < 1) {
-            throw new Bailout("monitor stack underflow");
+            throw new CiBailout("monitor stack underflow");
         }
         ValueStack stateBefore = curState.immutableCopy();
         appendWithoutOptimization(new MonitorExit(x, curState.unlock(), stateBefore), bci);
@@ -1081,7 +1082,7 @@ public class GraphBuilder {
 
     void genMonitorExit(int bci, ValueStack stateBefore) {
         if (curState.locksSize() < 1) {
-            throw new Bailout("monitor stack underflow");
+            throw new CiBailout("monitor stack underflow");
         }
         appendWithoutOptimization(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
@@ -1091,20 +1092,20 @@ public class GraphBuilder {
         for (ScopeData cur = scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
-                throw new Bailout("recursive jsr/ret structure");
+                throw new CiBailout("recursive jsr/ret structure");
             }
         }
-        push(BasicType.Jsr, append(Constant.forJsr(nextBCI())));
+        push(CiKind.Jsr, append(Constant.forJsr(nextBCI())));
         tryInlineJsr(dest);
     }
 
     void genRet(int localIndex) {
         if (!scopeData.parsingJsr()) {
-            throw new Bailout("ret encountered when not parsing subroutine");
+            throw new CiBailout("ret encountered when not parsing subroutine");
         }
 
         if (localIndex != scopeData.jsrEntryReturnAddressLocal()) {
-            throw new Bailout("jsr/ret structure is too complicated");
+            throw new CiBailout("jsr/ret structure is too complicated");
         }
         // rets become non-safepoint gotos
         append(new Goto(scopeData.jsrContinuation(), null, false));
@@ -1250,7 +1251,7 @@ public class GraphBuilder {
             lastInstr = lastInstr.setNext(x, bci);
             if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
                 // bailout if we've exceeded the maximum inlining size
-                throw new Bailout("Method and/or inlining is too large");
+                throw new CiBailout("Method and/or inlining is too large");
             }
 
             if (hasUncontrollableSideEffects(x)) {
@@ -1353,7 +1354,7 @@ public class GraphBuilder {
         int index = 0;
         if (!method.isStatic()) {
             // add the receiver and assume it is non null
-            Local local = new Local(BasicType.Object, index);
+            Local local = new Local(CiKind.Object, index);
             local.setFlag(Instruction.Flag.NonNull, true);
             local.setDeclaredType(method.holder());
             state.storeLocal(index, local);
@@ -1363,7 +1364,7 @@ public class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            BasicType vt = type.basicType().stackType();
+            CiKind vt = type.basicType().stackType();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
                 local.setDeclaredType(type);
@@ -1411,7 +1412,7 @@ public class GraphBuilder {
         }
 
         // get the arguments for the intrinsic
-        BasicType resultType = returnBasicType(target);
+        CiKind resultType = returnBasicType(target);
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
@@ -1820,7 +1821,7 @@ public class GraphBuilder {
 
             // check for active JSR during OSR compilation
             if (compilation.isOsrCompilation() && scope().isTopScope() && scopeData.parsingJsr() && s.currentBCI() == compilation.osrBCI) {
-                throw new Bailout("OSR not supported while a JSR is active");
+                throw new CiBailout("OSR not supported while a JSR is active");
             }
 
             // push an exception object onto the stack if we are parsing an exception handler
@@ -1852,72 +1853,72 @@ public class GraphBuilder {
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
                 case Bytecodes.LDC2_W         : genLoadConstant(stream().readCPI()); break;
-                case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), BasicType.Int); break;
-                case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), BasicType.Long); break;
-                case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), BasicType.Float); break;
-                case Bytecodes.DLOAD          : loadLocal(s.readLocalIndex(), BasicType.Double); break;
-                case Bytecodes.ALOAD          : loadLocal(s.readLocalIndex(), BasicType.Object); break;
-                case Bytecodes.ILOAD_0        : loadLocal(0, BasicType.Int); break;
-                case Bytecodes.ILOAD_1        : loadLocal(1, BasicType.Int); break;
-                case Bytecodes.ILOAD_2        : loadLocal(2, BasicType.Int); break;
-                case Bytecodes.ILOAD_3        : loadLocal(3, BasicType.Int); break;
-                case Bytecodes.LLOAD_0        : loadLocal(0, BasicType.Long); break;
-                case Bytecodes.LLOAD_1        : loadLocal(1, BasicType.Long); break;
-                case Bytecodes.LLOAD_2        : loadLocal(2, BasicType.Long); break;
-                case Bytecodes.LLOAD_3        : loadLocal(3, BasicType.Long); break;
-                case Bytecodes.FLOAD_0        : loadLocal(0, BasicType.Float); break;
-                case Bytecodes.FLOAD_1        : loadLocal(1, BasicType.Float); break;
-                case Bytecodes.FLOAD_2        : loadLocal(2, BasicType.Float); break;
-                case Bytecodes.FLOAD_3        : loadLocal(3, BasicType.Float); break;
-                case Bytecodes.DLOAD_0        : loadLocal(0, BasicType.Double); break;
-                case Bytecodes.DLOAD_1        : loadLocal(1, BasicType.Double); break;
-                case Bytecodes.DLOAD_2        : loadLocal(2, BasicType.Double); break;
-                case Bytecodes.DLOAD_3        : loadLocal(3, BasicType.Double); break;
-                case Bytecodes.ALOAD_0        : loadLocal(0, BasicType.Object); break;
-                case Bytecodes.ALOAD_1        : loadLocal(1, BasicType.Object); break;
-                case Bytecodes.ALOAD_2        : loadLocal(2, BasicType.Object); break;
-                case Bytecodes.ALOAD_3        : loadLocal(3, BasicType.Object); break;
-                case Bytecodes.IALOAD         : genLoadIndexed(BasicType.Int   ); break;
-                case Bytecodes.LALOAD         : genLoadIndexed(BasicType.Long  ); break;
-                case Bytecodes.FALOAD         : genLoadIndexed(BasicType.Float ); break;
-                case Bytecodes.DALOAD         : genLoadIndexed(BasicType.Double); break;
-                case Bytecodes.AALOAD         : genLoadIndexed(BasicType.Object); break;
-                case Bytecodes.BALOAD         : genLoadIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CALOAD         : genLoadIndexed(BasicType.Char  ); break;
-                case Bytecodes.SALOAD         : genLoadIndexed(BasicType.Short ); break;
-                case Bytecodes.ISTORE         : storeLocal(BasicType.Int, s.readLocalIndex()); break;
-                case Bytecodes.LSTORE         : storeLocal(BasicType.Long, s.readLocalIndex()); break;
-                case Bytecodes.FSTORE         : storeLocal(BasicType.Float, s.readLocalIndex()); break;
-                case Bytecodes.DSTORE         : storeLocal(BasicType.Double, s.readLocalIndex()); break;
-                case Bytecodes.ASTORE         : storeLocal(BasicType.Object, s.readLocalIndex()); break;
-                case Bytecodes.ISTORE_0       : storeLocal(BasicType.Int, 0); break;
-                case Bytecodes.ISTORE_1       : storeLocal(BasicType.Int, 1); break;
-                case Bytecodes.ISTORE_2       : storeLocal(BasicType.Int, 2); break;
-                case Bytecodes.ISTORE_3       : storeLocal(BasicType.Int, 3); break;
-                case Bytecodes.LSTORE_0       : storeLocal(BasicType.Long, 0); break;
-                case Bytecodes.LSTORE_1       : storeLocal(BasicType.Long, 1); break;
-                case Bytecodes.LSTORE_2       : storeLocal(BasicType.Long, 2); break;
-                case Bytecodes.LSTORE_3       : storeLocal(BasicType.Long, 3); break;
-                case Bytecodes.FSTORE_0       : storeLocal(BasicType.Float, 0); break;
-                case Bytecodes.FSTORE_1       : storeLocal(BasicType.Float, 1); break;
-                case Bytecodes.FSTORE_2       : storeLocal(BasicType.Float, 2); break;
-                case Bytecodes.FSTORE_3       : storeLocal(BasicType.Float, 3); break;
-                case Bytecodes.DSTORE_0       : storeLocal(BasicType.Double, 0); break;
-                case Bytecodes.DSTORE_1       : storeLocal(BasicType.Double, 1); break;
-                case Bytecodes.DSTORE_2       : storeLocal(BasicType.Double, 2); break;
-                case Bytecodes.DSTORE_3       : storeLocal(BasicType.Double, 3); break;
-                case Bytecodes.ASTORE_0       : storeLocal(BasicType.Object, 0); break;
-                case Bytecodes.ASTORE_1       : storeLocal(BasicType.Object, 1); break;
-                case Bytecodes.ASTORE_2       : storeLocal(BasicType.Object, 2); break;
-                case Bytecodes.ASTORE_3       : storeLocal(BasicType.Object, 3); break;
-                case Bytecodes.IASTORE        : genStoreIndexed(BasicType.Int   ); break;
-                case Bytecodes.LASTORE        : genStoreIndexed(BasicType.Long  ); break;
-                case Bytecodes.FASTORE        : genStoreIndexed(BasicType.Float ); break;
-                case Bytecodes.DASTORE        : genStoreIndexed(BasicType.Double); break;
-                case Bytecodes.AASTORE        : genStoreIndexed(BasicType.Object); break;
-                case Bytecodes.BASTORE        : genStoreIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CASTORE        : genStoreIndexed(BasicType.Char  ); break;
-                case Bytecodes.SASTORE        : genStoreIndexed(BasicType.Short ); break;
+                case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), CiKind.Int); break;
+                case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), CiKind.Long); break;
+                case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), CiKind.Float); break;
+                case Bytecodes.DLOAD          : loadLocal(s.readLocalIndex(), CiKind.Double); break;
+                case Bytecodes.ALOAD          : loadLocal(s.readLocalIndex(), CiKind.Object); break;
+                case Bytecodes.ILOAD_0        : loadLocal(0, CiKind.Int); break;
+                case Bytecodes.ILOAD_1        : loadLocal(1, CiKind.Int); break;
+                case Bytecodes.ILOAD_2        : loadLocal(2, CiKind.Int); break;
+                case Bytecodes.ILOAD_3        : loadLocal(3, CiKind.Int); break;
+                case Bytecodes.LLOAD_0        : loadLocal(0, CiKind.Long); break;
+                case Bytecodes.LLOAD_1        : loadLocal(1, CiKind.Long); break;
+                case Bytecodes.LLOAD_2        : loadLocal(2, CiKind.Long); break;
+                case Bytecodes.LLOAD_3        : loadLocal(3, CiKind.Long); break;
+                case Bytecodes.FLOAD_0        : loadLocal(0, CiKind.Float); break;
+                case Bytecodes.FLOAD_1        : loadLocal(1, CiKind.Float); break;
+                case Bytecodes.FLOAD_2        : loadLocal(2, CiKind.Float); break;
+                case Bytecodes.FLOAD_3        : loadLocal(3, CiKind.Float); break;
+                case Bytecodes.DLOAD_0        : loadLocal(0, CiKind.Double); break;
+                case Bytecodes.DLOAD_1        : loadLocal(1, CiKind.Double); break;
+                case Bytecodes.DLOAD_2        : loadLocal(2, CiKind.Double); break;
+                case Bytecodes.DLOAD_3        : loadLocal(3, CiKind.Double); break;
+                case Bytecodes.ALOAD_0        : loadLocal(0, CiKind.Object); break;
+                case Bytecodes.ALOAD_1        : loadLocal(1, CiKind.Object); break;
+                case Bytecodes.ALOAD_2        : loadLocal(2, CiKind.Object); break;
+                case Bytecodes.ALOAD_3        : loadLocal(3, CiKind.Object); break;
+                case Bytecodes.IALOAD         : genLoadIndexed(CiKind.Int   ); break;
+                case Bytecodes.LALOAD         : genLoadIndexed(CiKind.Long  ); break;
+                case Bytecodes.FALOAD         : genLoadIndexed(CiKind.Float ); break;
+                case Bytecodes.DALOAD         : genLoadIndexed(CiKind.Double); break;
+                case Bytecodes.AALOAD         : genLoadIndexed(CiKind.Object); break;
+                case Bytecodes.BALOAD         : genLoadIndexed(CiKind.Byte  ); break;
+                case Bytecodes.CALOAD         : genLoadIndexed(CiKind.Char  ); break;
+                case Bytecodes.SALOAD         : genLoadIndexed(CiKind.Short ); break;
+                case Bytecodes.ISTORE         : storeLocal(CiKind.Int, s.readLocalIndex()); break;
+                case Bytecodes.LSTORE         : storeLocal(CiKind.Long, s.readLocalIndex()); break;
+                case Bytecodes.FSTORE         : storeLocal(CiKind.Float, s.readLocalIndex()); break;
+                case Bytecodes.DSTORE         : storeLocal(CiKind.Double, s.readLocalIndex()); break;
+                case Bytecodes.ASTORE         : storeLocal(CiKind.Object, s.readLocalIndex()); break;
+                case Bytecodes.ISTORE_0       : storeLocal(CiKind.Int, 0); break;
+                case Bytecodes.ISTORE_1       : storeLocal(CiKind.Int, 1); break;
+                case Bytecodes.ISTORE_2       : storeLocal(CiKind.Int, 2); break;
+                case Bytecodes.ISTORE_3       : storeLocal(CiKind.Int, 3); break;
+                case Bytecodes.LSTORE_0       : storeLocal(CiKind.Long, 0); break;
+                case Bytecodes.LSTORE_1       : storeLocal(CiKind.Long, 1); break;
+                case Bytecodes.LSTORE_2       : storeLocal(CiKind.Long, 2); break;
+                case Bytecodes.LSTORE_3       : storeLocal(CiKind.Long, 3); break;
+                case Bytecodes.FSTORE_0       : storeLocal(CiKind.Float, 0); break;
+                case Bytecodes.FSTORE_1       : storeLocal(CiKind.Float, 1); break;
+                case Bytecodes.FSTORE_2       : storeLocal(CiKind.Float, 2); break;
+                case Bytecodes.FSTORE_3       : storeLocal(CiKind.Float, 3); break;
+                case Bytecodes.DSTORE_0       : storeLocal(CiKind.Double, 0); break;
+                case Bytecodes.DSTORE_1       : storeLocal(CiKind.Double, 1); break;
+                case Bytecodes.DSTORE_2       : storeLocal(CiKind.Double, 2); break;
+                case Bytecodes.DSTORE_3       : storeLocal(CiKind.Double, 3); break;
+                case Bytecodes.ASTORE_0       : storeLocal(CiKind.Object, 0); break;
+                case Bytecodes.ASTORE_1       : storeLocal(CiKind.Object, 1); break;
+                case Bytecodes.ASTORE_2       : storeLocal(CiKind.Object, 2); break;
+                case Bytecodes.ASTORE_3       : storeLocal(CiKind.Object, 3); break;
+                case Bytecodes.IASTORE        : genStoreIndexed(CiKind.Int   ); break;
+                case Bytecodes.LASTORE        : genStoreIndexed(CiKind.Long  ); break;
+                case Bytecodes.FASTORE        : genStoreIndexed(CiKind.Float ); break;
+                case Bytecodes.DASTORE        : genStoreIndexed(CiKind.Double); break;
+                case Bytecodes.AASTORE        : genStoreIndexed(CiKind.Object); break;
+                case Bytecodes.BASTORE        : genStoreIndexed(CiKind.Byte  ); break;
+                case Bytecodes.CASTORE        : genStoreIndexed(CiKind.Char  ); break;
+                case Bytecodes.SASTORE        : genStoreIndexed(CiKind.Short ); break;
                 case Bytecodes.POP            : // fall through
                 case Bytecodes.POP2           : // fall through
                 case Bytecodes.DUP            : // fall through
@@ -1929,75 +1930,75 @@ public class GraphBuilder {
                 case Bytecodes.SWAP           : stackOp(opcode); break;
                 case Bytecodes.IADD           : // fall through
                 case Bytecodes.ISUB           : // fall through
-                case Bytecodes.IMUL           : genArithmeticOp(BasicType.Int, opcode); break;
+                case Bytecodes.IMUL           : genArithmeticOp(CiKind.Int, opcode); break;
                 case Bytecodes.IDIV           : // fall through
-                case Bytecodes.IREM           : genArithmeticOp(BasicType.Int, opcode, curState.copy()); break;
+                case Bytecodes.IREM           : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
                 case Bytecodes.LADD           : // fall through
                 case Bytecodes.LSUB           : // fall through
-                case Bytecodes.LMUL           : genArithmeticOp(BasicType.Long, opcode); break;
+                case Bytecodes.LMUL           : genArithmeticOp(CiKind.Long, opcode); break;
                 case Bytecodes.LDIV           : // fall through
-                case Bytecodes.LREM           : genArithmeticOp(BasicType.Long, opcode, curState.copy()); break;
+                case Bytecodes.LREM           : genArithmeticOp(CiKind.Long, opcode, curState.copy()); break;
                 case Bytecodes.FADD           : // fall through
                 case Bytecodes.FSUB           : // fall through
                 case Bytecodes.FMUL           : // fall through
                 case Bytecodes.FDIV           : // fall through
-                case Bytecodes.FREM           : genArithmeticOp(BasicType.Float, opcode); break;
+                case Bytecodes.FREM           : genArithmeticOp(CiKind.Float, opcode); break;
                 case Bytecodes.DADD           : // fall through
                 case Bytecodes.DSUB           : // fall through
                 case Bytecodes.DMUL           : // fall through
                 case Bytecodes.DDIV           : // fall through
-                case Bytecodes.DREM           : genArithmeticOp(BasicType.Double, opcode); break;
-                case Bytecodes.INEG           : genNegateOp(BasicType.Int); break;
-                case Bytecodes.LNEG           : genNegateOp(BasicType.Long); break;
-                case Bytecodes.FNEG           : genNegateOp(BasicType.Float); break;
-                case Bytecodes.DNEG           : genNegateOp(BasicType.Double); break;
+                case Bytecodes.DREM           : genArithmeticOp(CiKind.Double, opcode); break;
+                case Bytecodes.INEG           : genNegateOp(CiKind.Int); break;
+                case Bytecodes.LNEG           : genNegateOp(CiKind.Long); break;
+                case Bytecodes.FNEG           : genNegateOp(CiKind.Float); break;
+                case Bytecodes.DNEG           : genNegateOp(CiKind.Double); break;
                 case Bytecodes.ISHL           : // fall through
                 case Bytecodes.ISHR           : // fall through
-                case Bytecodes.IUSHR          : genShiftOp(BasicType.Int, opcode); break;
+                case Bytecodes.IUSHR          : genShiftOp(CiKind.Int, opcode); break;
                 case Bytecodes.IAND           : // fall through
                 case Bytecodes.IOR            : // fall through
-                case Bytecodes.IXOR           : genLogicOp(BasicType.Int, opcode); break;
+                case Bytecodes.IXOR           : genLogicOp(CiKind.Int, opcode); break;
                 case Bytecodes.LSHL           : // fall through
                 case Bytecodes.LSHR           : // fall through
-                case Bytecodes.LUSHR          : genShiftOp(BasicType.Long, opcode); break;
+                case Bytecodes.LUSHR          : genShiftOp(CiKind.Long, opcode); break;
                 case Bytecodes.LAND           : // fall through
                 case Bytecodes.LOR            : // fall through
-                case Bytecodes.LXOR           : genLogicOp(BasicType.Long, opcode); break;
+                case Bytecodes.LXOR           : genLogicOp(CiKind.Long, opcode); break;
                 case Bytecodes.IINC           : genIncrement(); break;
-                case Bytecodes.I2L            : genConvert(opcode, BasicType.Int   , BasicType.Long  ); break;
-                case Bytecodes.I2F            : genConvert(opcode, BasicType.Int   , BasicType.Float ); break;
-                case Bytecodes.I2D            : genConvert(opcode, BasicType.Int   , BasicType.Double); break;
-                case Bytecodes.L2I            : genConvert(opcode, BasicType.Long  , BasicType.Int   ); break;
-                case Bytecodes.L2F            : genConvert(opcode, BasicType.Long  , BasicType.Float ); break;
-                case Bytecodes.L2D            : genConvert(opcode, BasicType.Long  , BasicType.Double); break;
-                case Bytecodes.F2I            : genConvert(opcode, BasicType.Float , BasicType.Int   ); break;
-                case Bytecodes.F2L            : genConvert(opcode, BasicType.Float , BasicType.Long  ); break;
-                case Bytecodes.F2D            : genConvert(opcode, BasicType.Float , BasicType.Double); break;
-                case Bytecodes.D2I            : genConvert(opcode, BasicType.Double, BasicType.Int   ); break;
-                case Bytecodes.D2L            : genConvert(opcode, BasicType.Double, BasicType.Long  ); break;
-                case Bytecodes.D2F            : genConvert(opcode, BasicType.Double, BasicType.Float ); break;
-                case Bytecodes.I2B            : genConvert(opcode, BasicType.Int   , BasicType.Byte  ); break;
-                case Bytecodes.I2C            : genConvert(opcode, BasicType.Int   , BasicType.Char  ); break;
-                case Bytecodes.I2S            : genConvert(opcode, BasicType.Int   , BasicType.Short ); break;
-                case Bytecodes.LCMP           : genCompareOp(BasicType.Long, opcode); break;
-                case Bytecodes.FCMPL          : genCompareOp(BasicType.Float, opcode); break;
-                case Bytecodes.FCMPG          : genCompareOp(BasicType.Float, opcode); break;
-                case Bytecodes.DCMPL          : genCompareOp(BasicType.Double, opcode); break;
-                case Bytecodes.DCMPG          : genCompareOp(BasicType.Double, opcode); break;
+                case Bytecodes.I2L            : genConvert(opcode, CiKind.Int   , CiKind.Long  ); break;
+                case Bytecodes.I2F            : genConvert(opcode, CiKind.Int   , CiKind.Float ); break;
+                case Bytecodes.I2D            : genConvert(opcode, CiKind.Int   , CiKind.Double); break;
+                case Bytecodes.L2I            : genConvert(opcode, CiKind.Long  , CiKind.Int   ); break;
+                case Bytecodes.L2F            : genConvert(opcode, CiKind.Long  , CiKind.Float ); break;
+                case Bytecodes.L2D            : genConvert(opcode, CiKind.Long  , CiKind.Double); break;
+                case Bytecodes.F2I            : genConvert(opcode, CiKind.Float , CiKind.Int   ); break;
+                case Bytecodes.F2L            : genConvert(opcode, CiKind.Float , CiKind.Long  ); break;
+                case Bytecodes.F2D            : genConvert(opcode, CiKind.Float , CiKind.Double); break;
+                case Bytecodes.D2I            : genConvert(opcode, CiKind.Double, CiKind.Int   ); break;
+                case Bytecodes.D2L            : genConvert(opcode, CiKind.Double, CiKind.Long  ); break;
+                case Bytecodes.D2F            : genConvert(opcode, CiKind.Double, CiKind.Float ); break;
+                case Bytecodes.I2B            : genConvert(opcode, CiKind.Int   , CiKind.Byte  ); break;
+                case Bytecodes.I2C            : genConvert(opcode, CiKind.Int   , CiKind.Char  ); break;
+                case Bytecodes.I2S            : genConvert(opcode, CiKind.Int   , CiKind.Short ); break;
+                case Bytecodes.LCMP           : genCompareOp(CiKind.Long, opcode); break;
+                case Bytecodes.FCMPL          : genCompareOp(CiKind.Float, opcode); break;
+                case Bytecodes.FCMPG          : genCompareOp(CiKind.Float, opcode); break;
+                case Bytecodes.DCMPL          : genCompareOp(CiKind.Double, opcode); break;
+                case Bytecodes.DCMPG          : genCompareOp(CiKind.Double, opcode); break;
                 case Bytecodes.IFEQ           : genIfZero(Condition.eql); break;
                 case Bytecodes.IFNE           : genIfZero(Condition.neq); break;
                 case Bytecodes.IFLT           : genIfZero(Condition.lss); break;
                 case Bytecodes.IFGE           : genIfZero(Condition.geq); break;
                 case Bytecodes.IFGT           : genIfZero(Condition.gtr); break;
                 case Bytecodes.IFLE           : genIfZero(Condition.leq); break;
-                case Bytecodes.IF_ICMPEQ      : genIfSame(BasicType.Int, Condition.eql); break;
-                case Bytecodes.IF_ICMPNE      : genIfSame(BasicType.Int, Condition.neq); break;
-                case Bytecodes.IF_ICMPLT      : genIfSame(BasicType.Int, Condition.lss); break;
-                case Bytecodes.IF_ICMPGE      : genIfSame(BasicType.Int, Condition.geq); break;
-                case Bytecodes.IF_ICMPGT      : genIfSame(BasicType.Int, Condition.gtr); break;
-                case Bytecodes.IF_ICMPLE      : genIfSame(BasicType.Int, Condition.leq); break;
-                case Bytecodes.IF_ACMPEQ      : genIfSame(BasicType.Object, Condition.eql); break;
-                case Bytecodes.IF_ACMPNE      : genIfSame(BasicType.Object, Condition.neq); break;
+                case Bytecodes.IF_ICMPEQ      : genIfSame(CiKind.Int, Condition.eql); break;
+                case Bytecodes.IF_ICMPNE      : genIfSame(CiKind.Int, Condition.neq); break;
+                case Bytecodes.IF_ICMPLT      : genIfSame(CiKind.Int, Condition.lss); break;
+                case Bytecodes.IF_ICMPGE      : genIfSame(CiKind.Int, Condition.geq); break;
+                case Bytecodes.IF_ICMPGT      : genIfSame(CiKind.Int, Condition.gtr); break;
+                case Bytecodes.IF_ICMPLE      : genIfSame(CiKind.Int, Condition.leq); break;
+                case Bytecodes.IF_ACMPEQ      : genIfSame(CiKind.Object, Condition.eql); break;
+                case Bytecodes.IF_ACMPNE      : genIfSame(CiKind.Object, Condition.neq); break;
                 case Bytecodes.GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case Bytecodes.JSR            : genJsr(s.readBranchDest()); break;
                 case Bytecodes.RET            : genRet(s.readLocalIndex()); break;
@@ -2032,9 +2033,9 @@ public class GraphBuilder {
                 case Bytecodes.GOTO_W         : genGoto(s.currentBCI(), s.readFarBranchDest()); break;
                 case Bytecodes.JSR_W          : genJsr(s.readFarBranchDest()); break;
                 case Bytecodes.BREAKPOINT:
-                    throw new Bailout("concurrent setting of breakpoint");
+                    throw new CiBailout("concurrent setting of breakpoint");
                 default:
-                    throw new Bailout("unknown bytecode " + opcode);
+                    throw new CiBailout("unknown bytecode " + opcode);
             }
             // Checkstyle: resume
 

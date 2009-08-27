@@ -21,8 +21,8 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 import com.sun.c1x.C1XOptions;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
@@ -47,7 +47,7 @@ public class MaxRiType implements RiType {
     final MaxRiConstantPool constantPool;
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
-    final BasicType basicType;
+    final CiKind basicType;
     final ClassConstant classRef;
 
     /**
@@ -300,7 +300,7 @@ public class MaxRiType implements RiType {
      * Gets the basic type for this compiler interface type.
      * @return the basic type
      */
-    public BasicType basicType() {
+    public CiKind basicType() {
         return basicType;
     }
 
@@ -328,30 +328,30 @@ public class MaxRiType implements RiType {
      * @param kind the kind
      * @return the associated basic type
      */
-    public static BasicType kindToBasicType(Kind kind) {
+    public static CiKind kindToBasicType(Kind kind) {
         switch (kind.asEnum) {
             case BYTE:
-                return BasicType.Byte;
+                return CiKind.Byte;
             case BOOLEAN:
-                return BasicType.Boolean;
+                return CiKind.Boolean;
             case SHORT:
-                return BasicType.Short;
+                return CiKind.Short;
             case CHAR:
-                return BasicType.Char;
+                return CiKind.Char;
             case INT:
-                return BasicType.Int;
+                return CiKind.Int;
             case FLOAT:
-                return BasicType.Float;
+                return CiKind.Float;
             case LONG:
-                return BasicType.Long;
+                return CiKind.Long;
             case DOUBLE:
-                return BasicType.Double;
+                return CiKind.Double;
             case WORD:
-                return C1XOptions.SupportWordTypes ? BasicType.Word : BasicType.Object;
+                return C1XOptions.SupportWordTypes ? CiKind.Word : CiKind.Object;
             case REFERENCE:
-                return BasicType.Object;
+                return CiKind.Object;
             case VOID:
-                return BasicType.Void;
+                return CiKind.Void;
             default:
                 throw ProgramError.unknownCase();
         }
@@ -424,8 +424,8 @@ public class MaxRiType implements RiType {
         throw ProgramError.unexpected();
     }
 
-    public BasicType getBasicType(RiType.Representation r) {
+    public CiKind getBasicType(RiType.Representation r) {
         // all portions of a type are represented by objects in Maxine
-        return BasicType.Object;
+        return CiKind.Object;
     }
 }

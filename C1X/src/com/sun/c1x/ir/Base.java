@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>Base</code> instruction represents the end of the entry block of the procedure that has
@@ -36,7 +36,7 @@ public class Base extends BlockEnd {
      * @param osrEntry the OSR entrypoint block
      */
     public Base(BlockBegin standardEntry, BlockBegin osrEntry) {
-        super(BasicType.Illegal, null, false);
+        super(CiKind.Illegal, null, false);
         assert osrEntry == null || osrEntry.isOsrEntry();
         assert standardEntry.isStandardEntry();
         if (osrEntry != null) {

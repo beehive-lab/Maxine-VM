@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>Return</code> class definition.
@@ -37,7 +37,7 @@ public class Return extends BlockEnd {
      * is a void return
      */
     public Return(Instruction result) {
-        super(result == null ? BasicType.Void : result.type(), null, true);
+        super(result == null ? CiKind.Void : result.type(), null, true);
         this.result = result;
     }
 

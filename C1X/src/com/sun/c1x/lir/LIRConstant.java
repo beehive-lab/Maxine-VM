@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 
 /**
@@ -38,7 +37,7 @@ public class LIRConstant extends LIROperand {
      * Create a LIRConstant from a ConstType object.
      * @param value the value
      */
-    LIRConstant(CiConstant value) {
+    public LIRConstant(CiConstant value) {
         super(value.basicType);
         this.value = value;
     }
@@ -50,7 +49,7 @@ public class LIRConstant extends LIROperand {
      */
     @Override
     public int asInt() {
-        assertType(this, BasicType.Int);
+        assertType(this, CiKind.Int);
         return value.asInt();
     }
 
@@ -61,7 +60,7 @@ public class LIRConstant extends LIROperand {
      */
     @Override
     public long asLong() {
-        assertType(this, BasicType.Long);
+        assertType(this, CiKind.Long);
         return value.asLong();
     }
 
@@ -71,7 +70,7 @@ public class LIRConstant extends LIROperand {
      * @return the float value of the constant, if it is a float
      */
     public float asFloat() {
-        assertType(this, BasicType.Float);
+        assertType(this, CiKind.Float);
         return value.asFloat();
     }
 
@@ -81,7 +80,7 @@ public class LIRConstant extends LIROperand {
      * @return the double value of the constant, if it is a double
      */
     public double asDouble() {
-        assertType(this, BasicType.Double);
+        assertType(this, CiKind.Double);
         return value.asDouble();
     }
 
@@ -91,7 +90,7 @@ public class LIRConstant extends LIROperand {
      * @return a reference to the object if this is a reference to an object
      */
     public Object asObject() {
-        assertType(this, BasicType.Object);
+        assertType(this, CiKind.Object);
         return value.asObject();
     }
 
@@ -101,7 +100,7 @@ public class LIRConstant extends LIROperand {
      * @return the lower order 32 bits of this constant
      */
     public int asIntLo() {
-        assertType(this, BasicType.Long);
+        assertType(this, CiKind.Long);
         return (int) value.asLong();
     }
 
@@ -111,7 +110,7 @@ public class LIRConstant extends LIROperand {
      * @return the high order 32 bits of this constant
      */
     public int asIntHi() {
-        assertType(this, BasicType.Long);
+        assertType(this, CiKind.Long);
         return (int) (value.asLong() >> 32);
     }
 
@@ -120,7 +119,7 @@ public class LIRConstant extends LIROperand {
      *
      * @return the reference to the input constant if succeeded.
      */
-    public static LIRConstant assertType(LIRConstant c, BasicType t) {
+    public static LIRConstant assertType(LIRConstant c, CiKind t) {
         assert c.type() == t : "constant has wrong type";
         return c;
     }
@@ -133,7 +132,7 @@ public class LIRConstant extends LIROperand {
     public int asIntBits() {
         if (this.isFloat()) {
             return Float.floatToIntBits(this.asFloat());
-        } else if (this.type() == BasicType.Int) {
+        } else if (this.type() == CiKind.Int) {
             return this.asInt();
         } else {
             throw Util.shouldNotReachHere();

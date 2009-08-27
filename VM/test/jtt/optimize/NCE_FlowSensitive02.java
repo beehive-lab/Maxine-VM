@@ -29,8 +29,7 @@ public class NCE_FlowSensitive02 {
     public static String test(String arg) {
         if (arg != null) {
             return arg.toString();
-        } else {
-            return arg.toString();
         }
+        return arg.toString();
     }
 }

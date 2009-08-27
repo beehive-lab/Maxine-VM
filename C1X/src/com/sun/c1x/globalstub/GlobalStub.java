@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.globalstub;
 
-import static com.sun.c1x.value.BasicType.*;
+import static com.sun.c1x.ci.CiKind.*;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  *
@@ -39,10 +39,7 @@ public enum GlobalStub {
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
     ThrowIncompatibleClassChangeError,
-    SlowSubtypeCheck(Boolean, Object, Object),
-    NewObjectArray(Object, Object, Int),
     NewInstance(Object, Object),
-    NewTypeArray(Object, Object, Int),
     f2i(Int, Float),
     fneg(Float, Float),
     dneg(Double, Double),
@@ -55,28 +52,18 @@ public enum GlobalStub {
     ArithmeticLdiv(Long, Long, Long),
     ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
-    ArithmeticDrem(Double, Double),
-    ResolveOptVirtualCall(Word, Int, Object),
-    ResolveStaticCall(Word, Int, Object),
-    RetrieveInterfaceIndex(Int, Object, Int),
-    ResolveClass(Object, Int, Object),
-    ResolveArrayClass(Object, Int, Object),
-    ResolveInterfaceIndex(Int, Object, Int, Object),
-    ResolveStaticFields(Object, Int, Object),
-    ResolveJavaClass(Object, Int, Object),
-    ResolveFieldOffset(Int, Int, Object),
-    ResolveVTableIndex(Int, Int, Object);
+    ArithmeticDrem(Double, Double);
 
 
-    public final BasicType resultType;
-    public final BasicType[] arguments;
+    public final CiKind resultType;
+    public final CiKind[] arguments;
 
     private GlobalStub() {
         resultType = Void;
-        arguments = new BasicType[0];
+        arguments = new CiKind[0];
     }
 
-    private GlobalStub(BasicType resultType, BasicType... args) {
+    private GlobalStub(CiKind resultType, CiKind... args) {
         this.resultType = resultType;
         this.arguments = args;
     }

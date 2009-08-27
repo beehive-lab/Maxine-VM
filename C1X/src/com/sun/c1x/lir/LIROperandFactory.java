@@ -22,9 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 
 /**
@@ -40,20 +38,20 @@ public class LIROperandFactory {
 
     public static final LIROperand IllegalOperand = LIROperand.ILLEGAL;
 
-    public static LIROperand singleLocation(BasicType type, Register reg) {
+    public static LIROperand singleLocation(CiKind type, CiRegister reg) {
         return new LIRLocation(type, reg);
     }
 
-    public static LIROperand doubleLocation(BasicType type, Register reg1, Register reg2) {
+    public static LIROperand doubleLocation(CiKind type, CiRegister reg1, CiRegister reg2) {
         return new LIRLocation(type, reg1, reg2);
     }
 
-    public static LIROperand virtualRegister(int index, BasicType type) {
+    public static LIROperand virtualRegister(int index, CiKind type) {
         assert index >= LIRLocation.virtualRegisterBase() : "must start at vregBase";
         return new LIRLocation(type, index);
     }
 
-    public static LIROperand stack(int index, BasicType type) {
+    public static LIROperand stack(int index, CiKind type) {
         assert index >= 0;
         return new LIRLocation(type, -index - 1);
     }
@@ -109,11 +107,11 @@ public class LIROperandFactory {
         }
     }
 
-    public static LIROperand address(LIROperand register, int disp, BasicType t) {
+    public static LIROperand address(LIROperand register, int disp, CiKind t) {
         return new LIRAddress(register, disp, t);
     }
 
-    public static LIROperand address(Register rsp, int disp, BasicType t) {
-        return address(new LIRLocation(BasicType.Int, rsp), disp, t);
+    public static LIROperand address(CiRegister rsp, int disp, CiKind t) {
+        return address(new LIRLocation(CiKind.Int, rsp), disp, t);
     }
 }

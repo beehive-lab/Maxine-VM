@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -41,7 +42,7 @@ public abstract class TypeCheck extends StateSplit {
      * @param type the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(RiType targetClass, Instruction targetClassInstruction, Instruction object, BasicType type, ValueStack stateBefore) {
+    public TypeCheck(RiType targetClass, Instruction targetClassInstruction, Instruction object, CiKind type, ValueStack stateBefore) {
         super(type, stateBefore);
         this.targetClass = targetClass;
         this.targetClassInstruction = targetClassInstruction;

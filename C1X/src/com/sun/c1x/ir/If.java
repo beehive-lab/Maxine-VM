@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -50,7 +51,7 @@ public class If extends BlockEnd {
      */
     public If(Instruction x, Condition cond, boolean unorderedIsTrue, Instruction y,
               BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
-        super(BasicType.Illegal, stateBefore, isSafepoint);
+        super(CiKind.Illegal, stateBefore, isSafepoint);
         this.x = x;
         this.y = y;
         condition = cond;

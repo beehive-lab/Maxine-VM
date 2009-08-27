@@ -24,7 +24,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -90,7 +89,7 @@ public class C1XRuntimeCalls {
     }
 
 
-    private static boolean checkCompatible(BasicType resultType, Kind resultKind) {
+    private static boolean checkCompatible(CiKind resultType, Kind resultKind) {
         switch(resultType) {
             case Boolean:
                 return resultKind == Kind.BOOLEAN;
@@ -204,7 +203,7 @@ public class C1XRuntimeCalls {
 
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveInterfaceIndex)
-    public static int retrieveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
+    public static int resolveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
 
         if (receiver == null) {
             return 0;
@@ -216,7 +215,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
+        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + 8 * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
     }
 
     @INLINE

@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -39,7 +40,7 @@ public abstract class NewArray extends StateSplit {
      * @param stateBefore the state before the allocation
      */
     NewArray(Instruction length, ValueStack stateBefore, RiConstantPool constantPool) {
-        super(BasicType.Object, stateBefore);
+        super(CiKind.Object, stateBefore);
         this.constantPool = constantPool;
         this.length = length;
         this.stateBefore = stateBefore;

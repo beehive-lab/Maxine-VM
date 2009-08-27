@@ -25,11 +25,9 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.Location.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  *
@@ -88,21 +86,21 @@ public abstract class FrameMap {
         return argumentLocations[index];
     }
 
-    private static BasicType[] signatureTypeArrayFor(RiMethod method) {
+    private static CiKind[] signatureTypeArrayFor(RiMethod method) {
         RiSignature sig = method.signatureType();
-        BasicType[] sta = new BasicType[sig.argumentCount(!method.isStatic())];
+        CiKind[] sta = new CiKind[sig.argumentCount(!method.isStatic())];
 
         int z = 0;
 
         // add receiver, if any
         if (!method.isStatic()) {
-            sta[z++] = BasicType.Object;
+            sta[z++] = CiKind.Object;
         }
 
         // add remaining arguments
         for (int i = 0; i < sig.argumentCount(false); i++) {
             RiType type = sig.argumentTypeAt(i);
-            BasicType t = type.basicType();
+            CiKind t = type.basicType();
             sta[z++] = t;
         }
 
@@ -112,7 +110,7 @@ public abstract class FrameMap {
         return sta;
     }
 
-    public CallingConvention runtimeCallingConvention(BasicType[] signature) {
+    public CallingConvention runtimeCallingConvention(CiKind[] signature) {
 
         CiLocation[] regs = new CiLocation[signature.length];
         int preservedStackSlots = compilation.runtime.runtimeCallingConvention(signature, regs);
@@ -124,7 +122,7 @@ public abstract class FrameMap {
         return new CallingConvention(args, preservedStackSlots);
     }
 
-    public CallingConvention javaCallingConvention(BasicType[] signature, boolean outgoing) {
+    public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
 
         CiLocation[] regs = new CiLocation[signature.length];
         int preservedStackSlots = compilation.runtime.javaCallingConvention(signature, regs, outgoing);
@@ -136,13 +134,13 @@ public abstract class FrameMap {
         return new CallingConvention(args, preservedStackSlots);
     }
 
-    private LIROperand mapToOpr(BasicType t, CiLocation location, boolean outgoing) {
+    private LIROperand mapToOpr(CiKind t, CiLocation location, boolean outgoing) {
 
         if (location.isStackOffset()) {
             if (outgoing) {
                 int stackOffset = (location.stackOffset - 1) * compilation.target.arch.wordSize; // TODO: Fix this hack! //spillSlotSizeInBytes;
                 reservedArgumentAreaSize = Math.max(reservedArgumentAreaSize, stackOffset + compilation.target.arch.wordSize);
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(BasicType.Int, stackRegister()), stackOffset, t);
+                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, stackRegister()), stackOffset, t);
             } else {
                 return LIROperandFactory.stack(location.stackOffset, t);
             }
@@ -159,7 +157,7 @@ public abstract class FrameMap {
         return this.incomingArguments;
     }
 
-    public abstract Register stackRegister();
+    public abstract CiRegister stackRegister();
 
     public Address addressForSlot(int stackSlot) {
         return addressForSlot(stackSlot, 0);
@@ -297,12 +295,12 @@ public abstract class FrameMap {
     }
 
     public LIROperand receiverOpr() {
-        return mapToOpr(BasicType.Object, compilation.runtime.receiverLocation(), false);
+        return mapToOpr(CiKind.Object, compilation.runtime.receiverLocation(), false);
     }
 
-    public abstract boolean allocatableRegister(Register r);
+    public abstract boolean allocatableRegister(CiRegister r);
 
-    public LIROperand returnOpr(BasicType object) {
+    public LIROperand returnOpr(CiKind object) {
         return LIROperandFactory.singleLocation(object, compilation.runtime.returnRegister(object));
     }
 

@@ -28,10 +28,9 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -83,11 +82,7 @@ public abstract class LIRAssembler {
         return compilation.method();
     }
 
-    protected CodeOffsets offsets() {
-        return compilation.offsets();
-    }
-
-    protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+    protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, CiRegister obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
         while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
             asm.nop();
@@ -457,10 +452,10 @@ public abstract class LIRAssembler {
     }
 
     void emitRtcall(LIRRTCall op) {
-        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info());
+        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info(), op.calleeSaved);
     }
 
-    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info);
+    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info, boolean calleeSaved);
 
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info());
@@ -497,7 +492,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
+    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
 
     protected abstract void emitStaticCallStub();
 
@@ -505,7 +500,7 @@ public abstract class LIRAssembler {
 
     protected abstract void vtableCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void icCall(RiMethod ciMethod, GlobalStub addr, CodeEmitInfo info);
+    protected abstract void icCall(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
 
     protected abstract void alignCall(LIROpcode code);
 
@@ -590,7 +585,7 @@ public abstract class LIRAssembler {
 
     protected abstract void prefetchr(LIROperand inOpr);
 
-    protected abstract void volatileMoveOp(LIROperand inOpr, LIROperand result, BasicType type, CodeEmitInfo info);
+    protected abstract void volatileMoveOp(LIROperand inOpr, LIROperand result, CiKind type, CodeEmitInfo info);
 
     protected abstract void emitPrologue();
 
@@ -617,22 +612,20 @@ public abstract class LIRAssembler {
 
             case StdEntry:
                 // init offsets
-                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.codeBuffer.position());
 
                 emitPrologue();
 
+                // TODO: Set entry offsets
 
                 if (needsIcache(compilation.method())) {
                     checkIcache();
                 }
-                offsets().setValue(CodeOffsets.Entries.VerifiedEntry, asm.codeBuffer.position());
                 asm.verifiedEntry();
                 buildFrame();
-                offsets().setValue(CodeOffsets.Entries.FrameComplete, asm.codeBuffer.position());
                 break;
 
             case OsrEntry:
-                offsets().setValue(CodeOffsets.Entries.OSREntry, asm.codeBuffer.position());
+                // TODO: Set OSR entry offsets
                 osrEntry();
                 break;
 
@@ -687,23 +680,23 @@ public abstract class LIRAssembler {
 
 
             case Resolve:
-                resolve(GlobalStub.ResolveClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveClass, op.result, op.inOpr1(), op.inOpr2());
                 break;
 
             case ResolveArrayClass:
-                resolve(GlobalStub.ResolveArrayClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveArrayClass, op.result, op.inOpr1(), op.inOpr2());
                 break;
 
             case ResolveStaticFields:
-                resolve(GlobalStub.ResolveStaticFields, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveStaticFields, op.result, op.inOpr1(), op.inOpr2());
                 break;
 
             case ResolveJavaClass:
-                resolve(GlobalStub.ResolveJavaClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveJavaClass, op.result, op.inOpr1(), op.inOpr2());
                 break;
 
             case ResolveFieldOffset:
-                resolve(GlobalStub.ResolveFieldOffset, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveFieldOffset, op.result, op.inOpr1(), op.inOpr2());
                 break;
 
             case Cmove:
@@ -778,11 +771,11 @@ public abstract class LIRAssembler {
 
     protected abstract int initialFrameSizeInBytes();
 
-    protected abstract void reg2stack(LIROperand src, LIROperand dest, BasicType type);
+    protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void resolve(GlobalStub stub, LIROperand dest, LIROperand index, LIROperand cp);
+    protected abstract void resolve(CiRuntimeCall stub, LIROperand dest, LIROperand index, LIROperand cp);
 
-    public void moveOp(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
                 assert patchCode == LIRPatchCode.PatchNone && info == null : "no patching and info allowed here";
@@ -837,23 +830,23 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
+    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
 
-    protected abstract void mem2reg(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
+    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned);
 
-    protected abstract void const2mem(LIROperand src, LIROperand dest, BasicType type, CodeEmitInfo info);
+    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info);
 
     protected abstract void const2stack(LIROperand src, LIROperand dest);
 
     protected abstract void const2reg(LIROperand src, LIROperand dest, LIRPatchCode patchCode, CodeEmitInfo info);
 
-    protected abstract void mem2stack(LIROperand src, LIROperand dest, BasicType type);
+    protected abstract void mem2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void mem2mem(LIROperand src, LIROperand dest, BasicType type);
+    protected abstract void mem2mem(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void stack2stack(LIROperand src, LIROperand dest, BasicType type);
+    protected abstract void stack2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void stack2reg(LIROperand src, LIROperand dest, BasicType type);
+    protected abstract void stack2reg(LIROperand src, LIROperand dest, CiKind type);
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 
@@ -912,6 +905,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitProfileCall(LIRProfileCall lirProfileCall);
 
+    protected abstract void emitXir(LIRXirInstruction lirXirInstruction);
    // public abstract void emitExceptionHandler();
 
     public void emitDeoptHandler() {
