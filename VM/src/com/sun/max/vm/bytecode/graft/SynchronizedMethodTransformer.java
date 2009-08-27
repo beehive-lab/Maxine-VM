@@ -21,10 +21,9 @@
 package com.sun.max.vm.bytecode.graft;
 
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
-import com.sun.max.vm.type.*;
 
 /**
- * 
+ *
  *
  * @author Doug Simon
  */
@@ -41,8 +40,7 @@ abstract class SynchronizedMethodTransformer extends BytecodeTransformer {
     }
 
     abstract void acquireMonitor();
-    abstract void releaseMonitorAndReturn(Kind resultKind);
-    abstract void releaseMonitorAndRethrow();
+    abstract void releaseMonitor();
 
     private void convertReturnToGoto() {
         if (returnBlockLabel == null) {

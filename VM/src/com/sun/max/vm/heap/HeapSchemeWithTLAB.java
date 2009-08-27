@@ -74,6 +74,20 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         = new VmThreadLocal("_TLAB_MARK", false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
+     * The temporary top of the current thread-local allocation buffer. This will remain zero if TLABs are not
+     * {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
+     */
+    private static final VmThreadLocal TLAB_TOP_TMP
+        = new VmThreadLocal("_TLAB_TOP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
+
+    /**
+     * The temporary allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
+     * are not {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
+     */
+    private static final VmThreadLocal TLAB_MARK_TMP
+        = new VmThreadLocal("_TLAB_MARK", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
+
+    /**
      * Thread-local used to disable allocation per thread.
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
@@ -279,8 +293,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return !ALLOCATION_DISABLED.getConstantWord().isZero();
     }
 
-    @INLINE
-    public final boolean useTLAB() {
+    @INLINE(override = true)
+    @Override
+    public boolean usesTLAB() {
         return useTLAB;
     }
 
@@ -373,7 +388,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
                 Log.println(" while allocation is disabled");
                 FatalError.unexpected("Trying to allocate while allocation is disabled");
             }
-            // This path will always be taken if TLAB allocation is not enabled
+            // This path will always be taken if TLAB allocation is not enabled.
             return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
@@ -420,5 +435,28 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return Cell.plantClone(cell, size, object);
     }
 
+    @Override
+    public void enableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
+        final Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
+
+        enabledVmThreadLocals.setWord(TLAB_MARK_TMP.index, allocationMark);
+        enabledVmThreadLocals.setWord(TLAB_TOP_TMP.index, tlabTop);
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, Word.zero());
+        enabledVmThreadLocals.setWord(TLAB_TOP.index, Word.zero());
+    }
+
+    @Override
+    public void disableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        final Pointer allocationMarkTmp = enabledVmThreadLocals.getWord(TLAB_MARK_TMP.index).asPointer();
+        final Pointer tlabTopTmp = enabledVmThreadLocals.getWord(TLAB_TOP_TMP.index).asPointer();
+
+        enabledVmThreadLocals.setWord(TLAB_MARK.index, allocationMarkTmp);
+        enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTopTmp);
+        enabledVmThreadLocals.setWord(TLAB_MARK_TMP.index, Word.zero());
+        enabledVmThreadLocals.setWord(TLAB_TOP_TMP.index, Word.zero());
+    }
 }
 

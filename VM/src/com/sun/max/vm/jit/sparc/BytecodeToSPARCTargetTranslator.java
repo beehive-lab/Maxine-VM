@@ -603,7 +603,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             final GPR stackPointerRegister = targetABI.stackPointer();
             final GPR framePointerRegister = targetABI.framePointer();
             final GPR linkRegister = GPR.O7;
-            final GPR frameSizeRegister = targetABI.scratchRegister();
+            final GPR scratchRegister = targetABI.scratchRegister();
             final Label jitEntryPoint = new Label();
 
             //                                   |<-------------------- JIT frame size ----------------------->|
@@ -629,7 +629,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 // Skip over the frame adapter for calls from jit code
                 asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, jitEntryPoint);
                 if (largeFrame) {
-                    asm.sethi(asm.hi(jitedCodeFrameSize), frameSizeRegister);
+                    asm.sethi(asm.hi(jitedCodeFrameSize), scratchRegister);
                 } else {
                     asm.sub(stackPointerRegister, jitedCodeFrameSize, stackPointerRegister);
                 }
@@ -642,8 +642,17 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 assert jitEntryPoint.state().equals(Label.State.BOUND);
 
                 if (largeFrame) {
-                    asm.or(frameSizeRegister, asm.lo(jitedCodeFrameSize), frameSizeRegister);
-                    asm.sub(stackPointerRegister, frameSizeRegister, stackPointerRegister);
+                    asm.or(scratchRegister, asm.lo(jitedCodeFrameSize), scratchRegister);
+                    asm.sub(stackPointerRegister, scratchRegister, stackPointerRegister);
+                }
+                if (Trap.STACK_BANGING) {
+                    final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
+                    if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                        asm.ldub(stackPointerRegister, stackBangOffset, GPR.G0);
+                    } else {
+                        asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
+                        asm.ldub(stackPointerRegister, scratchRegister, GPR.G0);
+                    }
                 }
 
                 // Frame for the JITed call already allocated. All that is left to do is
