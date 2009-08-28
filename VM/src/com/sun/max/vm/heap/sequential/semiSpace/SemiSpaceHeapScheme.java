@@ -333,7 +333,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 stopTimer(codeScanTimer);
 
                 startTimer(immortalSpaceScanTimer);
-                //scanImmortalHeap();
+                scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
 
                 if (Heap.traceGCPhases()) {

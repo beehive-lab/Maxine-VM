@@ -196,7 +196,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
 
             if (maxVM().teleImmortalHeapRegion() != null) {
-                sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleImmortalHeapRegion()));
+                sortedMemoryRegions.add(new HeapRegionDisplay(maxVM().teleImmortalHeapRegion()));
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);

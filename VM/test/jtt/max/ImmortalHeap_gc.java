@@ -70,7 +70,18 @@ public final class ImmortalHeap_gc {
             return false;
         }
 
-        return true;
+        String expected = "";
+        String result = "";
+        for (int i = 0; i < nrObjects; i++) {
+            expected += i;
+            result += strings[i];
+        }
+
+        if (expected.equals(result)) {
+            return true;
+        }
+
+        return false;
     }
 
 }
