@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -59,7 +60,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
     }
 
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
-        final Size tupleSize = tupleLayout.layoutFields(superClassActor, fieldActors);
+        final Size tupleSize = tupleLayout.layoutFields(superClassActor, fieldActors, headerSize);
         return getArraySize(firstAvailableWordArrayIndex(tupleSize));
     }
 
@@ -69,7 +70,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
 
     @INLINE
     public int getFieldOffsetInCell(FieldActor fieldActor) {
-        return tupleLayout.getFieldOffsetInCell(fieldActor);
+        return headerSize + fieldActor.offset();
     }
 
     @PROTOTYPE_ONLY
@@ -77,7 +78,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;
         visitHeader(visitor, object);
-        tupleLayout.visitFields(visitor, object);
+        HomTupleLayout.visitFields(visitor, object, this);
 
         for (int wordIndex = hybrid.firstWordIndex(); wordIndex <= hybrid.lastWordIndex(); wordIndex++) {
             visitor.visitElement(getElementOffsetInCell(wordIndex).toInt(), wordIndex, new WordValue(hybrid.getWord(wordIndex)));
@@ -85,6 +86,36 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
 
         for (int intIndex = hybrid.firstIntIndex(); intIndex <= hybrid.lastIntIndex(); intIndex++) {
             visitor.visitElement(intArrayLayout.getElementOffsetInCell(intIndex).toInt(), intIndex, IntValue.from(hybrid.getInt(intIndex)));
+        }
+    }
+
+    @PROTOTYPE_ONLY
+    @Override
+    public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
+        final Value value = readHeaderValue(mirror, offset);
+        if (value != null) {
+            return value;
+        }
+        final int index = offset / kind.width.numberOfBytes;
+        if ((kind == Kind.INT && index >= mirror.firstIntIndex()) ||
+            (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
+            return mirror.readElement(kind, index);
+        }
+        return tupleLayout.readValue(kind, mirror, offset);
+    }
+
+    @PROTOTYPE_ONLY
+    @Override
+    public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
+        if (writeHeaderValue(mirror, offset, value)) {
+            return;
+        }
+        final int index = offset / Word.size();
+        if ((kind == Kind.INT && index >= mirror.firstIntIndex()) ||
+            (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
+            super.writeValue(kind, mirror, offset, value);
+        } else {
+            tupleLayout.writeValue(kind, mirror, offset, value);
         }
     }
 }
