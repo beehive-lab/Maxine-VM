@@ -240,17 +240,19 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }
 
+    @PROTOTYPE_ONLY
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
         if (offset == hubOffset) {
             return mirror.readHub();
         } else if (offset == arrayLengthOffset) {
-            return mirror.readArrayLength();
+            return WordValue.from(HomArrayHeaderLayout.lengthToWord(mirror.readArrayLength()));
         } else if (offset == miscOffset) {
             return mirror.readMisc();
         }
         return null;
     }
 
+    @PROTOTYPE_ONLY
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
         if (offset == hubOffset) {
             mirror.writeHub(value);

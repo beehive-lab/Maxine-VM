@@ -80,7 +80,11 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultLayoutPackage(Platform platform) {
-        if (platform.instructionSet().category == Category.RISC) {
+        if (false && platform.instructionSet().category == Category.RISC) {
+            // The HOM layout does not work yet. Also, debugging the reason why with
+            // the inspector is not yet possible as the inspector relies on
+            // GeneralLayout.originToCell() to work *without* reading memory.
+            // This is not the case for HomGeneralLayout.
             return new com.sun.max.vm.layout.hom.Package();
         }
         return new com.sun.max.vm.layout.ohm.Package();
