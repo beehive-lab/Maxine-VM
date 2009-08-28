@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
 
 /**
  * The <code>LIRVisitState</code> class definition.
@@ -148,146 +147,8 @@ public class LIRVisitState {
         // copy information from the LIRInstruction
         setOp(op);
 
-        switch (op.code()) {
+        switch (op.code) {
 
-            // LIROp0
-            case WordAlign: // result and info always invalid
-            case BackwardBranchTarget: // result and info always invalid
-            case BuildFrame: // result and info always invalid
-            case Membar: // result and info always invalid
-            case MembarAcquire: // result and info always invalid
-            case MembarRelease: // result and info always invalid
-            {
-                assert op.info == null : "info not used by this instruction";
-                assert op.result.isIllegal() : "not used";
-                break;
-            }
-
-            case Nop: // may have info, result always invalid
-            case StdEntry: // may have result, info always invalid
-            case OsrEntry: // may have result, info always invalid
-            case GetThread: // may have result, info always invalid
-            {
-                if (op.info != null) {
-                    doInfo(op.info);
-                }
-                if (op.result.isValid()) {
-                    op.result = doOutput(op.result);
-                }
-                break;
-            }
-
-                // LIROpLabel
-            case Label: // result and info always invalid
-            {
-                assert op instanceof LIRLabel : "must be";
-                assert op.info == null : "info not used by this instruction";
-                assert op.result.isIllegal() : "not used";
-                break;
-            }
-
-                // LIROp1
-            case Return: // input always valid, result and info always invalid
-            case Leal: // input and result always valid, info always invalid
-            case Neg: // input and result always valid, info always invalid
-            case Monaddr: // input and result always valid, info always invalid
-            case NullCheck: // input and info always valid, result always invalid
-            case Move: // input and result always valid, may have info
-            case Prefetchr: // input always valid, result and info always invalid
-            case Prefetchw: // input always valid, result and info always invalid
-            {
-                LIROp1 op1 = (LIROp1) op;
-
-                if (op1.info != null) {
-                    doInfo(op1.info);
-                }
-                if (op1.opr.isValid()) {
-                    op1.opr = doInput(op1.opr);
-                }
-
-
-
-                if (op1.result.isValid()) {
-                    op1.result = doOutput(op1.result);
-                }
-
-                break;
-            }
-
-            case Safepoint: {
-                LIROp1 op1 = (LIROp1) op;
-
-                assert op1.info != null : "";
-                doInfo(op1.info);
-                if (op1.opr.isValid()) {
-                    op1.opr = doTemp(op1.opr); // safepoints on SPARC need temporary register
-                }
-                assert op1.result.isIllegal() : "safepoint does not produce value";
-
-                break;
-            }
-
-                // LIROpConvert;
-            case Convert: // input and result always valid, info always invalid
-            {
-                LIRConvert opConvert = (LIRConvert) op;
-
-                assert opConvert.info == null : "must be";
-                if (opConvert.opr.isValid()) {
-                    opConvert.opr = doInput(opConvert.opr);
-                }
-                if (opConvert.result.isValid()) {
-                    opConvert.result = doOutput(opConvert.result);
-                }
-
-                break;
-            }
-
-                // LIROpBranch;
-            case Branch: // may have info, input and result register always invalid
-            case CondFloatBranch: // may have info, input and result register always invalid
-            {
-                LIRBranch opBranch = (LIRBranch) op;
-
-                if (opBranch.info != null) {
-                    doInfo(opBranch.info);
-                }
-                assert opBranch.result.isIllegal() : "not used";
-                if (opBranch.stub != null) {
-                    opBranch.stub().visit(this);
-                }
-
-                break;
-            }
-
-                // LIROpAllocObj
-            case AllocObject: {
-                LIRAllocObj opAllocObj = (LIRAllocObj) op;
-
-                if (opAllocObj.info != null) {
-                    doInfo(opAllocObj.info);
-                }
-                if (opAllocObj.opr.isValid()) {
-                    opAllocObj.opr = doInput(opAllocObj.opr);
-                }
-                if (opAllocObj.tmp1.isValid()) {
-                    opAllocObj.tmp1 = doTemp(opAllocObj.tmp1);
-                }
-                if (opAllocObj.tmp2.isValid()) {
-                    opAllocObj.tmp2 = doTemp(opAllocObj.tmp2);
-                }
-                if (opAllocObj.tmp3.isValid()) {
-                    opAllocObj.tmp3 = doTemp(opAllocObj.tmp3);
-                }
-                if (opAllocObj.tmp4.isValid()) {
-                    opAllocObj.tmp4 = doTemp(opAllocObj.tmp4);
-                }
-                if (opAllocObj.result.isValid()) {
-                    opAllocObj.result = doOutput(opAllocObj.result);
-                }
-                doStub(opAllocObj.stub);
-                break;
-            }
 
                 // LIROp2
             case Cmp:
@@ -430,97 +291,6 @@ public class LIRVisitState {
                 break;
             }
 
-                // LIROpJavaCall
-            case StaticCall:
-            case OptVirtualCall:
-            case IcVirtualCall:
-            case InterfaceCall:
-            case VirtualCall: {
-                LIRJavaCall opJavaCall = (LIRJavaCall) op;
-
-                if (opJavaCall.receiver.isValid()) {
-                    opJavaCall.receiver = doInput(opJavaCall.receiver);
-                }
-
-                // only visit register parameters
-                int n = opJavaCall.arguments.size();
-                for (int i = 0; i < n; i++) {
-                    if (!opJavaCall.arguments.get(i).isPointer()) {
-                        opJavaCall.arguments.set(i, doInput(opJavaCall.arguments.get(i)));
-                    }
-                }
-
-                if (opJavaCall.info != null) {
-                    doInfo(opJavaCall.info);
-                }
-                doCall();
-                if (opJavaCall.result.isValid()) {
-                    opJavaCall.result = doOutput(opJavaCall.result);
-                }
-
-                break;
-            }
-
-                // LIROpRTCall
-            case RtCall: {
-                LIRRTCall opRTCall = (LIRRTCall) op;
-
-                // only visit register parameters
-                int n = opRTCall.arguments.size();
-                for (int i = 0; i < n; i++) {
-                    if (!opRTCall.arguments.get(i).isPointer()) {
-                        opRTCall.arguments.set(i, doInput(opRTCall.arguments.get(i)));
-                    }
-                }
-                if (opRTCall.info != null) {
-                    doInfo(opRTCall.info);
-                }
-                if (opRTCall.tmp.isValid()) {
-                    opRTCall.tmp = doTemp(opRTCall.tmp);
-                }
-
-                if (!opRTCall.calleeSaved) {
-                    doCall();
-                }
-                if (opRTCall.result.isValid()) {
-                    opRTCall.result = doOutput(opRTCall.result);
-                }
-
-                break;
-            }
-
-                // LIROpArrayCopy
-            case ArrayCopy: {
-                LIRArrayCopy opArrayCopy = (LIRArrayCopy) op;
-
-                assert opArrayCopy.result.isIllegal() : "unused";
-                assert opArrayCopy.src.isValid() : "used";
-                opArrayCopy.src = doInput(opArrayCopy.src);
-                opArrayCopy.src = doTemp(opArrayCopy.src);
-                assert opArrayCopy.srcPos.isValid() : "used";
-                opArrayCopy.srcPos = doInput(opArrayCopy.srcPos);
-                opArrayCopy.srcPos = doTemp(opArrayCopy.srcPos);
-                assert opArrayCopy.dst.isValid() : "used";
-                opArrayCopy.dst = doInput(opArrayCopy.dst);
-                opArrayCopy.dstPos = doTemp(opArrayCopy.dst);
-                assert opArrayCopy.dstPos.isValid() : "used";
-                opArrayCopy.dstPos = doInput(opArrayCopy.dstPos);
-                opArrayCopy.dstPos = doTemp(opArrayCopy.dstPos);
-                assert opArrayCopy.length.isValid() : "used";
-                opArrayCopy.length = doInput(opArrayCopy.length);
-                opArrayCopy.length = doTemp(opArrayCopy.length);
-                assert opArrayCopy.tmp.isValid() : "used";
-                opArrayCopy.tmp = doTemp(opArrayCopy.tmp);
-                if (opArrayCopy.info != null) {
-                    doInfo(opArrayCopy.info);
-                }
-
-                // the implementation of arraycopy always has a call into the runtime
-                doCall();
-
-                break;
-            }
-
             // XIR
             case Xir:
 
@@ -550,41 +320,6 @@ public class LIRVisitState {
 
                 break;
 
-                // LIROpLock
-            case Lock:
-            case Unlock: {
-                LIRLock opLock = (LIRLock) op;
-
-                if (opLock.info != null) {
-                    doInfo(opLock.info);
-                }
-
-                // TODO: check if these operands really have to be temp
-                // (or if input is sufficient). This may have influence on the oop map!
-                assert opLock.lock.isValid() : "used";
-                opLock.lock = doTemp(opLock.lock);
-                assert opLock.hdr.isValid() : "used";
-                opLock.hdr = doTemp(opLock.hdr);
-                assert opLock.obj.isValid() : "used";
-                opLock.obj = doTemp(opLock.obj);
-
-                if (opLock.scratch.isValid()) {
-                    opLock.scratch = doTemp(opLock.scratch);
-                }
-                assert opLock.result.isIllegal() : "unused";
-
-                doStub(opLock.stub);
-
-                break;
-            }
-
-                // LIROpDelay
-            case DelaySlot: {
-                LIRDelay opDelay = (LIRDelay) op;
-
-                visit(opDelay.delayOperand());
-                break;
-            }
 
                 // LIROpTypeCheck
             case InstanceOf:
@@ -608,6 +343,7 @@ public class LIRVisitState {
                     if (op.code == LIROpcode.InstanceOf || op.code == LIROpcode.CheckCast) {
                         // (tw) For instanceOf or checkcast the first temporary is used as an input operand (the hub).
                         opTypeCheck.tmp1 = doInput(opTypeCheck.tmp1);
+                        opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
                     } else {
                         opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
                     }
@@ -622,73 +358,6 @@ public class LIRVisitState {
                     opTypeCheck.result = doOutput(opTypeCheck.result);
                 }
                 doStub(opTypeCheck.stub);
-                break;
-            }
-
-                // LIROpCompareAndSwap
-            case CasLong:
-            case CasObj:
-            case CasInt: {
-                assert op instanceof LIRCompareAndSwap : "must be";
-                LIRCompareAndSwap opCompareAndSwap = (LIRCompareAndSwap) op;
-
-                if (opCompareAndSwap.info != null) {
-                    doInfo(opCompareAndSwap.info);
-                }
-                if (opCompareAndSwap.addr.isValid()) {
-                    opCompareAndSwap.addr = doInput(opCompareAndSwap.addr);
-                }
-                if (opCompareAndSwap.cmpValue.isValid()) {
-                    opCompareAndSwap.cmpValue = doInput(opCompareAndSwap.cmpValue);
-                }
-                if (opCompareAndSwap.newValue.isValid()) {
-                    opCompareAndSwap.newValue = doInput(opCompareAndSwap.newValue);
-                }
-                if (opCompareAndSwap.tmp1.isValid()) {
-                    opCompareAndSwap.tmp1 = doTemp(opCompareAndSwap.tmp1);
-                }
-                if (opCompareAndSwap.tmp2.isValid()) {
-                    opCompareAndSwap.tmp2 = doTemp(opCompareAndSwap.tmp2);
-                }
-                if (opCompareAndSwap.result.isValid()) {
-                    opCompareAndSwap.result = doOutput(opCompareAndSwap.result);
-                }
-
-                break;
-            }
-
-                // LIROpAllocArray;
-            case AllocArray: {
-                assert (op instanceof LIRAllocArray) : "must be";
-                LIRAllocArray opAllocArray = (LIRAllocArray) op;
-
-                if (opAllocArray.info != null) {
-                    doInfo(opAllocArray.info);
-                }
-                if (opAllocArray.klass.isValid()) {
-                    opAllocArray.klass = doInput(opAllocArray.klass);
-                }
-                opAllocArray.klass = doTemp(opAllocArray.klass);
-                if (opAllocArray.len.isValid()) {
-                    opAllocArray.len = doInput(opAllocArray.len);
-                }
-                opAllocArray.len = doTemp(opAllocArray.len);
-                if (opAllocArray.tmp1.isValid()) {
-                    opAllocArray.tmp1 = doTemp(opAllocArray.tmp1);
-                }
-                if (opAllocArray.tmp2.isValid()) {
-                    opAllocArray.tmp2 = doTemp(opAllocArray.tmp2);
-                }
-                if (opAllocArray.tmp3.isValid()) {
-                    opAllocArray.tmp3 = doTemp(opAllocArray.tmp3);
-                }
-                if (opAllocArray.tmp4.isValid()) {
-                    opAllocArray.tmp4 = doTemp(opAllocArray.tmp4);
-                }
-                if (opAllocArray.result.isValid()) {
-                    opAllocArray.result = doOutput(opAllocArray.result);
-                }
-                doStub(opAllocArray.stub);
                 break;
             }
 
@@ -708,7 +377,44 @@ public class LIRVisitState {
             }
 
             default:
-                Util.shouldNotReachHere();
+
+                LIRInstruction inst = op;
+
+                if (!inst.result.isIllegal()) {
+                    inst.setResult(doOutput(inst.result));
+                }
+
+                if (inst.inputOperands != null) {
+                    for (int i = 0; i < inst.inputOperands.length; i++) {
+                        LIROperand lirOperand = inst.inputOperands[i];
+                        if (!lirOperand.isIllegal() && (!lirOperand.isPointer() || !(op instanceof LIRCall))) {
+                            inst.inputOperands[i] = doInput(lirOperand);
+                        }
+                    }
+                }
+
+                if (inst.tempOperands != null) {
+                    for (int i = 0; i < inst.tempOperands.length; i++) {
+                        LIROperand lirOperand = inst.tempOperands[i];
+                        if (!lirOperand.isIllegal()) {
+                            inst.tempOperands[i] = doTemp(lirOperand);
+                        }
+                    }
+                }
+
+                if (inst.hasCall) {
+                    doCall();
+                }
+
+                if (inst.info != null) {
+                    doInfo(inst.info);
+                }
+
+                if (inst.stub != null) {
+                    doStub(inst.stub);
+                }
+
+                break;
         }
     }
 

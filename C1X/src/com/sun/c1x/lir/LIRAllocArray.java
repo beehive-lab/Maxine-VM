@@ -32,14 +32,7 @@ import com.sun.c1x.stub.*;
  */
 public class LIRAllocArray extends LIRInstruction {
 
-    LIROperand klass;
-    LIROperand len;
-    LIROperand tmp1;
-    LIROperand tmp2;
-    LIROperand tmp3;
-    LIROperand tmp4;
     CiKind type;
-    CodeStub stub;
 
     /**
      * Creates a new LIRAllocArray instruction.
@@ -55,14 +48,11 @@ public class LIRAllocArray extends LIRInstruction {
      */
     public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, CiKind type, CodeStub stub) {
         super(LIROpcode.AllocArray, result, null);
-        this.klass = klass;
-        this.len = len;
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
-        this.tmp3 = tmp3;
-        this.tmp4 = tmp4;
         this.type = type;
-        this.stub = stub;
+
+        setInputOperands(klass, len);
+        setTempOperands(tmp1, tmp2, tmp3, tmp4);
+        setStub(stub);
     }
 
     /**
@@ -71,7 +61,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the klass
      */
     public LIROperand klass() {
-        return klass;
+        return inputOperands[0];
     }
 
     /**
@@ -79,7 +69,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the array length to be allocated
      */
     public LIROperand length() {
-        return len;
+        return inputOperands[1];
     }
 
     /**
@@ -97,7 +87,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tmp1;
+        return tempOperands[0];
     }
 
     /**
@@ -107,7 +97,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tmp2;
+        return tempOperands[1];
     }
 
     /**
@@ -117,7 +107,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp3
      */
     public LIROperand tmp3() {
-        return tmp3;
+        return tempOperands[2];
     }
 
     /**
@@ -127,7 +117,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp4
      */
     public LIROperand tmp4() {
-        return tmp4;
+        return tempOperands[3];
     }
 
     /**
@@ -137,15 +127,6 @@ public class LIRAllocArray extends LIRInstruction {
      */
     public CiKind type() {
         return type;
-    }
-
-    /**
-     * Gets the code stub for this instruction.
-     *
-     * @return the stub
-     */
-    public CodeStub stub() {
-        return stub;
     }
 
     /**
@@ -166,21 +147,21 @@ public class LIRAllocArray extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        klass.print(out);
+        klass().print(out);
         out.print(" ");
-        len.print(out);
+        length().print(out);
         out.print(" ");
         obj().print(out);
         out.print(" ");
         result.print(out);
         out.print(" ");
-        tmp1.print(out);
+        tmp1().print(out);
         out.print(" ");
-        tmp2.print(out);
+        tmp2().print(out);
         out.print(" ");
-        tmp3.print(out);
+        tmp3().print(out);
         out.print(" ");
-        tmp4.print(out);
+        tmp4().print(out);
         out.print(" ");
         out.printf("[type:%s] ", type().name());
         out.printf("[label:%s]", stub.entry.toString());

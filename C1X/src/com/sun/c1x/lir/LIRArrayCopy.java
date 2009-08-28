@@ -32,13 +32,6 @@ import com.sun.c1x.stub.*;
  */
 public class LIRArrayCopy extends LIRInstruction {
 
-    private ArrayCopyStub stub;
-    LIROperand src;
-    LIROperand srcPos;
-    LIROperand dst;
-    LIROperand dstPos;
-    LIROperand length;
-    LIROperand tmp;
     private RiType expectedType;
     private int arrayCopyFlags;
 
@@ -69,16 +62,12 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param tmp
      */
     public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
-        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info);
-        this.src = src;
-        this.srcPos = srcPos;
-        this.dst = dst;
-        this.dstPos = dstPos;
-        this.length = length;
-        this.tmp = tmp;
+        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info, true);
+        setInputOperands(src, srcPos, dst, dstPos, length);
+        setTempOperands(src, srcPos, dst, dstPos, length, tmp);
         this.expectedType = expectedType;
         this.arrayCopyFlags = arrayCopyFlags;
-        stub = new ArrayCopyStub(this);
+        setStub(new ArrayCopyStub(this));
     }
 
     /**
@@ -87,7 +76,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the source
      */
     public LIROperand src() {
-        return src;
+        return inputOperands[0];
     }
 
     /**
@@ -96,7 +85,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the sourcePos
      */
     public LIROperand srcPos() {
-        return srcPos;
+        return inputOperands[1];
     }
 
     /**
@@ -105,7 +94,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the dest
      */
     public LIROperand dst() {
-        return dst;
+        return inputOperands[2];
     }
 
     /**
@@ -114,7 +103,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the destPos
      */
     public LIROperand dstPos() {
-        return dstPos;
+        return inputOperands[3];
     }
 
     /**
@@ -123,7 +112,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the length
      */
     public LIROperand length() {
-        return length;
+        return inputOperands[4];
     }
 
     /**
@@ -132,7 +121,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the tmp
      */
     public LIROperand tmp() {
-        return tmp;
+        return tempOperands[5];
     }
 
     /**
@@ -150,15 +139,6 @@ public class LIRArrayCopy extends LIRInstruction {
      */
     public RiType expectedType() {
         return expectedType;
-    }
-
-    /**
-     * Gets the stub of this class.
-     *
-     * @return the stub
-     */
-    public ArrayCopyStub stub() {
-        return stub;
     }
 
     /**

@@ -23,31 +23,41 @@ package com.sun.c1x.lir;
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.stub.*;
 
 /**
  * The <code>LIRInstruction</code> class definition.
  *
  * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  */
 public abstract class LIRInstruction {
 
-    public enum LIRMoveKind {
-        Normal, Volatile, Unaligned, MaxFlag
-    }
+    // the opcode of this instruction
+    public final LIROpcode code;
 
-    protected LIROperand result; // the result operand for this instruction
-    protected LIROpcode code; // the opcode of this instruction
-    protected LIRMoveKind flags; // flag that indicate the kind of move
-    CodeEmitInfo info; // used to emit debug information
-    private int id; // value id for register allocation
-    private Instruction source; // for debugging
+    // the result operand for this instruction
+    protected LIROperand result;
 
-    /**
-     * Constructs a new Instruction.
-     *
-     */
-    public LIRInstruction() {
-        this(LIROpcode.None, LIROperandFactory.IllegalOperand, null);
+    // used to emit debug information
+    public final CodeEmitInfo info;
+
+    // value id for register allocation
+    private int id;
+
+    // backlink to the HIR instruction for debugging purposes
+    private Instruction source;
+
+    public LIROperand[] inputOperands;
+
+    public LIROperand[] tempOperands;
+
+    public final boolean hasCall;
+
+    public CodeStub stub;
+
+    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
+        this(opcode, result, info, false);
     }
 
     /**
@@ -57,31 +67,36 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
+    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info, boolean hasCall) {
         this.result = result;
         this.code = opcode;
         this.info = info;
-        flags = LIRMoveKind.Normal;
-        source = null;
+        this.hasCall = hasCall;
         id = -1;
     }
 
-    /**
-     * Gets the code emission info of this instruction.
-     *
-     * @return info the object containing additional information to produce generate debug information.
-     */
-    public CodeEmitInfo info() {
-        return info;
+    public void setStub(CodeStub stub) {
+        assert this.stub == null;
+        this.stub = stub;
     }
 
-    /**
-     * Gets the opcode of this instruction.
-     *
-     * @return return the instruction's opcode.
-     */
-    public LIROpcode code() {
-        return code;
+    protected void setInputOperands(LIROperand... operands) {
+        assert inputOperands == null;
+        assert nonNullOperands(operands);
+        this.inputOperands = operands;
+    }
+
+    protected void setTempOperands(LIROperand... operands) {
+        assert tempOperands == null;
+        assert nonNullOperands(operands);
+        this.tempOperands = operands;
+    }
+
+    private boolean nonNullOperands(LIROperand... operands) {
+        for (int i = 0; i < operands.length; i++) {
+            assert operands[i] != null;
+        }
+        return true;
     }
 
     /**
@@ -100,6 +115,10 @@ public abstract class LIRInstruction {
      */
     public void setResult(LIROperand result) {
         this.result = result;
+    }
+
+    public CodeStub stub() {
+        return stub;
     }
 
     /**
@@ -176,8 +195,8 @@ public abstract class LIRInstruction {
         st.print(name());
         st.print(" ");
         printInstruction(st);
-        if (info() != null) {
-            st.printf(" [bci:%d]", info().bci());
+        if (info != null) {
+            st.printf(" [bci:%d]", info.bci());
         }
     }
     public boolean verify() {

@@ -231,7 +231,13 @@ public class RegisterVerifier {
 
         for (int i = 0; i < ops.length(); i++) {
             LIRInstruction op = ops.at(i);
+
+            if (op instanceof LIRAllocArray) {
+                final int x = 0;
+            }
             visitor.visit(op);
+
+
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 op.printOn(TTY.out);

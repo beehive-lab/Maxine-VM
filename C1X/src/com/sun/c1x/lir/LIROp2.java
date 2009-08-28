@@ -195,7 +195,7 @@ public class LIROp2 extends LIRInstruction {
      * @return condition the condition of this instruction
      */
     public LIRCondition condition() {
-        assert code() == LIROpcode.Cmp || code() == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
+        assert code == LIROpcode.Cmp || code == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
         return condition;
     }
 
@@ -224,7 +224,7 @@ public class LIROp2 extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        if (code() == LIROpcode.Cmove) {
+        if (code == LIROpcode.Cmove) {
             printCondition(out, condition());
             out.print(" ");
         }

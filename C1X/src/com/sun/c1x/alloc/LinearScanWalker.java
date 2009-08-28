@@ -957,7 +957,7 @@ public class LinearScanWalker extends IntervalWalker {
     }
 
     boolean isMove(LIRInstruction op, Interval from, Interval to) {
-        if (op.code() != LIROpcode.Move) {
+        if (op.code != LIROpcode.Move) {
             return false;
         }
         assert op instanceof LIROp1 : "move must be LIROp1";

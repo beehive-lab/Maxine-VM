@@ -43,7 +43,6 @@ public class LIRTypeCheck extends LIRInstruction {
     private boolean fastCheck;
     CodeEmitInfo infoForPatch;
     CodeEmitInfo infoForException;
-    CodeStub stub;
     // Helpers for Tier1UpdateMethodData
     RiMethod profiledMethod;
     int profiledBci;
@@ -74,7 +73,7 @@ public class LIRTypeCheck extends LIRInstruction {
         this.tmp2 = tmp2;
         this.tmp3 = tmp3;
         this.fastCheck = fastCheck;
-        this.stub = stub;
+        setStub(stub);
         this.infoForPatch = infoForPatch;
         this.infoForException = infoForException;
         this.profiledMethod = profiledMethod;
@@ -179,7 +178,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the klass
      */
     public RiType klass() {
-        assert code() == LIROpcode.InstanceOf || code() == LIROpcode.CheckCast : "opcode is not valid.";
+        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return klass;
     }
 
@@ -189,7 +188,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the fastCheck
      */
     public boolean isFastCheck() {
-        assert code() == LIROpcode.InstanceOf || code() == LIROpcode.CheckCast : "opcode is not valid.";
+        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return fastCheck;
     }
 
@@ -209,15 +208,6 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public CodeEmitInfo infoForException() {
         return infoForException;
-    }
-
-    /**
-     * Gets the stub of this type check instruction.
-     *
-     * @return the stub
-     */
-    public CodeStub stub() {
-        return stub;
     }
 
     /**
@@ -259,11 +249,11 @@ public class LIRTypeCheck extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         object().print(out);                  out.print(" ");
-        if (code() == LIROpcode.StoreCheck) {
+        if (code == LIROpcode.StoreCheck) {
           array().print(out);
           out.print(" ");
         }
-        if (code() != LIROpcode.StoreCheck) {
+        if (code != LIROpcode.StoreCheck) {
           out.print(klass().name());
           out.print(" ");
           if (isFastCheck()) {

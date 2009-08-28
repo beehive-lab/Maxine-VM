@@ -39,7 +39,6 @@ public class LIRBranch extends LIRInstruction {
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
-    CodeStub stub;     // if this is a branch to a stub, this is the stub
 
     /**
      * Creates a new LIRBranch instruction.
@@ -67,7 +66,7 @@ public class LIRBranch extends LIRInstruction {
         this.cond = cond;
         this.label = stub.entry;
         this.type = type;
-        this.stub = stub;
+        setStub(stub);
     }
 
     /**
@@ -120,10 +119,6 @@ public class LIRBranch extends LIRInstruction {
 
     public BlockBegin ublock() {
         return ublock;
-    }
-
-    public CodeStub stub() {
-        return stub;
     }
 
     public void changeBlock(BlockBegin b) {

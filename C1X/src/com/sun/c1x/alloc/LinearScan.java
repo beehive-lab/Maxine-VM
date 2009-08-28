@@ -578,7 +578,7 @@ public class LinearScan {
                 if (opId == -1) {
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
-                    assert op.code() == LIROpcode.Move : "only moves can have a opId of -1";
+                    assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
                     assert ((LIROp1) op).resultOpr().isVirtual() : "LinearScan inserts only moves to virtual registers";
 
                     LIROp1 op1 = (LIROp1) op;
@@ -1173,7 +1173,7 @@ public class LinearScan {
     // if the functions return shouldHaveRegister and the interval is spilled,
     // it is not reloaded to a register.
     IntervalUseKind useKindOfOutputOperand(LIRInstruction op, LIROperand opr) {
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
             LIROperand res = move.resultOpr();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
@@ -1208,7 +1208,7 @@ public class LinearScan {
     }
 
     IntervalUseKind useKindOfInputOperand(LIRInstruction op, LIROperand opr) {
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
             LIROperand res = move.resultOpr();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
@@ -1234,7 +1234,7 @@ public class LinearScan {
         }
 
         if (compilation.target.arch.isX86()) {
-            if (op.code() == LIROpcode.Cmove) {
+            if (op.code == LIROpcode.Cmove) {
                 // conditional moves can handle stack operands
                 assert op.result().isRegister() : "result must always be in a register";
                 return IntervalUseKind.shouldHaveRegister;
@@ -1246,7 +1246,7 @@ public class LinearScan {
             if (oprType == CiKind.Float || oprType == CiKind.Double) {
                 if ((C1XOptions.SSEVersion == 1 && oprType == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
                     // SSE float instruction (BasicType.Double only supported with SSE2)
-                    switch (op.code()) {
+                    switch (op.code) {
                         case Cmp:
                         case Add:
                         case Sub:
@@ -1254,21 +1254,21 @@ public class LinearScan {
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
                             if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                                assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                                assert (op2.resultOpr().isRegister() || op.code == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
                     }
                 } else {
                     // FPU stack float instruction
-                    switch (op.code()) {
+                    switch (op.code) {
                         case Add:
                         case Sub:
                         case Mul:
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
                             if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                                assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                                assert (op2.resultOpr().isRegister() || op.code == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
@@ -1277,7 +1277,7 @@ public class LinearScan {
 
             } else if (oprType != CiKind.Long) {
                 // integer instruction (note: long operands must always be in register)
-                switch (op.code()) {
+                switch (op.code) {
                     case Cmp:
                     case Add:
                     case Sub:
@@ -1286,7 +1286,7 @@ public class LinearScan {
                     case LogicXor: {
                         LIROp2 op2 = (LIROp2) op;
                         if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                            assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                            assert (op2.resultOpr().isRegister() || op.code == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                             return IntervalUseKind.shouldHaveRegister;
                         }
                     }
@@ -1303,7 +1303,7 @@ public class LinearScan {
         // the interval gets no register assigned, but the stack slot.
         // it is split before the first use by the register allocator.
 
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
             if (move.inOpr().isStack()) {
@@ -1338,7 +1338,7 @@ public class LinearScan {
         // special handling for doubleword move from memory to register:
         // in this case the registers of the input Pointer and the result
         // registers must not overlap . add a temp range for the input registers
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
             if (move.resultOpr().isDoubleCpu() && move.inOpr().isPointer()) {
@@ -1356,7 +1356,7 @@ public class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Move: // fall through
             case Convert: {
                 LIROp1 move = (LIROp1) op;
@@ -1533,7 +1533,7 @@ public class LinearScan {
         // TODO Platform dependent!
         assert compilation.target.arch.isX86();
 
-        switch (op.code()) {
+        switch (op.code) {
             case Tan:
             case Sin:
             case Cos: {
@@ -1899,8 +1899,8 @@ public class LinearScan {
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1 && block.numberOfExceptionHandlers() == 0) {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
-                assert instructions.get(0).code() == LIROpcode.Label : "block must start with label";
-                assert instructions.get(instructions.size() - 1).code() == LIROpcode.Branch : "block with successors must end with branch";
+                assert instructions.get(0).code == LIROpcode.Label : "block must start with label";
+                assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successors must end with branch";
                 assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "block with successor must end with unconditional branch";
 
                 // check if block is empty (only label and branch)
@@ -2479,7 +2479,7 @@ public class LinearScan {
 
         // Check if this is a patch site.
         boolean isPatchInfo = false;
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             assert !isCallSite : "move must not be a call site";
             LIROp1 move = (LIROp1) op;
 
@@ -3013,7 +3013,7 @@ public class LinearScan {
             assert op.verify();
 
             // remove useless moves
-            if (op.code() == LIROpcode.Move) {
+            if (op.code == LIROpcode.Move) {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.inOpr();
                 LIROperand dst = move.resultOpr();
@@ -3160,7 +3160,7 @@ public class LinearScan {
         verifyIntervals();
 
         Util.traceLinearScan(2, " verifying that no oops are in fixed intervals *");
-        verifyNoOopsInFixedIntervals();
+        //verifyNoOopsInFixedIntervals();
 
         Util.traceLinearScan(2, " verifying that unpinned constants are not alive across block boundaries");
         verifyConstants();
@@ -3300,7 +3300,7 @@ public class LinearScan {
                 if (visitor.infoCount() > 0) {
                     iw.walkBefore(op.id());
                     boolean checkLive = true;
-                    if (op.code() == LIROpcode.Move) {
+                    if (op.code == LIROpcode.Move) {
                         LIROp1 move = (LIROp1) op;
                         checkLive = (move.patchCode() == LIRPatchCode.PatchNone);
                     }

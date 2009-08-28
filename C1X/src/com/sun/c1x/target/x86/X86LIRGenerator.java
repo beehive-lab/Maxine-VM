@@ -424,7 +424,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand result = rlockResult(x);
-            lir().callRuntime(entry, getThreadTemp(), resultReg, cc.args(), null);
+            lir().callRuntime(entry, resultReg, cc.args(), null);
             lir().move(resultReg, result);
         } else if (x.opcode() == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap
@@ -990,7 +990,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // Create a new code emit info as they must not be shared!
         CodeEmitInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
-        lir().callRuntime(CiRuntimeCall.NewMultiArray, LIROperandFactory.IllegalOperand, reg, cc.args(), info2);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, reg, cc.args(), info2);
 
         // Save result
         LIROperand result = rlockResult(x);

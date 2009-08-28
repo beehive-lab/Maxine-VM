@@ -690,7 +690,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             }
 
             LIROperand result = newRegister(arg.runtimeCall.resultType);
-            lir.callRuntimeCalleeSaved(arg.runtimeCall, LIROperand.ILLEGAL, result, arguments, null);
+            lir.callRuntimeCalleeSaved(arg.runtimeCall, result, arguments, null);
             return result;
 
         } else if (arg.constant != null) {
@@ -1702,7 +1702,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             assert args == null;
         }
 
-        lir.callRuntime(l, getThreadTemp(), physReg, argumentList, info);
+        lir.callRuntime(l, physReg, argumentList, info);
 
         if (result.isValid()) {
             lir.move(physReg, result);

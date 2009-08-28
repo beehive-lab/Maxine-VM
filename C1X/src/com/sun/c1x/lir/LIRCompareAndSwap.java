@@ -31,13 +31,6 @@ import com.sun.c1x.debug.*;
  */
 public class LIRCompareAndSwap extends LIRInstruction {
 
-    LIROperand addr;
-    LIROperand cmpValue;
-    LIROperand newValue;
-    LIROperand tmp1;
-    LIROperand tmp2;
-
-
     /**
      * Constructs a new LIRCompareAndSwap instruction.
      *
@@ -49,11 +42,9 @@ public class LIRCompareAndSwap extends LIRInstruction {
      */
     public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
         super(opcode, LIROperandFactory.IllegalOperand, null);
-        this.addr = addr;
-        this.cmpValue = cmpValue;
-        this.newValue = newValue;
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
+
+        setInputOperands(addr, cmpValue, newValue);
+        setTempOperands(tmp1, tmp2);
     }
 
     /**
@@ -62,7 +53,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the address
      */
     public LIROperand address() {
-        return addr;
+        return inputOperands[0];
     }
 
     /**
@@ -71,7 +62,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the cmpValue
      */
     public LIROperand cmpValue() {
-        return cmpValue;
+        return inputOperands[1];
     }
 
     /**
@@ -80,7 +71,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the newValue
      */
     public LIROperand newValue() {
-        return newValue;
+        return inputOperands[2];
     }
 
     /**
@@ -89,7 +80,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tmp1;
+        return tempOperands[0];
     }
 
     /**
@@ -98,7 +89,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tmp2;
+        return tempOperands[1];
     }
 
     /**
@@ -118,14 +109,14 @@ public class LIRCompareAndSwap extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        addr.print(out);
+        address().print(out);
         out.print(" ");
-        cmpValue.print(out);
+        cmpValue().print(out);
         out.print(" ");
-        newValue.print(out);
+        newValue().print(out);
         out.print(" ");
-        tmp1.print(out);
+        tmp1().print(out);
         out.print(" ");
-        tmp2.print(out);
+        tmp2().print(out);
     }
 }

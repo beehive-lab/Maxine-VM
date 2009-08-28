@@ -30,13 +30,7 @@ import com.sun.c1x.stub.*;
  * @author Marcelo Cintra
  *
  */
-public class LIRLock extends LIRInstruction{
-
-    LIROperand hdr;
-    LIROperand obj;
-    LIROperand lock;
-    LIROperand scratch;
-    CodeStub stub;
+public class LIRLock extends LIRInstruction {
 
     /**
      * Creates a new LIRLock instruction.
@@ -49,29 +43,10 @@ public class LIRLock extends LIRInstruction{
      */
     public LIRLock(LIROpcode opcode, LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
         super(opcode, LIROperandFactory.IllegalOperand, info);
-        this.hdr = hdr;
-        this.obj = obj;
-        this.lock = lock;
-        this.scratch = scratch;
-        this.stub = stub;
-    }
 
-    /**
-     * Gets the header of this class.
-     *
-     * @return the header
-     */
-    public LIROperand hdrOpr() {
-        return hdr;
-    }
-
-    /**
-     * Gets the object of this class.
-     *
-     * @return the object
-     */
-    public LIROperand objOpr() {
-        return obj;
+        setInputOperands(obj);
+        setTempOperands(lock, hdr, scratch);
+        setStub(stub);
     }
 
     /**
@@ -80,7 +55,26 @@ public class LIRLock extends LIRInstruction{
      * @return the lock
      */
     public LIROperand lockOpr() {
-        return lock;
+        return tempOperands[0];
+    }
+
+
+    /**
+     * Gets the header of this class.
+     *
+     * @return the header
+     */
+    public LIROperand hdrOpr() {
+        return tempOperands[1];
+    }
+
+    /**
+     * Gets the object of this class.
+     *
+     * @return the object
+     */
+    public LIROperand objOpr() {
+        return inputOperands[0];
     }
 
     /**
@@ -89,16 +83,7 @@ public class LIRLock extends LIRInstruction{
      * @return the scratch
      */
     public LIROperand scratchOpr() {
-        return scratch;
-    }
-
-    /**
-     * Gets the stub of this class.
-     *
-     * @return the stub
-     */
-    public CodeStub stub() {
-        return stub;
+        return tempOperands[2];
     }
 
     /**
@@ -120,13 +105,13 @@ public class LIRLock extends LIRInstruction{
      */
     @Override
     public void printInstruction(LogStream out) {
-        hdr.print(out);
+        hdrOpr().print(out);
         out.print(" ");
-        obj.print(out);
+        objOpr().print(out);
         out.print(" ");
-        lock.print(out);
-        if (scratch.isValid()) {
-            scratch.print(out);
+        lockOpr().print(out);
+        if (scratchOpr().isValid()) {
+            scratchOpr().print(out);
             out.print(" ");
         }
         out.printf("[lbl:%s]", stub.entry.toString());

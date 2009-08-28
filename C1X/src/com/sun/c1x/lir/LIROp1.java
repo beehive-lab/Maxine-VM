@@ -32,28 +32,18 @@ import com.sun.c1x.util.*;
  */
 public class LIROp1 extends LIRInstruction {
 
-    protected LIROperand opr; // the input operand
-    protected CiKind type; // the operand type
-    protected LIRPatchCode patch; // only required for patching (TODO:NEEDS_CLEANUP: do we want a special instruction
-                                  // for patching?)
 
-    protected static void printPatchCode(LogStream out, LIRPatchCode code) {
-        switch (code) {
-            case PatchNone:
-                break;
-            case PatchLow:
-                out.print("[PatchLow]");
-                break;
-            case PatchHigh:
-                out.print("[PatchHigh]");
-                break;
-            case PatchNormal:
-                out.print("[PatchNormal]");
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
+    public enum LIRMoveKind {
+        Normal, Volatile, Unaligned, MaxFlag
     }
+
+    protected CiKind type;              // the operand type
+    protected LIRPatchCode patch;       // only required for patching (TODO:NEEDS_CLEANUP: do we want a special instruction
+                                        // for patching?)
+
+
+    protected LIRMoveKind flags = LIRMoveKind.Normal; // flag that indicate the kind of move
+
 
     /**
      * Sets the move kind for this instruction.
@@ -77,7 +67,7 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info) {
         super(opcode, result, info);
-        this.opr = opr;
+        setInputOperands(opr);
         this.type = type;
         this.patch = patch;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
@@ -142,7 +132,7 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
         super(opcode, result, info);
-        this.opr = opr;
+        setInputOperands(opr);
         this.type = type;
         this.patch = patch;
         assert opcode == LIROpcode.Move : "The " + opcode + " is not valid on LIROp1. Opcode must be of type LIROpcode.Move";
@@ -158,7 +148,7 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
         super(opcode, LIROperandFactory.IllegalOperand, info);
-        this.opr = opr;
+        setInputOperands(opr);
         this.type = CiKind.Illegal;
         this.patch = LIRPatchCode.PatchNone;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
@@ -170,7 +160,7 @@ public class LIROp1 extends LIRInstruction {
      * @return opr the input operand.
      */
     public LIROperand operand() {
-        return opr;
+        return inputOperands[0];
     }
 
     /**
@@ -230,35 +220,45 @@ public class LIROp1 extends LIRInstruction {
         }
     }
 
-    /**
-     * Sets the input operand of this instruction.
-     *
-     * @param opr the input operand.
-     */
-    public void setOperand(LIROperand opr) {
-        this.opr = opr;
-    }
-
     @Override
     public void printInstruction(LogStream out) {
-        opr.print(out);
+        operand().print(out);
         out.print(" ");
         this.result().print(out);
         out.print(" ");
         printPatchCode(out, patchCode());
     }
 
+
+    protected static void printPatchCode(LogStream out, LIRPatchCode code) {
+        switch (code) {
+            case PatchNone:
+                break;
+            case PatchLow:
+                out.print("[PatchLow]");
+                break;
+            case PatchHigh:
+                out.print("[PatchHigh]");
+                break;
+            case PatchNormal:
+                out.print("[PatchNormal]");
+                break;
+            default:
+                Util.shouldNotReachHere();
+        }
+    }
+
     @Override
     public boolean verify() {
         switch (code) {
             case Move:
-                assert opr.isValid() && result.isValid() : "Operand and result must be valid in a LIROp1 move instruction.";
+                assert operand().isValid() && result.isValid() : "Operand and result must be valid in a LIROp1 move instruction.";
                 break;
             case NullCheck:
-                assert opr.isRegister() : "Operand must be a register in a LIROp1 null check instruction.";
+                assert operand().isRegister() : "Operand must be a register in a LIROp1 null check instruction.";
                 break;
             case Return:
-                assert opr.isRegister() || opr.isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
+                assert operand().isRegister() || operand().isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
         return true;

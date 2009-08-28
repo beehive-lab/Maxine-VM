@@ -192,8 +192,7 @@ public abstract class LIRAssembler {
 
             for (ExceptionHandler handler : handlers) {
                 assert handler.lirOpId() != -1 : "handler not processed by LinearScan";
-                assert handler.entryCode() == null || handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.Branch ||
-                        handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code() == LIROpcode.DelaySlot : "last operation must be branch";
+                assert handler.entryCode() == null || handler.entryCode().instructionsList().get(handler.entryCode().instructionsList().size() - 1).code == LIROpcode.Branch : "last operation must be branch";
 
                 if (handler.entryCodeOffset() == -1) {
                     // entry code not emitted yet
@@ -270,7 +269,7 @@ public abstract class LIRAssembler {
                 // Don't record out every op since that's too verbose. Print
                 // branches since they include block and stub names. Also print
                 // patching moves since they generate funny looking code.
-                if (op.code() == LIROpcode.Branch || (op.code() == LIROpcode.Move && ((LIROp1) op).patchCode() != LIRPatchCode.PatchNone)) {
+                if (op.code == LIROpcode.Branch || (op.code == LIROpcode.Move && ((LIROp1) op).patchCode() != LIRPatchCode.PatchNone)) {
                     ByteArrayOutputStream st = new ByteArrayOutputStream();
                     LogStream ls = new LogStream(st);
                     op.printOn(ls);
@@ -452,13 +451,13 @@ public abstract class LIRAssembler {
     }
 
     void emitRtcall(LIRRTCall op) {
-        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info(), op.calleeSaved);
+        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.info, op.calleeSaved);
     }
 
-    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIROperand tmp, CodeEmitInfo info, boolean calleeSaved);
+    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved);
 
     void emitCall(LIRJavaCall op) {
-        verifyOopMap(op.info());
+        verifyOopMap(op.info);
 
         // TODO (tw) check if this is necessary and how to do it properly!
         if (compilation.runtime.isMP()) {
@@ -471,21 +470,21 @@ public abstract class LIRAssembler {
             emitStaticCallStub();
         }
 
-        switch (op.code()) {
+        switch (op.code) {
             case StaticCall:
-                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info(), new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
                 break;
             case IcVirtualCall:
-                icCall(op.method(), op.addr, op.info());
+                icCall(op.method(), op.addr, op.info);
                 break;
             case InterfaceCall:
-                interfaceCall(op.method(), op.receiver, op.info(), op.cpi, op.constantPool);
+                interfaceCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             case VirtualCall:
-                vtableCall(op.method(), op.receiver, op.info(), op.cpi, op.constantPool);
+                vtableCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -509,13 +508,13 @@ public abstract class LIRAssembler {
     }
 
     void emitOp1(LIROp1 op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Move:
-                if (op.moveKind() == LIRInstruction.LIRMoveKind.Volatile) {
+                if (op.moveKind() == LIROp1.LIRMoveKind.Volatile) {
                     assert op.patchCode() == LIRPatchCode.PatchNone : "can't patch volatiles";
-                    volatileMoveOp(op.inOpr(), op.result(), op.type(), op.info());
+                    volatileMoveOp(op.inOpr(), op.result(), op.type(), op.info);
                 } else {
-                    moveOp(op.inOpr(), op.result(), op.type(), op.patchCode(), op.info(), op.moveKind() == LIRInstruction.LIRMoveKind.Unaligned);
+                    moveOp(op.inOpr(), op.result(), op.type(), op.patchCode(), op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
                 }
                 break;
 
@@ -535,7 +534,7 @@ public abstract class LIRAssembler {
                 if (compilation.debugInfoRecorder().lastPcOffset() == codeOffset()) {
                     asm.nop();
                 }
-                safepointPoll(op.inOpr(), op.info());
+                safepointPoll(op.inOpr(), op.info);
                 break;
 
             case Branch:
@@ -551,7 +550,7 @@ public abstract class LIRAssembler {
 
             case NullCheck:
                 if (C1XOptions.GenerateCompilerNullChecks) {
-                    addDebugInfoForNullCheckHere(op.info());
+                    addDebugInfoForNullCheckHere(op.info);
 
                     if (op.inOpr().isSingleCpu()) {
                         asm.nullCheck(op.inOpr().asRegister());
@@ -590,7 +589,7 @@ public abstract class LIRAssembler {
     protected abstract void emitPrologue();
 
     public void emitOp0(LIROp0 op) {
-        switch (op.code()) {
+        switch (op.code) {
             case WordAlign: {
                 while (codeOffset() % compilation.target.arch.wordSize != 0) {
                     asm.nop();
@@ -599,7 +598,7 @@ public abstract class LIRAssembler {
             }
 
             case Nop:
-                assert op.info() == null : "not supported";
+                assert op.info == null : "not supported";
                 asm.nop();
                 break;
 
@@ -663,11 +662,11 @@ public abstract class LIRAssembler {
     protected abstract void osrEntry();
 
     protected void emitOp2(LIROp2 op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Cmp:
-                if (op.info() != null) {
+                if (op.info != null) {
                     assert op.inOpr1().isAddress() || op.inOpr2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
-                    addDebugInfoForNullCheckHere(op.info()); // exception possible
+                    addDebugInfoForNullCheckHere(op.info); // exception possible
                 }
                 compOp(op.condition(), op.inOpr1(), op.inOpr2(), op);
                 break;
@@ -675,7 +674,7 @@ public abstract class LIRAssembler {
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                compFl2i(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                compFl2i(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
                 break;
 
 
@@ -707,9 +706,9 @@ public abstract class LIRAssembler {
             case Shr:
             case Ushr:
                 if (op.inOpr2().isConstant()) {
-                    shiftOp(op.code(), op.inOpr1(), op.inOpr2().asConstantPtr().asInt(), op.resultOpr());
+                    shiftOp(op.code, op.inOpr1(), op.inOpr2().asConstantPtr().asInt(), op.resultOpr());
                 } else {
-                    shiftOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
+                    shiftOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
                 }
                 break;
 
@@ -718,7 +717,7 @@ public abstract class LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info());
+                arithOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info);
                 break;
 
             case Abs:
@@ -728,18 +727,18 @@ public abstract class LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                intrinsicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                intrinsicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                logicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                logicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr());
                 break;
 
             case Throw:
             case Unwind:
-                throwOp(op.inOpr1(), op.inOpr2(), op.info(), op.code() == LIROpcode.Unwind);
+                throwOp(op.inOpr1(), op.inOpr2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:
@@ -886,8 +885,6 @@ public abstract class LIRAssembler {
     protected abstract void emitAllocObj(LIRAllocObj lirAllocObj);
 
     protected abstract void emitLIROp2(LIROp2 lirOp2);
-
-    protected abstract void emitDelay(LIRDelay lirDelay);
 
     protected abstract void emitOp3(LIROp3 lirOp3);
 

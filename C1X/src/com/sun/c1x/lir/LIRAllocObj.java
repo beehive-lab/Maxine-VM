@@ -30,15 +30,10 @@ import com.sun.c1x.stub.*;
  * @author Marcelo Cintra
  *
  */
-public class LIRAllocObj extends LIROp1 {
+public class LIRAllocObj extends LIRInstruction {
 
-    LIROperand tmp1;
-    LIROperand tmp2;
-    LIROperand tmp3;
-    LIROperand tmp4;
     private int     hdrSize;
     private int     objSize;
-    CodeStub stub;
     private boolean initCheck;
 
 
@@ -58,14 +53,13 @@ public class LIRAllocObj extends LIROp1 {
      */
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
                     int hdrSize, int objSize, boolean initCheck, CodeStub stub) {
-        super(LIROpcode.AllocObject, klass, result);
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
-        this.tmp3 = tmp3;
-        this.tmp4 = tmp4;
+        super(LIROpcode.AllocObject, result, null);
+
+        setInputOperands(klass);
+        setTempOperands(tmp1, tmp2, tmp3, tmp4);
         this.hdrSize = hdrSize;
         this.objSize = objSize;
-        this.stub = stub;
+        setStub(stub);
         this.initCheck = initCheck;
     }
 
@@ -73,7 +67,7 @@ public class LIRAllocObj extends LIROp1 {
      * @return the operand
      */
     public LIROperand klass() {
-        return operand();
+        return inputOperands[0];
     }
 
     public LIROperand obj() {
@@ -83,28 +77,28 @@ public class LIRAllocObj extends LIROp1 {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tmp1;
+        return tempOperands[0];
     }
 
     /**
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tmp2;
+        return tempOperands[1];
     }
 
     /**
      * @return the tmp3
      */
     public LIROperand tmp3() {
-        return tmp3;
+        return tempOperands[2];
     }
 
     /**
      * @return the tmp4
      */
     public LIROperand tmp4() {
-        return tmp4;
+        return tempOperands[3];
     }
 
     /**
@@ -126,13 +120,6 @@ public class LIRAllocObj extends LIROp1 {
      */
     public boolean isInitCheck() {
         return initCheck;
-    }
-
-    /**
-     * @return the stub
-     */
-    public CodeStub stub() {
-        return stub;
     }
 
     /**

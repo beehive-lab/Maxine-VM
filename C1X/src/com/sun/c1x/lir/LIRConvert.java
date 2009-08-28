@@ -63,7 +63,7 @@ public class LIRConvert extends LIROp1 {
     @Override
     public void printInstruction(LogStream out) {
         printBytecode(out, bytecode);
-        opr.print(out);
+        operand().print(out);
         out.print(" ");
         result.print(out);
         out.print(" ");

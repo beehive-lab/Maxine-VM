@@ -42,10 +42,17 @@ public abstract class LIRCall extends LIRInstruction {
      * @param entry
      * @param arguments
      */
-    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
-        super(opcode, result, info);
+    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
+        super(opcode, result, info, !calleeSaved);
         this.addr = entry;
         this.arguments = arguments;
+
+        LIROperand[] operands = new LIROperand[arguments.size() + 1];
+        operands[0] = receiver;
+        for (int i = 0; i < arguments.size(); i++) {
+            operands[i + 1] = arguments.get(i);
+        }
+        setInputOperands(operands);
     }
 
     /**
@@ -58,11 +65,25 @@ public abstract class LIRCall extends LIRInstruction {
     }
 
     /**
+     * Returns the receiver for this method call.
+     *
+     * @return the receiver
+     */
+    public LIROperand receiver() {
+        return inputOperands[0];
+    }
+
+    /**
      * Gets the arguments list of this call.
      *
      * @return the arguments
      */
     public List<LIROperand> arguments() {
-        return arguments;
+
+        final List<LIROperand> args = new ArrayList<LIROperand>();
+        for (int i = 1; i < inputOperands.length; i++) {
+            args.add(inputOperands[i]);
+        }
+        return args;
     }
 }
