@@ -422,6 +422,40 @@ function run_build() {
 }
 
 #=======================================
+# 'clean' command
+#=======================================
+
+clean_help="Clean all class files, images, and executables
+
+    Removes all files created by a build."
+
+
+function run_clean() {
+    if [ $# -ne 0 ]; then
+        run_help clean
+        exit 1
+    fi
+    
+    pushd $maxine_dir/Native >/dev/null
+    check_gnu_make
+    run $make clean
+    result=$?
+
+    for project in ${projects[@]}; do
+	project_dir=${project/:*/}
+	project_cp=$(get_project_cp ${project_dir})
+	if [ x$project_cp != x ]; then
+	    echo Removing $project_cp...
+	    rm -rf $project_cp
+	fi
+    done
+
+    popd >/dev/null
+    exit $result
+}
+
+
+#=======================================
 # 'jttgen' command
 #=======================================
 
