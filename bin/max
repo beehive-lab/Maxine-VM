@@ -425,9 +425,10 @@ function run_build() {
 # 'clean' command
 #=======================================
 
-clean_help="Clean all class files, images, and executables
+clean_help="Remove all class files, images, and executables
 
-    Removes all files created by a build."
+    Removes all files created by a build, including Java class files, executables, and 
+    generated images."
 
 
 function run_clean() {
@@ -439,12 +440,11 @@ function run_clean() {
     pushd $maxine_dir/Native >/dev/null
     check_gnu_make
     run $make clean
-    result=$?
 
     for project in ${projects[@]}; do
 	project_dir=${project/:*/}
 	project_cp=$(get_project_cp ${project_dir})
-	if [ x$project_cp != x ]; then
+	if [ "x$project_cp" != "x" ]; then
 	    echo Removing $project_cp...
 	    rm -rf $project_cp
 	fi
@@ -554,6 +554,7 @@ function run_check() {
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
 
+	    result=0
             if [ -f $maxine_dir/$project_dir/.checkstyle ]; then
                 checks_file=$(grep 'location=' < $maxine_dir/$project_dir/.checkstyle | sed 's:.*location="\([^"]*\)".*:\1:g')
                 if [[ "$checks_file" = /* ]]; then
@@ -592,7 +593,7 @@ function run_check() {
             fi
             rm $javac_input
             popd >/dev/null
-            if [ "$result" -ne "0" ]; then
+            if [ $result -ne 0 ]; then
                 exit $result
             fi
         done
