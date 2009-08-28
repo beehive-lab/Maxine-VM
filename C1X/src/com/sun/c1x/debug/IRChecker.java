@@ -36,7 +36,7 @@ import com.sun.c1x.ri.*;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends InstructionVisitor {
+public class IRChecker extends ValueVisitor {
 
     /**
      * The <code>IRCheckException</code> class is thrown when the IRChecker detects
@@ -54,7 +54,7 @@ public class IRChecker extends InstructionVisitor {
 
     private final IR ir;
     private final HashMap<Integer, BlockBegin> idMap = new HashMap<Integer, BlockBegin>();
-    private final BasicInstructionChecker basicChecker = new BasicInstructionChecker();
+    private final BasicValueChecker basicChecker = new BasicValueChecker();
 
     /**
      * Creates a new IRChecker for the specified IR.
@@ -67,7 +67,7 @@ public class IRChecker extends InstructionVisitor {
     public void check() {
         ir.startBlock.iterateAnyOrder(new CheckBlock(), false);
         ir.startBlock.iterateAnyOrder(new CheckReachable(), true);
-        ir.startBlock.iterateAnyOrder(new CheckInstructions(), false);
+        ir.startBlock.iterateAnyOrder(new CheckValues(), false);
     }
 
     private class CheckBlock implements BlockClosure {
@@ -106,7 +106,7 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private class CheckInstructions implements BlockClosure {
+    private class CheckValues implements BlockClosure {
         public void apply(BlockBegin block) {
             Instruction instr = block;
             while (instr != null) {
@@ -125,8 +125,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.IADD:
@@ -181,8 +181,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitLogicOp(LogicOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.IAND:
@@ -221,8 +221,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitCompareOp(CompareOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.LCMP:
@@ -383,7 +383,7 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitLoadField(LoadField i) {
         assertBasicType(i, i.field().basicType().stackType());
-        Instruction object = i.object();
+        Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);
             assertInstanceType(object.declaredType());
@@ -400,7 +400,7 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitStoreField(StoreField i) {
         assertBasicType(i.value(), i.field().basicType().stackType());
-        Instruction object = i.object();
+        Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);
             assertInstanceType(object.declaredType());
@@ -534,7 +534,7 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitProfileCounter(ProfileCounter i) {
         assertBasicType(i, CiKind.Void);
-        assertNonNull(i.mdo(), "Instruction that produces the method data object must not be null");
+        assertNonNull(i.mdo(), "Value that produces the method data object must not be null");
         if (i.increment() > 0) {
             fail("Increment must be greater than zero");
         }
@@ -618,7 +618,7 @@ public class IRChecker extends InstructionVisitor {
     public void visitBase(Base i) {
         assertBasicType(i, CiKind.Illegal);
         if (i.isSafepoint()) {
-            fail("Instruction Base is not a safepoint instruction ");
+            fail("Value Base is not a safepoint instruction ");
         }
     }
 
@@ -684,7 +684,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitReturn(Return i) {
-        final Instruction result = i.result();
+        final Value result = i.result();
 
         CiKind retType = ir.compilation.method.signatureType().returnBasicType();
         if (result == null) {
@@ -773,7 +773,7 @@ public class IRChecker extends InstructionVisitor {
         assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
         RiSignature signatureType = i.target().signatureType();
         assertBasicType(i, signatureType.returnBasicType().stackType());
-        Instruction[] args = i.arguments();
+        Value[] args = i.arguments();
         if (i.isStatic()) {
             // typecheck a static call (i.e. there should be no receiver)
             if (i.opcode() != Bytecodes.INVOKESTATIC) {
@@ -794,7 +794,7 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private void typeCheckArguments(boolean isStatic, Instruction[] args, RiSignature signatureType) {
+    private void typeCheckArguments(boolean isStatic, Value[] args, RiSignature signatureType) {
         int argSize = signatureType.argumentSlots(!isStatic);
         if (argSize != args.length) {
             fail("Size of arguments does not match invoke signature");
@@ -823,14 +823,14 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitNewMultiArray(NewMultiArray i) {
-        final Instruction[] dimensions = i.dimensions();
+        final Value[] dimensions = i.dimensions();
         assertBasicType(i, CiKind.Object);
 
         if (dimensions.length <= 1) {
-            fail("Instruction NewMultiArray must have more than 1 dimension");
+            fail("Value NewMultiArray must have more than 1 dimension");
         }
 
-        for (Instruction dim : dimensions) {
+        for (Value dim : dimensions) {
             assertBasicType(dim, CiKind.Int);
         }
     }
@@ -945,15 +945,15 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private void assertBasicType(Instruction i, CiKind basicType) {
-        assertNonNull(i, "Instruction should not be null");
+    private void assertBasicType(Value i, CiKind basicType) {
+        assertNonNull(i, "Value should not be null");
         if (i.type().basicType != basicType) {
             fail("Type mismatch: " + i + " should be of type " + basicType);
         }
     }
 
-    private void assertLegal(Instruction i) {
-        assertNonNull(i, "Instruction should not be null");
+    private void assertLegal(Value i) {
+        assertNonNull(i, "Value should not be null");
         if (i.type().basicType == CiKind.Illegal) {
             fail("Type mismatch: " + i + " should not be illegal");
         }
@@ -1005,15 +1005,15 @@ public class IRChecker extends InstructionVisitor {
         throw new IRCheckException(msg);
     }
 
-    private class BasicInstructionChecker implements InstructionClosure {
+    private class BasicValueChecker implements ValueClosure {
 
-        public Instruction apply(Instruction i) {
+        public Value apply(Value i) {
             if (i.subst() != i) {
                 fail("instruction has unresolved substitution " + i + " -> " + i.subst());
             }
             if (!i.isDeadPhi()) {
                 // legal instructions must have legal instructions as inputs
-                LegalInstructionChecker legalChecker = new LegalInstructionChecker(i);
+                LegalValueChecker legalChecker = new LegalValueChecker(i);
                 i.inputValuesDo(legalChecker);
                 if (i instanceof Phi) {
                     // phis are special, once again
@@ -1027,17 +1027,17 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private class LegalInstructionChecker implements InstructionClosure {
-        private final Instruction i;
+    private class LegalValueChecker implements ValueClosure {
+        private final Value i;
 
-        public LegalInstructionChecker(Instruction i) {
+        public LegalValueChecker(Value i) {
             this.i = i;
         }
 
-        public Instruction apply(Instruction x) {
+        public Value apply(Value x) {
             assertNonNull(x, "must have input value for " + i);
             if (x.isIllegal()) {
-                fail("Instruction has illegal input value " + i + " <- " + x);
+                fail("Value has illegal input value " + i + " <- " + x);
             }
             return x;
         }

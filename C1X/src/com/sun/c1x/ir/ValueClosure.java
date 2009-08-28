@@ -21,11 +21,11 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>InstructionClosure</code> interface represents a first-class
- * function that can be applied to an instruction.
+ * The <code>ValueClosure</code> interface represents a first-class
+ * function that can be applied to a value.
  *
  * @author Ben L. Titzer
  */
-public interface InstructionClosure {
-    Instruction apply(Instruction i);
+public interface ValueClosure {
+    Value apply(Value i);
 }

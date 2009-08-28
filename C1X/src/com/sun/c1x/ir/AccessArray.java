@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class AccessArray extends StateSplit {
 
-    Instruction array;
+    Value array;
 
     /**
      * Creates a new AccessArray instruction.
@@ -38,7 +38,7 @@ public abstract class AccessArray extends StateSplit {
      * @param array the instruction that produces the array object value
      * @param stateBefore the lock stack
      */
-    public AccessArray(CiKind type, Instruction array, ValueStack stateBefore) {
+    public AccessArray(CiKind type, Value array, ValueStack stateBefore) {
         super(type, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
@@ -50,7 +50,7 @@ public abstract class AccessArray extends StateSplit {
      * Gets the instruction that produces the array object.
      * @return the instruction that produces the array object
      */
-    public Instruction array() {
+    public Value array() {
         return array;
     }
 
@@ -80,7 +80,7 @@ public abstract class AccessArray extends StateSplit {
      * @param closure the closure to apply to each of the input values.
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         array = closure.apply(array);
     }
 }

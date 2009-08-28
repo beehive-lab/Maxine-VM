@@ -32,14 +32,14 @@ import com.sun.c1x.value.*;
  */
 public class NullCheck extends StateSplit {
 
-    Instruction object;
+    Value object;
 
     /**
      * Constructs a new NullCheck instruction.
      * @param obj the instruction producing the object to check against null
      * @param stateBefore the state before executing the null check
      */
-    public NullCheck(Instruction obj, ValueStack stateBefore) {
+    public NullCheck(Value obj, ValueStack stateBefore) {
         super(obj.type(), stateBefore);
         this.object = obj;
         setFlag(Flag.NonNull);
@@ -50,7 +50,7 @@ public class NullCheck extends StateSplit {
      * Gets the instruction that produces the object tested against null.
      * @return the instruction producing the object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -61,10 +61,10 @@ public class NullCheck extends StateSplit {
     public void setNeedsNullCheck(boolean on) {
         if (on) {
             assert stateBefore != null;
-            setFlag(Instruction.Flag.NoNullCheck);
+            setFlag(Value.Flag.NoNullCheck);
         } else {
             stateBefore = null;
-            clearFlag(Instruction.Flag.NoNullCheck);
+            clearFlag(Value.Flag.NoNullCheck);
         }
     }
 
@@ -82,7 +82,7 @@ public class NullCheck extends StateSplit {
      * @param closure the closure to apply to each instruction
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
     }
 
@@ -91,7 +91,7 @@ public class NullCheck extends StateSplit {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNullCheck(this);
     }
 

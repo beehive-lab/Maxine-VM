@@ -37,18 +37,18 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class Canonicalizer extends InstructionVisitor {
+public class Canonicalizer extends ValueVisitor {
 
     private static final Object[] NO_ARGUMENTS = {};
 
-    Instruction canonical;
+    Value canonical;
     int bci;
     List<Instruction> extra;
 
     public Canonicalizer() {
     }
 
-    public Instruction canonicalize(Instruction original, int bci) {
+    public Value canonicalize(Instruction original, int bci) {
         this.canonical = original;
         this.bci = bci;
         this.extra = null;
@@ -60,7 +60,7 @@ public class Canonicalizer extends InstructionVisitor {
      * Gets the canonicalized version of the instruction.
      * @return the canonicalized version of the instruction
      */
-    public Instruction canonical() {
+    public Value canonical() {
         return canonical;
     }
 
@@ -84,38 +84,38 @@ public class Canonicalizer extends InstructionVisitor {
         return addInstr(Constant.forLong(v));
     }
 
-    private Instruction setCanonical(Instruction x) {
+    private Value setCanonical(Value x) {
         return canonical = x;
     }
 
-    private Instruction setIntConstant(int val) {
+    private Value setIntConstant(int val) {
         return canonical = Constant.forInt(val);
     }
 
-    private Instruction setConstant(CiConstant val) {
+    private Value setConstant(CiConstant val) {
         return canonical = new Constant(val);
     }
 
-    private Instruction setBooleanConstant(boolean val) {
+    private Value setBooleanConstant(boolean val) {
         return canonical = Constant.forBoolean(val);
     }
 
-    private Instruction setObjectConstant(Object val) {
+    private Value setObjectConstant(Object val) {
         if (C1XOptions.SupportObjectConstants) {
             return canonical = Constant.forObject(val);
         }
         return canonical;
     }
 
-    private Instruction setLongConstant(long val) {
+    private Value setLongConstant(long val) {
         return canonical = Constant.forLong(val);
     }
 
-    private Instruction setFloatConstant(float val) {
+    private Value setFloatConstant(float val) {
         return canonical = Constant.forFloat(val);
     }
 
-    private Instruction setDoubleConstant(double val) {
+    private Value setDoubleConstant(double val) {
         return canonical = Constant.forDouble(val);
     }
 
@@ -126,8 +126,8 @@ public class Canonicalizer extends InstructionVisitor {
     }
 
     private void visitOp2(Op2 i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         if (x == y) {
             // the left and right operands are the same value, try reducing some operations
@@ -213,7 +213,7 @@ public class Canonicalizer extends InstructionVisitor {
         assert Instruction.sameBasicType(i, canonical);
     }
 
-    private Instruction reduceIntOp2(Op2 original, Instruction x, int y) {
+    private Value reduceIntOp2(Op2 original, Value x, int y) {
         // attempt to reduce a binary operation with a constant on the right
         int opcode = original.opcode();
         switch (opcode) {
@@ -251,7 +251,7 @@ public class Canonicalizer extends InstructionVisitor {
         return null;
     }
 
-    private Instruction reduceShift(boolean islong, int opcode, int reverse, Instruction x, long y) {
+    private Value reduceShift(boolean islong, int opcode, int reverse, Value x, long y) {
         int mod = islong ? 0x3f : 0x1f;
         long shift = y & mod;
         if (shift == 0) {
@@ -302,7 +302,7 @@ public class Canonicalizer extends InstructionVisitor {
         return null;
     }
 
-    private Instruction reduceLongOp2(Op2 original, Instruction x, long y) {
+    private Value reduceLongOp2(Op2 original, Value x, long y) {
         // attempt to reduce a binary operation with a constant on the right
         int opcode = original.opcode();
         switch (opcode) {
@@ -340,17 +340,21 @@ public class Canonicalizer extends InstructionVisitor {
         return null;
     }
 
-    private boolean inCurrentBlock(Instruction x) {
-        int max = 4; // XXX: anything special about 4? seems like a tunable heuristic
-        while (max > 0 && x != null && !(x instanceof BlockEnd)) {
-            x = x.next();
-            max--;
+    private boolean inCurrentBlock(Value x) {
+        if (x instanceof Instruction) {
+            Instruction i = (Instruction) x;
+            int max = 4; // XXX: anything special about 4? seems like a tunable heuristic
+            while (max > 0 && i != null && !(i instanceof BlockEnd)) {
+                i = i.next();
+                max--;
+            }
+            return i == null;
         }
-        return x == null;
+        return true;
     }
 
-    private Instruction eliminateNarrowing(CiKind type, Convert c) {
-        Instruction nv = null;
+    private Value eliminateNarrowing(CiKind type, Convert c) {
+        Value nv = null;
         switch (c.opcode()) {
             case Bytecodes.I2B:
                 if (type == CiKind.Byte) {
@@ -387,10 +391,11 @@ public class Canonicalizer extends InstructionVisitor {
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
             // writing the value to a field that is packed
-            Instruction v = i.value();
+            Value v = i.value();
             if (v instanceof Convert) {
-                Instruction nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
+                Value nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
                 // limit this optimization to the current basic block
+                // TODO: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
                                                 i.stateBefore(), i.isLoaded(), i.cpi, i.constantPool));
@@ -404,11 +409,11 @@ public class Canonicalizer extends InstructionVisitor {
         // we can compute the length of the array statically if the object
         // is a NewArray of a constant, or if the object is a constant reference
         // (either by itself or loaded from a constant value field)
-        Instruction array = i.array();
+        Value array = i.array();
         if (array instanceof NewArray) {
             // the array is a NewArray; check if it has a constant length
             NewArray newArray = (NewArray) array;
-            Instruction length = newArray.length();
+            Value length = newArray.length();
             if (length instanceof Constant) {
                 // note that we don't use the Constant instruction itself
                 // as that would cause problems with liveness later
@@ -438,9 +443,9 @@ public class Canonicalizer extends InstructionVisitor {
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
             // writing the value to an array (which is packed)
-            Instruction v = i.value();
+            Value v = i.value();
             if (v instanceof Convert) {
-                Instruction nv = eliminateNarrowing(i.elementType(), (Convert) v);
+                Value nv = eliminateNarrowing(i.elementType(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.stateBefore()));
                 }
@@ -451,7 +456,7 @@ public class Canonicalizer extends InstructionVisitor {
     @Override
     public void visitNegateOp(NegateOp i) {
         CiKind vt = i.x().type();
-        Instruction v = i.x();
+        Value v = i.x();
         if (i.x().isConstant()) {
             switch (vt.basicType) {
                 case Int: setIntConstant(-v.asConstant().asInt()); break;
@@ -482,8 +487,8 @@ public class Canonicalizer extends InstructionVisitor {
     public void visitCompareOp(CompareOp i) {
         // we can reduce a compare op if the two inputs are the same,
         // or if both are constants
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
         CiKind xt = x.type();
         if (x == y) {
             // x and y are generated by the same instruction
@@ -540,7 +545,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitConvert(Convert i) {
-        Instruction v = i.value();
+        Value v = i.value();
         if (v.isConstant()) {
             // fold conversions between primitive types
             // Checkstyle: stop
@@ -623,7 +628,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitNullCheck(NullCheck i) {
-        Instruction o = i.object();
+        Value o = i.object();
         if (o.isNonNull()) {
             // if the instruction producing the object was a new, no check is necessary
             setCanonical(o);
@@ -656,7 +661,7 @@ public class Canonicalizer extends InstructionVisitor {
     public void visitCheckCast(CheckCast i) {
         // we can remove a redundant check cast if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
-            Instruction o = i.object();
+            Value o = i.object();
             RiType type = o.exactType();
             if (type == null) {
                 type = o.declaredType();
@@ -684,7 +689,7 @@ public class Canonicalizer extends InstructionVisitor {
     public void visitInstanceOf(InstanceOf i) {
         // we can fold an instanceof if it is an object constant or the exact type is known
         if (i.targetClass().isLoaded()) {
-            Instruction o = i.object();
+            Value o = i.object();
             RiType exact = o.exactType();
             if (exact != null && exact.isLoaded() && (o instanceof NewArray || o instanceof NewInstance)) {
                 // compute instanceof statically for NewArray and NewInstance
@@ -710,8 +715,8 @@ public class Canonicalizer extends InstructionVisitor {
         if (!C1XOptions.CanonicalizeIntrinsics) {
             return;
         }
-        Instruction[] args = i.arguments();
-        for (Instruction arg : args) {
+        Value[] args = i.arguments();
+        for (Value arg : args) {
             if (arg != null && !arg.isConstant()) {
                 // one input is not constant, give up
                 return;
@@ -880,8 +885,8 @@ public class Canonicalizer extends InstructionVisitor {
             // move constant to the right
             i.swapOperands();
         }
-        Instruction l = i.x();
-        Instruction r = i.y();
+        Value l = i.x();
+        Value r = i.y();
 
         if (l == r) {
             // this is a comparison of x op x
@@ -921,13 +926,13 @@ public class Canonicalizer extends InstructionVisitor {
         }
     }
 
-    private boolean isNullConstant(Instruction r) {
+    private boolean isNullConstant(Value r) {
         return r.isConstant() && r.type().isObject() && r.asConstant().asObject() == null;
     }
 
     private void reduceIfCompareOpConstant(If i, CiConstant rtc) {
         Condition ifcond = i.condition();
-        Instruction l = i.x();
+        Value l = i.x();
         CompareOp cmp = (CompareOp) l;
         boolean unorderedIsLess = cmp.opcode() == Bytecodes.FCMPL || cmp.opcode() == Bytecodes.DCMPL;
         BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc));
@@ -990,7 +995,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitTableSwitch(TableSwitch i) {
-        Instruction v = i.value();
+        Value v = i.value();
         if (v.isConstant()) {
             // fold a table switch over a constant by replacing it with a goto
             int val = v.asConstant().asInt();
@@ -1004,7 +1009,10 @@ public class Canonicalizer extends InstructionVisitor {
         int max = i.numberOfCases();
         if (max == 0) {
             // replace switch with Goto
-            addInstr(v); // the value expression may produce side effects
+            if (v instanceof Instruction) {
+                // TODO: is it necessary to add the instruction explicitly?
+                addInstr((Instruction) v);
+            }
             setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
             return;
         }
@@ -1019,7 +1027,7 @@ public class Canonicalizer extends InstructionVisitor {
 
     @Override
     public void visitLookupSwitch(LookupSwitch i) {
-        Instruction v = i.value();
+        Value v = i.value();
         if (v.isConstant()) {
             // fold a lookup switch over a constant by replacing it with a goto
             int val = v.asConstant().asInt();
@@ -1036,7 +1044,9 @@ public class Canonicalizer extends InstructionVisitor {
         int max = i.numberOfCases();
         if (max == 1) {
             // replace switch with Goto
-            addInstr(v); // the value expression may produce side effects
+            if (v instanceof Instruction) {
+                addInstr((Instruction) v); // the value expression may produce side effects
+            }
             setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
             return;
         }
@@ -1056,8 +1066,8 @@ public class Canonicalizer extends InstructionVisitor {
             if (!root.isLive() && root.opcode() == Bytecodes.LADD) {
                 // match unsafe(x + y) if the x + y is not pinned
                 // try reducing (x + y) and (y + x)
-                Instruction y = root.y();
-                Instruction x = root.x();
+                Value y = root.y();
+                Value x = root.x();
                 if (reduceRawOp(i, x, y) || reduceRawOp(i, y, x)) {
                     // the operation was reduced
                     return;
@@ -1074,7 +1084,7 @@ public class Canonicalizer extends InstructionVisitor {
         }
     }
 
-    private boolean reduceRawOp(UnsafeRawOp i, Instruction base, Instruction index) {
+    private boolean reduceRawOp(UnsafeRawOp i, Value base, Value index) {
         if (index instanceof Convert) {
             // skip any conversion operations
             index = ((Convert) index).value();
@@ -1112,7 +1122,7 @@ public class Canonicalizer extends InstructionVisitor {
         return false;
     }
 
-    private boolean setUnsafeRawOp(UnsafeRawOp i, Instruction base, Instruction index, int log2scale) {
+    private boolean setUnsafeRawOp(UnsafeRawOp i, Value base, Value index, int log2scale) {
         i.setBase(base);
         i.setIndex(index);
         i.setLog2Scale(log2scale);
@@ -1133,39 +1143,39 @@ public class Canonicalizer extends InstructionVisitor {
         }
     }
 
-    private Object argAsObject(Instruction[] args, int index) {
+    private Object argAsObject(Value[] args, int index) {
         return args[index].asConstant().asObject();
     }
 
-    private Class<?> argAsClass(Instruction[] args, int index) {
+    private Class<?> argAsClass(Value[] args, int index) {
         return (Class<?>) args[index].asConstant().asObject();
     }
 
-    private String argAsString(Instruction[] args, int index) {
+    private String argAsString(Value[] args, int index) {
         return (String) args[index].asConstant().asObject();
     }
 
-    private double argAsDouble(Instruction[] args, int index) {
+    private double argAsDouble(Value[] args, int index) {
         return args[index].asConstant().asDouble();
     }
 
-    private float argAsFloat(Instruction[] args, int index) {
+    private float argAsFloat(Value[] args, int index) {
         return args[index].asConstant().asFloat();
     }
 
-    private int argAsInt(Instruction[] args, int index) {
+    private int argAsInt(Value[] args, int index) {
         return args[index].asConstant().asInt();
     }
 
-    private long argAsLong(Instruction[] args, int index) {
+    private long argAsLong(Value[] args, int index) {
         return args[index].asConstant().asLong();
     }
 
-    public static CiConstant foldInvocation(RiMethod method, Instruction[] args) {
+    public static CiConstant foldInvocation(RiMethod method, Value[] args) {
         Method reflectMethod = C1XIntrinsic.getFoldableMethod(method);
         if (reflectMethod != null) {
             // the method is foldable. check that all input arguments are constants
-            for (Instruction a : args) {
+            for (Value a : args) {
                 if (a != null && !a.isConstant()) {
                     return null;
                 }
@@ -1178,7 +1188,7 @@ public class Canonicalizer extends InstructionVisitor {
                 recvr = null;
                 if (args.length > 0) {
                     ArrayList<Object> list = new ArrayList<Object>();
-                    for (Instruction a : args) {
+                    for (Value a : args) {
                         if (a != null) {
                             list.add(a.asConstant().boxedValue());
                         }
@@ -1191,7 +1201,7 @@ public class Canonicalizer extends InstructionVisitor {
                 if (args.length > 1) {
                     ArrayList<Object> list = new ArrayList<Object>();
                     for (int i = 1; i < args.length; i++) {
-                        Instruction a = args[i];
+                        Value a = args[i];
                         if (a != null) {
                             list.add(a.asConstant().boxedValue());
                         }

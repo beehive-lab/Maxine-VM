@@ -44,7 +44,7 @@ import com.sun.c1x.xir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public abstract class LIRGenerator extends InstructionVisitor {
+public abstract class LIRGenerator extends ValueVisitor {
     private static final CiKind[] BASIC_TYPES_OBJECT = {CiKind.Object};
 
     // the range of values in a lookupswitch or tableswitch statement
@@ -72,16 +72,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
     PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
-    private Instruction currentInstruction;
-    private Instruction lastInstructionPrinted; // Debugging only
+    private Value currentInstruction;
+    private Value lastInstructionPrinted; // Debugging only
 
-    ArrayMap<Instruction> instructionForOperand;
+    ArrayMap<Value> instructionForOperand;
     // XXX: refactor this to use 3 one dimensional bitmaps
     private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
 
     private List<LIRConstant> constants;
     private List<LIROperand> regForConstants;
-    private List<Instruction> unpinnedConstants;
     protected LIRList lir;
     protected final IR ir;
 
@@ -91,10 +90,9 @@ public abstract class LIRGenerator extends InstructionVisitor {
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         this.ir = compilation.hir();
 
-        instructionForOperand = new ArrayMap<Instruction>();
+        instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<LIRConstant>();
         regForConstants = new ArrayList<LIROperand>();
-        unpinnedConstants = new ArrayList<Instruction>();
         init();
     }
 
@@ -121,14 +119,14 @@ public abstract class LIRGenerator extends InstructionVisitor {
         blockDoEpilog(block);
     }
 
-    public Instruction instructionForOpr(LIROperand opr) {
+    public Value instructionForOpr(LIROperand opr) {
         if (opr.isVirtual()) {
             return instructionForVreg(opr.vregNumber());
         }
         return null;
     }
 
-    public Instruction instructionForVreg(int regNum) {
+    public Value instructionForVreg(int regNum) {
         return instructionForOperand.get(regNum);
     }
 
@@ -202,7 +200,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             lir.move(src, dest);
 
             // Assign new location to Local instruction for this local
-            Instruction instr = state.localAt(javaIndex);
+            Value instr = state.localAt(javaIndex);
             assert instr instanceof Local;
             Local local = ((Local) instr);
             assert t == local.type().basicType : "check";
@@ -676,7 +674,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         throw Util.shouldNotReachHere();
     }
 
-    private XirArgument toXirArgument(Instruction i) {
+    private XirArgument toXirArgument(Value i) {
         return XirArgument.forInternalObject(i.operand());
     }
 
@@ -1123,7 +1121,6 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        unpinnedConstants.add(x);
         return loadConstant(LIROperandFactory.basicType(x).asConstantPtr());
     }
 
@@ -1194,7 +1191,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return resultRegisterFor(type, false);
     }
 
-    protected LIROperand rlock(Instruction instr) {
+    protected LIROperand rlock(Value instr) {
         // Try to lock using register in hint
         return newRegister(instr.type().basicType);
     }
@@ -1550,11 +1547,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     protected final void arraycopyHelper(Intrinsic x, int[] flagsp, RiType[] expectedTypep) {
-        Instruction src = x.argumentAt(0);
-        Instruction srcPos = x.argumentAt(1);
-        Instruction dst = x.argumentAt(2);
-        Instruction dstPos = x.argumentAt(3);
-        Instruction length = x.argumentAt(4);
+        Value src = x.argumentAt(0);
+        Value srcPos = x.argumentAt(1);
+        Value dst = x.argumentAt(2);
+        Value dstPos = x.argumentAt(3);
+        Value length = x.argumentAt(4);
 
         // first try to identify the likely type of the arrays involved
         RiType expectedType = null;
@@ -1774,7 +1771,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
 
     void doRoot(Instruction instr) {
         // This is where the tree-walk starts; instr must be root;
-        Instruction prev = currentInstruction;
+        Value prev = currentInstruction;
         currentInstruction = instr;
         try {
             assert instr.isLive() : "use only with roots";
@@ -1795,7 +1792,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     private boolean isUsedForValue(Instruction instr) {
-        return instr.checkFlag(Instruction.Flag.LiveValue);
+        return instr.checkFlag(Value.Flag.LiveValue);
     }
 
     // increment a counter returning the incremented value
@@ -1903,7 +1900,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    void moveToPhi(PhiResolver resolver, Instruction curVal, Instruction suxVal) {
+    void moveToPhi(PhiResolver resolver, Value curVal, Value suxVal) {
         // move current value to referenced phi function
         if (suxVal instanceof Phi) {
             Phi phi = (Phi) suxVal;
@@ -1972,7 +1969,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return LIROperandFactory.virtualRegister(vreg, type);
     }
 
-    LIROperand operandForInstruction(Instruction x) {
+    LIROperand operandForInstruction(Value x) {
         if (x.operand().isIllegal()) {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
@@ -2073,7 +2070,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
             assert liveness == null || liveness.size() == s.localsSize() : "error in use of liveness";
 
             for (int index = 0; index < s.localsSize(); index++) {
-                final Instruction value = s.localAt(index);
+                final Value value = s.localAt(index);
                 if (value != null) {
                     if ((liveness == null || liveness.get(index)) && !value.isIllegal()) {
                         walkStateInstruction(value);
@@ -2088,7 +2085,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    private void walkStateInstruction(Instruction value) {
+    private void walkStateInstruction(Value value) {
         if (value != null) {
             assert value.subst() == value : "missed substitution";
             assert value.isLive() : "value must be marked live in ValueStack";
@@ -2128,8 +2125,8 @@ public abstract class LIRGenerator extends InstructionVisitor {
     }
 
     // This is called for each node in tree; the walk stops if a root is reached
-    protected void walk(Instruction instr) {
-        Instruction prev = currentInstruction;
+    protected void walk(Value instr) {
+        Value prev = currentInstruction;
         currentInstruction = instr;
         try {
             if (instr instanceof Phi) {
@@ -2147,11 +2144,11 @@ public abstract class LIRGenerator extends InstructionVisitor {
         }
     }
 
-    protected abstract boolean canInlineAsConstant(Instruction i);
+    protected abstract boolean canInlineAsConstant(Value i);
 
     protected abstract boolean canInlineAsConstant(LIRConstant c);
 
-    protected abstract boolean canStoreAsConstant(Instruction i, CiKind type);
+    protected abstract boolean canStoreAsConstant(Value i, CiKind type);
 
     protected abstract void cmpMemInt(LIRCondition condition, LIROperand base, int disp, int c, CodeEmitInfo info);
 
@@ -2226,7 +2223,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return Util.nonFatalUnimplemented(0);
     }
 
-    private static boolean isConstantZero(Instruction x) {
+    private static boolean isConstantZero(Value x) {
         if (x instanceof Constant) {
             final Constant c = (Constant) x;
             // XXX: what about byte, short, char, long?
@@ -2237,7 +2234,7 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return false;
     }
 
-    private static boolean positiveConstant(Instruction x) {
+    private static boolean positiveConstant(Value x) {
         if (x instanceof Constant) {
             final Constant c = (Constant) x;
             // XXX: what about byte, short, char, long?
@@ -2277,14 +2274,15 @@ public abstract class LIRGenerator extends InstructionVisitor {
         return virtualRegisterNumber;
     }
 
-    public Instruction currentInstruction() {
+    public Value currentInstruction() {
         return currentInstruction;
     }
 
     public void maybePrintCurrentInstruction() {
         if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
             lastInstructionPrinted = currentInstruction;
-            currentInstruction.printLine();
+            InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+            ip.printInstructionListing(currentInstruction);
         }
     }
 

@@ -29,7 +29,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Instruction.*;
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -61,12 +61,12 @@ public class IRInterpreter {
         this.runtime = runtime;
     }
 
-    private static class Value {
+    private static class Val {
 
         int counter;
         CiConstant value;
 
-        public Value(int counter, CiConstant value) {
+        public Val(int counter, CiConstant value) {
             this.setCounter(counter);
             this.value = value;
         }
@@ -85,19 +85,19 @@ public class IRInterpreter {
 
         private class PhiMove {
             Phi phi;
-            Instruction value;
+            Value value;
 
-            public PhiMove(Phi phi, Instruction value) {
+            public PhiMove(Phi phi, Value value) {
                 super();
                 this.phi = phi;
                 this.value = value;
             }
         }
 
-        private Map<Instruction, Value> instructionTrace = new HashMap<Instruction, Value>();
-        private Map<Instruction, ArrayList<PhiMove>> phiMoves = new HashMap<Instruction, ArrayList<PhiMove>>();
+        private Map<Value, Val> instructionTrace = new HashMap<Value, Val>();
+        private Map<Value, ArrayList<PhiMove>> phiMoves = new HashMap<Value, ArrayList<PhiMove>>();
 
-        private class InstructionMapInitializer implements BlockClosure {
+        private class ValueMapInitializer implements BlockClosure {
 
             public void apply(BlockBegin block) {
                 ValueStack valueStack = block.stateBefore();
@@ -105,7 +105,7 @@ public class IRInterpreter {
 
                 for (Phi phi : phis) {
                     for (int j = 0; j < phi.operandCount(); j++) {
-                        Instruction phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
+                        Value phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
                         assert phiOperand != null : "Illegal phi operand";
 
                         if (phiOperand instanceof Phi) {
@@ -126,18 +126,14 @@ public class IRInterpreter {
                 }
 
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
-                    instructionTrace.put(instr, new Value(-1, null));
+                    instructionTrace.put(instr, new Val(-1, null));
                 }
             }
 
-            /**
-             * @param phiOperand
-             * @param phi
-             */
             private void addPhiToInstructionList(Phi phiSrc, Phi phi) {
                 phiSrc.setFlag(Flag.PhiVisited);
                 for (int j = 0; j < phiSrc.operandCount(); j++) {
-                    Instruction phiOperand = phiSrc.operandAt(j);
+                    Value phiOperand = phiSrc.operandAt(j);
                     assert phiOperand != null : "Illegal phi operand";
 
                     if (phiOperand instanceof Phi) {
@@ -158,7 +154,7 @@ public class IRInterpreter {
 
         }
 
-        public void performPhiMove(Instruction i) {
+        public void performPhiMove(Value i) {
             ArrayList<PhiMove> blockPhiMoves = phiMoves.get(i);
             if (blockPhiMoves != null) {
                 ArrayList <CiConstant> currentPhiValues = new ArrayList <CiConstant>();
@@ -177,21 +173,21 @@ public class IRInterpreter {
             }
         }
 
-        public void bind(Instruction i, CiConstant value, Integer iCounter) {
-            Value v = new Value(iCounter, value);
+        public void bind(Value i, CiConstant value, Integer iCounter) {
+            Val v = new Val(iCounter, value);
             assert v.counter >= 0;
-            instructionTrace.put(i, new Value(iCounter, value));
+            instructionTrace.put(i, new Val(iCounter, value));
         }
 
         public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
             assert values.length <= valueStack.localsSize() : "Incorrect number of initialization arguments";
-            ir.startBlock.iteratePreOrder(new InstructionMapInitializer());
+            ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
             for (CiConstant value : values) {
                 Object obj;
                 // TODO: Need to fix this hacking
-                Instruction local = valueStack.localAt(index);
+                Value local = valueStack.localAt(index);
                 if (local.type() == CiKind.Float && value.basicType == CiKind.Int) {
                     obj = new Float(value.asInt());
                 } else if ((local.type() == CiKind.Double && value.basicType == CiKind.Int)) {
@@ -205,9 +201,9 @@ public class IRInterpreter {
             }
         }
 
-        CiConstant lookup(Instruction instruction) {
+        CiConstant lookup(Value instruction) {
             if (!(instruction instanceof Constant)) {
-                final Value result = instructionTrace.get(instruction);
+                final Val result = instructionTrace.get(instruction);
                 assert result != null : "Value not defined for instruction: " + instruction;
                 return result.value;
             } else {
@@ -216,7 +212,7 @@ public class IRInterpreter {
         }
     }
 
-    private class Evaluator extends InstructionVisitor {
+    private class Evaluator extends ValueVisitor {
 
         private final RiMethod method;
         private BlockBegin block;
@@ -252,9 +248,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        /**
-         * @param i
-         */
         private void jumpNextInstruction() {
             environment.performPhiMove(currentInstruction);
             currentInstruction = currentInstruction.next();
@@ -366,7 +359,7 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Object getCompatibleBoxedValue(Class< ? > arrayType, Instruction value) {
+        private Object getCompatibleBoxedValue(Class< ? > arrayType, Value value) {
             if (arrayType == byte.class) {
                 assert value.type().basicType == CiKind.Int : "Types are not compatible";
                 return new Byte((byte) environment.lookup(value).asInt());
@@ -1120,7 +1113,7 @@ public class IRInterpreter {
 
         @Override
         public void visitInstanceOf(InstanceOf i) {
-            Instruction object = i.object();
+            Value object = i.object();
             Object objectRef = environment.lookup(object).asObject();
 
             if (objectRef == null || !(toJavaClass(i.targetClass()).isInstance(objectRef))) {

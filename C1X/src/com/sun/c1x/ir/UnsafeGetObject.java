@@ -36,7 +36,7 @@ public class UnsafeGetObject extends UnsafeObjectOp {
      * @param offset the instruction generating the offset
      * @param isVolatile <code>true</code> if this operation is volatile
      */
-    public UnsafeGetObject(CiKind basicType, Instruction object, Instruction offset, boolean isVolatile) {
+    public UnsafeGetObject(CiKind basicType, Value object, Value offset, boolean isVolatile) {
         super(basicType, object, offset, false, isVolatile);
     }
 
@@ -45,7 +45,7 @@ public class UnsafeGetObject extends UnsafeObjectOp {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitUnsafeGetObject(this);
     }
 }

@@ -204,7 +204,7 @@ public class CFGPrinter {
 
           int i = 0;
           while (i < state.stackSize()) {
-              Instruction value = state.stackAt(i);
+              Value value = state.stackAt(i);
               out.disableIndentation();
               out.print(InstructionPrinter.stateString(i, value, block));
               printLirOperand(value);
@@ -220,7 +220,7 @@ public class CFGPrinter {
             out.print("size ").println(state.locksSize());
 
             for (int i = 0; i < state.locksSize(); ++i) {
-                Instruction value = state.lockAt(i);
+                Value value = state.lockAt(i);
                 out.disableIndentation();
                 out.print(InstructionPrinter.stateString(i, value, block));
                 printLirOperand(value);
@@ -236,7 +236,7 @@ public class CFGPrinter {
             out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
-                Instruction value = state.localAt(i);
+                Value value = state.localAt(i);
                 if (value != null) {
                     out.disableIndentation();
                     out.print(InstructionPrinter.stateString(i, value, block));
@@ -289,7 +289,7 @@ public class CFGPrinter {
         }
     }
 
-    private void printLirOperand(Instruction i) {
+    private void printLirOperand(Value i) {
         if (i != null && i.operand().isVirtual()) {
             out.print(" \"").print(i.operand().toString()).print("\" ");
         }

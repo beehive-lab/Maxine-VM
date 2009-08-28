@@ -115,6 +115,18 @@ public class MaxRiMethod implements RiMethod {
     }
 
     /**
+     * Checks whether this method has bytecode. For unresolved, abstract, or native methods,
+     * this method returns {@code false}.
+     * @return {@code true} if bytecode is available for the method
+     */
+    public boolean hasCode() {
+        if (methodActor instanceof ClassMethodActor && !methodActor.isNative()) {
+            return ((ClassMethodActor) methodActor).originalCodeAttribute() != null;
+        }
+        return false;
+    }
+
+    /**
      * Gets the maximum number of locals used in the code of this method.
      * @return the maximum number of locals
      * @throws MaxRiUnresolved if the method is unresolved

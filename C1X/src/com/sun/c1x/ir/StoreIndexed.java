@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class StoreIndexed extends AccessIndexed {
 
-    Instruction value;
+    Value value;
 
     /**
      * Creates a new StoreIndexed instruction.
@@ -41,7 +41,7 @@ public class StoreIndexed extends AccessIndexed {
      * @param value the value to store into the array
      * @param stateBefore the state before executing this instruction
      */
-    public StoreIndexed(Instruction array, Instruction index, Instruction length, CiKind elementType, Instruction value, ValueStack stateBefore) {
+    public StoreIndexed(Value array, Value index, Value length, CiKind elementType, Value value, ValueStack stateBefore) {
         super(array, index, length, elementType, stateBefore);
         this.value = value;
         setFlag(Flag.LiveStore);
@@ -51,7 +51,7 @@ public class StoreIndexed extends AccessIndexed {
      * Gets the instruction that produces the value that is to be stored into the array.
      * @return the value to write into the array
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -76,7 +76,7 @@ public class StoreIndexed extends AccessIndexed {
      * @param closure the closure to apply to each instruction
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
@@ -86,7 +86,7 @@ public class StoreIndexed extends AccessIndexed {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitStoreIndexed(this);
     }
 }
