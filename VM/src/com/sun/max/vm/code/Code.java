@@ -182,8 +182,8 @@ public final class Code {
         codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
-    public static Size getCodeSize() {
-        return codeManager.getSize();
+    public static Size getRuntimeCodeRegionSize() {
+        return codeManager.getRuntimeCodeRegionSize();
     }
 
 }

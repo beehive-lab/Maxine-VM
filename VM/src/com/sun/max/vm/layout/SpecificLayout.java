@@ -55,6 +55,7 @@ public interface SpecificLayout extends GeneralLayout {
 
     int getHubReferenceOffsetInCell();
 
+    @PROTOTYPE_ONLY
     public static interface ObjectMirror {
 
         ClassActor classActor();
@@ -65,7 +66,7 @@ public interface SpecificLayout extends GeneralLayout {
 
         Value readElement(Kind kind, int index);
 
-        Value readArrayLength();
+        int readArrayLength();
 
         Value readField(int offset);
 
@@ -106,6 +107,7 @@ public interface SpecificLayout extends GeneralLayout {
      *
      * @param kind the kind of the result value
      */
+    @PROTOTYPE_ONLY
     Value readValue(Kind kind, ObjectMirror mirror, int offset);
 
     /**
@@ -113,6 +115,7 @@ public interface SpecificLayout extends GeneralLayout {
      *
      * @param kind the kind of the value in its target location
      */
+    @PROTOTYPE_ONLY
     void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value);
 
 }

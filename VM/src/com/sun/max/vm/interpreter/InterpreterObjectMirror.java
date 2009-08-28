@@ -100,8 +100,8 @@ public class InterpreterObjectMirror implements ObjectMirror {
     }
 
 
-    public Value readArrayLength() {
-        return IntValue.from(HostObjectAccess.getArrayLength(object));
+    public int readArrayLength() {
+        return HostObjectAccess.getArrayLength(object);
     }
 
 

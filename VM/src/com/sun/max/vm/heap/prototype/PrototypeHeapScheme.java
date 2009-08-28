@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A pseudo heap for limited unit testing on the prototype host,
@@ -155,6 +156,16 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    @Override
+    public void disableImmortalMemoryAllocation() {
+        FatalError.unexpected("Non implemented");
+    }
+
+    @Override
+    public void enableImmortalMemoryAllocation() {
+        FatalError.unexpected("Non implemented");
     }
 
 }

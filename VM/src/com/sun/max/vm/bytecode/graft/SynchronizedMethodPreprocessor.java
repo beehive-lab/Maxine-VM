@@ -29,7 +29,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
- * 
+ *
  * @author Doug Simon
 s */
 public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
@@ -49,19 +49,28 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
         final Kind resultKind = classMethodActor.resultKind();
         setStack(resultKind.stackSlots());
-        synchronizedMethodTransformer.releaseMonitorAndReturn(resultKind);
+        Label returnBlockLabel = synchronizedMethodTransformer.returnBlockLabel;
+        if (returnBlockLabel != null) {
+            returnBlockLabel.bind();
+            synchronizedMethodTransformer.releaseMonitor();
+            return_(resultKind);
+        }
 
         final int monitorExitHandlerAddress = currentAddress();
         setStack(1);
-        synchronizedMethodTransformer.releaseMonitorAndRethrow();
+        pop();
+        synchronizedMethodTransformer.releaseMonitor();
+        final int monitorExitHandlerEndAddress = currentAddress();
+        invokestatic(ExceptionDispatcher.safepointAndLoadExceptionObject, 0, 1);
+        athrow();
 
         trackingStack = false;
         final byte[] code = code();
         final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = fixupExceptionHandlerTable(
                         monitorExitHandlerAddress,
+                        monitorExitHandlerEndAddress,
                         code,
-                        codeAttribute.exceptionHandlerTable(),
-                        relocator);
+                        codeAttribute.exceptionHandlerTable(), relocator);
         result = new CodeAttribute(
                         constantPool(),
                         code,
@@ -109,21 +118,19 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
     /**
      * Adjusts the exception handler table for a synchronized method to account for the change in bytecode addresses.
      * Also, any code range previously not covered by an exception handler is now covered the monitor exit handler.
-     * 
-     * @param monitorExitHandlerAddress
-     *                the entry address of the monitor exit handler (i.e. an exception handler that tries to release the
-     *                monitor for the synchronized method before re-throwing the original exception)
-     * @param code
-     *                the modified bytecode
-     * @param exceptionHandlerTable
-     *                the exception handler table for the original, unmodified bytecode
+     *
+     * @param monitorExitHandlerAddress the entry address of the monitor exit handler (i.e. an exception handler that
+     *            tries to release the monitor for the synchronized method before re-throwing the original exception)
+     * @param monitorExitHandlerEndAddress
+     * @param code the modified bytecode
+     * @param exceptionHandlerTable the exception handler table for the original, unmodified bytecode
      * @param relocator
      * @return the fixed up exception handler table
      */
     private Sequence<ExceptionHandlerEntry> fixupExceptionHandlerTable(int monitorExitHandlerAddress,
+                                                                       int monitorExitHandlerEndAddress,
                                                                        byte[] code,
-                                                                       Sequence<ExceptionHandlerEntry> exceptionHandlerTable,
-                                                                       OpcodePositionRelocator relocator) {
+                                                                       Sequence<ExceptionHandlerEntry> exceptionHandlerTable, OpcodePositionRelocator relocator) {
         final int codeLength = code.length;
         final int relocatedCodeStartAddress = relocator.relocate(0);
         assert Bytecode.from(code[codeLength - 1]) == Bytecode.ATHROW;
@@ -143,9 +150,9 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
             previousEntryEndAddress = relocatedEntry.endPosition();
         }
 
-        // Cover the range of any generated exception dispatchers as well as the monitor exit exception handler itself *except for the very last athrow*
+        // Cover the range of any generated exception dispatchers as well as the monitor exit exception handler itself
         if (previousEntryEndAddress < monitorExitHandlerAddress) {
-            updatedExceptionHandlerTable.append(new ExceptionHandlerEntry(previousEntryEndAddress, codeLength - 1, monitorExitHandlerAddress, 0));
+            updatedExceptionHandlerTable.append(new ExceptionHandlerEntry(previousEntryEndAddress, monitorExitHandlerEndAddress, monitorExitHandlerAddress, 0));
         }
         return updatedExceptionHandlerTable;
     }

@@ -37,6 +37,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -157,8 +158,12 @@ public class C1XTest {
         final Target target = createTarget();
         final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
 
-        doWarmup(compiler, methods);
-        doCompile(compiler, methods, progress);
+        MaxineVM.usingTarget(new Runnable() {
+            public void run() {
+                doWarmup(compiler, methods);
+                doCompile(compiler, methods, progress);
+            }
+        });
 
         if (verboseOption.getValue() > 0) {
             progress.report();

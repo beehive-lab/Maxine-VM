@@ -278,7 +278,7 @@ public abstract class TeleVM implements MaxVM {
         final MaxineVM vm = new MaxineVM(vmConfiguration);
         MaxineVM.setTarget(vm);
         MaxineVM.setGlobalHostOrTarget(vm);
-        new JavaPrototype(vm.configuration(), false);
+        new JavaPrototype(vm.configuration, false);
         return vm;
     }
 
@@ -291,7 +291,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public String getVersion() {
-        return MaxineVM.version();
+        return MaxineVM.VERSION;
     }
 
     public String getDescription() {
@@ -448,7 +448,7 @@ public abstract class TeleVM implements MaxVM {
         this.sourcepath = sourcepath;
         nativeInitialize(bootImage.header().threadLocalsSize);
         final MaxineVM vm = createVM(this.bootImage);
-        this.vmConfiguration = vm.configuration();
+        this.vmConfiguration = vm.configuration;
 
         // Pre-initialize an appropriate disassembler to save time.
         TeleDisassembler.initialize(vmConfiguration.platform().processorKind);
@@ -641,25 +641,25 @@ public abstract class TeleVM implements MaxVM {
 
     public final IndexedSequence<MemoryRegion> allocatedMemoryRegions() {
         final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions = teleHeapRegions();
-        final IndexedSequence<TeleCodeRegion> teleCodeRegions = teleCodeManager().teleCodeRegions();
+        final TeleCodeRegion teleRuntimeCodeRegion = teleCodeManager().teleRuntimeCodeRegion();
         final IterableWithLength<TeleNativeThread> threads = teleProcess.threads();
-        final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + teleCodeRegions.length() + threads.length() + 2);
+        final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + 1 + threads.length() + 2);
         // Special "tele roots" region
         if (teleRootsRegion() != null) {
             regions.append(teleRootsRegion());
         }
         // Heap regions
         regions.append(teleBootHeapRegion());
+        regions.append(teleImmortalHeapRegion());
         for (MemoryRegion region : teleHeapRegions) {
             regions.append(region);
         }
         // Code regions
         regions.append(teleCodeManager().teleBootCodeRegion());
-        for (TeleCodeRegion region : teleCodeRegions) {
-            if (region.isAllocated()) {
-                regions.append(region);
-            }
+        if (teleRuntimeCodeRegion.isAllocated()) {
+            regions.append(teleRuntimeCodeRegion);
         }
+
         // Thread memory (stacks + thread locals)
         for (TeleNativeThread thread : threads) {
             final TeleNativeStack stack = thread.stack();
@@ -702,6 +702,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
+    }
+
+    public final TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+        return teleHeapManager.teleImmortalHeapRegion();
     }
 
     public final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
@@ -779,8 +783,8 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeManager().teleBootCodeRegion();
     }
 
-    public final IndexedSequence<TeleCodeRegion> teleCodeRegions() {
-        return teleCodeManager().teleCodeRegions();
+    public final TeleCodeRegion teleRuntimeCodeRegion() {
+        return teleCodeManager().teleRuntimeCodeRegion();
     }
 
     public final boolean containsInThread(Address address) {

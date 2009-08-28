@@ -18,30 +18,59 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.code;
-
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-
-/**
- * A code manager that reserves and allocates virtual memory at a fixed address.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: (1)=true; (10)=true;
  */
-public class FixedAddressCodeManager extends CodeManager {
+/**
+ * @author Hannes Payer
+ */
+package jtt.max;
 
-    /**
-     * Initialize this code manager.
-     */
-    @Override
-    void initialize() {
-        final Address address = Code.bootCodeRegion.end().roundedUpBy(Platform.hostOrTarget().pageSize);
-        final Size size = runtimeCodeRegionSize.getValue();
-        if (!VirtualMemory.allocateAtFixedAddress(address, size, VirtualMemory.Type.CODE)) {
-            ProgramError.unexpected("could not allocate runtime code region");
-        }
-        runtimeCodeRegion.bind(address, size);
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
+
+
+public final class ImmortalHeap_gc {
+    private ImmortalHeap_gc() {
     }
+
+    @UNSAFE
+    public static boolean test(int nrObjects) {
+        String[] strings;
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+
+        try {
+            Heap.enableImmortalMemoryAllocation();
+            strings = new String[nrObjects];
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
+        }
+
+        if (immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+
+        oldMark = immortalMemoryRegion.mark();
+
+        for (int i = 0; i < nrObjects; i++) {
+            strings[i] = new String("" + i);
+        }
+
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+
+        System.gc();
+
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

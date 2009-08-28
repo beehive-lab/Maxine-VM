@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-import com.sun.max.vm.type.*;
 
 /**
  * @author Doug Simon
@@ -43,21 +42,8 @@ class VirtualSynchronizedMethodTransformer extends SynchronizedMethodTransformer
     }
 
     @Override
-    void releaseMonitorAndReturn(Kind resultKind) {
-        if (returnBlockLabel != null) {
-            returnBlockLabel.bind();
-            asm().aload(copyOfReceiver);
-            asm().monitorexit();
-            asm().return_(resultKind);
-        }
-    }
-
-    @Override
-    void releaseMonitorAndRethrow() {
-        asm().pop();
+    void releaseMonitor() {
         asm().aload(copyOfReceiver);
         asm().monitorexit();
-        asm().invokestatic(ExceptionDispatcher.safepointAndLoadExceptionObject, 0, 1);
-        asm().athrow();
     }
 }

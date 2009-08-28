@@ -44,10 +44,13 @@ public class EirStack {
     }
 
     /**
-     * Sufficiently high, so the stack can grow downwards. This must also be
+     * The address at which the stack starts.  Any attempt to read from or write
+     * to the stack at an address equal to or higher that this value results in
+     * a {@link StackAddressOutOfBoundsException}.
+     * Sufficiently high, so the stack can grow downwards.  This must also be
      * a word aligned value as the real stack will also be word aligned.
      */
-    private final Address ceiling;
+    public final Address ceiling;
 
     private Address sp;
 
@@ -68,15 +71,6 @@ public class EirStack {
      */
     public EirStack save() {
         return new EirStack(this);
-    }
-
-    /**
-     * Gets the address at which the stack starts. Any attempt to read from or write
-     * to the stack at an address equal to or higher that this value results in
-     * a {@link StackAddressOutOfBoundsException}.
-     */
-    public Address ceiling() {
-        return ceiling;
     }
 
     /**
