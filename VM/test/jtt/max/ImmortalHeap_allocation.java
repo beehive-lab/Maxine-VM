@@ -38,6 +38,7 @@ public final class ImmortalHeap_allocation {
     private ImmortalHeap_allocation() {
     }
 
+    @UNSAFE
     public static void resetImmortalHeap(ImmortalMemoryRegion immortalMemoryRegion, Pointer value) {
         immortalMemoryRegion.mark.set(value);
     }
