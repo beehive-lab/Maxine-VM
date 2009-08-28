@@ -89,12 +89,12 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
     }
 
     @INLINE
-    protected final Word lengthToWord(int length) {
+    static final Word lengthToWord(int length) {
         return Address.fromInt(length).shiftedLeft(1).or(1);
     }
 
     @INLINE
-    private int wordToLength(Word word) {
+    static int wordToLength(Word word) {
         return word.asAddress().unsignedShiftedRight(1).toInt();
     }
 
