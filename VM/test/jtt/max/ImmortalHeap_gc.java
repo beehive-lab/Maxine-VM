@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (4)=true; (8)=true; (10)=true; (100)=true;
+ * @Runs: (1)=true; (10)=true;
  */
 /**
  * @author Hannes Payer
@@ -30,26 +30,47 @@ package jtt.max;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
 
-public final class ImmortalHeap_allocation {
-    private ImmortalHeap_allocation() {
+public final class ImmortalHeap_gc {
+    private ImmortalHeap_gc() {
     }
 
     @UNSAFE
-    public static boolean test(int size) {
+    public static boolean test(int nrObjects) {
+        String[] strings;
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
-        ImmortalHeap.allocate(Size.fromInt(size), true);
-        if (MaxineVM.isDebug()) {
-            size += Word.size();
+
+        try {
+            Heap.enableImmortalMemoryAllocation();
+            strings = new String[nrObjects];
+        } finally {
+            Heap.disableImmortalMemoryAllocation();
         }
-        if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
-            return true;
+
+        if (immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
         }
-        return false;
+
+        oldMark = immortalMemoryRegion.mark();
+
+        for (int i = 0; i < nrObjects; i++) {
+            strings[i] = new String("" + i);
+        }
+
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+
+        System.gc();
+
+        if (!immortalMemoryRegion.mark().equals(oldMark)) {
+            return false;
+        }
+
+        return true;
     }
 
 }

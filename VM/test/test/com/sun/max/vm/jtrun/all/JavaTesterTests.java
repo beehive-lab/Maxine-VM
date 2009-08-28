@@ -12872,6 +12872,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_max_ImmortalHeap_gc() {
+        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_gc");
+        String runString = null;
+        try {
+        // (1) == true
+            runString = "(1)";
+            if (true != jtt.max.ImmortalHeap_gc.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (10) == true
+            runString = "(10)";
+            if (true != jtt.max.ImmortalHeap_gc.test(10)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_max_ImmortalHeap_switching() {
         JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_switching");
         String runString = null;

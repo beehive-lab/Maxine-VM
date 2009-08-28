@@ -22,7 +22,9 @@
  * @Harness: java
  * @Runs: (10)=true; (20)=true;
  */
-
+/**
+ * @author Hannes Payer
+ */
 package jtt.max;
 
 import com.sun.max.annotate.*;
