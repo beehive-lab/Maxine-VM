@@ -63,7 +63,7 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
                 // Inlining of method selection for methods with accessor arguments must never be attempted:
                 for (Class parameterClass : declaredMethod.toJava().getParameterTypes()) {
                     if (parameterClass == Accessor.class) {
-                        ProgramError.unexpected("attempted method selection inlining for method with Accessor argument");
+                        ProgramError.unexpected("attempted method selection inlining for method with Accessor argument: " + declaredMethod);
                     }
                 }
             }

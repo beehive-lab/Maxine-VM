@@ -229,6 +229,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return hubOffset;
     }
 
+    @PROTOTYPE_ONLY
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
         if (offset == hubOffset) {
             return mirror.readHub();
@@ -238,6 +239,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return null;
     }
 
+    @PROTOTYPE_ONLY
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
         if (offset == hubOffset) {
             mirror.writeHub(value);

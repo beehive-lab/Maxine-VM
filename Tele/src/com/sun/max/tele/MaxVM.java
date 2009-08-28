@@ -270,14 +270,24 @@ public interface MaxVM {
      * @return surrogate for the special heap {@link MemoryRegion} in the {@link BootImage} of the VM.
      * @see #teleHeapRegions()
      * @see #allocatedMemoryRegions()
+     * @see #teleImmortalHeapRegion()
      */
     TeleRuntimeMemoryRegion teleBootHeapRegion();
+
+    /**
+     * @return surrogate for the immortal heap {@link MemoryRegion}
+     * @see #teleHeapRegions()
+     * @see #allocatedMemoryRegions()
+     * @see #teleBootHeapRegion()
+     */
+    TeleRuntimeMemoryRegion teleImmortalHeapRegion();
 
     /**
      * @return surrogates for all {@link MemoryRegion}s in the {@link Heap} of the VM.
      * Sorted in order of allocation.  Does not include the boot heap region.
      * @see #teleBootHeapRegion()
      * @see #allocatedMemoryRegions()
+     * @see #teleImmortalHeapRegion()
      */
     IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions();
 
