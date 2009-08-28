@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>LIRLocation</code> class represents a LIROperand that is either a stack slot or a CPU register. LIRLocation
@@ -35,8 +34,8 @@ import com.sun.c1x.value.*;
  */
 public class LIRLocation extends LIROperand {
 
-    public Register location1;
-    public Register location2;
+    public CiRegister location1;
+    public CiRegister location2;
     public int index;
 
     /**
@@ -49,12 +48,12 @@ public class LIRLocation extends LIROperand {
      * @param flags
      *            the flags of this location
      */
-    LIRLocation(BasicType basicType, Register number) {
+    LIRLocation(CiKind basicType, CiRegister number) {
         super(basicType);
         assert basicType.size == 1;
         assert number != null;
         this.location1 = number;
-        this.location2 = Register.noreg;
+        this.location2 = CiRegister.noreg;
         index = 0;
     }
 
@@ -67,11 +66,11 @@ public class LIRLocation extends LIROperand {
      * @param number
      *            the virtual register index or the stack location index if negative
      */
-    LIRLocation(BasicType basicType, int number) {
+    LIRLocation(CiKind basicType, int number) {
         super(basicType);
         assert number != 0;
-        this.location1 = Register.noreg;
-        this.location2 = Register.noreg;
+        this.location1 = CiRegister.noreg;
+        this.location2 = CiRegister.noreg;
         this.index = number;
     }
 
@@ -85,7 +84,7 @@ public class LIRLocation extends LIROperand {
      * @param location2
      *            the number of the second location
      */
-    LIRLocation(BasicType basicType, Register location1, Register location2) {
+    LIRLocation(CiKind basicType, CiRegister location1, CiRegister location2) {
         super(basicType);
         assert basicType.size == 2;
         assert location1 != null && location2 != null;
@@ -151,12 +150,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleCpu() {
-        return !isStack() && location2 == Register.noreg && location1.isCpu();
+        return !isStack() && location2 == CiRegister.noreg && location1.isCpu();
     }
 
     @Override
     public boolean isDoubleCpu() {
-        return !isStack() && location2 != Register.noreg && location1.isCpu() && location2.isCpu();
+        return !isStack() && location2 != CiRegister.noreg && location1.isCpu() && location2.isCpu();
     }
 
     @Override
@@ -176,7 +175,7 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isOopRegister() {
-        return isCpuRegister() && basicType == BasicType.Object;
+        return isCpuRegister() && basicType == CiKind.Object;
     }
 
 
@@ -211,18 +210,18 @@ public class LIRLocation extends LIROperand {
     }
 
     @Override
-    public Register asRegister() {
-        assert location1 == location2 || location2 == Register.noreg;
+    public CiRegister asRegister() {
+        assert location1 == location2 || location2 == CiRegister.noreg;
         return this.location1;
     }
 
     @Override
-    public Register asRegisterLo() {
+    public CiRegister asRegisterLo() {
         return this.location1;
     }
 
     @Override
-    public Register asRegisterHi() {
+    public CiRegister asRegisterHi() {
         return this.location2;
     }
 
@@ -254,6 +253,6 @@ public class LIRLocation extends LIROperand {
      * @return the minimum virtual register value
      */
     public static int virtualRegisterBase() {
-        return Register.vregBase;
+        return CiRegister.vregBase;
     }
 }

@@ -30,13 +30,13 @@ import com.sun.c1x.util.*;
  */
 public class RoundFP extends Instruction {
 
-    Instruction value;
+    Value value;
 
     /**
      * Creates a new RoundFP instruction.
       * @param value the instruction generating the input value
      */
-    public RoundFP(Instruction value) {
+    public RoundFP(Value value) {
         super(value.type());
         this.value = value;
     }
@@ -45,7 +45,7 @@ public class RoundFP extends Instruction {
      * Gets the instruction producing the input value to this round instruction.
      * @return the instruction that generates the input value
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -54,7 +54,7 @@ public class RoundFP extends Instruction {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
     }
 
@@ -63,7 +63,7 @@ public class RoundFP extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitRoundFP(this);
     }
 

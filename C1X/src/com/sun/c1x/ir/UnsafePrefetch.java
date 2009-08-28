@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafePrefetch</code> class is the base of prefetch reads and prefetch writes.
@@ -34,7 +34,7 @@ public abstract class UnsafePrefetch extends UnsafeObjectOp {
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
      */
-    public UnsafePrefetch(Instruction object, Instruction offset) {
-        super(BasicType.Void, object, offset, false, false);
+    public UnsafePrefetch(Value object, Value offset) {
+        super(CiKind.Void, object, offset, false, false);
     }
 }

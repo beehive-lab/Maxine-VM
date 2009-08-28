@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>MaxRiExceptionHandler</code> represents an exception handler

@@ -32,8 +32,9 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.xir.*;
 
 /**
  * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
@@ -43,16 +44,17 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
-    public final Target target;
+    public final CiTarget target;
     public final RiRuntime runtime;
     public final RiMethod method;
+    public final CiStatistics stats;
     public final int osrBCI;
+    public final XirRuntime xirRuntime;
 
-    int maxSpills;
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
     boolean hasUnsafeAccess;
-    Bailout bailout;
+    CiBailout bailout;
 
     private FrameMap frameMap;
     private AbstractAssembler assembler;
@@ -61,7 +63,6 @@ public class C1XCompilation {
 
     private CFGPrinter cfgPrinter;
 
-    private CodeOffsets codeOffsets;
     private List<ExceptionInfo> exceptionInfoList;
     public C1XCompiler compiler;
 
@@ -74,12 +75,14 @@ public class C1XCompilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    C1XCompilation(C1XCompiler compiler, Target target, RiRuntime runtime, RiMethod method, int osrBCI) {
+    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirRuntime xirRuntime, RiMethod method, int osrBCI) {
         this.compiler = compiler;
         this.target = target;
         this.runtime = runtime;
+        this.xirRuntime = xirRuntime;
         this.method = method;
         this.osrBCI = osrBCI;
+        this.stats = new CiStatistics();
     }
 
     /**
@@ -90,8 +93,8 @@ public class C1XCompilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public C1XCompilation(C1XCompiler compiler, Target target, RiRuntime runtime, RiMethod method) {
-        this(compiler, target, runtime, method, -1);
+    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirRuntime xirRuntime, RiMethod method) {
+        this(compiler, target, runtime, xirRuntime, method, -1);
     }
 
     public IR hir() {
@@ -103,7 +106,7 @@ public class C1XCompilation {
      *
      * @return the bailout condition
      */
-    public Bailout bailout() {
+    public CiBailout bailout() {
         return bailout;
     }
 
@@ -211,7 +214,7 @@ public class C1XCompilation {
      * @return the block map for the specified method
      */
     public BlockMap getBlockMap(RiMethod method, int osrBCI) {
-        // XXX: cache the block map for methods that are compiled or inlined often
+        // PERF: cache the block map for methods that are compiled or inlined often
         BlockMap map = new BlockMap(method, hir.numberOfBlocks());
         boolean isOsrCompilation = false;
         if (osrBCI >= 0) {
@@ -219,7 +222,7 @@ public class C1XCompilation {
             isOsrCompilation = true;
         }
         if (!map.build(!isOsrCompilation && C1XOptions.ComputeStoresInLoops)) {
-            throw new Bailout("build of BlockMap failed for " + method);
+            throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (C1XOptions.PrintCFGToFile) {
                 CFGPrinter cfgPrinter = this.cfgPrinter();
@@ -227,17 +230,9 @@ public class C1XCompilation {
             }
         }
         map.cleanup();
-        hir.incrementNumberOfBlocks(map.numberOfBlocks());
+        stats.byteCount += map.numberOfBytes();
+        stats.blockCount += map.numberOfBlocks();
         return map;
-    }
-
-    /**
-     * Returns the number of bytecodes inlined into the compilation.
-     *
-     * @return the number of bytecodes
-     */
-    public int totalInstructions() {
-        return hir.totalInstructions();
     }
 
     /**
@@ -247,13 +242,6 @@ public class C1XCompilation {
      */
     public FrameMap frameMap() {
         return frameMap;
-    }
-
-    public CodeOffsets offsets() {
-        if (codeOffsets == null) {
-            codeOffsets = new CodeOffsets();
-        }
-        return codeOffsets;
     }
 
     public AbstractAssembler masm() {
@@ -279,7 +267,7 @@ public class C1XCompilation {
         return hasExceptionHandlers;
     }
 
-    public CiTargetMethod compile() {
+    public CiResult compile() {
 
         Instruction.nextID = 0;
 
@@ -288,22 +276,19 @@ public class C1XCompilation {
             TTY.println("Compiling method: " + method.toString());
         }
 
-        CiTargetMethod targetMethod = null;
+        CiTargetMethod targetMethod;
         try {
             hir = new IR(this);
             hir.build();
             emitLIR();
             targetMethod = emitCode();
+        } catch (CiBailout b) {
+            return new CiResult(null, b, stats);
         } catch (Throwable t) {
-            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
-            throw bailout;
+            return new CiResult(null, new CiBailout("Exception while compiling: " + this.method(), t), stats);
         }
 
-        if (targetMethod != null) {
-            targetMethod.totalInstructions = this.totalInstructions();
-        }
-
-        return targetMethod;
+        return new CiResult(targetMethod, null, stats);
     }
 
     public IR emitHIR() {
@@ -315,7 +300,7 @@ public class C1XCompilation {
             hir = new IR(this);
             hir.build();
         } catch (Throwable t) {
-            bailout = new Bailout("Unexpected exception while compiling: " + this.method(), t);
+            bailout = new CiBailout("Unexpected exception while compiling: " + this.method(), t);
             throw bailout;
         }
         return hir;
@@ -323,8 +308,8 @@ public class C1XCompilation {
 
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
-            frameMap = target.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
-            final LIRGenerator lirGenerator = target.backend.newLIRGenerator(this);
+            frameMap = this.compiler.backend.newFrameMap(this, method, hir.topScope.numberOfLocks(), hir.topScope.maxStack());
+            final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.visitBlock(begin);
             }
@@ -340,8 +325,8 @@ public class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = target.backend.newAssembler(compiler);
-            final LIRAssembler lirAssembler = target.backend.newLIRAssembler(this);
+            assembler = compiler.backend.newAssembler(compiler);
+            final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code or slow cases

@@ -202,6 +202,7 @@ function get_project_cp() {
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 projects=( \
+    CRI:src               \
     C1X:src               \
     C0X:src               \
     Base:src,test,shell   \

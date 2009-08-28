@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.*;
 
@@ -40,10 +41,19 @@ public class ArithmeticOp extends Op2 {
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack stateBefore) {
+    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, ValueStack stateBefore) {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
-        this.stateBefore = stateBefore;
+        if (stateBefore != null) {
+            // state before is only used in the case of a division or remainder,
+            // and isn't needed if the zero check is redundant
+            if (y.isConstant() && y.asConstant().asLong() != 0) {
+                C1XMetrics.ZeroChecksRedundant++;
+                setFlag(Flag.NoZeroCheck);
+            } else {
+                this.stateBefore = stateBefore;
+            }
+        }
     }
 
     /**
@@ -70,14 +80,7 @@ public class ArithmeticOp extends Op2 {
      */
     @Override
     public boolean canTrap() {
-        switch (opcode) {
-            case Bytecodes.IDIV:
-            case Bytecodes.IREM:
-            case Bytecodes.LDIV:
-            case Bytecodes.LREM:
-                return true;
-        }
-        return false;
+        return stateBefore != null;
     }
 
     /**
@@ -85,7 +88,7 @@ public class ArithmeticOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitArithmeticOp(this);
     }
 

@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -32,9 +32,11 @@ import com.sun.c1x.value.*;
  */
 public abstract class AccessField extends StateSplit {
 
-    Instruction object;
+    Value object;
     final int offset;
     final RiField field;
+    public final char cpi;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new access field object.
@@ -44,8 +46,10 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded) {
+    public AccessField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(field.basicType().stackType(), stateBefore);
+        this.cpi = cpi;
+        this.constantPool = constantPool;
         this.object = object;
         this.offset = isLoaded ? field.offset() : -1;
         this.field = field;
@@ -57,8 +61,7 @@ public abstract class AccessField extends StateSplit {
         initFlag(Flag.IsLoaded, isLoaded);
         initFlag(Flag.IsStatic, isStatic);
         if (isLoaded && object != null && object.isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
         assert object != null : "every field access must reference some object";
     }
@@ -68,7 +71,7 @@ public abstract class AccessField extends StateSplit {
      * (for instance field accesses).
      * @return the instruction that produces the receiver object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -113,11 +116,11 @@ public abstract class AccessField extends StateSplit {
     }
 
     @Override
-    public void clearNullCheck() {
+    public boolean internalClearNullCheck() {
         if (isLoaded()) {
             stateBefore = null;
         }
-        setFlag(Flag.NoNullCheck);
+        return true;
     }
 
     /**
@@ -144,7 +147,7 @@ public abstract class AccessField extends StateSplit {
      * @param closure the closure to apply to each value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
     }
 }

@@ -26,7 +26,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.target.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -37,7 +37,7 @@ public abstract class AbstractAssembler {
 
     public final Buffer codeBuffer;
     public final Buffer dataBuffer;
-    public final Target target;
+    public final CiTarget target;
     private final CiTargetMethod targetMethod = new CiTargetMethod();
 
     private final int doubleAlignment;
@@ -46,7 +46,7 @@ public abstract class AbstractAssembler {
     private final int longLongAlignment;
     private final int intAlignment;
 
-    public AbstractAssembler(Target target) {
+    public AbstractAssembler(CiTarget target) {
         this.target = target;
         this.codeBuffer = new Buffer(target.arch.bitOrdering);
         this.dataBuffer = new Buffer(target.arch.bitOrdering);
@@ -299,7 +299,7 @@ public abstract class AbstractAssembler {
         Util.nonFatalUnimplemented();
     }
 
-    public abstract void nullCheck(Register r);
+    public abstract void nullCheck(CiRegister r);
 
     public void verifiedEntry() {
         Util.nonFatalUnimplemented();

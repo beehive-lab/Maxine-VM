@@ -40,7 +40,7 @@ public abstract class LIRInstruction {
     protected LIRMoveKind flags; // flag that indicate the kind of move
     CodeEmitInfo info; // used to emit debug information
     private int id; // value id for register allocation
-    private Instruction source; // for debugging
+    private Value source; // for debugging
 
     /**
      * Constructs a new Instruction.
@@ -135,7 +135,7 @@ public abstract class LIRInstruction {
      *
      * @return source the HIR source instruction.
      */
-    public Instruction source() {
+    public Value source() {
         return source;
     }
 
@@ -144,7 +144,7 @@ public abstract class LIRInstruction {
      *
      * @param source the HIR source instruction.
      */
-    public void setSource(Instruction source) {
+    public void setSource(Value source) {
         this.source = source;
     }
 
