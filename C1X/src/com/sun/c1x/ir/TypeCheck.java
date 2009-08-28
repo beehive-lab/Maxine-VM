@@ -32,8 +32,8 @@ import com.sun.c1x.value.*;
 public abstract class TypeCheck extends StateSplit {
 
     final RiType targetClass;
-    public Instruction targetClassInstruction;
-    Instruction object;
+    public Value targetClassInstruction;
+    Value object;
 
     /**
      * Creates a new TypeCheck instruction.
@@ -42,7 +42,7 @@ public abstract class TypeCheck extends StateSplit {
      * @param type the result type of this instruction
      * @param stateBefore the state before this instruction is executed
      */
-    public TypeCheck(RiType targetClass, Instruction targetClassInstruction, Instruction object, CiKind type, ValueStack stateBefore) {
+    public TypeCheck(RiType targetClass, Value targetClassInstruction, Value object, CiKind type, ValueStack stateBefore) {
         super(type, stateBefore);
         this.targetClass = targetClass;
         this.targetClassInstruction = targetClassInstruction;
@@ -62,7 +62,7 @@ public abstract class TypeCheck extends StateSplit {
      * Gets the instruction which produces the object input.
      * @return the instruction producing the object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -102,7 +102,7 @@ public abstract class TypeCheck extends StateSplit {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
         targetClassInstruction = closure.apply(targetClassInstruction);
     }

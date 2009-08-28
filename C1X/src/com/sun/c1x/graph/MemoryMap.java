@@ -38,9 +38,9 @@ import com.sun.c1x.ri.*;
  */
 public class MemoryMap {
 
-    private final HashMap<RiField, Instruction> objectMap = new HashMap<RiField, Instruction>();
-    private final HashMap<RiField, Instruction> valueMap = new HashMap<RiField, Instruction>();
-    private final IdentityHashMap<Instruction, Instruction> newObjects = new IdentityHashMap<Instruction, Instruction>();
+    private final HashMap<RiField, Value> objectMap = new HashMap<RiField, Value>();
+    private final HashMap<RiField, Value> valueMap = new HashMap<RiField, Value>();
+    private final IdentityHashMap<Value, Value> newObjects = new IdentityHashMap<Value, Value>();
 
     /**
      * Kills all memory locations.
@@ -55,7 +55,7 @@ public class MemoryMap {
      * The specified instruction has just escaped, it can no longer be considered a "new object".
      * @param x the instruction that just escaped
      */
-    public void storeValue(Instruction x) {
+    public void storeValue(Value x) {
         newObjects.remove(x);
     }
 
@@ -73,7 +73,7 @@ public class MemoryMap {
      * @return a reference to the previous instruction that already loaded the value, if it is available; the
      * <code>load</code> parameter otherwise
      */
-    public Instruction load(LoadField load) {
+    public Value load(LoadField load) {
         if (!load.isLoaded()) {
             // the field is not loaded, kill everything, because it will need to be resolved
             kill();
@@ -82,7 +82,7 @@ public class MemoryMap {
         RiField field = load.field();
         if (load.isStatic()) {
             // the field is static, look in the static map
-            Instruction r = valueMap.get(field);
+            Value r = valueMap.get(field);
             if (r != null) {
                 return r;
             }
@@ -104,7 +104,7 @@ public class MemoryMap {
      * @param load the load instruction
      * @param result the result that the load instruction should produce
      */
-    public void setResult(LoadField load, Instruction result) {
+    public void setResult(LoadField load, Value result) {
         if (load.isLoaded()) {
             RiField field = load.field();
             if (load.isStatic()) {
@@ -131,7 +131,7 @@ public class MemoryMap {
             return store;
         }
         RiField field = store.field();
-        Instruction value = store.value();
+        Value value = store.value();
         if (store.isStatic()) {
             // the field is static, overwrite it into the static map
             valueMap.put(field, value);
@@ -143,7 +143,7 @@ public class MemoryMap {
                     return null;
                 }
             }
-            Instruction obj = objectMap.get(field);
+            Value obj = objectMap.get(field);
             if (obj == store.object()) {
                 // is this a redundant store?
                 if (value == valueMap.get(field) && !field.isVolatile()) {

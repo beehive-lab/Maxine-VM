@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  */
 public class LIRItem {
 
-    private Instruction value;
+    private Value value;
     private final LIRGenerator gen;
     private LIROperand result;
     private boolean destroysRegister;
@@ -41,12 +41,12 @@ public class LIRItem {
         return gen;
     }
 
-    public LIRItem(Instruction value, LIRGenerator gen) {
+    public LIRItem(Value value, LIRGenerator gen) {
         this.gen = gen;
         setInstruction(value);
     }
 
-    public void setInstruction(Instruction value) {
+    public void setInstruction(Value value) {
         this.value = value;
         this.result = LIROperandFactory.IllegalOperand;
         if (value != null) {
@@ -62,7 +62,7 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 

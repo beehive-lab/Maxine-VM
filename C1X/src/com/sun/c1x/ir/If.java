@@ -32,8 +32,8 @@ import com.sun.c1x.value.*;
  */
 public class If extends BlockEnd {
 
-    Instruction x;
-    Instruction y;
+    Value x;
+    Value y;
     Condition condition;
     RiMethod profiledMethod;
     int profiledBCI;
@@ -49,7 +49,7 @@ public class If extends BlockEnd {
      * @param stateBefore the state before the branch
      * @param isSafepoint <code>true</code> if this branch should be considered a safepoint
      */
-    public If(Instruction x, Condition cond, boolean unorderedIsTrue, Instruction y,
+    public If(Value x, Condition cond, boolean unorderedIsTrue, Value y,
               BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint);
         this.x = x;
@@ -65,7 +65,7 @@ public class If extends BlockEnd {
      * Gets the instruction that produces the first input to this comparison.
      * @return the instruction producing the first input
      */
-    public Instruction x() {
+    public Value x() {
         return x;
     }
 
@@ -73,7 +73,7 @@ public class If extends BlockEnd {
      * Gets the instruction that produces the second input to this comparison.
      * @return the instruction producing the second input
      */
-    public Instruction y() {
+    public Value y() {
         return y;
     }
 
@@ -132,7 +132,7 @@ public class If extends BlockEnd {
      */
     public void swapOperands() {
         condition = condition.mirror();
-        Instruction t = x;
+        Value t = x;
         x = y;
         y = t;
     }
@@ -189,7 +189,7 @@ public class If extends BlockEnd {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         x = closure.apply(x);
         y = closure.apply(y);
     }
@@ -199,7 +199,7 @@ public class If extends BlockEnd {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitIf(this);
     }
 

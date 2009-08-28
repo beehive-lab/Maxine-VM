@@ -85,7 +85,7 @@ public class LIROperandFactory {
         return LIROperand.ILLEGAL;
     }
 
-    public static LIROperand basicType(Instruction type) {
+    public static LIROperand basicType(Value type) {
 
         if (type.type().isObject()) {
             return oopConst(type.asConstant().asObject());

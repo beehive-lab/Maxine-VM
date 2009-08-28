@@ -41,7 +41,7 @@ public class ExceptionObject extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitExceptionObject(this);
     }
 }

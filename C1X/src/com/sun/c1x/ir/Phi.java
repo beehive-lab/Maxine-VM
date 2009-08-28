@@ -94,7 +94,7 @@ public class Phi extends Instruction {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public final Instruction operandAt(int i) {
+    public final Value operandAt(int i) {
         ValueStack state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
@@ -109,7 +109,7 @@ public class Phi extends Instruction {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public final Instruction operandIn(ValueStack state) {
+    public final Value operandIn(ValueStack state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {
@@ -135,7 +135,7 @@ public class Phi extends Instruction {
      * @param v the visitor to dispatch to
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitPhi(this);
     }
 

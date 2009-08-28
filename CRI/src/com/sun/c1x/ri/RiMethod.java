@@ -58,6 +58,13 @@ public interface RiMethod {
     byte[] code();
 
     /**
+     * Checks whether this method has bytecode. For unresolved, abstract, or native methods,
+     * this method must return {@code false}.
+     * @return {@code true} if bytecode is available for the method
+     */
+    boolean hasCode();
+
+    /**
      * Gets the size of the bytecode of the method, if the method has bytecode.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
      * @return the size of the bytecode of the method

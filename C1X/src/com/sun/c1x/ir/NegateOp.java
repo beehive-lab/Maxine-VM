@@ -30,13 +30,13 @@ import com.sun.c1x.util.*;
  */
 public class NegateOp extends Instruction {
 
-    Instruction x;
+    Value x;
 
     /**
      * Creates new NegateOp instance.
      * @param x the instruction producing the value that is input to this instruction
      */
-    public NegateOp(Instruction x) {
+    public NegateOp(Value x) {
         super(x.type());
         this.x = x;
     }
@@ -45,7 +45,7 @@ public class NegateOp extends Instruction {
      * Gets the instruction producing input to this instruction.
      * @return the instruction that produces this instruction's input
      */
-    public Instruction x() {
+    public Value x() {
         return x;
     }
 
@@ -54,7 +54,7 @@ public class NegateOp extends Instruction {
      * @param closure the closure to apply to each value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         x = closure.apply(x);
     }
 
@@ -63,7 +63,7 @@ public class NegateOp extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNegateOp(this);
     }
 

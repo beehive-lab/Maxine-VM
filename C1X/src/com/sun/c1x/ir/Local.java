@@ -69,7 +69,7 @@ public class Local extends Instruction {
      * @param v the visitor to dispatch to
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLocal(this);
     }
 }

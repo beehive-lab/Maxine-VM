@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class SubstitutionResolver implements BlockClosure, InstructionClosure {
+public class SubstitutionResolver implements BlockClosure, ValueClosure {
 
     /**
      * Creates a new SubstitutionResolver and applies it to each instruction
@@ -57,7 +57,7 @@ public class SubstitutionResolver implements BlockClosure, InstructionClosure {
         }
     }
 
-    public Instruction apply(Instruction i) {
+    public Value apply(Value i) {
         if (i != null) {
             return i.subst();
         }

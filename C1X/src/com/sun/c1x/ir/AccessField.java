@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class AccessField extends StateSplit {
 
-    Instruction object;
+    Value object;
     final int offset;
     final RiField field;
     public final char cpi;
@@ -46,7 +46,7 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+    public AccessField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(field.basicType().stackType(), stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;
@@ -71,7 +71,7 @@ public abstract class AccessField extends StateSplit {
      * (for instance field accesses).
      * @return the instruction that produces the receiver object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -147,7 +147,7 @@ public abstract class AccessField extends StateSplit {
      * @param closure the closure to apply to each value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
     }
 }

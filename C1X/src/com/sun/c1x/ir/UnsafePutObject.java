@@ -29,7 +29,7 @@ import com.sun.c1x.ci.*;
  */
 public class UnsafePutObject extends UnsafeObjectOp {
 
-    Instruction value;
+    Value value;
 
     /**
      * Creates a new UnsafePutObject instruction.
@@ -39,7 +39,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * @param value the instruction generating the value
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafePutObject(CiKind basicType, Instruction object, Instruction offset, Instruction value, boolean isVolatile) {
+    public UnsafePutObject(CiKind basicType, Value object, Value offset, Value value, boolean isVolatile) {
         super(basicType, object, offset, true, isVolatile);
         this.value = value;
     }
@@ -48,7 +48,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * Gets the instruction that generates the value to store.
      * @return the instruction generating the value
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -57,7 +57,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
@@ -67,7 +67,7 @@ public class UnsafePutObject extends UnsafeObjectOp {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitUnsafePutObject(this);
     }
 }

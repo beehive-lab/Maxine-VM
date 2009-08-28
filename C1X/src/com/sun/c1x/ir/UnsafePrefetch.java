@@ -34,7 +34,7 @@ public abstract class UnsafePrefetch extends UnsafeObjectOp {
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
      */
-    public UnsafePrefetch(Instruction object, Instruction offset) {
+    public UnsafePrefetch(Value object, Value offset) {
         super(CiKind.Void, object, offset, false, false);
     }
 }
