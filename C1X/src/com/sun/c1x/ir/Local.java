@@ -29,7 +29,7 @@ import com.sun.c1x.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class Local extends Instruction {
+public class Local extends Value {
 
     private final int javaIndex;
     private RiType declaredType;

@@ -1253,29 +1253,25 @@ public class GraphBuilder {
             }
         }
 
-        if (!(x instanceof Phi || x instanceof Local)) {
-            // TODO: make phis and locals Values, not instructions
-            // add instructions to the basic block (if not a phi or a local)
-            assert x.next() == null : "instruction should not have been appended yet";
-            assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
-            lastInstr = lastInstr.setNext(x, bci);
-            if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
-                // bailout if we've exceeded the maximum inlining size
-                throw new CiBailout("Method and/or inlining is too large");
-            }
+        assert x.next() == null : "instruction should not have been appended yet";
+        assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
+        lastInstr = lastInstr.setNext(x, bci);
+        if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
+            // bailout if we've exceeded the maximum inlining size
+            throw new CiBailout("Method and/or inlining is too large");
+        }
 
-            if (hasUncontrollableSideEffects(x)) {
-                // conservatively kill all memory if there are unknown side effects
-                if (memoryMap != null) {
-                    memoryMap.kill();
-                }
+        if (hasUncontrollableSideEffects(x)) {
+            // conservatively kill all memory if there are unknown side effects
+            if (memoryMap != null) {
+                memoryMap.kill();
             }
+        }
 
-            if (x.canTrap()) {
-                // connect the instruction to any exception handlers
-                assert exceptionState != null || !hasHandler() : "must have setup exception state";
-                x.setExceptionHandlers(handleException(bci));
-            }
+        if (x.canTrap()) {
+            // connect the instruction to any exception handlers
+            assert exceptionState != null || !hasHandler() : "must have setup exception state";
+            x.setExceptionHandlers(handleException(bci));
         }
 
         return x;

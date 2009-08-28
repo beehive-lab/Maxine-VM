@@ -136,7 +136,7 @@ public class CEEliminator implements BlockClosure {
         // this can happen when tBlock or fBlock contained additional stores to local variables
         // that are no longer represented by explicit instructions
 
-        for (Instruction i : sux.stateBefore().allPhis(sux)) {
+        for (Phi i : sux.stateBefore().allPhis(sux)) {
             if (i != suxPhi) {
                 return;
             }

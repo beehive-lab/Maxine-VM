@@ -34,35 +34,6 @@ import com.sun.c1x.ci.CiConstant;
  */
 public abstract class Value {
     /**
-     * Utility method to check that two instructions have the same basic type.
-     * @param i the first instruction
-     * @param other the second instruction
-     * @return {@code true} if the instructions have the same basic type
-     */
-    public static boolean sameBasicType(Value i, Value other) {
-        return i.type().basicType == other.type().basicType;
-    }
-
-    /**
-     * Checks that two instructions are equivalent, optionally comparing constants.
-     * @param x the first instruction
-     * @param y the second instruction
-     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
-     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
-     */
-    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
-        if (x == y) {
-            return true;
-        }
-        if (compareConstants && x != null && y != null) {
-            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * An enumeration of flags on instructions.
      */
     public enum Flag {
@@ -366,5 +337,34 @@ public abstract class Value {
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
+
+    /**
+     * Utility method to check that two instructions have the same basic type.
+     * @param i the first instruction
+     * @param other the second instruction
+     * @return {@code true} if the instructions have the same basic type
+     */
+    public static boolean sameBasicType(Value i, Value other) {
+        return i.type().basicType == other.type().basicType;
+    }
+
+    /**
+     * Checks that two instructions are equivalent, optionally comparing constants.
+     * @param x the first instruction
+     * @param y the second instruction
+     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
+     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
+     */
+    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
+        if (x == y) {
+            return true;
+        }
+        if (compareConstants && x != null && y != null) {
+            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
