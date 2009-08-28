@@ -53,9 +53,6 @@ public final class ImmortalHeap_switching {
         }
         oldMark = immortalMemoryRegion.mark();
         new Object();
-        if (!immortalMemoryRegion.mark().equals(oldMark)) {
-            return false;
-        }
-        return true;
+        return immortalMemoryRegion.mark().equals(oldMark);
     }
 }

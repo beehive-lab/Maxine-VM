@@ -39,10 +39,6 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public abstract class Instruction {
-    public boolean isDeadPhi() {
-        return checkFlag(Flag.PhiDead);
-    }
-
     /**
      * An enumeration of flags on instructions.
      */
@@ -580,4 +576,9 @@ public abstract class Instruction {
         InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
         ip.printInstructionListing(this);
     }
+
+    public boolean isDeadPhi() {
+        return checkFlag(Flag.PhiDead);
+    }
+
 }

@@ -58,7 +58,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == 
+        // (2) ==
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -86,7 +86,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) == 
+        // (2) ==
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -258,7 +258,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // ("") == 
+        // ("") ==
             runString = "(\"\")";
             if (!"".equals(jtt.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -8288,28 +8288,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_except_Except_Synchronized00() {
-        JavaTesterRunScheme.begin("jtt.except.Except_Synchronized00");
-        String runString = null;
-        try {
-        // (0) == 0
-            runString = "(0)";
-            if (0 != jtt.except.Except_Synchronized00.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (1) == 2
-            runString = "(1)";
-            if (2 != jtt.except.Except_Synchronized00.test(1)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
     static void jtt_except_Except_Synchronized01() {
         JavaTesterRunScheme.begin("jtt.except.Except_Synchronized01");
         String runString = null;
@@ -15914,7 +15892,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-<<<<<<< local
     static void jtt_optimize_NCE_FlowSensitive03() {
         JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive03");
         String runString = null;
@@ -15971,8 +15948,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-=======
->>>>>>> other
     static void jtt_optimize_Narrow_byte01() {
         JavaTesterRunScheme.begin("jtt.optimize.Narrow_byte01");
         String runString = null;
