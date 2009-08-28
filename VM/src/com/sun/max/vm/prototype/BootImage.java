@@ -304,7 +304,7 @@ public class BootImage {
             relocationDataSize = dataPrototype.relocationData().length;
             bootHeapSize = dataPrototype.heapData().length;
             bootCodeSize = dataPrototype.codeData().length;
-            codeCacheSize = CodeManager.CODE_CACHE_SIZE;
+            codeCacheSize = CodeManager.runtimeCodeRegionSize.getValue().toInt();
 
             heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
 

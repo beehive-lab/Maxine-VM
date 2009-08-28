@@ -18,30 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.bytecode.graft;
-
-
-/**
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (4)=true; (8)=true; (10)=true; (100)=true;
  */
-class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
+package jtt.max;
 
-    private final int classConstantIndex;
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
-    public StaticSynchronizedMethodTransformer(BytecodeAssembler assembler, int constantIndex) {
-        super(assembler);
-        classConstantIndex = constantIndex;
+
+public final class ImmortalHeap_allocation {
+    private ImmortalHeap_allocation() {
     }
 
-    @Override
-    void acquireMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorenter();
+    @UNSAFE
+    public static boolean test(int size) {
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+        ImmortalHeap.allocate(Size.fromInt(size), true);
+        if (MaxineVM.isDebug()) {
+            size += Word.size();
+        }
+        if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
+            return true;
+        }
+        return false;
     }
 
-    @Override
-    void releaseMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorexit();
-    }
 }

@@ -68,6 +68,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private TeleRuntimeMemoryRegion teleBootHeapRegion = null;
 
+    private TeleRuntimeMemoryRegion teleImmortalHeapRegion = null;
+
     /**
      * Surrogates for each of the heap regions created by GC implementations in the {@link TeleVM}.
      */
@@ -173,6 +175,16 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 }
             }
 
+            if (teleImmortalHeapRegion == null) {
+                final Reference immortalHeapReference = teleVM().fields().ImmortalHeap_immortalHeap.readReference(teleVM());
+                if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
+                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(immortalHeapReference);
+                    if (maybeAllocatedRegion.isAllocated()) {
+                        teleImmortalHeapRegion = maybeAllocatedRegion;
+                    }
+                }
+            }
+
             cardTableSize = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.readInt(teleVM()) * Word.size();
 
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
@@ -184,6 +196,13 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     public TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleBootHeapRegion;
+    }
+
+    /**
+     * @return surrogate for the immortal heap {@link RuntimeMemoryRegion} of the {@link TeleVM}.
+     */
+    public TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+        return teleImmortalHeapRegion;
     }
 
     /**
@@ -233,6 +252,9 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         if (teleBootHeapRegion.contains(address)) {
             return teleBootHeapRegion;
         }
+        if (teleImmortalHeapRegion != null && teleImmortalHeapRegion.contains(address)) {
+            return teleImmortalHeapRegion;
+        }
         for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
                 return teleHeapRegion;
@@ -277,6 +299,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         }
         for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
+                return true;
+            }
+        }
+        if (teleImmortalHeapRegion != null) {
+            if (teleImmortalHeapRegion.contains(address)) {
                 return true;
             }
         }
