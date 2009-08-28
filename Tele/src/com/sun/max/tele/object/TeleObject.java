@@ -284,6 +284,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         return new FixedMemoryRegion(start, size, "");
     }
 
+    /**
+     * Gathers all instance fields for a class, including inherited fields.
+     * @param classActor description of a class
+     * @param instanceFieldActors the set to which collected {@link FieldActor}s will be added.
+     */
     private void collectInstanceFieldActors(ClassActor classActor, Set<FieldActor> instanceFieldActors) {
         if (classActor != null) {
             for (FieldActor fieldActor : classActor.localInstanceFieldActors()) {
