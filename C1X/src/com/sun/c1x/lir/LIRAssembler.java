@@ -415,7 +415,7 @@ public abstract class LIRAssembler {
         int pcOffset = pendingNonSafepointOffset;
         ValueStack vstack = debugInfo(pendingNonSafepoint);
         // TODO: what should the bci be for a phi or local?
-        int bci = pendingNonSafepoint instanceof Instruction ? ((Instruction)pendingNonSafepoint).bci() : -1;
+        int bci = pendingNonSafepoint instanceof Instruction ? ((Instruction) pendingNonSafepoint).bci() : -1;
 
         DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
         assert debugInfo.recordingNonSafepoints() : "sanity";
