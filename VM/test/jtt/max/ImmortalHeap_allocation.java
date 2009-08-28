@@ -38,6 +38,10 @@ public final class ImmortalHeap_allocation {
     private ImmortalHeap_allocation() {
     }
 
+    public static void resetImmortalHeap(ImmortalMemoryRegion immortalMemoryRegion, Pointer value) {
+        immortalMemoryRegion.mark.set(value);
+    }
+
     @UNSAFE
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
@@ -47,8 +51,10 @@ public final class ImmortalHeap_allocation {
             size += Word.size();
         }
         if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
+            resetImmortalHeap(immortalMemoryRegion, oldMark);
             return true;
         }
+        resetImmortalHeap(immortalMemoryRegion, oldMark);
         return false;
     }
 
