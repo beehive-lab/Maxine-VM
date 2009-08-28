@@ -280,7 +280,6 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.except.Catch_StackOverflowError_01.class,
         jtt.except.Catch_StackOverflowError_02.class,
         jtt.except.Catch_StackOverflowError_03.class,
-        jtt.except.Except_Synchronized00.class,
         jtt.except.Except_Synchronized01.class,
         jtt.except.Except_Synchronized02.class,
         jtt.except.Except_Synchronized03.class,
@@ -493,11 +492,8 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.optimize.NCE_04.class,
         jtt.optimize.NCE_FlowSensitive01.class,
         jtt.optimize.NCE_FlowSensitive02.class,
-<<<<<<< local
         jtt.optimize.NCE_FlowSensitive03.class,
         jtt.optimize.NCE_FlowSensitive04.class,
-=======
->>>>>>> other
         jtt.optimize.Narrow_byte01.class,
         jtt.optimize.Narrow_byte02.class,
         jtt.optimize.Narrow_byte03.class,

@@ -23,11 +23,7 @@ package com.sun.c1x.opt;
 import java.util.*;
 
 import com.sun.c1x.*;
-<<<<<<< local
-import com.sun.c1x.value.BasicType;
-=======
 import com.sun.c1x.ci.*;
->>>>>>> other
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;

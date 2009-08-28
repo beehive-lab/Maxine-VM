@@ -20,12 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-<<<<<<< local
-
-=======
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
->>>>>>> other
+import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.value.*;
 
 /**

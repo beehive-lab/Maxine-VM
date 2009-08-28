@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ci;
 
-import com.sun.c1x.Bailout;
-
 /**
  * The <code>CiResult</code> class represents the result of compiling a method. The result
  * can include a target method with machine code and metadata, and/or statistics. If the
@@ -32,10 +30,10 @@ import com.sun.c1x.Bailout;
  */
 public class CiResult {
     private final CiTargetMethod targetMethod;
-    private final Bailout bailout;
+    private final CiBailout bailout;
     private final CiStatistics stats;
 
-    public CiResult(CiTargetMethod targetMethod, Bailout bailout, CiStatistics stats) {
+    public CiResult(CiTargetMethod targetMethod, CiBailout bailout, CiStatistics stats) {
         this.targetMethod = targetMethod;
         this.bailout = bailout;
         this.stats = stats;
@@ -52,7 +50,7 @@ public class CiResult {
         return stats;
     }
 
-    public Bailout bailout() {
+    public CiBailout bailout() {
         return bailout;
     }
 }
