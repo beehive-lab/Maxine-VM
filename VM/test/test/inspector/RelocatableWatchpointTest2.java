@@ -49,15 +49,9 @@ public class RelocatableWatchpointTest2 {
     public static void relocationTest() {
         SimpleObject test = getGarbageSimpleObject();
         test = getSimpleObject();
-        for (int i = 0; i < allocations; i++) {
-            final byte[] tmp = new byte[allocationSize];
-            tmp[0] = 1;
-        }
+        System.gc();
         printMessage(test);
-        for (int i = 0; i < allocations; i++) {
-            final byte[] tmp = new byte[allocationSize];
-            tmp[0] = 1;
-        }
+        System.gc();
         printMessage(test);
         System.out.println("program end");
     }
