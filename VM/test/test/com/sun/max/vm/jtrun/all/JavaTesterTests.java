@@ -15964,40 +15964,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_optimize_NCE_FlowSensitive02() {
-        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive02");
-        String runString = null;
-        try {
-        // (null) == !java.lang.NullPointerException
-            try {
-                runString = "(null)";
-                jtt.fail.NCE_FlowSensitive02.test(null);
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            } catch (Throwable e) {
-                if (e.getClass() != java.lang.NullPointerException.class) {
-                    JavaTesterRunScheme.end(runString, e);
-                    return;
-                }
-            }
-        // ("x") == x
-            runString = "(\"x\")";
-            if (!"x".equals(jtt.fail.NCE_FlowSensitive02.test("x"))) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // ("yay") == yay
-            runString = "(\"yay\")";
-            if (!"yay".equals(jtt.fail.NCE_FlowSensitive02.test("yay"))) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
     static void jtt_optimize_NCE_FlowSensitive03() {
         JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive03");
         String runString = null;
