@@ -495,7 +495,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.optimize.NCE_03.class,
         jtt.optimize.NCE_04.class,
         jtt.optimize.NCE_FlowSensitive01.class,
-        jtt.optimize.NCE_FlowSensitive02.class,
+        jtt.fail.NCE_FlowSensitive02.class,
         jtt.optimize.NCE_FlowSensitive03.class,
         jtt.optimize.NCE_FlowSensitive04.class,
         jtt.optimize.Narrow_byte01.class,

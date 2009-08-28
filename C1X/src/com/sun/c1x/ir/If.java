@@ -55,7 +55,7 @@ public class If extends BlockEnd {
         this.x = x;
         this.y = y;
         condition = cond;
-        assert Instruction.sameBasicType(x, y);
+        assert Value.sameBasicType(x, y);
         initFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         successors.add(trueSucc);
         successors.add(falseSucc);

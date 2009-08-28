@@ -210,7 +210,7 @@ public class Canonicalizer extends ValueVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Instruction.sameBasicType(i, canonical);
+        assert Value.sameBasicType(i, canonical);
     }
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
@@ -535,7 +535,7 @@ public class Canonicalizer extends ValueVisitor {
                 }
             }
         }
-        assert Instruction.sameBasicType(i, canonical);
+        assert Value.sameBasicType(i, canonical);
     }
 
     @Override
@@ -876,7 +876,7 @@ public class Canonicalizer extends ValueVisitor {
                 return;
             }
         }
-        assert Instruction.sameBasicType(i, canonical);
+        assert Value.sameBasicType(i, canonical);
     }
 
     @Override

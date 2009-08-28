@@ -269,7 +269,7 @@ public class C1XCompilation {
 
     public CiResult compile() {
 
-        Instruction.nextID = 0;
+        Value.nextID = 0;
 
         if (C1XOptions.PrintCompilation) {
             TTY.println();

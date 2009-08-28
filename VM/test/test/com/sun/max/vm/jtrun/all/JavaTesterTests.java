@@ -15971,7 +15971,7 @@ public class JavaTesterTests {
         // (null) == !java.lang.NullPointerException
             try {
                 runString = "(null)";
-                jtt.optimize.NCE_FlowSensitive02.test(null);
+                jtt.fail.NCE_FlowSensitive02.test(null);
                 JavaTesterRunScheme.end(runString, false);
                 return;
             } catch (Throwable e) {
@@ -15982,13 +15982,13 @@ public class JavaTesterTests {
             }
         // ("x") == x
             runString = "(\"x\")";
-            if (!"x".equals(jtt.optimize.NCE_FlowSensitive02.test("x"))) {
+            if (!"x".equals(jtt.fail.NCE_FlowSensitive02.test("x"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // ("yay") == yay
             runString = "(\"yay\")";
-            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive02.test("yay"))) {
+            if (!"yay".equals(jtt.fail.NCE_FlowSensitive02.test("yay"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

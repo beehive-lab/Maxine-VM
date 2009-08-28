@@ -642,7 +642,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertBasicType(i, CiKind.Illegal);
-        if (!Instruction.sameBasicType(i.x(), i.y())) {
+        if (!Value.sameBasicType(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {
