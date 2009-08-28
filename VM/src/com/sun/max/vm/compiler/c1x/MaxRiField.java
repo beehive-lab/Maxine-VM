@@ -21,7 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
@@ -40,7 +40,7 @@ import com.sun.max.vm.value.*;
 public class MaxRiField implements RiField {
 
     final MaxRiConstantPool constantPool;
-    final BasicType basicType; // cached for performance
+    final CiKind basicType; // cached for performance
     FieldRefConstant fieldRef;
     FieldActor fieldActor;
 
@@ -83,7 +83,7 @@ public class MaxRiField implements RiField {
      */
     public RiType type() {
         if (fieldActor != null) {
-            return constantPool.canonicalRiType(fieldActor.type());
+            return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool);
         }
         return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool));
     }
@@ -92,7 +92,7 @@ public class MaxRiField implements RiField {
      * Gets the basic type for the this field.
      * @return the basic type for this field
      */
-    public BasicType basicType() {
+    public CiKind basicType() {
         return basicType;
     }
 
@@ -102,7 +102,7 @@ public class MaxRiField implements RiField {
      */
     public RiType holder() {
         if (fieldActor != null) {
-            return constantPool.canonicalRiType(fieldActor.holder());
+            return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool);
         }
         return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool));
     }

@@ -33,8 +33,8 @@ import com.sun.c1x.util.*;
 public class IfOp extends Op2 {
 
     Condition cond;
-    Instruction trueVal;
-    Instruction falseVal;
+    Value trueVal;
+    Value falseVal;
 
     /**
      * Constructs a new IfOp.
@@ -44,7 +44,7 @@ public class IfOp extends Op2 {
      * @param tval the value produced if the condition is true
      * @param fval the value produced if the condition is false
      */
-    public IfOp(Instruction x, Condition cond, Instruction y, Instruction tval, Instruction fval) {
+    public IfOp(Value x, Condition cond, Value y, Value tval, Value fval) {
         // TODO: return the appropriate bytecode IF_ICMPEQ, etc
         super(tval.type().meet(fval.type()), Bytecodes.ILLEGAL, x, y);
         this.cond = cond;
@@ -64,7 +64,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is true.
      * @return the instruction producing the value upon true
      */
-    public Instruction trueValue() {
+    public Value trueValue() {
         return trueVal;
     }
 
@@ -72,7 +72,7 @@ public class IfOp extends Op2 {
      * Gets the instruction that produces the value if the comparison is false.
      * @return the instruction producing the value upon false
      */
-    public Instruction falseValue() {
+    public Value falseValue() {
         return falseVal;
     }
 
@@ -89,7 +89,7 @@ public class IfOp extends Op2 {
      * @param closure the closure to apply to each instruction
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         trueVal = closure.apply(trueVal);
         falseVal = closure.apply(falseVal);
@@ -100,7 +100,7 @@ public class IfOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitIfOp(this);
     }
 

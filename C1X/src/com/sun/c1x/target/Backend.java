@@ -26,6 +26,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>Backend</code> class represents a compiler backend for C1X.
@@ -33,9 +34,9 @@ import com.sun.c1x.lir.*;
  * @author Ben L. Titzer
  */
 public abstract class Backend {
-    public final Target target;
+    public final CiTarget target;
 
-    protected Backend(Target target) {
+    protected Backend(CiTarget target) {
         this.target = target;
     }
 

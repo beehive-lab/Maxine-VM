@@ -435,7 +435,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return Cell.plantClone(cell, size, object);
     }
 
-    @Override
     public void enableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
@@ -447,7 +446,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         enabledVmThreadLocals.setWord(TLAB_TOP.index, Word.zero());
     }
 
-    @Override
     public void disableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         final Pointer allocationMarkTmp = enabledVmThreadLocals.getWord(TLAB_MARK_TMP.index).asPointer();

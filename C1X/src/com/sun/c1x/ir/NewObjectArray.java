@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -41,7 +41,7 @@ public class NewObjectArray extends NewArray {
      * @param cpi the constant pool index
      * @param constantPool the constant pool
      */
-    public NewObjectArray(RiType elementClass, Instruction length, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+    public NewObjectArray(RiType elementClass, Value length, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
         super(length, stateBefore, constantPool);
         this.elementClass = elementClass;
         this.cpi = cpi;
@@ -69,7 +69,7 @@ public class NewObjectArray extends NewArray {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewObjectArray(this);
     }
 }

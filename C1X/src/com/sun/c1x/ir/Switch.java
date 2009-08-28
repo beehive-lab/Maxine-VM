@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -31,7 +32,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class Switch extends BlockEnd {
 
-    Instruction value;
+    Value value;
 
     /**
      * Constructs a new Switch.
@@ -40,8 +41,8 @@ public abstract class Switch extends BlockEnd {
      * @param stateBefore the state before the switch
      * @param isSafepoint <code>true</code> if this switch is a safepoint
      */
-    public Switch(Instruction value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
-        super(BasicType.Illegal, stateBefore, isSafepoint);
+    public Switch(Value value, List<BlockBegin> successors, ValueStack stateBefore, boolean isSafepoint) {
+        super(CiKind.Illegal, stateBefore, isSafepoint);
         this.successors = successors;
         this.value = value;
     }
@@ -50,7 +51,7 @@ public abstract class Switch extends BlockEnd {
      * Gets the instruction that provides the input value to this switch.
      * @return the instruction producing the input value
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -67,7 +68,7 @@ public abstract class Switch extends BlockEnd {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
     }
 }

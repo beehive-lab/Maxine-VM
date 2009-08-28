@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -38,7 +39,7 @@ public class LoadIndexed extends AccessIndexed {
      * @param elementType the element type
      * @param stateBefore the state before executing this instruction
      */
-    public LoadIndexed(Instruction array, Instruction index, Instruction length, BasicType elementType, ValueStack stateBefore) {
+    public LoadIndexed(Value array, Value index, Value length, CiKind elementType, ValueStack stateBefore) {
         super(array, index, length, elementType, stateBefore);
     }
 
@@ -66,7 +67,7 @@ public class LoadIndexed extends AccessIndexed {
     }
 
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLoadIndexed(this);
     }
 }

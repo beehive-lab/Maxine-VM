@@ -25,15 +25,16 @@ import static com.sun.c1x.debug.InstructionPrinter.InstructionLineColumn.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * An {@link com.sun.c1x.ir.InstructionVisitor} for {@linkplain #printInstruction(Instruction) printing}
+ * An {@link com.sun.c1x.ir.ValueVisitor} for {@linkplain #printInstruction(Value) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon
  */
-public class InstructionPrinter extends InstructionVisitor {
+public class InstructionPrinter extends ValueVisitor {
     /**
      * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
      * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
@@ -44,7 +45,7 @@ public class InstructionPrinter extends InstructionVisitor {
      *            {@linkplain com.sun.c1x.ir.Phi#block() join point}
      * @return the instruction representation as a string
      */
-    public static String stateString(int index, Instruction value, BlockBegin block) {
+    public static String stateString(int index, Value value, BlockBegin block) {
         StringBuilder sb = new StringBuilder(30);
         sb.append(String.format("%2d  %s", index, Instruction.valueString(value)));
         if (value instanceof Phi) {
@@ -54,7 +55,7 @@ public class InstructionPrinter extends InstructionVisitor {
                 sb.append(" [");
                 for (int j = 0; j < phi.operandCount(); j++) {
                     sb.append(' ');
-                    Instruction operand = phi.operandAt(j);
+                    Value operand = phi.operandAt(j);
                     if (operand != null) {
                         sb.append(Instruction.valueString(operand));
                     } else {
@@ -72,7 +73,7 @@ public class InstructionPrinter extends InstructionVisitor {
 
     /**
      * The columns printed in a tabulated instruction
-     * {@linkplain InstructionPrinter#printInstructionListing(Instruction) listing}.
+     * {@linkplain InstructionPrinter#printInstructionListing(Value) listing}.
      */
     public enum InstructionLineColumn {
         /**
@@ -86,7 +87,7 @@ public class InstructionPrinter extends InstructionVisitor {
         USE(7, "use"),
 
         /**
-         * The instruction as a {@linkplain Instruction#valueString(com.sun.c1x.ir.Instruction) value}.
+         * The instruction as a {@linkplain Instruction#valueString(com.sun.c1x.ir.Value) value}.
          */
         VALUE(12, "tid"),
 
@@ -142,7 +143,7 @@ public class InstructionPrinter extends InstructionVisitor {
      *
      * @param instruction the instruction to print
      */
-    public void printInstruction(Instruction instruction) {
+    public void printInstruction(Value instruction) {
         instruction.accept(this);
     }
 
@@ -151,7 +152,7 @@ public class InstructionPrinter extends InstructionVisitor {
     }
 
     /**
-     * Prints a header for the tabulated data printed by {@link #printInstructionListing(Instruction)}.
+     * Prints a header for the tabulated data printed by {@link #printInstructionListing(Value)}.
      */
     public void printInstructionListingHeader() {
         BCI.printLabel(out);
@@ -168,14 +169,14 @@ public class InstructionPrinter extends InstructionVisitor {
      *
      * @param instruction the instruction to print
      */
-    public void printInstructionListing(Instruction instruction) {
+    public void printInstructionListing(Value instruction) {
         if (instruction.isLive()) {
             out.print('.');
         }
 
         int indentation = out.indentation();
         out.fillTo(BCI.position + indentation, ' ').
-             print(instruction.bci()).
+             print(instruction instanceof Instruction ? ((Instruction) instruction).bci() : 0).
              fillTo(USE.position + indentation, ' ').
              print("0").
              fillTo(VALUE.position + indentation, ' ').
@@ -285,14 +286,14 @@ public class InstructionPrinter extends InstructionVisitor {
 
             int i = 0;
             while (!hasPhisOnStack && i < state.stackSize()) {
-                Instruction value = state.stackAt(i);
+                Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
                 i += value.type().sizeInSlots();
             }
 
             do {
                 for (i = 0; !hasPhisInLocals && i < state.localsSize();) {
-                    Instruction value = state.localAt(i);
+                    Value value = state.localAt(i);
                     hasPhisInLocals = isPhiAtBlock(value, block);
                     // also ignore illegal HiWords
                     if (value != null && !value.isIllegal()) {
@@ -314,7 +315,7 @@ public class InstructionPrinter extends InstructionVisitor {
             do {
                 int i = 0;
                 while (i < state.localsSize()) {
-                    Instruction value = state.localAt(i);
+                    Value value = state.localAt(i);
                     if (value != null) {
                         out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
@@ -334,7 +335,7 @@ public class InstructionPrinter extends InstructionVisitor {
             out.println("Stack:");
             int i = 0;
             while (i < block.stateBefore().stackSize()) {
-                Instruction value = block.stateBefore().stackAt(i);
+                Value value = block.stateBefore().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value, block));
                     i += value.type().sizeInSlots();
@@ -352,7 +353,7 @@ public class InstructionPrinter extends InstructionVisitor {
      * @param block the block that may be the join block of {@code value} if {@code value} is a phi
      * @return {@code true} if {@code value} is a phi and its join block is {@code block}
      */
-    public static boolean isPhiAtBlock(Instruction value, BlockBegin block) {
+    public static boolean isPhiAtBlock(Value value, BlockBegin block) {
         return value instanceof Phi && ((Phi) value).block() == block;
     }
 
@@ -473,7 +474,7 @@ public class InstructionPrinter extends InstructionVisitor {
           }
 
           out.print(Bytecodes.name(invoke.opcode())).print('(');
-          Instruction[] arguments = invoke.arguments();
+          Value[] arguments = invoke.arguments();
           for (int i = argStart; i < arguments.length; i++) {
               if (i > argStart) {
                   out.print(", ");
@@ -551,7 +552,7 @@ public class InstructionPrinter extends InstructionVisitor {
     @Override
     public void visitNewMultiArray(NewMultiArray newMultiArray) {
         out.print("new multi array [");
-        final Instruction[] dimensions = newMultiArray.dimensions();
+        final Value[] dimensions = newMultiArray.dimensions();
         for (int i = 0; i < dimensions.length; i++) {
           if (i > 0) {
               out.print(", ");

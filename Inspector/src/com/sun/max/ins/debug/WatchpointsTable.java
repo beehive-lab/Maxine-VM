@@ -354,11 +354,9 @@ public final class WatchpointsTable extends InspectorTable {
             return label;
         }
 
-        @Override
         public void redisplay() {
         }
 
-        @Override
         public void refresh(boolean force) {
         }
 

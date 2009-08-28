@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -30,7 +31,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class NewArray extends StateSplit {
 
-    Instruction length;
+    Value length;
     public final RiConstantPool constantPool;
 
     /**
@@ -38,8 +39,8 @@ public abstract class NewArray extends StateSplit {
      * @param length the instruction that produces the length for this allocation
      * @param stateBefore the state before the allocation
      */
-    NewArray(Instruction length, ValueStack stateBefore, RiConstantPool constantPool) {
-        super(BasicType.Object, stateBefore);
+    NewArray(Value length, ValueStack stateBefore, RiConstantPool constantPool) {
+        super(CiKind.Object, stateBefore);
         this.constantPool = constantPool;
         this.length = length;
         this.stateBefore = stateBefore;
@@ -50,7 +51,7 @@ public abstract class NewArray extends StateSplit {
      * Gets the instruction that produces the length of this array.
      * @return the instruction that produces the length
      */
-    public Instruction length() {
+    public Value length() {
         return length;
     }
 
@@ -69,7 +70,7 @@ public abstract class NewArray extends StateSplit {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         length = closure.apply(length);
     }
 

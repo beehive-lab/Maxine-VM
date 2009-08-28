@@ -20,8 +20,12 @@
  */
 package com.sun.c0x;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.target.Target;
+import com.sun.c1x.ci.CiCompiler;
+import com.sun.c1x.ci.CiResult;
+import com.sun.c1x.ci.CiTarget;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiRuntime;
+import com.sun.c1x.xir.XirRuntime;
 
 /**
  * The <code>C0XCompiler</code> class definition.
@@ -30,8 +34,18 @@ import com.sun.c1x.target.Target;
  */
 public class C0XCompiler extends CiCompiler {
 
-    public C0XCompiler(RiRuntime runtime, Target target) {
-        super(runtime, target);
+    /**
+     * The target that this compiler has been configured for.
+     */
+    public final CiTarget target;
+    /**
+     * The runtime that this compiler has been configured for.
+     */
+    public final RiRuntime runtime;
+
+    public C0XCompiler(RiRuntime runtime, CiTarget target) {
+        this.runtime = runtime;
+        this.target = target;
     }
     /**
      * Compile the specified method.
@@ -40,7 +54,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiTargetMethod compileMethod(RiMethod method) {
+    public CiResult compileMethod(RiMethod method, XirRuntime xirRuntime) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;
@@ -54,7 +68,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, XirRuntime xirRuntime) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;

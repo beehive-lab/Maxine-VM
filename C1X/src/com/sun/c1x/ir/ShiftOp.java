@@ -33,7 +33,7 @@ public class ShiftOp extends Op2 {
      * @param x the first input value
      * @param y the second input value
      */
-    public ShiftOp(int opcode, Instruction x, Instruction y) {
+    public ShiftOp(int opcode, Value x, Value y) {
         super(x.type(), opcode, x, y);
     }
 
@@ -42,7 +42,7 @@ public class ShiftOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitShiftOp(this);
     }
 }

@@ -68,7 +68,7 @@ public class BytecodePreprocessorTest extends CompilerTestCase<BirMethod> {
 
     private void assertProcessedCodeIsDifferent(String methodName) {
         final ClassMethodActor classMethodActor = getClassMethodActor(methodName);
-        final CodeAttribute originalCodeAttribute = classMethodActor.rawCodeAttribute();
+        final CodeAttribute originalCodeAttribute = classMethodActor.codeAttribute();
         compileMethod(classMethodActor);
         assertFalse(Arrays.equals(originalCodeAttribute.code(), classMethodActor.codeAttribute().code()));
     }

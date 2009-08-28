@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -36,13 +37,13 @@ public class NewInstance extends StateSplit {
 
     /**
      * Constructs a NewInstance instruction.
-     * @param theClass the class being allocated
+     * @param type the class being allocated
      * @param cpi the constant pool index
      * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        super(BasicType.Object, stateBefore);
-        this.instanceClass = theClass;
+    public NewInstance(RiType type, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+        super(CiKind.Object, stateBefore);
+        this.instanceClass = type;
         this.cpi = cpi;
         this.constantPool = constantPool;
         setFlag(Flag.NonNull);
@@ -80,7 +81,7 @@ public class NewInstance extends StateSplit {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewInstance(this);
     }
 }

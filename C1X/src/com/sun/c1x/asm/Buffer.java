@@ -22,7 +22,7 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-import com.sun.c1x.target.Architecture.*;
+import com.sun.c1x.ci.CiArchitecture.*;
 import com.sun.c1x.util.*;
 
 /**
