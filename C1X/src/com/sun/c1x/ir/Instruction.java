@@ -100,7 +100,7 @@ public abstract class Instruction extends Value {
      */
     public final Instruction setNext(Instruction next, int bci) {
         if (next != null) {
-            assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
+            assert !(this instanceof BlockEnd);
             this.next = next;
             next.setBCI(bci);
         }
@@ -115,7 +115,7 @@ public abstract class Instruction extends Value {
      */
     public final Instruction resetNext(Instruction next) {
         if (next != null) {
-            assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
+            assert !(this instanceof BlockEnd);
             this.next = next;
         }
         return next;
