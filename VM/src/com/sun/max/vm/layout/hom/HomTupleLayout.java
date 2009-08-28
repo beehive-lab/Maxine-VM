@@ -111,6 +111,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
                     break;
                 }
                 if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
+                    assert currentOffset >= 0;
                     fieldActor.setOffset(currentOffset);
                     currentOffset += scale;
                     assert nBytesToFill >= 0;
@@ -128,13 +129,20 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();
-        int offset = (superClassActor == null || superClassActor.toJava() == Hybrid.class) ? 0 : superClassActor.dynamicTupleSize().toInt() - headerSize();
+        int offset;
+        if (superClassActor == null || superClassActor.toJava() == Hybrid.class) {
+            offset = 0;
+        } else {
+            offset = superClassActor.dynamicTupleSize().toInt() - headerSize();
+        }
+        assert offset >= 0;
         if (offset % nAlignmentBytes != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
         }
         for (int scale = 8; scale >= 1; scale /= 2) {
             for (FieldActor fieldActor : fieldActors) {
                 if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
+                    assert offset >= 0;
                     fieldActor.setOffset(offset);
                     offset += scale;
                 }
@@ -142,7 +150,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         }
         assert hasValidOffsets(fieldActors);
         offset = Ints.roundUp(offset, nAlignmentBytes);
-        return Size.fromInt(offset);
+        return Size.fromInt(offset + headerSize);
     }
 
     @PROTOTYPE_ONLY

@@ -21,6 +21,7 @@
 package com.sun.max.vm.layout.hom;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.grip.*;
@@ -149,8 +150,18 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE(override = true)
-    public Size size(Accessor accessor) {
-        return specificLayout(accessor).size(accessor);
+    public final Size size(Accessor accessor) {
+        final Hub hub = getHub(accessor);
+        switch (hub.layoutCategory) {
+            case TUPLE:
+                return Layout.tupleLayout().specificSize(accessor);
+            case ARRAY:
+                return Layout.arrayHeaderLayout().getArraySize(hub.classActor.componentClassActor().kind, Layout.arrayHeaderLayout().readLength(accessor));
+            case HYBRID:
+                return Layout.hybridLayout().specificSize(accessor);
+        }
+        ProgramError.unknownCase();
+        return Size.zero();
     }
 
     @INLINE
@@ -224,7 +235,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
-        final int origin = hub.specificLayout.isTupleLayout() ? -miscOffset : -arrayLengthOffset;
+        final int origin = hub.specificLayout.headerSize();
         visitor.visitHeaderField(origin + hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
         visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }

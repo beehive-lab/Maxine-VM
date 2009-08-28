@@ -103,11 +103,9 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
         if (is32Bit) {
             final SPARC32Assembler assembler32 = (SPARC32Assembler) assembler();
             assembler32.setStartAddress(address.toInt());
-            //assembler32.fixLabel(_literalBaseLabel, address.toInt());
         } else {
             final SPARC64Assembler assembler64 = (SPARC64Assembler) assembler();
             assembler64.setStartAddress(address.toInt());
-            //assembler64.fixLabel(_literalBaseLabel, address.toLong());
         }
     }
 
