@@ -21,7 +21,6 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
@@ -136,9 +135,5 @@ public class BlockMerger implements BlockClosure {
         for (int i = 0; i < endState.stackSize(); i++) {
             assert endState.stackAt(i) == suxState.stackAt(i);
         }
-    }
-
-    private IfOp asIfOp(Instruction x) {
-        return x instanceof IfOp ? (IfOp) x : null;
     }
 }
