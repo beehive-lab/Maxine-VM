@@ -24,7 +24,10 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.target.x86.*;
+import com.sun.c1x.xir.*;
 
 /**
  *
@@ -33,20 +36,42 @@ import com.sun.c1x.target.*;
 public class C1XCompiler extends CiCompiler {
 
     private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
+    private final Map<CiRuntimeCall, Object> runtimeCallStubs = new HashMap<CiRuntimeCall, Object>();
 
     private boolean initialized;
 
-    public C1XCompiler(RiRuntime runtime, Target target) {
-        super(runtime, target);
+    /**
+     * The target that this compiler has been configured for.
+     */
+    public final CiTarget target;
+
+    /**
+     * The runtime that this compiler has been configured for.
+     */
+    public final RiRuntime runtime;
+
+    /**
+     * The backend that this compiler has been configured for.
+     */
+    public final Backend backend;
+
+
+    public C1XCompiler(RiRuntime runtime, CiTarget target) {
+        this.runtime = runtime;
+        this.target = target;
+
+        // TODO: Remove this fixed wiring to X86
+        assert target.arch instanceof AMD64;
+        this.backend = new X86Backend(target);
     }
 
     @Override
-    public CiTargetMethod compileMethod(RiMethod method) {
-        return compileMethod(method, -1);
+    public CiResult compileMethod(RiMethod method, XirRuntime xirRuntime) {
+        return compileMethod(method, -1, xirRuntime);
     }
 
     @Override
-    public CiTargetMethod compileMethod(RiMethod method, int osrBCI) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, XirRuntime xirRuntime) {
 
 
         if (!initialized) {
@@ -54,12 +79,12 @@ public class C1XCompiler extends CiCompiler {
             init();
         }
 
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
+        C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirRuntime, method, osrBCI);
         return compilation.compile();
     }
 
     private void init() {
-        final GlobalStubEmitter emitter = target.backend.newGlobalStubEmitter(this);
+        final GlobalStubEmitter emitter = backend.newGlobalStubEmitter(this);
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);
             Object result = runtime.registerTargetMethod(targetMethod, globalStub.toString());
@@ -70,5 +95,21 @@ public class C1XCompiler extends CiCompiler {
     public Object lookupGlobalStub(GlobalStub stub) {
         assert map.containsKey(stub);
         return map.get(stub);
+    }
+
+    public Object lookupGlobalStub(CiRuntimeCall dest) {
+
+        if (!runtimeCallStubs.containsKey(dest)) {
+
+            final GlobalStubEmitter emitter = backend.newGlobalStubEmitter(this);
+            final CiTargetMethod targetMethod = emitter.emitRuntimeStub(dest);
+            Object result = runtime.registerTargetMethod(targetMethod, dest.toString());
+            runtimeCallStubs.put(dest, result);
+        }
+
+
+        assert runtimeCallStubs.containsKey(dest);
+        return runtimeCallStubs.get(dest);
+
     }
 }

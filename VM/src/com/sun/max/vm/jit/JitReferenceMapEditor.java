@@ -66,7 +66,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         this.targetMethod = targetMethod;
-        this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(classMethodActor.rawCodeAttribute());
+        this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(classMethodActor.codeAttribute());
         this.stackFrameLayout = jitStackFrameLayout;
         this.blockStartBytecodePositions = new char[numberOfBlocks];
         int blockIndex = 0;
@@ -112,7 +112,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     public int blockStartBytecodePosition(int blockIndex) {
         if (blockIndex == blockStartBytecodePositions.length) {
-            return classMethodActor().rawCodeAttribute().code().length;
+            return classMethodActor().codeAttribute().code().length;
         }
         return blockStartBytecodePositions[blockIndex];
     }

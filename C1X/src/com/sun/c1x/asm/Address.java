@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.asm;
 
-import com.sun.c1x.target.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -40,7 +40,7 @@ public class Address {
             this.value = value;
         }
 
-        public static ScaleFactor timesPtr(Architecture arch) {
+        public static ScaleFactor timesPtr(CiArchitecture arch) {
             return (arch.is32bit()) ? times8 : times4;
         }
 
@@ -65,22 +65,22 @@ public class Address {
         }
     }
 
-    public static final Address InternalRelocation = new Address(Register.noreg, 0);
+    public static final Address InternalRelocation = new Address(CiRegister.noreg, 0);
 
-    public final Register base;
+    public final CiRegister base;
     public final int disp;
     public final ScaleFactor scale;
-    public final Register index;
+    public final CiRegister index;
 
-    public Address(Register base, int displacement) {
-        this(base, Register.noreg, ScaleFactor.noScale, displacement);
+    public Address(CiRegister base, int displacement) {
+        this(base, CiRegister.noreg, ScaleFactor.noScale, displacement);
     }
 
-    public Address(Register base, Register index, ScaleFactor scale) {
+    public Address(CiRegister base, CiRegister index, ScaleFactor scale) {
         this(base, index, scale, 0);
     }
 
-    public Address(Register base, Register index, ScaleFactor scale, int displacement) {
+    public Address(CiRegister base, CiRegister index, ScaleFactor scale, int displacement) {
         this.base = base;
         this.index = index;
         this.scale = scale;
@@ -88,20 +88,20 @@ public class Address {
         assert base != null && index != null && scale != null;
     }
 
-    public Address(Register base, RegisterOrConstant index, ScaleFactor scale, int displacement) {
+    public Address(CiRegister base, RegisterOrConstant index, ScaleFactor scale, int displacement) {
         this(base, index.registerOrNoReg(), scale, displacement);
         assert !this.index.isValid() == (scale == ScaleFactor.noScale) : "inconsistent Pointer";
     }
 
-    public Address(Register base, long displacement) {
+    public Address(CiRegister base, long displacement) {
         this(base, Util.safeToInt(displacement));
     }
 
-    public Address(Register reg) {
+    public Address(CiRegister reg) {
         this(reg, 0);
     }
 
-    public boolean uses(Register r) {
+    public boolean uses(CiRegister r) {
         return base == r || index == r;
     }
 }

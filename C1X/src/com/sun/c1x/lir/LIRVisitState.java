@@ -309,6 +309,9 @@ public class LIRVisitState {
             case Shl:
             case Shr:
             case Ushr:
+            case ResolveJavaClass:
+            case ResolveStaticFields:
+            case ResolveFieldOffset:
             case ResolveArrayClass:
             case Resolve: {
                 LIROp2 op2 = (LIROp2) op;
@@ -475,7 +478,10 @@ public class LIRVisitState {
                 if (opRTCall.tmp.isValid()) {
                     opRTCall.tmp = doTemp(opRTCall.tmp);
                 }
-                doCall();
+
+                if (!opRTCall.calleeSaved) {
+                    doCall();
+                }
                 if (opRTCall.result.isValid()) {
                     opRTCall.result = doOutput(opRTCall.result);
                 }
@@ -514,6 +520,35 @@ public class LIRVisitState {
 
                 break;
             }
+
+            // XIR
+            case Xir:
+
+                LIRXirInstruction xir = (LIRXirInstruction) op;
+                for (int i = 0; i < xir.operands.length; i++) {
+
+                    final OperandMode mode = xir.modes[i];
+                    if (mode != null) {
+                        switch (mode) {
+                            case InputMode:
+                                xir.operands[i] = doInput(xir.operands[i]);
+                                break;
+
+                            case OutputMode:
+                                xir.operands[i] = doOutput(xir.operands[i]);
+                                break;
+
+                            case TempMode:
+                                xir.operands[i] = doTemp(xir.operands[i]);
+                                break;
+
+                        }
+                    }
+                }
+
+                // TODO: Calls and debug info and stubs!!
+
+                break;
 
                 // LIROpLock
             case Lock:
@@ -570,7 +605,12 @@ public class LIRVisitState {
                     opTypeCheck.array = doInput(opTypeCheck.array);
                 }
                 if (opTypeCheck.tmp1.isValid()) {
-                    opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
+                    if (op.code == LIROpcode.InstanceOf || op.code == LIROpcode.CheckCast) {
+                        // (tw) For instanceOf or checkcast the first temporary is used as an input operand (the hub).
+                        opTypeCheck.tmp1 = doInput(opTypeCheck.tmp1);
+                    } else {
+                        opTypeCheck.tmp1 = doTemp(opTypeCheck.tmp1);
+                    }
                 }
                 if (opTypeCheck.tmp2.isValid()) {
                     opTypeCheck.tmp2 = doTemp(opTypeCheck.tmp2);

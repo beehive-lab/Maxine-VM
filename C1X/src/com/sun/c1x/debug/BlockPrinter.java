@@ -85,7 +85,7 @@ public class BlockPrinter implements BlockClosure {
             if (i > 0) {
                 out.print(", ");
             }
-            Instruction value = stack.stackAt(i);
+            Value value = stack.stackAt(i);
             out.print(i + ":" + valueString(value));
             i += value.type().sizeInSlots();
             if (value instanceof Phi) {
@@ -105,7 +105,7 @@ public class BlockPrinter implements BlockClosure {
             out.fillTo(startPosition, ' ');
             out.print("locks [");
             for (int i = 0; i < stack.locksSize(); i++) {
-                Instruction value = stack.lockAt(i);
+                Value value = stack.lockAt(i);
                 if (i > 0) {
                     out.print(", ");
                 }

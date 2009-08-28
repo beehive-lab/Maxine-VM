@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
@@ -69,7 +70,7 @@ public class CEEliminator implements BlockClosure {
         If curIf = (If) block.end();
 
         // check that the if's operands are of int or object type
-        BasicType ifType = curIf.x().type();
+        CiKind ifType = curIf.x().type();
         if (!ifType.isInt() && !ifType.isObject()) {
             return;
         }
@@ -112,7 +113,7 @@ public class CEEliminator implements BlockClosure {
 
         // check that phi function is present at end of successor stack and that
         // only this phi was pushed on the stack
-        Instruction suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
+        Value suxPhi = suxState.stackAt(curIf.stateAfter().stackSize());
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
@@ -121,8 +122,8 @@ public class CEEliminator implements BlockClosure {
         }
 
         // get the values that were pushed in the true- and false-branch
-        Instruction tValue = tGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
-        Instruction fValue = fGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
+        Value tValue = tGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
+        Value fValue = fGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
 
         assert tValue.type() == fValue.type() : "incompatible types";
 
@@ -135,7 +136,7 @@ public class CEEliminator implements BlockClosure {
         // this can happen when tBlock or fBlock contained additional stores to local variables
         // that are no longer represented by explicit instructions
 
-        for (Instruction i : sux.stateBefore().allPhis(sux)) {
+        for (Phi i : sux.stateBefore().allPhis(sux)) {
             if (i != suxPhi) {
                 return;
             }
@@ -154,12 +155,14 @@ public class CEEliminator implements BlockClosure {
         // clone constants because original block must not be destroyed
         assert (tValue != fConst && fValue != tConst) || tConst == fConst : "mismatch";
         if (tValue == tConst) {
-            tValue = new Constant(tConst.asConstant());
-            ifPrev = ifPrev.setNext(tValue, bci);
+            Constant tc = new Constant(tConst.asConstant());
+            tValue = tc;
+            ifPrev = ifPrev.setNext(tc, bci);
         }
         if (fValue == fConst) {
-            fValue = new Constant(fConst.asConstant());
-            ifPrev = ifPrev.setNext(fValue, bci);
+            Constant fc = new Constant(fConst.asConstant());
+            fValue = fc;
+            ifPrev = ifPrev.setNext(fc, bci);
         }
 
         // it is very unlikely that the condition can be statically decided

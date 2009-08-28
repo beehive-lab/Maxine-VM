@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -39,11 +39,10 @@ public class InstanceOf extends TypeCheck {
      * @param object the instruction producing the object input to this instruction
      * @param stateBefore the state before this instruction
      */
-    public InstanceOf(RiType targetClass, Instruction object, ValueStack stateBefore) {
-        super(targetClass, object, BasicType.Int, stateBefore);
+    public InstanceOf(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
+        super(targetClass, targetClassInstruction, object, CiKind.Int, stateBefore);
         if (object.isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -52,7 +51,7 @@ public class InstanceOf extends TypeCheck {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitInstanceOf(this);
     }
 

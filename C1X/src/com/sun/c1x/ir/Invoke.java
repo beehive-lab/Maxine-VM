@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -33,7 +33,7 @@ import com.sun.c1x.value.*;
 public class Invoke extends StateSplit {
 
     final int opcode;
-    final Instruction[] arguments;
+    final Value[] arguments;
     final int vtableIndex;
     final RiMethod target;
     public final char cpi;
@@ -50,16 +50,17 @@ public class Invoke extends StateSplit {
      * @param target the target method being called
      * @param stateBefore the state before executing the invocation
      */
-    public Invoke(int opcode, BasicType result, Instruction[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, int vtableIndex, RiMethod target, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         super(result, stateBefore);
         this.opcode = opcode;
         this.arguments = args;
         this.vtableIndex = vtableIndex;
         this.target = target;
-        initFlag(Flag.IsStatic, isStatic);
-        if (!isStatic && args[0].isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+        if (isStatic) {
+            setFlag(Flag.IsStatic);
+            redundantNullCheck();
+        } else if (args[0].isNonNull()) {
+            redundantNullCheck();
         }
 
         this.cpi = cpi;
@@ -87,7 +88,7 @@ public class Invoke extends StateSplit {
      * @return the instruction that produces the receiver object for this invocation if any, <code>null</code> if this
      *         invocation does not take a receiver object
      */
-    public Instruction receiver() {
+    public Value receiver() {
         assert !isStatic();
         return arguments[0];
     }
@@ -112,7 +113,7 @@ public class Invoke extends StateSplit {
      * Gets the list of instructions that produce input for this instruction.
      * @return the list of instructions that produce input
      */
-    public Instruction[] arguments() {
+    public Value[] arguments() {
         return arguments;
     }
 
@@ -122,6 +123,11 @@ public class Invoke extends StateSplit {
      */
     @Override
     public boolean canTrap() {
+        return true;
+    }
+
+    @Override
+    public boolean internalClearNullCheck() {
         return true;
     }
 
@@ -139,9 +145,9 @@ public class Invoke extends StateSplit {
      * @param closure the closure to apply to each instruction
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < arguments.length; i++) {
-            Instruction arg = arguments[i];
+            Value arg = arguments[i];
             if (arg != null) {
                 arguments[i] = closure.apply(arg);
                 assert arguments[i] != null;
@@ -155,11 +161,11 @@ public class Invoke extends StateSplit {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitInvoke(this);
     }
 
-    public BasicType[] signature() {
+    public CiKind[] signature() {
         return Util.signatureToBasicTypes(target.signatureType(), !isStatic());
     }
 }

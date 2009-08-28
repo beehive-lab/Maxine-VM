@@ -20,12 +20,12 @@
  */
 package com.sun.c0x;
 
+import java.io.PrintStream;
+
 import com.sun.c1x.C1XOptions;
-import com.sun.c1x.ci.RiMethod;
 import com.sun.c1x.bytecode.BytecodeSwitch;
 import com.sun.c1x.bytecode.Bytecodes;
-
-import java.io.PrintStream;
+import com.sun.c1x.ri.RiMethod;
 
 /**
  * The <code>Printer</code> class definition.

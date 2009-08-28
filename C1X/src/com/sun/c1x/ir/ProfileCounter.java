@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>ProfileCounter</code> instruction represents instrumentation inserted by the compiler
@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  */
 public class ProfileCounter extends Instruction {
 
-    Instruction mdo;
+    Value mdo;
     final int offset;
     final int increment;
 
@@ -40,8 +40,8 @@ public class ProfileCounter extends Instruction {
      * @param offset the offset into the method data object
      * @param increment the increment by which to increase the counter
      */
-    public ProfileCounter(Instruction mdo, int offset, int increment) {
-        super(BasicType.Void);
+    public ProfileCounter(Value mdo, int offset, int increment) {
+        super(CiKind.Void);
         this.mdo = mdo;
         this.offset = offset;
         this.increment = increment;
@@ -51,7 +51,7 @@ public class ProfileCounter extends Instruction {
      * Gets the instruction which produces the method data object.
      * @return the instruction generating the mdo
      */
-    public Instruction mdo() {
+    public Value mdo() {
         return mdo;
     }
 
@@ -76,7 +76,7 @@ public class ProfileCounter extends Instruction {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         mdo = closure.apply(mdo);
     }
 
@@ -85,7 +85,7 @@ public class ProfileCounter extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitProfileCounter(this);
     }
 }

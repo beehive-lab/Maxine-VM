@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -38,8 +39,8 @@ public class CompareOp extends Op2 {
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public CompareOp(int opcode, Instruction x, Instruction y, ValueStack stateBefore) {
-        super(BasicType.Int, opcode, x, y);
+    public CompareOp(int opcode, Value x, Value y, ValueStack stateBefore) {
+        super(CiKind.Int, opcode, x, y);
         this.stateBefore = stateBefore;
     }
 
@@ -58,7 +59,7 @@ public class CompareOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitCompareOp(this);
     }
 }

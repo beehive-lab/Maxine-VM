@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafePutRaw</code> instruction represents an unsafe store operation.
@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  */
 public class UnsafePutRaw extends UnsafeRawOp {
 
-    Instruction value;
+    Value value;
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
@@ -37,7 +37,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param addr the instruction generating the base address
      * @param value the instruction generating the value to store
      */
-    public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction value) {
+    public UnsafePutRaw(CiKind basicType, Value addr, Value value) {
         super(basicType, addr, false);
         this.value = value;
     }
@@ -50,7 +50,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param log2scale the log base 2 of the scaling factor
      * @param value the instruction generating the value to store
      */
-    public UnsafePutRaw(BasicType basicType, Instruction addr, Instruction index, int log2scale, Instruction value) {
+    public UnsafePutRaw(CiKind basicType, Value addr, Value index, int log2scale, Instruction value) {
         super(basicType, addr, index, log2scale, false);
         this.value = value;
     }
@@ -59,7 +59,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * Gets the instruction generating the value that will be stored.
      * @return the instruction generating the value
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -68,7 +68,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
@@ -78,7 +78,7 @@ public class UnsafePutRaw extends UnsafeRawOp {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitUnsafePutRaw(this);
     }
 

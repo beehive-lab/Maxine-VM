@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -36,7 +37,7 @@ public class Goto extends BlockEnd {
      * @param isSafepoint <code>true</code> if the goto should be considered a safepoint (e.g. backward branch)
      */
     public Goto(BlockBegin succ, ValueStack stateBefore, boolean isSafepoint) {
-        super(BasicType.Illegal, stateBefore, isSafepoint);
+        super(CiKind.Illegal, stateBefore, isSafepoint);
         successors.add(succ);
     }
 
@@ -45,7 +46,7 @@ public class Goto extends BlockEnd {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitGoto(this);
     }
 }
