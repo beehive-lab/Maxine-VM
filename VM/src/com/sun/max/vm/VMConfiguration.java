@@ -278,18 +278,18 @@ public final class VMConfiguration {
     }
 
     public static VMConfiguration host() {
-        return MaxineVM.host().configuration();
+        return MaxineVM.host().configuration;
     }
 
     @FOLD
     public static VMConfiguration target() {
-        return MaxineVM.target().configuration();
+        return MaxineVM.target().configuration;
     }
 
     @UNSAFE
     @FOLD
     public static VMConfiguration hostOrTarget() {
-        return MaxineVM.hostOrTarget().configuration();
+        return MaxineVM.hostOrTarget().configuration;
     }
 
     @Override

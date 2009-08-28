@@ -18,30 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.bytecode.graft;
+/**
+ * @author Hannes Payer
+ */
+package com.sun.max.memory;
 
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
- * @author Doug Simon
+ * Immortal memory region can be used for objects, which are not collected by the GC.
+ *
+ * @author Hannes Payer
  */
-class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
+public class ImmortalMemoryRegion extends RuntimeMemoryRegion{
 
-    private final int classConstantIndex;
-
-    public StaticSynchronizedMethodTransformer(BytecodeAssembler assembler, int constantIndex) {
-        super(assembler);
-        classConstantIndex = constantIndex;
+    public ImmortalMemoryRegion() {
     }
 
-    @Override
-    void acquireMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorenter();
+    public ImmortalMemoryRegion(String name) {
+        super(name);
     }
 
-    @Override
-    void releaseMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorexit();
+    public void initialize(Size size) {
+        Pointer region = VirtualMemory.allocate(size, VirtualMemory.Type.HEAP);
+        if (region.equals(Pointer.zero())) {
+            FatalError.unexpected("Initialization of immortal memory region failed");
+        }
+        this.size = size;
+        this.start = region;
+        this.mark.set(region);
     }
 }

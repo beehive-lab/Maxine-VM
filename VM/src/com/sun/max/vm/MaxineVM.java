@@ -44,23 +44,87 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
+/**
+ * Maxine.
+ * @author Paul Caprioli
+ */
 public final class MaxineVM {
 
-    private static final String VERSION = "0.2";
-
-    public static String version() {
-        return VERSION;
-    }
-
-    public static String name() {
-        return "Maxine VM";
-    }
-
-    public static String description() {
-        return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
-    }
-
+    public static final String VERSION = "0.2";
     public static final int HARD_EXIT_CODE = -2;
+
+    private static final List<String> MAXINE_CODE_BASE_LIST = new ArrayList<String>();
+    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
+    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
+    private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
+
+    /**
+     * The signature of {@link #run(Pointer, Pointer, Word, Word, Word, int, Pointer)}.
+     */
+    public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
+
+    @PROTOTYPE_ONLY
+    private static final Class[] RUN_METHOD_PARAMETER_TYPES;
+
+    @PROTOTYPE_ONLY
+    private static final Map<Class, Boolean> PROTOTYPE_CLASSES = new HashMap<Class, Boolean>();
+
+    private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption EA_OPTION = register(new VMOption("-ea", "Enables assertions in user code.  Currently unimplemented."), MaxineVM.Phase.PRISTINE);
+
+    @PROTOTYPE_ONLY
+    private static MaxineVM globalHostOrTarget = null;
+
+    /**
+     * Assigned twice by the prototype generator. First, assigned to the host VM during
+     * {@linkplain Prototype#initializeHost() prototype initialization}. Second, all references to the host MaxineVM
+     * object are {@linkplain HostObjectAccess#hostToTarget(Object) swapped} to be references to the target MaxineVM
+     * object as the boot image is being generated.
+     */
+    @CONSTANT
+    private static MaxineVM host;
+
+    /**
+     * Assigned only once by the prototype generator.
+     */
+    @CONSTANT
+    private static MaxineVM target;
+
+    /**
+     * The primordial thread locals.
+     *
+     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
+     * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
+     */
+    private static Pointer primordialThreadLocals;
+
+    private static int exitCode = 0;
+
+    public final VMConfiguration configuration;
+    private Phase phase = Phase.PROTOTYPING;
+
+
+    static {
+        MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
+        MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
+        final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
+        if (p != null) {
+            final String[] parts = p.split(",");
+            for (int i = 0; i < parts.length; i++) {
+                MAXINE_CODE_BASE_LIST.add(parts[i]);
+            }
+        }
+
+        Method runMethod = null;
+        for (Method method : MaxineVM.class.getDeclaredMethods()) {
+            if (method.getName().equals("run")) {
+                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
+                runMethod = method;
+            }
+        }
+        RUN_METHOD_PARAMETER_TYPES = runMethod.getParameterTypes();
+        RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
+    }
 
     public enum Phase {
         /**
@@ -89,11 +153,35 @@ public final class MaxineVM {
         RUNNING
     }
 
-    private Phase phase = Phase.PROTOTYPING;
-    private final VMConfiguration configuration;
+    /**
+     * An enum for the properties whose values must be obtained from the native environment at runtime. The enum
+     * constants in this class are used to read values from the native_properties_t struct defined in
+     * Native/substrate/maxine.c returned by {@link MaxineVM#native_properties()}.
+     *
+     * @author Doug Simon
+     */
+    public enum NativeProperty {
+        USER_NAME,
+        USER_HOME,
+        USER_DIR;
 
-    public MaxineVM(VMConfiguration vmConfiguration) {
-        configuration = vmConfiguration;
+        /**
+         * Gets the value of this property from a given C struct.
+         *
+         * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
+         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
+         */
+        public String value(Pointer cStruct) {
+            final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
+            if (cString.isZero()) {
+                return null;
+            }
+            try {
+                return CString.utf8ToJava(cString);
+            } catch (Utf8Exception utf8Exception) {
+                throw FatalError.unexpected("Could not convert C string value of " + this + " to a Java string");
+            }
+        }
     }
 
     public static void initialize(VMConfiguration hostVMConfiguration, VMConfiguration targetVMConfiguration) {
@@ -101,17 +189,12 @@ public final class MaxineVM {
         target = new MaxineVM(targetVMConfiguration);
     }
 
-    public Phase phase() {
-        return phase;
+    public static String name() {
+        return "Maxine VM";
     }
 
-    public void setPhase(Phase phase) {
-        this.phase = phase;
-    }
-
-    @INLINE
-    public VMConfiguration configuration() {
-        return configuration;
+    public static String description() {
+        return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
     }
 
     public static void writeInitialVMParams() {
@@ -120,15 +203,6 @@ public final class MaxineVM {
         // TODO: write a sensible value here, and keep native space up to date
         native_writeFreeMemory(Heap.maxSize().toLong() >> 1);
     }
-
-    /**
-     * Assigned twice by the prototype generator. First, assigned to the host VM during
-     * {@linkplain Prototype#initializeHost() prototype initialization}. Second, all references to the host MaxineVM
-     * object are {@linkplain HostObjectAccess#hostToTarget(Object) swapped} to be references to the target MaxineVM
-     * object as the boot image is being generated.
-     */
-    @CONSTANT
-    private static MaxineVM host;
 
     @PROTOTYPE_ONLY
     public static boolean isHostInitialized() {
@@ -147,12 +221,6 @@ public final class MaxineVM {
     private static MaxineVM host_() {
         return host;
     }
-
-    /**
-     * Assigned only once by the prototype generator.
-     */
-    @CONSTANT
-    private static MaxineVM target;
 
     /**
      * This differs from 'host()' only while running the prototype generator.
@@ -215,7 +283,7 @@ public final class MaxineVM {
             try {
                 return function.call();
             } catch (RuntimeException runtimeException) {
-                // rethrow runtime exceptions.
+                // re-throw runtime exceptions.
                 throw runtimeException;
             } catch (Exception exception) {
                 throw ProgramError.unexpected(exception);
@@ -226,7 +294,7 @@ public final class MaxineVM {
         try {
             return function.call();
         } catch (RuntimeException runtimeException) {
-            // rethrow runtime exceptions.
+            // re-throw runtime exceptions.
             throw runtimeException;
         } catch (Exception exception) {
             throw ProgramError.unexpected(exception);
@@ -248,9 +316,6 @@ public final class MaxineVM {
         }
         return function.call();
     }
-
-    @PROTOTYPE_ONLY
-    private static MaxineVM globalHostOrTarget = null;
 
     /**
      * Sets the single unique VM context. Subsequent to the call, all calls to {@link #hostOrTarget()} will return
@@ -299,7 +364,7 @@ public final class MaxineVM {
     @UNSAFE
     @FOLD
     public static boolean isDebug() {
-        return target().configuration().debugging();
+        return target().configuration.debugging();
     }
 
     /**
@@ -314,9 +379,6 @@ public final class MaxineVM {
         return isPrototypeOnly(Classes.getDeclaringClass(member));
     }
 
-    @PROTOTYPE_ONLY
-    private static final Map<Class, Boolean> prototypeClasses = new HashMap<Class, Boolean>();
-
     /**
      * Determines if a given class exists only for prototyping purposes and should not be part
      * of a generated target image. A class is determined to be a prototype-only class if any
@@ -329,13 +391,13 @@ public final class MaxineVM {
      */
     @PROTOTYPE_ONLY
     public static boolean isPrototypeOnly(Class<?> javaClass) {
-        final Boolean value = prototypeClasses.get(javaClass);
+        final Boolean value = PROTOTYPE_CLASSES.get(javaClass);
         if (value != null) {
             return value.booleanValue();
         }
 
         if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
-            prototypeClasses.put(javaClass, Boolean.TRUE);
+            PROTOTYPE_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }
 
@@ -343,7 +405,7 @@ public final class MaxineVM {
         if (maxPackage != null) {
             if (maxPackage.getClass().getSuperclass() == MaxPackage.class) {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
-                prototypeClasses.put(javaClass, !isTestPackage);
+                PROTOTYPE_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
             }
         }
@@ -351,10 +413,10 @@ public final class MaxineVM {
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
         if (enclosingClass != null) {
             final boolean result = isPrototypeOnly(enclosingClass);
-            prototypeClasses.put(javaClass, Boolean.valueOf(result));
+            PROTOTYPE_CLASSES.put(javaClass, Boolean.valueOf(result));
             return result;
         }
-        prototypeClasses.put(javaClass, Boolean.FALSE);
+        PROTOTYPE_CLASSES.put(javaClass, Boolean.FALSE);
         return false;
     }
 
@@ -379,31 +441,13 @@ public final class MaxineVM {
         return host().phase() == Phase.RUNNING;
     }
 
-    private static final List<String> maxineCodeBaseList = new ArrayList<String>();
-
-    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
-    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
-    private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
-
-    static {
-        maxineCodeBaseList.add(MAXINE_CLASS_PACKAGE_PREFIX);
-        maxineCodeBaseList.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
-        final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
-        if (p != null) {
-            final String[] parts = p.split(",");
-            for (int i = 0; i < parts.length; i++) {
-                maxineCodeBaseList.add(parts[i]);
-            }
-        }
-    }
-
     /**
      * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        for (int i = 0; i < maxineCodeBaseList.size(); i++) {
-            final String prefix = maxineCodeBaseList.get(i);
+        for (int i = 0; i < MAXINE_CODE_BASE_LIST.size(); i++) {
+            final String prefix = MAXINE_CODE_BASE_LIST.get(i);
             if (className.startsWith(prefix)) {
                 return true;
             }
@@ -418,53 +462,21 @@ public final class MaxineVM {
         return isMaxineClass(classActor.typeDescriptor);
     }
 
-    private static int exitCode = 0;
-
     public static void setExitCode(int code) {
         exitCode = code;
     }
-
-    /**
-     * The primordial thread locals.
-     *
-     * The address of this field is exposed to native code via {@link Header#primordialThreadLocalsOffset}
-     * so that it can be initialized by the C substrate. It also enables a debugger attached to the VM to find it.
-     */
-    private static Pointer primordialThreadLocals;
 
     public static Pointer primordialVmThreadLocals() {
         return primordialThreadLocals;
     }
 
     /**
-     * The signature of {@link #run(Pointer, Pointer, Word, Word, Word, int, Pointer)}.
-     */
-    public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
-
-    @PROTOTYPE_ONLY
-    private static final Class[] runMethodParameterTypes;
-    static {
-        Method runMethod = null;
-        for (Method method : MaxineVM.class.getDeclaredMethods()) {
-            if (method.getName().equals("run")) {
-                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
-                runMethod = method;
-            }
-        }
-        runMethodParameterTypes = runMethod.getParameterTypes();
-        RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
-    }
-
-    /**
      * Used by the inspector only.
      */
     @PROTOTYPE_ONLY
-    public static  Class[] runMethodParameterTypes() {
-        return runMethodParameterTypes.clone();
+    public static Class[] runMethodParameterTypes() {
+        return RUN_METHOD_PARAMETER_TYPES.clone();
     }
-
-    private static final VMOption helpOption = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
-    private static final VMOption eaOption = register(new VMOption("-ea", "Enables assertions in user code. Currently unimplemented."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Entry point called by the substrate.
@@ -505,6 +517,8 @@ public final class MaxineVM {
 
         Code.initialize();
 
+        ImmortalHeap.initialize();
+
         JniNativeInterface.initialize();
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
@@ -512,7 +526,7 @@ public final class MaxineVM {
         hostOrTarget().setPhase(MaxineVM.Phase.PRISTINE);
 
         if (VMOptions.parsePristine(argc, argv)) {
-            if (helpOption.isPresent()) {
+            if (HELP_OPTION.isPresent()) {
                 VMOptions.printUsage();
             } else {
                 VmThread.createAndRunMainThread();
@@ -572,37 +586,6 @@ public final class MaxineVM {
     public static native Pointer native_environment();
 
     /**
-     * An enum for the properties whose values must be obtained from the native environment at runtime. The enum
-     * constants in this class are used to read values from the native_properties_t struct defined in
-     * Native/substrate/maxine.c returned by {@link MaxineVM#native_properties()}.
-     *
-     * @author Doug Simon
-     */
-    public enum NativeProperty {
-        USER_NAME,
-        USER_HOME,
-        USER_DIR;
-
-        /**
-         * Gets the value of this property from a given C struct.
-         *
-         * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
-         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
-         */
-        public String value(Pointer cStruct) {
-            final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
-            if (cString.isZero()) {
-                return null;
-            }
-            try {
-                return CString.utf8ToJava(cString);
-            } catch (Utf8Exception utf8Exception) {
-                throw FatalError.unexpected("Could not convert C string value of " + this + " to a Java string");
-            }
-        }
-    }
-
-    /**
      * Gets a pointer to a C struct whose fields are NULL terminated C char arrays. The fields of this struct are read
      * and converted to {@link String} values by {@link NativeProperty#value(Pointer)}. The {@code native_properties_t}
      * struct declaration is in Native/substrate/maxine.c.
@@ -624,4 +607,18 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native void native_writeFreeMemory(long freeMem);
+
+
+    public MaxineVM(VMConfiguration vmConfiguration) {
+        configuration = vmConfiguration;
+    }
+
+    public Phase phase() {
+        return phase;
+    }
+
+    public void setPhase(Phase phase) {
+        this.phase = phase;
+    }
+
 }

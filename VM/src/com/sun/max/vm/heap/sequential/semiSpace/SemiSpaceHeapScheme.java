@@ -109,8 +109,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private final RuntimeMemoryRegion fromSpace = new RuntimeMemoryRegion("Heap-From");
-    private final RuntimeMemoryRegion toSpace = new RuntimeMemoryRegion("Heap-To");
+    private RuntimeMemoryRegion fromSpace = null;
+    private RuntimeMemoryRegion toSpace = null;
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -158,6 +158,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric rootScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric bootHeapScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric codeScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
+    private final TimerMetric immortalSpaceScanTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
@@ -171,13 +172,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize().dividedBy(2);
+
+            try {
+                Heap.enableImmortalMemoryAllocation();
+                fromSpace = new RuntimeMemoryRegion("Heap-From");
+                toSpace = new RuntimeMemoryRegion("Heap-To");
+            } finally {
+                Heap.disableImmortalMemoryAllocation();
+            }
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
@@ -320,6 +331,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 startTimer(codeScanTimer);
                 scanCode();
                 stopTimer(codeScanTimer);
+
+                startTimer(immortalSpaceScanTimer);
+                //scanImmortalHeap();
+                stopTimer(immortalSpaceScanTimer);
 
                 if (Heap.traceGCPhases()) {
                     Log.println("Moving reachable...");
@@ -592,6 +607,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         Code.visitCells(this, includeBootCode);
     }
 
+    void scanImmortalHeap() {
+        ImmortalHeap.visitCells(this);
+    }
+
     private boolean cannotGrow() {
         return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize());
     }
@@ -774,12 +793,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
+        // Immortal heap allocation
+        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+        if (!immortalAllocation.isZero()) {
+            return ImmortalHeap.allocate(size, true);
+        }
+
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
             ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
-            if (!useTLAB()) {
+
+            if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
                 TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
                 return retryAllocate(size, true);
@@ -934,11 +960,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 Log.println("Verifying code objects...");
             }
 
-            for (CodeRegion codeRegion : Code.getCodeManager().getCodeRegions()) {
-                if (!codeRegion.size().isZero()) {
-                    DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
-                }
+            CodeRegion codeRegion = Code.getCodeManager().getRuntimeCodeRegion();
+            if (!codeRegion.size().isZero()) {
+                DebugHeap.verifyRegion(codeRegion.description(), codeRegion.start().asPointer(), codeRegion.getAllocationMark(), toSpace, gripVerifier);
             }
+
         }
 
         if (Heap.traceGCPhases()) {
@@ -1097,6 +1123,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
         void setAmount(Size amount) {
             this.amount = amount.toInt();
+        }
+    }
+
+    @Override
+    public void disableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
+        if (usesTLAB()) {
+            super.disableImmortalMemoryAllocation();
+        }
+    }
+
+    @Override
+    public void enableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
+        if (usesTLAB()) {
+            super.enableImmortalMemoryAllocation();
         }
     }
 }

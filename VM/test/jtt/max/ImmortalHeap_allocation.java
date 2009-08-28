@@ -18,19 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.lang;
-
-import com.sun.max.lang.*;
-
 /*
  * @Harness: java
- * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
+ * @Runs: (4)=true; (8)=true; (10)=true; (100)=true;
  */
-public final class Unsigned_idiv01 {
-    private Unsigned_idiv01() {
+/**
+ * @author Hannes Payer
+ */
+package jtt.max;
+
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
+
+
+public final class ImmortalHeap_allocation {
+    private ImmortalHeap_allocation() {
     }
 
-    public static int test(int dividend, int divisor) {
-        return Unsigned.idiv(dividend, divisor);
+    @UNSAFE
+    public static boolean test(int size) {
+        ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+        Pointer oldMark = immortalMemoryRegion.mark();
+        ImmortalHeap.allocate(Size.fromInt(size), true);
+        if (MaxineVM.isDebug()) {
+            size += Word.size();
+        }
+        if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
+            return true;
+        }
+        return false;
     }
+
 }

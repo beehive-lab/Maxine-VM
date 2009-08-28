@@ -18,30 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.bytecode.graft;
-
-
-/**
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
  */
-class StaticSynchronizedMethodTransformer extends SynchronizedMethodTransformer {
+package jtt.max;
 
-    private final int classConstantIndex;
+import com.sun.max.lang.*;
 
-    public StaticSynchronizedMethodTransformer(BytecodeAssembler assembler, int constantIndex) {
-        super(assembler);
-        classConstantIndex = constantIndex;
+public final class Unsigned_idiv01 {
+    private Unsigned_idiv01() {
     }
 
-    @Override
-    void acquireMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorenter();
-    }
-
-    @Override
-    void releaseMonitor() {
-        asm().ldc(classConstantIndex);
-        asm().monitorexit();
+    public static int test(int dividend, int divisor) {
+        return Unsigned.idiv(dividend, divisor);
     }
 }
