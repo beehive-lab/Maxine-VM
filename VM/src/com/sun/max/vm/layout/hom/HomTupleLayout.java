@@ -126,7 +126,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return Ints.roundUp(currentOffset, nAlignmentBytes);
     }
 
-    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
+    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();
         int offset;
@@ -153,15 +153,19 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return Size.fromInt(offset + headerSize);
     }
 
+    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
+        return layoutFields(superClassActor, fieldActors, headerSize());
+    }
+
     @PROTOTYPE_ONLY
-    void visitFields(ObjectCellVisitor visitor, Object tuple) {
+    static void visitFields(ObjectCellVisitor visitor, Object tuple, TupleLayout layout) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
         do {
             final FieldActor[] fieldActors = (hub instanceof StaticHub) ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
             for (FieldActor fieldActor : fieldActors) {
                 final Value value = HostTupleAccess.readValue(tuple, fieldActor);
-                visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
+                visitor.visitField(layout.getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
             }
             if (hub instanceof StaticHub) {
                 return;
@@ -173,25 +177,25 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @PROTOTYPE_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
-        visitFields(visitor, tuple);
+        visitFields(visitor, tuple, this);
     }
 
     public int getHubReferenceOffsetInCell() {
         return headerSize + hubOffset;
     }
 
+    @PROTOTYPE_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
             return value;
         }
         final Value result = mirror.readField(offset);
-        assert result.kind() == kind;
         return result;
     }
 
+    @PROTOTYPE_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
-        assert kind == value.kind();
         if (writeHeaderValue(mirror, offset, value)) {
             return;
         }
