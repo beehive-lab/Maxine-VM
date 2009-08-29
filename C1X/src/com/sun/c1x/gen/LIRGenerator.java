@@ -30,7 +30,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRVisitState.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -704,23 +703,25 @@ public abstract class LIRGenerator extends InstructionVisitor {
     private void emitXir(XirSnippet snippet) {
 
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
-        final LIRVisitState.OperandMode[] operandModes = new LIRVisitState.OperandMode[snippet.arguments.length];
+        final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
+        //final List<LIROperand> tempOperands = new ArrayList<LIROperand>();
+        LIROperand outputOperand = LIROperand.ILLEGAL;
         for (int i = 0; i < snippet.arguments.length; i++) {
             XirArgument arg = snippet.arguments[i];
             if (arg != null) {
                 operands[i] = allocateOperand(arg);
                 if (operands[i].isRegister()) {
                     if (i == snippet.template.getResultParameterIndex()) {
-                        operandModes[i] = OperandMode.OutputMode;
+                        outputOperand = operands[i];
                     } else {
                         // TODO: Determine tempModes
-                        operandModes[i] = OperandMode.InputMode;
+                        inputOperands.add(operands[i]);
                     }
                 }
             }
         }
 
-        lir.xir(snippet, operands, operandModes);
+        lir.xir(snippet, operands, outputOperand, 0, 0, inputOperands.toArray(new LIROperand[inputOperands.size()]));
     }
 
     @Override

@@ -665,50 +665,50 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert op.inOpr1().isAddress() || op.inOpr2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
+                    assert op.opr1().isAddress() || op.opr2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
                     addDebugInfoForNullCheckHere(op.info); // exception possible
                 }
-                compOp(op.condition(), op.inOpr1(), op.inOpr2(), op);
+                compOp(op.condition(), op.opr1(), op.opr2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                compFl2i(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                compFl2i(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
 
             case Resolve:
-                resolve(CiRuntimeCall.ResolveClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveClass, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveArrayClass:
-                resolve(CiRuntimeCall.ResolveArrayClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveArrayClass, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveStaticFields:
-                resolve(CiRuntimeCall.ResolveStaticFields, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveStaticFields, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveJavaClass:
-                resolve(CiRuntimeCall.ResolveJavaClass, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveJavaClass, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveFieldOffset:
-                resolve(CiRuntimeCall.ResolveFieldOffset, op.result, op.inOpr1(), op.inOpr2());
+                resolve(CiRuntimeCall.ResolveFieldOffset, op.result(), op.opr1(), op.opr2());
                 break;
 
             case Cmove:
-                cmove(op.condition(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                cmove(op.condition(), op.opr1(), op.opr2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (op.inOpr2().isConstant()) {
-                    shiftOp(op.code, op.inOpr1(), op.inOpr2().asConstantPtr().asInt(), op.resultOpr());
+                if (op.opr2().isConstant()) {
+                    shiftOp(op.code, op.opr1(), op.opr2().asConstantPtr().asInt(), op.result());
                 } else {
-                    shiftOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
+                    shiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -717,7 +717,7 @@ public abstract class LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                arithOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info);
+                arithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -727,18 +727,18 @@ public abstract class LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                intrinsicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                intrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                logicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr());
+                logicOp(op.code, op.opr1(), op.opr2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                throwOp(op.inOpr1(), op.inOpr2(), op.info, op.code == LIROpcode.Unwind);
+                throwOp(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:

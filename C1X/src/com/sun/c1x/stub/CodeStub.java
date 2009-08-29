@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
@@ -39,8 +38,32 @@ public abstract class CodeStub {
     public final Label entry = new Label();            // label at the stub entry point
     public final Label continuation = new Label();     // label where stub continues, if any
 
+    protected LIRInstruction instruction;
+
+    private LIROperand[] operands;
+    private LIROperand result;
+    private LIRInstruction.OperandSlot resultSlot;
+
+    protected int tempCount;
+    protected int tempInputCount;
+
     public CodeStub(CodeEmitInfo info) {
+        this(info, LIROperandFactory.IllegalOperand);
+    }
+
+    public CodeStub(CodeEmitInfo info, LIROperand result) {
         this.info = info;
+        this.result = result;
+    }
+
+    protected void setOperands(int tempInputCount, int tempCount, LIROperand... operands) {
+        this.tempCount = tempCount;
+        this.tempInputCount = tempInputCount;
+        this.operands = operands;
+    }
+
+    protected LIROperand operand(int index) {
+        return instruction.stubOperand(index);
     }
 
     /**
@@ -60,14 +83,6 @@ public abstract class CodeStub {
         return false;
     }
 
-    public void visit(LIRVisitState v) {
-        if (C1XOptions.LIRTracePeephole && C1XOptions.Verbose) {
-            TTY.print("no visitor for ");
-            printName(TTY.out);
-            TTY.println();
-        }
-    }
-
     public abstract void accept(CodeStubVisitor visitor);
 
     public void printName(LogStream out) {
@@ -76,6 +91,35 @@ public abstract class CodeStub {
 
     public String name() {
         return this.getClass().getSimpleName();
+    }
+
+    public LIROperand originalResult() {
+        return result;
+    }
+
+    public LIROperand result() {
+        return resultSlot.get(instruction);
+    }
+
+    public LIROperand[] operands() {
+        return operands;
+    }
+
+    public int tempCount() {
+        return tempCount;
+    }
+
+    public int tempInputCount() {
+        return tempInputCount;
+    }
+
+    public void setResultSlot(LIRInstruction.OperandSlot resultSlot) {
+        this.resultSlot = resultSlot;
+    }
+
+    public void setInstruction(LIRInstruction instruction) {
+        this.instruction = instruction;
+
     }
 
 }

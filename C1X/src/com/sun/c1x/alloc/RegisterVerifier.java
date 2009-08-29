@@ -227,15 +227,11 @@ public class RegisterVerifier {
 
     void processOperations(LIRList ops, List<Interval> inputState) {
         // visit all instructions of the block
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
 
         for (int i = 0; i < ops.length(); i++) {
             LIRInstruction op = ops.at(i);
-
-            if (op instanceof LIRAllocArray) {
-                final int x = 0;
-            }
-            visitor.visit(op);
+            //visitor.visit(op);
 
 
 
@@ -245,13 +241,13 @@ public class RegisterVerifier {
 
             // check if input operands are correct
             int j;
-            int n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
+            int n = op.oprCount(LIRInstruction.OperandMode.InputMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, j);
+                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRVisitState.OperandMode.InputMode, allocator);
+                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.InputMode, allocator);
                     }
 
                     assert checkState(inputState, interval.assignedReg(), interval.splitParent());
@@ -260,27 +256,27 @@ public class RegisterVerifier {
             }
 
             // invalidate all caller save registers at calls
-            if (visitor.hasCall()) {
+            if (op.hasCall()) {
                 for (CiRegister r : allocator.compilation.target.callerSavedRegisters) {
                     statePut(inputState, r.number, null);
                 }
             }
 
             // process xhandler before output and temp operands
-            List<ExceptionHandler> xhandlers = visitor.allXhandler();
+            List<ExceptionHandler> xhandlers = op.allXhandler();
             n = xhandlers.size();
             for (int k = 0; k < n; k++) {
                 processXhandler(xhandlers.get(k), inputState);
             }
 
             // set temp operands (some operations use temp operands also as output operands, so can't set them null)
-            n = visitor.oprCount(LIRVisitState.OperandMode.TempMode);
+            n = op.oprCount(LIRInstruction.OperandMode.TempMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.TempMode, j);
+                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, j);
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRVisitState.OperandMode.TempMode, allocator);
+                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.TempMode, allocator);
                     }
 
                     statePut(inputState, interval.assignedReg(), interval.splitParent());
@@ -289,13 +285,13 @@ public class RegisterVerifier {
             }
 
             // set output operands
-            n = visitor.oprCount(LIRVisitState.OperandMode.OutputMode);
+            n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.OutputMode, j);
+                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, j);
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRVisitState.OperandMode.OutputMode, allocator);
+                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.OutputMode, allocator);
                     }
 
                     statePut(inputState, interval.assignedReg(), interval.splitParent());
