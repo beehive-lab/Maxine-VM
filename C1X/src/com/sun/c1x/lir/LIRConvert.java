@@ -65,7 +65,7 @@ public class LIRConvert extends LIROp1 {
         printBytecode(out, bytecode);
         operand().print(out);
         out.print(" ");
-        result.print(out);
+        result().print(out);
         out.print(" ");
     }
 

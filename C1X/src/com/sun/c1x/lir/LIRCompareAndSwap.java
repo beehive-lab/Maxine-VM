@@ -41,10 +41,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp2
      */
     public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperandFactory.IllegalOperand, null);
-
-        setInputOperands(addr, cmpValue, newValue);
-        setTempOperands(tmp1, tmp2);
+        super(opcode, LIROperandFactory.IllegalOperand, null, false, null, 0, 2, addr, cmpValue, newValue);
     }
 
     /**
@@ -53,7 +50,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the address
      */
     public LIROperand address() {
-        return inputOperands[0];
+        return operand(0);
     }
 
     /**
@@ -62,7 +59,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the cmpValue
      */
     public LIROperand cmpValue() {
-        return inputOperands[1];
+        return operand(1);
     }
 
     /**
@@ -71,25 +68,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the newValue
      */
     public LIROperand newValue() {
-        return inputOperands[2];
-    }
-
-    /**
-     * Gets the tmp1 of this class.
-     *
-     * @return the tmp1
-     */
-    public LIROperand tmp1() {
-        return tempOperands[0];
-    }
-
-    /**
-     * Gets the tmp2 of this class.
-     *
-     * @return the tmp2
-     */
-    public LIROperand tmp2() {
-        return tempOperands[1];
+        return operand(2);
     }
 
     /**
@@ -114,9 +93,5 @@ public class LIRCompareAndSwap extends LIRInstruction {
         cmpValue().print(out);
         out.print(" ");
         newValue().print(out);
-        out.print(" ");
-        tmp1().print(out);
-        out.print(" ");
-        tmp2().print(out);
     }
 }

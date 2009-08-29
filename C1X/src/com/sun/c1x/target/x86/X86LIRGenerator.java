@@ -51,7 +51,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand exceptionPcOpr() {
-        return X86FrameMap.rdxOpr;
+        return LIROperandFactory.IllegalOperand; //X86FrameMap.rdxOpr;
     }
 
     protected LIROperand divInOpr() {

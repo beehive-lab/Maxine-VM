@@ -42,11 +42,7 @@ public class LIRLock extends LIRInstruction {
      * @param stub
      */
     public LIRLock(LIROpcode opcode, LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info);
-
-        setInputOperands(obj);
-        setTempOperands(lock, hdr, scratch);
-        setStub(stub);
+        super(opcode, LIROperandFactory.IllegalOperand, info, false, stub, 0, 3, obj, lock, hdr, scratch);
     }
 
     /**
@@ -55,7 +51,7 @@ public class LIRLock extends LIRInstruction {
      * @return the lock
      */
     public LIROperand lockOpr() {
-        return tempOperands[0];
+        return operand(1);
     }
 
 
@@ -65,7 +61,7 @@ public class LIRLock extends LIRInstruction {
      * @return the header
      */
     public LIROperand hdrOpr() {
-        return tempOperands[1];
+        return operand(2);
     }
 
     /**
@@ -74,7 +70,7 @@ public class LIRLock extends LIRInstruction {
      * @return the object
      */
     public LIROperand objOpr() {
-        return inputOperands[0];
+        return operand(0);
     }
 
     /**
@@ -83,7 +79,7 @@ public class LIRLock extends LIRInstruction {
      * @return the scratch
      */
     public LIROperand scratchOpr() {
-        return tempOperands[2];
+        return operand(3);
     }
 
     /**

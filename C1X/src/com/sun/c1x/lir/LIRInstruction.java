@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
@@ -37,7 +39,7 @@ public abstract class LIRInstruction {
     public final LIROpcode code;
 
     // the result operand for this instruction
-    protected LIROperand result;
+    private OperandSlot result;
 
     // used to emit debug information
     public final CodeEmitInfo info;
@@ -48,17 +50,70 @@ public abstract class LIRInstruction {
     // backlink to the HIR instruction for debugging purposes
     private Instruction source;
 
-    public LIROperand[] inputOperands;
-
-    public LIROperand[] tempOperands;
-
     public final boolean hasCall;
 
     public CodeStub stub;
 
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        this(opcode, result, info, false);
+    public enum OperandMode {
+        OutputMode,
+        InputMode,
+        TempMode
     }
+
+
+    private OperandSlot[] operandSlots;
+
+    private int outputCount;
+    private int inputCount;
+    private int tempCount;
+    private int tempInputCount;
+    private List<LIROperand> operands = new ArrayList<LIROperand>(5);
+    private List<LIRAddress> addresses = new ArrayList<LIRAddress>(2);
+
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(-1, -1, -1);
+
+    public static final class OperandSlot {
+        private int base;
+        private int index;
+        private int addressIndex;
+        private LIROperand direct;
+
+        private OperandSlot(int base, int index, int addressIndex) {
+            this.base = base;
+            this.index = index;
+            this.addressIndex = addressIndex;
+        }
+
+        private OperandSlot(int index) {
+            this.base = index;
+            this.addressIndex = -1;
+        }
+
+        private OperandSlot(LIROperand direct) {
+            this.direct = direct;
+        }
+
+        public LIROperand get(LIRInstruction inst) {
+            if (direct != null) {
+                return direct;
+            } else if (addressIndex != -1) {
+
+                LIROperand baseOperand = inst.operands.get(base);
+                LIROperand indexOperand = LIROperandFactory.IllegalOperand;
+                if (index != -1) {
+                    indexOperand = inst.operands.get(index);
+                    assert indexOperand.isCpuRegister();
+                }
+                assert baseOperand.isCpuRegister();
+                return new LIRAddress(baseOperand, indexOperand, inst.addresses.get(addressIndex).scale, inst.addresses.get(addressIndex).displacement, inst.addresses.get(addressIndex).basicType);
+            } else if (base != -1) {
+                return inst.operands.get(base);
+            } else {
+                return LIROperandFactory.IllegalOperand;
+            }
+        }
+    }
+
 
     /**
      * Constructs a new Instruction.
@@ -67,36 +122,180 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info, boolean hasCall) {
-        this.result = result;
+    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
+
         this.code = opcode;
         this.info = info;
         this.hasCall = hasCall;
+        this.stub = stub;
+
+        this.result = addOutput(result);
+        if (stub != null) {
+            stub.setInstruction(this);
+            stub.setResultSlot(addOutput(stub.originalResult()));
+        }
+
+        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
         id = -1;
     }
 
-    public void setStub(CodeStub stub) {
-        assert this.stub == null;
-        this.stub = stub;
-    }
+    private OperandSlot addOutput(LIROperand output) {
+        assert output != null;
+        if (output != LIROperand.ILLEGAL) {
+            if (output instanceof LIRAddress) {
+                return addAddress((LIRAddress) output);
+            }
 
-    protected void setInputOperands(LIROperand... operands) {
-        assert inputOperands == null;
-        assert nonNullOperands(operands);
-        this.inputOperands = operands;
-    }
-
-    protected void setTempOperands(LIROperand... operands) {
-        assert tempOperands == null;
-        assert nonNullOperands(operands);
-        this.tempOperands = operands;
-    }
-
-    private boolean nonNullOperands(LIROperand... operands) {
-        for (int i = 0; i < operands.length; i++) {
-            assert operands[i] != null;
+            assert !(output instanceof LIRAddress);
+            assert operands.size() == outputCount;
+            operands.add(output);
+            outputCount++;
+            return new OperandSlot(operands.size() - 1);
+        } else {
+            return ILLEGAL_SLOT;
         }
-        return true;
+    }
+
+    private OperandSlot addAddress(LIRAddress address) {
+        int addressIndex = addresses.size();
+        addresses.add(address);
+        assert address.base.isRegister();
+        OperandSlot baseSlot = addOperand(address.base, true, false);
+        if (!address.index.isIllegal()) {
+            OperandSlot indexSlot = addOperand(address.index, true, false);
+            return new OperandSlot(baseSlot.base, indexSlot.base, addressIndex);
+        } else {
+            return new OperandSlot(baseSlot.base, -1, addressIndex);
+        }
+    }
+
+    private OperandSlot addStackSlot(LIROperand operand) {
+        assert operand.isStack();
+        return new OperandSlot(operand);
+    }
+
+    private OperandSlot addConstant(LIRConstant constant) {
+        return new OperandSlot(constant);
+    }
+
+    private OperandSlot addOperand(LIROperand input, boolean isInput, boolean isTemp) {
+        assert input != null;
+        if (input != LIROperand.ILLEGAL) {
+            assert !(input instanceof LIRAddress);
+            if (input.isStack()) {
+                return addStackSlot(input);
+            } else if (input.isConstant()) {
+                return addConstant((LIRConstant) input);
+            } else {
+                assert operands.size() == outputCount + inputCount + tempInputCount + tempCount;
+
+                operands.add(input);
+
+                if (isInput && isTemp) {
+                    tempInputCount++;
+                } else if (isInput) {
+                    inputCount++;
+                } else {
+                    assert isTemp;
+                    tempCount++;
+                }
+
+                return new OperandSlot(operands.size() - 1);
+            }
+        } else {
+            return ILLEGAL_SLOT;
+        }
+    }
+
+    protected final LIROperand operand(int index) {
+        if (index >= operandSlots.length) {
+            return LIROperand.ILLEGAL;
+        }
+
+        return operandSlots[index].get(this);
+    }
+
+    public final LIROperand stubOperand(int index) {
+        return operandSlots[index + (operandSlots.length - stub.operands().length)].get(this);
+    }
+
+    private void initInputsAndTemps(int tempInputCount, int tempCount, LIROperand[] operands, CodeStub stub) {
+
+        this.operandSlots = new OperandSlot[operands.length + (stub == null || stub.operands() == null ? 0 : stub.operands().length)];
+
+        // Addresses in instruction
+        for (int i = 0; i < operands.length; i++) {
+            LIROperand op = operands[i];
+            if (op.isAddress()) {
+                operandSlots[i] = addAddress(op.asAddress());
+            }
+        }
+
+        // Addresses in stub
+        if (stub != null && stub.operands() != null) {
+            for (int i = 0; i < stub.operands().length; i++) {
+                LIROperand op = stub.operands()[i];
+                if (op.isAddress()) {
+                    operandSlots[i + operands.length] = addAddress(op.asAddress());
+                }
+            }
+        }
+
+        // Input operands in instruction
+        for (int i = 0; i < operands.length - tempInputCount - tempCount; i++) {
+            if (operandSlots[i] == null) {
+                operandSlots[i] = addOperand(operands[i], true, false);
+            }
+        }
+
+        // Input operands in stub
+        if (stub != null && stub.operands() != null) {
+            for (int i = 0; i < stub.operands().length - stub.tempCount() - stub.tempInputCount(); i++) {
+                if (operandSlots[i + operands.length] == null) {
+                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], true, false);
+                }
+            }
+        }
+
+        // Input Temp operands in instruction
+        for (int i = operands.length - tempInputCount - tempCount; i < operands.length - tempCount; i++) {
+            if (operandSlots[i] == null) {
+                operandSlots[i] = addOperand(operands[i], true, true);
+            }
+        }
+
+        // Input Temp operands in stub
+        if (stub != null && stub.operands() != null) {
+            for (int i = stub.operands().length - stub.tempCount() - stub.tempInputCount(); i < stub.operands().length - stub.tempCount(); i++) {
+                if (operandSlots[i + operands.length] == null) {
+                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], true, true);
+                }
+            }
+        }
+
+        // Temp operands in instruction
+        for (int i = operands.length - tempCount; i < operands.length; i++) {
+            if (operandSlots[i] == null) {
+                operandSlots[i] = addOperand(operands[i], false, true);
+            }
+        }
+
+        // Temp operands in stub
+        if (stub != null && stub.operands() != null) {
+            for (int i = stub.operands().length - stub.tempCount(); i < stub.operands().length; i++) {
+                if (operandSlots[i + operands.length] == null) {
+                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], false, true);
+                }
+            }
+        }
+
+        for (int i = 0; i < operandSlots.length; i++) {
+            assert operandSlots[i] != null;
+        }
+
+        for (int i = 0; i < this.operands.size(); i++) {
+            assert this.operands.get(i) != null;
+        }
     }
 
     /**
@@ -105,16 +304,7 @@ public abstract class LIRInstruction {
      * @return return the result operand
      */
     public LIROperand result() {
-        return result;
-    }
-
-    /**
-     * Sets the result operand for this instruction.
-     *
-     * @param result the result operand
-     */
-    public void setResult(LIROperand result) {
-        this.result = result;
+        return result.get(this);
     }
 
     public CodeStub stub() {
@@ -243,6 +433,112 @@ public abstract class LIRInstruction {
             default:
                 out.printf("[%d]", cond.ordinal());
                 break;
+        }
+    }
+
+    public boolean hasOperands() {
+
+        if (info != null || hasCall || stub != null) {
+            return true;
+        }
+
+        if (this.operands.size() > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean hasCall() {
+        return hasCall;
+    }
+
+    public int oprCount(OperandMode mode) {
+        if (mode == OperandMode.OutputMode) {
+            return outputCount;
+        } else if (mode == OperandMode.InputMode) {
+            return inputCount + tempInputCount;
+        } else {
+            assert mode == OperandMode.TempMode;
+            return tempInputCount + tempCount;
+        }
+    }
+
+    public LIROperand oprAt(OperandMode mode, int index) {
+        if (mode == OperandMode.OutputMode) {
+            assert index < outputCount;
+            return operands.get(index);
+        } else if (mode == OperandMode.InputMode) {
+            assert index < inputCount + tempInputCount;
+            return operands.get(index + outputCount);
+        } else {
+            assert mode == OperandMode.TempMode;
+            assert index < tempInputCount + tempCount;
+            return operands.get(index + outputCount + inputCount);
+        }
+    }
+
+    public void setOprAt(OperandMode mode, int index, LIROperand colorLirOpr) {
+        assert index < oprCount(mode);
+        if (mode == OperandMode.OutputMode) {
+            assert index < outputCount;
+            operands.set(index, colorLirOpr);
+        } else if (mode == OperandMode.InputMode) {
+            assert index < inputCount + tempInputCount;
+            operands.set(index + outputCount, colorLirOpr);
+        } else {
+            assert mode == OperandMode.TempMode;
+            assert index < tempInputCount + tempCount;
+            operands.set(index + outputCount + inputCount, colorLirOpr);
+        }
+    }
+
+    public int infoCount() {
+        int result = 0;
+        if (info != null) {
+            result++;
+        }
+
+        if (stub != null && stub.info != null) {
+            result++;
+        }
+
+        return result;
+    }
+
+    public List<ExceptionHandler> allXhandler() {
+
+        List<ExceptionHandler> result = null;
+
+        int i;
+        for (i = 0; i < infoCount(); i++) {
+            if (infoAt(i).exceptionHandlers() != null) {
+                result = infoAt(i).exceptionHandlers();
+                break;
+            }
+        }
+
+        for (i = 0; i < infoCount(); i++) {
+            assert infoAt(i).exceptionHandlers() == null || infoAt(i).exceptionHandlers() == result : "only one xhandler list allowed per LIR-operation";
+        }
+
+        if (result != null) {
+            return result;
+        } else {
+            return new ArrayList<ExceptionHandler>();
+        }
+    }
+
+    public CodeEmitInfo infoAt(int k) {
+        if (k == 1) {
+            return stub.info;
+        } else {
+            assert k == 0;
+            if (info == null) {
+                return stub.info;
+            } else {
+                return info;
+            }
         }
     }
 }

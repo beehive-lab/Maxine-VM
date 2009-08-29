@@ -48,7 +48,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, Label label) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.label = label;
     }
@@ -62,11 +62,10 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, CiKind type, CodeStub stub) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, stub, 0, 0);
         this.cond = cond;
         this.label = stub.entry;
         this.type = type;
-        setStub(stub);
     }
 
     /**
@@ -78,7 +77,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
         this.label = block.label();
@@ -87,7 +86,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
-        super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
         this.label = block.label();

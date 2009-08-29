@@ -53,13 +53,9 @@ public class LIRAllocObj extends LIRInstruction {
      */
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
                     int hdrSize, int objSize, boolean initCheck, CodeStub stub) {
-        super(LIROpcode.AllocObject, result, null);
-
-        setInputOperands(klass);
-        setTempOperands(tmp1, tmp2, tmp3, tmp4);
+        super(LIROpcode.AllocObject, result, null, false, stub, 0, 4, klass, tmp1, tmp2, tmp3, tmp4);
         this.hdrSize = hdrSize;
         this.objSize = objSize;
-        setStub(stub);
         this.initCheck = initCheck;
     }
 
@@ -67,7 +63,7 @@ public class LIRAllocObj extends LIRInstruction {
      * @return the operand
      */
     public LIROperand klass() {
-        return inputOperands[0];
+        return operand(0);
     }
 
     public LIROperand obj() {
@@ -77,28 +73,28 @@ public class LIRAllocObj extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tempOperands[0];
+        return operand(1);
     }
 
     /**
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tempOperands[1];
+        return operand(2);
     }
 
     /**
      * @return the tmp3
      */
     public LIROperand tmp3() {
-        return tempOperands[2];
+        return operand(3);
     }
 
     /**
      * @return the tmp4
      */
     public LIROperand tmp4() {
-        return tempOperands[3];
+        return operand(4);
     }
 
     /**

@@ -30,29 +30,33 @@ import com.sun.c1x.lir.*;
  * @author Thomas Wuerthinger
  *
  */
-public class MonitorExitStub extends MonitorAccessStub {
+public class MonitorExitStub extends CodeStub {
 
     public final boolean computeLock;
     public final int monitorIx;
 
     public MonitorExitStub(LIROperand objReg, LIROperand lockReg, boolean computeLock, int monitorIx) {
-        super(objReg, lockReg, null);
+        super(null);
         this.computeLock = computeLock;
         this.monitorIx = monitorIx;
+
+        if (computeLock) {
+            setOperands(0, 1, objReg, lockReg);
+        } else {
+            setOperands(0, 0, objReg, lockReg);
+        }
+    }
+
+    public LIROperand objReg() {
+        return operand(0);
+    }
+
+    public LIROperand lockReg() {
+        return operand(1);
     }
 
     @Override
     public void accept(CodeStubVisitor visitor) {
         visitor.visitMonitorExitStub(this);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        objReg = visitor.doInput(objReg);
-        if (computeLock) {
-            lockReg = visitor.doTemp(lockReg);
-        } else {
-            lockReg = visitor.doInput(lockReg);
-        }
     }
 }

@@ -62,12 +62,9 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param tmp
      */
     public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
-        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info, true);
-        setInputOperands(src, srcPos, dst, dstPos, length);
-        setTempOperands(src, srcPos, dst, dstPos, length, tmp);
+        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info, true, new ArrayCopyStub(), 5, 1, src, srcPos, dst, dstPos, length, tmp);
         this.expectedType = expectedType;
         this.arrayCopyFlags = arrayCopyFlags;
-        setStub(new ArrayCopyStub(this));
     }
 
     /**
@@ -76,7 +73,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the source
      */
     public LIROperand src() {
-        return inputOperands[0];
+        return operand(0);
     }
 
     /**
@@ -85,7 +82,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the sourcePos
      */
     public LIROperand srcPos() {
-        return inputOperands[1];
+        return operand(1);
     }
 
     /**
@@ -94,7 +91,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the dest
      */
     public LIROperand dst() {
-        return inputOperands[2];
+        return operand(2);
     }
 
     /**
@@ -103,7 +100,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the destPos
      */
     public LIROperand dstPos() {
-        return inputOperands[3];
+        return operand(3);
     }
 
     /**
@@ -112,7 +109,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the length
      */
     public LIROperand length() {
-        return inputOperands[4];
+        return operand(4);
     }
 
     /**
@@ -121,7 +118,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @return the tmp
      */
     public LIROperand tmp() {
-        return tempOperands[5];
+        return operand(5);
     }
 
     /**

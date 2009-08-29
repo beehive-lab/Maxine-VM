@@ -47,12 +47,8 @@ public class LIRAllocArray extends LIRInstruction {
      * @param stub
      */
     public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, CiKind type, CodeStub stub) {
-        super(LIROpcode.AllocArray, result, null);
+        super(LIROpcode.AllocArray, result, null, false, stub, 0, 4, klass, len, tmp1, tmp2, tmp3, tmp4);
         this.type = type;
-
-        setInputOperands(klass, len);
-        setTempOperands(tmp1, tmp2, tmp3, tmp4);
-        setStub(stub);
     }
 
     /**
@@ -61,7 +57,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the klass
      */
     public LIROperand klass() {
-        return inputOperands[0];
+        return operand(0);
     }
 
     /**
@@ -69,7 +65,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the array length to be allocated
      */
     public LIROperand length() {
-        return inputOperands[1];
+        return operand(1);
     }
 
     /**
@@ -87,7 +83,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tempOperands[0];
+        return operand(2);
     }
 
     /**
@@ -97,7 +93,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tempOperands[1];
+        return operand(3);
     }
 
     /**
@@ -107,7 +103,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp3
      */
     public LIROperand tmp3() {
-        return tempOperands[2];
+        return operand(4);
     }
 
     /**
@@ -117,7 +113,7 @@ public class LIRAllocArray extends LIRInstruction {
      * @return the tmp4
      */
     public LIROperand tmp4() {
-        return tempOperands[3];
+        return operand(5);
     }
 
     /**
@@ -153,7 +149,7 @@ public class LIRAllocArray extends LIRInstruction {
         out.print(" ");
         obj().print(out);
         out.print(" ");
-        result.print(out);
+        result().print(out);
         out.print(" ");
         tmp1().print(out);
         out.print(" ");

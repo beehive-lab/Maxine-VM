@@ -90,9 +90,9 @@ public class LIRJavaCall extends LIRCall {
             receiver().print(out);
             out.print("]");
         }
-        if (result.isValid()) {
+        if (result().isValid()) {
             out.print(" [result: ");
-            result.print(out);
+            result().print(out);
             out.print("]");
         }
     }

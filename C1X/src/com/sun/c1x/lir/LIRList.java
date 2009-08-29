@@ -255,7 +255,7 @@ public class LIRList {
     }
 
     public void throwException(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info) {
-        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, LIROperandFactory.IllegalOperand, info));
+        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, LIROperandFactory.IllegalOperand, info, CiKind.Illegal, true));
     }
 
     public void unwindException(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info) {
@@ -660,7 +660,7 @@ public class LIRList {
         operations.add(i, op);
     }
 
-    public void xir(XirSnippet snippet, LIROperand[] operands, LIRVisitState.OperandMode[] modes) {
-        append(new LIRXirInstruction(snippet, operands, modes));
+    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands) {
+        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands));
     }
 }

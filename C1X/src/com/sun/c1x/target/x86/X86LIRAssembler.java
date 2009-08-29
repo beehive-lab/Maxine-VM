@@ -1392,7 +1392,7 @@ public class X86LIRAssembler extends LIRAssembler {
             Label done = new Label();
             masm().cmpptr(value, (int) NULLWORD);
             masm().jcc(X86Assembler.Condition.equal, done);
-            addDebugInfoForNullCheckHere(op.infoForException());
+            addDebugInfoForNullCheckHere(op.info);
 
 
             masm().movptr(kRInfo, new Address(array, compilation.runtime.hubOffsetInBytes()));
@@ -2582,11 +2582,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
-        assert unwind || exceptionPC.asRegister() == X86.rdx : "must match";
+
 
         // exception object is not added to oop map by LinearScan
         // (LinearScan assumes that no oops are in fixed registers)
-        info.addRegisterOop(exceptionOop);
+       // info.addRegisterOop(exceptionOop);
         CiRuntimeCall unwindId;
 
         if (!unwind) {
@@ -2594,9 +2594,9 @@ public class X86LIRAssembler extends LIRAssembler {
             // pc is only needed if the method has an exception handler, the unwind code does not need it.
             //int pcForAthrowOffset = masm().codeBuffer.position();
 
-            masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
+            //masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
 
-            masm().verifyNotNullOop(X86.rax);
+            //masm().verifyNotNullOop(X86.rax);
             // search an exception handler (rax: exception oop, rdx: throwing pc)
             unwindId = CiRuntimeCall.HandleException;
         } else {
@@ -3194,29 +3194,29 @@ public class X86LIRAssembler extends LIRAssembler {
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert op.inOpr1().isAddress() || op.inOpr2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
+                    assert op.opr1().isAddress() || op.opr2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
                     addDebugInfoForNullCheckHere(op.info); // exception possible
                 }
-                compOp(op.condition(), op.inOpr1(), op.inOpr2(), op);
+                compOp(op.condition(), op.opr1(), op.opr2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                compFl2i(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                compFl2i(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
             case Cmove:
-                cmove(op.condition(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                cmove(op.condition(), op.opr1(), op.opr2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (op.inOpr2().isConstant()) {
-                    shiftOp(op.code, op.inOpr1(), op.inOpr2().asConstantPtr().asInt(), op.resultOpr());
+                if (op.opr2().isConstant()) {
+                    shiftOp(op.code, op.opr1(), op.opr2().asConstantPtr().asInt(), op.result());
                 } else {
-                    shiftOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
+                    shiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -3225,7 +3225,7 @@ public class X86LIRAssembler extends LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                arithOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info);
+                arithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -3235,18 +3235,18 @@ public class X86LIRAssembler extends LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                intrinsicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                intrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                logicOp(op.code, op.inOpr1(), op.inOpr2(), op.resultOpr());
+                logicOp(op.code, op.opr1(), op.opr2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                throwOp(op.inOpr1(), op.inOpr2(), op.info, op.code == LIROpcode.Unwind);
+                throwOp(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:
@@ -3294,7 +3294,7 @@ public class X86LIRAssembler extends LIRAssembler {
             labels[i] = new Label();
         }
 
-        LIROperand[] ops = instruction.operands;
+        LIROperand[] ops = instruction.getOperands();
         XirInstruction[] instructions = snippet.template.instructions;
         for (int i = 0; i < instructions.length; i++) {
 
