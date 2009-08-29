@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -21,15 +21,22 @@
 package jtt.optimize;
 
 /*
- * Tests optimization of switches.
  * @Harness: java
- * @Runs: 0=1;
+ * @Runs: 0 = true; 1 = true; 2 = true; 3 = false; 4 = false;
  */
-public class Switch01 {
-    public static int test(int arg) {
-        switch (arg) {
-            default:
-                return 1;
+public class BlockSkip01 {
+    public static boolean test(int arg) {
+        int x = 1;
+
+        if (arg > 2) {
+            x = 2;
+        } else {
+            x = 1;
         }
+        return m(x) == 2;
+    }
+
+    private static int m(int x) {
+        return x + 1;
     }
 }

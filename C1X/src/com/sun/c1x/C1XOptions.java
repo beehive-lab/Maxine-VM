@@ -62,6 +62,7 @@ public class C1XOptions {
     public static boolean PrintNotLoaded                     = ____;
     public static boolean IRChecking                         = ____;
     public static boolean FatalUnimplemented                 = ____;
+    public static boolean InterpretInvokedMethods            = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = true;

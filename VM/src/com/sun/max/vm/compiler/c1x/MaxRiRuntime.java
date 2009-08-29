@@ -584,4 +584,15 @@ public class MaxRiRuntime implements RiRuntime {
         }
         return previous;
     }
+
+    @Override
+    public RiType getRiType(Class<?> javaClass) {
+        ClassActor classActor = null;
+        try {
+            classActor = ClassActor.fromJava(javaClass);
+        } catch (Throwable t) {
+            // do nothing.
+        }
+        return canonicalRiType(classActor, globalConstantPool);
+    }
 }
