@@ -60,57 +60,71 @@ public abstract class LIRInstruction {
         TempMode
     }
 
-
     private OperandSlot[] operandSlots;
-
     private int outputCount;
     private int inputCount;
     private int tempCount;
     private int tempInputCount;
-    private List<LIROperand> operands = new ArrayList<LIROperand>(5);
-    private List<LIRAddress> addresses = new ArrayList<LIRAddress>(2);
+    private List<LIROperand> operands = new ArrayList<LIROperand>(6);
 
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(-1, -1, -1);
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperand.ILLEGAL);
 
     public static final class OperandSlot {
         private int base;
-        private int index;
-        private int addressIndex;
         private LIROperand direct;
+        private boolean resolved;
 
-        private OperandSlot(int base, int index, int addressIndex) {
+        private OperandSlot(int base, LIRAddress address) {
             this.base = base;
-            this.index = index;
-            this.addressIndex = addressIndex;
+            this.direct = address;
+            assert !address.isStack();
         }
 
-        private OperandSlot(int index) {
-            this.base = index;
-            this.addressIndex = -1;
+        private OperandSlot(int base) {
+            this.base = base;
         }
 
         private OperandSlot(LIROperand direct) {
+            resolved = true;
             this.direct = direct;
         }
 
         public LIROperand get(LIRInstruction inst) {
-            if (direct != null) {
-                return direct;
-            } else if (addressIndex != -1) {
 
-                LIROperand baseOperand = inst.operands.get(base);
-                LIROperand indexOperand = LIROperandFactory.IllegalOperand;
-                if (index != -1) {
-                    indexOperand = inst.operands.get(index);
-                    assert indexOperand.isCpuRegister();
+            if (!resolved) {
+                LIROperand result = null;
+                if (direct != null && direct.isAddress()) {
+                    LIRAddress address = (LIRAddress) direct;
+                    LIROperand baseOperand = inst.operands.get(base);
+                    LIROperand indexOperand = LIROperandFactory.IllegalOperand;
+                    if (!address.index.isIllegal()) {
+                        indexOperand = inst.operands.get(base + 1);
+                        assert indexOperand.isCpuRegister();
+                    }
+                    assert baseOperand.isCpuRegister();
+                    result = new LIRAddress(baseOperand, indexOperand, address.scale, address.displacement, address.basicType);
+                } else if (base != -1) {
+                    result = inst.operands.get(base);
                 }
-                assert baseOperand.isCpuRegister();
-                return new LIRAddress(baseOperand, indexOperand, inst.addresses.get(addressIndex).scale, inst.addresses.get(addressIndex).displacement, inst.addresses.get(addressIndex).basicType);
-            } else if (base != -1) {
-                return inst.operands.get(base);
-            } else {
-                return LIROperandFactory.IllegalOperand;
+
+                assert result != null;
+
+                direct = result;
+                if (result.isRegister() && !result.isVirtual()) {
+                    resolved = true;
+                }
+
+                if (result.isAddress() && !((LIRAddress) result).base.isVirtual()) {
+                    resolved = true;
+                }
+
+                if (resolved) {
+                    direct = result;
+                } else {
+                    return result;
+                }
             }
+            return direct;
         }
     }
 
@@ -157,16 +171,24 @@ public abstract class LIRInstruction {
     }
 
     private OperandSlot addAddress(LIRAddress address) {
-        int addressIndex = addresses.size();
-        addresses.add(address);
         assert address.base.isRegister();
-        OperandSlot baseSlot = addOperand(address.base, true, false);
+
+
+        int baseIndex = operands.size();
+        inputCount++;
+        operands.add(address.base);
+
         if (!address.index.isIllegal()) {
-            OperandSlot indexSlot = addOperand(address.index, true, false);
-            return new OperandSlot(baseSlot.base, indexSlot.base, addressIndex);
-        } else {
-            return new OperandSlot(baseSlot.base, -1, addressIndex);
+            inputCount++;
+            operands.add(address.index);
         }
+
+        if (address.base.isCpuRegister() && !address.base.isVirtual()) {
+            assert address.index.isIllegal() || !address.index.isVirtual();
+            return new OperandSlot(address);
+        }
+
+        return new OperandSlot(baseIndex, address);
     }
 
     private OperandSlot addStackSlot(LIROperand operand) {
