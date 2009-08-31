@@ -46,7 +46,7 @@ public class GuestVMXenTeleVM extends TeleVM {
         if (domain != null) {
             throw new RuntimeException("Attempt to create multiple XenOSTeleDomains, not allowed.");
         }
-        domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration().platform(), processID);
+        domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration.platform(), processID);
         return domain;
     }
 

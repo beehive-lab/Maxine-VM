@@ -334,12 +334,6 @@ public interface MaxVM {
     Reference originToReference(final Pointer origin);
 
     /**
-     * @param reference a heap object in the VM.
-     * @return a pointer to the current absolute memory  location for the object.
-     */
-    Pointer referenceToCell(Reference reference);
-
-    /**
      * @param cell a pointer to the current absolute memory  location for a heap object in the VM.
      * @return a reference to the object.
      */

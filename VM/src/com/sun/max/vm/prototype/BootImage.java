@@ -22,10 +22,11 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.nio.*;
+import java.nio.channels.FileChannel.*;
 import java.util.*;
 
 import com.sun.max.*;
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -47,20 +48,33 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The <i>boot image</i> contains the heap objects that represent a Maxine VM,
- * including compiled code.
- * This class organizes both writing and reading a boot image.
- * Whereas writing may be directed to any output stream,
- * reading assumes a binary file.
+ * The <i>boot image</i> contains the heap objects that represent a Maxine VM, including compiled code.
+ * This class is a utility for both writing and reading a boot image.
+ *
+ * The layout of the boot image as a pseudo-C struct is:
+ * <pre>
+ *
+ *     struct BootImage {
+ *          struct Header header;            // see declaration of image_Header in Native/substrate/image.h
+ *          struct StringInfo string_info;   // see declaration of image_StringInfo in Native/substrate/image.h
+ *          byte[header.relocationDataSize] relocation_data;
+ *          byte[] pad;                      // padding such that next field will be aligned on an OS page-size address
+ *          byte[header.heapSize];       // header.bootHeapSize is a multiple of page-size
+ *          byte[header.codeSize];       // header.bootCodeSize is a multiple of page-size
+ *          struct Trailer trailer;          // see declaration of image_Trailer in Native/substrate/image.h
+ *     }
+ *
+ * </pre>
+ *
+ * The 'pad' member in the image exists so that in-memory images can be supported. That is, if the
+ * VM obtains the image from a memory location as opposed to loading it from a file, then the
+ * page-alignment requirement for the heap and code sections in the image will be satisifed if the
+ * image itself starts at a page-aligned address.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public class BootImage {
-
-    public enum RelocationScheme {
-        DEFAULT
-    }
 
     /**
      * A special identifier for Maxine boot image files. {@code 0xCAFE4DAD}
@@ -72,8 +86,18 @@ public class BootImage {
      */
     public static final int VERSION = 1;
 
-    public abstract static class Section {
-        protected Section() {
+    /**
+     * A field section in a boot image is described by the {@code public final} and {@code final}
+     * fields in a {@code FieldSection} subclass. That is, every {@code public final} field of the
+     * specified {@linkplain #fieldType() type} declared in a subclass of {@code FieldSection}
+     * describes a section entry.
+     */
+    public abstract static class FieldSection {
+
+        private final int offset;
+
+        protected FieldSection(int offset) {
+            this.offset = offset;
         }
 
         static Field[] fields(Class holder, final Class fieldType) {
@@ -88,34 +112,54 @@ public class BootImage {
             }, new Field[0]);
         }
 
-        protected Field[] fields() {
+        /**
+         * Gets the fields representing the entries of this section.
+         */
+        public Field[] fields() {
             return fields(getClass(), fieldType());
         }
 
+        /**
+         * Gets the type of the fields in this class that describe section entries.
+         */
         public abstract Class<?> fieldType();
+
+        /**
+         * Gets the size (in bytes) of this section within the boot image.
+         */
         public abstract int size();
+
+        /**
+         * Gets the offset (in bytes) of this section within the boot image.
+         */
+        public final int offset() {
+            return offset;
+        }
+
+        /**
+         * Writes the data in this section to a given stream.
+         */
         public abstract void write(OutputStream outputStream) throws IOException;
     }
 
-    public abstract static class IntSection extends Section {
+    /**
+     * A section composed of {@code int} entries.
+     */
+    public abstract static class IntSection extends FieldSection {
         private final Endianness endianness;
 
         public Endianness endianness() {
             return endianness;
         }
 
-        protected IntSection(Endianness endianness) {
+        protected IntSection(Endianness endianness, int offset) {
+            super(offset);
             this.endianness = endianness;
         }
 
         @Override
         public int size() {
-            int size = 0;
-            for (Field field : fields()) {
-                assert field.getType() == int.class;
-                size += Ints.SIZE;
-            }
-            return size;
+            return fields().length * Ints.SIZE;
         }
 
         @Override
@@ -135,28 +179,10 @@ public class BootImage {
         }
     }
 
-    private static final Utf8Constant run = SymbolTable.makeSymbol("run");
-
     /**
-     * Gets the class method actor for the first method with the name "run" found
-     * while traversing all the class method actors declared by a given class and
-     * its super classes.
+     * The header section in a boot image.
      *
-     * @param javaClass the class in which to start the search for a method named "run"
-     * @return the found method or null
-     */
-    public static ClassMethodActor getRunMethodActor(Class<?> javaClass) {
-        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run, null);
-        if (runMethodActor != null) {
-            return runMethodActor;
-        }
-        return getRunMethodActor(javaClass.getSuperclass());
-    }
-
-    /**
-     * ATTENTION: this must match 'image_HeaderStruct' in "Native/substrate/image.h".
-     *
-     * @author Bernd Mathiske
+     * <b>ATTENTION: this must match 'image_Header' in "Native/substrate/image.h".</b>
      */
     public static final class Header extends IntSection {
         public final int isBigEndian;
@@ -167,7 +193,6 @@ public class BootImage {
 
         public final int wordSize;
         public final int cacheAlignment;
-        public final int relocationScheme;
 
         public final int pageSize;
 
@@ -180,8 +205,8 @@ public class BootImage {
         public final int stringInfoSize;
         public final int relocationDataSize;
 
-        public final int bootHeapSize;
-        public final int bootCodeSize;
+        public final int heapSize;
+        public final int codeSize;
         public final int codeCacheSize;
 
         public final int heapRegionsPointerOffset;
@@ -229,7 +254,7 @@ public class BootImage {
         }
 
         private Header(DataInputStream dataInputStream) throws IOException, BootImageException {
-            super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
+            super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG, 0);
             final Endianness endian = endianness();
             isBigEndian = endian.ordinal();
 
@@ -239,7 +264,6 @@ public class BootImage {
 
             wordSize = endian.readInt(dataInputStream);
             cacheAlignment = endian.readInt(dataInputStream);
-            relocationScheme = endian.readInt(dataInputStream);
 
             pageSize = endian.readInt(dataInputStream);
 
@@ -251,8 +275,8 @@ public class BootImage {
             stringInfoSize = endian.readInt(dataInputStream);
             relocationDataSize = endian.readInt(dataInputStream);
 
-            bootHeapSize = endian.readInt(dataInputStream);
-            bootCodeSize = endian.readInt(dataInputStream);
+            heapSize = endian.readInt(dataInputStream);
+            codeSize = endian.readInt(dataInputStream);
             codeCacheSize = endian.readInt(dataInputStream);
 
             heapRegionsPointerOffset = endian.readInt(dataInputStream);
@@ -285,8 +309,8 @@ public class BootImage {
             return staticTupleOrigin.toInt() + fieldActor.offset();
         }
 
-        private Header(DataPrototype dataPrototype, StringInfo stringInfo) {
-            super(dataPrototype.vmConfiguration().platform().processorKind.dataModel.endianness);
+        private Header(DataPrototype dataPrototype, int stringInfoSize) {
+            super(dataPrototype.vmConfiguration().platform().processorKind.dataModel.endianness, 0);
             final VMConfiguration vmConfiguration = dataPrototype.vmConfiguration();
             isBigEndian = endianness() == Endianness.LITTLE ? 0 : 0xffffffff;
             identification = IDENTIFICATION;
@@ -294,21 +318,20 @@ public class BootImage {
             randomID = UUID.randomUUID().hashCode();
             wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
-            relocationScheme = RelocationScheme.DEFAULT.ordinal();
             pageSize = vmConfiguration.platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
             classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
-            stringInfoSize = stringInfo.size();
+            this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
-            bootHeapSize = dataPrototype.heapData().length;
-            bootCodeSize = dataPrototype.codeData().length;
+            heapSize = dataPrototype.heapData().length;
+            codeSize = dataPrototype.codeData().length;
             codeCacheSize = CodeManager.runtimeCodeRegionSize.getValue().toInt();
 
             heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
 
-            auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(bootHeapSize + bootCodeSize);
+            auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
 
             messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
@@ -341,12 +364,7 @@ public class BootImage {
 
         @Override
         public int size() {
-            int size = 0;
-            for (Field field : fields()) {
-                assert field.getType() == int.class;
-                size += Ints.SIZE;
-            }
-            return size;
+            return fields().length * Ints.SIZE;
         }
 
         @Override
@@ -361,16 +379,12 @@ public class BootImage {
         }
     }
 
-    private final Header header;
-
-    public Header header() {
-        return header;
-    }
-
     /**
-     * See "image.h".
+     * The string info section in a boot image.
+     *
+     * <b>ATTENTION: this must match 'image_StringInfo' in "Native/substrate/image.h".</b>
      */
-    public static final class StringInfo extends Section {
+    public static final class StringInfo extends FieldSection {
         public final String buildLevelName;
         public final String processorModelName;
         public final String instructionSetName;
@@ -446,8 +460,8 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(runPackageName);
         }
 
-        private StringInfo(InputStream inputStream) throws IOException, Utf8Exception {
-            super();
+        private StringInfo(InputStream inputStream, int offset) throws IOException, Utf8Exception {
+            super(offset);
             buildLevelName = Utf8.readString(inputStream);
             processorModelName = Utf8.readString(inputStream);
             instructionSetName = Utf8.readString(inputStream);
@@ -465,8 +479,8 @@ public class BootImage {
             runPackageName = Utf8.readString(inputStream);
         }
 
-        private StringInfo(VMConfiguration vmConfiguration) {
-            super();
+        private StringInfo(VMConfiguration vmConfiguration, int offset) {
+            super(offset);
             buildLevelName = vmConfiguration.buildLevel().name();
             processorModelName = vmConfiguration.platform().processorKind.processorModel.name();
             instructionSetName = vmConfiguration.platform().processorKind.instructionSet.name();
@@ -543,10 +557,10 @@ public class BootImage {
         }
     }
 
-    private final StringInfo stringInfo;
-
     /**
-     * See "image.h".
+     * The trailer section in a boot image.
+     *
+     * <b>ATTENTION: this must match 'image_Trailer' in "Native/substrate/image.h".</b>
      */
     public static final class Trailer extends IntSection {
         public final int randomID;
@@ -554,15 +568,15 @@ public class BootImage {
         public final int identification;
 
 
-        private Trailer(Header header, InputStream inputStream) throws IOException {
-            super(header.endianness());
+        private Trailer(Header header, InputStream inputStream, int offset) throws IOException {
+            super(header.endianness(), offset);
             randomID = endianness().readInt(inputStream);
             version = endianness().readInt(inputStream);
             identification = endianness().readInt(inputStream);
         }
 
-        private Trailer(Header header) {
-            super(header.endianness());
+        private Trailer(Header header, int offset) {
+            super(header.endianness(), offset);
             randomID = header.randomID;
             version = header.version;
             identification = header.identification;
@@ -575,48 +589,58 @@ public class BootImage {
         }
     }
 
-    private final Trailer trailer;
+    private static final Utf8Constant run = SymbolTable.makeSymbol("run");
 
-    public Trailer trailer() {
-        return trailer;
-    }
-
-    private final VMConfiguration vmConfiguration;
-
-    public VMConfiguration vmConfiguration() {
-        return vmConfiguration;
-    }
-
-    private static native void nativeRelocate(long heapPointer, int relocationScheme, byte[] relocationDataPointer, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize);
-
-    private void relocate(Pointer heap, byte[] relocationData) {
-        nativeRelocate(heap.toLong(), header.relocationScheme, relocationData, relocationData.length, header.cacheAlignment, header.isBigEndian, header.wordSize);
-    }
-
-    private final DataPrototype dataPrototype;
-
-    public int pagePaddingSize(int numberOfBytesSoFar) throws IOException {
-        final int pageSize = vmConfiguration().platform().pageSize;
-        final int rest = numberOfBytesSoFar % pageSize;
-        if (rest == 0) {
-            return 0;
+    /**
+     * Gets the class method actor for the first method with the name "run" found
+     * while traversing all the class method actors declared by a given class and
+     * its super classes.
+     *
+     * @param javaClass the class in which to start the search for a method named "run"
+     * @return the found method or null
+     */
+    public static ClassMethodActor getRunMethodActor(Class<?> javaClass) {
+        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run, null);
+        if (runMethodActor != null) {
+            return runMethodActor;
         }
-        return pageSize - rest;
+        return getRunMethodActor(javaClass.getSuperclass());
     }
+
+    public final Header header;
+    public final StringInfo stringInfo;
+    public final byte[] relocationData;
+    public final byte[] padding;
+    public final Trailer trailer;
+    public final VMConfiguration vmConfiguration;
+
+    private ByteBuffer heap;
+    private ByteBuffer code;
+    private final File imageFile;
 
     /**
      * Creates a BootImage object representing the information in a given boot image file.
      */
     public BootImage(File file) throws BootImageException {
-        this.dataPrototype = null;
+        this.imageFile = file;
         try {
             final FileInputStream fileInputStream = new FileInputStream(file);
             try {
                 header = new Header(new DataInputStream(fileInputStream));
                 header.check();
-                stringInfo = new StringInfo(fileInputStream);
+                stringInfo = new StringInfo(fileInputStream, header.size());
                 stringInfo.check();
                 BootImageException.check(header.stringInfoSize == stringInfo.size(), "inconsistent string area size");
+                relocationData = new byte[header.relocationDataSize];
+                fileInputStream.read(relocationData);
+                this.padding = new byte[deltaToPageAlign(header.size() + stringInfo.size() + relocationData.length)];
+                fileInputStream.read(padding);
+
+                for (int i = 0; i < padding.length; ++i) {
+                    BootImageException.check(padding[i] == 0, "all padding bytes should be 0");
+                }
+                BootImageException.check((heapOffset() % header.pageSize) == 0, "heap offset is not page-size aligned");
+                BootImageException.check((codeOffset() % header.pageSize) == 0, "code offset is not page-size aligned");
 
                 final DataModel dataModel = new DataModel(header.wordWidth(), header.endianness(), header.cacheAlignment);
                 final ProcessorKind processorKind = new ProcessorKind(stringInfo.processorModel(), stringInfo.instructionSet(), dataModel);
@@ -634,10 +658,9 @@ public class BootImage {
                                 stringInfo.runPackage());
                 vmConfiguration.loadAndInstantiateSchemes();
 
-                fileInputStream.skip(header.relocationDataSize);
-                final int padding = pagePaddingSize(header.size() + header.stringInfoSize + header.relocationDataSize);
-                fileInputStream.skip(padding + header.bootHeapSize + header.bootCodeSize);
-                trailer = new Trailer(header, fileInputStream);
+                fileInputStream.skip(header.heapSize + header.codeSize);
+                int trailerOffset = codeOffset() + header.codeSize;
+                trailer = new Trailer(header, fileInputStream, trailerOffset);
                 trailer.check(header);
             } catch (Utf8Exception utf8Exception) {
                 throw new BootImageException(utf8Exception);
@@ -653,32 +676,110 @@ public class BootImage {
      * Used when constructing a boot image to be written to a file.
      */
     public BootImage(DataPrototype dataPrototype) throws BootImageException {
-        this.dataPrototype = dataPrototype;
         this.vmConfiguration = dataPrototype.vmConfiguration();
-        this.stringInfo = new StringInfo(vmConfiguration);
+        this.stringInfo = new StringInfo(vmConfiguration, new Header(dataPrototype, 0).size());
         this.stringInfo.check();
-        this.header = new Header(dataPrototype, stringInfo);
+        this.header = new Header(dataPrototype, stringInfo.size());
         this.header.check();
-        this.trailer = new Trailer(header);
+        this.relocationData = dataPrototype.relocationData();
+        this.padding = new byte[deltaToPageAlign(header.size() + stringInfo.size() + relocationData.length)];
+        this.heap = ByteBuffer.wrap(dataPrototype.heapData());
+        this.code = ByteBuffer.wrap(dataPrototype.codeData());
+        int trailerOffset = codeOffset() + header.codeSize;
+        this.trailer = new Trailer(header, trailerOffset);
+        this.imageFile = null;
     }
 
+    public int relocationDataOffset() {
+        return header.size() + stringInfo.size();
+    }
+
+    public int heapOffset() {
+        return paddingOffset() + paddingSize();
+    }
+
+    public int codeOffset() {
+        return heapOffset() + header.heapSize;
+    }
+
+    public int paddingOffset() {
+        return relocationDataOffset() + header.relocationDataSize;
+    }
+
+    public int paddingSize() {
+        return padding.length;
+    }
+
+    public synchronized ByteBuffer heap() {
+        if (heap == null) {
+            heap = mapSection(heapOffset(), header.heapSize);
+        }
+        return heap;
+    }
+
+    public synchronized ByteBuffer code() {
+        if (code == null) {
+            code = mapSection(codeOffset(), header.codeSize);
+        }
+        return code;
+    }
+
+    /**
+     * Writes this image to a given stream.
+     *
+     * @param outputStream
+     * @throws IOException
+     */
     public void write(OutputStream outputStream) throws IOException {
         header.write(outputStream);
         stringInfo.write(outputStream);
-        outputStream.write(dataPrototype.relocationData());
-        final byte[] padding = new byte[pagePaddingSize(header.size() + stringInfo.size() /*+ dataPrototype.cardOffsetTable().length*/ +  dataPrototype.relocationData().length)];
+        outputStream.write(relocationData);
         outputStream.write(padding);
-        outputStream.write(dataPrototype.heapData());
-        outputStream.write(dataPrototype.codeData());
+        write(heap(), outputStream);
+        write(code(), outputStream);
         trailer.write(outputStream);
     }
 
-    @C_FUNCTION
-    static native Address nativeGetEndOfCodeRegion();
-
-    public static Address getEndOfCodeRegion() {
-        return nativeGetEndOfCodeRegion();
+    private void write(ByteBuffer buffer, OutputStream outputStream) throws IOException {
+        if (buffer.hasArray()) {
+            outputStream.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
+        } else {
+            byte[] array = new byte[buffer.limit()];
+            buffer.get(array);
+            outputStream.write(array);
+        }
     }
 
+    /**
+     * Computes the amount to add to a given size to bump it up to the next page-aligned size.
+     */
+    private int deltaToPageAlign(int size) {
+        final int pageSize = header.pageSize;
+        final int rest = size % pageSize;
+        if (rest == 0) {
+            return 0;
+        }
+        return pageSize - rest;
+    }
 
+    /**
+     * Maps a section of an image file to memory.
+     *
+     * @param offset the offset within the image file to map
+     * @param size the size of the image file section to map
+     * @return a buffer representing the mapped section
+     */
+    private ByteBuffer mapSection(int offset, int size) {
+        assert imageFile != null : "Cannot map section of image for which underlying file is not available";
+        try {
+            final RandomAccessFile raf = new RandomAccessFile(imageFile, "r");
+            final MappedByteBuffer buffer = raf.getChannel().map(MapMode.READ_ONLY, offset, size);
+            raf.close();
+            ByteOrder byteOrder = vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder();
+            buffer.order(byteOrder);
+            return buffer;
+        } catch (IOException e) {
+            throw new InternalError("Error trying to map section of image file: " + e);
+        }
+    }
 }

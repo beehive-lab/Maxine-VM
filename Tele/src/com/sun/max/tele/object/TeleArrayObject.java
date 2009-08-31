@@ -49,8 +49,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private int length = -1;
 
-    protected TeleArrayObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+    private final Kind componentKind;
+
+    protected TeleArrayObject(TeleVM teleVM, Reference reference, Kind componentKind, SpecificLayout layout) {
+        super(teleVM, reference, layout);
+        this.componentKind = componentKind;
     }
 
     @Override
@@ -74,7 +77,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public Kind componentKind() {
-        return classActorForType().componentClassActor().kind;
+        return componentKind;
     }
 
     @Override

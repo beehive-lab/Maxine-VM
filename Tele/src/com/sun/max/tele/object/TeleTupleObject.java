@@ -48,7 +48,7 @@ public class TeleTupleObject extends TeleObject {
     private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC);
 
     protected TeleTupleObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+        super(teleVM, reference, teleVM.vmConfiguration().layoutScheme().tupleLayout);
     }
 
     @Override

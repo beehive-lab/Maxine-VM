@@ -33,7 +33,7 @@ public final class SolarisTeleVM extends TeleVM {
 
     @Override
     protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new SolarisTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
+        return new SolarisTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
     }
 
     public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {

@@ -99,7 +99,9 @@ public final class DataPrototype extends Prototype {
      * @return a pointer to the origin of the object in this data prototype
      */
     public Pointer objectToOrigin(Object object) {
-        return layoutScheme.generalLayout.cellToOrigin(objectToCell(object).asPointer());
+        final Hub hub = HostObjectAccess.readHub(object);
+        final SpecificLayout specificLayout = hub.specificLayout;
+        return specificLayout.cellToOrigin(objectToCell(object).asPointer());
     }
 
     /**

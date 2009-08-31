@@ -52,7 +52,7 @@ public abstract class TeleHybridObject extends TeleObject {
     private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH);
 
     protected TeleHybridObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+        super(teleVM, reference, teleVM.vmConfiguration().layoutScheme().hybridLayout);
     }
 
     @Override
