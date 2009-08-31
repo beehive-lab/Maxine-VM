@@ -386,7 +386,7 @@ public class BlockBegin extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitBlockBegin(this);
     }
 
@@ -458,7 +458,7 @@ public class BlockBegin extends Instruction {
         int max = newState.localsSize();
         assert liveness.size() == max;
         for (int i = 0; i < max; i++) {
-            Instruction x = newState.localAt(i);
+            Value x = newState.localAt(i);
             if (x != null && (x.isIllegal() || !liveness.get(i))) {
                 // invalidate the local if it is not live
                 newState.invalidateLocal(i);
@@ -475,7 +475,7 @@ public class BlockBegin extends Instruction {
         int localsSize = newState.localsSize();
         BitMap requiresPhi = newState.scope().getStoresInLoops();
         for (int i = 0; i < localsSize; i++) {
-            Instruction x = newState.localAt(i);
+            Value x = newState.localAt(i);
             if (x != null) {
                 if (requiresPhi != null) {
                     if (requiresPhi.get(i) || x.type().isDoubleWord() && requiresPhi.get(i + 1)) {

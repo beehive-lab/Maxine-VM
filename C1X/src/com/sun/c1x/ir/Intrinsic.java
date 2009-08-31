@@ -34,7 +34,7 @@ import com.sun.c1x.value.*;
 public class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
-    final Instruction[] arguments;
+    final Value[] arguments;
     final boolean canTrap;
 
     /**
@@ -47,7 +47,7 @@ public class Intrinsic extends StateSplit {
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, Instruction[] args, boolean isStatic,
+    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, Value[] args, boolean isStatic,
                      ValueStack stateBefore, boolean preservesState, boolean canTrap) {
         super(type, stateBefore);
         this.intrinsic = intrinsic;
@@ -59,8 +59,7 @@ public class Intrinsic extends StateSplit {
         initFlag(Flag.PreservesState, preservesState);
         this.canTrap = canTrap;
         if (!isStatic && args[0].isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -76,7 +75,7 @@ public class Intrinsic extends StateSplit {
      * Gets the list of instructions that produce input for this instruction.
      * @return the list of instructions that produce input
      */
-    public Instruction[] arguments() {
+    public Value[] arguments() {
         return arguments;
     }
 
@@ -96,7 +95,7 @@ public class Intrinsic extends StateSplit {
      * Gets the instruction which produces the receiver object for this intrinsic.
      * @return the instruction producing the receiver object
      */
-    public Instruction receiver() {
+    public Value receiver() {
         assert !isStatic();
         return arguments[0];
     }
@@ -118,12 +117,17 @@ public class Intrinsic extends StateSplit {
         return canTrap;
     }
 
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
+
     /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < arguments.length; i++) {
             arguments[i] = closure.apply(arguments[i]);
         }
@@ -134,11 +138,11 @@ public class Intrinsic extends StateSplit {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitIntrinsic(this);
     }
 
-    public Instruction argumentAt(int i) {
+    public Value argumentAt(int i) {
         return arguments[i];
     }
 

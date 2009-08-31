@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
@@ -38,11 +37,11 @@ public class ArrayLength extends AccessArray {
      * @param array the instruction producing the array
      * @param stateBefore the state before executing this instruction
      */
-    public ArrayLength(Instruction array, ValueStack stateBefore) {
+    public ArrayLength(Value array, ValueStack stateBefore) {
         super(CiKind.Int, array, stateBefore);
+        setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {
-            clearNullCheck();
-            C1XMetrics.NullChecksRedundant++;
+            redundantNullCheck();
         }
     }
 
@@ -59,14 +58,8 @@ public class ArrayLength extends AccessArray {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitArrayLength(this);
-    }
-
-    @Override
-    public void clearNullCheck() {
-        stateBefore = null;
-        setFlag(Flag.NoNullCheck);
     }
 
     @Override

@@ -42,7 +42,7 @@ public class CheckCast extends TypeCheck {
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(RiType targetClass, Instruction targetClassInstruction, Instruction object, ValueStack stateBefore) {
+    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }
@@ -104,7 +104,7 @@ public class CheckCast extends TypeCheck {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitCheckCast(this);
     }
 

@@ -29,7 +29,7 @@ import com.sun.c1x.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class Local extends Instruction {
+public class Local extends Value {
 
     private final int javaIndex;
     private RiType declaredType;
@@ -69,7 +69,7 @@ public class Local extends Instruction {
      * @param v the visitor to dispatch to
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLocal(this);
     }
 }

@@ -544,7 +544,7 @@ public final class StackReferenceMapPreparer {
         // Thus we always look up what bytecode we were in during the call,
         final int bytecodePosition = caller.bytecodePositionFor(instructionPointer.minus(1));
 
-        final CodeAttribute codeAttribute = caller.classMethodActor().originalCodeAttribute();
+        final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool();
         final byte[] code = codeAttribute.code();
         final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));

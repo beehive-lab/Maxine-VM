@@ -76,6 +76,11 @@ public final class MaxineInspector {
     public static void initializeSwing() {
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+//            System.out.println("L&F=" + UIManager.getLookAndFeel());
+//            System.out.println("Theme=" + MetalLookAndFeel.getCurrentTheme());
         } catch (Exception e) {
             ProgramError.unexpected("Could not set L&F to MetalLookAndFeel");
         }

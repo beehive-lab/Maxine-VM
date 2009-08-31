@@ -18,18 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.optimize;
+package com.sun.c1x.ci;
 
-/*
- * @Harness: java
- * @Runs: null=!java.lang.NullPointerException; "x"="x"; "yay"="yay"
+/**
+ * The <code>CiResult</code> class represents the result of compiling a method. The result
+ * can include a target method with machine code and metadata, and/or statistics. If the
+ * compiler bailed out due to malformed bytecode, an internal error, or other cause,
+ * it will supply the bailout object.
+ *
+ * @author Ben L. Titzer
  */
-public class NCE_FlowSensitive02 {
+public class CiResult {
+    private final CiTargetMethod targetMethod;
+    private final CiBailout bailout;
+    private final CiStatistics stats;
 
-    public static String test(String arg) {
-        if (arg != null) {
-            return arg.toString();
+    public CiResult(CiTargetMethod targetMethod, CiBailout bailout, CiStatistics stats) {
+        this.targetMethod = targetMethod;
+        this.bailout = bailout;
+        this.stats = stats;
+    }
+
+    public CiTargetMethod targetMethod() {
+        if (bailout != null) {
+            throw bailout;
         }
-        return arg.toString();
+        return targetMethod;
+    }
+
+    public CiStatistics statistics() {
+        return stats;
+    }
+
+    public CiBailout bailout() {
+        return bailout;
     }
 }

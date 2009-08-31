@@ -29,8 +29,8 @@ import com.sun.c1x.ci.*;
  */
 public abstract class UnsafeObjectOp extends UnsafeOp {
 
-    Instruction object;
-    Instruction offset;
+    Value object;
+    Value offset;
     final boolean isVolatile;
 
     /**
@@ -41,7 +41,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @param isStore <code>true</code> if this is a store operation
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafeObjectOp(CiKind basicType, Instruction object, Instruction offset, boolean isStore, boolean isVolatile) {
+    public UnsafeObjectOp(CiKind basicType, Value object, Value offset, boolean isStore, boolean isVolatile) {
         super(basicType, isStore);
         this.object = object;
         this.offset = offset;
@@ -52,7 +52,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * Gets the instruction that generates the object.
      * @return the instruction that produces the object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -60,7 +60,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * Gets the instruction that generates the offset.
      * @return the instruction generating the offset
      */
-    public Instruction offset() {
+    public Value offset() {
         return offset;
     }
 
@@ -77,7 +77,7 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         object = closure.apply(object);
         offset = closure.apply(offset);

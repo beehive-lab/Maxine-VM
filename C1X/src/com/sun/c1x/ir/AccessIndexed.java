@@ -31,8 +31,8 @@ import com.sun.c1x.value.*;
  */
 public abstract class AccessIndexed extends AccessArray {
 
-    Instruction index;
-    Instruction length;
+    Value index;
+    Value length;
     final CiKind elementType;
 
     /**
@@ -43,7 +43,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param elementType the type of the elements of the array
      * @param stateBefore the state before executing this instruction
      */
-    AccessIndexed(Instruction array, Instruction index, Instruction length, CiKind elementType, ValueStack stateBefore) {
+    AccessIndexed(Value array, Value index, Value length, CiKind elementType, ValueStack stateBefore) {
         super(elementType.stackType(), array, stateBefore);
         this.index = index;
         this.length = length;
@@ -54,7 +54,7 @@ public abstract class AccessIndexed extends AccessArray {
      * Gets the instruction producing the index into the array.
      * @return the index
      */
-    public Instruction index() {
+    public Value index() {
         return index;
     }
 
@@ -62,7 +62,7 @@ public abstract class AccessIndexed extends AccessArray {
      * Gets the instruction that produces the length of the array.
      * @return the length
      */
-    public Instruction length() {
+    public Value length() {
         return length;
     }
 
@@ -79,7 +79,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @return {@code true} if a range check is required for this instruction
      */
     public boolean needsRangeCheck() {
-        return !checkFlag(Instruction.Flag.NoRangeCheck);
+        return !checkFlag(Value.Flag.NoBoundsCheck);
     }
 
     /**
@@ -87,7 +87,7 @@ public abstract class AccessIndexed extends AccessArray {
      * @param closure the closure to apply to each of the input values
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         index = closure.apply(index);
         if (length != null) {

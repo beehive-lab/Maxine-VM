@@ -27,7 +27,7 @@ package com.sun.c1x.ir;
  *
  * @author Ben L. Titzer
  */
-public abstract class InstructionVisitor {
+public abstract class ValueVisitor {
     public void visitPhi(Phi i) {
     }
     public void visitLocal(Local i) {

@@ -650,6 +650,7 @@ public abstract class TeleVM implements MaxVM {
         }
         // Heap regions
         regions.append(teleBootHeapRegion());
+        regions.append(teleImmortalHeapRegion());
         for (MemoryRegion region : teleHeapRegions) {
             regions.append(region);
         }
@@ -701,6 +702,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
+    }
+
+    public final TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+        return teleHeapManager.teleImmortalHeapRegion();
     }
 
     public final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {

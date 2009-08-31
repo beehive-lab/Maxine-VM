@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
 public class Convert extends Instruction {
 
     final int opcode;
-    Instruction value;
+    Value value;
 
     /**
      * Constructs a new Convert instance.
@@ -39,7 +39,7 @@ public class Convert extends Instruction {
      * @param value the instruction producing the input value
      * @param type the result type of this instruction
      */
-    public Convert(int opcode, Instruction value, CiKind type) {
+    public Convert(int opcode, Value value, CiKind type) {
         super(type);
         this.opcode = opcode;
         this.value = value;
@@ -57,7 +57,7 @@ public class Convert extends Instruction {
      * Gets the instruction which produces the input value to this instruction.
      * @return the input value instruction
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -66,7 +66,7 @@ public class Convert extends Instruction {
      * @param closure the closure to apply to each input value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
     }
 
@@ -75,7 +75,7 @@ public class Convert extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitConvert(this);
     }
 

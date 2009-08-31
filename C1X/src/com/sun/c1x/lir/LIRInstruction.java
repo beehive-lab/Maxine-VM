@@ -48,7 +48,7 @@ public abstract class LIRInstruction {
     private int id;
 
     // backlink to the HIR instruction for debugging purposes
-    private Instruction source;
+    private Value source;
 
     public final boolean hasCall;
 
@@ -366,7 +366,7 @@ public abstract class LIRInstruction {
      *
      * @return source the HIR source instruction.
      */
-    public Instruction source() {
+    public Value source() {
         return source;
     }
 
@@ -375,7 +375,7 @@ public abstract class LIRInstruction {
      *
      * @param source the HIR source instruction.
      */
-    public void setSource(Instruction source) {
+    public void setSource(Value source) {
         this.source = source;
     }
 

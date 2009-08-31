@@ -111,6 +111,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
                     break;
                 }
                 if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
+                    assert currentOffset >= 0;
                     fieldActor.setOffset(currentOffset);
                     currentOffset += scale;
                     assert nBytesToFill >= 0;
@@ -125,16 +126,23 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return Ints.roundUp(currentOffset, nAlignmentBytes);
     }
 
-    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
+    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();
-        int offset = (superClassActor == null || superClassActor.toJava() == Hybrid.class) ? 0 : superClassActor.dynamicTupleSize().toInt() - headerSize();
+        int offset;
+        if (superClassActor == null || superClassActor.toJava() == Hybrid.class) {
+            offset = 0;
+        } else {
+            offset = superClassActor.dynamicTupleSize().toInt() - headerSize();
+        }
+        assert offset >= 0;
         if (offset % nAlignmentBytes != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
         }
         for (int scale = 8; scale >= 1; scale /= 2) {
             for (FieldActor fieldActor : fieldActors) {
                 if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
+                    assert offset >= 0;
                     fieldActor.setOffset(offset);
                     offset += scale;
                 }
@@ -142,18 +150,22 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         }
         assert hasValidOffsets(fieldActors);
         offset = Ints.roundUp(offset, nAlignmentBytes);
-        return Size.fromInt(offset);
+        return Size.fromInt(offset + headerSize);
+    }
+
+    public Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors) {
+        return layoutFields(superClassActor, fieldActors, headerSize());
     }
 
     @PROTOTYPE_ONLY
-    void visitFields(ObjectCellVisitor visitor, Object tuple) {
+    static void visitFields(ObjectCellVisitor visitor, Object tuple, TupleLayout layout) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
         do {
             final FieldActor[] fieldActors = (hub instanceof StaticHub) ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
             for (FieldActor fieldActor : fieldActors) {
                 final Value value = HostTupleAccess.readValue(tuple, fieldActor);
-                visitor.visitField(getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
+                visitor.visitField(layout.getFieldOffsetInCell(fieldActor), fieldActor.name, fieldActor.descriptor(), value);
             }
             if (hub instanceof StaticHub) {
                 return;
@@ -165,25 +177,25 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @PROTOTYPE_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
-        visitFields(visitor, tuple);
+        visitFields(visitor, tuple, this);
     }
 
     public int getHubReferenceOffsetInCell() {
         return headerSize + hubOffset;
     }
 
+    @PROTOTYPE_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
             return value;
         }
         final Value result = mirror.readField(offset);
-        assert result.kind() == kind;
         return result;
     }
 
+    @PROTOTYPE_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
-        assert kind == value.kind();
         if (writeHeaderValue(mirror, offset, value)) {
             return;
         }

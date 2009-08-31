@@ -33,7 +33,7 @@ public class ProfileCall extends Instruction {
 
     final RiMethod method;
     final int bciOfInvoke;
-    Instruction object;
+    Value object;
     final RiType knownHolder;
 
     /**
@@ -43,7 +43,7 @@ public class ProfileCall extends Instruction {
      * @param object the instruction generating the receiver object; <code>null</code> if there is no receiver
      * @param knownHolder the static type known at the call site
      */
-    public ProfileCall(RiMethod method, int bci, Instruction object, RiType knownHolder) {
+    public ProfileCall(RiMethod method, int bci, Value object, RiType knownHolder) {
         super(CiKind.Void);
         this.method = method;
         this.bciOfInvoke = bci;
@@ -71,7 +71,7 @@ public class ProfileCall extends Instruction {
      * Gets the instruction that generates the object that is input to this instruction.
      * @return the instruction generating the object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -83,12 +83,17 @@ public class ProfileCall extends Instruction {
         return knownHolder;
     }
 
+    @Override
+    public boolean internalClearNullCheck() {
+        return true;
+    }
+
     /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         if (object != null) {
             object = closure.apply(object);
         }
@@ -99,7 +104,7 @@ public class ProfileCall extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitProfileCall(this);
     }
 }

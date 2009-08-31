@@ -45,19 +45,19 @@ public final class ImmortalHeap {
     }
 
     @INSPECTED
-    private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion();
+    private static final ImmortalMemoryRegion immortalHeap = new ImmortalMemoryRegion("Heap-Immortal");
 
     /**
      * VM option to trace immortal heap allocations.
      */
     public static final VMBooleanXXOption traceAllocation
-        = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.STARTING);
+        = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.PRISTINE);
 
     /**
      * VM option to set the size of the immortal heap (MaxPermSize called in Hotspot).
      */
     public static final VMSizeOption maxPermSize =
-        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(32),
+        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(1),
             "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
 
     /**

@@ -39,7 +39,7 @@ public class Constant extends Instruction {
     public Constant(CiConstant value) {
         super(value.basicType.stackType());
         this.value = value;
-        initFlag(Instruction.Flag.NonNull, value.isNonNull());
+        initFlag(Value.Flag.NonNull, value.isNonNull());
     }
 
     /**
@@ -47,7 +47,7 @@ public class Constant extends Instruction {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitConstant(this);
     }
 
@@ -113,7 +113,7 @@ public class Constant extends Instruction {
     public static Constant forObject(Object o) {
         final Constant constant = new Constant(CiConstant.forObject(o));
         if (o != null) {
-            constant.setFlag(Instruction.Flag.NonNull);
+            constant.setFlag(Value.Flag.NonNull);
         }
         return constant;
     }

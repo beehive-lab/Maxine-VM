@@ -32,7 +32,7 @@ public class NewTypeArray extends NewArray {
 
     final CiKind elementType;
 
-    public NewTypeArray(Instruction length, CiKind elementType, ValueStack stateBefore) {
+    public NewTypeArray(Value length, CiKind elementType, ValueStack stateBefore) {
         super(length, stateBefore, null);
         this.elementType = elementType;
     }
@@ -46,7 +46,7 @@ public class NewTypeArray extends NewArray {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewTypeArray(this);
     }
 }

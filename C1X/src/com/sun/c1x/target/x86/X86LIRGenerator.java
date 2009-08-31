@@ -30,7 +30,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Instruction.*;
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -89,7 +89,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     // i486 instructions can inline constants
     @Override
-    protected boolean canStoreAsConstant(Instruction v, CiKind type) {
+    protected boolean canStoreAsConstant(Value v, CiKind type) {
         if (type == CiKind.Short || type == CiKind.Char) {
             // there is no immediate move of word values in asemblerI486.?pp
             return false;
@@ -98,7 +98,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected boolean canInlineAsConstant(Instruction v) {
+    protected boolean canInlineAsConstant(Value v) {
         if (v.type().basicType == CiKind.Long) {
             return false;
         }
@@ -948,7 +948,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     public void visitNewMultiArray(NewMultiArray x) {
 
-        Instruction[] dims = x.dimensions();
+        Value[] dims = x.dimensions();
 
         List<LIRItem> items = new ArrayList<LIRItem>(dims.length);
         for (int i = 0; i < dims.length; i++) {

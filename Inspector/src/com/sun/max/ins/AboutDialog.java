@@ -40,6 +40,7 @@ public final class AboutDialog extends SimpleDialog {
         "the research organization of Sun Microsystems, Inc.:\n" +
         "\n" +
         "     Doug Simon (Principal Investigator)\n" +
+        "     Paul Caprioli\n" +
         "     Laurent Daynes\n" +
         "     Ben Titzer\n" +
         "     Michael Van De Vanter\n" +

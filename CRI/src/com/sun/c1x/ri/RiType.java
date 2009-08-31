@@ -70,7 +70,6 @@ public interface RiType {
      *     "I"
      *     "[[B"
      * </pre>
-     * To convert this name to it Java programming language form, use {@link com.sun.c1x.util.Util#toJavaName(RiType)}.
      *
      * @return the name of this type in internal form
      */

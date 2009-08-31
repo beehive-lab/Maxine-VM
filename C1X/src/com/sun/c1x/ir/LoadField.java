@@ -24,7 +24,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadField</code> instruction a read of a static or instance field.
+ * The <code>LoadField</code> instruction represents a read of a static or instance field.
  *
  * @author Ben L. Titzer
  */
@@ -38,7 +38,7 @@ public class LoadField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public LoadField(Instruction object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+    public LoadField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
     }
 
@@ -67,7 +67,7 @@ public class LoadField extends AccessField {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLoadField(this);
     }
 }

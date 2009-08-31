@@ -674,7 +674,7 @@ public class LinearScan {
     // * Phase 2: compute local live sets separately for each block
     // (sets liveGen and liveKill for each block)
 
-    void setLiveGenKill(Instruction value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
+    void setLiveGenKill(Value value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
         LIROperand opr = value.operand();
         Constant con = null;
         if (value instanceof Constant) {
@@ -784,7 +784,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = op.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allLiveStateValues()) {
+                    for (Value value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
                 }
@@ -978,7 +978,7 @@ public class LinearScan {
                 // print some additional information to simplify debugging
                 for (int i = 0; i < ir().startBlock.liveIn().size(); i++) {
                     if (ir().startBlock.liveIn().get(i)) {
-                        Instruction instr = gen().instructionForVreg(i);
+                        Value instr = gen().instructionForVreg(i);
                         TTY.println(" vreg %d (HIR instruction %c%d)", i, instr == null ? ' ' : instr.type().tchar(), instr == null ? 0 : instr.id());
 
                         for (int j = 0; j < numBlocks; j++) {
@@ -1004,7 +1004,7 @@ public class LinearScan {
     // * Phase 4: build intervals
     // (fills the list intervals)
 
-    void addUse(Instruction value, int from, int to, IntervalUseKind useKind) {
+    void addUse(Value value, int from, int to, IntervalUseKind useKind) {
         assert !value.isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
         LIROperand opr = value.operand();
         Constant con = null;
@@ -1501,7 +1501,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = op.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allLiveStateValues()) {
+                    for (Value value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
                 }
@@ -2033,7 +2033,7 @@ public class LinearScan {
             // no moves are created for this phi function in the LIRGenerator, so the
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
-            Instruction fromValue = phi.operandAt(handler.phiOperand());
+            Value fromValue = phi.operandAt(handler.phiOperand());
 
             // with phi functions it can happen that the same fromValue is used in
             // multiple mappings, so notify move-resolver that this is allowed
@@ -2791,7 +2791,7 @@ public class LinearScan {
         return Util.nonFatalUnimplemented(null);
     }
 
-    int appendScopeValue(int opId, Instruction value, List<ScopeValue> scopeValues) {
+    int appendScopeValue(int opId, Value value, List<ScopeValue> scopeValues) {
         if (value != null) {
             LIROperand opr = value.operand();
             Constant con = null;
@@ -2880,7 +2880,7 @@ public class LinearScan {
             while (pos < nofLocals) {
                 assert pos < curState.localsSize() : "why not?";
 
-                Instruction local = curState.localAt(pos);
+                Value local = curState.localAt(pos);
                 pos += appendScopeValue(opId, local, locals);
 
                 assert locals.size() == pos : "must match";
@@ -2905,7 +2905,7 @@ public class LinearScan {
 
             int pos = stackBegin;
             while (pos < stackEnd) {
-                Instruction expression = innermostState.stackAt(pos);
+                Value expression = innermostState.stackAt(pos);
                 appendScopeValue(opId, expression, expressions);
 
                 assert expressions.size() + stackBegin == pos : "must match";
@@ -3400,7 +3400,7 @@ public class LinearScan {
             for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
                 Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
 
-                Instruction value = gen().instructionForVreg(r);
+                Value value = gen().instructionForVreg(r);
 
                 assert value != null : "all intervals live across block boundaries must have Value";
                 assert value.operand().isRegister() && value.operand().isVirtual() : "value must have virtual operand";

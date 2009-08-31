@@ -365,12 +365,12 @@ public class LogStream {
     }
 
     /**
-     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Instruction) value} to this stream.
+     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Value) value} to this stream.
      *
      * @param value the instruction to print
      * @return this {@code LogStream} instance
      */
-    public LogStream print(Instruction value) {
+    public LogStream print(Value value) {
         indent();
         if (value == null) {
             lineBuffer.append("null");
@@ -381,13 +381,13 @@ public class LogStream {
     }
 
     /**
-     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Instruction) value} to this stream
+     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Value) value} to this stream
      * followed by a {@linkplain #LINE_SEPARATOR line separator}.
      *
      * @param value the instruction to print
      * @return this {@code LogStream} instance
      */
-    public LogStream println(Instruction value) {
+    public LogStream println(Value value) {
         print(value);
         flushLine(true);
         return this;
