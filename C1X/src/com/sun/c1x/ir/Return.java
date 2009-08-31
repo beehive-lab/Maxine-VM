@@ -29,14 +29,14 @@ import com.sun.c1x.ci.*;
  */
 public class Return extends BlockEnd {
 
-    Instruction result;
+    Value result;
 
     /**
      * Constructs a new Return instruction.
      * @param result the instruction producing the result for this return; <code>null</code> if this
      * is a void return
      */
-    public Return(Instruction result) {
+    public Return(Value result) {
         super(result == null ? CiKind.Void : result.type(), null, true);
         this.result = result;
     }
@@ -45,7 +45,7 @@ public class Return extends BlockEnd {
      * Gets the instruction that produces the result for the return.
      * @return the instruction producing the result
      */
-    public Instruction result() {
+    public Value result() {
         return result;
     }
 
@@ -62,7 +62,7 @@ public class Return extends BlockEnd {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         if (result != null) {
             result = closure.apply(result);
         }
@@ -73,7 +73,7 @@ public class Return extends BlockEnd {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitReturn(this);
     }
 }

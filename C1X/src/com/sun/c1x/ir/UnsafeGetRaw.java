@@ -38,7 +38,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      * @param addr the instruction generating the base address
      * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
      */
-    public UnsafeGetRaw(CiKind basicType, Instruction addr, boolean mayBeUnaligned) {
+    public UnsafeGetRaw(CiKind basicType, Value addr, boolean mayBeUnaligned) {
         super(basicType, addr, false);
         this.mayBeUnaligned = mayBeUnaligned;
     }
@@ -51,7 +51,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      * @param log2scale the log base 2 of the scaling factor
      * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
      */
-    public UnsafeGetRaw(CiKind basicType, Instruction addr, Instruction index, int log2scale, boolean mayBeUnaligned) {
+    public UnsafeGetRaw(CiKind basicType, Value addr, Value index, int log2scale, boolean mayBeUnaligned) {
         super(basicType, addr, index, log2scale, false);
         this.mayBeUnaligned = mayBeUnaligned;
     }
@@ -69,7 +69,7 @@ public class UnsafeGetRaw extends UnsafeRawOp {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitUnsafeGetRaw(this);
     }
 }

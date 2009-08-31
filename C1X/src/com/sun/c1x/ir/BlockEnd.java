@@ -49,7 +49,7 @@ public abstract class BlockEnd extends Instruction {
         this.successors = new ArrayList<BlockBegin>(2);
         this.stateAfter = stateAfter;
         if (isSafepoint) {
-            setFlag(Instruction.Flag.IsSafepoint);
+            setFlag(Value.Flag.IsSafepoint);
         }
     }
 
@@ -72,7 +72,7 @@ public abstract class BlockEnd extends Instruction {
      * @return <code>true</code> if this instruction is a safepoint
      */
     public boolean isSafepoint() {
-        return checkFlag(Instruction.Flag.IsSafepoint);
+        return checkFlag(Value.Flag.IsSafepoint);
     }
 
     /**

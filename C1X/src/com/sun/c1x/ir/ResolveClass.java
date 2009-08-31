@@ -48,7 +48,7 @@ public class ResolveClass extends StateSplit {
     }
 
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitResolveClass(this);
     }
 

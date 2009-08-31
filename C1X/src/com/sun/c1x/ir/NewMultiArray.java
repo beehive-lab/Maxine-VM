@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  */
 public class NewMultiArray extends NewArray {
     public final RiType elementType;
-    final Instruction[] dimensions;
+    final Value[] dimensions;
     public final char cpi;
 
     /**
@@ -42,7 +42,7 @@ public class NewMultiArray extends NewArray {
      * @param cpi the constant pool index for resolution
      * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArray(RiType elementType, Instruction[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
+    public NewMultiArray(RiType elementType, Value[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
         super(null, stateBefore, riConstantPool);
         this.elementType = elementType;
         this.dimensions = dimensions;
@@ -53,7 +53,7 @@ public class NewMultiArray extends NewArray {
      * Gets the list of instructions which produce input for this instruction.
      * @return the list of instructions which produce input
      */
-    public Instruction[] dimensions() {
+    public Value[] dimensions() {
         return dimensions;
     }
 
@@ -70,7 +70,7 @@ public class NewMultiArray extends NewArray {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         for (int i = 0; i < dimensions.length; i++) {
             dimensions[i] = closure.apply(dimensions[i]);
         }
@@ -80,7 +80,7 @@ public class NewMultiArray extends NewArray {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewMultiArray(this);
     }
 

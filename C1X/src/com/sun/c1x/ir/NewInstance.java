@@ -37,13 +37,13 @@ public class NewInstance extends StateSplit {
 
     /**
      * Constructs a NewInstance instruction.
-     * @param theClass the class being allocated
+     * @param type the class being allocated
      * @param cpi the constant pool index
      * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType theClass, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    public NewInstance(RiType type, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         super(CiKind.Object, stateBefore);
-        this.instanceClass = theClass;
+        this.instanceClass = type;
         this.cpi = cpi;
         this.constantPool = constantPool;
         setFlag(Flag.NonNull);
@@ -81,7 +81,7 @@ public class NewInstance extends StateSplit {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewInstance(this);
     }
 }

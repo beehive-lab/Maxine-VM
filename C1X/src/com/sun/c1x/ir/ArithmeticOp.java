@@ -41,7 +41,7 @@ public class ArithmeticOp extends Op2 {
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Instruction x, Instruction y, boolean isStrictFP, ValueStack stateBefore) {
+    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, ValueStack stateBefore) {
         super(x.type().meet(y.type()), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
@@ -88,7 +88,7 @@ public class ArithmeticOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitArithmeticOp(this);
     }
 

@@ -1126,6 +1126,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * @return an Action that will create a Memory Words Inspector for the immortal heap region.
+     */
+    public final InspectorAction inspectImmortalHeapMemoryWords() {
+        return new InspectRegionMemoryWordsAction(maxVM().teleImmortalHeapRegion(), "Heap-Immortal", null);
+    }
+
+    /**
      * @return an Action that will create a Memory Words Inspector for the boot code region.
      */
     public final InspectorAction inspectBootCodeMemoryWords() {

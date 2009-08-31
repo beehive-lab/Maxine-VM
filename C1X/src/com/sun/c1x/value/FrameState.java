@@ -34,7 +34,7 @@ import com.sun.c1x.util.*;
 public class FrameState {
 
     private final IRScope scope;
-    private final Instruction[] state;
+    private final Value[] state;
     private final char localsSize;
     private final char stackSize;
 
@@ -42,7 +42,7 @@ public class FrameState {
         scope = state.scope();
         localsSize = (char) state.localsSize();
         stackSize = (char) state.stackSize();
-        this.state = new Instruction[localsSize + stackSize + state.locksSize()];
+        this.state = new Value[localsSize + stackSize + state.locksSize()];
 
         int i = 0;
         for (int j = 0; j < localsSize; j++) {
@@ -65,15 +65,15 @@ public class FrameState {
         throw Util.unimplemented();
     }
 
-    public Instruction localAt(int i) {
+    public Value localAt(int i) {
         return state[i];
     }
 
-    public Instruction stackAt(int i) {
+    public Value stackAt(int i) {
         return state[i + localsSize];
     }
 
-    public Instruction lockAt(int i) {
+    public Value lockAt(int i) {
         return state[i + localsSize + stackSize];
     }
 
@@ -89,9 +89,9 @@ public class FrameState {
         return state.length - stackSize - localsSize;
     }
 
-    public void valuesDo(InstructionClosure closure) {
+    public void valuesDo(ValueClosure closure) {
         for (int i = 0; i < state.length; i++) {
-            Instruction x = state[i];
+            Value x = state[i];
             if (x != null) {
                 state[i] = closure.apply(x);
             }

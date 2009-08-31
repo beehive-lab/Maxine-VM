@@ -55,12 +55,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         this.runtime = compiler.runtime;
     }
 
-    @Override
     public CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall) {
         return emitHelper(null, runtimeCall);
     }
 
-    @Override
     public CiTargetMethod emit(GlobalStub stub) {
         return emitHelper(stub, null);
     }

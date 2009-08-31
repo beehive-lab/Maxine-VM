@@ -194,7 +194,7 @@ public final class WatchpointsTable extends InspectorTable {
                 case EAGER:
                     return watchpoint.isEagerRelocationUpdateSet();
                 default:
-                    throw FatalError.unexpected("Unspected Watchpoint Data column");
+                    throw FatalError.unexpected("Unexpected Watchpoint Data column");
             }
         }
 
@@ -354,11 +354,9 @@ public final class WatchpointsTable extends InspectorTable {
             return label;
         }
 
-        @Override
         public void redisplay() {
         }
 
-        @Override
         public void refresh(boolean force) {
         }
 

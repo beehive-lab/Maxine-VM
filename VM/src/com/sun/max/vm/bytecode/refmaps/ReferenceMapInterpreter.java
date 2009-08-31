@@ -53,7 +53,7 @@ public abstract class ReferenceMapInterpreter {
      */
     public static Object createFrames(ReferenceMapInterpreterContext context) {
         final ClassMethodActor classMethodActor = context.classMethodActor();
-        final CodeAttribute codeAttribute = classMethodActor.originalCodeAttribute();
+        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         final int maxStack = codeAttribute.maxStack();
         final int maxLocals = codeAttribute.maxLocals();
         final ReferenceMapInterpreter interpreter;
@@ -153,7 +153,7 @@ public abstract class ReferenceMapInterpreter {
      */
     protected void resetInterpreter(ReferenceMapInterpreterContext context) {
         this.classMethodActor = context.classMethodActor();
-        final CodeAttribute codeAttribute = classMethodActor.originalCodeAttribute();
+        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         this.constantPool = codeAttribute.constantPool();
         this.codeAttribute = codeAttribute;
         this.code = codeAttribute.code();

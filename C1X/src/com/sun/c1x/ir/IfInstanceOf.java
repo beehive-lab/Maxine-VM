@@ -31,7 +31,7 @@ import com.sun.c1x.ri.*;
 public class IfInstanceOf extends BlockEnd {
 
     final RiType targetClass;
-    Instruction object;
+    Value object;
     boolean testIsInstance;
     final int instanceofBCI;
 
@@ -44,7 +44,7 @@ public class IfInstanceOf extends BlockEnd {
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
      */
-    public IfInstanceOf(RiType targetClass, Instruction object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
+    public IfInstanceOf(RiType targetClass, Value object, boolean testIsInstance, int instanceofBCI, BlockBegin trueSucc, BlockBegin falseSucc) {
         super(CiKind.Illegal, null, false); // XXX: why don't we need the state before??
         this.targetClass = targetClass;
         this.object = object;
@@ -66,7 +66,7 @@ public class IfInstanceOf extends BlockEnd {
      * Gets the instruction that produces the object that is input to the instanceof.
      * @return the instruction producing the object
      */
-    public Instruction object() {
+    public Value object() {
         return object;
     }
 
@@ -128,7 +128,7 @@ public class IfInstanceOf extends BlockEnd {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         object = closure.apply(object);
     }
 
@@ -137,7 +137,7 @@ public class IfInstanceOf extends BlockEnd {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitIfInstanceOf(this);
     }
 }

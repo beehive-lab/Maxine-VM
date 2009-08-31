@@ -25,11 +25,12 @@ import java.util.*;
 
 import sun.misc.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Instruction.*;
+import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -55,18 +56,20 @@ public class IRInterpreter {
     }
 
     public RiRuntime runtime;
+    public C1XCompiler compiler;
     public static final Unsafe unsafe = (Unsafe) getStaticField(Unsafe.class, "theUnsafe");
 
-    public IRInterpreter(RiRuntime runtime) {
+    public IRInterpreter(RiRuntime runtime, C1XCompiler compiler) {
         this.runtime = runtime;
+        this.compiler = compiler;
     }
 
-    private static class Value {
+    private static class Val {
 
         int counter;
         CiConstant value;
 
-        public Value(int counter, CiConstant value) {
+        public Val(int counter, CiConstant value) {
             this.setCounter(counter);
             this.value = value;
         }
@@ -85,19 +88,19 @@ public class IRInterpreter {
 
         private class PhiMove {
             Phi phi;
-            Instruction value;
+            Value value;
 
-            public PhiMove(Phi phi, Instruction value) {
+            public PhiMove(Phi phi, Value value) {
                 super();
                 this.phi = phi;
                 this.value = value;
             }
         }
 
-        private Map<Instruction, Value> instructionTrace = new HashMap<Instruction, Value>();
-        private Map<Instruction, ArrayList<PhiMove>> phiMoves = new HashMap<Instruction, ArrayList<PhiMove>>();
+        private Map<Value, Val> instructionTrace = new HashMap<Value, Val>();
+        private Map<Value, ArrayList<PhiMove>> phiMoves = new HashMap<Value, ArrayList<PhiMove>>();
 
-        private class InstructionMapInitializer implements BlockClosure {
+        private class ValueMapInitializer implements BlockClosure {
 
             public void apply(BlockBegin block) {
                 ValueStack valueStack = block.stateBefore();
@@ -105,7 +108,7 @@ public class IRInterpreter {
 
                 for (Phi phi : phis) {
                     for (int j = 0; j < phi.operandCount(); j++) {
-                        Instruction phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
+                        Value phiOperand = block.isExceptionEntry() ? phi.operandAt(j) : phi.block().predAt(j).end();
                         assert phiOperand != null : "Illegal phi operand";
 
                         if (phiOperand instanceof Phi) {
@@ -124,20 +127,15 @@ public class IRInterpreter {
                         }
                     }
                 }
-
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
-                    instructionTrace.put(instr, new Value(-1, null));
+                    instructionTrace.put(instr, new Val(-1, null));
                 }
             }
 
-            /**
-             * @param phiOperand
-             * @param phi
-             */
             private void addPhiToInstructionList(Phi phiSrc, Phi phi) {
                 phiSrc.setFlag(Flag.PhiVisited);
                 for (int j = 0; j < phiSrc.operandCount(); j++) {
-                    Instruction phiOperand = phiSrc.operandAt(j);
+                    Value phiOperand = phiSrc.operandAt(j);
                     assert phiOperand != null : "Illegal phi operand";
 
                     if (phiOperand instanceof Phi) {
@@ -155,10 +153,9 @@ public class IRInterpreter {
                 }
                 phiSrc.clearFlag(Flag.PhiVisited);
             }
-
         }
 
-        public void performPhiMove(Instruction i) {
+        public void performPhiMove(Value i) {
             ArrayList<PhiMove> blockPhiMoves = phiMoves.get(i);
             if (blockPhiMoves != null) {
                 ArrayList <CiConstant> currentPhiValues = new ArrayList <CiConstant>();
@@ -177,21 +174,21 @@ public class IRInterpreter {
             }
         }
 
-        public void bind(Instruction i, CiConstant value, Integer iCounter) {
-            Value v = new Value(iCounter, value);
+        public void bind(Value i, CiConstant value, Integer iCounter) {
+            Val v = new Val(iCounter, value);
             assert v.counter >= 0;
-            instructionTrace.put(i, new Value(iCounter, value));
+            instructionTrace.put(i, new Val(iCounter, value));
         }
 
         public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
             assert values.length <= valueStack.localsSize() : "Incorrect number of initialization arguments";
-            ir.startBlock.iteratePreOrder(new InstructionMapInitializer());
+            ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
             for (CiConstant value : values) {
                 Object obj;
                 // TODO: Need to fix this hacking
-                Instruction local = valueStack.localAt(index);
+                Value local = valueStack.localAt(index);
                 if (local.type() == CiKind.Float && value.basicType == CiKind.Int) {
                     obj = new Float(value.asInt());
                 } else if ((local.type() == CiKind.Double && value.basicType == CiKind.Int)) {
@@ -201,13 +198,13 @@ public class IRInterpreter {
                 }
                 bind(local, new CiConstant(local.type(), obj), 0);
                 performPhiMove(local);
-                index += value.basicType.sizeInSlots();
+                index += local.type().sizeInSlots();
             }
         }
 
-        CiConstant lookup(Instruction instruction) {
+        CiConstant lookup(Value instruction) {
             if (!(instruction instanceof Constant)) {
-                final Value result = instructionTrace.get(instruction);
+                final Val result = instructionTrace.get(instruction);
                 assert result != null : "Value not defined for instruction: " + instruction;
                 return result.value;
             } else {
@@ -216,7 +213,7 @@ public class IRInterpreter {
         }
     }
 
-    private class Evaluator extends InstructionVisitor {
+    private class Evaluator extends ValueVisitor {
 
         private final RiMethod method;
         private BlockBegin block;
@@ -252,9 +249,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        /**
-         * @param i
-         */
         private void jumpNextInstruction() {
             environment.performPhiMove(currentInstruction);
             currentInstruction = currentInstruction.next();
@@ -269,7 +263,6 @@ public class IRInterpreter {
 
         private void unexpected(Instruction i, Throwable e) {
             List<ExceptionHandler> exceptionHandlerList = i.exceptionHandlers();
-
             for (ExceptionHandler eh : exceptionHandlerList) {
                 if (eh.handler.isCatchAll() || toJavaClass(eh.handler.catchKlass()).isAssignableFrom(e.getClass())) {
                     jump(eh.entryBlock());
@@ -278,40 +271,40 @@ public class IRInterpreter {
                     return;
                 }
             }
-
             environment.bind(i, new CiConstant(CiKind.Object, e), instructionCounter);
             throwable = e;
         }
 
         @Override
         public void visitLoadField(LoadField i) {
-//            if (i.field().isConstant() && i.field().isLoaded()) {
-//                environment.bind(i, CiConstant.fromBoxedJavaValue(i.field().constantValue().boxedValue()), instructionCounter);
-//            } else {
+            try {
+                Class< ? > klass = toJavaClass(i.field().holder());
+                String name = i.field().name();
+                Field field;
                 try {
-                    Class< ? > klass = toJavaClass(i.field().holder());
-                    String name = i.field().name();
-                    Field field = klass.getDeclaredField(name);
-                    field.setAccessible(true);
-                    Object boxedJavaValue;
-                    if (i.object() != null) {
-                        boxedJavaValue = field.get(environment.lookup(i.object()).asObject());
-                    } else {
-                        assert i.isStatic() : "Field must be static in LoadField";
-                        boxedJavaValue = field.get(null);
-                    }
-                    environment.bind(i, CiConstant.fromBoxedJavaValue(boxedJavaValue), instructionCounter);
-                } catch (Throwable e) {
-                    unexpected(i, e);
+                    field = klass.getDeclaredField(name);
+                } catch (NoSuchFieldException e) {
+                    field = klass.getField(name);
                 }
-//            }
+                field.setAccessible(true);
+                Object boxedJavaValue;
+                if (i.object() != null) {
+                    boxedJavaValue = field.get(environment.lookup(i.object()).asObject());
+                } else {
+                    assert i.isStatic() : "Field must be static in LoadField";
+                    boxedJavaValue = field.get(null);
+                }
+                environment.bind(i, CiConstant.fromBoxedJavaValue(boxedJavaValue), instructionCounter);
+            } catch (Throwable e) {
+                unexpected(i, e);
+            }
             jumpNextInstruction();
         }
 
         @Override
         public void visitStoreField(StoreField i) {
             try {
-                Class< ? > klass = toJavaClass(i.field().holder()); // i.field().holder().javaClass(); //
+                Class< ? > klass = toJavaClass(i.field().holder());
                 Field field = klass.getDeclaredField(i.field().name());
                 field.setAccessible(true);
                 field.set(environment.lookup(i.object()).asObject(), getCompatibleBoxedValue(toJavaClass(i.field().type()), i.value()));
@@ -366,37 +359,39 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        private Object getCompatibleBoxedValue(Class< ? > arrayType, Instruction value) {
-            if (arrayType == byte.class) {
+        private Object getCompatibleBoxedValue(Class< ? > type, Value value) {
+            CiConstant lookupValue = environment.lookup(value);
+            if (type == byte.class) {
                 assert value.type().basicType == CiKind.Int : "Types are not compatible";
-                return new Byte((byte) environment.lookup(value).asInt());
-            } else if (arrayType == short.class) {
+                return new Byte((byte) lookupValue.asInt());
+            } else if (type == short.class) {
                 assert value.type().basicType == CiKind.Int : "Types are not compatible";
-                return new Short((short) environment.lookup(value).asInt());
-            } else if (arrayType == char.class) {
+                return new Short((short) lookupValue.asInt());
+            } else if (type == char.class) {
                 assert value.type().basicType == CiKind.Int : "Types are not compatible";
-                return new Character((char) environment.lookup(value).asInt());
-            } else if (arrayType == boolean.class) {
+                return new Character((char) lookupValue.asInt());
+            } else if (type == boolean.class) {
                 assert value.type().basicType == CiKind.Int : "Types are not compatible";
-                return new Boolean(environment.lookup(value).asInt() == 1 ? true : false);
-            } else if (arrayType == double.class) {
-                CiConstant rvalue = environment.lookup(value);
-                if (rvalue.basicType == CiKind.Int) {
-                    return new Double(rvalue.asInt());
+                return new Boolean(lookupValue.asInt() == 1 ? true : false);
+            } else if (type == double.class) {
+                if (lookupValue.basicType == CiKind.Int) {
+                    return new Double(lookupValue.asInt());
                 } else {
-                    return rvalue.boxedValue();
+                    return lookupValue.boxedValue();
                 }
-            } else if (arrayType == float.class) {
-                CiConstant rvalue = environment.lookup(value);
+            } else if (type == float.class) {
+                CiConstant rvalue = lookupValue;
                 if (rvalue.basicType == CiKind.Int) {
                     return new Float(rvalue.asInt());
                 } else {
                     return rvalue.boxedValue();
                 }
             } else {
-                return environment.lookup(value).boxedValue();
+                return lookupValue.boxedValue();
             }
         }
+
+
 
         /**
          * @param i
@@ -816,24 +811,156 @@ public class IRInterpreter {
 
         @Override
         public void visitInvoke(Invoke i) {
+            if (!C1XOptions.InterpretInvokedMethods) {
+                visitInvokeNative(i);
+                return;
+            }
+            RiMethod targetMethod = i.target();
+            String methodName = targetMethod.name();
+            if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+                Object res = callInitMethod(i);
+                environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
+                jumpNextInstruction();
+                return;
+            }
+            if (!targetMethod.isLoaded()) {
+                switch (i.opcode()) {
+                    case Bytecodes.INVOKEINTERFACE:
+                        targetMethod = i.constantPool.resolveInvokeInterface(i.cpi);
+                        break;
+                    case Bytecodes.INVOKESPECIAL:
+                        targetMethod = i.constantPool.resolveInvokeSpecial(i.cpi);
+                        break;
+                    case Bytecodes.INVOKESTATIC:
+                        targetMethod = i.constantPool.resolveInvokeStatic(i.cpi);
+                        break;
+                    case Bytecodes.INVOKEVIRTUAL:
+                        targetMethod = i.constantPool.resolveInvokeVirtual(i.cpi);
+                        break;
+                }
+            }
+            if (targetMethod.isNative() || methodName.equals("newInstance") || methodName.equals("newInstance0") /*|| targetMethod.holder().javaClass().getName().startsWith("com.sun.max.unsafe") */) {
+                visitInvokeNative(i);
+                return;
+            }
+
+            switch (i.opcode()) {
+                case Bytecodes.INVOKEINTERFACE: {
+                    RiType type = null;
+                    try {
+                        Class< ? > objClass = environment.lookup(i.arguments()[0]).boxedValue().getClass();
+                        type = runtime.getRiType(objClass);
+                    } catch (NullPointerException ne) {
+                        unexpected(i, ne);
+                        return;
+                    }
+                    targetMethod = type.resolveMethodImpl(targetMethod);
+                    break;
+                }
+
+                case Bytecodes.INVOKEVIRTUAL: {
+                    RiType type = null;
+                    try {
+                        Class< ? > objClass = environment.lookup(i.arguments()[0]).boxedValue().getClass();
+                        type = runtime.getRiType(objClass);
+                    } catch (NullPointerException ne) {
+                        unexpected(i, ne);
+                        return;
+                    }
+                    targetMethod = type.resolveMethodImpl(targetMethod);
+                    break;
+                }
+            }
+
+            if (!i.isStatic()) {
+                if (environment.lookup(i.arguments()[0]).boxedValue() == null) {
+                    unexpected(i, new NullPointerException());
+                    return;
+                }
+            }
+
+            CiConstant result;
+            try {
+                C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, null, targetMethod);
+                final IRInterpreter interpreter = new IRInterpreter(runtime, compiler);
+                result = interpreter.execute(compilation.emitHIR(), arguments(i));
+                environment.bind(i, CiConstant.fromBoxedJavaValue(result.boxedValue()) /*new CiConstant(signature.returnBasicType(), result.boxedValue() */, instructionCounter);
+            } catch (InvocationTargetException e) {
+                unexpected(i, e.getTargetException());
+            //} catch (Bailout e) {
+              //  unexpected(i, e);
+            }
+            jumpNextInstruction();
+        }
+
+        private CiConstant [] arguments(Invoke i) {
+            RiSignature signature = i.target().signatureType();
+
+            int nargs = signature.argumentCount(!i.isStatic());
+            CiConstant[] arglist = new CiConstant[nargs];
+            int index = 0;
+            if (i.isStatic()) {
+                index = 0;
+                for (int j = 0; j < nargs; j++) {
+                    CiKind argumentType = signature.argumentTypeAt(j).basicType();
+                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    index += argumentType.sizeInSlots();
+                }
+            } else {
+                arglist[0] = environment.lookup(i.receiver());
+                index = 1;
+                for (int j = 1; j < nargs; j++) {
+                    CiKind argumentType = signature.argumentTypeAt(j - 1).basicType();
+                    arglist[j] = getCompatibleCiConstant(toJavaClass(signature.argumentTypeAt(j - 1)), (i.arguments()[index])); //environment.lookup(i.arguments()[index]);
+                    index += argumentType.sizeInSlots();
+                }
+            }
+            return arglist;
+        }
+        private CiConstant getCompatibleCiConstant(Class< ? > arrayType, Value value) {
+            if (arrayType == byte.class) {
+                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                return CiConstant.forByte((byte) environment.lookup(value).asInt());
+            } else if (arrayType == short.class) {
+                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                return CiConstant.forShort((short) environment.lookup(value).asInt());
+            } else if (arrayType == char.class) {
+                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                return CiConstant.forChar((char) environment.lookup(value).asInt());
+            } else if (arrayType == boolean.class) {
+                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                return CiConstant.forBoolean(environment.lookup(value).asInt() == 0 ? false : true);
+            } else if (arrayType == double.class) {
+                CiConstant rvalue = environment.lookup(value);
+                if (rvalue.basicType == CiKind.Int) {
+                    return CiConstant.forDouble(rvalue.asInt());
+                } else {
+                    return rvalue;
+                }
+            } else if (arrayType == float.class) {
+                CiConstant rvalue = environment.lookup(value);
+                if (rvalue.basicType == CiKind.Int) {
+                    return CiConstant.forFloat(rvalue.asInt());
+                } else {
+                    return rvalue;
+                }
+            } else {
+                return environment.lookup(value);
+            }
+        }
+
+
+//        @Override
+        public void visitInvokeNative(Invoke i) {
             RiMethod targetMethod = i.target();
             RiSignature signature = targetMethod.signatureType();
             String methodName = targetMethod.name();
 
             if (i.isStatic()) {
-                int nargs = targetMethod.signatureType().argumentCount(false);
-                Object[] arglist = new Object[nargs];
-                int index = 0;
-                for (int j = 0; j < nargs; j++) {
-                    CiKind argumentType = signature.argumentTypeAt(j).basicType();
-                     arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index])); // environment.lookup((i.arguments()[j])).boxedValue();
-                    index += argumentType.sizeInSlots();
-                }
-
                 Class< ? > methodClass = toJavaClass(targetMethod.holder());
                 Method m = null;
                 try {
-                    m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature, nargs));
+                    m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
                 } catch (SecurityException e1) {
                     unexpected(i, e1.getCause());
                 } catch (NoSuchMethodException e1) {
@@ -844,11 +971,7 @@ public class IRInterpreter {
                 try {
                     if (m != null) {
                         m.setAccessible(true);
-                        // TODO: need to fix this bug
-                        //       host vm crashes when calling this method
-                        if (!methodName.equals("longToWord")) {
-                            res = m.invoke(null, arglist);
-                        }
+                        res = m.invoke(null, argumentList(i, signature));
                     } else {
                         throw new Error();
                     }
@@ -863,7 +986,6 @@ public class IRInterpreter {
                 environment.bind(i, new CiConstant(signature.returnBasicType(), res), instructionCounter);
 
             } else {
-
                 // Call init methods
                 if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
                     Object res = callInitMethod(i);
@@ -873,16 +995,8 @@ public class IRInterpreter {
                 }
 
                 Object objref = environment.lookup((i.arguments()[0])).boxedValue();
-                int nargs = signature.argumentCount(false);
-                Object[] arglist = new Object[nargs];
-                int index = 0;
-                for (int j = 0; j < nargs; j++) {
-                    CiKind argumentType = signature.argumentTypeAt(j).basicType();
-                     arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index + 1]));
-                    index += argumentType.sizeInSlots();
-                }
-
                 Class< ? > methodClass = null;
+
                 try {
                     methodClass = objref.getClass();
                 } catch (NullPointerException ne) {
@@ -894,7 +1008,7 @@ public class IRInterpreter {
 
                 while (m == null && methodClass != null) {
                     try {
-                        m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature, nargs));
+                        m = methodClass.getDeclaredMethod(methodName, toJavaSignature(signature));
                     } catch (SecurityException e) {
                         unexpected(i, e);
                         return;
@@ -913,7 +1027,7 @@ public class IRInterpreter {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
-                        res = m.invoke(objref, arglist);
+                        res = m.invoke(objref, argumentList(i, signature));
                     }
                 } catch (IllegalArgumentException e) {
                     unexpected(i, e.getCause());
@@ -928,14 +1042,33 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
+        private Object[] argumentList(Invoke i, RiSignature signature) {
+            int nargs = signature.argumentCount(false);
+            Object[] arglist = new Object[nargs];
+            int index = 0;
+            if (i.isStatic()) {
+                index = 0;
+            } else {
+                index = 1;
+            }
+            for (int j = 0; j < nargs; j++) {
+                CiKind argumentType = signature.argumentTypeAt(j).basicType();
+                arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index]));
+                index += argumentType.sizeInSlots();
+            }
+            return arglist;
+        }
+
         private Object callInitMethod(Invoke i) {
             Object objectRef = environment.lookup(i.arguments()[0]).boxedValue();
+            // at this point, objectRef can represent a class, or a new uninitialized object produced by a NewInstance instruction
+            // in both cases, a new object will be allocated and initialized.
             Class< ? > javaClass = (objectRef instanceof Class<?>) ? (Class <?>) objectRef : objectRef.getClass();
             Object newReference = null;
             int nargs = i.target().signatureType().argumentCount(false);
             Object[] arglist = new Object[nargs];
             for (int j = 0; j < nargs; j++) {
-                arglist[j] = environment.lookup((i.arguments()[j + 1])).boxedValue();
+                arglist[j] = getCompatibleBoxedValue(toJavaClass(i.target().signatureType().argumentTypeAt(j)), i.arguments()[j + 1]); //environment.lookup((i.arguments()[j + 1])).boxedValue();
             }
 
             Class< ? >[] partypes = new Class< ? >[i.target().signatureType().argumentCount(false)];
@@ -959,7 +1092,8 @@ public class IRInterpreter {
             return newReference;
         }
 
-        private Class< ? >[] toJavaSignature(RiSignature signature, int nargs) {
+        private Class< ? >[] toJavaSignature(RiSignature signature) {
+            int nargs = signature.argumentCount(false);
             Class< ? >[] partypes = new Class< ? >[signature.argumentCount(false)];
             for (int j = 0; j < nargs; j++) {
                 partypes[j] = toJavaClass(signature.argumentTypeAt(j));
@@ -985,7 +1119,7 @@ public class IRInterpreter {
                             resolved = CiKind.fromPrimitiveOrVoidTypeChar(internalName.charAt(0)).primitiveArrayClass();
                             arrayDimensions--;
                         } else {
-                            String name = internalName.substring(arrayDimensions, internalName.length() - 1).replace('/', '.');
+                            String name = internalName.substring(1, internalName.length() - 1).replace('/', '.');
                             resolved = Class.forName(name);
                         }
                         while (arrayDimensions > 0) {
@@ -1013,6 +1147,7 @@ public class IRInterpreter {
             RiType type = i.instanceClass();
             Class< ? > javaClass = toJavaClass(type);
             try {
+                // bind the NewInstance instruction to the new allocated object
                 environment.bind(i, new CiConstant(CiKind.Object, unsafe.allocateInstance(javaClass)), instructionCounter);
             } catch (InstantiationException e) {
                 unexpected(i, e.getCause());
@@ -1082,8 +1217,8 @@ public class IRInterpreter {
             for (int j = 0; j < nDimensions; j++) {
                 dimensions[j] = environment.lookup(i.dimensions()[j]).asInt();
             }
-            Object newObjectArray = null;
 
+            Object newObjectArray = null;
             try {
                 newObjectArray = Array.newInstance(elementTypeNewArray(i), dimensions);
             } catch (NegativeArraySizeException e) {
@@ -1111,7 +1246,7 @@ public class IRInterpreter {
         public void visitCheckCast(CheckCast i) {
             CiConstant objectRef = environment.lookup(i.object());
 
-            if (objectRef.asObject() != null && !toJavaClass(i.declaredType()).isInstance(objectRef.asObject())) {
+            if (objectRef.boxedValue() != null && !toJavaClass(i.declaredType()).isInstance(objectRef.boxedValue())) {
                 throwable = new ClassCastException("Object reference cannot be cast to the resolved type.");
             }
             environment.bind(i, objectRef, instructionCounter);
@@ -1120,7 +1255,7 @@ public class IRInterpreter {
 
         @Override
         public void visitInstanceOf(InstanceOf i) {
-            Instruction object = i.object();
+            Value object = i.object();
             Object objectRef = environment.lookup(object).asObject();
 
             if (objectRef == null || !(toJavaClass(i.targetClass()).isInstance(objectRef))) {
@@ -1263,7 +1398,7 @@ public class IRInterpreter {
                 return x.asObject() == y.asObject() ? 0 : 1;
             } else {
                 final int xInt = x.asInt();
-                final int yInt = y.asInt();
+                final int yInt = y.basicType.isObject() ? (Integer) y.boxedValue() : y.asInt();
                 if (xInt == yInt) {
                     return 0;
                 } else if (xInt > yInt) {
@@ -1321,6 +1456,11 @@ public class IRInterpreter {
 
         @Override
         public void visitReturn(Return i) {
+            if (i.result() == null) {
+                result = null;
+                jumpNextInstruction();
+                return;
+            }
             result = environment.lookup(i.result());
             CiKind returnType = method.signatureType().returnBasicType();
             if (returnType == CiKind.Boolean) {
@@ -1368,25 +1508,156 @@ public class IRInterpreter {
 
         @Override
         public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-            // TODO: implement with the Unsafe API
+            Object address = environment.lookup(i.base()).asObject();
+            long index = i.index() == null ? 0 : environment.lookup(i.index()).asLong();
+            Object result = null;
+            switch (i.basicType()) {
+                case Boolean:
+                    result = unsafe.getBoolean(address, index);
+                    break;
+                case Byte:
+                    result = unsafe.getByte(address, index);
+                    break;
+                case Short:
+                    result = unsafe.getShort(address, index);
+                    break;
+                case Int:
+                    result = unsafe.getInt(address, index);
+                    break;
+                case Long:
+                    result = unsafe.getLong(address, index);
+                    break;
+                case Float:
+                    result = unsafe.getFloat(address, index);
+                    break;
+                case Double:
+                    result = unsafe.getDouble(address, index);
+                    break;
+                default:
+                    fail("Should not reach here");
+
+            }
+            environment.bind(i, new CiConstant(i.basicType(), result), instructionCounter);
             jumpNextInstruction();
         }
 
         @Override
         public void visitUnsafePutRaw(UnsafePutRaw i) {
-            // TODO: implement with the Unsafe API
+            Object address = environment.lookup(i.base()).asObject();
+            long index = i.index() == null ? 0 : environment.lookup(i.index()).asLong();
+            CiConstant value = environment.lookup(i.value());
+            switch (i.basicType()) {
+                case Boolean:
+                    unsafe.putBoolean(address, index, value.asInt() == 0 ? false : true);
+                    break;
+                case Byte:
+                    unsafe.putByte(address, index, (byte) value.asInt());
+                    break;
+                case Short:
+                    unsafe.putShort(address, index, (short) value.asInt());
+                    break;
+                case Int:
+                    unsafe.putInt(address, index, value.asInt());
+                    break;
+                case Long:
+                    unsafe.putLong(address, index, value.asLong());
+                    break;
+                case Float:
+                    unsafe.putFloat(address, index, value.asFloat());
+                    break;
+                case Double:
+                    unsafe.putDouble(address, index, value.asDouble());
+                    break;
+                case Word:
+                case Object:
+                    unsafe.putObject(address, index, value.asObject());
+                    break;
+
+                default:
+                    fail("Should not reach here");
+
+            }
             jumpNextInstruction();
         }
 
         @Override
         public void visitUnsafeGetObject(UnsafeGetObject i) {
-            // TODO: implement with the Unsafe API
+            Object object = environment.lookup(i.object()).asObject();
+            long offset = environment.lookup(i.offset()).asLong();
+
+            Object result = null;
+            switch (i.basicType()) {
+                case Boolean:
+                    result = unsafe.getBoolean(object, offset);
+                    break;
+                case Byte:
+                    result = unsafe.getByte(object, offset);
+                    break;
+                case Short:
+                    result = unsafe.getShort(object, offset);
+                    break;
+                case Int:
+                    result = unsafe.getInt(object, offset);
+                    break;
+                case Long:
+                    result = unsafe.getLong(object, offset);
+                    break;
+                case Float:
+                    result = unsafe.getFloat(object, offset);
+                    break;
+                case Double:
+                    result = unsafe.getDouble(object, offset);
+                    break;
+                case Word:
+                case Object:
+                    result = unsafe.getObject(object, offset);
+                    break;
+
+                default:
+                    fail("Should not reach here");
+
+            }
+            environment.bind(i, new CiConstant(i.basicType(), result), instructionCounter);
             jumpNextInstruction();
         }
 
         @Override
         public void visitUnsafePutObject(UnsafePutObject i) {
-            // TODO: implement with the Unsafe API
+            Object object = environment.lookup(i.object());
+            long offset = environment.lookup(i.offset()).asLong();
+            CiConstant value = environment.lookup(i.value());
+
+            switch (i.basicType()) {
+                case Boolean:
+                    unsafe.putBoolean(object, offset, value.asInt() == 0 ? false : true);
+                    break;
+                case Byte:
+                    unsafe.putByte(object, offset, (byte) value.asInt());
+                    break;
+                case Short:
+                    unsafe.putShort(object, offset, (short) value.asInt());
+                    break;
+                case Int:
+                    unsafe.putInt(object, offset, value.asInt());
+                    break;
+                case Long:
+                    unsafe.putLong(object, offset, value.asLong());
+                    break;
+                case Float:
+                    unsafe.putFloat(object, offset, value.asFloat());
+                    break;
+                case Double:
+                    unsafe.putDouble(object, offset, value.asDouble());
+                    break;
+                case Word:
+                case Object:
+                    unsafe.putObject(object, offset, value.asObject());
+                    break;
+
+                default:
+                    fail("Should not reach here");
+
+            }
             jumpNextInstruction();
         }
 
@@ -1414,7 +1685,6 @@ public class IRInterpreter {
          * @return
          */
         public CiConstant run() throws InvocationTargetException {
-
             while (currentInstruction != null) {
                 currentInstruction.accept(this);
                 instructionCounter++;
@@ -1424,8 +1694,6 @@ public class IRInterpreter {
             }
             if (result != null) {
                 assert method.signatureType().returnBasicType() != CiKind.Void;
-                // TODO: Need to improve this!
-
                 return result;
             } else {
                 return CiConstant.NULL_OBJECT;
@@ -1481,14 +1749,15 @@ public class IRInterpreter {
         }
 
         private void assertBasicType(CiKind xval, CiKind yval, CiKind type) {
-            if (xval != type || yval != type) {
-                throw new CiBailout("Type mismatch");
-            }
+            assertBasicType(xval, type);
+            assertBasicType(yval, type);
         }
 
         private void assertBasicType(CiKind x, CiKind type) {
             if (x != type) {
-                throw new CiBailout("Type mismatch");
+                if (!(x.isInt() && (type.isLong() || type.isInt()))) {
+                    throw new CiBailout("Type mismatch");
+                }
             }
         }
 

@@ -23,7 +23,7 @@ package jtt.optimize;
 /*
  * Tests optimization of switches.
  * @Harness: java
- * @Runs: 0=1
+ * @Runs: 0=1;
  */
 public class Switch01 {
     public static int test(int arg) {

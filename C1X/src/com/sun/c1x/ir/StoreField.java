@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  */
 public class StoreField extends AccessField {
-    Instruction value;
+    Value value;
 
     /**
      * Creates a new LoadField instance.
@@ -40,7 +40,7 @@ public class StoreField extends AccessField {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public StoreField(Instruction object, RiField field, Instruction value, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+    public StoreField(Value object, RiField field, Value value, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(object, field, isStatic, stateBefore, isLoaded, cpi, constantPool);
         this.value = value;
         setFlag(Flag.LiveStore);
@@ -50,7 +50,7 @@ public class StoreField extends AccessField {
      * Gets the value that is written to the field.
      * @return the value
      */
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -68,7 +68,7 @@ public class StoreField extends AccessField {
      * @param closure the closure to apply to each value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         value = closure.apply(value);
     }
@@ -78,7 +78,7 @@ public class StoreField extends AccessField {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitStoreField(this);
     }
 }

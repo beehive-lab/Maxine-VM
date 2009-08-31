@@ -42,16 +42,26 @@ public final class UnsafeLoophole {
     }
 
     @UNSAFE_CAST
-    public static native <Word_Type extends Word> Word_Type intToWord(int value);
+    public static <Word_Type extends Word> Word_Type intToWord(int value) {
+        final Class<Word_Type> type = null;
+        return StaticLoophole.cast(type, Address.fromInt(value));
+    }
 
     @UNSAFE_CAST
-    public static native <Word_Type extends Word> Word_Type longToWord(long value);
+    public static <Word_Type extends Word> Word_Type longToWord(long value) {
+        final Class<Word_Type> type = null;
+        return StaticLoophole.cast(type, Address.fromLong(value));
+    }
 
     @UNSAFE_CAST
-    public static native int wordToInt(Word word);
+    public static int wordToInt(Word word) {
+        return word.asAddress().toInt();
+    }
 
     @UNSAFE_CAST
-    public static native long wordToLong(Word word);
+    public static long wordToLong(Word word) {
+        return word.asAddress().toLong();
+    }
 
     @UNSAFE_CAST
     public static boolean byteToBoolean(byte value) {

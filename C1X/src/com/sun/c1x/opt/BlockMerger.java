@@ -21,7 +21,6 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
@@ -35,7 +34,7 @@ import com.sun.c1x.value.*;
  */
 public class BlockMerger implements BlockClosure {
 
-    final BlockBegin startBlock;
+    private final BlockBegin startBlock;
 
     public BlockMerger(IR ir) {
         startBlock = ir.startBlock;
@@ -87,18 +86,26 @@ public class BlockMerger implements BlockClosure {
                     C1XMetrics.BlocksMerged++;
                 } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
                     // the successor has multiple predecessors, but this block is empty
-                    ValueStack oldState = oldEnd.stateAfter();
+                    final ValueStack oldState = oldEnd.stateAfter();
                     assert sux.stateBefore().scope() == oldState.scope();
                     if (block.stateBefore().hasPhisFor(block)) {
                         // can't skip a block that has phis
                         return false;
                     }
                     for (BlockBegin pred : block.predecessors()) {
-                        ValueStack predState = pred.end().stateAfter();
+                        final ValueStack predState = pred.end().stateAfter();
                         if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
                             // scopes would not match after skipping this block
                             // XXX: if phi's were smarter about scopes, this would not be necessary
                             return false;
+                        }
+                        if (sux.stateBefore().hasPhisFor(sux)) {
+                            Iterable<Phi> suxPhis = sux.stateBefore().allPhis(sux);
+                            for (Phi phi : suxPhis) {
+                                if (phi.operandIn(block.end().stateAfter()) != phi.operandIn(pred.end().stateAfter())) {
+                                    return false;
+                                }
+                            }
                         }
                     }
                     sux.removePredecessor(block); // remove this block from the successor
@@ -115,71 +122,7 @@ public class BlockMerger implements BlockClosure {
                 }
             }
         }
-        if (newEnd instanceof If) {
-            reduceNestedIfOp(block, (If) newEnd);
-        }
         return newEnd != oldEnd;
-    }
-
-    private void reduceNestedIfOp(BlockBegin block, If newEnd) {
-        IfOp ifOp = asIfOp(newEnd.x());
-        CiConstant k1 = newEnd.y().asConstant();
-        Condition cond = newEnd.condition();
-
-        if (k1 == null || ifOp == null) {
-            ifOp = asIfOp(newEnd.y());
-            k1 = newEnd.x().asConstant();
-            cond = cond.mirror();
-        }
-        if (k1 != null && ifOp != null) {
-            // this matches:
-            // if (cond, ifOp(a, b, c, d), k1, tsux, fsux)   -or-
-            // if (cond, k1, ifOp(a, b, c, d), tsux, fsux)
-
-            if (ifOp.trueValue().isConstant() && ifOp.falseValue().isConstant()) {
-                // this matches:
-                // if (cond, ifOp(a, b, kT, kF), k1, tsux, fsux)  -or-
-                // if (cond, k1, ifOp(a, b, kT, kF), tsux, fsux)
-                CiConstant kT = ifOp.trueValue().asConstant();
-                CiConstant kF = ifOp.falseValue().asConstant();
-                // Find the instruction before newEnd, starting with ifOp.
-                // When newEnd and ifOp are not in the same block, prev
-                // becomes null. In such (rare) cases it is not
-                // profitable to perform the optimization.
-                Instruction prev = ifOp;
-                while (prev != null && prev.next() != newEnd) {
-                    prev = prev.next();
-                }
-
-                if (prev != null) {
-                    BlockBegin tsux = newEnd.trueSuccessor();
-                    BlockBegin fsux = newEnd.falseSuccessor();
-
-                    // see where we would go in the true and false cases
-                    Boolean tres = cond.foldCondition(kT, k1);
-                    Boolean fres = cond.foldCondition(kF, k1);
-
-                    if (tres == null || fres == null) {
-                        // could not fold the comparison for some reason
-                        return;
-                    }
-
-                    BlockBegin tblock = tres ? tsux : fsux;
-                    BlockBegin fblock = fres ? fsux : tsux;
-
-                    if (tblock != fblock && !newEnd.isSafepoint()) {
-                        // remove the IfOp and move its comparison into the if at the end
-                        If newIf = new If(ifOp.x(), ifOp.condition(), false, ifOp.y(), tblock, fblock, null, newEnd.isSafepoint());
-                        newIf.setStateAfter(newEnd.stateAfter().immutableCopy());
-
-                        assert prev.next() == newEnd : "must be guaranteed by above search";
-                        prev.setNext(newIf, newEnd.bci());
-                        block.setEnd(newIf);
-                        C1XMetrics.NestedIfOpsRemoved++;
-                    }
-                }
-            }
-        }
     }
 
     private void verifyStates(BlockBegin block, BlockBegin sux) {
@@ -200,9 +143,5 @@ public class BlockMerger implements BlockClosure {
         for (int i = 0; i < endState.stackSize(); i++) {
             assert endState.stackAt(i) == suxState.stackAt(i);
         }
-    }
-
-    private IfOp asIfOp(Instruction x) {
-        return x instanceof IfOp ? (IfOp) x : null;
     }
 }

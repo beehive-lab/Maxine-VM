@@ -22,11 +22,8 @@ package com.sun.c1x.ir;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -38,80 +35,25 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public abstract class Instruction {
-    public boolean isDeadPhi() {
-        return checkFlag(Flag.PhiDead);
-    }
-
-    /**
-     * An enumeration of flags on instructions.
-     */
-    public enum Flag {
-        NonNull,            // produces non-null value
-        NoNullCheck,        // does not require null check
-        NoStoreCheck,       // does not require store check
-        NoRangeCheck,       // does not require range (bounds) check
-        NoWriteBarrier,     // does not require write barrier
-        NoZeroCheck,        // divide or modulus cannot cause exception
-        DirectCompare,
-        IsLoaded,           // field or method is resolved and class is loaded and initialized
-        IsStatic,           // field or method access is static
-        IsSafepoint,        // branch is backward (safepoint)
-        IsStrictFP,
-        PreservesState,     // intrinsic preserves state
-        UnorderedIsTrue,
-        NeedsPatching,
-        ThrowIncompatibleClassChangeError,
-        LiveValue,          // live because value is used
-        LiveDeopt,          // live for deoptimization
-        LiveControl,        // live for control dependencies
-        LiveSideEffect,     // live for possible side-effects only
-        LiveStore,          // instruction is a store
-        PhiDead,            // phi is illegal because local is dead
-        PhiCannotSimplify,  // phi cannot be simplified
-        PhiVisited;         // phi has been visited during simplification
-
-        public final int mask = 1 << ordinal();
-    }
+public abstract class Instruction extends Value {
 
     private static final int BCI_NOT_APPENDED = -99;
-    private static final int LIVE_FLAGS = Flag.LiveValue.mask |
-                                          Flag.LiveDeopt.mask |
-                                          Flag.LiveControl.mask |
-                                          Flag.LiveSideEffect.mask;
     public static final int INVOCATION_ENTRY_BCI = -1;
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
-    public static int nextID;
-
-    private final int id;
-    protected final CiKind valueType;
     private int bci;
-    private int flags;
     private Instruction next;
-    private Instruction subst;
 
     private List<ExceptionHandler> exceptionHandlers = ExceptionHandler.ZERO_HANDLERS;
-
-    private LIROperand lirOperand;
 
     /**
      * Constructs a new instruction with the specified value type.
      * @param type the value type for this instruction
      */
     public Instruction(CiKind type) {
-        id = nextID++;
+        super(type);
         bci = BCI_NOT_APPENDED;
-        valueType = type;
         lirOperand = LIROperand.ILLEGAL;
-    }
-
-    /**
-     * Gets the unique ID of this instruction.
-     * @return the id of this instruction
-     */
-    public final int id() {
-        return id;
     }
 
     /**
@@ -141,33 +83,6 @@ public abstract class Instruction {
     }
 
     /**
-     * Checks whether this instruction is live (i.e. code should be generated for it).
-     * This is computed in a dedicated pass by {@link com.sun.c1x.opt.LivenessMarker}.
-     * An instruction be live because its value is needed by another live instruction,
-     * because its value is needed for deoptimization, or the program is control dependent
-     * upon it.
-     * @return {@code true} if this instruction should be considered live
-     */
-    public boolean isLive() {
-        return C1XOptions.PinAllInstructions || (flags & LIVE_FLAGS) != 0;
-    }
-
-    /**
-     * Clears all liveness flags.
-     */
-    public void clearLive() {
-        flags = flags & ~LIVE_FLAGS;
-    }
-
-    /**
-     * Gets the type of the value pushed to the stack by this instruction.
-     * @return the value type of this instruction
-     */
-    public final CiKind type() {
-        return valueType;
-    }
-
-    /**
      * Gets the next instruction after this one in the basic block, or <code>null</code>
      * if this instruction is the end of a basic block.
      * @return the next instruction after this one in the basic block
@@ -185,7 +100,7 @@ public abstract class Instruction {
      */
     public final Instruction setNext(Instruction next, int bci) {
         if (next != null) {
-            assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
+            assert !(this instanceof BlockEnd);
             this.next = next;
             next.setBCI(bci);
         }
@@ -200,40 +115,10 @@ public abstract class Instruction {
      */
     public final Instruction resetNext(Instruction next) {
         if (next != null) {
-            assert !(this instanceof Phi || this instanceof BlockEnd || this instanceof Local);
+            assert !(this instanceof BlockEnd);
             this.next = next;
         }
         return next;
-    }
-
-    /**
-     * Gets the instruction that should be substituted for this one. Note that this
-     * method is recursive; if the substituted instruction has a substitution, then
-     * the final substituted instruction will be returned. If there is no substitution
-     * for this instruction, <code>this</code> will be returned.
-     * @return the substitution for this instruction
-     */
-    public final Instruction subst() {
-        if (subst == null) {
-            return this;
-        }
-        return subst.subst();
-    }
-
-    /**
-     * Checks whether this instruction has a substitute.
-     * @return <code>true</code> if this instruction has a substitution.
-     */
-    public final boolean hasSubst() {
-        return subst != null;
-    }
-
-    /**
-     * Sets the instruction that will be substituted for this instruction.
-     * @param subst the instruction to substitute for this instruction
-     */
-    public final void setSubst(Instruction subst) {
-        this.subst = subst;
     }
 
     /**
@@ -254,119 +139,6 @@ public abstract class Instruction {
             q = q.next();
         }
         return p;
-    }
-
-    public void clearNullCheck() {
-        clearFlag(Flag.NoNullCheck);
-    }
-
-    /**
-     * Check whether this instruction has the specified flag set.
-     * @param flag the flag to test
-     * @return <code>true</code> if this instruction has the flag
-     */
-    public final boolean checkFlag(Flag flag) {
-        return (flags & flag.mask) != 0;
-    }
-
-    /**
-     * Set a flag on this instruction.
-     * @param flag the flag to set
-     */
-    public final void setFlag(Flag flag) {
-        flags |= flag.mask;
-    }
-
-    /**
-     * Set a flag on this instruction.
-     * @param flag the flag to set
-     */
-    public final void clearFlag(Flag flag) {
-        flags &= ~flag.mask;
-    }
-
-    /**
-     * Set a flag on this instruction.
-     * @param flag the flag to set
-     * @param val if <code>true</code>, set the flag, otherwise clear it
-     */
-    public final void setFlag(Flag flag, boolean val) {
-        if (val) {
-            setFlag(flag);
-        } else {
-            clearFlag(flag);
-        }
-    }
-
-    /**
-     * Initialize a flag on this instruction.
-     * @param flag the flag to set
-     * @param val if <code>true</code>, set the flag, otherwise do nothing
-     */
-    public final void initFlag(Flag flag, boolean val) {
-        if (val) {
-            setFlag(flag);
-        }
-    }
-
-    /**
-     * Checks whether this instruction produces a value which is guaranteed to be non-null.
-     * @return <code>true</code> if this instruction's value is not null
-     */
-    public final boolean isNonNull() {
-        return checkFlag(Flag.NonNull);
-    }
-
-    /**
-     * Checks whether this instruction needs a null check.
-     * @return <code>true</code> if this instruction needs a null check
-     */
-    public final boolean needsNullCheck() {
-        return !checkFlag(Flag.NoNullCheck);
-    }
-
-    public final boolean isConstant() {
-        return this instanceof Constant;
-    }
-
-    /**
-     * Checks whether this instruction "is illegal"--i.e. it represents a dead
-     * phi or an instruction which does not produce a value.
-     * @return {@code true} if this instruction is illegal as an input value to another instruction
-     */
-    public final boolean isIllegal() {
-        return checkFlag(Flag.PhiDead);
-    }
-
-    public final CiConstant asConstant() {
-        if (this instanceof Constant) {
-            return ((Constant) this).value;
-        }
-        return null;
-    }
-
-    /**
-     * Gets the LIR operand associated with this instruction.
-     * @return the LIR operand for this instruction
-     */
-    public LIROperand operand() {
-        return lirOperand;
-    }
-
-    /**
-     * Sets the LIR operand associated with this instruction.
-     * @param operand the operand to associate with this instruction
-     */
-    public void setOperand(LIROperand operand) {
-        assert operand != LIROperand.ILLEGAL : "operand must exist";
-        lirOperand = operand;
-    }
-
-    /**
-     * Clears the LIR operand associated with this instruction.
-     */
-    public void clearOperand() {
-        lirOperand = LIROperand.ILLEGAL;
     }
 
     /**
@@ -418,43 +190,11 @@ public abstract class Instruction {
     }
 
     /**
-     * This method supports the visitor pattern by accepting a visitor and calling the
-     * appropriate <code>visit()</code> method.
-     * @param v the visitor to accept
-     */
-    public abstract void accept(InstructionVisitor v);
-
-    /**
-     * Computes the exact type of the result of this instruction, if possible.
-     * @return the exact type of the result of this instruction, if it is known; <code>null</code> otherwise
-     */
-    public RiType exactType() {
-        return null;
-    }
-
-    /**
-     * Computes the declared type of the result of this instruction, if possible.
-     * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
-     */
-    public RiType declaredType() {
-        return null;
-    }
-
-    /**
      * Tests whether this instruction can trap.
      * @return <code>true</code> if this instruction can cause a trap.
      */
     public boolean canTrap() {
-        // XXX: what is the relationship to the CanTrap?
         return false;
-    }
-
-    /**
-     * Apply the specified closure to all the input values of this instruction.
-     * @param closure the closure to apply
-     */
-    public void inputValuesDo(InstructionClosure closure) {
-        // default: do nothing.
     }
 
     /**
@@ -462,7 +202,7 @@ public abstract class Instruction {
      * input values, state values, and other values.
      * @param closure the closure to apply
      */
-    public void allValuesDo(InstructionClosure closure) {
+    public void allValuesDo(ValueClosure closure) {
         inputValuesDo(closure);
         ValueStack stateBefore = stateBefore();
         if (stateBefore != null) {
@@ -474,58 +214,6 @@ public abstract class Instruction {
         }
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getSimpleName());
-        builder.append(" #");
-        builder.append(id);
-        builder.append(" @ ");
-        builder.append(bci);
-        builder.append(" [");
-        boolean hasFlag = false;
-        for (Flag f : Flag.values()) {
-            if (checkFlag(f)) {
-                if (hasFlag) {
-                    builder.append(' ');
-                }
-                builder.append(f.name());
-                hasFlag = true;
-            }
-        }
-        builder.append("]");
-        return builder.toString();
-    }
-
-    /**
-     * Utility method to check that two instructions have the same basic type.
-     * @param i the first instruction
-     * @param other the second instruction
-     * @return {@code true} if the instructions have the same basic type
-     */
-    public static boolean sameBasicType(Instruction i, Instruction other) {
-        return i.type().basicType == other.type().basicType;
-    }
-
-    /**
-     * Checks that two instructions are equivalent, optionally comparing constants.
-     * @param x the first instruction
-     * @param y the second instruction
-     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
-     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
-     */
-    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
-        if (x == y) {
-            return true;
-        }
-        if (compareConstants && x != null && y != null) {
-            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
      * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#tchar() character} denoting its
@@ -535,7 +223,7 @@ public abstract class Instruction {
      * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
      * @return the instruction representation as a string
      */
-    public static String valueString(Instruction value) {
+    public static String valueString(Value value) {
         return value == null ? "null" : "" + value.type().tchar() + value.id();
     }
 
@@ -555,8 +243,4 @@ public abstract class Instruction {
         return null;
     }
 
-    public void printLine() {
-        InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
-        ip.printInstructionListing(this);
-    }
 }

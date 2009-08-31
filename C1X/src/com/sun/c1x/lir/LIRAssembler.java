@@ -50,7 +50,7 @@ public abstract class LIRAssembler {
     private FrameMap frameMap;
     private BlockBegin currentBlock;
 
-    private Instruction pendingNonSafepoint;
+    private Value pendingNonSafepoint;
     private int pendingNonSafepointOffset;
 
     // Assert only:
@@ -342,15 +342,15 @@ public abstract class LIRAssembler {
         }
     }
 
-    static ValueStack debugInfo(Instruction ins) {
-        if (ins instanceof StateSplit) {
-            return ((StateSplit) ins).stateBefore();
+    static ValueStack debugInfo(Value ins) {
+        if (ins instanceof Instruction) {
+            return ((Instruction) ins).stateBefore();
         }
-        return ins.stateBefore();
+        return null;
     }
 
     void processDebugInfo(LIRInstruction op) {
-        Instruction src = op.source();
+        Value src = op.source();
         if (src == null) {
             return;
         }
@@ -365,7 +365,11 @@ public abstract class LIRAssembler {
         }
         if (pendingNonSafepoint != null) {
             // Got some old debug info. Get rid of it.
-            if (pendingNonSafepoint.bci() == src.bci() && debugInfo(pendingNonSafepoint) == vstack) {
+            if (!(pendingNonSafepoint instanceof Instruction) || !(src instanceof Instruction)) {
+                // TODO: wtf to do about non instructions?
+                return;
+            }
+            if (((Instruction) pendingNonSafepoint).bci() == ((Instruction) src).bci() && debugInfo(pendingNonSafepoint) == vstack) {
                 pendingNonSafepointOffset = pcOffset;
                 return;
             }
@@ -409,7 +413,8 @@ public abstract class LIRAssembler {
     void recordNonSafepointDebugInfo() {
         int pcOffset = pendingNonSafepointOffset;
         ValueStack vstack = debugInfo(pendingNonSafepoint);
-        int bci = pendingNonSafepoint.bci();
+        // TODO: what should the bci be for a phi or local?
+        int bci = pendingNonSafepoint instanceof Instruction ? ((Instruction) pendingNonSafepoint).bci() : -1;
 
         DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
         assert debugInfo.recordingNonSafepoints() : "sanity";

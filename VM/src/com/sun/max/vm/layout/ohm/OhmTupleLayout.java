@@ -163,6 +163,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         visitFields(visitor, tuple);
     }
 
+    @PROTOTYPE_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
@@ -171,6 +172,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return mirror.readField(offset);
     }
 
+    @PROTOTYPE_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {
             return;

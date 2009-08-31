@@ -127,22 +127,24 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         return headerSize + hubOffset;
     }
 
+    @PROTOTYPE_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
-        assert kind.isPrimitiveOfSameSizeAs(elementKind);
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
             return value;
         }
+        assert kind.isPrimitiveOfSameSizeAs(elementKind) : "kind: " + kind + ", elementKind: " + elementKind;
         assert offset % kind.width.numberOfBytes == 0;
         final int index = offset / kind.width.numberOfBytes;
         return mirror.readElement(kind, index);
     }
 
+    @PROTOTYPE_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
-        assert kind.isPrimitiveOfSameSizeAs(value.kind());
         if (writeHeaderValue(mirror, offset, value)) {
             return;
         }
+        assert kind.isPrimitiveOfSameSizeAs(value.kind());
         assert offset % elementSize() == 0;
         assert kind.isPrimitiveOfSameSizeAs(elementKind);
         final int index = offset / elementSize();

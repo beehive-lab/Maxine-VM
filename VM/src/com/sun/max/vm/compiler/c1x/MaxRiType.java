@@ -29,7 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.*;
 import com.sun.max.lang.Function;
 
 /**
@@ -280,11 +280,12 @@ public class MaxRiType implements RiType {
         final MethodActor methodActor = ((MaxRiMethod) method).methodActor;
         final ClassActor resolvedClassActor = asClassActor("resolveMethod()");
         if (methodActor instanceof InterfaceMethodActor) {
-            // resolve the actual method implementation in this class
-            final int index = ((InterfaceMethodActor) methodActor).iIndexInInterface();
-            final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByIIndex(index);
+            InterfaceMethodActor interfaceActor = (InterfaceMethodActor) methodActor;
+            final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.holder().id) - classActor.dynamicHub().iTableStartIndex;
+            final VirtualMethodActor implementation = classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceActor.iIndexInInterface());
             return constantPool.runtime.canonicalRiMethod(implementation, constantPool);
         } else if (methodActor instanceof VirtualMethodActor) {
+
             // resolve the actual method implementation in this class
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByVTableIndex(index);

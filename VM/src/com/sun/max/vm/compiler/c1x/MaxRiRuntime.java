@@ -534,7 +534,7 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface method for the method actor
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool) {
-// synchronized (runtime) {
+        // TODO: is synchronization necessary here or are duplicates harmless?
         // all resolved methods are canonicalized per runtime instance
         final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
         if (previous == null) {
@@ -543,7 +543,6 @@ public class MaxRiRuntime implements RiRuntime {
             return method;
         }
         return previous;
-// }
     }
 
     /**
@@ -555,7 +554,7 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface field for the field actor
      */
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool) {
-// synchronized (runtime) {
+        // TODO: is synchronization necessary here or are duplicates harmless?
         // all resolved field are canonicalized per runtime instance
         final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
         if (previous == null) {
@@ -564,7 +563,6 @@ public class MaxRiRuntime implements RiRuntime {
             return field;
         }
         return previous;
-// }
     }
 
     /**
@@ -576,7 +574,7 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the canonical compiler interface type for the class actor
      */
     public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool) {
-// synchronized (runtime) {
+        // TODO: is synchronization necessary here or are duplicates harmless?
         // all resolved types are canonicalized per runtime instance
         final MaxRiType previous = (MaxRiType) classActor.ciObject;
         if (previous == null) {
@@ -585,6 +583,16 @@ public class MaxRiRuntime implements RiRuntime {
             return type;
         }
         return previous;
-// }
+    }
+
+    @Override
+    public RiType getRiType(Class<?> javaClass) {
+        ClassActor classActor = null;
+        try {
+            classActor = ClassActor.fromJava(javaClass);
+        } catch (Throwable t) {
+            // do nothing.
+        }
+        return canonicalRiType(classActor, globalConstantPool);
     }
 }

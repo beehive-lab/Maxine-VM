@@ -41,7 +41,7 @@ public class TableSwitch extends Switch {
      * @param stateBefore the state before the switch
      * @param isSafepoint <code>true</code> if this instruction is a safepoint
      */
-    public TableSwitch(Instruction value, List<BlockBegin> successors, int lowKey, ValueStack stateBefore, boolean isSafepoint) {
+    public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, ValueStack stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
         this.lowKey = lowKey;
     }
@@ -67,7 +67,7 @@ public class TableSwitch extends Switch {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitTableSwitch(this);
     }
 }

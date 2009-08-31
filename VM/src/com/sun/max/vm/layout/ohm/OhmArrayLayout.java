@@ -121,9 +121,10 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         visitElements(visitor, array);
     }
 
+    @PROTOTYPE_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         if (offset == lengthOffset) {
-            return mirror.readArrayLength();
+            return IntValue.from(mirror.readArrayLength());
         }
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
@@ -134,6 +135,7 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         return mirror.readElement(kind, index);
     }
 
+    @PROTOTYPE_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         assert kind.isPrimitiveOfSameSizeAs(value.kind());
         if (offset == lengthOffset) {
