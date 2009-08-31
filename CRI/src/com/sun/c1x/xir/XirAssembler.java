@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.CiRegister;
 
 /**
  * @author Thomas Wuerthinger
@@ -37,6 +39,7 @@ public class XirAssembler {
     private final List<XirInstruction> instructions = new ArrayList<XirInstruction>();
     private final List<XirLabel> labels = new ArrayList<XirLabel>();
     private final List<XirParameter> parameters = new ArrayList<XirParameter>();
+    private final List<XirParameter> temps = new ArrayList<XirParameter>();
 
     public class XirLabel {
         public final int index;
@@ -49,12 +52,14 @@ public class XirAssembler {
     public class XirParameter {
 
         public final CiKind kind;
-        public final boolean mustBeConstant;
+        public final boolean unknownConstant;
+        public final CiConstant value;
         public final int index;
 
-        XirParameter(CiKind kind, boolean mustBeConstant, int index) {
+        XirParameter(CiKind kind, boolean unknownConstant, CiConstant value, int index) {
             this.kind = kind;
-            this.mustBeConstant = mustBeConstant;
+            this.unknownConstant = unknownConstant;
+            this.value = value;
             this.index = index;
         }
 
@@ -66,7 +71,7 @@ public class XirAssembler {
     }
 
     private XirParameter createParameter(CiKind kind, boolean isConstant) {
-        final XirParameter result = new XirParameter(kind, isConstant, parameters.size());
+        final XirParameter result = new XirParameter(kind, isConstant, null, parameters.size());
         parameters.add(result);
         return result;
     }
@@ -111,19 +116,11 @@ public class XirAssembler {
     }
 
     public enum OperatorKind {
-        Add, Sub, Div, Mul, Mod, Shl, Shr, And, Or, Xor, Pload, Pstore, PloadDisp, PstoreDisp, Pcas, Call, Jmp, Jeq, Jneq, Jgt, Jgteq, Jlt, Jlteq, Bind
-    }
-
-    private void op2(OperatorKind op, XirParameter result, XirParameter a, XirParameter b) {
-        append(new XirInstruction(result.kind, op, result, a, b));
+        Mov, Add, Sub, Div, Mul, Mod, Shl, Shr, And, Or, Xor, Pload, Pstore, PloadDisp, PstoreDisp, Pcas, Stub, Call, Jmp, Jeq, Jneq, Jgt, Jgteq, Jugteq, Jlt, Jlteq, Bind, Ret
     }
 
     private void append(XirInstruction xirInstruction) {
         instructions.add(xirInstruction);
-    }
-
-    public void add(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Add, result, a, b);
     }
 
     public XirLabel createInlineLabel() {
@@ -133,47 +130,62 @@ public class XirAssembler {
     }
 
     public XirLabel createOutOfLineLabel() {
-        return null;
+        // TODO: distinguish out of line labels
+        final XirLabel result = new XirLabel(this.labels.size());
+        labels.add(result);
+        return result;
+    }
+
+    public void mov(XirParameter result, XirParameter a) {
+        append(new XirInstruction(result.kind, OperatorKind.Mov, result, a));
+    }
+
+    public void add(XirParameter result, XirParameter a, XirParameter b) {
+        append(new XirInstruction(result.kind, OperatorKind.Add, result, a, b));
     }
 
     public void sub(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Sub, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Sub, result, a, b));
     }
 
     public void div(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Div, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Div, result, a, b));
     }
 
     public void mul(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Mul, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Mul, result, a, b));
     }
 
     public void mod(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Mod, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Mod, result, a, b));
     }
 
     public void shl(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Shl, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Shl, result, a, b));
     }
 
     public void shr(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Shr, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Shr, result, a, b));
     }
 
     public void and(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.And, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.And, result, a, b));
     }
 
     public void or(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Or, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Or, result, a, b));
     }
 
     public void xor(XirParameter result, XirParameter a, XirParameter b) {
-        op2(OperatorKind.Xor, result, a, b);
+        append(new XirInstruction(result.kind, OperatorKind.Xor, result, a, b));
     }
 
     public void pload(CiKind kind, XirParameter result, XirParameter pointer) {
         append(new XirInstruction(kind, OperatorKind.Pload, result, pointer));
+    }
+
+    public void pload(CiKind kind, XirParameter result, XirParameter pointer, int disp) {
+        append(new XirInstruction(kind, OperatorKind.PloadDisp, result, pointer, i(disp)));
     }
 
     public void pstore(CiKind kind, XirParameter pointer, XirParameter value) {
@@ -186,6 +198,10 @@ public class XirAssembler {
 
     public void pstore(CiKind kind, XirParameter pointer, XirParameter disp, XirParameter value) {
         append(new XirInstruction(kind, OperatorKind.PstoreDisp, nullOperand, pointer, disp, value));
+    }
+
+    public void pstore(CiKind kind, XirParameter pointer, int disp, XirParameter value) {
+        append(new XirInstruction(kind, OperatorKind.PstoreDisp, nullOperand, pointer, i(disp), value));
     }
 
     public void pcas(CiKind kind, XirParameter result, XirParameter pointer, XirParameter value, XirParameter expectedValue) {
@@ -217,6 +233,10 @@ public class XirAssembler {
         jcc(OperatorKind.Jgteq, l, a, b);
     }
 
+    public void jugteq(XirLabel l, XirParameter a, XirParameter b) {
+        jcc(OperatorKind.Jgteq, l, a, b);
+    }
+
     public void jlt(XirLabel l, XirParameter a, XirParameter b) {
         jcc(OperatorKind.Jlt, l, a, b);
     }
@@ -233,10 +253,44 @@ public class XirAssembler {
         append(new XirInstruction(result.kind, OperatorKind.Call, nullOperand, destination));
     }
 
-    public XirParameter createInputOperand(CiKind object, boolean constant) {
-        XirParameter param = new XirParameter(object, constant, parameters.size());
+    public void stub(XirTemplate stub) {
+        append(new XirInstruction(stub.parameters[stub.getResultParameterIndex()].kind, OperatorKind.Call, nullOperand, null));
+    }
+
+    public void ret() {
+        append(new XirInstruction(CiKind.Void, OperatorKind.Ret, nullOperand));
+    }
+
+    public XirParameter createInputParameter(CiKind kind) {
+        XirParameter param = new XirParameter(kind, false, null, parameters.size());
         parameters.add(param);
         return param;
+    }
+
+    public XirParameter createConstantInputParameter(CiKind kind) {
+        XirParameter param = new XirParameter(kind, true, null, parameters.size());
+        parameters.add(param);
+        return param;
+    }
+
+    public XirParameter createConstantTemp(CiConstant constant) {
+        XirParameter param = new XirParameter(constant.basicType, true, constant, parameters.size());
+        parameters.add(param);
+        return param;
+    }
+
+    public XirParameter createTemp(CiKind kind) {
+        XirParameter param = new XirParameter(kind, false, null, temps.size());
+        temps.add(param);
+        return param;
+    }
+
+    public XirParameter createRegister(CiKind kind, CiRegister register) {
+        return null;
+    }
+
+    public XirAssembler.XirParameter i(int b) {
+        return createConstantTemp(CiConstant.forInt(b));
     }
 
     public XirParameter getResultOperand() {
