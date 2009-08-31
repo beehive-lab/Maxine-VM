@@ -253,7 +253,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case TRIGGER_THREAD:
                     return  breakpointData.triggerThreadName();
                 default:
-                    throw FatalError.unexpected("Unspected Breakpoint Data column");
+                    throw FatalError.unexpected("Unexpected Breakpoint Data column");
             }
         }
 
@@ -273,7 +273,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case TRIGGER_THREAD:
                     return String.class;
                 default:
-                    throw FatalError.unexpected("Unspected Breakpoint Data column");
+                    throw FatalError.unexpected("Unexected Breakpoint Data column");
             }
         }
 

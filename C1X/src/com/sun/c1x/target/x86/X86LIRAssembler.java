@@ -30,18 +30,20 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.target.x86.X86Assembler.Condition;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.xir.*;
+import com.sun.c1x.xir.XirAssembler.*;
 
 public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
-    private static final Register ICKlass = X86.rax;
+    private static final CiRegister ICKlass = X86.rax;
     //private static final Register SYNCHeader = X86.rax;
-    private static final Register SHIFTCount = X86.rcx;
+    private static final CiRegister SHIFTCount = X86.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
@@ -51,7 +53,7 @@ public class X86LIRAssembler extends LIRAssembler {
     final int deoptHandlerSize;
     private final int wordSize;
     private final int referenceSize;
-    private final Register rscratch1;
+    private final CiRegister rscratch1;
 
     public X86LIRAssembler(C1XCompilation compilation) {
         super(compilation);
@@ -83,7 +85,7 @@ public class X86LIRAssembler extends LIRAssembler {
         return asAddress(addr, X86FrameMap.rscratch1(compilation.target.arch));
     }
 
-    private Address asAddress(LIRAddress addr, Register tmp) {
+    private Address asAddress(LIRAddress addr, CiRegister tmp) {
         if (addr.base().isIllegal()) {
             assert addr.index().isIllegal() : "must be illegal too";
             assert false : "(tw) should not occur?";
@@ -97,12 +99,12 @@ public class X86LIRAssembler extends LIRAssembler {
 //            }
         }
 
-        Register base = addr.base().asPointerRegister(compilation.target.arch);
+        CiRegister base = addr.base().asPointerRegister(compilation.target.arch);
 
         if (addr.index().isIllegal()) {
             return new Address(base, addr.displacement());
         } else if (addr.index().isCpuRegister()) {
-            Register index = addr.index().asPointerRegister(compilation.target.arch);
+            CiRegister index = addr.index().asPointerRegister(compilation.target.arch);
             return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else if (addr.index().isConstant()) {
             long addrOffset = (addr.index().asConstantPtr().asInt() << addr.scale().ordinal()) + addr.displacement();
@@ -127,7 +129,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
         Util.unimplemented();
 
-        offsets().setValue(CodeOffsets.Entries.OSREntry, codeOffset());
+        // TODO: Report OSR entry offset
+
         BlockBegin osrEntry = compilation.hir().osrEntryBlock;
         ValueStack entryState = osrEntry.stateBefore();
         int numberOfLocks = entryState.locksSize();
@@ -162,7 +165,7 @@ public class X86LIRAssembler extends LIRAssembler {
         // All other registers are dead at this point and the locals will be
         // copied into place by code emitted in the IR.
 
-        Register osrBuf = osrBufferPointer().asPointerRegister(compilation.target.arch);
+        CiRegister osrBuf = osrBufferPointer().asPointerRegister(compilation.target.arch);
 
         assert compilation.runtime.interpreterFrameMonitorSize() == compilation.runtime.basicObjectLockSize() : "adjust code below";
         int monitorOffset = Util.safeToInt(compilation.target.arch.wordSize * method().maxLocals() + (compilation.runtime.basicObjectLockSize() * compilation.target.arch.wordSize) *
@@ -186,7 +189,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected int checkIcache() {
-        Register receiver = this.receiverOpr().asRegister();
+        CiRegister receiver = this.receiverOpr().asRegister();
         int icCmpSize = 9;
         if (compilation.target.arch.is64bit()) {
             icCmpSize = 10;
@@ -362,17 +365,17 @@ public class X86LIRAssembler extends LIRAssembler {
         // TODO: Add safepoint polling
     }
 
-    private void moveRegs(Register fromReg, Register toReg) {
+    private void moveRegs(CiRegister fromReg, CiRegister toReg) {
         if (fromReg != toReg) {
             masm().mov(toReg, fromReg);
         }
     }
 
-    private void swapReg(Register a, Register b) {
+    private void swapReg(CiRegister a, CiRegister b) {
         masm().xchgptr(a, b);
     }
 
-    private void jobject2regWithPatching(Register reg, CodeEmitInfo info) {
+    private void jobject2regWithPatching(CiRegister reg, CodeEmitInfo info) {
         Object o = null;
         PatchingStub patch = new PatchingStub(masm, PatchingStub.PatchID.LoadKlassId);
         masm().movoop(reg, o);
@@ -477,7 +480,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void const2mem(LIROperand src, LIROperand dest, BasicType type, CodeEmitInfo info) {
+    protected void const2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info) {
         assert src.isConstant() : "should not call otherwise";
         assert dest.isAddress() : "should not call otherwise";
         LIRConstant c = src.asConstantPtr();
@@ -495,7 +498,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().movptr(asAddress(addr), NULLWORD);
                 } else {
                     if (isLiteralAddress(addr)) {
-                        masm().movoop(asAddress(addr, Register.noreg), c.asObject());
+                        masm().movoop(asAddress(addr, CiRegister.noreg), c.asObject());
                         throw Util.shouldNotReachHere();
                     } else {
                         masm().movoop(asAddress(addr), c.asObject());
@@ -559,21 +562,21 @@ public class X86LIRAssembler extends LIRAssembler {
         if (dest.isSingleCpu()) {
 
             if (compilation.target.arch.is64bit()) {
-                if (src.type() == BasicType.Long) {
+                if (src.type() == CiKind.Long) {
                     // Can do LONG . OBJECT
                     moveRegs(src.asRegisterLo(), dest.asRegister());
                     return;
                 }
             }
             assert src.isSingleCpu() : "must match";
-            if (src.type() == BasicType.Object) {
+            if (src.type() == CiKind.Object) {
                 masm().verifyOop(src.asRegister());
             }
             moveRegs(src.asRegister(), dest.asRegister());
 
         } else if (dest.isDoubleCpu()) {
             if (compilation.target.arch.is64bit()) {
-                if (src.type() == BasicType.Object) {
+                if (src.type() == CiKind.Object) {
                     // Surprising to me but we can see move of a long to tObject
                     masm().verifyOop(src.asRegister());
                     moveRegs(src.asRegister(), dest.asRegisterLo());
@@ -581,10 +584,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
             }
             assert src.isDoubleCpu() : "must match";
-            Register fLo = src.asRegisterLo();
-            Register fHi = src.asRegisterHi();
-            Register tLo = dest.asRegisterLo();
-            Register tHi = dest.asRegisterHi();
+            CiRegister fLo = src.asRegisterLo();
+            CiRegister fHi = src.asRegisterHi();
+            CiRegister tLo = dest.asRegisterLo();
+            CiRegister tHi = dest.asRegisterHi();
             if (compilation.target.arch.is64bit()) {
                 assert fHi == fLo : "must be same";
                 assert tHi == tLo : "must be same";
@@ -619,13 +622,13 @@ public class X86LIRAssembler extends LIRAssembler {
 
 
     @Override
-    protected void reg2stack(LIROperand src, LIROperand dest, BasicType type) {
+    protected void reg2stack(LIROperand src, LIROperand dest, CiKind type) {
         assert src.isRegister() : "should not call otherwise";
         assert dest.isStack() : "should not call otherwise";
 
         if (src.isSingleCpu()) {
             Address dst = frameMap().addressForSlot(dest.singleStackIx());
-            if (type == BasicType.Object) {
+            if (type == CiKind.Object) {
                 masm().verifyOop(src.asRegister());
                 masm().movptr(dst, src.asRegister());
             } else {
@@ -658,11 +661,11 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         LIRAddress toAddr = dest.asAddressPtr();
         PatchingStub patch = null;
 
-        if (type == BasicType.Object) {
+        if (type == CiKind.Object) {
             masm().verifyOop(src.asRegister());
         }
         if (patchCode != LIRPatchCode.PatchNone) {
@@ -707,19 +710,19 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
 
             case Long: {
-                Register fromLo = src.asRegisterLo();
-                Register fromHi = src.asRegisterHi();
+                CiRegister fromLo = src.asRegisterLo();
+                CiRegister fromHi = src.asRegisterHi();
                 if (compilation.target.arch.is64bit()) {
                     masm().movptr(asAddressLo(toAddr), fromLo);
                 } else {
-                    Register base = toAddr.base().asRegister();
-                    Register index = Register.noreg;
+                    CiRegister base = toAddr.base().asRegister();
+                    CiRegister index = CiRegister.noreg;
                     if (toAddr.index().isRegister()) {
                         index = toAddr.index().asRegister();
                     }
                     if (base == fromLo || index == fromLo) {
                         assert base != fromHi : "can't be";
-                        assert index == Register.noreg || (index != base && index != fromHi) : "can't handle this";
+                        assert index == CiRegister.noreg || (index != base && index != fromHi) : "can't handle this";
                         masm().movl(asAddressHi(toAddr), fromHi);
                         if (patch != null) {
                             patchingEpilog(patch, LIRPatchCode.PatchHigh, base, info);
@@ -728,7 +731,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         }
                         masm().movl(asAddressLo(toAddr), fromLo);
                     } else {
-                        assert index == Register.noreg || (index != base && index != fromLo) : "can't handle this";
+                        assert index == CiRegister.noreg || (index != base && index != fromLo) : "can't handle this";
                         masm().movl(asAddressLo(toAddr), fromLo);
                         if (patch != null) {
                             patchingEpilog(patch, LIRPatchCode.PatchLow, base, info);
@@ -743,7 +746,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Byte: // fall through
             case Boolean: {
-                Register srcReg = src.asRegister();
+                CiRegister srcReg = src.asRegister();
                 Address dstAddr = asAddress(toAddr);
                 assert compilation.target.isP6() || srcReg.isByte() : "must use byte registers if not P6";
                 masm().movb(dstAddr, srcReg);
@@ -764,18 +767,18 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-    private static Register asXmmFloatReg(LIROperand src) {
+    private static CiRegister asXmmFloatReg(LIROperand src) {
         assert src.isXmmRegister();
         return src.asRegister();
     }
 
     @Override
-    protected void stack2reg(LIROperand src, LIROperand dest, BasicType type) {
+    protected void stack2reg(LIROperand src, LIROperand dest, CiKind type) {
         assert src.isStack() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
 
         if (dest.isSingleCpu()) {
-            if (type == BasicType.Object) {
+            if (type == CiKind.Object) {
                 masm().movptr(dest.asRegister(), frameMap().addressForSlot(src.singleStackIx()));
                 masm().verifyOop(dest.asRegister());
             } else {
@@ -804,10 +807,10 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2mem(LIROperand src, LIROperand dest, BasicType type) {
+    protected void mem2mem(LIROperand src, LIROperand dest, CiKind type) {
         if (dest.type().isSingleWord()) {
             assert src.type().isSingleWord();
-            if (type == BasicType.Object) {
+            if (type == CiKind.Object) {
                 masm().pushptr(asAddress(src.asAddress()));
                 masm().popptr(asAddress(dest.asAddress()));
             } else {
@@ -833,9 +836,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2stack(LIROperand src, LIROperand dest, BasicType type) {
+    protected void mem2stack(LIROperand src, LIROperand dest, CiKind type) {
         if (dest.isSingleStack()) {
-            if (type == BasicType.Object) {
+            if (type == CiKind.Object) {
                 masm().pushptr(asAddress(src.asAddress()));
                 masm().popptr(frameMap().addressForSlot(dest.singleStackIx()));
             } else {
@@ -862,9 +865,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void stack2stack(LIROperand src, LIROperand dest, BasicType type) {
+    protected void stack2stack(LIROperand src, LIROperand dest, CiKind type) {
         if (src.isSingleStack()) {
-            if (type == BasicType.Object) {
+            if (type == CiKind.Object) {
                 masm().pushptr(frameMap().addressForSlot(src.singleStackIx()));
                 masm().popptr(frameMap().addressForSlot(dest.singleStackIx()));
             } else {
@@ -889,7 +892,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2reg(LIROperand src, LIROperand dest, BasicType type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         assert src.isAddress() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
 
@@ -954,14 +957,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
 
             case Long: {
-                Register toLo = dest.asRegisterLo();
-                Register toHi = dest.asRegisterHi();
+                CiRegister toLo = dest.asRegisterLo();
+                CiRegister toHi = dest.asRegisterHi();
 
                 if (compilation.target.arch.is64bit()) {
                     masm().movptr(toLo, asAddressLo(addr));
                 } else {
-                    Register base = addr.base().asRegister();
-                    Register index = Register.noreg;
+                    CiRegister base = addr.base().asRegister();
+                    CiRegister index = CiRegister.noreg;
                     if (addr.index().isRegister()) {
                         index = addr.index().asRegister();
                     }
@@ -975,7 +978,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().movl(toHi, new Address(toHi, wordSize));
                     } else if (base == toLo || index == toLo) {
                         assert base != toHi : "can't be";
-                        assert index == Register.noreg || (index != base && index != toHi) : "can't handle this";
+                        assert index == CiRegister.noreg || (index != base && index != toHi) : "can't handle this";
                         masm().movl(toHi, asAddressHi(addr));
                         if (patch != null) {
                             patchingEpilog(patch, LIRPatchCode.PatchHigh, base, info);
@@ -984,7 +987,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         }
                         masm().movl(toLo, asAddressLo(addr));
                     } else {
-                        assert index == Register.noreg || (index != base && index != toLo) : "can't handle this";
+                        assert index == CiRegister.noreg || (index != base && index != toLo) : "can't handle this";
                         masm().movl(toLo, asAddressLo(addr));
                         if (patch != null) {
                             patchingEpilog(patch, LIRPatchCode.PatchLow, base, info);
@@ -999,7 +1002,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Boolean: // fall through
             case Byte: {
-                Register destReg = dest.asRegister();
+                CiRegister destReg = dest.asRegister();
                 assert compilation.target.isP6() || destReg.isByte() : "must use byte registers if not P6";
                 if (compilation.target.isP6() || fromAddr.uses(destReg)) {
                     masm().movsbl(destReg, fromAddr);
@@ -1013,7 +1016,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
             case Char: {
-                Register destReg = dest.asRegister();
+                CiRegister destReg = dest.asRegister();
                 assert compilation.target.isP6() || destReg.isByte() : "must use byte registers if not P6";
                 if (compilation.target.isP6() || fromAddr.uses(destReg)) {
                     masm().movzwl(destReg, fromAddr);
@@ -1026,7 +1029,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
             case Short: {
-                Register destReg = dest.asRegister();
+                CiRegister destReg = dest.asRegister();
                 if (compilation.target.isP6() || fromAddr.uses(destReg)) {
                     masm().movswl(destReg, fromAddr);
                 } else {
@@ -1047,7 +1050,7 @@ public class X86LIRAssembler extends LIRAssembler {
             patchingEpilog(patch, patchCode, addr.base().asRegister(), info);
         }
 
-        if (type == BasicType.Object) {
+        if (type == CiKind.Object) {
             masm().verifyOop(dest.asRegister());
         }
     }
@@ -1105,10 +1108,10 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitOp3(LIROp3 op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Idiv:
             case Irem:
-                arithmeticIdiv(op.code(), op.opr1(), op.opr2(), op.opr3(), op.result(), op.info());
+                arithmeticIdiv(op.code, op.opr1(), op.opr2(), op.opr3(), op.result(), op.info);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1132,13 +1135,13 @@ public class X86LIRAssembler extends LIRAssembler {
         assert assertEmitBranch(op);
 
         if (op.cond() == LIRCondition.Always) {
-            if (op.info() != null) {
-                addDebugInfoForBranch(op.info());
+            if (op.info != null) {
+                addDebugInfoForBranch(op.info);
             }
             masm().jmp(op.label());
         } else {
             X86Assembler.Condition acond = X86Assembler.Condition.zero;
-            if (op.code() == LIROpcode.CondFloatBranch) {
+            if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.ublock() != null : "must have unordered successor";
                 masm().jcc(X86Assembler.Condition.parity, op.ublock().label());
                 switch (op.cond()) {
@@ -1202,8 +1205,8 @@ public class X86LIRAssembler extends LIRAssembler {
         LIROperand src = op.inOpr();
         LIROperand dest = op.resultOpr();
         Label endLabel = new Label();
-        Register srcRegister = src.asRegister();
-        Register rscratch1 = X86FrameMap.rscratch1(this.compilation.target.arch);
+        CiRegister srcRegister = src.asRegister();
+        CiRegister rscratch1 = X86FrameMap.rscratch1(this.compilation.target.arch);
         switch (op.bytecode) {
             case Bytecodes.I2L:
                 if (compilation.target.arch.is64bit()) {
@@ -1321,13 +1324,13 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitAllocArray(LIRAllocArray op) {
-        if (C1XOptions.UseSlowPath || (!C1XOptions.UseFastNewObjectArray && op.type() == BasicType.Object) || (!C1XOptions.UseFastNewTypeArray && op.type() != BasicType.Object)) {
+        if (C1XOptions.UseSlowPath || (!C1XOptions.UseFastNewObjectArray && op.type() == CiKind.Object) || (!C1XOptions.UseFastNewTypeArray && op.type() != CiKind.Object)) {
             masm().jmp(op.stub().entry);
         } else {
-            Register len = op.length().asRegister();
-            Register tmp1 = op.tmp1().asRegister();
-            Register tmp2 = op.tmp2().asRegister();
-            Register tmp3 = op.tmp3().asRegister();
+            CiRegister len = op.length().asRegister();
+            CiRegister tmp1 = op.tmp1().asRegister();
+            CiRegister tmp2 = op.tmp2().asRegister();
+            CiRegister tmp3 = op.tmp3().asRegister();
             if (len == tmp1) {
                 tmp1 = tmp3;
             } else if (len == tmp2) {
@@ -1344,29 +1347,29 @@ public class X86LIRAssembler extends LIRAssembler {
         masm().bind(op.stub().continuation);
     }
 
-    static void selectDifferentRegisters(Register preserve, Register extra, Register[] tmp1, Register[] tmp2) {
+    static void selectDifferentRegisters(CiRegister preserve, CiRegister extra, CiRegister[] tmp1, CiRegister[] tmp2) {
         if (tmp1[0] == preserve) {
-            assert Register.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
+            assert CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
             tmp1[0] = extra;
         } else if (tmp2[0] == preserve) {
-            Register.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
+            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
             tmp2[0] = extra;
         }
-        Register.assertDifferentRegisters(preserve, tmp1[0], tmp2[0]);
+        CiRegister.assertDifferentRegisters(preserve, tmp1[0], tmp2[0]);
     }
 
-    static void selectDifferentRegisters(Register preserve, Register extra, Register[] tmp1, Register[] tmp2, Register[] tmp3) {
+    static void selectDifferentRegisters(CiRegister preserve, CiRegister extra, CiRegister[] tmp1, CiRegister[] tmp2, CiRegister[] tmp3) {
         if (tmp1[0] == preserve) {
-            Register.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
+            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
             tmp1[0] = extra;
         } else if (tmp2[0] == preserve) {
-            Register.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
+            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
             tmp2[0] = extra;
         } else if (tmp3[0] == preserve) {
-            Register.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
+            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
             tmp3[0] = extra;
         }
-        Register.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
+        CiRegister.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
     }
 
 
@@ -1375,21 +1378,21 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // TODO: Make this work with Maxine while preserving the general semantics
 
-        LIROpcode code = op.code();
+        LIROpcode code = op.code;
         if (code == LIROpcode.StoreCheck) {
 
-            Register value = op.object().asRegister();
-            Register array = op.array().asRegister();
-            Register kRInfo = op.tmp1().asRegister();
-            Register klassRInfo = op.tmp2().asRegister();
-            Register rtmp1 = op.tmp3().asRegister();
+            CiRegister value = op.object().asRegister();
+            CiRegister array = op.array().asRegister();
+            CiRegister kRInfo = op.tmp1().asRegister();
+            CiRegister klassRInfo = op.tmp2().asRegister();
+            CiRegister rtmp1 = op.tmp3().asRegister();
 
 
             CodeStub stub = op.stub();
             Label done = new Label();
             masm().cmpptr(value, (int) NULLWORD);
             masm().jcc(X86Assembler.Condition.equal, done);
-            addDebugInfoForNullCheckHere(op.infoForException());
+            addDebugInfoForNullCheckHere(op.info);
 
 
             masm().movptr(kRInfo, new Address(array, compilation.runtime.hubOffsetInBytes()));
@@ -1403,21 +1406,21 @@ public class X86LIRAssembler extends LIRAssembler {
             // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
             // RegisterOrConstant(-1));
 
-            masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, rtmp1, kRInfo, klassRInfo);
+            masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, rtmp1, kRInfo, klassRInfo);
 
             // result is a boolean
             masm().cmpl(rtmp1, 0);
             masm().jcc(X86Assembler.Condition.equal, stub.entry);
             masm().bind(done);
-        } else if (op.code() == LIROpcode.CheckCast) {
+        } else if (op.code == LIROpcode.CheckCast) {
             // we always need a stub for the failure case.
             CodeStub stub = op.stub();
-            Register obj = op.object().asRegister();
-            Register kRInfo = op.tmp1().asRegister();
-            Register klassRInfo = op.tmp2().asRegister();
-            Register dst = op.result().asRegister();
+            CiRegister obj = op.object().asRegister();
+            CiRegister kRInfo = op.tmp1().asRegister();
+            CiRegister klassRInfo = op.tmp2().asRegister();
+            CiRegister dst = op.result().asRegister();
             RiType k = op.klass();
-            Register rtmp1 = Register.noreg;
+            //Register rtmp1 = Register.noreg;
 
             Label done = new Label();
             if (obj == kRInfo) {
@@ -1425,7 +1428,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (obj == klassRInfo) {
                 klassRInfo = dst;
             }
-            if (k.isLoaded()) {
+            /*if (k.isLoaded()) {
                 // TODO: out params?!
                 Register[] tmp1 = {kRInfo};
                 Register[] tmp2 = {klassRInfo};
@@ -1441,14 +1444,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 kRInfo = tmp1[0];
                 klassRInfo = tmp2[0];
                 rtmp1 = tmp3[0];
-            }
+            }*/
 
-            assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
-            if (!k.isLoaded()) {
-                jobject2regWithPatching(kRInfo, op.infoForPatch());
-            } else {
-                masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-            }
+            //assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
+            //if (!k.isLoaded()) {
+            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
+            //} else {
+            //    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
+            //}
             assert obj != kRInfo : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
             if (op.profiledMethod() != null) {
@@ -1460,12 +1463,12 @@ public class X86LIRAssembler extends LIRAssembler {
                 // Object is null; update methodDataOop
                 RiMethodProfile md = method.methodData();
                 if (md == null) {
-                    throw new Bailout("out of memory building methodDataOop");
+                    throw new CiBailout("out of memory building methodDataOop");
                 }
                 // ciProfileData data = md.bciToData(bci);
                 // assert data != null : "need data for checkcast";
                 // assert data.isBitData() : "need BitData for checkcast";
-                Register mdo = klassRInfo;
+                CiRegister mdo = klassRInfo;
                 masm().movoop(mdo, md);
                 Address dataAddr = new Address(mdo, md.headerOffset(bci));
                 int headerBits = compilation.runtime.methodDataNullSeenByteConstant(); // TODO: Check what this really
@@ -1511,7 +1514,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         // check for self
                         masm().cmpptr(klassRInfo, kRInfo);
                         masm().jcc(X86Assembler.Condition.equal, done);
-                        masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, klassRInfo, kRInfo, klassRInfo);
+                        masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, klassRInfo, kRInfo, klassRInfo);
 
                         // result is a boolean
                         masm().cmpl(klassRInfo, 0);
@@ -1524,7 +1527,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
 
 
-                    masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, kRInfo, kRInfo, klassRInfo);
+                    masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, kRInfo, kRInfo, klassRInfo);
 
                     // result is a boolean
                     masm().cmpl(kRInfo, 0);
@@ -1537,29 +1540,36 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().mov(dst, obj);
             }
         } else if (code == LIROpcode.InstanceOf) {
-            Register obj = op.object().asRegister();
-            Register kRInfo = op.tmp1().asRegister();
-            Register klassRInfo = op.tmp2().asRegister();
-            Register dst = op.result().asRegister();
+            CiRegister obj = op.object().asRegister();
+            CiRegister kRInfo = op.tmp1().asRegister();
+            CiRegister klassRInfo = op.tmp2().asRegister();
+            CiRegister dst = op.result().asRegister();
             RiType k = op.klass();
 
             Label done = new Label();
             Label zero = new Label();
             Label one = new Label();
-            if (obj == kRInfo) {
-                kRInfo = klassRInfo;
-                klassRInfo = obj;
-            }
+//            if (obj == kRInfo) {
+//                kRInfo = klassRInfo;
+//                klassRInfo = obj;
+//            }
             // patching may screw with our temporaries on sparc :
             // so let's do it before loading the class
-            if (!k.isLoaded()) {
-                jobject2regWithPatching(kRInfo, op.infoForPatch());
-            } else {
-                if (compilation.target.arch.is64bit()) {
-                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-                }
+            //if (!k.isLoaded()) {
+            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
+            //} else {
+//                if (compilation.target.arch.is64bit()) {
+//                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
+//                }
+//            }
+
+            if (klassRInfo == kRInfo || klassRInfo == obj) {
+                klassRInfo = dst;
             }
             assert obj != kRInfo : "must be different";
+            assert obj != klassRInfo : "must be different";
+
+            assert CiRegister.assertDifferentRegisters(obj, kRInfo, klassRInfo);
 
             masm().verifyOop(obj);
             if (op.isFastCheck()) {
@@ -1569,7 +1579,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // not a safepoint as obj null check happens earlier
                 if (!compilation.target.arch.is64bit() && k.isLoaded()) {
                     masm().cmpoop(new Address(obj, compilation.runtime.hubOffsetInBytes()), k);
-                    kRInfo = Register.noreg;
+                    kRInfo = CiRegister.noreg;
                 } else {
                     masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
 
@@ -1582,12 +1592,15 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().jcc(X86Assembler.Condition.equal, zero);
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffsetInBytes()));
                 // next block is unconditional if LP64:
-                assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
+
+
+                // TODO: Check if this is really necessary
+                //assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
 
                 // perform the fast part of the checking logic
                 //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
                 // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-                masm().callGlobalStub(GlobalStub.SlowSubtypeCheck, dst, kRInfo, klassRInfo);
+                masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, dst, kRInfo, klassRInfo);
                 masm().jmp(done);
             }
             masm().bind(zero);
@@ -1603,22 +1616,22 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
-        if (!compilation.target.arch.is64bit() && op.code() == LIROpcode.CasLong && compilation.target.supportsCx8()) {
+        if (!compilation.target.arch.is64bit() && op.code == LIROpcode.CasLong && compilation.target.supportsCx8()) {
             assert op.cmpValue().asRegisterLo() == X86.rax : "wrong register";
             assert op.cmpValue().asRegisterHi() == X86.rdx : "wrong register";
             assert op.newValue().asRegisterLo() == X86.rbx : "wrong register";
             assert op.newValue().asRegisterHi() == X86.rcx : "wrong register";
-            Register addr = op.address().asRegister();
+            CiRegister addr = op.address().asRegister();
             if (compilation.runtime.isMP()) {
                 masm().lock();
             }
             masm().cmpxchg8(new Address(addr, 0));
 
-        } else if (op.code() == LIROpcode.CasInt || op.code() == LIROpcode.CasObj) {
+        } else if (op.code == LIROpcode.CasInt || op.code == LIROpcode.CasObj) {
             assert compilation.target.arch.is64bit() || op.address().isSingleCpu() : "must be single";
-            Register addr = ((op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo()));
-            Register newval = op.newValue().asRegister();
-            Register cmpval = op.cmpValue().asRegister();
+            CiRegister addr = ((op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo()));
+            CiRegister newval = op.newValue().asRegister();
+            CiRegister cmpval = op.cmpValue().asRegister();
             assert cmpval == X86.rax : "wrong register";
             assert newval != null : "new val must be register";
             assert cmpval != newval : "cmp and new values must be in different registers";
@@ -1627,17 +1640,17 @@ public class X86LIRAssembler extends LIRAssembler {
             if (compilation.runtime.isMP()) {
                 masm().lock();
             }
-            if (op.code() == LIROpcode.CasObj) {
+            if (op.code == LIROpcode.CasObj) {
                 masm().cmpxchgptr(newval, new Address(addr, 0));
-            } else if (op.code() == LIROpcode.CasInt) {
+            } else if (op.code == LIROpcode.CasInt) {
                 masm().cmpxchgl(newval, new Address(addr, 0));
             } else if (compilation.target.arch.is64bit()) {
                 masm().cmpxchgq(newval, new Address(addr, 0));
             }
-        } else if (compilation.target.arch.is64bit() && op.code() == LIROpcode.CasLong) {
-            Register addr = (op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo());
-            Register newval = op.newValue().asRegisterLo();
-            Register cmpval = op.cmpValue().asRegisterLo();
+        } else if (compilation.target.arch.is64bit() && op.code == LIROpcode.CasLong) {
+            CiRegister addr = (op.address().isSingleCpu() ? op.address().asRegister() : op.address().asRegisterLo());
+            CiRegister newval = op.newValue().asRegisterLo();
+            CiRegister cmpval = op.cmpValue().asRegisterLo();
             assert cmpval == X86.rax : "wrong register";
             assert newval != null : "new val must be register";
             assert cmpval != newval : "cmp and new values must be in different registers";
@@ -1748,11 +1761,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (left.isSingleCpu()) {
             assert left.equals(dest) : "left and dest must be equal";
-            Register lreg = left.asRegister();
+            CiRegister lreg = left.asRegister();
 
             if (right.isSingleCpu()) {
                 // cpu register - cpu register
-                Register rreg = right.asRegister();
+                CiRegister rreg = right.asRegister();
                 switch (code) {
                     case Add:
                         masm().addl(lreg, rreg);
@@ -1803,15 +1816,15 @@ public class X86LIRAssembler extends LIRAssembler {
 
         } else if (left.isDoubleCpu()) {
             assert left.equals(dest) : "left and dest must be equal";
-            Register lregLo = left.asRegisterLo();
-            Register lregHi = left.asRegisterHi();
+            CiRegister lregLo = left.asRegisterLo();
+            CiRegister lregHi = left.asRegisterHi();
 
             if (right.isDoubleCpu()) {
                 // cpu register - cpu register
-                Register rregLo = right.asRegisterLo();
-                Register rregHi = right.asRegisterHi();
-                assert compilation.target.arch.is64bit() || Register.assertDifferentRegisters(lregLo, lregHi, rregLo, rregHi);
-                assert !compilation.target.arch.is64bit() || Register.assertDifferentRegisters(lregLo, rregLo);
+                CiRegister rregLo = right.asRegisterLo();
+                CiRegister rregHi = right.asRegisterHi();
+                assert compilation.target.arch.is64bit() || CiRegister.assertDifferentRegisters(lregLo, lregHi, rregLo, rregHi);
+                assert !compilation.target.arch.is64bit() || CiRegister.assertDifferentRegisters(lregLo, rregLo);
                 switch (code) {
                     case Add:
                         masm().addptr(lregLo, rregLo);
@@ -1879,11 +1892,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
         } else if (left.isSingleXmm()) {
             assert left.equals(dest) : "left and dest must be equal";
-            Register lreg = asXmmFloatReg(left);
+            CiRegister lreg = asXmmFloatReg(left);
             assert lreg.isXMM();
 
             if (right.isSingleXmm()) {
-                Register rreg = asXmmFloatReg(right);
+                CiRegister rreg = asXmmFloatReg(right);
                 assert rreg.isXMM();
                 switch (code) {
                     case Add:
@@ -1931,10 +1944,10 @@ public class X86LIRAssembler extends LIRAssembler {
         } else if (left.isDoubleXmm()) {
             assert left.equals(dest) : "left and dest must be equal";
 
-            Register lreg = asXmmDoubleReg(left);
+            CiRegister lreg = asXmmDoubleReg(left);
             assert lreg.isXMM();
             if (right.isDoubleXmm()) {
-                Register rreg = asXmmDoubleReg(right);
+                CiRegister rreg = asXmmDoubleReg(right);
                 assert rreg.isXMM();
                 switch (code) {
                     case Add:
@@ -1993,7 +2006,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
             if (right.isSingleCpu()) {
-                Register rreg = right.asRegister();
+                CiRegister rreg = right.asRegister();
                 switch (code) {
                     case Add:
                         masm().addl(laddr, rreg);
@@ -2058,7 +2071,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         // assert left.destroysRegister() : "check";
         if (left.isSingleCpu()) {
-            Register reg = left.asRegister();
+            CiRegister reg = left.asRegister();
             if (right.isConstant()) {
                 int val = right.asConstantPtr().asInt();
                 switch (code) {
@@ -2091,7 +2104,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             } else {
-                Register rright = right.asRegister();
+                CiRegister rright = right.asRegister();
                 switch (code) {
                     case LogicAnd:
                         masm().andptr(reg, rright);
@@ -2108,8 +2121,8 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             moveRegs(reg, dst.asRegister());
         } else {
-            Register lLo = left.asRegisterLo();
-            Register lHi = left.asRegisterHi();
+            CiRegister lLo = left.asRegisterLo();
+            CiRegister lHi = left.asRegisterHi();
             if (right.isConstant()) {
                 if (compilation.target.arch.is64bit()) {
                     masm().mov64(rscratch1, right.asConstantPtr().asLong());
@@ -2147,8 +2160,8 @@ public class X86LIRAssembler extends LIRAssembler {
                     }
                 }
             } else {
-                Register rLo = right.asRegisterLo();
-                Register rHi = right.asRegisterHi();
+                CiRegister rLo = right.asRegisterLo();
+                CiRegister rHi = right.asRegisterHi();
                 assert lLo != rHi : "overwriting registers";
                 switch (code) {
                     case LogicAnd:
@@ -2175,8 +2188,8 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
             }
 
-            Register dstLo = dst.asRegisterLo();
-            Register dstHi = dst.asRegisterHi();
+            CiRegister dstLo = dst.asRegisterLo();
+            CiRegister dstHi = dst.asRegisterHi();
 
             if (compilation.target.arch.is64bit()) {
                 moveRegs(lLo, dstLo);
@@ -2204,8 +2217,8 @@ public class X86LIRAssembler extends LIRAssembler {
         // assert left.destroysRegister() : "check";
         // assert right.destroysRegister() : "check";
 
-        Register lreg = left.asRegister();
-        Register dreg = result.asRegister();
+        CiRegister lreg = left.asRegister();
+        CiRegister dreg = result.asRegister();
 
         if (right.isConstant()) {
             int divisor = right.asConstantPtr().asInt();
@@ -2235,7 +2248,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 throw Util.shouldNotReachHere();
             }
         } else {
-            Register rreg = right.asRegister();
+            CiRegister rreg = right.asRegister();
             assert lreg == X86.rax : "left register must be rax : ";
             assert rreg != X86.rdx : "right register must not be rdx";
             assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
@@ -2257,18 +2270,18 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void compOp(LIRCondition condition, LIROperand opr1, LIROperand opr2, LIROp2 op) {
         if (opr1.isSingleCpu()) {
-            Register reg1 = opr1.asRegister();
+            CiRegister reg1 = opr1.asRegister();
             if (opr2.isSingleCpu()) {
                 // cpu register - cpu register
-                if (opr1.type() == BasicType.Object) {
+                if (opr1.type() == CiKind.Object) {
                     masm().cmpptr(reg1, opr2.asRegister());
                 } else {
-                    assert opr2.type() != BasicType.Object : "cmp int :  oop?";
+                    assert opr2.type() != CiKind.Object : "cmp int :  oop?";
                     masm().cmpl(reg1, opr2.asRegister());
                 }
             } else if (opr2.isStack()) {
                 // cpu register - stack
-                if (opr1.type() == BasicType.Object) {
+                if (opr1.type() == CiKind.Object) {
                     masm().cmpptr(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
                 } else {
                     masm().cmpl(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
@@ -2276,9 +2289,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (opr2.isConstant()) {
                 // cpu register - constant
                 LIRConstant c = opr2.asConstantPtr();
-                if (c.type() == BasicType.Int) {
+                if (c.type() == CiKind.Int) {
                     masm().cmpl(reg1, c.asInt());
-                } else if (c.type() == BasicType.Object) {
+                } else if (c.type() == CiKind.Object) {
                     // In 64bit oops are single register
                     Object o = c.asObject();
                     if (o == null) {
@@ -2296,8 +2309,8 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 // cpu register - address
             } else if (opr2.isAddress()) {
-                if (op != null && op.info() != null) {
-                    addDebugInfoForNullCheckHere(op.info());
+                if (op != null && op.info != null) {
+                    addDebugInfoForNullCheckHere(op.info);
                 }
                 masm().cmpl(reg1, asAddress(opr2.asAddressPtr()));
             } else {
@@ -2305,15 +2318,15 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
         } else if (opr1.isDoubleCpu()) {
-            Register xlo = opr1.asRegisterLo();
-            Register xhi = opr1.asRegisterHi();
+            CiRegister xlo = opr1.asRegisterLo();
+            CiRegister xhi = opr1.asRegisterHi();
             if (opr2.isDoubleCpu()) {
                 if (compilation.target.arch.is64bit()) {
                     masm().cmpptr(xlo, opr2.asRegisterLo());
                 } else {
                     // cpu register - cpu register
-                    Register ylo = opr2.asRegisterLo();
-                    Register yhi = opr2.asRegisterHi();
+                    CiRegister ylo = opr2.asRegisterLo();
+                    CiRegister yhi = opr2.asRegisterHi();
                     masm().subl(xlo, ylo);
                     masm().sbbl(xhi, yhi);
                     if (condition == LIRCondition.Equal || condition == LIRCondition.NotEqual) {
@@ -2334,7 +2347,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
         } else if (opr1.isSingleXmm()) {
-            Register reg1 = asXmmFloatReg(opr1);
+            CiRegister reg1 = asXmmFloatReg(opr1);
             assert reg1.isXMM();
             if (opr2.isSingleXmm()) {
                 // xmm register - xmm register
@@ -2347,8 +2360,8 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomiss(reg1, masm().floatConstant(((LIRConstant) opr2).asFloat()));
             } else if (opr2.isAddress()) {
                 // xmm register - address
-                if (op != null && op.info() != null) {
-                    addDebugInfoForNullCheckHere(op.info());
+                if (op != null && op.info != null) {
+                    addDebugInfoForNullCheckHere(op.info);
                 }
                 masm().ucomiss(reg1, asAddress(opr2.asAddressPtr()));
             } else {
@@ -2356,7 +2369,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
         } else if (opr1.isDoubleXmm()) {
-            Register reg1 = asXmmDoubleReg(opr1);
+            CiRegister reg1 = asXmmDoubleReg(opr1);
             assert reg1.isXMM();
             if (opr2.isDoubleXmm()) {
                 // xmm register - xmm register
@@ -2369,8 +2382,8 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomisd(reg1, masm().doubleConstant(((LIRConstant) opr2).asDouble()));
             } else if (opr2.isAddress()) {
                 // xmm register - address
-                if (op != null && op.info() != null) {
-                    addDebugInfoForNullCheckHere(op.info());
+                if (op != null && op.info != null) {
+                    addDebugInfoForNullCheckHere(op.info);
                 }
                 masm().ucomisd(reg1, asAddress(opr2.asAddress()));
             } else {
@@ -2380,23 +2393,23 @@ public class X86LIRAssembler extends LIRAssembler {
             LIRConstant c = opr2.asConstantPtr();
 
             if (compilation.target.arch.is64bit()) {
-                if (c.type() == BasicType.Object) {
+                if (c.type() == CiKind.Object) {
                     assert condition == LIRCondition.Equal || condition == LIRCondition.NotEqual : "need to reverse";
                     masm().movoop(rscratch1, c.asObject());
                 }
             }
-            if (op != null && op.info() != null) {
-                addDebugInfoForNullCheckHere(op.info());
+            if (op != null && op.info != null) {
+                addDebugInfoForNullCheckHere(op.info);
             }
             // special case: address - constant
             LIRAddress addr = opr1.asAddressPtr();
-            if (c.type() == BasicType.Int) {
+            if (c.type() == CiKind.Int) {
                 masm().cmpl(asAddress(addr), c.asInt());
-            } else if (c.type() == BasicType.Object) {
+            } else if (c.type() == CiKind.Object) {
                 if (compilation.target.arch.is64bit()) {
                     // %%% Make this explode if addr isn't reachable until we figure out a
                     // better strategy by giving X86.noreg as the temp for asAddress
-                    masm().cmpptr(rscratch1, asAddress(addr, Register.noreg));
+                    masm().cmpptr(rscratch1, asAddress(addr, CiRegister.noreg));
                 } else {
                     masm().cmpoop(asAddress(addr), c.asObject());
                 }
@@ -2425,7 +2438,7 @@ public class X86LIRAssembler extends LIRAssembler {
         } else {
             assert code == LIROpcode.Cmpl2i;
             if (compilation.target.arch.is64bit()) {
-                Register dest = dst.asRegister();
+                CiRegister dest = dst.asRegister();
                 Label high = new Label();
                 Label done = new Label();
                 Label isEqual = new Label();
@@ -2476,7 +2489,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(RiMethod method, GlobalStub entry, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool) {
+    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool) {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
 
@@ -2485,14 +2498,14 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.call(method);
         } else {
             assert entry != null;
-            masm().callGlobalStub(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm().callRuntimeCalleeSaved(entry, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
             masm().call(rscratch1);
         }
         addCallInfoHere(info);
     }
 
     @Override
-    protected void icCall(RiMethod method, GlobalStub entry, CodeEmitInfo info) {
+    protected void icCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
 //        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
 //        masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
 //        masm().callRuntime(entry, method);
@@ -2513,19 +2526,18 @@ public class X86LIRAssembler extends LIRAssembler {
             assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
             assert receiver.isRegister() : "Receiver must be in a register";
             addCallInfoHere(info);
-
             assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffsetInBytes());
-
-            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
+            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            this.masm.callGlobalStub(GlobalStub.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            this.masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
             addCallInfoHere(info);
             int vtableEntrySize = compilation.runtime.vtableEntrySize();
             assert Util.isPowerOf2(vtableEntrySize);
             masm.shlq(rscratch1, Util.log2(vtableEntrySize));
             masm.addq(rscratch1, compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset());
+            addCallInfoHere(info);
             masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
             callAddress = new Address(rscratch1);
         }
@@ -2539,11 +2551,19 @@ public class X86LIRAssembler extends LIRAssembler {
      */
     @Override
     protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-        assert receiver != null && method.vtableIndex() >= 0 : "Invalid receiver or vtable offset!";
+        assert receiver != null : "Invalid receiver!";
         assert receiver.isRegister() : "Receiver must be in a register";
-        masm.movl(rscratch1, method.interfaceID());
-        masm.callGlobalStub(GlobalStub.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
-        masm.addq(rscratch1, method.iIndexInInterface() * 8);
+
+        if (method.vtableIndex() == -1) {
+            // Unresolved method
+            this.masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+        } else {
+            // Resolved method
+            masm.movl(rscratch1, method.interfaceID());
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
+            masm.addq(rscratch1, method.iIndexInInterface() * 8);
+        }
+
         addCallInfoHere(info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
         masm.call(new Address(rscratch1, 0));
@@ -2552,7 +2572,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitRTCall(LIRRTCall op) {
-        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.tmp(), op.info());
+        rtCall(op.result(), op.runtimeEntry, op.arguments(), op.info, op.calleeSaved);
     }
 
     @Override
@@ -2562,11 +2582,11 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
-        assert unwind || exceptionPC.asRegister() == X86.rdx : "must match";
+
 
         // exception object is not added to oop map by LinearScan
         // (LinearScan assumes that no oops are in fixed registers)
-        info.addRegisterOop(exceptionOop);
+       // info.addRegisterOop(exceptionOop);
         CiRuntimeCall unwindId;
 
         if (!unwind) {
@@ -2574,9 +2594,9 @@ public class X86LIRAssembler extends LIRAssembler {
             // pc is only needed if the method has an exception handler, the unwind code does not need it.
             //int pcForAthrowOffset = masm().codeBuffer.position();
 
-            masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
+            //masm().movl(exceptionPC.asRegister(), masm().codeBuffer.position());
 
-            masm().verifyNotNullOop(X86.rax);
+            //masm().verifyNotNullOop(X86.rax);
             // search an exception handler (rax: exception oop, rdx: throwing pc)
             unwindId = CiRuntimeCall.HandleException;
         } else {
@@ -2604,7 +2624,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
 
         if (left.isSingleCpu()) {
-            Register value = left.asRegister();
+            CiRegister value = left.asRegister();
             assert value != SHIFTCount : "left cannot be ECX";
 
             switch (code) {
@@ -2621,8 +2641,8 @@ public class X86LIRAssembler extends LIRAssembler {
                     throw Util.shouldNotReachHere();
             }
         } else if (left.isDoubleCpu()) {
-            Register lo = left.asRegisterLo();
-            Register hi = left.asRegisterHi();
+            CiRegister lo = left.asRegisterLo();
+            CiRegister hi = left.asRegisterHi();
             assert lo != SHIFTCount && hi != SHIFTCount : "left cannot be ECX";
 
             if (compilation.target.arch.is64bit()) {
@@ -2664,7 +2684,7 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void shiftOp(LIROpcode code, LIROperand left, int count, LIROperand dest) {
         if (dest.isSingleCpu()) {
             // first move left into dest so that left is not destroyed by the shift
-            Register value = dest.asRegister();
+            CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
 
             moveRegs(left.asRegister(), value);
@@ -2688,7 +2708,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
             // first move left into dest so that left is not destroyed by the shift
-            Register value = dest.asRegisterLo();
+            CiRegister value = dest.asRegisterLo();
             count = count & 0x1F; // Java spec
 
             moveRegs(left.asRegisterLo(), value);
@@ -2713,20 +2733,20 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArrayCopy(LIRArrayCopy op) {
         RiType defaultType = op.expectedType();
-        Register src = op.src().asRegister();
-        Register dst = op.dst().asRegister();
-        Register srcPos = op.srcPos().asRegister();
-        Register dstPos = op.dstPos().asRegister();
-        Register length = op.length().asRegister();
-        Register tmp = op.tmp().asRegister();
+        CiRegister src = op.src().asRegister();
+        CiRegister dst = op.dst().asRegister();
+        CiRegister srcPos = op.srcPos().asRegister();
+        CiRegister dstPos = op.dstPos().asRegister();
+        CiRegister length = op.length().asRegister();
+        CiRegister tmp = op.tmp().asRegister();
 
-        Register cRarg0 = compilation.runtime.getCRarg(0);
-        Register cRarg1 = compilation.runtime.getCRarg(1);
-        Register cRarg2 = compilation.runtime.getCRarg(2);
+        CiRegister cRarg0 = compilation.runtime.getCRarg(0);
+        CiRegister cRarg1 = compilation.runtime.getCRarg(1);
+        CiRegister cRarg2 = compilation.runtime.getCRarg(2);
 
-        CodeStub stub = op.stub();
+        CodeStub stub = op.stub;
         int flags = op.flags();
-        BasicType basicType = defaultType != null ? defaultType.componentType().basicType() : BasicType.Illegal;
+        CiKind basicType = defaultType != null ? defaultType.componentType().basicType() : CiKind.Illegal;
 
         // if we don't know anything or it's an object array, just go through the generic arraycopy
         if (defaultType == null) {
@@ -2824,7 +2844,7 @@ public class X86LIRAssembler extends LIRAssembler {
         }
 
         if (C1XOptions.GenerateAssertionCode) {
-            if (basicType != BasicType.Object || (flags & LIRArrayCopy.Flags.TypeCheck.mask()) == 0) {
+            if (basicType != CiKind.Object || (flags & LIRArrayCopy.Flags.TypeCheck.mask()) == 0) {
                 // Sanity check the known type with the incoming class. For the
                 // primitive case the types must match exactly with src.klass and
                 // dst.klass each exactly matching the default type. For the
@@ -2835,7 +2855,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 Label knownOk = new Label();
                 Label halt = new Label();
                 masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub).asObject());
-                if (basicType != BasicType.Object) {
+                if (basicType != CiKind.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
                     masm().cmpptr(tmp, srcKlassAddr);
@@ -2852,14 +2872,14 @@ public class X86LIRAssembler extends LIRAssembler {
             }
         }
 
-        if (shiftAmount > 0 && basicType != BasicType.Object) {
+        if (shiftAmount > 0 && basicType != CiKind.Object) {
             masm().shlptr(length, shiftAmount);
         }
 
         if (compilation.target.arch.is64bit()) {
-            assert Register.assertDifferentRegisters(cRarg0, dst, dstPos, length);
+            assert CiRegister.assertDifferentRegisters(cRarg0, dst, dstPos, length);
             masm().lea(cRarg0, new Address(src, srcPos, scale, compilation.runtime.firstArrayElementOffsetInBytes(basicType)));
-            assert Register.assertDifferentRegisters(cRarg1, length);
+            assert CiRegister.assertDifferentRegisters(cRarg1, length);
             masm().lea(cRarg1, new Address(dst, dstPos, scale, compilation.runtime.firstArrayElementOffsetInBytes(basicType)));
             masm().mov(cRarg2, length);
 
@@ -2872,7 +2892,7 @@ public class X86LIRAssembler extends LIRAssembler {
 //            storeParameter(tmp, 1);
 //            storeParameter(length, 2);
         }
-        if (basicType == BasicType.Object) {
+        if (basicType == CiKind.Object) {
             masm().callRuntime(CiRuntimeCall.OopArrayCopy);
         } else {
             masm().callRuntime(CiRuntimeCall.PrimitiveArrayCopy);
@@ -2883,23 +2903,23 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitLock(LIRLock op) {
-        Register obj = op.objOpr().asRegister(); // may not be an oop
-        Register hdr = op.hdrOpr().asRegister();
-        Register lock = op.lockOpr().asRegister();
+        CiRegister obj = op.objOpr().asRegister(); // may not be an oop
+        CiRegister hdr = op.hdrOpr().asRegister();
+        CiRegister lock = op.lockOpr().asRegister();
         if (!C1XOptions.UseFastLocking) {
             masm().jmp(op.stub().entry);
-        } else if (op.code() == LIROpcode.Lock) {
-            Register scratch = Register.noreg;
+        } else if (op.code == LIROpcode.Lock) {
+            CiRegister scratch = CiRegister.noreg;
             if (C1XOptions.UseBiasedLocking) {
                 scratch = op.scratchOpr().asRegister();
             }
             // add debug info for NullPointerException only if one is possible
             int nullCheckOffset = masm().lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub().entry);
-            if (op.info() != null) {
-                addDebugInfoForNullCheck(nullCheckOffset, op.info());
+            if (op.info != null) {
+                addDebugInfoForNullCheck(nullCheckOffset, op.info);
             }
             // done
-        } else if (op.code() == LIROpcode.Unlock) {
+        } else if (op.code == LIROpcode.Unlock) {
             masm().unlockObject(compilation.runtime, hdr, obj, lock, op.stub().entry);
         } else {
             throw Util.shouldNotReachHere();
@@ -2915,10 +2935,10 @@ public class X86LIRAssembler extends LIRAssembler {
         // Update counter for all call types
         RiMethodProfile md = method.methodData();
         if (md == null) {
-            throw new Bailout("out of memory building methodDataOop");
+            throw new CiBailout("out of memory building methodDataOop");
         }
         assert op.mdo().isSingleCpu() : "mdo must be allocated";
-        Register mdo = op.mdo().asRegister();
+        CiRegister mdo = op.mdo().asRegister();
         masm().movoop(mdo, md.encoding().asObject());
         Address counterAddr = new Address(mdo, md.countOffset(bci));
         masm().addl(counterAddr, 1);
@@ -2928,8 +2948,8 @@ public class X86LIRAssembler extends LIRAssembler {
         // invokeinterface bytecodes
         if ((bc == Bytecodes.INVOKEVIRTUAL || bc == Bytecodes.INVOKEINTERFACE) && C1XOptions.ProfileVirtualCalls) {
             assert op.recv().isSingleCpu() : "recv must be allocated";
-            Register recv = op.recv().asRegister();
-            assert Register.assertDifferentRegisters(mdo, recv);
+            CiRegister recv = op.recv().asRegister();
+            assert CiRegister.assertDifferentRegisters(mdo, recv);
             RiType knownKlass = op.knownHolder();
             if (C1XOptions.OptimizeVirtualCallProfiling && knownKlass != null) {
                 // We know the type that will be seen at this call site; we can
@@ -2996,11 +3016,6 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitDelay(LIRDelay lirDelay) {
-        throw Util.shouldNotReachHere();
-    }
-
-    @Override
     protected void monitorAddress(int monitorNo, LIROperand dst) {
 
         // TODO: Check what to do here for correct behaviour (lea in original code)
@@ -3019,13 +3034,13 @@ public class X86LIRAssembler extends LIRAssembler {
             moveRegs(left.asRegister(), dest.asRegister());
 
         } else if (left.isDoubleCpu()) {
-            Register lo = left.asRegisterLo();
+            CiRegister lo = left.asRegisterLo();
             if (compilation.target.arch.is64bit()) {
-                Register dst = dest.asRegisterLo();
+                CiRegister dst = dest.asRegisterLo();
                 masm().movptr(dst, lo);
                 masm().negptr(dst);
             } else {
-                Register hi = left.asRegisterHi();
+                CiRegister hi = left.asRegisterHi();
                 masm().lneg(hi, lo);
                 if (dest.asRegisterLo() == hi) {
                     assert dest.asRegisterHi() != lo : "destroying register";
@@ -3058,22 +3073,45 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void leal(LIROperand addr, LIROperand dest) {
         assert addr.isAddress() && dest.isRegister() : "check";
-        Register reg = dest.asPointerRegister(compilation.target.arch);
+        CiRegister reg = dest.asPointerRegister(compilation.target.arch);
         masm().lea(reg, asAddress(addr.asAddressPtr()));
     }
 
     @Override
-    protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIROperand tmp, CodeEmitInfo info) {
-        assert !tmp.isValid() : "don't need temporary on X86, so should be invalid";
-        masm().callRuntime(dest);
-        if (info != null) {
-            addCallInfoHere(info);
+    protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, CodeEmitInfo info, boolean calleeSaved) {
+
+
+        if (calleeSaved) {
+            // Call through global stub
+            assert result.isRegister();
+
+            final List<RegisterOrConstant> arguments = new ArrayList<RegisterOrConstant>();
+            for (LIROperand op : args) {
+                if (op.isConstant()) {
+                    assert op.basicType == CiKind.Int || op.basicType == CiKind.Object;
+                    if (op.basicType == CiKind.Int) {
+                        arguments.add(new RegisterOrConstant(op.asInt()));
+                    } else if (op.basicType == CiKind.Object) {
+                        arguments.add(new RegisterOrConstant(op.asConstantPtr().asObject()));
+                    }
+                } else {
+                    assert op.isRegister();
+                    arguments.add(new RegisterOrConstant(op.asRegister()));
+                }
+            }
+            masm.callRuntimeCalleeSaved(dest, result.asRegister(), arguments.toArray(new RegisterOrConstant[arguments.size()]));
+        } else {
+            // Call direct
+            masm().callRuntime(dest);
+            if (info != null) {
+                addCallInfoHere(info);
+            }
         }
     }
 
     @Override
-    protected void volatileMoveOp(LIROperand src, LIROperand dest, BasicType type, CodeEmitInfo info) {
-        assert type == BasicType.Long : "only for volatile long fields";
+    protected void volatileMoveOp(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info) {
+        assert type == CiKind.Long : "only for volatile long fields";
 
         if (info != null) {
             addDebugInfoForNullCheckHere(info);
@@ -3110,7 +3148,7 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-    private Register asXmmDoubleReg(LIROperand dest) {
+    private CiRegister asXmmDoubleReg(LIROperand dest) {
         assert dest.isXmmRegister();
         assert dest.isDoubleXmm();
         return dest.asRegister();
@@ -3153,32 +3191,32 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitLIROp2(LIROp2 op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Cmp:
-                if (op.info() != null) {
-                    assert op.inOpr1().isAddress() || op.inOpr2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
-                    addDebugInfoForNullCheckHere(op.info()); // exception possible
+                if (op.info != null) {
+                    assert op.opr1().isAddress() || op.opr2().isAddress() : "shouldn't be codeemitinfo for non-Pointer operands";
+                    addDebugInfoForNullCheckHere(op.info); // exception possible
                 }
-                compOp(op.condition(), op.inOpr1(), op.inOpr2(), op);
+                compOp(op.condition(), op.opr1(), op.opr2(), op);
                 break;
 
             case Cmpl2i:
             case Cmpfd2i:
             case Ucmpfd2i:
-                compFl2i(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                compFl2i(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
             case Cmove:
-                cmove(op.condition(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                cmove(op.condition(), op.opr1(), op.opr2(), op.result());
                 break;
 
             case Shl:
             case Shr:
             case Ushr:
-                if (op.inOpr2().isConstant()) {
-                    shiftOp(op.code(), op.inOpr1(), op.inOpr2().asConstantPtr().asInt(), op.resultOpr());
+                if (op.opr2().isConstant()) {
+                    shiftOp(op.code, op.opr1(), op.opr2().asConstantPtr().asInt(), op.result());
                 } else {
-                    shiftOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.tmpOpr());
+                    shiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
                 }
                 break;
 
@@ -3187,7 +3225,7 @@ public class X86LIRAssembler extends LIRAssembler {
             case Mul:
             case Div:
             case Rem:
-                arithOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op.info());
+                arithOp(op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
 
             case Abs:
@@ -3197,18 +3235,18 @@ public class X86LIRAssembler extends LIRAssembler {
             case Cos:
             case Log:
             case Log10:
-                intrinsicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr(), op);
+                intrinsicOp(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
             case LogicAnd:
             case LogicOr:
             case LogicXor:
-                logicOp(op.code(), op.inOpr1(), op.inOpr2(), op.resultOpr());
+                logicOp(op.code, op.opr1(), op.opr2(), op.result());
                 break;
 
             case Throw:
             case Unwind:
-                throwOp(op.inOpr1(), op.inOpr2(), op.info(), op.code() == LIROpcode.Unwind);
+                throwOp(op.opr1(), op.opr2(), op.info, op.code == LIROpcode.Unwind);
                 break;
 
             default:
@@ -3242,16 +3280,150 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void resolve(LIROperand dest, LIROperand index, LIROperand cp) {
-
-        // TODO:
-        masm.callGlobalStub(GlobalStub.ResolveClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
+    protected void resolve(CiRuntimeCall stub, LIROperand dest, LIROperand index, LIROperand cp) {
+        masm.callRuntimeCalleeSaved(stub, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
     }
 
-    @Override
-    protected void resolveArrayClass(LIROperand dest, LIROperand index, LIROperand cp) {
 
-        // TODO:
-        masm.callGlobalStub(GlobalStub.ResolveArrayClass, dest.asRegister(), index.asRegisterOrConstant(), cp.asRegisterOrConstant());
+    @Override
+    protected void emitXir(LIRXirInstruction instruction) {
+
+        XirSnippet snippet = instruction.snippet;
+        Label[] labels = new Label[snippet.template.labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = new Label();
+        }
+
+        LIROperand[] ops = instruction.getOperands();
+        XirInstruction[] instructions = snippet.template.instructions;
+        for (int i = 0; i < instructions.length; i++) {
+
+            XirInstruction inst = instructions[i];
+
+            switch (inst.operator) {
+
+                case Add:
+                    arithOp(LIROpcode.Add, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Sub:
+                    arithOp(LIROpcode.Sub, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Div:
+                    arithOp(LIROpcode.Div, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Mul:
+                    arithOp(LIROpcode.Mul, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Mod:
+                    arithOp(LIROpcode.Rem, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Shl:
+                    shiftOp(LIROpcode.Shl, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case Shr:
+                    shiftOp(LIROpcode.Shr, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    break;
+
+                case And:
+                    logicOp(LIROpcode.LogicAnd, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    break;
+
+                case Or:
+                    logicOp(LIROpcode.LogicOr, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    break;
+
+                case Xor:
+                    logicOp(LIROpcode.LogicXor, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    break;
+
+                case Pload: {
+                    LIROperand result = ops[inst.result.index];
+                    LIROperand pointer = ops[inst.a.index];
+                    moveOp(new LIRAddress(pointer, 0, inst.kind), result, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    break;
+                }
+
+                case Pstore: {
+                    LIROperand value = ops[inst.b.index];
+                    LIROperand pointer = ops[inst.a.index];
+                    moveOp(value, new LIRAddress(pointer, 0, inst.kind), inst.kind, LIRPatchCode.PatchNone, null, false);
+                    break;
+                }
+
+                case PloadDisp: {
+                    LIROperand result = ops[inst.result.index];
+                    LIROperand pointer = ops[inst.a.index];
+                    LIROperand displacement = ops[inst.b.index];
+
+                    assert pointer.isRegister();
+
+                    LIROperand src = null;
+                    if (displacement.isConstant() && displacement.basicType == CiKind.Int) {
+                        src = new LIRAddress(pointer, displacement.asInt(), inst.kind);
+                    } else {
+                        src = new LIRAddress(pointer, displacement, inst.kind);
+                    }
+
+                    moveOp(src, result, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    break;
+                }
+
+                case PstoreDisp: {
+                    LIROperand value = ops[inst.c.index];
+                    LIROperand pointer = ops[inst.a.index];
+                    LIROperand displacement = ops[inst.b.index];
+
+                    assert pointer.isRegister();
+
+                    LIROperand dst = null;
+                    if (displacement.isConstant() && displacement.basicType == CiKind.Int) {
+                        dst = new LIRAddress(pointer, displacement.asInt(), inst.kind);
+                    } else {
+                        dst = new LIRAddress(pointer, displacement, inst.kind);
+                    }
+
+                    moveOp(value, dst, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    break;
+                }
+
+                case Pcas:
+                    break;
+
+                case Call:
+                    break;
+
+                case Jmp:
+                    break;
+
+                case Jeq:
+                    break;
+
+                case Jneq:
+                    break;
+
+                case Jgt:
+                    break;
+
+                case Jgteq:
+                    break;
+
+                case Jlt:
+                    break;
+
+                case Jlteq:
+                    break;
+
+                case Bind:
+                    break;
+
+            }
+        }
+
     }
 }

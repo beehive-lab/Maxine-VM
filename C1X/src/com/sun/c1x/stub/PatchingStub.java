@@ -21,8 +21,8 @@
 package com.sun.c1x.stub;
 
 import com.sun.c1x.asm.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 
 
@@ -47,7 +47,7 @@ public class PatchingStub extends CodeStub {
     private Label patchedCodeEntry = new Label();
     private Label patchSiteEntry = new Label();
     public Label patchSiteContinuation = new Label();
-    public Register obj;
+    public CiRegister obj;
     private int oopIndex; // index of the patchable oop in nmethod oop table if needed
     private static int patchInfoOffset;
 
@@ -89,7 +89,7 @@ public class PatchingStub extends CodeStub {
         Util.nonFatalUnimplemented();
     }
 
-    public void install(AbstractAssembler masm, LIRPatchCode patchCode, Register obj, CodeEmitInfo info) {
+    public void install(AbstractAssembler masm, LIRPatchCode patchCode, CiRegister obj, CodeEmitInfo info) {
         this.info = info;
         this.obj = obj;
         masm.bind(patchSiteContinuation);
@@ -117,7 +117,7 @@ public class PatchingStub extends CodeStub {
         } else if (id == PatchID.LoadKlassId) {
             assert obj.isValid() : "must have register object for loadKlass";
             // verify that we're pointing at a NativeMovConstReg
-            assert NativeMovConstReg.isNativeMovConstRegAt(pcStart());
+            // TODO: assert that this is native mov const reg at?
         } else {
             Util.shouldNotReachHere();
         }
@@ -156,7 +156,7 @@ public class PatchingStub extends CodeStub {
      *
      * @return the obj
      */
-    public Register obj() {
+    public CiRegister obj() {
         return obj;
     }
 
@@ -167,11 +167,6 @@ public class PatchingStub extends CodeStub {
      */
     public int oopIndex() {
         return oopIndex;
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
     }
 
     @Override

@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
@@ -173,7 +173,7 @@ public class Util {
                 if (name.length() != 1) {
                     throw new IllegalArgumentException("Illegal internal name: " + name);
                 }
-                return BasicType.fromPrimitiveOrVoidTypeChar(name.charAt(0)).javaName;
+                return CiKind.fromPrimitiveOrVoidTypeChar(name.charAt(0)).javaName;
         }
     }
 
@@ -197,8 +197,8 @@ public class Util {
      * @return the Java name corresponding to {@code riType}
      */
     public static String toJavaName(RiType riType, boolean qualified) {
-        BasicType basicType = riType.basicType();
-        if (basicType.isPrimitive() || basicType == BasicType.Void) {
+        CiKind basicType = riType.basicType();
+        if (basicType.isPrimitive() || basicType == CiKind.Void) {
             return basicType.javaName;
         }
         String string = internalNameToJava(riType.name());
@@ -252,7 +252,7 @@ public class Util {
      * @param format a format specification
      * @param method the method to be formatted
      * @param basicTypes if {@code true} then the types in {@code method}'s signature are printed in the
-     *            {@linkplain BasicType#jniName JNI} form of their {@linkplain BasicType basic type}
+     *            {@linkplain CiKind#jniName JNI} form of their {@linkplain CiKind basic type}
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -338,8 +338,8 @@ public class Util {
      *
      * @param format a format specification
      * @param field the field to be formatted
-     * @param basicTypes if {@code true} then the field's type is printed in the {@linkplain BasicType#jniName JNI} form
-     *            of its {@linkplain BasicType basic type}
+     * @param basicTypes if {@code true} then the field's type is printed in the {@linkplain CiKind#jniName JNI} form
+     *            of its {@linkplain CiKind basic type}
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -511,7 +511,7 @@ public class Util {
 
     public static void guarantee(boolean b, String string) {
         if (!b) {
-            throw new Bailout(string);
+            throw new CiBailout(string);
         }
     }
 
@@ -600,16 +600,16 @@ public class Util {
         }
     }
 
-    public static BasicType[] signatureToBasicTypes(RiSignature signature, boolean withReceiver) {
+    public static CiKind[] signatureToBasicTypes(RiSignature signature, boolean withReceiver) {
         int args = signature.argumentCount(false);
-        BasicType[] result;
+        CiKind[] result;
         int i = 0;
         if (withReceiver) {
-            result = new BasicType[args + 1];
-            result[0] = BasicType.Object;
+            result = new CiKind[args + 1];
+            result[0] = CiKind.Object;
             i = 1;
         } else {
-            result = new BasicType[args];
+            result = new CiKind[args];
         }
         for (int j = 0; j < args; j++) {
             result[i + j] = signature.argumentBasicTypeAt(j);

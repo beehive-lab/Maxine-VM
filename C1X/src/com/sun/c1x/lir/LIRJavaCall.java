@@ -24,7 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.globalstub.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>LIRJavaCall</code> class definition.
@@ -36,7 +36,6 @@ import com.sun.c1x.globalstub.*;
 public class LIRJavaCall extends LIRCall {
 
     private RiMethod method;
-    LIROperand receiver;
     public final char cpi;
     public final RiConstantPool constantPool;
 
@@ -51,40 +50,11 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, GlobalStub address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-        super(opcode, address, result, arguments, info);
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+        super(opcode, address, result, receiver, arguments, info, false);
         this.method = method;
-        this.receiver = receiver;
         this.cpi = cpi;
         this.constantPool = constantPool;
-    }
-
-    /**
-     * Creates a new LIRJavaCall instruction.
-     *
-     * @param opcode
-     * @param method
-     * @param receiver
-     * @param result
-     * @param address
-     * @param arguments
-     * @param info
-     */
-    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-        super(opcode, null, result, arguments, info);
-        this.method = method;
-        this.receiver = receiver;
-        this.cpi = cpi;
-        this.constantPool = constantPool;
-    }
-
-    /**
-     * Returns the receiver for this method call.
-     *
-     * @return the receiver
-     */
-    public LIROperand receiver() {
-        return receiver;
     }
 
     /**
@@ -115,14 +85,14 @@ public class LIRJavaCall extends LIRCall {
     public void printInstruction(LogStream out) {
         out.print("call: ");
         out.printf("[addr: %s]", (address() == null) ? "null" : address().name());
-        if (receiver.isValid()) {
+        if (receiver().isValid()) {
             out.print(" [recv: ");
-            receiver.print(out);
+            receiver().print(out);
             out.print("]");
         }
-        if (result.isValid()) {
+        if (result().isValid()) {
             out.print(" [result: ");
-            result.print(out);
+            result().print(out);
             out.print("]");
         }
     }

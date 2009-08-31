@@ -33,8 +33,8 @@ import com.sun.c1x.debug.*;
  */
 public class LIRRTCall extends LIRCall {
 
-    LIROperand tmp;
     public final CiRuntimeCall runtimeEntry;
+    public final boolean calleeSaved;
 
     /**
      * Creates a new LIRRTCall instruction.
@@ -45,9 +45,9 @@ public class LIRRTCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRRTCall(CiRuntimeCall entry, LIROperand tmp, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info) {
-        super(LIROpcode.RtCall, null, result, arguments, info);
-        this.tmp = tmp;
+    public LIRRTCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
+        super(LIROpcode.RtCall, null, result, LIROperand.ILLEGAL, arguments, info, calleeSaved);
+        this.calleeSaved = calleeSaved;
         this.runtimeEntry = entry;
     }
 
@@ -59,8 +59,6 @@ public class LIRRTCall extends LIRCall {
     @Override
     public void printInstruction(LogStream out) {
         out.print(nameForAddress());
-        out.print(" ");
-        tmp().print(out);
     }
 
     /**
@@ -71,14 +69,6 @@ public class LIRRTCall extends LIRCall {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitRtcall(this);
-    }
-
-    /**
-     * Gets the temporary operand associated to this call.
-     * @return the tmp
-     */
-    public LIROperand tmp() {
-        return tmp;
     }
 
     /**

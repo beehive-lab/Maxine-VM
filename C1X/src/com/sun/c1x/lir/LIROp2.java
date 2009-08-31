@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
-import com.sun.c1x.value.*;
 
 
 /**
@@ -32,10 +32,7 @@ import com.sun.c1x.value.*;
  */
 public class LIROp2 extends LIRInstruction {
 
-    protected LIROperand opr1;
-    LIROperand opr2;
-    BasicType type;
-    LIROperand tmp;
+    CiKind type;
     LIRCondition condition;
 
     /**
@@ -48,12 +45,9 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info);
-        this.opr1 = opr1;
-        this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        super(opcode, LIROperandFactory.IllegalOperand, info, false, null, 0, 0, opr1, opr2);
+        this.type = CiKind.Illegal;
         this.condition = condition;
-        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
     }
 
@@ -67,12 +61,9 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      */
     public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
-        super(opcode, result, null);
-        this.opr1 = opr1;
-        this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        super(opcode, result, null, false, null, 0, 0, opr1, opr2);
+        this.type = CiKind.Illegal;
         this.condition = condition;
-        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode == LIROpcode.Cmove : "Instruction opcode should be of type LIROpcode.Cmove";
     }
 
@@ -86,13 +77,10 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      * @param type
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info, BasicType type) {
-        super(opcode, result, info);
-        this.opr1 = opr1;
-        this.opr2 = opr2;
+    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info, CiKind type, boolean hasCall) {
+        super(opcode, result, info, hasCall, null, 0, 0, opr1, opr2);
         this.type = type;
         this.condition = LIRCondition.Unknown;
-        this.tmp = LIROperandFactory.IllegalOperand;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
 
@@ -106,7 +94,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info) {
-        this(opcode, opr1, opr2, result, info, BasicType.Illegal);
+        this(opcode, opr1, opr2, result, info, CiKind.Illegal, false);
     }
 
     /**
@@ -126,28 +114,14 @@ public class LIROp2 extends LIRInstruction {
      *
      * @param opcode the instruction's opcode
      * @param opr1 the first input operand
-     * @param opr2 the instruction's second operand
-     */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2) {
-        this(opcode, opr1, opr2, LIROperandFactory.IllegalOperand);
-    }
-
-    /**
-     * Constructs a new LIROp2 instruction.
-     *
-     * @param opcode the instruction's opcode
-     * @param opr1 the first input operand
      * @param opr2 the second input operand
      * @param result the operand that holds the result of this instruction
      * @param tmp the temporary operand used by this instruction
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIROperand tmp) {
-        super(opcode, result, null);
-        this.opr1 = opr1;
-        this.opr2 = opr2;
-        this.type = BasicType.Illegal;
+        super(opcode, result, null, false, null, 0, 1, opr1, opr2, tmp);
+        this.type = CiKind.Illegal;
         this.condition = LIRCondition.Unknown;
-        this.tmp = tmp;
         assert opcode != LIROpcode.Cmp && isInRange(opcode, LIROpcode.BeginOp2, LIROpcode.EndOp2) : "The " + opcode + " is not a valid LIROp2 opcode";
     }
 
@@ -157,7 +131,7 @@ public class LIROp2 extends LIRInstruction {
      * @return opr1 the first input operand
      */
     public LIROperand opr1() {
-        return opr1;
+        return operand(0);
     }
 
     /**
@@ -166,7 +140,7 @@ public class LIROp2 extends LIRInstruction {
      * @return opr2 the second input operand
      */
     public LIROperand opr2() {
-        return opr2;
+        return operand(1);
     }
 
     /**
@@ -175,7 +149,7 @@ public class LIROp2 extends LIRInstruction {
      * @return type the resulting type
      *
      */
-    public BasicType type() {
+    public CiKind type() {
         return type;
     }
 
@@ -186,7 +160,7 @@ public class LIROp2 extends LIRInstruction {
      *
      */
     public LIROperand tmp() {
-        return tmp;
+        return operand(2);
     }
 
     /**
@@ -195,16 +169,8 @@ public class LIROp2 extends LIRInstruction {
      * @return condition the condition of this instruction
      */
     public LIRCondition condition() {
-        assert code() == LIROpcode.Cmp || code() == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
+        assert code == LIROpcode.Cmp || code == LIROpcode.Cmove : "Field access only valid for cmp and cmove";
         return condition;
-    }
-
-    public void setOpr1(LIROperand opr1) {
-        this.opr1 = opr1;
-    }
-
-    public void setOpr2(LIROperand opr2) {
-        this.opr2 = opr2;
     }
 
     /**
@@ -224,7 +190,7 @@ public class LIROp2 extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        if (code() == LIROpcode.Cmove) {
+        if (code == LIROpcode.Cmove) {
             printCondition(out, condition());
             out.print(" ");
         }
@@ -237,22 +203,6 @@ public class LIROp2 extends LIRInstruction {
             out.print(" ");
         }
         result().print(out);
-    }
-
-    public LIROperand inOpr1() {
-        return opr1();
-    }
-
-    public LIROperand inOpr2() {
-        return opr2();
-    }
-
-    public LIROperand resultOpr() {
-        return result();
-    }
-
-    public LIROperand tmpOpr() {
-        return tmp();
     }
 }
 

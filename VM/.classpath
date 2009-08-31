@@ -8,5 +8,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C0X"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CRI"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

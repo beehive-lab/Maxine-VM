@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ri.*;
 
 
 /**
@@ -34,9 +34,6 @@ public class LIRProfileCall extends LIRInstruction {
 
     private RiMethod profiledMethod;
     private int profiledBci;
-    LIROperand mdo;
-    LIROperand recv;
-    LIROperand tmp1;
     private RiType knownHolder;
 
     /**
@@ -49,12 +46,9 @@ public class LIRProfileCall extends LIRInstruction {
      * @param tmp1
      */
     public LIRProfileCall(LIROpcode opcode, RiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, RiType knownHolder) {
-        super(opcode, LIROperandFactory.IllegalOperand, null);
+        super(opcode, LIROperandFactory.IllegalOperand, null, false, null, 0, 3, recv, mdo, tmp1);
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
-        this.mdo = mdo;
-        this.recv = recv;
-        this.tmp1 = tmp1;
         this.knownHolder = knownHolder;
     }
 
@@ -82,7 +76,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @return the mdo
      */
     public LIROperand mdo() {
-        return mdo;
+        return operand(1);
     }
 
     /**
@@ -91,7 +85,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @return the receiver
      */
     public LIROperand recv() {
-        return recv;
+        return operand(0);
     }
 
     /**
@@ -100,7 +94,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tmp1;
+        return operand(2);
     }
 
     /**
@@ -133,10 +127,10 @@ public class LIRProfileCall extends LIRInstruction {
         out.print(".");
         out.print(profiledMethod.holder().name().toString());
         out.printf(" @ %d", profiledBci);
-        mdo.print(out);
+        mdo().print(out);
         out.print(" ");
-        recv.print(out);
+        recv().print(out);
         out.print(" ");
-        tmp1.print(out);
+        tmp1().print(out);
     }
 }

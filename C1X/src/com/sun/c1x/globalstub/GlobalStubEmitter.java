@@ -29,4 +29,5 @@ import com.sun.c1x.ci.*;
 public interface GlobalStubEmitter {
 
     CiTargetMethod emit(GlobalStub stub);
+    CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall);
 }

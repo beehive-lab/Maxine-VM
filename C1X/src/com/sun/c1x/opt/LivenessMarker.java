@@ -20,13 +20,12 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.ValueStack;
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.C1XMetrics;
+import java.util.*;
 
-import java.util.Queue;
-import java.util.LinkedList;
+import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LivenessMarker</code> class walks over an IR graph and marks instructions
@@ -39,11 +38,11 @@ public class LivenessMarker {
 
     final IR ir;
 
-    final Queue<Instruction> valueQueue = new LinkedList<Instruction>();
-    final Queue<Instruction> deoptQueue = new LinkedList<Instruction>();
+    final Queue<Value> valueQueue = new LinkedList<Value>();
+    final Queue<Value> deoptQueue = new LinkedList<Value>();
 
-    final InstrMarker deoptMarker = new InstrMarker(Instruction.Flag.LiveDeopt, deoptQueue);
-    final InstrMarker valueMarker = new InstrMarker(Instruction.Flag.LiveValue, valueQueue);
+    final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt, deoptQueue);
+    final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue, valueQueue);
 
     boolean removeDeadCode;
     boolean clearLiveMarks;
@@ -67,7 +66,7 @@ public class LivenessMarker {
                     markRootInstr(i);
                 }
 
-                Instruction x;
+                Value x;
                 // process queue of instructions which are used for their values
                 while ((x = valueQueue.poll()) != null) {
                     markInputs(x, valueMarker);
@@ -80,7 +79,7 @@ public class LivenessMarker {
         });
     }
 
-    private void markInputs(Instruction i, InstructionClosure marker) {
+    private void markInputs(Value i, ValueClosure marker) {
         if (!i.isDeadPhi()) {
             i.inputValuesDo(marker);
             if (i instanceof Phi) {
@@ -88,7 +87,7 @@ public class LivenessMarker {
                 Phi phi = (Phi) i;
                 int max = phi.operandCount();
                 for (int j = 0; j < max; j++) {
-                    Instruction x = phi.operandAt(j);
+                    Value x = phi.operandAt(j);
                     marker.apply(x);
                 }
             }
@@ -114,21 +113,21 @@ public class LivenessMarker {
         });
     }
 
-    private class InstrMarker implements InstructionClosure {
-        final Instruction.Flag reason;
-        final Queue<Instruction> queue;
+    private class InstrMarker implements ValueClosure {
+        final Value.Flag reason;
+        final Queue<Value> queue;
 
-        public InstrMarker(Instruction.Flag reason, Queue<Instruction> queue) {
+        public InstrMarker(Value.Flag reason, Queue<Value> queue) {
             this.reason = reason;
             this.queue = queue;
         }
 
-        public Instruction apply(Instruction i) {
+        public Value apply(Value i) {
             markLive(i);
             return i;
         }
 
-        final void markLive(Instruction i) {
+        final void markLive(Value i) {
             if (!i.checkFlag(reason) && !i.isDeadPhi()) {
                 i.setFlag(reason);
                 queue.offer(i);
@@ -142,16 +141,16 @@ public class LivenessMarker {
             // state before != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);
             i.inputValuesDo(valueMarker);
-            i.setFlag(Instruction.Flag.LiveSideEffect);
-        } else if (i.checkFlag(Instruction.Flag.LiveStore)) {
+            i.setFlag(Value.Flag.LiveSideEffect);
+        } else if (i.checkFlag(Value.Flag.LiveStore)) {
             // instruction is a store that cannot be eliminated
             i.inputValuesDo(valueMarker);
-            i.setFlag(Instruction.Flag.LiveSideEffect);
+            i.setFlag(Value.Flag.LiveSideEffect);
         }
         if (i instanceof BlockEnd) {
             // input values to block ends are control dependencies
             i.inputValuesDo(valueMarker);
-            i.setFlag(Instruction.Flag.LiveControl);
+            i.setFlag(Value.Flag.LiveControl);
         }
     }
 }

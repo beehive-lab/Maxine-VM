@@ -32,7 +32,6 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.BlockBegin.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -44,7 +43,7 @@ public class LinearScan {
 
     private int nofCpuRegs;
     private int vregBase;
-    private Register[] registerMapping;
+    private CiRegister[] registerMapping;
     private boolean[] allocatableRegister;
     int nofRegs;
 
@@ -101,7 +100,7 @@ public class LinearScan {
         assert this.frameMap() != null : "check if valid";
     }
 
-    private void initializeRegisters(Register[] registers) {
+    private void initializeRegisters(CiRegister[] registers) {
 
         int cpuCnt = 0;
         int cpuFirst = Integer.MAX_VALUE;
@@ -113,7 +112,7 @@ public class LinearScan {
         int xmmFirst = Integer.MAX_VALUE;
         int xmmLast = Integer.MIN_VALUE;
 
-        for (Register r : registers) {
+        for (CiRegister r : registers) {
 
             if (r.isCpu()) {
                 cpuCnt++;
@@ -135,9 +134,9 @@ public class LinearScan {
         }
 
         int maxReg = Math.max(cpuLast, xmmLast);
-        registerMapping = new Register[maxReg + 1];
+        registerMapping = new CiRegister[maxReg + 1];
         allocatableRegister = new boolean[maxReg + 1];
-        for (Register r : registers) {
+        for (CiRegister r : registers) {
             assert registerMapping[r.number] == null : "duplicate register!";
             registerMapping[r.number] = r;
             allocatableRegister[r.number] = frameMap().allocatableRegister(r);
@@ -230,7 +229,7 @@ public class LinearScan {
 
         public boolean apply(Interval i) {
             // fixed intervals never contain oops
-            return i.regNum() >= nofRegs && i.type() == BasicType.Object;
+            return i.regNum() >= nofRegs && i.type() == CiKind.Object;
         }
     };
 
@@ -288,7 +287,7 @@ public class LinearScan {
 
     void propagateSpillSlots() {
         if (!frameMap().finalizeFrame(maxSpills())) {
-            throw new Bailout("frame too large");
+            throw new CiBailout("frame too large");
         }
     }
 
@@ -348,7 +347,7 @@ public class LinearScan {
 
     // unified bailout support
     void bailout(String msg) {
-        throw new Bailout(msg);
+        throw new CiBailout(msg);
     }
 
     // TODO: Inline
@@ -579,7 +578,7 @@ public class LinearScan {
                 if (opId == -1) {
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
-                    assert op.code() == LIROpcode.Move : "only moves can have a opId of -1";
+                    assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
                     assert ((LIROp1) op).resultOpr().isVirtual() : "LinearScan inserts only moves to virtual registers";
 
                     LIROp1 op1 = (LIROp1) op;
@@ -675,7 +674,7 @@ public class LinearScan {
     // * Phase 2: compute local live sets separately for each block
     // (sets liveGen and liveKill for each block)
 
-    void setLiveGenKill(Instruction value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
+    void setLiveGenKill(Value value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
         LIROperand opr = value.operand();
         Constant con = null;
         if (value instanceof Constant) {
@@ -703,7 +702,7 @@ public class LinearScan {
         int numBlocks = blockCount();
         int liveSize = liveSetSize();
         int localNumCalls = 0;
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
 
         BitMap2D localIntervalInLoop = new BitMap2D(numVirtualRegs, numLoops());
 
@@ -725,18 +724,18 @@ public class LinearScan {
             int numInst = instructions.size();
 
             // iterate all instructions of the block. skip the first because it is always a label
-            assert visitor.noOperands(instructions.get(0)) : "first operation must always be a label";
+            assert !instructions.get(0).hasOperands() : "first operation must always be a label";
             for (int j = 1; j < numInst; j++) {
                 LIRInstruction op = instructions.get(j);
 
                 // visit operation to collect all operands
-                visitor.visit(op);
+                //visitor.visit(op);
 
-                if (visitor.hasCall()) {
+                if (op.hasCall()) {
                     hasCall.set(op.id() >> 1);
                     localNumCalls++;
                 }
-                if (visitor.infoCount() > 0) {
+                if (op.infoCount() > 0) {
                     hasInfo.set(op.id() >> 1);
                 }
 
@@ -744,9 +743,9 @@ public class LinearScan {
                 int k;
                 int n;
                 int reg;
-                n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
+                n = op.oprCount(LIRInstruction.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVirtualRegister()) {
@@ -781,19 +780,19 @@ public class LinearScan {
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper debug information generation
-                n = visitor.infoCount();
+                n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = visitor.infoAt(k);
+                    CodeEmitInfo info = op.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allLiveStateValues()) {
+                    for (Value value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
                 }
 
                 // iterate temp operands of instruction
-                n = visitor.oprCount(LIRVisitState.OperandMode.TempMode);
+                n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.TempMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVirtualRegister()) {
@@ -823,9 +822,9 @@ public class LinearScan {
                 }
 
                 // iterate output operands of instruction
-                n = visitor.oprCount(LIRVisitState.OperandMode.OutputMode);
+                n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.OutputMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVirtualRegister()) {
@@ -950,7 +949,7 @@ public class LinearScan {
             iterationCount++;
 
             if (changeOccurred && iterationCount > 50) {
-                throw new Bailout("too many iterations in computeGlobalLiveSets");
+                throw new CiBailout("too many iterations in computeGlobalLiveSets");
             }
         } while (changeOccurred);
 
@@ -959,7 +958,7 @@ public class LinearScan {
             // (live set must be empty at fixed intervals)
             for (int i = 0; i < numBlocks; i++) {
                 BlockBegin block = blockAt(i);
-                for (int j = 0; j < Register.vregBase; j++) {
+                for (int j = 0; j < CiRegister.vregBase; j++) {
                     assert block.liveIn().get(j) == false : "liveIn  set of fixed register must be empty";
                     assert block.liveOut().get(j) == false : "liveOut set of fixed register must be empty";
                     assert block.liveGen().get(j) == false : "liveGen set of fixed register must be empty";
@@ -979,7 +978,7 @@ public class LinearScan {
                 // print some additional information to simplify debugging
                 for (int i = 0; i < ir().startBlock.liveIn().size(); i++) {
                     if (ir().startBlock.liveIn().get(i)) {
-                        Instruction instr = gen().instructionForVreg(i);
+                        Value instr = gen().instructionForVreg(i);
                         TTY.println(" vreg %d (HIR instruction %c%d)", i, instr == null ? ' ' : instr.type().tchar(), instr == null ? 0 : instr.id());
 
                         for (int j = 0; j < numBlocks; j++) {
@@ -1005,7 +1004,7 @@ public class LinearScan {
     // * Phase 4: build intervals
     // (fills the list intervals)
 
-    void addUse(Instruction value, int from, int to, IntervalUseKind useKind) {
+    void addUse(Value value, int from, int to, IntervalUseKind useKind) {
         assert !value.isIllegal() : "if this value is used by the interpreter it shouldn't be of indeterminate type";
         LIROperand opr = value.operand();
         Constant con = null;
@@ -1092,15 +1091,15 @@ public class LinearScan {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > Register.vregBase || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
+        return reg > CiRegister.vregBase || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
     }
 
-    void addDef(int regNum, int defPos, IntervalUseKind useKind, BasicType type) {
+    void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind type) {
         Interval interval = intervalAt(regNum);
         if (interval != null) {
             assert interval.regNum() == regNum : "wrong interval";
 
-            if (type != BasicType.Illegal) {
+            if (type != CiKind.Illegal) {
                 interval.setType(type);
             }
 
@@ -1123,7 +1122,7 @@ public class LinearScan {
             // Dead value - make vacuous interval
             // also add useKind for dead intervals
             interval = createInterval(regNum);
-            if (type != BasicType.Illegal) {
+            if (type != CiKind.Illegal) {
                 interval.setType(type);
             }
 
@@ -1140,14 +1139,14 @@ public class LinearScan {
         }
     }
 
-    void addUse(int regNum, int from, int to, IntervalUseKind useKind, BasicType type) {
+    void addUse(int regNum, int from, int to, IntervalUseKind useKind, CiKind type) {
         Interval interval = intervalAt(regNum);
         if (interval == null) {
             interval = createInterval(regNum);
         }
         assert interval.regNum() == regNum : "wrong interval";
 
-        if (type != BasicType.Illegal) {
+        if (type != CiKind.Illegal) {
             interval.setType(type);
         }
 
@@ -1155,14 +1154,14 @@ public class LinearScan {
         interval.addUsePos(to, useKind);
     }
 
-    void addTemp(int regNum, int tempPos, IntervalUseKind useKind, BasicType type) {
+    void addTemp(int regNum, int tempPos, IntervalUseKind useKind, CiKind type) {
         Interval interval = intervalAt(regNum);
         if (interval == null) {
             interval = createInterval(regNum);
         }
         assert interval.regNum() == regNum : "wrong interval";
 
-        if (type != BasicType.Illegal) {
+        if (type != CiKind.Illegal) {
             interval.setType(type);
         }
 
@@ -1174,7 +1173,7 @@ public class LinearScan {
     // if the functions return shouldHaveRegister and the interval is spilled,
     // it is not reloaded to a register.
     IntervalUseKind useKindOfOutputOperand(LIRInstruction op, LIROperand opr) {
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
             LIROperand res = move.resultOpr();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
@@ -1209,7 +1208,7 @@ public class LinearScan {
     }
 
     IntervalUseKind useKindOfInputOperand(LIRInstruction op, LIROperand opr) {
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
             LIROperand res = move.resultOpr();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
@@ -1235,7 +1234,7 @@ public class LinearScan {
         }
 
         if (compilation.target.arch.isX86()) {
-            if (op.code() == LIROpcode.Cmove) {
+            if (op.code == LIROpcode.Cmove) {
                 // conditional moves can handle stack operands
                 assert op.result().isRegister() : "result must always be in a register";
                 return IntervalUseKind.shouldHaveRegister;
@@ -1243,42 +1242,42 @@ public class LinearScan {
 
             // optimizations for second input operand of arithmehtic operations on Intel
             // this operand is allowed to be on the stack in some cases
-            BasicType oprType = opr.typeRegister();
-            if (oprType == BasicType.Float || oprType == BasicType.Double) {
-                if ((C1XOptions.SSEVersion == 1 && oprType == BasicType.Float) || C1XOptions.SSEVersion >= 2) {
+            CiKind oprType = opr.typeRegister();
+            if (oprType == CiKind.Float || oprType == CiKind.Double) {
+                if ((C1XOptions.SSEVersion == 1 && oprType == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
                     // SSE float instruction (BasicType.Double only supported with SSE2)
-                    switch (op.code()) {
+                    switch (op.code) {
                         case Cmp:
                         case Add:
                         case Sub:
                         case Mul:
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
-                            if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                                assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                            if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
+                                assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
                     }
                 } else {
                     // FPU stack float instruction
-                    switch (op.code()) {
+                    switch (op.code) {
                         case Add:
                         case Sub:
                         case Mul:
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
-                            if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                                assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                            if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
+                                assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
                     }
                 }
 
-            } else if (oprType != BasicType.Long) {
+            } else if (oprType != CiKind.Long) {
                 // integer instruction (note: long operands must always be in register)
-                switch (op.code()) {
+                switch (op.code) {
                     case Cmp:
                     case Add:
                     case Sub:
@@ -1286,8 +1285,8 @@ public class LinearScan {
                     case LogicOr:
                     case LogicXor: {
                         LIROp2 op2 = (LIROp2) op;
-                        if (op2.inOpr1() != op2.inOpr2() && op2.inOpr2() == opr) {
-                            assert (op2.resultOpr().isRegister() || op.code() == LIROpcode.Cmp) && op2.inOpr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                        if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
+                            assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
                             return IntervalUseKind.shouldHaveRegister;
                         }
                     }
@@ -1304,7 +1303,7 @@ public class LinearScan {
         // the interval gets no register assigned, but the stack slot.
         // it is split before the first use by the register allocator.
 
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
             if (move.inOpr().isStack()) {
@@ -1339,7 +1338,7 @@ public class LinearScan {
         // special handling for doubleword move from memory to register:
         // in this case the registers of the input Pointer and the result
         // registers must not overlap . add a temp range for the input registers
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
             if (move.resultOpr().isDoubleCpu() && move.inOpr().isPointer()) {
@@ -1357,7 +1356,7 @@ public class LinearScan {
     }
 
     void addRegisterHints(LIRInstruction op) {
-        switch (op.code()) {
+        switch (op.code) {
             case Move: // fall through
             case Convert: {
                 LIROp1 move = (LIROp1) op;
@@ -1378,8 +1377,8 @@ public class LinearScan {
             case Cmove: {
                 LIROp2 cmove = (LIROp2) op;
 
-                LIROperand moveFrom = cmove.inOpr1();
-                LIROperand moveTo = cmove.resultOpr();
+                LIROperand moveFrom = cmove.opr1();
+                LIROperand moveTo = cmove.result();
 
                 if (moveTo.isRegister() && moveFrom.isRegister()) {
                     Interval from = intervalAt(regNum(moveFrom));
@@ -1408,13 +1407,13 @@ public class LinearScan {
         int numCallerSaveRegisters = compilation.target.callerSavedRegisters.length;
         int[] callerSaveRegisters = new int[compilation.target.callerSavedRegisters.length];
         int z = 0;
-        for (Register r : compilation.target.callerSavedRegisters) {
+        for (CiRegister r : compilation.target.callerSavedRegisters) {
             callerSaveRegisters[z++] = r.number;
         }
 
         // TODO: Check if the order of the registers (cpu, fpu, xmm) is important there!
 
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
 
         // iterate all blocks in reverse order
         for (int i = blockCount() - 1; i >= 0; i--) {
@@ -1431,10 +1430,10 @@ public class LinearScan {
             int size = live.size();
             for (int number = live.getNextOneOffset(0, size); number < size; number = live.getNextOneOffset(number + 1, size)) {
                 assert live.get(number) : "should not stop here otherwise";
-                assert number >= Register.vregBase : "fixed intervals must not be live on block bounds";
+                assert number >= CiRegister.vregBase : "fixed intervals must not be live on block bounds";
                 Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
 
-                addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, BasicType.Illegal);
+                addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, CiKind.Illegal);
 
                 // add special use positions for loop-end blocks when the
                 // interval is used anywhere inside this loop. It's possible
@@ -1448,19 +1447,19 @@ public class LinearScan {
             // iterate all instructions of the block in reverse order.
             // skip the first instruction because it is always a label
             // definitions of intervals are processed before uses
-            assert visitor.noOperands(instructions.get(0)) : "first operation must always be a label";
+            assert !instructions.get(0).hasOperands() : "first operation must always be a label";
             for (int j = instructions.size() - 1; j >= 1; j--) {
                 LIRInstruction op = instructions.get(j);
                 int opId = op.id();
 
                 // visit operation to collect all operands
-                visitor.visit(op);
+                //visitor.visit(op);
 
                 // add a temp range for each register if operation destroys caller-save registers
-                if (visitor.hasCall()) {
+                if (op.hasCall()) {
                     for (int k = 0; k < numCallerSaveRegisters; k++) {
                         if (isProcessedRegNum(callerSaveRegisters[k])) {
-                            addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, BasicType.Illegal);
+                            addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, CiKind.Illegal);
                         }
                     }
                     Util.traceLinearScan(4, "operation destroys all caller-save registers");
@@ -1472,24 +1471,24 @@ public class LinearScan {
                 // visit definitions (output and temp operands)
                 int k;
                 int n;
-                n = visitor.oprCount(LIRVisitState.OperandMode.OutputMode);
+                n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.OutputMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addDef(opr, opId, useKindOfOutputOperand(op, opr));
                 }
 
-                n = visitor.oprCount(LIRVisitState.OperandMode.TempMode);
+                n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.TempMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addTemp(opr, opId, IntervalUseKind.mustHaveRegister);
                 }
 
                 // visit uses (input operands)
-                n = visitor.oprCount(LIRVisitState.OperandMode.InputMode);
+                n = op.oprCount(LIRInstruction.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(LIRVisitState.OperandMode.InputMode, k);
+                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr));
                 }
@@ -1498,11 +1497,11 @@ public class LinearScan {
                 // debug information generation
                 // Treat these operands as temp values (if the life range is extended
                 // to a call site, the value would be in a register at the call otherwise)
-                n = visitor.infoCount();
+                n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = visitor.infoAt(k);
+                    CodeEmitInfo info = op.infoAt(k);
                     ValueStack stack = info.stack();
-                    for (Instruction value : stack.allLiveStateValues()) {
+                    for (Value value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
                 }
@@ -1534,7 +1533,7 @@ public class LinearScan {
         // TODO Platform dependent!
         assert compilation.target.arch.isX86();
 
-        switch (op.code()) {
+        switch (op.code) {
             case Tan:
             case Sin:
             case Cos: {
@@ -1552,9 +1551,9 @@ public class LinearScan {
                 }
                 int opId = op.id();
 
-                for (Register r : compilation.target.callerSavedRegisters) {
+                for (CiRegister r : compilation.target.callerSavedRegisters) {
                     if (r.isXMM()) {
-                        addTemp(r.number, opId, IntervalUseKind.noUse, BasicType.Illegal);
+                        addTemp(r.number, opId, IntervalUseKind.noUse, CiKind.Illegal);
                     }
                 }
                 break;
@@ -1789,7 +1788,7 @@ public class LinearScan {
 
     // wrapper for Interval.splitChildAtOpId that performs a bailout in product mode
     // instead of returning null
-    Interval splitChildAtOpId(Interval interval, int opId, LIRVisitState.OperandMode mode) {
+    Interval splitChildAtOpId(Interval interval, int opId, LIRInstruction.OperandMode mode) {
         Interval result = interval.splitChildAtOpId(opId, mode, this);
 
         if (result != null) {
@@ -1801,31 +1800,31 @@ public class LinearScan {
         }
 
         assert false : "must find an interval :  but do a clean bailout in product mode";
-        result = new Interval(Register.vregBase);
+        result = new Interval(CiRegister.vregBase);
         result.assignReg(0);
-        result.setType(BasicType.Int);
-        throw new Bailout("LinearScan: interval is null");
+        result.setType(CiKind.Int);
+        throw new CiBailout("LinearScan: interval is null");
     }
 
     Interval intervalAtBlockBegin(BlockBegin block, int regNum) {
         assert nofRegs <= regNum && regNum < numVirtualRegs() : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
-        return splitChildAtOpId(intervalAt(regNum), block.firstLirInstructionId(), LIRVisitState.OperandMode.OutputMode);
+        return splitChildAtOpId(intervalAt(regNum), block.firstLirInstructionId(), LIRInstruction.OperandMode.OutputMode);
     }
 
     Interval intervalAtBlockEnd(BlockBegin block, int regNum) {
         assert nofRegs <= regNum && regNum < numVirtualRegs() : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
-        return splitChildAtOpId(intervalAt(regNum), block.lastLirInstructionId() + 1, LIRVisitState.OperandMode.OutputMode);
+        return splitChildAtOpId(intervalAt(regNum), block.lastLirInstructionId() + 1, LIRInstruction.OperandMode.OutputMode);
     }
 
     Interval intervalAtOpId(int regNum, int opId) {
         assert nofRegs <= regNum && regNum < numVirtualRegs() : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
-        return splitChildAtOpId(intervalAt(regNum), opId, LIRVisitState.OperandMode.InputMode);
+        return splitChildAtOpId(intervalAt(regNum), opId, LIRInstruction.OperandMode.InputMode);
     }
 
     void resolveCollectMappings(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
@@ -1900,8 +1899,8 @@ public class LinearScan {
             // check if block has only one predecessor and only one successor
             if (block.numberOfPreds() == 1 && block.numberOfSux() == 1 && block.numberOfExceptionHandlers() == 0) {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
-                assert instructions.get(0).code() == LIROpcode.Label : "block must start with label";
-                assert instructions.get(instructions.size() - 1).code() == LIROpcode.Branch : "block with successors must end with branch";
+                assert instructions.get(0).code == LIROpcode.Label : "block must start with label";
+                assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successors must end with branch";
                 assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "block with successor must end with unconditional branch";
 
                 // check if block is empty (only label and branch)
@@ -2034,7 +2033,7 @@ public class LinearScan {
             // no moves are created for this phi function in the LIRGenerator, so the
             // interval at the throwing instruction must be searched using the operands
             // of the phi function
-            Instruction fromValue = phi.operandAt(handler.phiOperand());
+            Value fromValue = phi.operandAt(handler.phiOperand());
 
             // with phi functions it can happen that the same fromValue is used in
             // multiple mappings, so notify move-resolver that this is allowed
@@ -2098,7 +2097,7 @@ public class LinearScan {
 
     void resolveExceptionHandlers() {
         MoveResolver moveResolver = new MoveResolver(this);
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
         int numBlocks = blockCount();
 
         int i;
@@ -2115,17 +2114,17 @@ public class LinearScan {
             int numOps = ops.length();
 
             // iterate all instructions of the block. skip the first because it is always a label
-            assert visitor.noOperands(ops.at(0)) : "first operation must always be a label";
+            assert !ops.at(0).hasOperands() : "first operation must always be a label";
             for (int j = 1; j < numOps; j++) {
                 LIRInstruction op = ops.at(j);
                 int opId = op.id();
 
                 if (opId != -1 && hasInfo(opId)) {
                     // visit operation to collect all operands
-                    visitor.visit(op);
-                    assert visitor.infoCount() > 0 : "should not visit otherwise";
+                    //visitor.visit(op);
+                    assert op.infoCount() > 0 : "should not visit otherwise";
 
-                    List<ExceptionHandler> xhandlers = visitor.allXhandler();
+                    List<ExceptionHandler> xhandlers = op.allXhandler();
                     int n = xhandlers.size();
                     for (int k = 0; k < n; k++) {
                         if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
@@ -2135,8 +2134,8 @@ public class LinearScan {
                     }
 
                 } else if (C1XOptions.DetailedAsserts) {
-                    visitor.visit(op);
-                    assert visitor.allXhandler().size() == 0 : "missed exception handler";
+                    //visitor.visit(op);
+                    assert op.allXhandler().size() == 0 : "missed exception handler";
                 }
             }
         }
@@ -2173,7 +2172,7 @@ public class LinearScan {
 
     LIROperand calcOperandForInterval(Interval interval) {
         int assignedReg = interval.assignedReg();
-        BasicType type = interval.type();
+        CiKind type = interval.type();
 
         if (assignedReg >= nofRegs) {
             // stack slot
@@ -2186,34 +2185,34 @@ public class LinearScan {
                 case Object: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(BasicType.Object, toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(CiKind.Object, toRegister(assignedReg));
                 }
 
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(BasicType.Int, toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(CiKind.Int, toRegister(assignedReg));
                 }
 
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";
-                    assert numPhysicalRegs(BasicType.Long) == 1 || (isCpu(assignedRegHi)) : "no cpu register";
+                    assert numPhysicalRegs(CiKind.Long) == 1 || (isCpu(assignedRegHi)) : "no cpu register";
 
                     assert assignedReg != assignedRegHi : "invalid allocation";
-                    assert numPhysicalRegs(BasicType.Long) == 1 || assignedReg < assignedRegHi : "register numbers must be sorted (ensure that e.g. a move from eax,ebx to ebx,eax can not occur)";
-                    assert (assignedRegHi != getAnyreg()) ^ (numPhysicalRegs(BasicType.Long) == 1) : "must be match";
-                    if (requiresAdjacentRegs(BasicType.Long)) {
+                    assert numPhysicalRegs(CiKind.Long) == 1 || assignedReg < assignedRegHi : "register numbers must be sorted (ensure that e.g. a move from eax,ebx to ebx,eax can not occur)";
+                    assert (assignedRegHi != getAnyreg()) ^ (numPhysicalRegs(CiKind.Long) == 1) : "must be match";
+                    if (requiresAdjacentRegs(CiKind.Long)) {
                         assert assignedReg % 2 == 0 && assignedReg + 1 == assignedRegHi : "must be sequential and even";
                     }
 
                     if (compilation.target.arch.is64bit()) {
-                        return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedReg), toRegister(assignedReg));
+                        return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedReg), toRegister(assignedReg));
                     } else {
                         if (compilation.target.arch.isSPARC()) {
-                            return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedRegHi), toRegister(assignedReg));
+                            return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedRegHi), toRegister(assignedReg));
                         } else {
-                            return LIROperandFactory.doubleLocation(BasicType.Long, toRegister(assignedReg), toRegister(assignedRegHi));
+                            return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedReg), toRegister(assignedRegHi));
                         }
                     }
                 }
@@ -2222,30 +2221,30 @@ public class LinearScan {
                     if (compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                        return LIROperandFactory.singleLocation(BasicType.Float, toRegister(assignedReg));
+                        return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
                     }
 
                     assert false : "no fpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(BasicType.Float, toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
                 }
 
                 case Double: {
                     if (compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.doubleLocation(BasicType.Double, toRegister(assignedReg), toRegister(assignedReg));
+                        return LIROperandFactory.doubleLocation(CiKind.Double, toRegister(assignedReg), toRegister(assignedReg));
                     }
 
                     LIROperand result;
                     if (compilation.target.arch.isSPARC()) {
                         assert false : "no fpu register";
                         assert assignedReg % 2 == 0 && assignedReg + 1 == interval.assignedRegHi() : "must be sequential and even";
-                        result = LIROperandFactory.doubleLocation(BasicType.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
+                        result = LIROperandFactory.doubleLocation(CiKind.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
                     } else {
                         assert false : "no fpu register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
-                        result = LIROperandFactory.singleLocation(BasicType.Double, toRegister(assignedReg));
+                        result = LIROperandFactory.singleLocation(CiKind.Double, toRegister(assignedReg));
                     }
                     return result;
                 }
@@ -2262,8 +2261,8 @@ public class LinearScan {
         return assignedReg >= 0 && assignedReg < registerMapping.length && registerMapping[assignedReg] != null && this.registerMapping[assignedReg].isXMM();
     }
 
-    Register toRegister(int assignedReg) {
-        final Register result = registerMapping[assignedReg];
+    CiRegister toRegister(int assignedReg) {
+        final CiRegister result = registerMapping[assignedReg];
         assert result != null : "register not found!";
         return result;
     }
@@ -2278,7 +2277,7 @@ public class LinearScan {
         return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs, interval.type());
     }
 
-    LIROperand colorLirOpr(LIROperand opr, int opId, LIRVisitState.OperandMode mode) {
+    LIROperand colorLirOpr(LIROperand opr, int opId, LIRInstruction.OperandMode mode) {
         assert opr.isVirtual() : "should not call this otherwise";
 
         Interval interval = intervalAt(opr.vregNumber());
@@ -2480,7 +2479,7 @@ public class LinearScan {
 
         // Check if this is a patch site.
         boolean isPatchInfo = false;
-        if (op.code() == LIROpcode.Move) {
+        if (op.code == LIROpcode.Move) {
             assert !isCallSite : "move must not be a call site";
             LIROp1 move = (LIROp1) op;
 
@@ -2493,7 +2492,7 @@ public class LinearScan {
 
             assert interval.currentFrom() <= op.id() && op.id() <= interval.currentTo() : "interval should not be active otherwise";
             assert interval.assignedRegHi() == getAnyreg() : "oop must be single word";
-            assert interval.regNum() >= Register.vregBase : "fixed interval found";
+            assert interval.regNum() >= CiRegister.vregBase : "fixed interval found";
 
             // Check if this range covers the instruction. Intervals that
             // start or end at the current operation are not included in the
@@ -2535,23 +2534,23 @@ public class LinearScan {
         return Util.nonFatalUnimplemented(false);
     }
 
-    void computeOopMap(IntervalWalker iw, LIRVisitState visitor, LIRInstruction op) {
-        assert visitor.infoCount() > 0 : "no oop map needed";
+    void computeOopMap(IntervalWalker iw, LIRInstruction op) {
+        assert op.infoCount() > 0 : "no oop map needed";
 
         // compute oopMap only for first CodeEmitInfo
         // because it is (in most cases) equal for all other infos of the same operation
-        CodeEmitInfo firstInfo = visitor.infoAt(0);
-        OopMap firstOopMap = computeOopMap(iw, op, firstInfo, visitor.hasCall());
+        CodeEmitInfo firstInfo = op.infoAt(0);
+        OopMap firstOopMap = computeOopMap(iw, op, firstInfo, op.hasCall());
 
-        for (int i = 0; i < visitor.infoCount(); i++) {
-            CodeEmitInfo info = visitor.infoAt(i);
+        for (int i = 0; i < op.infoCount(); i++) {
+            CodeEmitInfo info = op.infoAt(i);
             OopMap oopMap = firstOopMap;
 
             if (info.stack().locksSize() != firstInfo.stack().locksSize()) {
                 // this info has a different number of locks then the precomputed oop map
                 // (possible for lock and unlock instructions) . compute oop map with
                 // correct lock information
-                oopMap = computeOopMap(iw, op, info, visitor.hasCall());
+                oopMap = computeOopMap(iw, op, info, op.hasCall());
             }
 
             if (info.oopMap == null) {
@@ -2613,7 +2612,7 @@ public class LinearScan {
         assert opr.isConstant() : "should not be called otherwise";
 
         LIRConstant c = opr.asConstantPtr();
-        BasicType t = c.type();
+        CiKind t = c.type();
         switch (t) {
             case Object: {
                 Object value = c.asObject();
@@ -2721,7 +2720,7 @@ public class LinearScan {
 
                 if (compilation.target.arch.is64bit()) {
                     Location[] loc1 = new Location[1];
-                    Location.LocationType locType = opr.type() == BasicType.Long ? Location.LocationType.Long : Location.LocationType.Double;
+                    Location.LocationType locType = opr.type() == CiKind.Long ? Location.LocationType.Long : Location.LocationType.Double;
                     if (!frameMap().locationsForSlot(opr.doubleStackIx(), locType, loc1, null)) {
                         bailout("too large frame");
                     }
@@ -2792,7 +2791,7 @@ public class LinearScan {
         return Util.nonFatalUnimplemented(null);
     }
 
-    int appendScopeValue(int opId, Instruction value, List<ScopeValue> scopeValues) {
+    int appendScopeValue(int opId, Value value, List<ScopeValue> scopeValues) {
         if (value != null) {
             LIROperand opr = value.operand();
             Constant con = null;
@@ -2881,7 +2880,7 @@ public class LinearScan {
             while (pos < nofLocals) {
                 assert pos < curState.localsSize() : "why not?";
 
-                Instruction local = curState.localAt(pos);
+                Value local = curState.localAt(pos);
                 pos += appendScopeValue(opId, local, locals);
 
                 assert locals.size() == pos : "must match";
@@ -2906,7 +2905,7 @@ public class LinearScan {
 
             int pos = stackBegin;
             while (pos < stackEnd) {
-                Instruction expression = innermostState.stackAt(pos);
+                Value expression = innermostState.stackAt(pos);
                 appendScopeValue(opId, expression, expressions);
 
                 assert expressions.size() + stackBegin == pos : "must match";
@@ -2952,7 +2951,7 @@ public class LinearScan {
     }
 
     void assignRegNum(List<LIRInstruction> instructions, IntervalWalker iw) {
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
         int numInst = instructions.size();
         boolean hasDead = false;
 
@@ -2969,25 +2968,25 @@ public class LinearScan {
             int opId = op.id();
 
             // visit instruction to get list of operands
-            visitor.visit(op);
+            //visitor.visit(op);
 
             // iterate all modes of the visitor and process all virtual operands
-            for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
-                int n = visitor.oprCount(mode);
+            for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+                int n = op.oprCount(mode);
                 for (int k = 0; k < n; k++) {
-                    LIROperand opr = visitor.oprAt(mode, k);
+                    LIROperand opr = op.oprAt(mode, k);
                     if (opr instanceof LIRLocation && opr.isVirtualRegister()) {
-                        visitor.setOprAt(mode, k, colorLirOpr(opr, opId, mode));
+                        op.setOprAt(mode, k, colorLirOpr(opr, opId, mode));
                     }
                 }
             }
 
-            visitor.visitReplace(op);
+            //visitor.visitReplace(op);
 
-            if (visitor.infoCount() > 0) {
+            if (op.infoCount() > 0) {
                 // exception handling
                 if (compilation().hasExceptionHandlers()) {
-                    List<ExceptionHandler> xhandlers = visitor.allXhandler();
+                    List<ExceptionHandler> xhandlers = op.allXhandler();
                     int n = xhandlers.size();
                     for (int k = 0; k < n; k++) {
                         ExceptionHandler handler = xhandlers.get(k);
@@ -2996,17 +2995,17 @@ public class LinearScan {
                         }
                     }
                 } else {
-                    assert visitor.allXhandler().size() == 0 : "missed exception handler";
+                    assert op.allXhandler().size() == 0 : "missed exception handler";
                 }
 
                 // compute oop map
                 assert iw != null : "needed for computeOopMap";
-                computeOopMap(iw, visitor, op);
+                computeOopMap(iw, op);
 
                 // compute debug information
-                int n = visitor.infoCount();
+                int n = op.infoCount();
                 for (int k = 0; k < n; k++) {
-                    computeDebugInfo(visitor.infoAt(k), opId);
+                    computeDebugInfo(op.infoAt(k), opId);
                 }
             }
 
@@ -3014,7 +3013,7 @@ public class LinearScan {
             assert op.verify();
 
             // remove useless moves
-            if (op.code() == LIROpcode.Move) {
+            if (op.code == LIROpcode.Move) {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.inOpr();
                 LIROperand dst = move.resultOpr();
@@ -3161,7 +3160,7 @@ public class LinearScan {
         verifyIntervals();
 
         Util.traceLinearScan(2, " verifying that no oops are in fixed intervals *");
-        verifyNoOopsInFixedIntervals();
+        //verifyNoOopsInFixedIntervals();
 
         Util.traceLinearScan(2, " verifying that unpinned constants are not alive across block boundaries");
         verifyConstants();
@@ -3197,7 +3196,7 @@ public class LinearScan {
                 assert false;
             }
 
-            if (i1.regNum() >= Register.vregBase && i1.type() == BasicType.Illegal) {
+            if (i1.regNum() >= CiRegister.vregBase && i1.type() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.regNum());
                 i1.print(TTY.out, this);
                 TTY.cr();
@@ -3286,7 +3285,7 @@ public class LinearScan {
         otherIntervals.addRange(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1);
         IntervalWalker iw = new IntervalWalker(this, fixedIntervals, otherIntervals);
 
-        LIRVisitState visitor = new LIRVisitState();
+        //LIRVisitState visitor = new LIRVisitState();
         for (int i = 0; i < blockCount(); i++) {
             BlockBegin block = blockAt(i);
 
@@ -3294,14 +3293,14 @@ public class LinearScan {
 
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
-                int opId = op.id();
+                //int opId = op.id();
 
-                visitor.visit(op);
+                //visitor.visit(op);
 
-                if (visitor.infoCount() > 0) {
+                if (op.infoCount() > 0) {
                     iw.walkBefore(op.id());
                     boolean checkLive = true;
-                    if (op.code() == LIROpcode.Move) {
+                    if (op.code == LIROpcode.Move) {
                         LIROp1 move = (LIROp1) op;
                         checkLive = (move.patchCode() == LIRPatchCode.PatchNone);
                     }
@@ -3324,10 +3323,10 @@ public class LinearScan {
                                 // that this interval represents some value that's
                                 // referenced by this op either as an input or output.
                                 boolean ok = false;
-                                for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
-                                    int n = visitor.oprCount(mode);
+                                for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+                                    int n = op.oprCount(mode);
                                     for (int k = 0; k < n; k++) {
-                                        LIROperand opr = visitor.oprAt(mode, k);
+                                        LIROperand opr = op.oprAt(mode, k);
                                         if (opr.isFixedCpu()) {
                                             if (intervalAt(regNum(opr)) == interval) {
                                                 ok = true;
@@ -3347,11 +3346,14 @@ public class LinearScan {
                     }
 
                     // TODO: (tw) Check whether this should also be asserted when visitor.infoCount() == 0 (to me this seems wrong in C1)
+                    // With register oop-maps this probably need not be true...
 
+
+                    /*
                     // oop-maps at calls do not contain registers, so check is not needed
                     if (!visitor.hasCall()) {
 
-                        for (LIRVisitState.OperandMode mode : LIRVisitState.OperandMode.values()) {
+                        for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
                             int n = visitor.oprCount(mode);
                             for (int k = 0; k < n; k++) {
                                 LIROperand opr = visitor.oprAt(mode, k);
@@ -3368,11 +3370,11 @@ public class LinearScan {
                                     Interval interval = intervalAt(regNum(opr));
                                     assert interval != null : "no interval";
 
-                                    if (mode == LIRVisitState.OperandMode.InputMode) {
+                                    if (mode == LIRInstruction.OperandMode.InputMode) {
                                         if (interval.to() >= opId + 1) {
                                             assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
                                         }
-                                    } else if (mode == LIRVisitState.OperandMode.OutputMode) {
+                                    } else if (mode == LIRInstruction.OperandMode.OutputMode) {
                                         if (interval.from() <= opId - 1) {
                                             assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
                                         }
@@ -3380,7 +3382,7 @@ public class LinearScan {
                                 }
                             }
                         }
-                    }
+                    }*/
                 }
             }
         }
@@ -3398,7 +3400,7 @@ public class LinearScan {
             for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
                 Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
 
-                Instruction value = gen().instructionForVreg(r);
+                Value value = gen().instructionForVreg(r);
 
                 assert value != null : "all intervals live across block boundaries must have Value";
                 assert value.operand().isRegister() && value.operand().isVirtual() : "value must have virtual operand";
@@ -3409,7 +3411,7 @@ public class LinearScan {
         }
     }
 
-    public int numberOfSpillSlots(BasicType type) {
+    public int numberOfSpillSlots(CiKind type) {
         switch (type) {
             case Boolean:
                 return 1;
@@ -3436,8 +3438,8 @@ public class LinearScan {
     }
 
     // TODO: Platform specific!!
-    public int numPhysicalRegs(BasicType type) {
-        if (type == BasicType.Double && compilation.target.arch.is32bit()) {
+    public int numPhysicalRegs(CiKind type) {
+        if (type == CiKind.Double && compilation.target.arch.is32bit()) {
             return 2;
         } else {
             return 1;
@@ -3445,11 +3447,11 @@ public class LinearScan {
     }
 
     // TODO: Platform specific!!
-    public boolean requiresAdjacentRegs(BasicType type) {
+    public boolean requiresAdjacentRegs(CiKind type) {
         return Util.nonFatalUnimplemented(false);
     }
 
     static int getAnyreg() {
-        return Register.noreg.number;
+        return CiRegister.noreg.number;
     }
 }

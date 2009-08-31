@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ir.Instruction;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
 
 /**

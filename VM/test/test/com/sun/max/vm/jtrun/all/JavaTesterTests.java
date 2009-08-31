@@ -12872,6 +12872,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_max_ImmortalHeap_gc() {
+        JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_gc");
+        String runString = null;
+        try {
+        // (1) == true
+            runString = "(1)";
+            if (true != jtt.max.ImmortalHeap_gc.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (10) == true
+            runString = "(10)";
+            if (true != jtt.max.ImmortalHeap_gc.test(10)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_max_ImmortalHeap_switching() {
         JavaTesterRunScheme.begin("jtt.max.ImmortalHeap_switching");
         String runString = null;
@@ -15102,6 +15124,46 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_optimize_BlockSkip01() {
+        JavaTesterRunScheme.begin("jtt.optimize.BlockSkip01");
+        String runString = null;
+        try {
+        // (0) == true
+            runString = "(0)";
+            if (true != jtt.optimize.BlockSkip01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == true
+            runString = "(1)";
+            if (true != jtt.optimize.BlockSkip01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == true
+            runString = "(2)";
+            if (true != jtt.optimize.BlockSkip01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == false
+            runString = "(3)";
+            if (false != jtt.optimize.BlockSkip01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (4) == false
+            runString = "(4)";
+            if (false != jtt.optimize.BlockSkip01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_optimize_DeadCode01() {
         JavaTesterRunScheme.begin("jtt.optimize.DeadCode01");
         String runString = null;
@@ -15905,6 +15967,90 @@ public class JavaTesterTests {
         // (0) == 23
             runString = "(0)";
             if (23 != jtt.optimize.NCE_04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive01() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive01");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (null != jtt.optimize.NCE_FlowSensitive01.test(null)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive01.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive01.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive03() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive03");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (!"null".equals(jtt.optimize.NCE_FlowSensitive03.test(null))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive03.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive03.test("yay"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_optimize_NCE_FlowSensitive04() {
+        JavaTesterRunScheme.begin("jtt.optimize.NCE_FlowSensitive04");
+        String runString = null;
+        try {
+        // (null) == null
+            runString = "(null)";
+            if (!"null".equals(jtt.optimize.NCE_FlowSensitive04.test(null))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("x") == x
+            runString = "(\"x\")";
+            if (!"x".equals(jtt.optimize.NCE_FlowSensitive04.test("x"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // ("yay") == yay
+            runString = "(\"yay\")";
+            if (!"yay".equals(jtt.optimize.NCE_FlowSensitive04.test("yay"))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

@@ -36,11 +36,6 @@ public class ArrayStoreExceptionStub extends CodeStub {
     }
 
     @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase();
-    }
-
-    @Override
     public void accept(CodeStubVisitor visitor) {
         visitor.visitArrayStoreExceptionStub(this);
     }

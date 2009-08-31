@@ -20,10 +20,10 @@
  */
 package com.sun.c1x.gen;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * @author Marcelo Cintra
@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  */
 public class LIRItem {
 
-    private Instruction value;
+    private Value value;
     private final LIRGenerator gen;
     private LIROperand result;
     private boolean destroysRegister;
@@ -41,12 +41,12 @@ public class LIRItem {
         return gen;
     }
 
-    public LIRItem(Instruction value, LIRGenerator gen) {
+    public LIRItem(Value value, LIRGenerator gen) {
         this.gen = gen;
         setInstruction(value);
     }
 
-    public void setInstruction(Instruction value) {
+    public void setInstruction(Value value) {
         this.value = value;
         this.result = LIROperandFactory.IllegalOperand;
         if (value != null) {
@@ -62,7 +62,7 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    public Instruction value() {
+    public Value value() {
         return value;
     }
 
@@ -80,13 +80,13 @@ public class LIRItem {
         }
     }
 
-    public void loadForStore(BasicType type) {
+    public void loadForStore(CiKind type) {
         if (gen.canStoreAsConstant(value(), type)) {
             result = value().operand();
             if (!result.isConstant()) {
                 result = LIROperandFactory.basicType(value());
             }
-        } else if (type == BasicType.Byte || type == BasicType.Boolean) {
+        } else if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();
@@ -138,7 +138,7 @@ public class LIRItem {
             if (!res.isVirtual() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
                 // make sure that it is a byte register
                 assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
-                LIROperand reg = gen.rlockByte(BasicType.Byte);
+                LIROperand reg = gen.rlockByte(CiKind.Byte);
                 lir().move(res, reg);
                 result = reg;
             }

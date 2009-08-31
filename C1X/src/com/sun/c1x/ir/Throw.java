@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -29,15 +30,15 @@ import com.sun.c1x.value.*;
  */
 public class Throw extends BlockEnd {
 
-    Instruction exception;
+    Value exception;
 
     /**
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
      * @param stateBefore the state before the exception is thrown
      */
-    public Throw(Instruction exception, ValueStack stateBefore) {
-        super(BasicType.Illegal, stateBefore, true);
+    public Throw(Value exception, ValueStack stateBefore) {
+        super(CiKind.Illegal, stateBefore, true);
         this.exception = exception;
     }
 
@@ -45,7 +46,7 @@ public class Throw extends BlockEnd {
      * Gets the instruction which produces the exception to throw.
      * @return the instruction producing the exception
      */
-    public Instruction exception() {
+    public Value exception() {
         return exception;
     }
 
@@ -63,7 +64,7 @@ public class Throw extends BlockEnd {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         exception = closure.apply(exception);
     }
 
@@ -72,7 +73,7 @@ public class Throw extends BlockEnd {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitThrow(this);
     }
 }

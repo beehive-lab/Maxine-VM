@@ -22,7 +22,7 @@ package jtt.reflect;
 
 /*
  * @Harness: java
- * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=true; 6=true; 7=true; 8=false
+ * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=true; 6=true; 7=true; 8=false;
  */
 public class Field_get04 {
 

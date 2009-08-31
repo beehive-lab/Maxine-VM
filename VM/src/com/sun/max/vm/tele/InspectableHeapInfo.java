@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -60,7 +61,7 @@ public final class InspectableHeapInfo {
      * Inspectable description the memory allocated for the Inspector's root table.
      */
     @INSPECTED
-    public static RuntimeMemoryRegion rootsRegion = new RuntimeMemoryRegion("TeleRoots"); // TODO: remove allocation
+    public static RuntimeMemoryRegion rootsRegion;
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
@@ -113,6 +114,7 @@ public final class InspectableHeapInfo {
 
     /**
      * Address of object after compaction.
+     * TODO: remove, not used
      */
     @INSPECTED
     public static Address newAddress;
@@ -133,6 +135,14 @@ public final class InspectableHeapInfo {
     public static void init(MemoryRegion... memoryRegions) {
         if (MaxineMessenger.isVmInspected()) {
             InspectableHeapInfo.memoryRegions = memoryRegions;
+
+            try {
+                Heap.enableImmortalMemoryAllocation();
+                rootsRegion = new RuntimeMemoryRegion("TeleRoots");
+            } finally {
+                Heap.disableImmortalMemoryAllocation();
+            }
+
             initRootsRegion();
             initCardTable(memoryRegions);
         }

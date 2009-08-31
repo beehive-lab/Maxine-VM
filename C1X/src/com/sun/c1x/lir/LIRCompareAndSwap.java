@@ -31,13 +31,6 @@ import com.sun.c1x.debug.*;
  */
 public class LIRCompareAndSwap extends LIRInstruction {
 
-    LIROperand addr;
-    LIROperand cmpValue;
-    LIROperand newValue;
-    LIROperand tmp1;
-    LIROperand tmp2;
-
-
     /**
      * Constructs a new LIRCompareAndSwap instruction.
      *
@@ -48,12 +41,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp2
      */
     public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperandFactory.IllegalOperand, null);
-        this.addr = addr;
-        this.cmpValue = cmpValue;
-        this.newValue = newValue;
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
+        super(opcode, LIROperandFactory.IllegalOperand, null, false, null, 0, 2, addr, cmpValue, newValue);
     }
 
     /**
@@ -62,7 +50,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the address
      */
     public LIROperand address() {
-        return addr;
+        return operand(0);
     }
 
     /**
@@ -71,7 +59,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the cmpValue
      */
     public LIROperand cmpValue() {
-        return cmpValue;
+        return operand(1);
     }
 
     /**
@@ -80,25 +68,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @return the newValue
      */
     public LIROperand newValue() {
-        return newValue;
-    }
-
-    /**
-     * Gets the tmp1 of this class.
-     *
-     * @return the tmp1
-     */
-    public LIROperand tmp1() {
-        return tmp1;
-    }
-
-    /**
-     * Gets the tmp2 of this class.
-     *
-     * @return the tmp2
-     */
-    public LIROperand tmp2() {
-        return tmp2;
+        return operand(2);
     }
 
     /**
@@ -118,14 +88,10 @@ public class LIRCompareAndSwap extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        addr.print(out);
+        address().print(out);
         out.print(" ");
-        cmpValue.print(out);
+        cmpValue().print(out);
         out.print(" ");
-        newValue.print(out);
-        out.print(" ");
-        tmp1.print(out);
-        out.print(" ");
-        tmp2.print(out);
+        newValue().print(out);
     }
 }
