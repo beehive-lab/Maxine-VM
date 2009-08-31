@@ -29,7 +29,7 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 
 /**
- * An internal frame with convenience methods for positioning and a default menu.
+ * An internal frame with convenience methods for positioning, a menu bar, and a default menu.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -42,14 +42,16 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         return inspector;
     }
 
+    private final InspectorMenuBar menuBar;
+
+    public InspectorMenuBar menuBar() {
+        return menuBar;
+    }
+
     private InspectorMenu menu;
 
     public InspectorMenu menu() {
         return menu;
-    }
-
-    public void setMenu(InspectorMenu menu) {
-        this.menu = menu;
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
@@ -78,17 +80,18 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
      */
     public InternalInspectorFrame(Inspector ins, InspectorMenu menu) {
         this.inspector = ins;
-        this.menu = menu;
+        this.menu = (menu == null) ? new InspectorMenu(ins) : menu;
+        this.menuBar = new InspectorMenuBar(ins.inspection());
+
+        final JMenu standardMenu = this.menu.standardMenu();
+        standardMenu.setIcon(FRAME_ICON);
+        menuBar.add(standardMenu);
+        setJMenuBar(menuBar);
 
         setResizable(true);
         setClosable(true);
         setIconifiable(false);
         setVisible(false);
-
-        if (this.menu == null) {
-            this.menu = new InspectorMenu(ins);
-        }
-        setFrameIcon(FRAME_ICON);
 
         addInternalFrameListener(new InternalFrameAdapter() {
 

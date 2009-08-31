@@ -51,8 +51,6 @@ public interface InspectorFrame extends Prober {
 
     InspectorMenu menu();
 
-    void setMenu(InspectorMenu menu);
-
     void setVisible(boolean visible);
 
     /**
@@ -143,23 +141,10 @@ public interface InspectorFrame extends Prober {
             return recentMouseLocationOnScreen;
         }
 
-
-
         public void eventDispatched(AWTEvent event) {
             if (event instanceof MouseEvent && event.getSource() != null) {
                 final MouseEvent mouseEvent = (MouseEvent) event;
                 recentMouseLocationOnScreen = getLocationOnScreen(mouseEvent);
-                if (isPopupTrigger(mouseEvent) && isTitleBarSourceEvent(event)) {
-                    final InternalInspectorFrame internalInspectorFrame = getInternalInspectorFrame(mouseEvent.getComponent());
-                    if (internalInspectorFrame != null) {
-                        final Rectangle frameIconBounds = FRAME_ICON_BOUNDS;
-                        final Point mousePoint = mouseEvent.getPoint();
-                        if (frameIconBounds.contains(mousePoint)) {
-                            final JPopupMenu popupMenu = internalInspectorFrame.menu().popupMenu();
-                            popupMenu.show(internalInspectorFrame, frameIconBounds.x + frameIconBounds.width, frameIconBounds.y + frameIconBounds.height);
-                        }
-                    }
-                }
             }
         }
 
