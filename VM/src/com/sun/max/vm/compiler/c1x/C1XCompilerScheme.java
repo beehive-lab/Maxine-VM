@@ -87,8 +87,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
 
-            xirRuntime = new MaxXirRuntime();
-
             // configure the allocatable registers
             List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
             for (CiRegister r : arch.registers) {
@@ -101,7 +99,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
             // TODO (tw): Initialize target differently
             c1xTarget = new CiTarget(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
             c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
-
+            xirRuntime = new MaxXirRuntime(c1xTarget);
 
             compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
