@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -91,7 +92,9 @@ public class CodeEmitInfo {
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
             exceptionHandlers = new ArrayList<ExceptionHandler>();
-            exceptionHandlers.addAll(info.exceptionHandlers);
+            for (ExceptionHandler h : info.exceptionHandlers) {
+                exceptionHandlers.add(new ExceptionHandler(h));
+            }
         }
     }
 

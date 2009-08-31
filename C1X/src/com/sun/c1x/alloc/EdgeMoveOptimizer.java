@@ -102,12 +102,12 @@ public final class EdgeMoveOptimizer {
             return true;
         }
 
-        if (op1.code() == LIROpcode.Move && op2.code() == LIROpcode.Move) {
+        if (op1.code == LIROpcode.Move && op2.code == LIROpcode.Move) {
             assert op1 instanceof LIROp1 : "move must be LIROp1";
             assert op2 instanceof LIROp1 : "move must be LIROp1";
             LIROp1 move1 = (LIROp1) op1;
             LIROp1 move2 = (LIROp1) op2;
-            if (move1.info() == move2.info() && move1.inOpr() == move2.inOpr() && move1.resultOpr() == move2.resultOpr()) {
+            if (move1.info == move2.info && move1.inOpr() == move2.inOpr() && move1.resultOpr() == move2.resultOpr()) {
                 // these moves are exactly equal and can be optimized
                 return false;
             }
@@ -145,11 +145,11 @@ public final class EdgeMoveOptimizer {
 
             assert pred.numberOfSux() == 1 : "can handle only one successor";
             assert pred.suxAt(0) == block : "invalid control flow";
-            assert predInstructions.get(predInstructions.size() - 1).code() == LIROpcode.Branch : "block with successor must end with branch";
+            assert predInstructions.get(predInstructions.size() - 1).code == LIROpcode.Branch : "block with successor must end with branch";
             assert predInstructions.get(predInstructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
             assert ((LIRBranch) predInstructions.get(predInstructions.size() - 1)).cond() == LIRCondition.Always : "block must end with unconditional branch";
 
-            if (predInstructions.get(predInstructions.size() - 1).info() != null) {
+            if (predInstructions.get(predInstructions.size() - 1).info != null) {
                 // can not optimize instructions when debug info is needed
                 return;
             }
@@ -193,17 +193,17 @@ public final class EdgeMoveOptimizer {
         List<LIRInstruction> curInstructions = block.lir().instructionsList();
 
         assert numSux == 2 : "method should not be called otherwise";
-        assert curInstructions.get(curInstructions.size() - 1).code() == LIROpcode.Branch : "block with successor must end with branch";
+        assert curInstructions.get(curInstructions.size() - 1).code == LIROpcode.Branch : "block with successor must end with branch";
         assert curInstructions.get(curInstructions.size() - 1) instanceof LIRBranch : "branch must be LIROpBranch";
         assert ((LIRBranch) curInstructions.get(curInstructions.size() - 1)).cond() == LIRCondition.Always : "block must end with unconditional branch";
 
-        if (curInstructions.get(curInstructions.size() - 1).info() != null) {
+        if (curInstructions.get(curInstructions.size() - 1).info != null) {
             // can no optimize instructions when debug info is needed
             return;
         }
 
         LIRInstruction branch = curInstructions.get(curInstructions.size() - 2);
-        if (branch.info() != null || (branch.code() != LIROpcode.Branch && branch.code() != LIROpcode.CondFloatBranch)) {
+        if (branch.info != null || (branch.code != LIROpcode.Branch && branch.code != LIROpcode.CondFloatBranch)) {
             // not a valid case for optimization
             // currently, only blocks that end with two branches (conditional branch followed
             // by unconditional branch) are optimized
@@ -218,7 +218,7 @@ public final class EdgeMoveOptimizer {
             int i;
             for (i = insertIdx - 1; i >= 0; i--) {
                 LIRInstruction op = curInstructions.get(i);
-                if ((op.code() == LIROpcode.Branch || op.code() == LIROpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
+                if ((op.code == LIROpcode.Branch || op.code == LIROpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
                     assert false : "block with two successors can have only two branch instructions";
                 }
             }
@@ -229,7 +229,7 @@ public final class EdgeMoveOptimizer {
             BlockBegin sux = block.suxAt(i);
             List<LIRInstruction> suxInstructions = sux.lir().instructionsList();
 
-            assert suxInstructions.get(0).code() == LIROpcode.Label : "block must start with label";
+            assert suxInstructions.get(0).code == LIROpcode.Label : "block must start with label";
 
             if (sux.numberOfPreds() != 1) {
                 // this can happen with switch-statements where multiple edges are between

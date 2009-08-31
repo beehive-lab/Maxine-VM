@@ -22,6 +22,9 @@
  * @Harness: java
  * @Runs: (4)=true; (8)=true; (10)=true; (100)=true;
  */
+/**
+ * @author Hannes Payer
+ */
 package jtt.max;
 
 import com.sun.max.annotate.*;
@@ -36,6 +39,11 @@ public final class ImmortalHeap_allocation {
     }
 
     @UNSAFE
+    public static void resetImmortalHeap(ImmortalMemoryRegion immortalMemoryRegion, Pointer value) {
+        immortalMemoryRegion.mark.set(value);
+    }
+
+    @UNSAFE
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
@@ -44,8 +52,10 @@ public final class ImmortalHeap_allocation {
             size += Word.size();
         }
         if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
+            resetImmortalHeap(immortalMemoryRegion, oldMark);
             return true;
         }
+        resetImmortalHeap(immortalMemoryRegion, oldMark);
         return false;
     }
 

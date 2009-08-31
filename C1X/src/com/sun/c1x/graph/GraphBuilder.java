@@ -27,6 +27,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
@@ -41,19 +42,20 @@ public class GraphBuilder {
 
     final IR ir;
     final C1XCompilation compilation;
+    final CiStatistics stats;
 
     final ValueMap localValueMap;          // map of values for local value numbering
     final MemoryMap memoryMap;             // map of field values for local load elimination
+    final Canonicalizer canonicalizer;     // canonicalizer which does strength reduction + constant folding
     ScopeData scopeData;                   // Per-scope data; used for inlining
     BlockBegin curBlock;                   // the current block
     ValueStack curState;                   // the current execution state
     Instruction lastInstr;                 // the last instruction added
-    int totalInstructions;                 // for bailing out in pathological jsr/ret cases
 
     ValueStack initialState;               // The state for the start block
     ValueStack exceptionState;             // state that will be used by handleException
     boolean skipBlock;                     // skip processing of the rest of this block
-    private Instruction rootMethodSynchronizedObject;
+    private Value rootMethodSynchronizedObject;
 
     /**
      * Creates a new instance and builds the graph for a the specified IRScope.
@@ -65,8 +67,10 @@ public class GraphBuilder {
     public GraphBuilder(C1XCompilation compilation, IRScope scope, IR ir) {
         this.compilation = compilation;
         this.ir = ir;
+        this.stats = compilation.stats;
         this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
+        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer() : null;
         int osrBCI = compilation.osrBCI;
         BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
         BlockBegin start = blockMap.get(0);
@@ -101,15 +105,15 @@ public class GraphBuilder {
                 // try to inline an Intrinsic node
                 boolean isStatic = method.isStatic();
                 int argsSize = method.signatureType().argumentSlots(!isStatic);
-                Instruction[] args = new Instruction[argsSize];
+                Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
                 }
                 if (tryInlineIntrinsic(method, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    BasicType rt = returnBasicType(method);
-                    Instruction result = null;
-                    if (rt != BasicType.Void) {
+                    CiKind rt = returnBasicType(method);
+                    Value result = null;
+                    if (rt != CiKind.Void) {
                         result = pop(rt);
                     }
                     genMethodReturn(result);
@@ -133,7 +137,7 @@ public class GraphBuilder {
         }
 
         if (syncHandler != null && syncHandler.stateBefore() != null) {
-            Instruction lock = null;
+            Value lock = null;
             if (method.isSynchronized()) {
                 curBlock = syncHandler;
                 lastInstr = syncHandler;
@@ -151,7 +155,7 @@ public class GraphBuilder {
             BlockBegin osrBlock = blockMap.get(osrBCI);
             assert osrBlock.wasVisited();
             if (!osrBlock.stateBefore().stackEmpty()) {
-                throw new Bailout("cannot OSR with non-empty stack");
+                throw new CiBailout("cannot OSR with non-empty stack");
             }
         }
     }
@@ -259,73 +263,73 @@ public class GraphBuilder {
         return scopeData.stream.nextBCI();
     }
 
-    void ipush(Instruction x) {
+    void ipush(Value x) {
         curState.ipush(x);
     }
 
-    void lpush(Instruction x) {
+    void lpush(Value x) {
         curState.lpush(x);
     }
 
-    void fpush(Instruction x) {
+    void fpush(Value x) {
         curState.fpush(x);
     }
 
-    void dpush(Instruction x) {
+    void dpush(Value x) {
         curState.dpush(x);
     }
 
-    void apush(Instruction x) {
+    void apush(Value x) {
         curState.apush(x);
     }
 
-    void push(BasicType basicType, Instruction x) {
+    void push(CiKind basicType, Value x) {
         curState.push(basicType, x);
     }
 
-    void pushReturn(BasicType basicType, Instruction x) {
-        if (basicType != BasicType.Void) {
+    void pushReturn(CiKind basicType, Value x) {
+        if (basicType != CiKind.Void) {
             curState.push(basicType.stackType(), x);
         }
     }
 
-    Instruction ipop() {
+    Value ipop() {
         return curState.ipop();
     }
 
-    Instruction lpop() {
+    Value lpop() {
         return curState.lpop();
     }
 
-    Instruction fpop() {
+    Value fpop() {
         return curState.fpop();
     }
 
-    Instruction dpop() {
+    Value dpop() {
         return curState.dpop();
     }
 
-    Instruction apop() {
+    Value apop() {
         return curState.apop();
     }
 
-    Instruction pop(BasicType basicType) {
+    Value pop(CiKind basicType) {
         return curState.pop(basicType);
     }
 
-    void loadLocal(int index, BasicType basicType) {
+    void loadLocal(int index, CiKind basicType) {
         push(basicType, curState.loadLocal(index));
     }
 
-    void storeLocal(BasicType basicType, int index) {
+    void storeLocal(CiKind basicType, int index) {
         if (scopeData.parsingJsr()) {
             // We need to do additional tracking of the location of the return
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (basicType == BasicType.Object) {
+            if (basicType == CiKind.Object) {
                 // might be storing the JSR return address
-                Instruction x = curState.xpop();
+                Value x = curState.xpop();
                 if (x.type().isJsr()) {
                     setJsrReturnAddressLocal(index);
                     curState.storeLocal(index, x);
@@ -359,12 +363,12 @@ public class GraphBuilder {
         // ret.
         for (ScopeData cur = scopeData.parent; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryReturnAddressLocal() == index) {
-                throw new Bailout("subroutine overwrites return address from previous subroutine");
+                throw new CiBailout("subroutine overwrites return address from previous subroutine");
             }
         }
     }
 
-    Instruction roundFp(Instruction x) {
+    Value roundFp(Value x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
             if (x.type().isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
                 return append(new RoundFP(x));
@@ -427,7 +431,7 @@ public class GraphBuilder {
 
         BlockBegin entry = h.entryBlock();
         if (entry == curBlock) {
-            throw new Bailout("Exception handler covers itself");
+            throw new CiBailout("Exception handler covers itself");
         }
         assert entry.bci() == h.handler.handlerBCI();
         assert entry.bci() == -1 || entry == curScopeData.blockAt(entry.bci()) : "blocks must correspond";
@@ -471,9 +475,9 @@ public class GraphBuilder {
             // this is a load of class constant which might be unresolved
             RiType ritype = (RiType) con;
             if (!ritype.isLoaded() || C1XOptions.TestPatching) {
-                push(BasicType.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
+                push(CiKind.Object, append(new ResolveClass(ritype, RiType.Representation.JavaClass, stateBefore, cpi, constantPool())));
             } else {
-                push(BasicType.Object, append(Constant.forObject(ritype.javaClass())));
+                push(CiKind.Object, append(Constant.forObject(ritype.javaClass())));
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
@@ -483,23 +487,23 @@ public class GraphBuilder {
         }
     }
 
-    void genLoadIndexed(BasicType type) {
+    void genLoadIndexed(CiKind type) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction index = ipop();
-        Instruction array = apop();
-        Instruction length = null;
+        Value index = ipop();
+        Value array = apop();
+        Value length = null;
         if (cseArrayLength(array)) {
             length = append(new ArrayLength(array, stateBefore));
         }
         push(type.stackType(), append(new LoadIndexed(array, index, length, type, stateBefore)));
     }
 
-    void genStoreIndexed(BasicType type) {
+    void genStoreIndexed(CiKind type) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction value = pop(type.stackType());
-        Instruction index = ipop();
-        Instruction array = apop();
-        Instruction length = null;
+        Value value = pop(type.stackType());
+        Value index = ipop();
+        Value array = apop();
+        Value length = null;
         if (cseArrayLength(array)) {
             length = append(new ArrayLength(array, stateBefore));
         }
@@ -522,23 +526,23 @@ public class GraphBuilder {
                 break;
             }
             case Bytecodes.DUP: {
-                Instruction w = curState.xpop();
+                Value w = curState.xpop();
                 curState.xpush(w);
                 curState.xpush(w);
                 break;
             }
             case Bytecodes.DUP_X1: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
                 curState.xpush(w1);
                 curState.xpush(w2);
                 curState.xpush(w1);
                 break;
             }
             case Bytecodes.DUP_X2: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
-                Instruction w3 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
+                Value w3 = curState.xpop();
                 curState.xpush(w1);
                 curState.xpush(w3);
                 curState.xpush(w2);
@@ -546,8 +550,8 @@ public class GraphBuilder {
                 break;
             }
             case Bytecodes.DUP2: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
                 curState.xpush(w2);
                 curState.xpush(w1);
                 curState.xpush(w2);
@@ -555,9 +559,9 @@ public class GraphBuilder {
                 break;
             }
             case Bytecodes.DUP2_X1: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
-                Instruction w3 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
+                Value w3 = curState.xpop();
                 curState.xpush(w2);
                 curState.xpush(w1);
                 curState.xpush(w3);
@@ -566,10 +570,10 @@ public class GraphBuilder {
                 break;
             }
             case Bytecodes.DUP2_X2: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
-                Instruction w3 = curState.xpop();
-                Instruction w4 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
+                Value w3 = curState.xpop();
+                Value w4 = curState.xpop();
                 curState.xpush(w2);
                 curState.xpush(w1);
                 curState.xpush(w4);
@@ -579,8 +583,8 @@ public class GraphBuilder {
                 break;
             }
             case Bytecodes.SWAP: {
-                Instruction w1 = curState.xpop();
-                Instruction w2 = curState.xpop();
+                Value w1 = curState.xpop();
+                Value w2 = curState.xpop();
                 curState.xpush(w1);
                 curState.xpush(w2);
                 break;
@@ -591,54 +595,54 @@ public class GraphBuilder {
 
     }
 
-    void genArithmeticOp(BasicType basicType, int opcode) {
+    void genArithmeticOp(CiKind basicType, int opcode) {
         genArithmeticOp(basicType, opcode, null);
     }
 
-    void genArithmeticOp(BasicType basicType, int opcode, ValueStack stack) {
-        Instruction y = pop(basicType);
-        Instruction x = pop(basicType);
-        Instruction result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
+    void genArithmeticOp(CiKind basicType, int opcode, ValueStack stack) {
+        Value y = pop(basicType);
+        Value x = pop(basicType);
+        Value result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             result = roundFp(result);
         }
         push(basicType, result);
     }
 
-    void genNegateOp(BasicType basicType) {
+    void genNegateOp(CiKind basicType) {
         push(basicType, append(new NegateOp(pop(basicType))));
     }
 
-    void genShiftOp(BasicType basicType, int opcode) {
-        Instruction s = ipop();
-        Instruction x = pop(basicType);
+    void genShiftOp(CiKind basicType, int opcode) {
+        Value s = ipop();
+        Value x = pop(basicType);
         // note that strength reduction of e << K >>> K is correctly handled in canonicalizer now
         push(basicType, append(new ShiftOp(opcode, x, s)));
     }
 
-    void genLogicOp(BasicType basicType, int opcode) {
-        Instruction y = pop(basicType);
-        Instruction x = pop(basicType);
+    void genLogicOp(CiKind basicType, int opcode) {
+        Value y = pop(basicType);
+        Value x = pop(basicType);
         push(basicType, append(new LogicOp(opcode, x, y)));
     }
 
-    void genCompareOp(BasicType basicType, int opcode) {
+    void genCompareOp(CiKind basicType, int opcode) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction y = pop(basicType);
-        Instruction x = pop(basicType);
+        Value y = pop(basicType);
+        Value x = pop(basicType);
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
-    void genConvert(int opcode, BasicType from, BasicType to) {
-        BasicType tt = to.stackType();
+    void genConvert(int opcode, CiKind from, CiKind to) {
+        CiKind tt = to.stackType();
         push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
     void genIncrement() {
         int index = stream().readLocalIndex();
         int delta = stream().readIncrement();
-        Instruction x = curState.localAt(index);
-        Instruction y = append(Constant.forInt(delta));
+        Value x = curState.localAt(index);
+        Value y = append(Constant.forInt(delta));
         curState.storeLocal(index, append(new ArithmeticOp(Bytecodes.IADD, x, y, method().isStrictFP(), null)));
     }
 
@@ -647,12 +651,12 @@ public class GraphBuilder {
         append(new Goto(blockAt(toBCI), null, toBCI <= fromBCI)); // backwards branch => safepoint
     }
 
-    void ifNode(Instruction x, Condition cond, Instruction y, ValueStack stateBefore) {
+    void ifNode(Value x, Condition cond, Value y, ValueStack stateBefore) {
         BlockBegin tsucc = blockAt(stream().readBranchDest());
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
         boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
-        final Instruction instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
+        final Value instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
         if (instr instanceof If && C1XOptions.ProfileBranches) {
             ((If) instr).setProfile(method(), bci);
         }
@@ -660,22 +664,22 @@ public class GraphBuilder {
 
     void genIfZero(Condition cond) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction y = appendConstant(CiConstant.INT_0);
-        Instruction x = ipop();
+        Value y = appendConstant(CiConstant.INT_0);
+        Value x = ipop();
         ifNode(x, cond, y, stateBefore);
     }
 
     void genIfNull(Condition cond) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction y = appendConstant(CiConstant.NULL_OBJECT);
-        Instruction x = apop();
+        Value y = appendConstant(CiConstant.NULL_OBJECT);
+        Value x = apop();
         ifNode(x, cond, y, stateBefore);
     }
 
-    void genIfSame(BasicType basicType, Condition cond) {
+    void genIfSame(CiKind basicType, Condition cond) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction y = pop(basicType);
-        Instruction x = pop(basicType);
+        Value y = pop(basicType);
+        Value x = pop(basicType);
         ifNode(x, cond, y, stateBefore);
     }
 
@@ -687,8 +691,10 @@ public class GraphBuilder {
 
     void genCheckCast() {
         ValueStack stateBefore = curState.immutableCopy();
-        RiType type = constantPool().lookupType(stream().readCPI());
-        CheckCast c = new CheckCast(type, apop(), stateBefore);
+        char cpi = stream().readCPI();
+        RiType type = constantPool().lookupType(cpi);
+        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
         if (assumeLeafClass(type)) {
             c.setDirectCompare();
@@ -700,8 +706,10 @@ public class GraphBuilder {
 
     void genInstanceOf() {
         ValueStack stateBefore = curState.immutableCopy();
-        RiType type = constantPool().lookupType(stream().readCPI());
-        InstanceOf i = new InstanceOf(type, apop(), stateBefore);
+        char cpi = stream().readCPI();
+        RiType type = constantPool().lookupType(cpi);
+        Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
+        InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
         if (assumeLeafClass(type)) {
             i.setDirectCompare();
@@ -720,7 +728,7 @@ public class GraphBuilder {
 
     void genNewTypeArray(int typeCode) {
         ValueStack stateBefore = curState.immutableCopy();
-        apush(append(new NewTypeArray(ipop(), BasicType.fromArrayTypeCode(typeCode), stateBefore)));
+        apush(append(new NewTypeArray(ipop(), CiKind.fromArrayTypeCode(typeCode), stateBefore)));
     }
 
     void genNewObjectArray(char cpi) {
@@ -734,7 +742,7 @@ public class GraphBuilder {
         RiType type = constantPool().lookupType(cpi);
         ValueStack stateBefore = curState.immutableCopy();
         int rank = stream().readUByte(stream().currentBCI() + 3);
-        Instruction[] dims = new Instruction[rank];
+        Value[] dims = new Value[rank];
         for (int i = rank - 1; i >= 0; i--) {
             dims[i] = ipop();
         }
@@ -746,7 +754,7 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded);
+        LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded, cpi, constantPool());
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -754,8 +762,8 @@ public class GraphBuilder {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        Instruction value = pop(field.basicType().stackType());
-        appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded));
+        Value value = pop(field.basicType().stackType());
+        appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
     void genGetStatic(char cpi) {
@@ -763,8 +771,8 @@ public class GraphBuilder {
         RiField field = constantPool().lookupGetStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
-        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized);
+        Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
+        LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedLoadField(field.basicType(), load);
     }
 
@@ -773,18 +781,18 @@ public class GraphBuilder {
         RiField field = constantPool().lookupPutStatic(cpi);
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
-        Instruction container = genStaticFields(holder, isInitialized, cpi, stateBefore);
-        Instruction value = pop(field.basicType().stackType());
-        StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized);
+        Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
+        Value value = pop(field.basicType().stackType());
+        StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedStoreField(store);
     }
 
-    private Instruction genStaticFields(RiType holder, boolean initialized, char cpi, ValueStack stateBefore) {
-        Instruction holderInstr;
+    private Value genResolveClass(RiType.Representation representation, RiType holder, boolean initialized, char cpi, ValueStack stateBefore) {
+        Value holderInstr;
         if (initialized) {
-            holderInstr = appendConstant(holder.getEncoding(RiType.Representation.StaticFields));
+            holderInstr = appendConstant(holder.getEncoding(representation));
         } else {
-            holderInstr = append(new ResolveClass(holder, RiType.Representation.StaticFields, stateBefore, cpi, constantPool()));
+            holderInstr = append(new ResolveClass(holder, representation, stateBefore, cpi, constantPool()));
         }
         return holderInstr;
     }
@@ -800,9 +808,9 @@ public class GraphBuilder {
         append(store);
     }
 
-    private void appendOptimizedLoadField(BasicType basicType, LoadField load) {
+    private void appendOptimizedLoadField(CiKind basicType, LoadField load) {
         if (memoryMap != null) {
-            Instruction replacement = memoryMap.load(load);
+            Value replacement = memoryMap.load(load);
             if (replacement != load) {
                 // the memory buffer found a replacement for this load (no need to append)
                 push(basicType.stackType(), replacement);
@@ -810,7 +818,7 @@ public class GraphBuilder {
             }
         }
         // append the load to the instruction
-        Instruction optimized = append(load);
+        Value optimized = append(load);
         if (memoryMap != null && optimized != load) {
             // local optimization happened, replace its value in the memory map
             memoryMap.setResult(load, optimized);
@@ -820,7 +828,7 @@ public class GraphBuilder {
 
     void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(false));
+        Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null, stateBefore)) {
                 profileInvocation(target);
@@ -831,7 +839,7 @@ public class GraphBuilder {
 
     void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
             profileCall(args[0], null);
@@ -841,9 +849,9 @@ public class GraphBuilder {
 
     void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
-            Instruction receiver = args[0];
+            Value receiver = args[0];
             // attempt to devirtualize the call
             if (target.isLoaded() && target.holder().isLoaded()) {
                 RiType klass = target.holder();
@@ -880,17 +888,17 @@ public class GraphBuilder {
         }
     }
 
-    private BasicType returnBasicType(RiMethod target) {
+    private CiKind returnBasicType(RiMethod target) {
         return target.signatureType().returnBasicType();
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
-        Instruction[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
     }
 
-    private void invokeDirect(RiMethod target, Instruction[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder, stateBefore)) {
                 // could not optimize or inline the method call
@@ -901,9 +909,9 @@ public class GraphBuilder {
         }
     }
 
-    private void appendInvoke(int opcode, RiMethod target, Instruction[] args, boolean isStatic, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        BasicType resultType = returnBasicType(target);
-        Instruction result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
+    private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+        CiKind resultType = returnBasicType(target);
+        Value result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -911,7 +919,7 @@ public class GraphBuilder {
         }
     }
 
-    private RiType getExactType(RiType staticType, Instruction receiver) {
+    private RiType getExactType(RiType staticType, Value receiver) {
         RiType exact = staticType.exactType();
         if (exact == null) {
             exact = receiver.exactType();
@@ -923,7 +931,7 @@ public class GraphBuilder {
         return exact;
     }
 
-    private RiType getAssumedLeafType(RiType staticType, Instruction receiver) {
+    private RiType getAssumedLeafType(RiType staticType, Value receiver) {
         if (assumeLeafClass(staticType)) {
             return staticType;
         }
@@ -934,7 +942,7 @@ public class GraphBuilder {
         return null;
     }
 
-    private RiMethod getAssumedLeafMethod(RiMethod target, Instruction receiver) {
+    private RiMethod getAssumedLeafMethod(RiMethod target, Value receiver) {
         if (assumeLeafMethod(target)) {
             return target;
         }
@@ -948,16 +956,16 @@ public class GraphBuilder {
         return null;
     }
 
-    Instruction getReceiver(RiMethod target) {
+    Value getReceiver(RiMethod target) {
         return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
     }
 
-    Instruction[] popArguments(RiMethod target) {
+    Value[] popArguments(RiMethod target) {
         return curState.popArguments(target.signatureType().argumentSlots(false));
     }
 
     void callRegisterFinalizer() {
-        Instruction receiver = curState.loadLocal(0);
+        Value receiver = curState.loadLocal(0);
         RiType declaredType = receiver.declaredType();
         RiType receiverType = declaredType;
         RiType exactType = receiver.exactType();
@@ -990,15 +998,15 @@ public class GraphBuilder {
 
         if (needsCheck) {
             // append a call to the registration intrinsic
-            loadLocal(0, BasicType.Object);
-            append(new Intrinsic(BasicType.Void, C1XIntrinsic.java_lang_Object$init,
+            loadLocal(0, CiKind.Object);
+            append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
                                           curState.popArguments(1), false, curState.immutableCopy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
     }
 
-    void genMethodReturn(Instruction x) {
+    void genMethodReturn(Value x) {
         if (C1XOptions.RegisterFinalizersAtInit) {
             C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
             if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
@@ -1014,9 +1022,12 @@ public class GraphBuilder {
                 assert C1XOptions.InlineSynchronizedMethods;
                 int i = curState.scope().callerState().locksSize();
                 assert curState.locksSize() == i + 1;
-                Instruction object = curState.lockAt(i);
-                if (!object.isAppended()) {
-                    appendWithoutOptimization(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                Value object = curState.lockAt(i);
+                if (object instanceof Instruction) {
+                    Instruction obj = (Instruction) object;
+                    if (!obj.isAppended()) {
+                        appendWithoutOptimization(obj, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                    }
                 }
                 genMonitorExit(object, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
@@ -1057,15 +1068,15 @@ public class GraphBuilder {
         append(new Return(x));
     }
 
-    void genMonitorEnter(Instruction x, int bci) {
+    void genMonitorEnter(Value x, int bci) {
         ValueStack stateBefore = curState.immutableCopy();
         appendWithoutOptimization(new MonitorEnter(x, curState.lock(scope(), x), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
 
-    void genMonitorExit(Instruction x, int bci) {
+    void genMonitorExit(Value x, int bci) {
         if (curState.locksSize() < 1) {
-            throw new Bailout("monitor stack underflow");
+            throw new CiBailout("monitor stack underflow");
         }
         ValueStack stateBefore = curState.immutableCopy();
         appendWithoutOptimization(new MonitorExit(x, curState.unlock(), stateBefore), bci);
@@ -1074,7 +1085,7 @@ public class GraphBuilder {
 
     void genMonitorExit(int bci, ValueStack stateBefore) {
         if (curState.locksSize() < 1) {
-            throw new Bailout("monitor stack underflow");
+            throw new CiBailout("monitor stack underflow");
         }
         appendWithoutOptimization(new MonitorExit(curState.apop(), curState.unlock(), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
@@ -1084,20 +1095,20 @@ public class GraphBuilder {
         for (ScopeData cur = scopeData; cur != null && cur.parsingJsr() && cur.scope == scope(); cur = cur.parent) {
             if (cur.jsrEntryBCI() == dest) {
                 // the jsr/ret pattern includes a recursive invocation
-                throw new Bailout("recursive jsr/ret structure");
+                throw new CiBailout("recursive jsr/ret structure");
             }
         }
-        push(BasicType.Jsr, append(Constant.forJsr(nextBCI())));
+        push(CiKind.Jsr, append(Constant.forJsr(nextBCI())));
         tryInlineJsr(dest);
     }
 
     void genRet(int localIndex) {
         if (!scopeData.parsingJsr()) {
-            throw new Bailout("ret encountered when not parsing subroutine");
+            throw new CiBailout("ret encountered when not parsing subroutine");
         }
 
         if (localIndex != scopeData.jsrEntryReturnAddressLocal()) {
-            throw new Bailout("jsr/ret structure is too complicated");
+            throw new CiBailout("jsr/ret structure is too complicated");
         }
         // rets become non-safepoint gotos
         append(new Goto(scopeData.jsrContinuation(), null, false));
@@ -1143,7 +1154,7 @@ public class GraphBuilder {
         append(new LookupSwitch(ipop(), list, keys, stateBefore, isBackwards));
     }
 
-    private boolean cseArrayLength(Instruction array) {
+    private boolean cseArrayLength(Value array) {
         // checks whether an array length access should be generated for CSE
         if (C1XOptions.AlwaysCSEArrayLength) {
             // always access the length for CSE
@@ -1156,13 +1167,13 @@ public class GraphBuilder {
             return true;
         } else if (array instanceof NewArray) {
             // the array is derived from an allocation
-            final Instruction length = ((NewArray) array).length();
+            final Value length = ((NewArray) array).length();
             return length != null && length.isConstant();
         }
         return false;
     }
 
-    private void profileCall(Instruction receiver, RiType knownHolder) {
+    private void profileCall(Value receiver, RiType knownHolder) {
         if (C1XOptions.ProfileCalls) {
             append(new ProfileCall(method(), bci(), receiver, knownHolder));
         }
@@ -1175,7 +1186,7 @@ public class GraphBuilder {
                 int offset = mdo.invocationCountOffset();
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the invocation count
-                    Instruction m = append(new Constant(mdo.encoding()));
+                    Value m = append(new Constant(mdo.encoding()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
@@ -1189,37 +1200,45 @@ public class GraphBuilder {
                 int offset = mdo.bciCountOffset(bci);
                 if (offset >= 0) {
                     // if the method data object exists and it has an entry for the bytecode index
-                    Instruction m = append(new Constant(mdo.encoding()));
+                    Value m = append(new Constant(mdo.encoding()));
                     append(new ProfileCounter(m, offset, 1));
                 }
             }
         }
     }
 
-    private Instruction appendConstant(CiConstant type) {
+    private Value appendConstant(CiConstant type) {
         return appendWithBCI(new Constant(type), bci(), false);
     }
 
-    private Instruction append(Instruction x) {
+    private Value append(Instruction x) {
         return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
     }
 
-    private Instruction appendWithoutOptimization(Instruction x, int bci) {
+    private Value appendWithoutOptimization(Instruction x, int bci) {
         return appendWithBCI(x, bci, false);
     }
 
-    private Instruction appendWithBCI(Instruction x, int bci, boolean canonicalize) {
+    private Value appendWithBCI(Instruction x, int bci, boolean canonicalize) {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
-            Canonicalizer canon = new Canonicalizer(x, bci);
-            List<Instruction> extra = canon.extra();
+            // Canonicalizer canon = new Canonicalizer(x, bci);
+            canonicalizer.canonicalize(x, bci);
+            List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this
                 for (Instruction i : extra) {
                     appendWithBCI(i, bci, false); // don't try to canonicalize the new instructions
                 }
             }
-            x = canon.canonical();
+            Value r = canonicalizer.canonical();
+            if (r instanceof Instruction) {
+                // the result is an instruction that may need to be appended
+                x = (Instruction) r;
+            } else {
+                // the result is not an instruction (and thus cannot be appended)
+                return r;
+            }
         }
         if (x.isAppended()) {
             // the instruction has already been added
@@ -1227,42 +1246,38 @@ public class GraphBuilder {
         }
         if (C1XOptions.UseLocalValueNumbering) {
             // look in the local value map
-            Instruction r = localValueMap.findInsert(x);
+            Value r = localValueMap.findInsert(x);
             if (r != x) {
                 C1XMetrics.LocalValueNumberHits++;
-                assert r.isAppended() : "lvn result should already be appended";
                 return r;
             }
         }
 
-        if (!(x instanceof Phi || x instanceof Local)) {
-            // add instructions to the basic block (if not a phi or a local)
-            assert x.next() == null : "instruction should not have been appended yet";
-            assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
-            lastInstr = lastInstr.setNext(x, bci);
-            if (++totalInstructions >= C1XOptions.MaximumInstructionCount) {
-                // bailout if we've exceeded the maximum inlining size
-                throw new Bailout("Method and/or inlining is too large");
-            }
+        assert x.next() == null : "instruction should not have been appended yet";
+        assert lastInstr.next() == null : "cannot append instruction to instruction which isn't end";
+        lastInstr = lastInstr.setNext(x, bci);
+        if (++stats.nodeCount >= C1XOptions.MaximumInstructionCount) {
+            // bailout if we've exceeded the maximum inlining size
+            throw new CiBailout("Method and/or inlining is too large");
+        }
 
-            if (hasUncontrollableSideEffects(x)) {
-                // conservatively kill all memory if there are unknown side effects
-                if (memoryMap != null) {
-                    memoryMap.kill();
-                }
+        if (hasUncontrollableSideEffects(x)) {
+            // conservatively kill all memory if there are unknown side effects
+            if (memoryMap != null) {
+                memoryMap.kill();
             }
+        }
 
-            if (x.canTrap()) {
-                // connect the instruction to any exception handlers
-                assert exceptionState != null || !hasHandler() : "must have setup exception state";
-                x.setExceptionHandlers(handleException(bci));
-            }
+        if (x.canTrap()) {
+            // connect the instruction to any exception handlers
+            assert exceptionState != null || !hasHandler() : "must have setup exception state";
+            x.setExceptionHandlers(handleException(bci));
         }
 
         return x;
     }
 
-    private boolean hasUncontrollableSideEffects(Instruction x) {
+    private boolean hasUncontrollableSideEffects(Value x) {
         return x instanceof Invoke || x instanceof Intrinsic && !((Intrinsic) x).preservesState() || x instanceof ResolveClass;
     }
 
@@ -1345,8 +1360,8 @@ public class GraphBuilder {
         int index = 0;
         if (!method.isStatic()) {
             // add the receiver and assume it is non null
-            Local local = new Local(BasicType.Object, index);
-            local.setFlag(Instruction.Flag.NonNull, true);
+            Local local = new Local(CiKind.Object, index);
+            local.setFlag(Value.Flag.NonNull, true);
             local.setDeclaredType(method.holder());
             state.storeLocal(index, local);
             index = 1;
@@ -1355,7 +1370,7 @@ public class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            BasicType vt = type.basicType().stackType();
+            CiKind vt = type.basicType().stackType();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
                 local.setDeclaredType(type);
@@ -1370,7 +1385,7 @@ public class GraphBuilder {
         return state;
     }
 
-    boolean tryOptimizeCall(RiMethod target, Instruction[] args, boolean isStatic) {
+    boolean tryOptimizeCall(RiMethod target, Value[] args, boolean isStatic) {
         if (target.isLoaded()) {
             if (C1XOptions.InlineIntrinsics) {
                 // try to create an intrinsic node
@@ -1390,7 +1405,7 @@ public class GraphBuilder {
         return false;
     }
 
-    private boolean tryInlineIntrinsic(RiMethod target, Instruction[] args, boolean isStatic, C1XIntrinsic intrinsic) {
+    private boolean tryInlineIntrinsic(RiMethod target, Value[] args, boolean isStatic, C1XIntrinsic intrinsic) {
         boolean preservesState = true;
         boolean canTrap = false;
 
@@ -1403,16 +1418,16 @@ public class GraphBuilder {
         }
 
         // get the arguments for the intrinsic
-        BasicType resultType = returnBasicType(target);
+        CiKind resultType = returnBasicType(target);
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
-        C1XMetrics.InlinedIntrinsics++;
+        stats.intrinsicCount++;
         return true;
     }
 
-    private boolean tryFoldable(RiMethod target, Instruction[] args) {
+    private boolean tryFoldable(RiMethod target, Value[] args) {
         CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
             pushReturn(returnBasicType(target), new Constant(result));
@@ -1421,7 +1436,7 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInline(RiMethod target, Instruction[] args, RiType knownHolder, ValueStack stateBefore) {
+    boolean tryInline(RiMethod target, Value[] args, RiType knownHolder, ValueStack stateBefore) {
         return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder, stateBefore);
     }
 
@@ -1429,8 +1444,8 @@ public class GraphBuilder {
         if (!C1XOptions.InlineMethods) {
             return false; // all inlining is turned off
         }
-        if (!target.isLoaded()) {
-            return cannotInline(target, "method is not resolved");
+        if (!target.hasCode()) {
+            return cannotInline(target, "method has no code");
         }
         if (!target.holder().isInitialized()) {
             return cannotInline(target, "holder is not initialized");
@@ -1445,8 +1460,8 @@ public class GraphBuilder {
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
-        if (totalInstructions > C1XOptions.MaximumDesiredSize) {
-            return cannotInline(target, "compilation already too big " + "(" + compilation.totalInstructions() + " insts)");
+        if (stats.nodeCount > C1XOptions.MaximumDesiredSize) {
+            return cannotInline(target, "compilation already too big " + "(" + compilation.stats.nodeCount + " nodes)");
         }
         if (compilation.runtime.mustNotInline(target)) {
             C1XMetrics.InlineForbiddenMethods++;
@@ -1454,12 +1469,6 @@ public class GraphBuilder {
         }
         if (compilation.runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
-        }
-        if (target.isAbstract()) {
-            return cannotInline(target, "is abstract");
-        }
-        if (target.isNative()) {
-            return cannotInline(target, "is native");
         }
         if (target.isSynchronized() && !C1XOptions.InlineSynchronizedMethods) {
             return cannotInline(target, "is synchronized");
@@ -1469,9 +1478,6 @@ public class GraphBuilder {
         }
         if (!target.hasBalancedMonitors()) {
             return cannotInline(target, "has unbalanced monitors");
-        }
-        if (C1XOptions.SSEVersion < 2 && target.isStrictFP() != method().isStrictFP()) {
-            return cannotInline(target, "strictfp mismatch on x87");
         }
         if (target.codeSize() > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
@@ -1491,14 +1497,17 @@ public class GraphBuilder {
         return false;
     }
 
-    boolean tryInlineFull(RiMethod target, Instruction[] args, RiType knownHolder, ValueStack stateBefore) {
+    boolean tryInlineFull(RiMethod target, Value[] args, RiType knownHolder, ValueStack stateBefore) {
         BlockBegin orig = curBlock;
-        Instruction receiver = null;
+        Value receiver = null;
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
             receiver = args[0];
             if (!receiver.isNonNull()) {
-                append(new NullCheck(receiver, stateBefore));
+                NullCheck check = new NullCheck(receiver, stateBefore);
+                receiver = check;
+                args[0] = check;
+                append(check);
             }
         }
 
@@ -1530,7 +1539,7 @@ public class GraphBuilder {
         // pass parameters into the callee state
         ValueStack calleeState = curState;
         for (int i = 0; i < args.length; i++) {
-            Instruction arg = args[i];
+            Value arg = args[i];
             if (arg != null) {
                 calleeState.storeLocal(i, roundFp(arg));
             }
@@ -1544,7 +1553,7 @@ public class GraphBuilder {
         // compute the lock stack size for callee scope
         scope().computeLockStackSize();
 
-        Instruction lock = null;
+        Value lock = null;
         BlockBegin syncHandler = null;
         // inline the locking code if the target method is synchronized
         if (target.isSynchronized()) {
@@ -1616,11 +1625,11 @@ public class GraphBuilder {
             popScope();
         }
 
-        C1XMetrics.InlinedMethods++;
+        stats.inlineCount++;
         return true;
     }
 
-    private Instruction synchronizedObject(ValueStack state, RiMethod target) {
+    private Value synchronizedObject(ValueStack state, RiMethod target) {
         if (target.isStatic()) {
             Constant classConstant = Constant.forObject(target.holder().javaClass());
             return appendWithoutOptimization(classConstant, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -1629,11 +1638,10 @@ public class GraphBuilder {
         }
     }
 
-    void inlineSyncEntry(Instruction lock, BlockBegin syncHandler) {
+    void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
         exceptionState = curState.copy();
-        assert lock.isAppended();
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-        lastInstr.setFlag(Instruction.Flag.NonNull, true);
+        lastInstr.setFlag(Value.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
         RiExceptionHandler handler = newDefaultExceptionHandler(method());
@@ -1642,7 +1650,7 @@ public class GraphBuilder {
         scopeData.addExceptionHandler(h);
     }
 
-    void fillSyncHandler(Instruction lock, BlockBegin syncHandler, boolean defaultHandler) {
+    void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean defaultHandler) {
         BlockBegin origBlock = curBlock;
         ValueStack origState = curState;
         Instruction origLast = lastInstr;
@@ -1657,13 +1665,16 @@ public class GraphBuilder {
         assert !syncHandler.wasVisited() : "synch handler already visited";
 
         curBlock.setWasVisited(true);
-        Instruction exception = appendWithoutOptimization(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI);
+        Value exception = appendWithoutOptimization(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI);
 
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
         if (lock != null) {
             assert curState.locksSize() > 0 && curState.lockAt(curState.locksSize() - 1) == lock;
-            if (!lock.isAppended()) {
-                lock = appendWithoutOptimization(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            if (lock instanceof Instruction) {
+                Instruction l = (Instruction) lock;
+                if (!l.isAppended()) {
+                    lock = appendWithoutOptimization(l, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+                }
             }
             // exit the monitor
             genMonitorExit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
@@ -1753,11 +1764,11 @@ public class GraphBuilder {
         // create the entry instruction which represents the OSR state buffer
         // input from interpreter / JIT
         Instruction e = new OsrEntry();
-        e.setFlag(Instruction.Flag.NonNull, true);
+        e.setFlag(Value.Flag.NonNull, true);
 
         for (int i = 0; i < state.localsSize(); i++) {
-            Instruction local = state.localAt(i);
-            Instruction get;
+            Value local = state.localAt(i);
+            Value get;
             int offset = frame.getLocalOffset(i);
             if (local != null) {
                 // this is a live local according to compiler
@@ -1766,7 +1777,7 @@ public class GraphBuilder {
                     // pretend that it passed null
                     get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
-                    Instruction oc = appendConstant(CiConstant.forInt(offset));
+                    Value oc = appendConstant(CiConstant.forInt(offset));
                     get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
@@ -1812,7 +1823,7 @@ public class GraphBuilder {
 
             // check for active JSR during OSR compilation
             if (compilation.isOsrCompilation() && scope().isTopScope() && scopeData.parsingJsr() && s.currentBCI() == compilation.osrBCI) {
-                throw new Bailout("OSR not supported while a JSR is active");
+                throw new CiBailout("OSR not supported while a JSR is active");
             }
 
             // push an exception object onto the stack if we are parsing an exception handler
@@ -1844,72 +1855,72 @@ public class GraphBuilder {
                 case Bytecodes.LDC            : // fall through
                 case Bytecodes.LDC_W          : // fall through
                 case Bytecodes.LDC2_W         : genLoadConstant(stream().readCPI()); break;
-                case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), BasicType.Int); break;
-                case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), BasicType.Long); break;
-                case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), BasicType.Float); break;
-                case Bytecodes.DLOAD          : loadLocal(s.readLocalIndex(), BasicType.Double); break;
-                case Bytecodes.ALOAD          : loadLocal(s.readLocalIndex(), BasicType.Object); break;
-                case Bytecodes.ILOAD_0        : loadLocal(0, BasicType.Int); break;
-                case Bytecodes.ILOAD_1        : loadLocal(1, BasicType.Int); break;
-                case Bytecodes.ILOAD_2        : loadLocal(2, BasicType.Int); break;
-                case Bytecodes.ILOAD_3        : loadLocal(3, BasicType.Int); break;
-                case Bytecodes.LLOAD_0        : loadLocal(0, BasicType.Long); break;
-                case Bytecodes.LLOAD_1        : loadLocal(1, BasicType.Long); break;
-                case Bytecodes.LLOAD_2        : loadLocal(2, BasicType.Long); break;
-                case Bytecodes.LLOAD_3        : loadLocal(3, BasicType.Long); break;
-                case Bytecodes.FLOAD_0        : loadLocal(0, BasicType.Float); break;
-                case Bytecodes.FLOAD_1        : loadLocal(1, BasicType.Float); break;
-                case Bytecodes.FLOAD_2        : loadLocal(2, BasicType.Float); break;
-                case Bytecodes.FLOAD_3        : loadLocal(3, BasicType.Float); break;
-                case Bytecodes.DLOAD_0        : loadLocal(0, BasicType.Double); break;
-                case Bytecodes.DLOAD_1        : loadLocal(1, BasicType.Double); break;
-                case Bytecodes.DLOAD_2        : loadLocal(2, BasicType.Double); break;
-                case Bytecodes.DLOAD_3        : loadLocal(3, BasicType.Double); break;
-                case Bytecodes.ALOAD_0        : loadLocal(0, BasicType.Object); break;
-                case Bytecodes.ALOAD_1        : loadLocal(1, BasicType.Object); break;
-                case Bytecodes.ALOAD_2        : loadLocal(2, BasicType.Object); break;
-                case Bytecodes.ALOAD_3        : loadLocal(3, BasicType.Object); break;
-                case Bytecodes.IALOAD         : genLoadIndexed(BasicType.Int   ); break;
-                case Bytecodes.LALOAD         : genLoadIndexed(BasicType.Long  ); break;
-                case Bytecodes.FALOAD         : genLoadIndexed(BasicType.Float ); break;
-                case Bytecodes.DALOAD         : genLoadIndexed(BasicType.Double); break;
-                case Bytecodes.AALOAD         : genLoadIndexed(BasicType.Object); break;
-                case Bytecodes.BALOAD         : genLoadIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CALOAD         : genLoadIndexed(BasicType.Char  ); break;
-                case Bytecodes.SALOAD         : genLoadIndexed(BasicType.Short ); break;
-                case Bytecodes.ISTORE         : storeLocal(BasicType.Int, s.readLocalIndex()); break;
-                case Bytecodes.LSTORE         : storeLocal(BasicType.Long, s.readLocalIndex()); break;
-                case Bytecodes.FSTORE         : storeLocal(BasicType.Float, s.readLocalIndex()); break;
-                case Bytecodes.DSTORE         : storeLocal(BasicType.Double, s.readLocalIndex()); break;
-                case Bytecodes.ASTORE         : storeLocal(BasicType.Object, s.readLocalIndex()); break;
-                case Bytecodes.ISTORE_0       : storeLocal(BasicType.Int, 0); break;
-                case Bytecodes.ISTORE_1       : storeLocal(BasicType.Int, 1); break;
-                case Bytecodes.ISTORE_2       : storeLocal(BasicType.Int, 2); break;
-                case Bytecodes.ISTORE_3       : storeLocal(BasicType.Int, 3); break;
-                case Bytecodes.LSTORE_0       : storeLocal(BasicType.Long, 0); break;
-                case Bytecodes.LSTORE_1       : storeLocal(BasicType.Long, 1); break;
-                case Bytecodes.LSTORE_2       : storeLocal(BasicType.Long, 2); break;
-                case Bytecodes.LSTORE_3       : storeLocal(BasicType.Long, 3); break;
-                case Bytecodes.FSTORE_0       : storeLocal(BasicType.Float, 0); break;
-                case Bytecodes.FSTORE_1       : storeLocal(BasicType.Float, 1); break;
-                case Bytecodes.FSTORE_2       : storeLocal(BasicType.Float, 2); break;
-                case Bytecodes.FSTORE_3       : storeLocal(BasicType.Float, 3); break;
-                case Bytecodes.DSTORE_0       : storeLocal(BasicType.Double, 0); break;
-                case Bytecodes.DSTORE_1       : storeLocal(BasicType.Double, 1); break;
-                case Bytecodes.DSTORE_2       : storeLocal(BasicType.Double, 2); break;
-                case Bytecodes.DSTORE_3       : storeLocal(BasicType.Double, 3); break;
-                case Bytecodes.ASTORE_0       : storeLocal(BasicType.Object, 0); break;
-                case Bytecodes.ASTORE_1       : storeLocal(BasicType.Object, 1); break;
-                case Bytecodes.ASTORE_2       : storeLocal(BasicType.Object, 2); break;
-                case Bytecodes.ASTORE_3       : storeLocal(BasicType.Object, 3); break;
-                case Bytecodes.IASTORE        : genStoreIndexed(BasicType.Int   ); break;
-                case Bytecodes.LASTORE        : genStoreIndexed(BasicType.Long  ); break;
-                case Bytecodes.FASTORE        : genStoreIndexed(BasicType.Float ); break;
-                case Bytecodes.DASTORE        : genStoreIndexed(BasicType.Double); break;
-                case Bytecodes.AASTORE        : genStoreIndexed(BasicType.Object); break;
-                case Bytecodes.BASTORE        : genStoreIndexed(BasicType.Byte  ); break;
-                case Bytecodes.CASTORE        : genStoreIndexed(BasicType.Char  ); break;
-                case Bytecodes.SASTORE        : genStoreIndexed(BasicType.Short ); break;
+                case Bytecodes.ILOAD          : loadLocal(s.readLocalIndex(), CiKind.Int); break;
+                case Bytecodes.LLOAD          : loadLocal(s.readLocalIndex(), CiKind.Long); break;
+                case Bytecodes.FLOAD          : loadLocal(s.readLocalIndex(), CiKind.Float); break;
+                case Bytecodes.DLOAD          : loadLocal(s.readLocalIndex(), CiKind.Double); break;
+                case Bytecodes.ALOAD          : loadLocal(s.readLocalIndex(), CiKind.Object); break;
+                case Bytecodes.ILOAD_0        : loadLocal(0, CiKind.Int); break;
+                case Bytecodes.ILOAD_1        : loadLocal(1, CiKind.Int); break;
+                case Bytecodes.ILOAD_2        : loadLocal(2, CiKind.Int); break;
+                case Bytecodes.ILOAD_3        : loadLocal(3, CiKind.Int); break;
+                case Bytecodes.LLOAD_0        : loadLocal(0, CiKind.Long); break;
+                case Bytecodes.LLOAD_1        : loadLocal(1, CiKind.Long); break;
+                case Bytecodes.LLOAD_2        : loadLocal(2, CiKind.Long); break;
+                case Bytecodes.LLOAD_3        : loadLocal(3, CiKind.Long); break;
+                case Bytecodes.FLOAD_0        : loadLocal(0, CiKind.Float); break;
+                case Bytecodes.FLOAD_1        : loadLocal(1, CiKind.Float); break;
+                case Bytecodes.FLOAD_2        : loadLocal(2, CiKind.Float); break;
+                case Bytecodes.FLOAD_3        : loadLocal(3, CiKind.Float); break;
+                case Bytecodes.DLOAD_0        : loadLocal(0, CiKind.Double); break;
+                case Bytecodes.DLOAD_1        : loadLocal(1, CiKind.Double); break;
+                case Bytecodes.DLOAD_2        : loadLocal(2, CiKind.Double); break;
+                case Bytecodes.DLOAD_3        : loadLocal(3, CiKind.Double); break;
+                case Bytecodes.ALOAD_0        : loadLocal(0, CiKind.Object); break;
+                case Bytecodes.ALOAD_1        : loadLocal(1, CiKind.Object); break;
+                case Bytecodes.ALOAD_2        : loadLocal(2, CiKind.Object); break;
+                case Bytecodes.ALOAD_3        : loadLocal(3, CiKind.Object); break;
+                case Bytecodes.IALOAD         : genLoadIndexed(CiKind.Int   ); break;
+                case Bytecodes.LALOAD         : genLoadIndexed(CiKind.Long  ); break;
+                case Bytecodes.FALOAD         : genLoadIndexed(CiKind.Float ); break;
+                case Bytecodes.DALOAD         : genLoadIndexed(CiKind.Double); break;
+                case Bytecodes.AALOAD         : genLoadIndexed(CiKind.Object); break;
+                case Bytecodes.BALOAD         : genLoadIndexed(CiKind.Byte  ); break;
+                case Bytecodes.CALOAD         : genLoadIndexed(CiKind.Char  ); break;
+                case Bytecodes.SALOAD         : genLoadIndexed(CiKind.Short ); break;
+                case Bytecodes.ISTORE         : storeLocal(CiKind.Int, s.readLocalIndex()); break;
+                case Bytecodes.LSTORE         : storeLocal(CiKind.Long, s.readLocalIndex()); break;
+                case Bytecodes.FSTORE         : storeLocal(CiKind.Float, s.readLocalIndex()); break;
+                case Bytecodes.DSTORE         : storeLocal(CiKind.Double, s.readLocalIndex()); break;
+                case Bytecodes.ASTORE         : storeLocal(CiKind.Object, s.readLocalIndex()); break;
+                case Bytecodes.ISTORE_0       : storeLocal(CiKind.Int, 0); break;
+                case Bytecodes.ISTORE_1       : storeLocal(CiKind.Int, 1); break;
+                case Bytecodes.ISTORE_2       : storeLocal(CiKind.Int, 2); break;
+                case Bytecodes.ISTORE_3       : storeLocal(CiKind.Int, 3); break;
+                case Bytecodes.LSTORE_0       : storeLocal(CiKind.Long, 0); break;
+                case Bytecodes.LSTORE_1       : storeLocal(CiKind.Long, 1); break;
+                case Bytecodes.LSTORE_2       : storeLocal(CiKind.Long, 2); break;
+                case Bytecodes.LSTORE_3       : storeLocal(CiKind.Long, 3); break;
+                case Bytecodes.FSTORE_0       : storeLocal(CiKind.Float, 0); break;
+                case Bytecodes.FSTORE_1       : storeLocal(CiKind.Float, 1); break;
+                case Bytecodes.FSTORE_2       : storeLocal(CiKind.Float, 2); break;
+                case Bytecodes.FSTORE_3       : storeLocal(CiKind.Float, 3); break;
+                case Bytecodes.DSTORE_0       : storeLocal(CiKind.Double, 0); break;
+                case Bytecodes.DSTORE_1       : storeLocal(CiKind.Double, 1); break;
+                case Bytecodes.DSTORE_2       : storeLocal(CiKind.Double, 2); break;
+                case Bytecodes.DSTORE_3       : storeLocal(CiKind.Double, 3); break;
+                case Bytecodes.ASTORE_0       : storeLocal(CiKind.Object, 0); break;
+                case Bytecodes.ASTORE_1       : storeLocal(CiKind.Object, 1); break;
+                case Bytecodes.ASTORE_2       : storeLocal(CiKind.Object, 2); break;
+                case Bytecodes.ASTORE_3       : storeLocal(CiKind.Object, 3); break;
+                case Bytecodes.IASTORE        : genStoreIndexed(CiKind.Int   ); break;
+                case Bytecodes.LASTORE        : genStoreIndexed(CiKind.Long  ); break;
+                case Bytecodes.FASTORE        : genStoreIndexed(CiKind.Float ); break;
+                case Bytecodes.DASTORE        : genStoreIndexed(CiKind.Double); break;
+                case Bytecodes.AASTORE        : genStoreIndexed(CiKind.Object); break;
+                case Bytecodes.BASTORE        : genStoreIndexed(CiKind.Byte  ); break;
+                case Bytecodes.CASTORE        : genStoreIndexed(CiKind.Char  ); break;
+                case Bytecodes.SASTORE        : genStoreIndexed(CiKind.Short ); break;
                 case Bytecodes.POP            : // fall through
                 case Bytecodes.POP2           : // fall through
                 case Bytecodes.DUP            : // fall through
@@ -1921,75 +1932,75 @@ public class GraphBuilder {
                 case Bytecodes.SWAP           : stackOp(opcode); break;
                 case Bytecodes.IADD           : // fall through
                 case Bytecodes.ISUB           : // fall through
-                case Bytecodes.IMUL           : genArithmeticOp(BasicType.Int, opcode); break;
+                case Bytecodes.IMUL           : genArithmeticOp(CiKind.Int, opcode); break;
                 case Bytecodes.IDIV           : // fall through
-                case Bytecodes.IREM           : genArithmeticOp(BasicType.Int, opcode, curState.copy()); break;
+                case Bytecodes.IREM           : genArithmeticOp(CiKind.Int, opcode, curState.copy()); break;
                 case Bytecodes.LADD           : // fall through
                 case Bytecodes.LSUB           : // fall through
-                case Bytecodes.LMUL           : genArithmeticOp(BasicType.Long, opcode); break;
+                case Bytecodes.LMUL           : genArithmeticOp(CiKind.Long, opcode); break;
                 case Bytecodes.LDIV           : // fall through
-                case Bytecodes.LREM           : genArithmeticOp(BasicType.Long, opcode, curState.copy()); break;
+                case Bytecodes.LREM           : genArithmeticOp(CiKind.Long, opcode, curState.copy()); break;
                 case Bytecodes.FADD           : // fall through
                 case Bytecodes.FSUB           : // fall through
                 case Bytecodes.FMUL           : // fall through
                 case Bytecodes.FDIV           : // fall through
-                case Bytecodes.FREM           : genArithmeticOp(BasicType.Float, opcode); break;
+                case Bytecodes.FREM           : genArithmeticOp(CiKind.Float, opcode); break;
                 case Bytecodes.DADD           : // fall through
                 case Bytecodes.DSUB           : // fall through
                 case Bytecodes.DMUL           : // fall through
                 case Bytecodes.DDIV           : // fall through
-                case Bytecodes.DREM           : genArithmeticOp(BasicType.Double, opcode); break;
-                case Bytecodes.INEG           : genNegateOp(BasicType.Int); break;
-                case Bytecodes.LNEG           : genNegateOp(BasicType.Long); break;
-                case Bytecodes.FNEG           : genNegateOp(BasicType.Float); break;
-                case Bytecodes.DNEG           : genNegateOp(BasicType.Double); break;
+                case Bytecodes.DREM           : genArithmeticOp(CiKind.Double, opcode); break;
+                case Bytecodes.INEG           : genNegateOp(CiKind.Int); break;
+                case Bytecodes.LNEG           : genNegateOp(CiKind.Long); break;
+                case Bytecodes.FNEG           : genNegateOp(CiKind.Float); break;
+                case Bytecodes.DNEG           : genNegateOp(CiKind.Double); break;
                 case Bytecodes.ISHL           : // fall through
                 case Bytecodes.ISHR           : // fall through
-                case Bytecodes.IUSHR          : genShiftOp(BasicType.Int, opcode); break;
+                case Bytecodes.IUSHR          : genShiftOp(CiKind.Int, opcode); break;
                 case Bytecodes.IAND           : // fall through
                 case Bytecodes.IOR            : // fall through
-                case Bytecodes.IXOR           : genLogicOp(BasicType.Int, opcode); break;
+                case Bytecodes.IXOR           : genLogicOp(CiKind.Int, opcode); break;
                 case Bytecodes.LSHL           : // fall through
                 case Bytecodes.LSHR           : // fall through
-                case Bytecodes.LUSHR          : genShiftOp(BasicType.Long, opcode); break;
+                case Bytecodes.LUSHR          : genShiftOp(CiKind.Long, opcode); break;
                 case Bytecodes.LAND           : // fall through
                 case Bytecodes.LOR            : // fall through
-                case Bytecodes.LXOR           : genLogicOp(BasicType.Long, opcode); break;
+                case Bytecodes.LXOR           : genLogicOp(CiKind.Long, opcode); break;
                 case Bytecodes.IINC           : genIncrement(); break;
-                case Bytecodes.I2L            : genConvert(opcode, BasicType.Int   , BasicType.Long  ); break;
-                case Bytecodes.I2F            : genConvert(opcode, BasicType.Int   , BasicType.Float ); break;
-                case Bytecodes.I2D            : genConvert(opcode, BasicType.Int   , BasicType.Double); break;
-                case Bytecodes.L2I            : genConvert(opcode, BasicType.Long  , BasicType.Int   ); break;
-                case Bytecodes.L2F            : genConvert(opcode, BasicType.Long  , BasicType.Float ); break;
-                case Bytecodes.L2D            : genConvert(opcode, BasicType.Long  , BasicType.Double); break;
-                case Bytecodes.F2I            : genConvert(opcode, BasicType.Float , BasicType.Int   ); break;
-                case Bytecodes.F2L            : genConvert(opcode, BasicType.Float , BasicType.Long  ); break;
-                case Bytecodes.F2D            : genConvert(opcode, BasicType.Float , BasicType.Double); break;
-                case Bytecodes.D2I            : genConvert(opcode, BasicType.Double, BasicType.Int   ); break;
-                case Bytecodes.D2L            : genConvert(opcode, BasicType.Double, BasicType.Long  ); break;
-                case Bytecodes.D2F            : genConvert(opcode, BasicType.Double, BasicType.Float ); break;
-                case Bytecodes.I2B            : genConvert(opcode, BasicType.Int   , BasicType.Byte  ); break;
-                case Bytecodes.I2C            : genConvert(opcode, BasicType.Int   , BasicType.Char  ); break;
-                case Bytecodes.I2S            : genConvert(opcode, BasicType.Int   , BasicType.Short ); break;
-                case Bytecodes.LCMP           : genCompareOp(BasicType.Long, opcode); break;
-                case Bytecodes.FCMPL          : genCompareOp(BasicType.Float, opcode); break;
-                case Bytecodes.FCMPG          : genCompareOp(BasicType.Float, opcode); break;
-                case Bytecodes.DCMPL          : genCompareOp(BasicType.Double, opcode); break;
-                case Bytecodes.DCMPG          : genCompareOp(BasicType.Double, opcode); break;
+                case Bytecodes.I2L            : genConvert(opcode, CiKind.Int   , CiKind.Long  ); break;
+                case Bytecodes.I2F            : genConvert(opcode, CiKind.Int   , CiKind.Float ); break;
+                case Bytecodes.I2D            : genConvert(opcode, CiKind.Int   , CiKind.Double); break;
+                case Bytecodes.L2I            : genConvert(opcode, CiKind.Long  , CiKind.Int   ); break;
+                case Bytecodes.L2F            : genConvert(opcode, CiKind.Long  , CiKind.Float ); break;
+                case Bytecodes.L2D            : genConvert(opcode, CiKind.Long  , CiKind.Double); break;
+                case Bytecodes.F2I            : genConvert(opcode, CiKind.Float , CiKind.Int   ); break;
+                case Bytecodes.F2L            : genConvert(opcode, CiKind.Float , CiKind.Long  ); break;
+                case Bytecodes.F2D            : genConvert(opcode, CiKind.Float , CiKind.Double); break;
+                case Bytecodes.D2I            : genConvert(opcode, CiKind.Double, CiKind.Int   ); break;
+                case Bytecodes.D2L            : genConvert(opcode, CiKind.Double, CiKind.Long  ); break;
+                case Bytecodes.D2F            : genConvert(opcode, CiKind.Double, CiKind.Float ); break;
+                case Bytecodes.I2B            : genConvert(opcode, CiKind.Int   , CiKind.Byte  ); break;
+                case Bytecodes.I2C            : genConvert(opcode, CiKind.Int   , CiKind.Char  ); break;
+                case Bytecodes.I2S            : genConvert(opcode, CiKind.Int   , CiKind.Short ); break;
+                case Bytecodes.LCMP           : genCompareOp(CiKind.Long, opcode); break;
+                case Bytecodes.FCMPL          : genCompareOp(CiKind.Float, opcode); break;
+                case Bytecodes.FCMPG          : genCompareOp(CiKind.Float, opcode); break;
+                case Bytecodes.DCMPL          : genCompareOp(CiKind.Double, opcode); break;
+                case Bytecodes.DCMPG          : genCompareOp(CiKind.Double, opcode); break;
                 case Bytecodes.IFEQ           : genIfZero(Condition.eql); break;
                 case Bytecodes.IFNE           : genIfZero(Condition.neq); break;
                 case Bytecodes.IFLT           : genIfZero(Condition.lss); break;
                 case Bytecodes.IFGE           : genIfZero(Condition.geq); break;
                 case Bytecodes.IFGT           : genIfZero(Condition.gtr); break;
                 case Bytecodes.IFLE           : genIfZero(Condition.leq); break;
-                case Bytecodes.IF_ICMPEQ      : genIfSame(BasicType.Int, Condition.eql); break;
-                case Bytecodes.IF_ICMPNE      : genIfSame(BasicType.Int, Condition.neq); break;
-                case Bytecodes.IF_ICMPLT      : genIfSame(BasicType.Int, Condition.lss); break;
-                case Bytecodes.IF_ICMPGE      : genIfSame(BasicType.Int, Condition.geq); break;
-                case Bytecodes.IF_ICMPGT      : genIfSame(BasicType.Int, Condition.gtr); break;
-                case Bytecodes.IF_ICMPLE      : genIfSame(BasicType.Int, Condition.leq); break;
-                case Bytecodes.IF_ACMPEQ      : genIfSame(BasicType.Object, Condition.eql); break;
-                case Bytecodes.IF_ACMPNE      : genIfSame(BasicType.Object, Condition.neq); break;
+                case Bytecodes.IF_ICMPEQ      : genIfSame(CiKind.Int, Condition.eql); break;
+                case Bytecodes.IF_ICMPNE      : genIfSame(CiKind.Int, Condition.neq); break;
+                case Bytecodes.IF_ICMPLT      : genIfSame(CiKind.Int, Condition.lss); break;
+                case Bytecodes.IF_ICMPGE      : genIfSame(CiKind.Int, Condition.geq); break;
+                case Bytecodes.IF_ICMPGT      : genIfSame(CiKind.Int, Condition.gtr); break;
+                case Bytecodes.IF_ICMPLE      : genIfSame(CiKind.Int, Condition.leq); break;
+                case Bytecodes.IF_ACMPEQ      : genIfSame(CiKind.Object, Condition.eql); break;
+                case Bytecodes.IF_ACMPNE      : genIfSame(CiKind.Object, Condition.neq); break;
                 case Bytecodes.GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case Bytecodes.JSR            : genJsr(s.readBranchDest()); break;
                 case Bytecodes.RET            : genRet(s.readLocalIndex()); break;
@@ -2024,9 +2035,9 @@ public class GraphBuilder {
                 case Bytecodes.GOTO_W         : genGoto(s.currentBCI(), s.readFarBranchDest()); break;
                 case Bytecodes.JSR_W          : genJsr(s.readFarBranchDest()); break;
                 case Bytecodes.BREAKPOINT:
-                    throw new Bailout("concurrent setting of breakpoint");
+                    throw new CiBailout("concurrent setting of breakpoint");
                 default:
-                    throw new Bailout("unknown bytecode " + opcode);
+                    throw new CiBailout("unknown bytecode " + opcode);
             }
             // Checkstyle: resume
 
@@ -2074,7 +2085,7 @@ public class GraphBuilder {
     }
 
     private void genMonitorEnter(int bci, ValueStack stateBefore) {
-        Instruction object = apop();
+        Value object = apop();
         appendWithoutOptimization(new MonitorEnter(object, curState.lock(scope(), object), stateBefore), bci);
         killMemoryMap(); // prevent any optimizations across synchronization
     }
@@ -2131,14 +2142,5 @@ public class GraphBuilder {
 
     RiConstantPool constantPool() {
         return scopeData.constantPool;
-    }
-
-    /**
-     * Returns the number of instructions parsed into this graph.
-     *
-     * @return the number of instructions parsed into the graph
-     */
-    public int totalInstructions() {
-        return totalInstructions;
     }
 }

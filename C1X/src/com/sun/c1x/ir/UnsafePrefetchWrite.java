@@ -32,7 +32,7 @@ public class UnsafePrefetchWrite extends UnsafePrefetch {
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
      */
-    public UnsafePrefetchWrite(Instruction object, Instruction offset) {
+    public UnsafePrefetchWrite(Value object, Value offset) {
         super(object, offset);
     }
 
@@ -41,7 +41,7 @@ public class UnsafePrefetchWrite extends UnsafePrefetch {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitUnsafePrefetchWrite(this);
     }
 }

@@ -35,7 +35,7 @@ public class LogicOp extends Op2 {
      * @param x the first input into this instruction
      * @param s the second input into this instruction
      */
-    public LogicOp(int opcode, Instruction x, Instruction s) {
+    public LogicOp(int opcode, Value x, Value s) {
         super(x.type(), opcode, x, s);
     }
 
@@ -52,7 +52,7 @@ public class LogicOp extends Op2 {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLogicOp(this);
     }
 }

@@ -59,7 +59,7 @@ public class PhiSimplifier implements BlockClosure {
         }
     }
 
-    Instruction simplify(Instruction x) {
+    Value simplify(Value x) {
         if (x == null || !(x instanceof Phi)) {
             return x;
         }
@@ -67,10 +67,10 @@ public class PhiSimplifier implements BlockClosure {
         if (phi.hasSubst()) {
             // already substituted, but the subst could be a phi itself, so simplify
             return simplify(phi.subst());
-        } else if (phi.checkFlag(Instruction.Flag.PhiCannotSimplify)) {
+        } else if (phi.checkFlag(Value.Flag.PhiCannotSimplify)) {
             // already tried, cannot simplify this phi
             return phi;
-        } else if (phi.checkFlag(Instruction.Flag.PhiVisited)) {
+        } else if (phi.checkFlag(Value.Flag.PhiVisited)) {
             // break cycles in phis
             return phi;
         } else if (phi.isIllegal()) {
@@ -78,21 +78,21 @@ public class PhiSimplifier implements BlockClosure {
             return phi;
         } else {
             // attempt to simplify the phi by recursively simplifying its operands
-            phi.setFlag(Instruction.Flag.PhiVisited);
-            Instruction phiSubst = null;
+            phi.setFlag(Value.Flag.PhiVisited);
+            Value phiSubst = null;
             int max = phi.operandCount();
             for (int i = 0; i < max; i++) {
-                Instruction oldInstr = phi.operandAt(i);
+                Value oldInstr = phi.operandAt(i);
 
                 if (oldInstr == null || oldInstr.isIllegal() || oldInstr.isDeadPhi()) {
                     // if one operand is illegal, make the entire phi illegal
                     phi.makeDead();
-                    phi.clearFlag(Instruction.Flag.PhiVisited);
+                    phi.clearFlag(Value.Flag.PhiVisited);
                     return phi;
                 }
 
                 // attempt to simplify this operand
-                Instruction newInstr = simplify(oldInstr);
+                Value newInstr = simplify(oldInstr);
 
                 if (newInstr != phi && newInstr != phiSubst) {
                     if (phiSubst == null) {
@@ -109,14 +109,14 @@ public class PhiSimplifier implements BlockClosure {
                         }
                     }
                     // this phi cannot be simplified
-                    phi.setFlag(Instruction.Flag.PhiCannotSimplify);
-                    phi.clearFlag(Instruction.Flag.PhiVisited);
+                    phi.setFlag(Value.Flag.PhiCannotSimplify);
+                    phi.clearFlag(Value.Flag.PhiVisited);
                     return phi;
                 }
             }
             // successfully simplified the phi
             assert phiSubst != null : "illegal phi function";
-            phi.clearFlag(Instruction.Flag.PhiVisited);
+            phi.clearFlag(Value.Flag.PhiVisited);
             phi.setSubst(phiSubst);
             hasSubstitutions = true;
             return phiSubst;

@@ -25,9 +25,7 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.target.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  *
@@ -103,7 +101,7 @@ public class Interval {
     }
 
     int regNum;
-    BasicType type; // valid only for virtual registers
+    CiKind type; // valid only for virtual registers
     Range first; // sorted list of Ranges
     List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
 
@@ -146,14 +144,14 @@ public class Interval {
         regNum = r;
     }
 
-    BasicType type() {
-        assert regNum == -1 || regNum >= Register.vregBase : "cannot access type for fixed interval";
+    CiKind type() {
+        assert regNum == -1 || regNum >= CiRegister.vregBase : "cannot access type for fixed interval";
         return type;
     }
 
-    void setType(BasicType type) {
-        assert regNum < Register.vregBase || this.type == BasicType.Illegal || this.type == type : "overwriting existing type";
-        assert type != BasicType.Boolean && type != BasicType.Byte && type != BasicType.Char : "these basic types should have int type registers";
+    void setType(CiKind type) {
+        assert regNum < CiRegister.vregBase || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
+        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these basic types should have int type registers";
         this.type = type;
     }
 
@@ -347,7 +345,7 @@ public class Interval {
     Interval(int regNum) {
 
         this.regNum = regNum;
-        this.type = BasicType.Illegal;
+        this.type = CiKind.Illegal;
         this.first = Range.end();
         this.usePosAndKinds = new ArrayList<Integer>(12);
         this.current = Range.end();
@@ -435,7 +433,7 @@ public class Interval {
         return null;
     }
 
-    Interval splitChildAtOpId(int opId, LIRVisitState.OperandMode mode, LinearScan allocator) {
+    Interval splitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
 
@@ -447,7 +445,7 @@ public class Interval {
             int len = splitChildren.size();
 
             // in outputMode, the end of the interval (opId == cur.to()) is not valid
-            int toOffset = (mode == LIRVisitState.OperandMode.OutputMode ? 0 : 1);
+            int toOffset = (mode == LIRInstruction.OperandMode.OutputMode ? 0 : 1);
 
             int i;
             for (i = 0; i < len; i++) {
@@ -504,7 +502,7 @@ public class Interval {
     }
 
     // checks if opId is covered by any split child
-    boolean splitChildCovers(int opId, LIRVisitState.OperandMode mode) {
+    boolean splitChildCovers(int opId, LIRInstruction.OperandMode mode) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
 
@@ -575,11 +573,11 @@ public class Interval {
     }
 
     void addUsePos(int pos, IntervalUseKind useKind) {
-        assert covers(pos, LIRVisitState.OperandMode.InputMode) : "use position not covered by live range";
+        assert covers(pos, LIRInstruction.OperandMode.InputMode) : "use position not covered by live range";
 
         // do not add use positions for precolored intervals because
         // they are never used
-        if (useKind != IntervalUseKind.noUse && regNum() >= Register.vregBase) {
+        if (useKind != IntervalUseKind.noUse && regNum() >= CiRegister.vregBase) {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
@@ -711,7 +709,7 @@ public class Interval {
 
 
     boolean isVirtualInterval() {
-        return regNum() >= Register.vregBase;
+        return regNum() >= CiRegister.vregBase;
     }
 
     // split this interval at the specified position and return
@@ -743,7 +741,7 @@ public class Interval {
     }
 
     // returns true if the opId is inside the interval
-    boolean covers(int opId, LIRVisitState.OperandMode mode) {
+    boolean covers(int opId, LIRInstruction.OperandMode mode) {
         Range cur = first;
 
         while (cur != Range.end() && cur.to() < opId) {
@@ -752,7 +750,7 @@ public class Interval {
         if (cur != Range.end()) {
             assert cur.to() != cur.next().from() : "ranges not separated";
 
-            if (mode == LIRVisitState.OperandMode.OutputMode) {
+            if (mode == LIRInstruction.OperandMode.OutputMode) {
                 return cur.from() <= opId && opId < cur.to();
             } else {
                 return cur.from() <= opId && opId <= cur.to();
@@ -798,7 +796,7 @@ public class Interval {
     private String typeName() {
 
         String typeName;
-        if (regNum() < Register.vregBase) {
+        if (regNum() < CiRegister.vregBase) {
             typeName = "fixed";
         } else {
             typeName = type().name();
@@ -809,12 +807,12 @@ public class Interval {
     public void print(LogStream out, LinearScan allocator) {
 
         LIROperand opr = LIROperandFactory.illegal();
-        if (regNum() < Register.vregBase) {
+        if (regNum() < CiRegister.vregBase) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
-                opr = LIROperandFactory.singleLocation(BasicType.Int, allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(CiKind.Int, allocator.toRegister(assignedReg()));
             } else if (allocator.isXmm(assignedReg())) {
-                opr = LIROperandFactory.singleLocation(BasicType.Float, allocator.toRegister(assignedReg()));
+                opr = LIROperandFactory.singleLocation(CiKind.Float, allocator.toRegister(assignedReg()));
             } else {
                 Util.shouldNotReachHere();
             }

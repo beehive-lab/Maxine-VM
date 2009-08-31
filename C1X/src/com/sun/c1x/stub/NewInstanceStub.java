@@ -20,9 +20,9 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.ri.*;
 
 
 /**
@@ -35,8 +35,6 @@ import com.sun.c1x.lir.*;
 public class NewInstanceStub extends CodeStub {
 
     public final RiType klass;
-    public LIROperand klassReg;
-    public LIROperand result;
     public final GlobalStub stubId;
 
 
@@ -48,11 +46,10 @@ public class NewInstanceStub extends CodeStub {
      * @param stubId
      */
     public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, CodeEmitInfo info, GlobalStub stubId) {
-        super(info);
+        super(info, result);
         this.klass = klass;
-        this.klassReg = klassReg;
-        this.result = result;
         this.stubId = stubId;
+        this.setOperands(0, 0, klassReg);
     }
 
     @Override
@@ -60,10 +57,7 @@ public class NewInstanceStub extends CodeStub {
         visitor.visitNewInstanceStub(this);
     }
 
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-        klassReg = visitor.doInput(klassReg);
-        result = visitor.doOutput(result);
+    public LIROperand klassReg() {
+        return operand(0);
     }
 }

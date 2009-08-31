@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -34,16 +33,10 @@ import com.sun.c1x.util.*;
  */
 public class LIRTypeCheck extends LIRInstruction {
 
-    LIROperand object;
-    LIROperand array;
     private RiType klass;
-    LIROperand tmp1;
-    LIROperand tmp2;
-    LIROperand tmp3;
     private boolean fastCheck;
-    CodeEmitInfo infoForPatch;
-    CodeEmitInfo infoForException;
-    CodeStub stub;
+
+
     // Helpers for Tier1UpdateMethodData
     RiMethod profiledMethod;
     int profiledBci;
@@ -66,27 +59,13 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
                         CodeEmitInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
-        super(opcode, result, null);
-        this.object = object;
-        this.array = LIROperandFactory.IllegalOperand;
+        super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalOperand, tmp1, tmp2, tmp3);
+
+        assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
         this.klass = klass;
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
-        this.tmp3 = tmp3;
         this.fastCheck = fastCheck;
-        this.stub = stub;
-        this.infoForPatch = infoForPatch;
-        this.infoForException = infoForException;
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
-
-        if (opcode == LIROpcode.CheckCast) {
-            assert this.infoForException != null : "infoForException must not be null. CheckCast throws exceptions.";
-        } else if (opcode == LIROpcode.InstanceOf) {
-            assert this.infoForException == null : "infoForExeception must be null. Instanceof throws no exceptions.";
-        } else {
-            Util.shouldNotReachHere();
-        }
     }
 
     /**
@@ -105,26 +84,13 @@ public class LIRTypeCheck extends LIRInstruction {
     public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
                         LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
                         CodeEmitInfo infoForException, RiMethod profiledMethod, int profiledBci) {
-        super(opcode, LIROperandFactory.IllegalOperand, null);
-        this.object = object;
+        super(opcode, LIROperandFactory.IllegalOperand, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
-        this.array = array;
-        this.tmp1 = tmp1;
-        this.tmp2 = tmp2;
-        this.tmp3 = tmp3;
         this.fastCheck = false;
-        this.stub = null;
-        this.infoForPatch = null;
-        this.infoForException = infoForException;
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
-
-        if (opcode == LIROpcode.StoreCheck) {
-            stub = new ArrayStoreExceptionStub(infoForException);
-            assert infoForException != null : "infoForException must not be null. StoreCheck instrution throws exceptions.";
-        } else {
-            Util.shouldNotReachHere();
-        }
+        assert opcode == LIROpcode.StoreCheck;
+        assert infoForException != null : "infoForException must not be null. StoreCheck instrution throws exceptions.";
     }
 
     /**
@@ -133,7 +99,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the object
      */
     public LIROperand object() {
-        return object;
+        return operand(0);
     }
 
     /**
@@ -143,7 +109,7 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public LIROperand array() {
         assert code == LIROpcode.StoreCheck : "opcode is not valid.";
-        return array;
+        return operand(1);
     }
 
     /**
@@ -152,7 +118,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the tmp1
      */
     public LIROperand tmp1() {
-        return tmp1;
+        return operand(2);
     }
 
     /**
@@ -161,7 +127,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the tmp2
      */
     public LIROperand tmp2() {
-        return tmp2;
+        return operand(3);
     }
 
     /**
@@ -170,7 +136,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the tmp3
      */
     public LIROperand tmp3() {
-        return tmp3;
+        return operand(4);
     }
 
     /**
@@ -179,7 +145,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the klass
      */
     public RiType klass() {
-        assert code() == LIROpcode.InstanceOf || code() == LIROpcode.CheckCast : "opcode is not valid.";
+        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return klass;
     }
 
@@ -189,35 +155,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the fastCheck
      */
     public boolean isFastCheck() {
-        assert code() == LIROpcode.InstanceOf || code() == LIROpcode.CheckCast : "opcode is not valid.";
+        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return fastCheck;
-    }
-
-    /**
-     * Gets the infoForPatch of this type check instruction.
-     *
-     * @return the infoForPatch
-     */
-    public CodeEmitInfo infoForPatch() {
-        return infoForPatch;
-    }
-
-    /**
-     * Gets the infoForException of this type check instruction.
-     *
-     * @return the infoForException
-     */
-    public CodeEmitInfo infoForException() {
-        return infoForException;
-    }
-
-    /**
-     * Gets the stub of this type check instruction.
-     *
-     * @return the stub
-     */
-    public CodeStub stub() {
-        return stub;
     }
 
     /**
@@ -259,11 +198,11 @@ public class LIRTypeCheck extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         object().print(out);                  out.print(" ");
-        if (code() == LIROpcode.StoreCheck) {
+        if (code == LIROpcode.StoreCheck) {
           array().print(out);
           out.print(" ");
         }
-        if (code() != LIROpcode.StoreCheck) {
+        if (code != LIROpcode.StoreCheck) {
           out.print(klass().name());
           out.print(" ");
           if (isFastCheck()) {
@@ -278,8 +217,8 @@ public class LIRTypeCheck extends LIRInstruction {
         out.print(" ");
         result().print(out);
         out.print(" ");
-        if (infoForException() != null) {
-            out.printf(" [bci:%d]", infoForException().bci());
+        if (info != null) {
+            out.printf(" [bci:%d]", info.bci());
         }
     }
 }

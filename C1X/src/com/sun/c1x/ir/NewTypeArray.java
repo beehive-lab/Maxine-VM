@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -29,14 +30,14 @@ import com.sun.c1x.value.*;
  */
 public class NewTypeArray extends NewArray {
 
-    final BasicType elementType;
+    final CiKind elementType;
 
-    public NewTypeArray(Instruction length, BasicType elementType, ValueStack stateBefore) {
+    public NewTypeArray(Value length, CiKind elementType, ValueStack stateBefore) {
         super(length, stateBefore, null);
         this.elementType = elementType;
     }
 
-    public BasicType elementType() {
+    public CiKind elementType() {
         return elementType;
     }
 
@@ -45,7 +46,7 @@ public class NewTypeArray extends NewArray {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitNewTypeArray(this);
     }
 }

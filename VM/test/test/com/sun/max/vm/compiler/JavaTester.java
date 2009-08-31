@@ -42,7 +42,7 @@ public final class JavaTester {
     private JavaTester() {
     }
 
-    private static final OptionSet options = new OptionSet(true);
+    public static final OptionSet options = new OptionSet(true);
 
     private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
                     "Displays usage message and exits.");

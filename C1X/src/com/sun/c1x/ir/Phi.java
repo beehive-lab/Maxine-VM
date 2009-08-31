@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -28,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Phi extends Instruction {
+public class Phi extends Value {
 
     private final BlockBegin block;
     private final int index;
@@ -39,7 +40,7 @@ public class Phi extends Instruction {
      * @param block the join point
      * @param index the index into the stack (if < 0) or local variables
      */
-    public Phi(BasicType type, BlockBegin block, int index) {
+    public Phi(CiKind type, BlockBegin block, int index) {
         super(type);
         this.block = block;
         this.index = index;
@@ -93,7 +94,7 @@ public class Phi extends Instruction {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public final Instruction operandAt(int i) {
+    public final Value operandAt(int i) {
         ValueStack state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
@@ -108,7 +109,7 @@ public class Phi extends Instruction {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public final Instruction operandIn(ValueStack state) {
+    public final Value operandIn(ValueStack state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {
@@ -134,7 +135,7 @@ public class Phi extends Instruction {
      * @param v the visitor to dispatch to
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitPhi(this);
     }
 

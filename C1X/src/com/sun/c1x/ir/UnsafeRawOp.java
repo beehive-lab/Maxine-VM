@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.value.*;
+import com.sun.c1x.ci.*;
 
 /**
  * The <code>UnsafeRawOp</code> class is the base class of all unsafe raw operations.
@@ -29,8 +29,8 @@ import com.sun.c1x.value.*;
  */
 public abstract class UnsafeRawOp extends UnsafeOp {
 
-    Instruction base;
-    Instruction index;
+    Value base;
+    Value index;
     int log2Scale;
 
     /**
@@ -39,9 +39,9 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param addr the instruction generating the base address (a long)
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(BasicType basicType, Instruction addr, boolean isStore) {
+    public UnsafeRawOp(CiKind basicType, Value addr, boolean isStore) {
         super(basicType, isStore);
-        assert addr == null || addr.type() == BasicType.Long;
+        assert addr == null || addr.type() == CiKind.Long;
         base = addr;
     }
 
@@ -53,7 +53,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param log2scale the log base 2 of the scaling factor
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(BasicType basicType, Instruction addr, Instruction index, int log2scale, boolean isStore) {
+    public UnsafeRawOp(CiKind basicType, Value addr, Value index, int log2scale, boolean isStore) {
         this(basicType, addr, isStore);
         this.base = addr;
         this.index = index;
@@ -64,7 +64,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Gets the instruction generating the base address for this operation.
      * @return the instruction generating the base
      */
-    public Instruction base() {
+    public Value base() {
         return base;
     }
 
@@ -72,7 +72,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Gets the instruction generating the index for this operation.
      * @return the instruction generating the index
      */
-    public Instruction index() {
+    public Value index() {
         return index;
     }
 
@@ -96,7 +96,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Sets the instruction that generates the base address for this instruction.
      * @param base the instruction generating the base address
      */
-    public void setBase(Instruction base) {
+    public void setBase(Value base) {
         this.base = base;
     }
 
@@ -104,7 +104,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Sets the instruction generating the base address for this instruction.
      * @param index the instruction generating the index
      */
-    public void setIndex(Instruction index) {
+    public void setIndex(Value index) {
         this.index = index;
     }
 
@@ -121,7 +121,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param closure the closure to apply
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         super.inputValuesDo(closure);
         base = closure.apply(base);
         if (index != null) {

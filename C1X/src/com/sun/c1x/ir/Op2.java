@@ -21,8 +21,8 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
  * The <code>Op2</code> class is the base of arithmetic and logic operations with two inputs.
@@ -31,8 +31,8 @@ import com.sun.c1x.value.*;
  */
 public abstract class Op2 extends Instruction {
     final int opcode;
-    Instruction x;
-    Instruction y;
+    Value x;
+    Value y;
 
     /**
      * Creates a new Op2 instance.
@@ -41,7 +41,7 @@ public abstract class Op2 extends Instruction {
      * @param x the first input instruction
      * @param y the second input instruction
      */
-    public Op2(BasicType type, int opcode, Instruction x, Instruction y) {
+    public Op2(CiKind type, int opcode, Value x, Value y) {
         super(type);
         this.opcode = opcode;
         this.x = x;
@@ -62,7 +62,7 @@ public abstract class Op2 extends Instruction {
      * Gets the first input to this instruction.
      * @return the first input to this instruction
      */
-    public Instruction x() {
+    public Value x() {
         return x;
     }
 
@@ -70,7 +70,7 @@ public abstract class Op2 extends Instruction {
      * Gets the second input to this instruction.
      * @return the second input to this instruction
      */
-    public Instruction y() {
+    public Value y() {
         return y;
     }
 
@@ -79,7 +79,7 @@ public abstract class Op2 extends Instruction {
      */
     public void swapOperands() {
         assert Bytecodes.isCommutative(opcode);
-        Instruction t = x;
+        Value t = x;
         x = y;
         y = t;
     }
@@ -89,7 +89,7 @@ public abstract class Op2 extends Instruction {
      * @param closure the closure to apply to each input value
      */
     @Override
-    public void inputValuesDo(InstructionClosure closure) {
+    public void inputValuesDo(ValueClosure closure) {
         x = closure.apply(x);
         y = closure.apply(y);
     }

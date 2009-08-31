@@ -26,7 +26,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
+import com.sun.c1x.ri.*;
 
 /**
  * The <code>IRChecker</code> class walks over the IR graph and checks
@@ -36,7 +36,7 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends InstructionVisitor {
+public class IRChecker extends ValueVisitor {
 
     /**
      * The <code>IRCheckException</code> class is thrown when the IRChecker detects
@@ -54,7 +54,7 @@ public class IRChecker extends InstructionVisitor {
 
     private final IR ir;
     private final HashMap<Integer, BlockBegin> idMap = new HashMap<Integer, BlockBegin>();
-    private final BasicInstructionChecker basicChecker = new BasicInstructionChecker();
+    private final BasicValueChecker basicChecker = new BasicValueChecker();
 
     /**
      * Creates a new IRChecker for the specified IR.
@@ -67,7 +67,7 @@ public class IRChecker extends InstructionVisitor {
     public void check() {
         ir.startBlock.iterateAnyOrder(new CheckBlock(), false);
         ir.startBlock.iterateAnyOrder(new CheckReachable(), true);
-        ir.startBlock.iterateAnyOrder(new CheckInstructions(), false);
+        ir.startBlock.iterateAnyOrder(new CheckValues(), false);
     }
 
     private class CheckBlock implements BlockClosure {
@@ -106,7 +106,7 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private class CheckInstructions implements BlockClosure {
+    private class CheckValues implements BlockClosure {
         public void apply(BlockBegin block) {
             Instruction instr = block;
             while (instr != null) {
@@ -125,8 +125,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.IADD:
@@ -134,9 +134,9 @@ public class IRChecker extends InstructionVisitor {
             case Bytecodes.IMUL:
             case Bytecodes.IDIV:
             case Bytecodes.IREM:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(x, BasicType.Int);
-                assertBasicType(y, BasicType.Int);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(x, CiKind.Int);
+                assertBasicType(y, CiKind.Int);
                 break;
 
             case Bytecodes.LADD:
@@ -144,9 +144,9 @@ public class IRChecker extends InstructionVisitor {
             case Bytecodes.LMUL:
             case Bytecodes.LDIV:
             case Bytecodes.LREM:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(x, BasicType.Long);
-                assertBasicType(y, BasicType.Long);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(x, CiKind.Long);
+                assertBasicType(y, CiKind.Long);
                 break;
 
             case Bytecodes.FADD:
@@ -154,9 +154,9 @@ public class IRChecker extends InstructionVisitor {
             case Bytecodes.FMUL:
             case Bytecodes.FDIV:
             case Bytecodes.FREM:
-                assertBasicType(i, BasicType.Float);
-                assertBasicType(x, BasicType.Float);
-                assertBasicType(y, BasicType.Float);
+                assertBasicType(i, CiKind.Float);
+                assertBasicType(x, CiKind.Float);
+                assertBasicType(y, CiKind.Float);
                 break;
 
             case Bytecodes.DADD:
@@ -164,9 +164,9 @@ public class IRChecker extends InstructionVisitor {
             case Bytecodes.DMUL:
             case Bytecodes.DDIV:
             case Bytecodes.DREM:
-                assertBasicType(i, BasicType.Double);
-                assertBasicType(x, BasicType.Double);
-                assertBasicType(y, BasicType.Double);
+                assertBasicType(i, CiKind.Double);
+                assertBasicType(x, CiKind.Double);
+                assertBasicType(y, CiKind.Double);
                 break;
 
             default:
@@ -181,23 +181,23 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitLogicOp(LogicOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.IAND:
             case Bytecodes.IOR:
             case Bytecodes.IXOR:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(x, BasicType.Int);
-                assertBasicType(y, BasicType.Int);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(x, CiKind.Int);
+                assertBasicType(y, CiKind.Int);
                 break;
             case Bytecodes.LAND:
             case Bytecodes.LOR:
             case Bytecodes.LXOR:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(x, BasicType.Long);
-                assertBasicType(y, BasicType.Long);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(x, CiKind.Long);
+                assertBasicType(y, CiKind.Long);
                 break;
             default:
                 fail("Logic operation instruction has an illegal opcode");
@@ -221,26 +221,26 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitCompareOp(CompareOp i) {
-        Instruction x = i.x();
-        Instruction y = i.y();
+        Value x = i.x();
+        Value y = i.y();
 
         switch (i.opcode()) {
             case Bytecodes.LCMP:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(x, BasicType.Long);
-                assertBasicType(y, BasicType.Long);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(x, CiKind.Long);
+                assertBasicType(y, CiKind.Long);
                 break;
             case Bytecodes.FCMPG:
             case Bytecodes.FCMPL:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(x, BasicType.Float);
-                assertBasicType(y, BasicType.Float);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(x, CiKind.Float);
+                assertBasicType(y, CiKind.Float);
                 break;
             case Bytecodes.DCMPG:
             case Bytecodes.DCMPL:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(x, BasicType.Double);
-                assertBasicType(y, BasicType.Double);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(x, CiKind.Double);
+                assertBasicType(y, CiKind.Double);
                 break;
             default:
                 fail("Illegal CompareOp opcode");
@@ -275,17 +275,17 @@ public class IRChecker extends InstructionVisitor {
             case Bytecodes.ISHL:
             case Bytecodes.ISHR:
             case Bytecodes.IUSHR:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(i.x(), BasicType.Int);
-                assertBasicType(i.y(), BasicType.Int);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(i.x(), CiKind.Int);
+                assertBasicType(i.y(), CiKind.Int);
                 break;
 
             case Bytecodes.LSHL:
             case Bytecodes.LSHR:
             case Bytecodes.LUSHR:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(i.x(), BasicType.Long);
-                assertBasicType(i.y(), BasicType.Int);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(i.x(), CiKind.Long);
+                assertBasicType(i.y(), CiKind.Int);
                 break;
             default:
                 fail("Illegal ShiftOp opcode");
@@ -301,61 +301,61 @@ public class IRChecker extends InstructionVisitor {
     public void visitConvert(Convert i) {
         switch (i.opcode()) {
             case Bytecodes.I2L:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(i.value(), BasicType.Int);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(i.value(), CiKind.Int);
                 break;
             case Bytecodes.I2F:
-                assertBasicType(i, BasicType.Float);
-                assertBasicType(i.value(), BasicType.Int);
+                assertBasicType(i, CiKind.Float);
+                assertBasicType(i.value(), CiKind.Int);
                 break;
             case Bytecodes.I2D:
-                assertBasicType(i, BasicType.Double);
-                assertBasicType(i.value(), BasicType.Int);
+                assertBasicType(i, CiKind.Double);
+                assertBasicType(i.value(), CiKind.Int);
                 break;
             case Bytecodes.I2B:
             case Bytecodes.I2C:
             case Bytecodes.I2S:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(i.value(), BasicType.Int);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(i.value(), CiKind.Int);
                 break;
 
             case Bytecodes.L2I:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(i.value(), BasicType.Long);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(i.value(), CiKind.Long);
                 break;
             case Bytecodes.L2F:
-                assertBasicType(i, BasicType.Float);
-                assertBasicType(i.value(), BasicType.Long);
+                assertBasicType(i, CiKind.Float);
+                assertBasicType(i.value(), CiKind.Long);
                 break;
             case Bytecodes.L2D:
-                assertBasicType(i, BasicType.Double);
-                assertBasicType(i.value(), BasicType.Long);
+                assertBasicType(i, CiKind.Double);
+                assertBasicType(i.value(), CiKind.Long);
                 break;
 
             case Bytecodes.F2I:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(i.value(), BasicType.Float);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(i.value(), CiKind.Float);
                 break;
             case Bytecodes.F2L:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(i.value(), BasicType.Float);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(i.value(), CiKind.Float);
                 break;
             case Bytecodes.F2D:
-                assertBasicType(i, BasicType.Double);
-                assertBasicType(i.value(), BasicType.Float);
+                assertBasicType(i, CiKind.Double);
+                assertBasicType(i.value(), CiKind.Float);
                 break;
 
             case Bytecodes.D2I:
-                assertBasicType(i, BasicType.Int);
-                assertBasicType(i.value(), BasicType.Double);
+                assertBasicType(i, CiKind.Int);
+                assertBasicType(i.value(), CiKind.Double);
                 break;
             case Bytecodes.D2L:
-                assertBasicType(i, BasicType.Long);
-                assertBasicType(i.value(), BasicType.Double);
+                assertBasicType(i, CiKind.Long);
+                assertBasicType(i.value(), CiKind.Double);
                 break;
             case Bytecodes.D2F:
-                assertBasicType(i, BasicType.Float);
-                assertBasicType(i.value(), BasicType.Double);
+                assertBasicType(i, CiKind.Float);
+                assertBasicType(i.value(), CiKind.Double);
                 break;
             default:
                 fail("invalid opcode in Convert");
@@ -371,8 +371,8 @@ public class IRChecker extends InstructionVisitor {
         if (i.object() == null) {
             fail("There is no instruction producing the object to check against null");
         }
-        assertBasicType(i, BasicType.Object);
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i, CiKind.Object);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -383,9 +383,9 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitLoadField(LoadField i) {
         assertBasicType(i, i.field().basicType().stackType());
-        Instruction object = i.object();
+        Value object = i.object();
         if (object != null) {
-            assertBasicType(object, BasicType.Object);
+            assertBasicType(object, CiKind.Object);
             assertInstanceType(object.declaredType());
             assertInstanceType(object.exactType());
         } else if (!i.isStatic()) {
@@ -400,9 +400,9 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitStoreField(StoreField i) {
         assertBasicType(i.value(), i.field().basicType().stackType());
-        Instruction object = i.object();
+        Value object = i.object();
         if (object != null) {
-            assertBasicType(object, BasicType.Object);
+            assertBasicType(object, CiKind.Object);
             assertInstanceType(object.declaredType());
             assertInstanceType(object.exactType());
         } else if (!i.isStatic()) {
@@ -416,8 +416,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitLoadIndexed(LoadIndexed i) {
-        assertBasicType(i.array(), BasicType.Object);
-        assertBasicType(i.index(), BasicType.Int);
+        assertBasicType(i.array(), CiKind.Object);
+        assertBasicType(i.index(), CiKind.Int);
         assertBasicType(i, i.elementType().stackType());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
@@ -429,8 +429,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
-        assertBasicType(i.array(), BasicType.Object);
-        assertBasicType(i.index(), BasicType.Int);
+        assertBasicType(i.array(), CiKind.Object);
+        assertBasicType(i.index(), CiKind.Int);
         assertBasicType(i.value(), i.elementType().stackType());
         assertBasicType(i, i.elementType().stackType());
         assertArrayType(i.array().exactType());
@@ -443,10 +443,10 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitArrayLength(ArrayLength i) {
-        assertBasicType(i.array(), BasicType.Object);
+        assertBasicType(i.array(), CiKind.Object);
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
-        assertBasicType(i, BasicType.Int);
+        assertBasicType(i, CiKind.Int);
     }
 
     /**
@@ -463,7 +463,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitExceptionObject(ExceptionObject i) {
-        assertBasicType(i, BasicType.Object);
+        assertBasicType(i, CiKind.Object);
     }
 
     /**
@@ -485,7 +485,7 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitOsrEntry(OsrEntry i) {
         // TODO: this type should probably be BasicType.Word in the future
-        assertBasicType(i, BasicType.Jsr);
+        assertBasicType(i, CiKind.Jsr);
     }
 
     /**
@@ -520,7 +520,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitProfileCall(ProfileCall i) {
-        assertBasicType(i, BasicType.Void);
+        assertBasicType(i, CiKind.Void);
         assertNonNull(i.method(), "Method being profiled must not be null");
         if (i.bci() < 0) {
             fail("Illegal bci in ProfileCall instruction");
@@ -533,8 +533,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitProfileCounter(ProfileCounter i) {
-        assertBasicType(i, BasicType.Void);
-        assertNonNull(i.mdo(), "Instruction that produces the method data object must not be null");
+        assertBasicType(i, CiKind.Void);
+        assertNonNull(i.mdo(), "Value that produces the method data object must not be null");
         if (i.increment() > 0) {
             fail("Increment must be greater than zero");
         }
@@ -548,10 +548,10 @@ public class IRChecker extends InstructionVisitor {
     public void visitRoundFP(RoundFP i) {
         switch (i.type().basicType) {
             case Float:
-                assertBasicType(i.value(), BasicType.Float);
+                assertBasicType(i.value(), CiKind.Float);
                 break;
             case Double:
-                assertBasicType(i.value(), BasicType.Double);
+                assertBasicType(i.value(), CiKind.Double);
                 break;
             default:
                 fail("type of RoundFP must be floating point");
@@ -564,8 +564,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitMonitorEnter(MonitorEnter i) {
-        assertBasicType(i, BasicType.Illegal);
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i, CiKind.Illegal);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -574,8 +574,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitMonitorExit(MonitorExit i) {
-        assertBasicType(i, BasicType.Illegal);
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i, CiKind.Illegal);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -590,7 +590,7 @@ public class IRChecker extends InstructionVisitor {
         }
         idMap.put(i.id(), i);
         assertNonNull(i.stateBefore(), "Block must have initial state");
-        assertBasicType(i, BasicType.Illegal);
+        assertBasicType(i, CiKind.Illegal);
         if (i.depthFirstNumber() < -1) {
             fail("Block has an invalid depth first number");
         }
@@ -616,9 +616,9 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitBase(Base i) {
-        assertBasicType(i, BasicType.Illegal);
+        assertBasicType(i, CiKind.Illegal);
         if (i.isSafepoint()) {
-            fail("Instruction Base is not a safepoint instruction ");
+            fail("Value Base is not a safepoint instruction ");
         }
     }
 
@@ -628,7 +628,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitGoto(Goto i) {
-        assertBasicType(i, BasicType.Illegal);
+        assertBasicType(i, CiKind.Illegal);
         if (i.successors().size() != 1) {
             fail("Goto instruction must have one successor");
         }
@@ -641,8 +641,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitIf(If i) {
-        assertBasicType(i, BasicType.Illegal);
-        if (!Instruction.sameBasicType(i.x(), i.y())) {
+        assertBasicType(i, CiKind.Illegal);
+        if (!Value.sameBasicType(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {
@@ -672,8 +672,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitInstanceOf(InstanceOf i) {
-        assertBasicType(i, BasicType.Int);
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i, CiKind.Int);
+        assertBasicType(i.object(), CiKind.Object);
         assertNonNull(i.targetClass(), "targetClass in InsatanceOf instruction must be non null");
         assertNotPrimitive(i.targetClass());
     }
@@ -684,19 +684,19 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitReturn(Return i) {
-        final Instruction result = i.result();
+        final Value result = i.result();
 
-        BasicType retType = ir.compilation.method.signatureType().returnBasicType();
+        CiKind retType = ir.compilation.method.signatureType().returnBasicType();
         if (result == null) {
-            assertBasicType(i, BasicType.Void);
-            if (retType != BasicType.Void) {
+            assertBasicType(i, CiKind.Void);
+            if (retType != CiKind.Void) {
                 fail("Must return value from non-void method");
             }
         } else {
-            if (retType == BasicType.Void) {
+            if (retType == CiKind.Void) {
                 fail("Must not return value from void method");
             }
-            if (i.type().basicType == BasicType.Void) {
+            if (i.type().basicType == CiKind.Void) {
                 fail("Return instruction must not be of type void if method returns a value");
             }
             assertBasicType(result, retType.stackType());
@@ -712,8 +712,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitLookupSwitch(LookupSwitch i) {
-        assertBasicType(i, BasicType.Illegal);
-        assertBasicType(i.value(), BasicType.Int);
+        assertBasicType(i, CiKind.Illegal);
+        assertBasicType(i.value(), CiKind.Int);
 
         if (i.numberOfCases() > 1) {
             int min = i.keyAt(0);
@@ -735,8 +735,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitTableSwitch(TableSwitch i) {
-        assertBasicType(i, BasicType.Illegal);
-        assertBasicType(i.value(), BasicType.Int);
+        assertBasicType(i, CiKind.Illegal);
+        assertBasicType(i.value(), CiKind.Int);
     }
 
     /**
@@ -745,8 +745,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitThrow(Throw i) {
-        assertBasicType(i, BasicType.Illegal);
-        assertBasicType(i.exception(), BasicType.Object);
+        assertBasicType(i, CiKind.Illegal);
+        assertBasicType(i.exception(), CiKind.Object);
         assertInstanceType(i.exception().declaredType());
         assertInstanceType(i.exception().exactType());
     }
@@ -773,7 +773,7 @@ public class IRChecker extends InstructionVisitor {
         assertNonNull(i.stateBefore(), "Invoke must have ValueStack");
         RiSignature signatureType = i.target().signatureType();
         assertBasicType(i, signatureType.returnBasicType().stackType());
-        Instruction[] args = i.arguments();
+        Value[] args = i.arguments();
         if (i.isStatic()) {
             // typecheck a static call (i.e. there should be no receiver)
             if (i.opcode() != Bytecodes.INVOKESTATIC) {
@@ -794,7 +794,7 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private void typeCheckArguments(boolean isStatic, Instruction[] args, RiSignature signatureType) {
+    private void typeCheckArguments(boolean isStatic, Value[] args, RiSignature signatureType) {
         int argSize = signatureType.argumentSlots(!isStatic);
         if (argSize != args.length) {
             fail("Size of arguments does not match invoke signature");
@@ -803,9 +803,9 @@ public class IRChecker extends InstructionVisitor {
         int j = 0; // loops over argument positions
         for (; j < argSize; j++) {
             if (!isStatic && j == 0) {
-                assertBasicType(args[j], BasicType.Object);
+                assertBasicType(args[j], CiKind.Object);
             } else {
-                BasicType basicType = signatureType.argumentBasicTypeAt(k);
+                CiKind basicType = signatureType.argumentBasicTypeAt(k);
                 assertBasicType(args[j], basicType.stackType());
                 if (basicType.sizeInSlots() == 2) {
                     assertNull(args[j + 1], "Second slot of a double operand must be null");
@@ -823,15 +823,15 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitNewMultiArray(NewMultiArray i) {
-        final Instruction[] dimensions = i.dimensions();
-        assertBasicType(i, BasicType.Object);
+        final Value[] dimensions = i.dimensions();
+        assertBasicType(i, CiKind.Object);
 
         if (dimensions.length <= 1) {
-            fail("Instruction NewMultiArray must have more than 1 dimension");
+            fail("Value NewMultiArray must have more than 1 dimension");
         }
 
-        for (Instruction dim : dimensions) {
-            assertBasicType(dim, BasicType.Int);
+        for (Value dim : dimensions) {
+            assertBasicType(dim, CiKind.Int);
         }
     }
 
@@ -841,8 +841,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitNewObjectArray(NewObjectArray i) {
-        assertBasicType(i, BasicType.Object);
-        assertBasicType(i.length(), BasicType.Int);
+        assertBasicType(i, CiKind.Object);
+        assertBasicType(i.length(), CiKind.Int);
         assertNotPrimitive(i.elementClass());
     }
 
@@ -852,8 +852,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitNewTypeArray(NewTypeArray i) {
-        assertBasicType(i, BasicType.Object);
-        assertBasicType(i.length(), BasicType.Int);
+        assertBasicType(i, CiKind.Object);
+        assertBasicType(i.length(), CiKind.Int);
         assertPrimitive(i.elementType());
     }
 
@@ -863,7 +863,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitNewInstance(NewInstance i) {
-        assertBasicType(i, BasicType.Object);
+        assertBasicType(i, CiKind.Object);
         assertInstanceType(i.instanceClass());
     }
 
@@ -873,9 +873,9 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitCheckCast(CheckCast i) {
-        assertBasicType(i, BasicType.Object);
-        assertBasicType(i.object(), BasicType.Object);
-        if (i.targetClass().basicType() != BasicType.Object) {
+        assertBasicType(i, CiKind.Object);
+        assertBasicType(i.object(), CiKind.Object);
+        if (i.targetClass().basicType() != CiKind.Object) {
             fail("Target class must be of type Object in a CheckCast instruction");
         }
     }
@@ -886,7 +886,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject i) {
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -895,7 +895,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -904,7 +904,7 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
-        assertBasicType(i.object(), BasicType.Object);
+        assertBasicType(i.object(), CiKind.Object);
     }
 
     /**
@@ -913,8 +913,8 @@ public class IRChecker extends InstructionVisitor {
      */
     @Override
     public void visitUnsafePutObject(UnsafePutObject i) {
-        assertBasicType(i.object(), BasicType.Object);
-        assertBasicType(i.offset(), BasicType.Int);
+        assertBasicType(i.object(), CiKind.Object);
+        assertBasicType(i.offset(), CiKind.Int);
     }
 
     /**
@@ -924,10 +924,10 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
         if (i.base() != null) {
-            assertBasicType(i.base(), BasicType.Long);
+            assertBasicType(i.base(), CiKind.Long);
         }
         if (i.index() != null) {
-            assertBasicType(i.index(), BasicType.Int);
+            assertBasicType(i.index(), CiKind.Int);
         }
     }
 
@@ -938,23 +938,23 @@ public class IRChecker extends InstructionVisitor {
     @Override
     public void visitUnsafePutRaw(UnsafePutRaw i) {
         if (i.base() != null) {
-            assertBasicType(i.base(), BasicType.Long);
+            assertBasicType(i.base(), CiKind.Long);
         }
         if (i.index() != null) {
-            assertBasicType(i.index(), BasicType.Int);
+            assertBasicType(i.index(), CiKind.Int);
         }
     }
 
-    private void assertBasicType(Instruction i, BasicType basicType) {
-        assertNonNull(i, "Instruction should not be null");
+    private void assertBasicType(Value i, CiKind basicType) {
+        assertNonNull(i, "Value should not be null");
         if (i.type().basicType != basicType) {
             fail("Type mismatch: " + i + " should be of type " + basicType);
         }
     }
 
-    private void assertLegal(Instruction i) {
-        assertNonNull(i, "Instruction should not be null");
-        if (i.type().basicType == BasicType.Illegal) {
+    private void assertLegal(Value i) {
+        assertNonNull(i, "Value should not be null");
+        if (i.type().basicType == CiKind.Illegal) {
             fail("Type mismatch: " + i + " should not be illegal");
         }
     }
@@ -983,7 +983,7 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private void assertPrimitive(BasicType basicType) {
+    private void assertPrimitive(CiKind basicType) {
         if (!basicType.isPrimitive()) {
             fail("RiType " + basicType + " must be a primitive");
         }
@@ -1005,15 +1005,15 @@ public class IRChecker extends InstructionVisitor {
         throw new IRCheckException(msg);
     }
 
-    private class BasicInstructionChecker implements InstructionClosure {
+    private class BasicValueChecker implements ValueClosure {
 
-        public Instruction apply(Instruction i) {
+        public Value apply(Value i) {
             if (i.subst() != i) {
                 fail("instruction has unresolved substitution " + i + " -> " + i.subst());
             }
             if (!i.isDeadPhi()) {
                 // legal instructions must have legal instructions as inputs
-                LegalInstructionChecker legalChecker = new LegalInstructionChecker(i);
+                LegalValueChecker legalChecker = new LegalValueChecker(i);
                 i.inputValuesDo(legalChecker);
                 if (i instanceof Phi) {
                     // phis are special, once again
@@ -1027,17 +1027,17 @@ public class IRChecker extends InstructionVisitor {
         }
     }
 
-    private class LegalInstructionChecker implements InstructionClosure {
-        private final Instruction i;
+    private class LegalValueChecker implements ValueClosure {
+        private final Value i;
 
-        public LegalInstructionChecker(Instruction i) {
+        public LegalValueChecker(Value i) {
             this.i = i;
         }
 
-        public Instruction apply(Instruction x) {
+        public Value apply(Value x) {
             assertNonNull(x, "must have input value for " + i);
             if (x.isIllegal()) {
-                fail("Instruction has illegal input value " + i + " <- " + x);
+                fail("Value has illegal input value " + i + " <- " + x);
             }
             return x;
         }

@@ -22,7 +22,9 @@
  * @Harness: java
  * @Runs: (10)=true; (20)=true;
  */
-
+/**
+ * @author Hannes Payer
+ */
 package jtt.max;
 
 import com.sun.max.annotate.*;
@@ -53,9 +55,6 @@ public final class ImmortalHeap_switching {
         }
         oldMark = immortalMemoryRegion.mark();
         new Object();
-        if (!immortalMemoryRegion.mark().equals(oldMark)) {
-            return false;
-        }
-        return true;
+        return immortalMemoryRegion.mark().equals(oldMark);
     }
 }

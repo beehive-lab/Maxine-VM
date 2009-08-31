@@ -90,6 +90,9 @@ public enum LIROpcode {
         , Unwind
         , CompareTo
         , Resolve
+        , ResolveStaticFields
+        , ResolveJavaClass
+        , ResolveFieldOffset
         , ResolveArrayClass
     , EndOp2
     , BeginOp3
@@ -110,9 +113,6 @@ public enum LIROpcode {
         , Lock
         , Unlock
     , EndOpLock
-    , BeginDelaySlot
-        , DelaySlot
-    , EndEelayslot
     , BeginOpTypeCheck
         , InstanceOf
         , CheckCast
@@ -125,6 +125,9 @@ public enum LIROpcode {
     , EndOpCompareAndSwap
         , BeginOpMDOProfile
         , ProfileCall
-    , EndOpMDOProfile
+    , EndOpMDOProfile,
+    Xir
+
    // Checkstyle: resume
+,
 }

@@ -32,9 +32,6 @@ import com.sun.c1x.lir.*;
  */
 public class NewObjectArrayStub extends CodeStub {
 
-    public LIROperand klassReg;
-    public LIROperand length;
-    public LIROperand result;
 
     /**
      * Creates a new instance of <code>NewObjectArrayStub</code>.
@@ -45,10 +42,9 @@ public class NewObjectArrayStub extends CodeStub {
      * @param info
      */
     public NewObjectArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, CodeEmitInfo info) {
-        super(info);
-        this.klassReg = klassReg;
-        this.length = length;
-        this.result = result;
+        super(info, result);
+        this.setOperands(0, 0, klassReg, length);
+
     }
 
     @Override
@@ -56,13 +52,11 @@ public class NewObjectArrayStub extends CodeStub {
         visitor.visitNewObjectArrayStub(this);
     }
 
+    public LIROperand klassReg() {
+        return operand(0);
+    }
 
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-        klassReg = visitor.doInput(klassReg);
-        length = visitor.doInput(length);
-        assert result.isValid() : "must be valid";
-        result = visitor.doOutput(result);
+    public LIROperand length() {
+        return operand(1);
     }
 }

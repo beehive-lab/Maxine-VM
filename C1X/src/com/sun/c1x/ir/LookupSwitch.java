@@ -42,7 +42,7 @@ public class LookupSwitch extends Switch {
      * @param stateBefore the state before the switch
      * @param isSafepoint <code>true</code> if this instruction is a safepoint
      */
-    public LookupSwitch(Instruction value, List<BlockBegin> successors, int[] keys, ValueStack stateBefore, boolean isSafepoint) {
+    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, ValueStack stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
         this.keys = keys;
     }
@@ -65,7 +65,7 @@ public class LookupSwitch extends Switch {
      * @param v the visitor to accept
      */
     @Override
-    public void accept(InstructionVisitor v) {
+    public void accept(ValueVisitor v) {
         v.visitLookupSwitch(this);
     }
 }

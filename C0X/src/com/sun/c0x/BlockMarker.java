@@ -20,11 +20,15 @@
  */
 package com.sun.c0x;
 
-import java.util.*;
+import java.util.List;
 
-import com.sun.c1x.bytecode.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.bytecode.BytecodeLookupSwitch;
+import com.sun.c1x.bytecode.BytecodeSwitch;
+import com.sun.c1x.bytecode.BytecodeTableSwitch;
+import com.sun.c1x.bytecode.Bytecodes;
+import com.sun.c1x.ri.RiExceptionHandler;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.util.Bytes;
 
 /**
  * The <code>BlockMarker</code> class computes the starts of all basic blocks by iterating over the bytecodes,
