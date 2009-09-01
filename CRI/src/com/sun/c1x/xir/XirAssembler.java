@@ -151,7 +151,35 @@ public class XirAssembler {
     }
 
     public enum OperatorKind {
-        Mov, Add, Sub, Div, Mul, Mod, Shl, Shr, And, Or, Xor, Pload, Pstore, PloadDisp, PstoreDisp, Pcas, CallStub, CallRuntime, CallJava, Jmp, Jeq, Jneq, Jgt, Jgteq, Jugteq, Jlt, Jlteq, Bind, Ret
+        Mov,
+        Add,
+        Sub,
+        Div,
+        Mul,
+        Mod,
+        Shl,
+        Shr,
+        And,
+        Or,
+        Xor,
+        PointerLoad,
+        PointerStore,
+        PointerLoadDisp,
+        PointerStoreDisp,
+        PointerCAS,
+        CallStub,
+        CallRuntime,
+        CallJava,
+        Jmp,
+        Jeq,
+        Jneq,
+        Jgt,
+        Jgteq,
+        Jugteq,
+        Jlt,
+        Jlteq,
+        Bind,
+        Ret
     }
 
     private void append(XirInstruction xirInstruction) {
@@ -215,33 +243,24 @@ public class XirAssembler {
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer) {
-        append(new XirInstruction(kind, OperatorKind.Pload, result, pointer));
-    }
-
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, int disp) {
-        append(new XirInstruction(kind, OperatorKind.PloadDisp, result, pointer, i(disp)));
+        append(new XirInstruction(kind, OperatorKind.PointerLoad, result, pointer));
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable value) {
-        append(new XirInstruction(kind, OperatorKind.Pstore, nullOperand, pointer, value));
+        append(new XirInstruction(kind, OperatorKind.PointerStore, nullOperand, pointer, value));
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp) {
-        append(new XirInstruction(kind, OperatorKind.PloadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, OperatorKind.PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value) {
-        append(new XirInstruction(kind, OperatorKind.PstoreDisp, nullOperand, pointer, disp, value));
-    }
-
-    public void pstore(CiKind kind, XirVariable pointer, int disp, XirVariable value) {
-        append(new XirInstruction(kind, OperatorKind.PstoreDisp, nullOperand, pointer, i(disp), value));
+        append(new XirInstruction(kind, OperatorKind.PointerStoreDisp, nullOperand, pointer, disp, value));
     }
 
     public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
-        append(new XirInstruction(kind, OperatorKind.Pload, result, pointer, value, expectedValue));
+        append(new XirInstruction(kind, OperatorKind.PointerLoad, result, pointer, value, expectedValue));
     }
-
 
     public void jmp(XirLabel l) {
         append(new XirInstruction(CiKind.Void, OperatorKind.Jmp, l, nullOperand));
@@ -287,7 +306,7 @@ public class XirAssembler {
         append(new XirInstruction(result.kind, OperatorKind.CallJava, nullOperand, destination));
     }
 
-    public void callStub(XirTemplate stub, XirVariable... args) {
+    public void callStub(XirTemplate stub, XirVariable result, XirVariable... args) {
         if (args.length < 2) {
             // TODO: create instructions to store parameters
         } else {
@@ -295,7 +314,7 @@ public class XirAssembler {
         }
     }
 
-    public void callRuntime(Object rt, XirVariable... args) {
+    public void callRuntime(Object rt, XirVariable result, XirVariable... args) {
         // TODO: create instructions to store parameters for runtime
     }
 

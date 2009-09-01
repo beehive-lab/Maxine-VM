@@ -3348,21 +3348,21 @@ public class X86LIRAssembler extends LIRAssembler {
                     logicOp(LIROpcode.LogicXor, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
                     break;
 
-                case Pload: {
+                case PointerLoad: {
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.a.index];
                     moveOp(new LIRAddress(pointer, 0, inst.kind), result, inst.kind, LIRPatchCode.PatchNone, null, false);
                     break;
                 }
 
-                case Pstore: {
+                case PointerStore: {
                     LIROperand value = ops[inst.b.index];
                     LIROperand pointer = ops[inst.a.index];
                     moveOp(value, new LIRAddress(pointer, 0, inst.kind), inst.kind, LIRPatchCode.PatchNone, null, false);
                     break;
                 }
 
-                case PloadDisp: {
+                case PointerLoadDisp: {
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.a.index];
                     LIROperand displacement = ops[inst.b.index];
@@ -3380,7 +3380,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     break;
                 }
 
-                case PstoreDisp: {
+                case PointerStoreDisp: {
                     LIROperand value = ops[inst.c.index];
                     LIROperand pointer = ops[inst.a.index];
                     LIROperand displacement = ops[inst.b.index];
@@ -3398,7 +3398,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     break;
                 }
 
-                case Pcas:
+                case PointerCAS:
                     break;
 
                 case CallJava:
