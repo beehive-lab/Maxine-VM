@@ -25,6 +25,9 @@ import java.lang.reflect.*;
 import java.nio.*;
 
 import com.sun.max.program.option.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.BootImage.*;
 
 
@@ -35,6 +38,29 @@ import com.sun.max.vm.prototype.BootImage.*;
  */
 public class BootImagePrinter {
 
+    public static class Range {
+        final int start;
+        final int size;
+
+        public Range(int start, int size) {
+            this.start = start;
+            this.size = size;
+        }
+
+        public boolean contains(Range other) {
+            return other.start >= start && other.end() <= end();
+        }
+
+        public int end() {
+            return start + size;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + start + '-' + (end() - 1) + ']';
+        }
+    }
+
     private final OptionSet options = new OptionSet();
 
     private final Option<Boolean> help = options.newBooleanOption("help", false,
@@ -44,11 +70,22 @@ public class BootImagePrinter {
             "The file to which output is written instead of standard out.");
 
     private final Option<String> sectionsOption = options.newStringOption("s", "HST",
-            "The sections to be printed: (H)eader, (S)tringInfo, (T)railer, (h)eap, (c)ode, (r)elocation data, (p)adding");
+            "The sections to be printed: (H)eader, (S)tringInfo, (T)railer, (h)eap, (c)ode, (r)elocation data, (p)adding. " +
+            "A sub-range of the data sections ('h', 'c', 'r', 'p') can be specified with a range suffix of the form '{<start>:<size>}' where " +
+            "<start> and <size> can be hexadecimal (with a '0x' prefix) or plain decimal. For example, " +
+            "'-s=h{0x100:300}c{+100:20}' will dump 300 bytes of the heap starting at heap address 0x100 and 20 bytes " +
+            "of the code starting at code address 100 (the '+' prefix specifies that <start> is relative to the first " +
+            "address in the code section). Note that the heap and code are contiguous and share the same address space. " +
+            "All other data sections have their own address space.");
 
-    private int heapStart;
-    private int codeStart;
+    private final Option<String> filterOption = options.newStringOption("filter", null,
+            "Only heap and code values matching containing the specified hex value substring are printed.");
+
+    private Range heapRegion;
+    private Range codeRegion;
     private int wordSize;
+    private BootImage bootImage;
+    private String filter;
 
     public static void main(String[] args) throws IOException, BootImageException {
         new BootImagePrinter().run(args);
@@ -71,10 +108,10 @@ public class BootImagePrinter {
 
         String bootImageFilePath = arguments[0];
         File bootImageFile = new File(bootImageFilePath);
-        BootImage bootImage = new BootImage(bootImageFile);
+        bootImage = new BootImage(bootImageFile);
 
-        heapStart = 0;
-        codeStart = heapStart + bootImage.header.heapSize;
+        heapRegion = new Range(0, bootImage.header.heapSize);
+        codeRegion = new Range(heapRegion.end(), bootImage.header.codeSize);
         wordSize = bootImage.header.wordSize;
 
         PrintStream out = System.out;
@@ -82,19 +119,59 @@ public class BootImagePrinter {
             out = new PrintStream(new FileOutputStream(outputFileOption.getValue()));
         }
 
-        // Checkstyle: stop
-        for (char section : sectionsOption.getValue().toCharArray()) {
+        filter = filterOption.getValue();
+
+        int cursor = 0;
+        String sections = sectionsOption.getValue();
+        while (cursor < sections.length()) {
+            char section = sections.charAt(cursor++);
             switch (section) {
-                case 'H': printHeader(out, bootImage); break;
-                case 'S': printStringInfo(out, bootImage); break;
-                case 'T': printTrailer(out, bootImage); break;
-                case 'h': printHeap(out, bootImage); break;
-                case 'c': printCode(out, bootImage); break;
-                case 'r': printRelocationData(out, bootImage); break;
-                case 'p': printPadding(out, bootImage); break;
+                case 'H': {
+                    printHeader(out);
+                    break;
+                }
+                case 'S': {
+                    printStringInfo(out);
+                    break;
+                }
+                case 'T': {
+                    printTrailer(out);
+                    break;
+                }
+                case 'h': {
+                    Range subregion = parseNarrowingRange(sections, cursor, heapRegion);
+                    if (subregion != null) {
+                        cursor = sections.indexOf('}', cursor) + 1;
+                    }
+                    printHeap(out, subregion);
+                    break;
+                }
+                case 'c': {
+                    Range subregion = parseNarrowingRange(sections, cursor, codeRegion);
+                    if (subregion != null) {
+                        cursor = sections.indexOf('}', cursor) + 1;
+                    }
+                    printCode(out, subregion);
+                    break;
+                }
+                case 'r': {
+                    Range subregion = parseNarrowingRange(sections, cursor, new Range(0, bootImage.header.relocationDataSize));
+                    if (subregion != null) {
+                        cursor = sections.indexOf('}', cursor) + 1;
+                    }
+                    printRelocationData(out, subregion);
+                    break;
+                }
+                case 'p': {
+                    Range subregion = parseNarrowingRange(sections, cursor, new Range(0, bootImage.paddingSize()));
+                    if (subregion != null) {
+                        cursor = sections.indexOf('}', cursor) + 1;
+                    }
+                    printPadding(out, subregion);
+                    break;
+                }
             }
         }
-        // Checkstyle: resume
 
         if (outputFileOption.getValue() != null) {
             out.close();
@@ -103,56 +180,166 @@ public class BootImagePrinter {
         return 0;
     }
 
-    private void printPadding(PrintStream out, BootImage bootImage) {
+    private static int parseInt(String s) {
+        if (s.startsWith("0x")) {
+            return Integer.parseInt(s.substring(2), 16);
+        }
+        return Integer.parseInt(s);
+    }
+
+    private static Range parseNarrowingRange(String s, int cursor, Range range) {
+        if (cursor < s.length() && s.charAt(cursor) == '{') {
+            int offset = 0;
+            if (cursor + 1 < s.length() && s.charAt(cursor + 1) == '+') {
+                offset = range.start;
+                cursor++;
+            }
+
+            int colon = s.indexOf(':', cursor + 1);
+            if (colon == -1) {
+                throw new IllegalArgumentException("Range at index " + cursor + " in sections string is missing ':'");
+            }
+            int closingBrace = s.indexOf('}', colon + 1);
+            if (closingBrace == -1) {
+                throw new IllegalArgumentException("Range at index " + cursor + " in sections string is missing '}'");
+            }
+
+            Range result = new Range(offset + parseInt(s.substring(cursor + 1, colon)), parseInt(s.substring(colon + 1, closingBrace)));
+            if (!range.contains(result)) {
+                throw new IllegalArgumentException("Narrowing range " + result + " is not completely contained by " + range);
+            }
+            return result;
+        }
+        return null;
+    }
+
+    private void printPadding(PrintStream out, Range subregion) {
         byte[] padding = bootImage.padding;
-        printData(out, "PADDING", padding.length, bootImage.paddingOffset(), ByteBuffer.wrap(padding));
+        printData(out, "PADDING", bootImage.paddingOffset(), padding, subregion);
     }
 
-    private void printRelocationData(PrintStream out, BootImage bootImage) {
+    private void printRelocationData(PrintStream out, Range subregion) {
         byte[] relocationData = bootImage.relocationData;
-        printData(out, "RELOCATION DATA", relocationData.length, bootImage.relocationDataOffset(), ByteBuffer.wrap(relocationData));
+        printData(out, "RELOCATION DATA", bootImage.relocationDataOffset(), relocationData, subregion);
     }
 
-    private void printHeader(PrintStream out, BootImage bootImage) {
+    private void printHeader(PrintStream out) {
         printSection(out, bootImage.header, "HEADER");
     }
 
-    private void printTrailer(PrintStream out, BootImage bootImage) {
+    private void printTrailer(PrintStream out) {
         printSection(out, bootImage.trailer, "TRAILER");
     }
 
-    private void printStringInfo(PrintStream out, BootImage bootImage) {
+    private void printHeap(PrintStream out, Range subregion) {
+        printHeapOrCodeData(out, "HEAP", heapRegion, bootImage.heapAndCode(), subregion, bootImage.heapOffset());
+    }
+
+    private void printCode(PrintStream out, Range subregion) {
+        printHeapOrCodeData(out, "CODE", codeRegion, bootImage.heapAndCode(), subregion, bootImage.codeOffset());
+    }
+
+    private void printStringInfo(PrintStream out) {
         printSection(out, bootImage.stringInfo, "STRING INFO");
     }
 
-    private void printHeap(PrintStream out, BootImage bootImage) {
-        int size = bootImage.header.heapSize;
-        assert heapStart + size == codeStart;
-        printData(out, "HEAP", size, heapStart, bootImage.heap());
+    private int wordAlign(int value) {
+        return (value + (wordSize - 1)) & ~(wordSize - 1);
     }
 
-    private void printCode(PrintStream out, BootImage bootImage) {
-        int size = bootImage.header.codeSize;
-        printData(out, "CODE", size, codeStart, bootImage.code());
-    }
+    private void printData(PrintStream out, String name, int offsetInImage, byte[] buffer, Range subregion) {
+        int startAddress = 0;
+        int size = buffer.length;
+        out.println(sectionHeader(name, size, startAddress, offsetInImage));
 
-    private void printData(PrintStream out, String name, int size, int start, ByteBuffer buffer) {
-        ByteBuffer copy = buffer.duplicate();
-        out.println(sectionHeader(name, size, start));
-        int end = start + size;
-        for (int a = start; a < end; a += wordSize) {
-            if (wordSize == 8) {
-                out.printf("0x%08x: 0x%016x%n", a, copy.getLong());
-            } else {
-                out.printf("0x%08x: 0x%08x%n", a, copy.getInt());
+        int end = startAddress + size;
+        int address;
+
+        if (subregion != null) {
+            address = subregion.start;
+            end = address + subregion.size;
+        } else {
+            address = startAddress;
+            end = startAddress + size;
+        }
+        assert end <= buffer.length;
+        while (address < end) {
+            out.printf("0x%08x:", address);
+            for (int i = 0; i < 32 && address < end; ++i) {
+                out.printf(" %02x", buffer[address]);
+                address++;
             }
+            out.println();
         }
     }
 
-    private String sectionHeader(String name, int size, int start) {
-        int end = start + size;
+    private long readWord(int pointer, ByteBuffer memory) {
+        if (wordSize == 8) {
+            return memory.getLong(pointer);
+        }
+        return memory.getInt(pointer);
+    }
+
+    private static boolean contains(int pointer, int size, ByteBuffer memory) {
+        return pointer >= 0 && pointer + size <= memory.limit();
+    }
+
+    private boolean isValidOrigin(int origin, ByteBuffer memory) {
+        GeneralLayout layout = bootImage.vmConfiguration.layoutScheme().generalLayout;
+        int hubOffset = layout.getOffsetFromOrigin(HeaderField.HUB).toInt();
+        if (contains(origin + hubOffset, wordSize, memory)) {
+            int hub = (int) readWord(origin + hubOffset, memory);
+            if (contains(hub + hubOffset, wordSize, memory)) {
+                int hubHub = (int) readWord(hub + hubOffset, memory);
+                if (contains(hubHub + hubOffset, wordSize, memory)) {
+                    int hubHubHub = (int) readWord(hubHub + hubOffset, memory);
+                    return hubHub == hubHubHub;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void printHeapOrCodeData(PrintStream out, String name, Range region, ByteBuffer heapAndCode, Range subregion, int offsetInImage) {
+        int startAddress = region.start;
+        int size = region.size;
+        out.println(sectionHeader(name, size, startAddress, offsetInImage));
+
+        int end;
+        int address;
+
+        ByteArrayBitMap relocMap = new ByteArrayBitMap(bootImage.relocationData);
+        if (subregion != null) {
+            address = wordAlign(subregion.start);
+            end = address + subregion.size;
+        } else {
+            address = startAddress;
+            end = startAddress + size;
+        }
+        while (address < end) {
+            int addressIndex = address / wordSize;
+            char pointerMark = relocMap.isSet(addressIndex) ? '*' : ' ';
+            String originLabel = isValidOrigin(address, heapAndCode) ? " <-- origin" : "";
+            if (wordSize == 8) {
+                String value = String.format("%016x", heapAndCode.getLong(address));
+                if (filter == null || value.contains(filter)) {
+                    out.printf("%c0x%08x: 0x%s%s%n", pointerMark, address, value, originLabel);
+                }
+            } else {
+                String value = String.format("%08x", heapAndCode.getInt(address));
+                if (filter == null || value.contains(filter)) {
+                    out.printf("%c0x%08x: 0x%s%s%n", pointerMark, address, value, originLabel);
+                }
+            }
+            address += wordSize;
+        }
+    }
+
+    private String sectionHeader(String name, int size, int startAddress, int offsetInImage) {
+        int end = startAddress + size;
         int wordSizeWidth = wordSize * 2;
-        return String.format("--- %s: start=0x%0" + wordSizeWidth + "x, end=0x%0" + wordSizeWidth + "x, size=%d[0x%08x] ---", name, start, end, size, size);
+        return String.format("--- %s: start=0x%0" + wordSizeWidth + "x, end=0x%0" + wordSizeWidth +
+            "x, size=%d[0x%08x], image-offset=%d[0x%08x] ---", name, startAddress, end, size, size, offsetInImage, offsetInImage);
     }
 
     private void printSection(PrintStream out, FieldSection section, String name) {
@@ -165,7 +352,7 @@ public class BootImagePrinter {
             } catch (Exception e) {
             }
         }
-        out.println(sectionHeader(name, section.size(), section.offset()));
+        out.println(sectionHeader(name, section.size(), 0, section.offset()));
         for (Field field : section.fields()) {
             Object value;
             try {

@@ -73,8 +73,11 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     public DataAccess map(File bootImageFile, BootImage bootImage) throws IOException {
         final RandomAccessFile randomAccessFile = new RandomAccessFile(bootImageFile, "r");
         final Header header = bootImage.header;
-        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, bootImage.heapOffset(), header.heapSize + header.codeSize);
+        int heapOffset = bootImage.heapOffset();
+        int heapAndCodeSize = header.heapSize + header.codeSize;
+        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.READ_ONLY, heapOffset, heapAndCodeSize);
         bootImageBuffer.order(bootImage.vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder());
+        randomAccessFile.close();
         return new MappedByteBufferDataAccess(bootImageBuffer, heap, header.wordWidth());
     }
 

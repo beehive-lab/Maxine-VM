@@ -806,10 +806,6 @@ public abstract class TeleVM implements MaxVM {
         return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(origin));
     }
 
-    public final Reference cellToReference(Pointer cell) {
-        return originToReference(layoutScheme().generalLayout.cellToOrigin(cell));
-    }
-
     public final Reference bootClassRegistryReference() {
         return originToReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
     }
@@ -839,8 +835,8 @@ public abstract class TeleVM implements MaxVM {
             // Keep following hub pointers until the same hub is traversed twice or
             // an address outside of heap or code region(s) is encountered.
             //
-           // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
-           // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
+            // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
+            // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
             Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
@@ -1109,9 +1105,9 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.lookupObject(id);
     }
 
-    public final TeleObject findObjectAt(Address cellAddress) {
+    public final TeleObject findObjectAt(Address origin) {
         try {
-            return makeTeleObject(cellToReference(cellAddress.asPointer()));
+            return makeTeleObject(originToReference(origin.asPointer()));
         } catch (Throwable throwable) {
         }
         return null;
@@ -1125,10 +1121,11 @@ public abstract class TeleVM implements MaxVM {
             wordSearchExtent = maxSearchExtent / wordSize().toInt();
         }
         try {
+            Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
-                cellAddress = cellAddress.plus(wordSize());
-                if (isValidOrigin(cellAddress.asPointer())) {
-                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
+                origin = origin.plus(wordSize());
+                if (isValidOrigin(origin)) {
+                    return makeTeleObject(originToReference(origin));
                 }
             }
         } catch (Throwable throwable) {
@@ -1144,10 +1141,11 @@ public abstract class TeleVM implements MaxVM {
             wordSearchExtent = maxSearchExtent / wordSize().toInt();
         }
         try {
+            Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
-                cellAddress = cellAddress.minus(wordSize());
-                if (isValidOrigin(cellAddress.asPointer())) {
-                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
+                origin = origin.minus(wordSize());
+                if (isValidOrigin(origin)) {
+                    return makeTeleObject(originToReference(origin));
                 }
             }
         } catch (Throwable throwable) {

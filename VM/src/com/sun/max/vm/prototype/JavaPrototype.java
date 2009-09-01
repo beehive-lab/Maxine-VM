@@ -425,19 +425,17 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection class for the specified class actor
      */
     public Class toJava(ClassActor classActor) {
-        synchronized (classActorMap) {
-            Class javaClass = classActorMap.get(classActor);
-            if (javaClass == null) {
-                try {
-                    javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
-                } catch (NoClassDefFoundError noClassDefFoundError) {
-                    // try again with the prototype class loader.
-                    javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
-                }
-                classActorMap.put(classActor, javaClass);
+        Class javaClass = classActorMap.get(classActor);
+        if (javaClass == null) {
+            try {
+                javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
+            } catch (NoClassDefFoundError noClassDefFoundError) {
+                // try again with the prototype class loader.
+                javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
             }
-            return javaClass;
+            classActorMap.put(classActor, javaClass);
         }
+        return javaClass;
     }
 
     /**

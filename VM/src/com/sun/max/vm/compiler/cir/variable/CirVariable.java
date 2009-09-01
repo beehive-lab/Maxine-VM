@@ -49,7 +49,7 @@ public abstract class CirVariable extends CirValue {
             result.serial = newSerial;
             return result;
         } catch (Throwable throwable) {
-            throw ProgramError.unexpected("clone() failed for: " + this);
+            throw ProgramError.unexpected("clone() failed for: " + this, throwable);
         }
     }
 

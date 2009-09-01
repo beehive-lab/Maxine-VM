@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -202,7 +203,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return enumeration of the fields in the header of this object
      */
-    public abstract EnumSet<Layout.HeaderField> getHeaderFields();
+    public abstract HeaderField[] getHeaderFields();
 
     /**
      * @param headerField
