@@ -31,9 +31,6 @@ import com.sun.c1x.debug.*;
  */
 public class LIROp3 extends LIRInstruction {
 
-    LIROperand opr1;
-    LIROperand opr2;
-    LIROperand opr3;
 
     /**
      * Creates a new LIROp3 instruction. A LIROp3 instruction represents a LIR instruction
@@ -47,10 +44,7 @@ public class LIROp3 extends LIRInstruction {
      * @param info the debug information, used for deoptimization, associated to this instruction
      */
     public LIROp3(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand opr3, LIROperand result, CodeEmitInfo info) {
-        super(opcode, result, info);
-        this.opr1 = opr1;
-        this.opr2 = opr2;
-        this.opr3 = opr3;
+        super(opcode, result, info, false, null, 1, 1, opr1, opr2, opr3);
         assert isInRange(opcode, LIROpcode.BeginOp3, LIROpcode.EndOp3) : "The " + opcode + " is not a valid LIROp3 opcode";
     }
 
@@ -60,7 +54,7 @@ public class LIROp3 extends LIRInstruction {
      * @return the opr1
      */
     public LIROperand opr1() {
-        return opr1;
+        return operand(0);
     }
 
     /**
@@ -69,7 +63,7 @@ public class LIROp3 extends LIRInstruction {
      * @return the opr2
      */
     public LIROperand opr2() {
-        return opr2;
+        return operand(1);
     }
 
     /**
@@ -78,7 +72,7 @@ public class LIROp3 extends LIRInstruction {
      * @return the opr3
      */
     public LIROperand opr3() {
-        return opr3;
+        return operand(2);
     }
 
     /**
@@ -98,12 +92,12 @@ public class LIROp3 extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        opr1.print(out);
+        opr1().print(out);
         out.print(" ");
-        opr2.print(out);
+        opr2().print(out);
         out.print(" ");
-        opr3.print(out);
+        opr3().print(out);
         out.print(" ");
-        result.print(out);
+        result().print(out);
     }
 }

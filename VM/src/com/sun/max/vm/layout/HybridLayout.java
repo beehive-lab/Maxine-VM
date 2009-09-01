@@ -23,6 +23,7 @@ package com.sun.max.vm.layout;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.Layout.*;
 
 
 /**
@@ -31,7 +32,7 @@ import com.sun.max.vm.actor.member.*;
  * All fields are concentrated in a bounded area of the word array,
  * which starts at array offset zero.
  * There is a fixed array index from which on there are no more fields.
- * 
+ *
  * @author Bernd Mathiske
  */
 public interface HybridLayout extends TupleLayout, WordArrayLayout {
@@ -42,4 +43,11 @@ public interface HybridLayout extends TupleLayout, WordArrayLayout {
      * The resulting size must be aligned with a word array size.
      */
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors);
+
+    /**
+     * Gets the header fields of this hybrid object layout.
+     *
+     * @return an array of header field descriptors sorted by ascending order of the field addresses in memory
+     */
+    HeaderField[] headerFields();
 }

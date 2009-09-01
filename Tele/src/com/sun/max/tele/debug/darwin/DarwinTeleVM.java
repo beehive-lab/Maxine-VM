@@ -35,7 +35,7 @@ public final class DarwinTeleVM extends TeleVM {
 
     @Override
     protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
+        return new DarwinTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
     }
 
     @Override
