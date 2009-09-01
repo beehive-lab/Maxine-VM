@@ -85,10 +85,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     /**
      * @return the inspector frame in which the Inspector displays its view.
-     *
-     * <strong>NOTE</strong> The need for the distinction between and {@link InspectorFrame} and the
-     * actual implementation class, which is a {@link JInternalFrame} is an anachronism
-     * from an earlier design phase.  It should be cleaned up.
      */
     public final InspectorFrame frame() {
         return frame;
@@ -98,7 +94,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @return the window system component in which the Inspector displays its view.
      */
     public final Component component() {
-        return (Component) frame;
+        return frame;
     }
 
     /**
@@ -176,7 +172,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param menu  optional menu to replace the default frame menu
      */
     protected void createFrame(InspectorMenu menu) {
-        frame = new InternalInspectorFrame(this, menu);
+        frame = new InspectorFrame(this, menu);
         updateFrameTitle();
         createView();
         frame.pack();
@@ -370,7 +366,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return new InspectorAction(inspection(), "Close") {
             @Override
             protected void procedure() {
-                frame().dispose();
+                dispose();
             }
         };
     }
