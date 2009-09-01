@@ -163,7 +163,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // this is likely a nop as we're entering here from returning from a signal handler.
         asm.flushw();
         final int wordSize = Word.size();
-        final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+        final int trapStateOffset =  SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
         int offset = trapStateOffset;
 
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.

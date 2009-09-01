@@ -232,7 +232,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
      * Constant amount of bytes to add to a call-save-area pointer to obtain the biased stack pointer of the caller.
      * This is used below to re-compute the biased stack pointer of a JIT caller.
      */
-    private static final int CALL_SAVE_AREA_OFFSET_TO_STACK = SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE - SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+    private static final int CALL_SAVE_AREA_OFFSET_TO_STACK = SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE - SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
 
     @Override
     protected void emitReturn() {
@@ -391,7 +391,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Offset to the top of the operand stack, when the top is an integer value.
      */
-    private static final int ITOS_OFFSET = SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer() + JitStackFrameLayout.offsetInStackSlot(Kind.INT);
+    private static final int ITOS_OFFSET = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + JitStackFrameLayout.offsetInStackSlot(Kind.INT);
 
     @PROTOTYPE_ONLY
     private static byte[] buildLookupSwitchTemplate(SPARCAssembler asm, Label branchToDefaultTarget) {
@@ -577,21 +577,30 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     }
 
     /**
-     * Return the size (in number of bytes) of the sequence of instructions in the prologue that sets up the new frame .
+     * Return the size (in number of bytes) of the sequence of instructions in the prologue that sets up the new frame.
+     * This method must not perform allocation.
      * @param targetMethod
      * @return
      */
     public static int frameBuilderSize(SPARCJitTargetMethod targetMethod) {
         final boolean largeFrame = !SPARCAssembler.isSimm13(targetMethod.frameSize());
         final JitStackFrameLayout stackFrameLayout = targetMethod.stackFrameLayout();
-        final int offsetToCallSaveArea = SPARCStackFrameLayout.minStackFrameSize() + stackFrameLayout.sizeOfTemplateSlots() + stackFrameLayout.sizeOfNonParameterLocals() + JIT_SLOT_SIZE;
-        final boolean largeRipOffset =  !SPARCAssembler.isSimm13(offsetToCallSaveArea + STACK_SLOT_SIZE);
+        final int offsetToCallSaveArea = SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE + stackFrameLayout.sizeOfTemplateSlots() + stackFrameLayout.sizeOfNonParameterLocals() + JIT_SLOT_SIZE;
+        final boolean largeOffset =  !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
 
         int numInstructions = 4;
+        if (Trap.STACK_BANGING) {
+            final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
+            if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                numInstructions += 1;
+            } else {
+                numInstructions += 2;
+            }
+        }
         if (largeFrame) {
             numInstructions += 2;
         }
-        if (largeRipOffset) {
+        if (largeOffset) {
             numInstructions += 2;
         }
         return numInstructions * InstructionSet.SPARC.instructionWidth;
@@ -617,11 +626,11 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             final int offsetToCallSaveAreaFromFP = ((SPARCJitStackFrameLayout) jitStackFrameLayout).offsetToTopOfFrameFromFramePointer() - SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
 
             // The following offsets are from the callee's stack pointer
-            final int offsetToSavedBaseLiteral = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.minStackFrameSize() + jitStackFrameLayout.sizeOfNonParameterLocals();
+            final int offsetToSavedBaseLiteral = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE + jitStackFrameLayout.sizeOfNonParameterLocals();
             final int offsetToSpillSlots = offsetToSavedBaseLiteral + JIT_SLOT_SIZE;
             final int offsetToCallSaveArea = offsetToSpillSlots + offsetToCallSaveAreaFromFP;
             final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
-            final boolean largeOffsets = !SPARCAssembler.isSimm13(offsetToCallSaveArea + 2 * STACK_SLOT_SIZE);
+            final boolean largeOffsets = !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
             adapterFrameGenerator.setJitedCodeFrameSize(jitedCodeFrameSize);
             adapterFrameGenerator.setJitEntryPoint(jitEntryPoint);
             try {
@@ -661,7 +670,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                     assert SPARCAssembler.isSimm13(offsetToCallSaveAreaFromFP);
                     // Offsets from stack pointer too large to be used as immediate.
                     // Instead, we compute the new frame pointer into a temporary that we use as a base.
-                    final GPR newFramePointerRegister = targetABI.scratchRegister();
+                    final GPR newFramePointerRegister = scratchRegister;
                     asm.setsw(offsetToSpillSlots, newFramePointerRegister);
                     asm.add(stackPointerRegister, newFramePointerRegister, newFramePointerRegister);
                     asm.stx(linkRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP + STACK_SLOT_SIZE);

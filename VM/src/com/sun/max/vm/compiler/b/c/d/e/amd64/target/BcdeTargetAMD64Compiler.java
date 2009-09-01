@@ -291,7 +291,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     }
                 }
                 final Pointer ignoredOperandStackPointer = Pointer.zero();
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, ignoredOperandStackPointer)) {
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
                     return false;
                 }
                 break;
