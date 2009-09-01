@@ -311,7 +311,7 @@ public class MaxRiConstantPool implements RiConstantPool {
             // the resolution can occur without side effects
             return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this);
         }
-        return new MaxRiField(this, constant); // unresolved
+        return new MaxRiField(this, constant, cpi); // unresolved
     }
 
     private MaxRiMethod methodFrom(MethodRefConstant constant, int cpi) {
@@ -325,7 +325,7 @@ public class MaxRiConstantPool implements RiConstantPool {
             // the resolution can occur without side effects
             return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this);
         }
-        return new MaxRiMethod(this, constant); // unresolved
+        return new MaxRiMethod(this, constant, cpi); // unresolved
     }
 
     private MaxRiType typeFrom(ClassConstant constant, int cpi) {

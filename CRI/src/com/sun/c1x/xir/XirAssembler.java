@@ -298,7 +298,13 @@ public class XirAssembler {
         jcc(OperatorKind.Jlteq, l, a, b);
     }
 
-    public void bind(XirLabel l) {
+    public void bindInline(XirLabel l) {
+        assert l.inline;
+        append(new XirInstruction(CiKind.Void, OperatorKind.Bind, l, nullOperand));
+    }
+
+    public void bindOutOfLine(XirLabel l) {
+        assert !l.inline;
         append(new XirInstruction(CiKind.Void, OperatorKind.Bind, l, nullOperand));
     }
 
@@ -362,6 +368,10 @@ public class XirAssembler {
 
     public XirTemp i(int b) {
         return createConstantTemp(CiConstant.forInt(b));
+    }
+
+    public XirTemp w(long b) {
+        return createConstantTemp(CiConstant.forWord(b));
     }
 
     public XirTemp o(Object obj) {
