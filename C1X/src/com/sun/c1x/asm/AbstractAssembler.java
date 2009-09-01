@@ -131,36 +131,6 @@ public abstract class AbstractAssembler {
         return targetMethod;
     }
 
-
-    protected void generateStackOverflowCheck() {
-        if (C1XOptions.UseStackBanging) {
-            // Each code entry causes one stack bang n pages down the stack where n
-            // is configurable by StackBangPages. The setting depends on the maximum
-            // depth of VM call stack or native before going back into java code,
-            // since only java code can raise a stack overflow exception using the
-            // stack banging mechanism. The VM and native code does not detect stack
-            // overflow.
-            // The code in JavaCalls.call() checks that there is at least n pages
-            // available, so all entry code needs to do is bang once for the end of
-            // this shadow zone.
-            // The entry code may need to bang additional pages if the framesize
-            // is greater than a page.
-
-            int bangEnd = C1XOptions.StackShadowPages * target.pageSize;
-
-            // This is how far the previous frame's stack banging extended.
-            int bangEndSafe = bangEnd;
-            int bangOffset = bangEndSafe;
-            while (bangOffset <= bangEnd) {
-                // Need at least one stack bang at end of shadow zone.
-                bangStackWithOffset(bangOffset);
-                bangOffset += target.pageSize;
-            }
-        } // end (UseStackBanging)
-    }
-
-    protected abstract void bangStackWithOffset(int bangOffset);
-
     protected void emitByte(int x) {
         codeBuffer.emitByte(x);
     }
