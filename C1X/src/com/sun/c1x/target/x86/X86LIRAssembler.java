@@ -2561,7 +2561,7 @@ public class X86LIRAssembler extends LIRAssembler {
             // Resolved method
             masm.movl(rscratch1, method.interfaceID());
             masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
-            masm.addq(rscratch1, method.iIndexInInterface() * 8);
+            masm.addq(rscratch1, method.iIndexInInterface() * compilation.target.arch.wordSize);
         }
 
         addCallInfoHere(info);
@@ -3401,7 +3401,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 case Pcas:
                     break;
 
-                case Call:
+                case CallJava:
                     break;
 
                 case Jmp:
