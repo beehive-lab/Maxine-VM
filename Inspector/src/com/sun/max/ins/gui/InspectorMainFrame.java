@@ -161,7 +161,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     public void addInspector(Inspector inspector) {
         final InspectorFrame inspectorFrame = inspector.frame();
-        desktopPane.add((Component) inspectorFrame);
+        desktopPane.add(inspectorFrame);
         inspectorFrame.setVisible(true);
         repaint();
     }
@@ -198,16 +198,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                             return containedInspector;
                         }
                     }
-                }
-            }
-        }
-        // Legacy hack; probably not relevant now.
-        for (Frame frame : Frame.getFrames()) {
-            if (frame.isVisible() && frame instanceof InspectorFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) frame;
-                final Inspector inspector = inspectorFrame.inspector();
-                if (predicate.evaluate(inspector)) {
-                    return inspector;
                 }
             }
         }

@@ -22,103 +22,133 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.*;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.*;
+import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 
 /**
- * A frame controlled by an {@linkplain Inspector inspector}.
+ * A internal frame controlled by an {@linkplain Inspector inspector}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public interface InspectorFrame extends Prober {
+public final class InspectorFrame extends JInternalFrame implements Prober {
 
-    Inspector inspector();
+    private final Inspector inspector;
 
-    InspectorMenu getMenu(String menuName);
-
-    void setVisible(boolean visible);
+    private final InspectorMenuBar menuBar;
 
     /**
-     * @return whether the frame that holds the Inspector can be seen on the screen.
+     * Creates an internal frame for an Inspector.
+     * @param inspector
+     * @param menu an optional menu, replaces default inspector menu if non-null
      */
-    boolean isShowing();
+    public InspectorFrame(Inspector inspector, InspectorMenu menu) {
+        this.inspector = inspector;
 
-    void moveToFront();
+        menuBar = new InspectorMenuBar(inspector.inspection());
+        menuBar.add((menu == null) ? inspector.createDefaultMenu() : menu);
+        setJMenuBar(menuBar);
 
-    void setTitle(String title);
+        setResizable(true);
+        setClosable(true);
+        setIconifiable(false);
+        setVisible(false);
 
-    String getTitle();
+        addInternalFrameListener(new InternalFrameAdapter() {
 
-    Container getContentPane();
+            @Override
+            public void internalFrameActivated(InternalFrameEvent e) {
+                InspectorFrame.this.inspector.inspectorGetsWindowFocus();
+            }
 
-    Component getGlassPane();
+            @Override
+            public void internalFrameDeactivated(InternalFrameEvent e) {
+                InspectorFrame.this.inspector.inspectorLosesWindowFocus();
+            }
+        });
+    }
 
-    void setContentPane(Container container);
 
-    boolean isSelected();
+    public void refresh(boolean force) {
+        menuBar.refresh(force);
+    }
 
-    void setSelected();
+    public void redisplay() {
+    }
 
-    void flash(Color borderFlashColor);
+    public Inspector inspector() {
+        return inspector;
+    }
 
-    void invalidate();
+    public InspectorMenu getMenu(String name) {
+        return menuBar.findMenu(name);
+    }
 
-    void repaint();
+    public void setSelected() {
+        try {
+            setSelected(true);
+        } catch (PropertyVetoException e) {
+        }
+    }
 
-    void pack();
+    public void flash(Color borderFlashColor) {
+        Component pane = getContentPane();
+        if (pane instanceof JScrollPane) {
+            final JScrollPane scrollPane = (JScrollPane) pane;
+            pane = scrollPane.getViewport();
+        }
+        final Graphics g = pane.getGraphics();
+        g.setPaintMode();
+        g.setColor(borderFlashColor);
+        for (int i = 0; i < 5; i++) {
+            g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
+        }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+        }
+        g.dispose();
+        invalidate();
+        repaint();
+    }
 
-    Dimension getSize();
+    @Override
+    public void dispose() {
+        super.dispose();
+        inspector.inspectorClosing();
+    }
 
-    void setPreferredSize(Dimension dimension);
 
-    Rectangle getBounds();
+    private InspectorAction frameClosingAction;
+    private InternalFrameListener frameClosingListener;
 
-    void setBounds(Rectangle bounds);
-
-    Point getLocationOnScreen();
-
-    int getWidth();
-
-    int getHeight();
-
-    void setLocation(int x, int y);
-
-    void setLocation(Point location);
-
-    void setSize(int width, int height);
-
-    void setMaximumSize(Dimension size);
-
-    void replaceFrameCloseAction(InspectorAction action);
-
-    void removeAll();
-
-    void dispose();
+    public void replaceFrameCloseAction(InspectorAction action) {
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        if (frameClosingAction != null) {
+            removeInternalFrameListener(frameClosingListener);
+        }
+        frameClosingAction = action;
+        frameClosingListener = new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosing(InternalFrameEvent we) {
+                frameClosingAction.perform();
+            }
+        };
+        addInternalFrameListener(frameClosingListener);
+    }
 
     /**
-     * This listener exists for two primary purposes:
-     * <ul>
-     * <li>Recording the last position of the mouse when it was over a component. This is used in positioning newly
-     * created internal frames.</li>
-     *
-     * </ul>
+     * Records the last position of the mouse when it was over a component. This is used in positioning newly
+     * created internal frames.
      */
-    public final class TitleBarListener implements AWTEventListener {
+    public static final class TitleBarListener implements AWTEventListener {
 
         private TitleBarListener() {
-        }
-
-        private InternalInspectorFrame getInternalInspectorFrame(Component component) {
-            Component c = component;
-            while (!(c == null || c instanceof InternalInspectorFrame)) {
-                c = c.getParent();
-            }
-            return (InternalInspectorFrame) c;
         }
 
         private static Point recentMouseLocationOnScreen = new Point(100, 100);
@@ -132,12 +162,6 @@ public interface InspectorFrame extends Prober {
                 final MouseEvent mouseEvent = (MouseEvent) event;
                 recentMouseLocationOnScreen = getLocationOnScreen(mouseEvent);
             }
-        }
-
-        private static boolean isTitleBarSourceEvent(AWTEvent event) {
-            final Object source = event.getSource();
-//            System.err.println(source.getClass());
-            return source instanceof MetalInternalFrameTitlePane;
         }
 
         private static Point getLocationOnScreen(MouseEvent mouseEvent) {
@@ -157,31 +181,5 @@ public interface InspectorFrame extends Prober {
         }
     }
 
-    public static final class Static {
-
-        private Static() {
-        }
-
-        public static void flash(InspectorFrame inspectorFrame, Color borderFlashColor) {
-            Component pane = inspectorFrame.getContentPane();
-            if (pane instanceof JScrollPane) {
-                final JScrollPane scrollPane = (JScrollPane) pane;
-                pane = scrollPane.getViewport();
-            }
-            final Graphics g = pane.getGraphics();
-            g.setPaintMode();
-            g.setColor(borderFlashColor);
-            for (int i = 0; i < 5; i++) {
-                g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-            g.dispose();
-            inspectorFrame.invalidate();
-            inspectorFrame.repaint();
-        }
-    }
 
 }
