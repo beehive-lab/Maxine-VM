@@ -65,9 +65,9 @@ public abstract class LIRInstruction {
     private int inputCount;
     private int tempCount;
     private int tempInputCount;
-    private List<LIROperand> operands = new ArrayList<LIROperand>(6);
+    private List<LIRLocation> operands = new ArrayList<LIRLocation>(6);
 
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperand.ILLEGAL);
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperandFactory.IllegalLocation);
 
     public static final class OperandSlot {
         private int base;
@@ -95,8 +95,8 @@ public abstract class LIRInstruction {
                 LIROperand result = null;
                 if (direct != null && direct.isAddress()) {
                     LIRAddress address = (LIRAddress) direct;
-                    LIROperand baseOperand = inst.operands.get(base);
-                    LIROperand indexOperand = LIROperandFactory.IllegalOperand;
+                    LIRLocation baseOperand = inst.operands.get(base);
+                    LIRLocation indexOperand = LIROperandFactory.IllegalLocation;
                     if (!address.index.isIllegal()) {
                         indexOperand = inst.operands.get(base + 1);
                         assert indexOperand.isCpuRegister();
@@ -155,14 +155,14 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOutput(LIROperand output) {
         assert output != null;
-        if (output != LIROperand.ILLEGAL) {
+        if (output != LIROperandFactory.IllegalLocation) {
             if (output instanceof LIRAddress) {
                 return addAddress((LIRAddress) output);
             }
 
-            assert !(output instanceof LIRAddress);
+            assert output instanceof LIRLocation;
             assert operands.size() == outputCount;
-            operands.add(output);
+            operands.add((LIRLocation) output);
             outputCount++;
             return new OperandSlot(operands.size() - 1);
         } else {
@@ -201,7 +201,7 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOperand(LIROperand input, boolean isInput, boolean isTemp) {
         assert input != null;
-        if (input != LIROperand.ILLEGAL) {
+        if (input != LIROperandFactory.IllegalLocation) {
             assert !(input instanceof LIRAddress);
             if (input.isStack()) {
                 return addStackSlot(input);
@@ -210,7 +210,8 @@ public abstract class LIRInstruction {
             } else {
                 assert operands.size() == outputCount + inputCount + tempInputCount + tempCount;
 
-                operands.add(input);
+                assert input instanceof LIRLocation;
+                operands.add((LIRLocation) input);
 
                 if (isInput && isTemp) {
                     tempInputCount++;
@@ -230,7 +231,7 @@ public abstract class LIRInstruction {
 
     protected final LIROperand operand(int index) {
         if (index >= operandSlots.length) {
-            return LIROperand.ILLEGAL;
+            return LIROperandFactory.IllegalLocation;
         }
 
         return operandSlots[index].get(this);
@@ -248,7 +249,7 @@ public abstract class LIRInstruction {
         for (int i = 0; i < operands.length; i++) {
             LIROperand op = operands[i];
             if (op.isAddress()) {
-                operandSlots[i] = addAddress(op.asAddress());
+                operandSlots[i] = addAddress((LIRAddress) op);
             }
         }
 
@@ -257,7 +258,7 @@ public abstract class LIRInstruction {
             for (int i = 0; i < stub.operands().length; i++) {
                 LIROperand op = stub.operands()[i];
                 if (op.isAddress()) {
-                    operandSlots[i + operands.length] = addAddress(op.asAddress());
+                    operandSlots[i + operands.length] = addAddress((LIRAddress) op);
                 }
             }
         }
@@ -390,7 +391,14 @@ public abstract class LIRInstruction {
      *
      * @param out the LogStream to print into.
      */
-    public abstract void printInstruction(LogStream out);
+    public void printInstruction(LogStream out) {
+
+        out.printf("%s = (", result.get(this), this.code.name());
+        for (int i = 0; i < operandSlots.length; i++) {
+            out.printf("%s ", operandSlots[i].get(this));
+        }
+        out.print(")");
+    }
 
     /**
      * Prints information common to all LIR instruction.
@@ -499,7 +507,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public void setOprAt(OperandMode mode, int index, LIROperand colorLirOpr) {
+    public void setOprAt(OperandMode mode, int index, LIRLocation colorLirOpr) {
         assert index < oprCount(mode);
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;

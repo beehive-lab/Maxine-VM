@@ -143,12 +143,12 @@ public class FrameMap {
 
     public CiLocation regname(LIROperand opr) {
         if (opr.isStack()) {
-            return new CiLocation(opr.type(), opr.stackIx() * SpillSlotSize, SpillSlotSize * opr.basicType.size, false);
+            return new CiLocation(opr.kind, opr.stackIx() * SpillSlotSize, SpillSlotSize * opr.kind.size, false);
         } else if (opr.isRegister()) {
             if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiLocation(opr.type(), opr.asRegisterLo(), opr.asRegisterHi());
+                return new CiLocation(opr.kind, opr.asRegisterLo(), opr.asRegisterHi());
             } else {
-                return new CiLocation(opr.type(), opr.asRegister());
+                return new CiLocation(opr.kind, opr.asRegister());
             }
         } else {
             throw Util.shouldNotReachHere();

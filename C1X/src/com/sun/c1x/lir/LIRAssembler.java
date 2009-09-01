@@ -566,7 +566,7 @@ public abstract class LIRAssembler {
                 break;
 
             case Monaddr:
-                monitorAddress(op.inOpr().asConstantPtr().asInt(), op.result());
+                monitorAddress(((LIRConstant) op.inOpr()).asInt(), op.result());
                 break;
 
             default:
@@ -711,7 +711,7 @@ public abstract class LIRAssembler {
             case Shr:
             case Ushr:
                 if (op.opr2().isConstant()) {
-                    shiftOp(op.code, op.opr1(), op.opr2().asConstantPtr().asInt(), op.result());
+                    shiftOp(op.code, op.opr1(), ((LIRConstant) op.opr2()).asInt(), op.result());
                 } else {
                     shiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
                 }

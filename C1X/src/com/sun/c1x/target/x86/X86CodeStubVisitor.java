@@ -356,10 +356,13 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             stubId = GlobalStub.ThrowRangeCheckFailed;
         }
 
-        if (stub.index().isCpuRegister()) {
-            masm.callGlobalStub(stubId, stub.info, CiRegister.None, stub.index().asRegister());
+        LIROperand index = stub.index();
+        if (index.isCpuRegister()) {
+            masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
         } else {
-            masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(stub.index().asInt()));
+            assert index.isConstant();
+            LIRConstant constantIndex = (LIRConstant) index;
+            masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
         }
 
         ce.addCallInfoHere(stub.info);

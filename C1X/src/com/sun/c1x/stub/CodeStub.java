@@ -48,7 +48,7 @@ public abstract class CodeStub {
     protected int tempInputCount;
 
     public CodeStub(CodeEmitInfo info) {
-        this(info, LIROperandFactory.IllegalOperand);
+        this(info, LIROperandFactory.IllegalLocation);
     }
 
     public CodeStub(CodeEmitInfo info, LIROperand result) {
