@@ -37,7 +37,7 @@
 #include "jni.h"
 #include "unistd.h"
 
-/* There seems to be a problem binding these identifiers in RedHat's include files, so we fake them: */
+/* There is a problem binding these identifiers in RedHat's include files, so we fake them: */
 #if os_LINUX
 #   ifndef MAP_ANONYMOUS
 #       define MAP_ANONYMOUS    0x20
@@ -90,7 +90,7 @@ Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd,
 Address virtualMemory_allocateNoSwap(Size size, int type) {
 	void *result = mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
 #if log_LOADER
-	log_println("%d virtualMemory_allocateNoSwap allocated %lx at %p", sizeof(size), size, result);
+	log_println("virtualMemory_allocateNoSwap allocated %p bytes at %p", size, result);
 #endif
 	return check_mmap_result(result);
 }

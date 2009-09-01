@@ -170,6 +170,7 @@ public final class MemoryWordsInspector extends Inspector {
     private final MemoryWordRegion originalMemoryWordRegion;
     private final ViewMode originalViewMode;
     private final String originalRegionName;
+    private final Address originalOrigin;
 
     // Current view specifications.
     private MemoryWordRegion memoryWordRegion;
@@ -220,11 +221,12 @@ public final class MemoryWordsInspector extends Inspector {
         final int wordCount = wordsInRegion(memoryRegion);
         this.originalMemoryWordRegion = new MemoryWordRegion(start, wordCount, wordSize);
         this.memoryWordRegion = originalMemoryWordRegion;
+        this.originalOrigin = (origin == null) ? start : origin;
         this.originalRegionName = regionName;
         this.regionName = regionName;
         this.originalViewMode = viewMode;
 
-        this.origin = (origin == null) ? start : origin;
+        this.origin = originalOrigin;
 
         frameMenuItems = new MemoryWordsFrameMenuItems();
 
@@ -570,7 +572,7 @@ public final class MemoryWordsInspector extends Inspector {
      * Sets the view to the parameters specified when inspector was created.
      */
     private void resetToOriginal() {
-        setOrigin(originalMemoryWordRegion.start());
+        setOrigin(originalOrigin);
         setMemoryRegion(originalMemoryWordRegion);
         setViewMode(originalViewMode);
         table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
