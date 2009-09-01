@@ -85,7 +85,7 @@ public class MaxineTesterConfiguration {
         output(test.output.GCTest2.class);
         output(test.output.GCTest3.class);
         output(test.output.GCTest4.class);
-        output(test.output.GCTest5.class);
+        output(test.output.GCTest5.class,                  RAND_SPARC);
         output(test.output.GCTest6.class);
         output(test.output.HelloWorldReflect.class);
         output(test.output.JREJarLoadTest.class);
