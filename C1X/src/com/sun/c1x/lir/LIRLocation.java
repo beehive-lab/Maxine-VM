@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
 
 /**
  * The <code>LIRLocation</code> class represents a LIROperand that is either a stack slot or a CPU register. LIRLocation
@@ -32,7 +31,7 @@ import com.sun.c1x.util.*;
  * @author Ben L. Titzer
  *
  */
-public class LIRLocation extends LIROperand {
+public final class LIRLocation extends LIROperand {
 
     public CiRegister location1;
     public CiRegister location2;
@@ -50,7 +49,7 @@ public class LIRLocation extends LIROperand {
      */
     LIRLocation(CiKind basicType, CiRegister number) {
         super(basicType);
-        assert basicType.size == 1;
+        assert basicType.size == 1 || (basicType.size == -1 && number == CiRegister.None);
         assert number != null;
         this.location1 = number;
         this.location2 = CiRegister.None;
@@ -102,7 +101,7 @@ public class LIRLocation extends LIROperand {
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.basicType == basicType && l.location1 == location1 && l.location2 == location2 && l.index == index;
+            return l.kind == kind && l.location1 == location1 && l.location2 == location2 && l.index == index;
         }
         return false;
     }
@@ -125,12 +124,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleStack() {
-        return isStack() && basicType.sizeInSlots() == 1;
+        return isStack() && kind.sizeInSlots() == 1;
     }
 
     @Override
     public boolean isDoubleStack() {
-        return isStack() && basicType.sizeInSlots() == 2;
+        return isStack() && kind.sizeInSlots() == 2;
     }
 
     @Override
@@ -165,30 +164,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleXmm() {
-        return !isStack() && location1.isXMM() && basicType.sizeInSlots() == 1;
+        return !isStack() && location1.isXMM() && kind.sizeInSlots() == 1;
     }
 
     @Override
     public boolean isDoubleXmm() {
-        return !isStack() && location1.isXMM() && basicType.sizeInSlots() == 2;
-    }
-
-    @Override
-    public boolean isOopRegister() {
-        return isCpuRegister() && basicType == CiKind.Object;
-    }
-
-
-    @Override
-    public boolean isFpuStackOffset() {
-        assert isRegister() : "only works for registers";
-        throw Util.unimplemented();
-    }
-
-    @Override
-    public LIROperand makeFpuStackOffset() {
-        assert isRegister() : "only works for registers";
-        throw Util.unimplemented();
+        return !isStack() && location1.isXMM() && kind.sizeInSlots() == 2;
     }
 
     @Override

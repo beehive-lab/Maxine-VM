@@ -1002,78 +1002,85 @@ public class LinearScan {
 
         if ((con == null || con.isLive()) && opr.isRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
-            addUse(opr, from, to, useKind);
+            CiKind registerKind = registerKind(opr);
+            addUse(opr, from, to, useKind, registerKind);
         }
     }
 
-    void addDef(LIROperand opr, int defPos, IntervalUseKind useKind) {
+    void addDef(LIROperand opr, int defPos, IntervalUseKind useKind, CiKind registerKind) {
+
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print(" def ");
-            opr.print(TTY.out);
-            TTY.println(" defPos %d (%s)", defPos, useKind.name());
+            TTY.println(" def %s defPos %d (%s)", opr, defPos, useKind.name());
         }
         assert opr.isRegister() : "should not be called otherwise";
 
         if (opr.isVirtualRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
-            addDef(opr.vregNumber(), defPos, useKind, opr.typeRegister());
+            addDef(opr.vregNumber(), defPos, useKind, registerKind);
 
         } else {
             int reg = regNum(opr);
             if (isProcessedRegNum(reg)) {
-                addDef(reg, defPos, useKind, opr.typeRegister());
+                addDef(reg, defPos, useKind, registerKind);
             }
             reg = regNumHi(opr);
             if (isValidRegNum(reg) && isProcessedRegNum(reg)) {
-                addDef(reg, defPos, useKind, opr.typeRegister());
+                addDef(reg, defPos, useKind, registerKind);
             }
         }
     }
 
-    void addUse(LIROperand opr, int from, int to, IntervalUseKind useKind) {
+    private CiKind registerKind(LIROperand operand) {
+
+        assert operand.isRegister();
+
+        if (operand.kind == CiKind.Boolean || operand.kind == CiKind.Char || operand.kind == CiKind.Byte) {
+            return CiKind.Int;
+        }
+
+        return operand.kind;
+    }
+
+    void addUse(LIROperand opr, int from, int to, IntervalUseKind useKind, CiKind registerKind) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print(" use ");
-            opr.print(TTY.out);
-            TTY.println(" from %d to %d (%s)", from, to, useKind.name());
+            TTY.print(" use %s from %d to %d (%s)", opr, from, to, useKind.name());
         }
         assert opr.isRegister() : "should not be called otherwise";
 
         if (opr.isVirtualRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
-            addUse(opr.vregNumber(), from, to, useKind, opr.typeRegister());
+            addUse(opr.vregNumber(), from, to, useKind, registerKind);
 
         } else {
             int reg = regNum(opr);
             if (isProcessedRegNum(reg)) {
-                addUse(reg, from, to, useKind, opr.typeRegister());
+                addUse(reg, from, to, useKind, registerKind);
             }
             reg = regNumHi(opr);
             if (isValidRegNum(reg) && isProcessedRegNum(reg)) {
-                addUse(reg, from, to, useKind, opr.typeRegister());
+                addUse(reg, from, to, useKind, registerKind);
             }
         }
     }
 
-    void addTemp(LIROperand opr, int tempPos, IntervalUseKind useKind) {
+    void addTemp(LIROperand opr, int tempPos, IntervalUseKind useKind, CiKind registerKind) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
-            TTY.print(" temp ");
-            opr.print(TTY.out);
-            TTY.println(" tempPos %d (%s)", tempPos, useKind.name());
+            TTY.println(" temp %s tempPos %d (%s)", opr, tempPos, useKind.name());
         }
         assert opr.isRegister() : "should not be called otherwise";
 
         if (opr.isVirtualRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
-            addTemp(opr.vregNumber(), tempPos, useKind, opr.typeRegister());
+            addTemp(opr.vregNumber(), tempPos, useKind, registerKind);
 
         } else {
             int reg = regNum(opr);
             if (isProcessedRegNum(reg)) {
-                addTemp(reg, tempPos, useKind, opr.typeRegister());
+                addTemp(reg, tempPos, useKind, registerKind);
             }
             reg = regNumHi(opr);
             if (isValidRegNum(reg) && isProcessedRegNum(reg)) {
-                addTemp(reg, tempPos, useKind, opr.typeRegister());
+                addTemp(reg, tempPos, useKind, registerKind);
             }
         }
     }
@@ -1230,7 +1237,7 @@ public class LinearScan {
 
             // optimizations for second input operand of arithmehtic operations on Intel
             // this operand is allowed to be on the stack in some cases
-            CiKind oprType = opr.typeRegister();
+            CiKind oprType = registerKind(opr);
             if (oprType == CiKind.Float || oprType == CiKind.Double) {
                 if ((C1XOptions.SSEVersion == 1 && oprType == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
                     // SSE float instruction (BasicType.Double only supported with SSE2)
@@ -1329,14 +1336,18 @@ public class LinearScan {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
-            if (move.resultOpr().isDoubleCpu() && move.inOpr().isLocation()) {
-                final LIRAddress pointer = move.inOpr().asAddressPtr();
-                if (pointer != null) {
-                    if (pointer.base().isValid()) {
-                        addTemp(pointer.base(), op.id(), IntervalUseKind.noUse);
+            LIROperand inOpr = move.inOpr();
+
+            if (move.resultOpr().isDoubleCpu() && inOpr.isLocation()) {
+                if (inOpr instanceof LIRAddress) {
+                    final LIRAddress pointer = (LIRAddress) inOpr;
+                    LIROperand base = pointer.base();
+                    if (!base.isIllegal()) {
+                        addTemp(base, op.id(), IntervalUseKind.noUse, registerKind(base));
                     }
-                    if (pointer.index().isValid()) {
-                        addTemp(pointer.index(), op.id(), IntervalUseKind.noUse);
+                    LIROperand index = pointer.index();
+                    if (!index.isIllegal()) {
+                        addTemp(index, op.id(), IntervalUseKind.noUse, registerKind(index));
                     }
                 }
             }
@@ -1463,14 +1474,14 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
-                    addDef(opr, opId, useKindOfOutputOperand(op, opr));
+                    addDef(opr, opId, useKindOfOutputOperand(op, opr), registerKind(opr));
                 }
 
                 n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
-                    addTemp(opr, opId, IntervalUseKind.mustHaveRegister);
+                    addTemp(opr, opId, IntervalUseKind.mustHaveRegister, registerKind(opr));
                 }
 
                 // visit uses (input operands)
@@ -1478,7 +1489,7 @@ public class LinearScan {
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
-                    addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr));
+                    addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr), registerKind(opr));
                 }
 
                 // Add uses of live locals from interpreter's point of view for proper
@@ -2143,7 +2154,7 @@ public class LinearScan {
     }
 
     CiLocation vmRegForOperand(LIROperand opr) {
-        assert opr.basicType == CiKind.Object : "currently only implemented for oop operands";
+        assert opr.kind == CiKind.Object : "currently only implemented for oop operands";
         return frameMap().regname(opr);
     }
 
@@ -2239,7 +2250,7 @@ public class LinearScan {
 
                 default: {
                     Util.shouldNotReachHere();
-                    return LIROperandFactory.IllegalOperand;
+                    return LIROperandFactory.IllegalLocation;
                 }
             }
         }
@@ -2265,7 +2276,7 @@ public class LinearScan {
         return LIROperandFactory.stack(interval.canonicalSpillSlot() - nofRegs, interval.type());
     }
 
-    LIROperand colorLirOpr(LIROperand opr, int opId, LIRInstruction.OperandMode mode) {
+    LIRLocation colorLirOpr(LIROperand opr, int opId, LIRInstruction.OperandMode mode) {
         assert opr.isVirtual() : "should not call this otherwise";
 
         Interval interval = intervalAt(opr.vregNumber());
@@ -2294,7 +2305,7 @@ public class LinearScan {
             interval = splitChildAtOpId(interval, opId, mode);
         }
 
-        LIROperand res = operandForInterval(interval);
+        LIRLocation res = (LIRLocation) operandForInterval(interval);
 
         assert !gen().isVregFlagSet(opr.vregNumber(), LIRGenerator.VregFlag.CalleeSaved) || !frameMap.isCallerSaveRegister(res) : "bad allocation";
 
@@ -2517,8 +2528,8 @@ public class LinearScan {
     int appendScopeValueForConstant(LIROperand opr, List<CiValue> scopeValues) {
         assert opr.isConstant() : "should not be called otherwise";
 
-        LIRConstant c = opr.asConstantPtr();
-        CiKind t = c.type();
+        LIRConstant c = (LIRConstant) opr;
+        CiKind t = c.kind;
         switch (t) {
             case Object: // fall through
             case Int: // fall through
@@ -2549,7 +2560,7 @@ public class LinearScan {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIx();
             //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.basicType, stackIdx, FrameMap.SpillSlotSize, false);
+            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SpillSlotSize, false);
             scopeValues.add(location);
 //            if (isOop) {
 //                oopValues.add(location);
@@ -2558,7 +2569,7 @@ public class LinearScan {
 
         } else if (opr.isSingleCpu()) {
             //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.basicType, opr.asRegister());
+            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
 //            if (isOop) {
 //                oopValues.add(location);
@@ -2566,7 +2577,7 @@ public class LinearScan {
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            CiLocation location = new CiLocation(opr.basicType, opr.asRegister());
+            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
 
@@ -2579,7 +2590,7 @@ public class LinearScan {
             if (opr.isDoubleStack()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.basicType, opr.doubleStackIx(), FrameMap.SpillSlotSize * 2, false);
+                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SpillSlotSize * 2, false);
                 } else {
                     Util.shouldNotReachHere();
                 }
@@ -2587,14 +2598,14 @@ public class LinearScan {
             } else if (opr.isDoubleCpu()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.basicType, opr.asRegister());
+                    first = new CiLocation(opr.kind, opr.asRegister());
                 } else {
                     Util.shouldNotReachHere();
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.asRegisterLo() == opr.asRegisterHi() : "assumed in calculation";
-                first = new CiLocation(opr.basicType, opr.asRegister());
+                first = new CiLocation(opr.kind, opr.asRegister());
 
             } else {
                 Util.shouldNotReachHere();
