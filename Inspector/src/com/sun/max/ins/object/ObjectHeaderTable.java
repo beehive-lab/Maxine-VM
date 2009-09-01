@@ -113,9 +113,9 @@ public final class ObjectHeaderTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
-            final InspectorMenu menu = new InspectorMenu();
+            final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields.get(row);
             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));

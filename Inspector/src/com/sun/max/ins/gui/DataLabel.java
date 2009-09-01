@@ -447,13 +447,13 @@ public abstract class DataLabel extends InspectorLabel {
                 public void procedure(final MouseEvent mouseEvent) {
                     switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
-                            final InspectorMenu menu = new InspectorMenu();
+                            final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));
                             menu.add(inspection().actions().inspectMemoryWords(address, null));
                             if (maxVM().watchpointsEnabled()) {
                                 menu.add(inspection().actions().setWordWatchpoint(address, null));
                             }
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
                         }
                         case MouseEvent.BUTTON2: {

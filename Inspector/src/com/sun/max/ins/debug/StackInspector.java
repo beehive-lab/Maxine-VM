@@ -338,8 +338,7 @@ public class StackInspector extends Inspector {
                         case MouseEvent.BUTTON3:
                             int index = stackFrameList.locationToIndex(mouseEvent.getPoint());
                             if (index >= 0 && index < stackFrameList.getModel().getSize()) {
-                                final InspectorMenu menu = getDynamicMenu(index, mouseEvent);
-                                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                                getPopupMenu(index, mouseEvent).show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             }
                             break;
                     }
@@ -425,9 +424,9 @@ public class StackInspector extends Inspector {
         return name;
     }
 
-    private InspectorMenu getDynamicMenu(int row, MouseEvent mouseEvent) {
+    private InspectorPopupMenu getPopupMenu(int row, MouseEvent mouseEvent) {
         final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(row);
-        final InspectorMenu menu = new InspectorMenu("");
+        final InspectorPopupMenu menu = new InspectorPopupMenu("Stack Frame");
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {

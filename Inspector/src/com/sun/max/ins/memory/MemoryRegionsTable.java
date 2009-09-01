@@ -75,8 +75,8 @@ public final class MemoryRegionsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
-        final InspectorMenu menu = new InspectorMenu();
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
+        final InspectorPopupMenu menu = new InspectorPopupMenu();
         final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) model.getMemoryRegion(row);
         final String regionName = memoryRegionDisplay.description();
         menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName, null));

@@ -60,7 +60,7 @@ public class TypeLabel extends InspectorLabel {
                     }
                 }
                 case MouseEvent.BUTTON3: {
-                    final InspectorMenu menu = new InspectorMenu();
+                    final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
                     final InspectorAction inspectActorAction = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
@@ -71,7 +71,7 @@ public class TypeLabel extends InspectorLabel {
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 
-                    menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     break;
                 }
                 default: {

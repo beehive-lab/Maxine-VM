@@ -57,7 +57,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final JDesktopPane desktopPane;
     private final JScrollPane scrollPane;
     private final InspectorMainMenuBar menuBar;
-    private final InspectorMenu desktopMenu = new InspectorMenu();
+    private final InspectorPopupMenu desktopMenu = new InspectorPopupMenu("Maxine Inspector");
     private final JLabel unavailableDataTableCellRenderer;
 
     /**
@@ -124,7 +124,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    desktopMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    desktopMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
         });

@@ -68,10 +68,10 @@ public final class MiscWordLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON3: {
-                        final InspectorMenu menu = new InspectorMenu();
+                        final InspectorPopupMenu menu = new InspectorPopupMenu("Header Misc. Word");
                         menu.add(getCopyWordAction());
                         menu.add(getInspectJavaMonitorAction());
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
             }
