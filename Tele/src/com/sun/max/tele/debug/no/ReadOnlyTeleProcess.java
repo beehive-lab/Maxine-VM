@@ -25,7 +25,6 @@ import java.nio.*;
 import java.nio.channels.FileChannel.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -54,7 +53,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         super(teleVM, platform, ProcessState.NO_PROCESS);
         heap = Pointer.zero();
         try {
-            dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage(), false);
+            dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage());
         } catch (IOException ioException) {
             throw new BootImageException("Error mapping in boot image", ioException);
         }
@@ -68,98 +67,18 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
      * Maps the heap and code sections of the boot image in a given file into memory.
      *
      * @param bootImageFile the file containing the heap and code sections to map into memory
-     * @param relocate specifies if the mapped sections should be relocated according to the relocation data in {@code
-     *            file} after the mapping has occurred
-     * @return the address at which the heap and code sections in {@code file} were mapped
+     * @return a {@link DataAccess} object that can be used to access the mapped sections
      * @throws IOException if an IO error occurs while performing the memory mapping
      */
-    public DataAccess map(File bootImageFile, BootImage bootImage, boolean relocate) throws IOException {
-        final RandomAccessFile randomAccessFile = new RandomAccessFile(bootImageFile, "rwd");
-
-        final Header header = bootImage.header();
-
-        int heapOffsetInImage = header.size() + header.stringInfoSize;
-        randomAccessFile.seek(heapOffsetInImage);
-
-        final byte[] relocationData = new byte[header.relocationDataSize];
-        randomAccessFile.read(relocationData);
-
-        heapOffsetInImage += header.relocationDataSize;
-        heapOffsetInImage += bootImage.pagePaddingSize(heapOffsetInImage);
-
-        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffsetInImage, header.bootHeapSize + header.bootCodeSize);
-        bootImageBuffer.order(bootImage.vmConfiguration().platform().processorKind.dataModel.endianness.asByteOrder());
-
-        return new MappedByteBufferDataAccess(bootImageBuffer, heap, WordWidth.BITS_64);
-    }
-
-    static final class MappedByteBufferDataAccess extends DataAccessAdapter {
-
-        private final MappedByteBuffer buffer;
-        private final Address base;
-
-        MappedByteBufferDataAccess(MappedByteBuffer buffer, Address base, WordWidth wordWidth) {
-            super(wordWidth);
-            this.buffer = buffer;
-            this.base = base;
-        }
-
-        public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
-            final int toRead = Math.min(length, dst.limit() - dstOffset);
-            final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(src.toInt()).limit(toRead);
-            dst.put(srcView);
-            return toRead;
-        }
-
-        public int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError {
-            buffer.position(dst.toInt());
-            final ByteBuffer srcView = (ByteBuffer) src.duplicate().position(srcOffset).limit(length);
-            buffer.put(srcView);
-            return length;
-        }
-
-        private int asOffset(Address address) {
-            if (address.lessThan(base)) {
-                throw new DataIOError(address);
-            }
-
-            if (address.toLong() < 0 || address.toLong() > Integer.MAX_VALUE) {
-                throw new DataIOError(address);
-            }
-            return base.toInt() + address.toInt();
-        }
-
-        public byte readByte(Address address) {
-            return buffer.get(asOffset(address));
-        }
-
-        public int readInt(Address address) {
-            return buffer.getInt(asOffset(address));
-        }
-
-        public long readLong(Address address) {
-            return buffer.getLong(asOffset(address));
-        }
-
-        public short readShort(Address address) {
-            return buffer.getShort(asOffset(address));
-        }
-
-        public void writeByte(Address address, byte value) {
-            buffer.put(asOffset(address), value);
-        }
-
-        public void writeInt(Address address, int value) {
-            buffer.putInt(asOffset(address), value);
-        }
-
-        public void writeLong(Address address, long value) {
-            buffer.putLong(asOffset(address), value);
-        }
-
-        public void writeShort(Address address, short value) {
-            buffer.putShort(asOffset(address), value);
-        }
+    public DataAccess map(File bootImageFile, BootImage bootImage) throws IOException {
+        final RandomAccessFile randomAccessFile = new RandomAccessFile(bootImageFile, "r");
+        final Header header = bootImage.header;
+        int heapOffset = bootImage.heapOffset();
+        int heapAndCodeSize = header.heapSize + header.codeSize;
+        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.READ_ONLY, heapOffset, heapAndCodeSize);
+        bootImageBuffer.order(bootImage.vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder());
+        randomAccessFile.close();
+        return new MappedByteBufferDataAccess(bootImageBuffer, heap, header.wordWidth());
     }
 
     private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";

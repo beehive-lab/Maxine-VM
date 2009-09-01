@@ -45,7 +45,7 @@ public class TestTeleVM {
     public static TeleVM create() {
         final Options options = new Options();
 
-        final File bootJar = BinaryImageGenerator.getDefaultBootImageJarFilePath();
+        final File bootJar = BootImageGenerator.getDefaultBootImageJarFilePath();
         Classpath classpathPrefix = Classpath.EMPTY;
         // May want to add something later
         classpathPrefix = classpathPrefix.prepend(bootJar.getAbsolutePath());
@@ -60,14 +60,14 @@ public class TestTeleVM {
             "test.com.sun.max.tele.HelloWorld";
 
         options.debugOption.setValue(Boolean.TRUE);
-        options.bootImageFileOption.setValue(BinaryImageGenerator.getDefaultBootImageFilePath());
+        options.bootImageFileOption.setValue(BootImageGenerator.getDefaultBootImageFilePath());
         options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
         options.vmArguments.setValue(vmArguments);
 
         try {
             teleVM = TeleVM.create(options);
         } catch (BootImageException e) {
-            System.out.println("Failed to load boot image " + BinaryImageGenerator.getDefaultBootImageFilePath().toString());
+            System.out.println("Failed to load boot image " + BootImageGenerator.getDefaultBootImageFilePath().toString());
             e.printStackTrace();
         }
 

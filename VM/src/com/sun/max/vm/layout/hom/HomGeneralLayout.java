@@ -101,7 +101,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE(override = true)
     public Pointer cellToOrigin(Pointer cell) {
-        return cell.isBitSet(0) ? cell.plus(-arrayLengthOffset) : cell.plus(-miscOffset);
+        return cell.readWord(0).asAddress().isBitSet(0) ? cell.plus(-arrayLengthOffset) : cell.plus(-hubOffset);
     }
 
     @ACCESSOR(Pointer.class)
@@ -265,6 +265,4 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         }
         return true;
     }
-
-
 }

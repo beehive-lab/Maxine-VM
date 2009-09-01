@@ -33,6 +33,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -82,6 +83,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     private final TeleReference reference;
     private final LayoutScheme layoutScheme;
+    private final SpecificLayout specificLayout;
     private final long oid;
     private TeleHub teleHub = null;
 
@@ -90,11 +92,13 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
     /**
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
+     * @param specificLayout TODO
      */
-    protected TeleObject(TeleVM teleVM, Reference reference) {
+    protected TeleObject(TeleVM teleVM, Reference reference, SpecificLayout specificLayout) {
         super(teleVM);
         this.reference = (TeleReference) reference;
         this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
+        this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
         live = true;
         lastValidPointer = Pointer.zero();
@@ -174,7 +178,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
     public final MemoryRegion getCurrentMemoryRegion() {
-        return new FixedMemoryRegion(teleVM().referenceToCell(reference), objectSize(), "");
+        return new FixedMemoryRegion(specificLayout.originToCell(reference.toOrigin()), objectSize(), "");
     }
 
     /**
@@ -199,7 +203,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return enumeration of the fields in the header of this object
      */
-    public abstract EnumSet<Layout.HeaderField> getHeaderFields();
+    public abstract HeaderField[] getHeaderFields();
 
     /**
      * @param headerField

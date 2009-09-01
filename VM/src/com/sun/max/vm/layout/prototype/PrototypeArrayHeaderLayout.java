@@ -25,6 +25,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -50,6 +51,10 @@ public class PrototypeArrayHeaderLayout extends PrototypeGeneralLayout implement
 
     @INLINE
     public final int headerSize() {
+        throw ProgramError.unexpected();
+    }
+
+    public HeaderField[] headerFields() {
         throw ProgramError.unexpected();
     }
 

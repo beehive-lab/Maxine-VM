@@ -33,7 +33,7 @@ public final class LinuxTeleVM extends TeleVM {
 
     @Override
     protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
+        return new LinuxTeleProcess(this, bootImage().vmConfiguration.platform(), programFile(), commandLineArguments, agent);
     }
 
     public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {

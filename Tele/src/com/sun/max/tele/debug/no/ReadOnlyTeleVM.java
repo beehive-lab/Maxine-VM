@@ -37,8 +37,6 @@ import com.sun.max.vm.prototype.*;
  */
 public final class ReadOnlyTeleVM extends TeleVM {
 
-    private final boolean relocate;
-
     private TeleMessenger messenger = new NoVMInspectorMessenger();
 
     /**
@@ -47,11 +45,9 @@ public final class ReadOnlyTeleVM extends TeleVM {
      * @param bootImageFile a file containing a boot image
      * @param bootImage the metadata describing the boot image in {@code bootImageFile}
      * @param sourcepath the source code path to search for class or interface definitions
-     * @param relocate specifies if the heap and code sections in the boot image are to be relocated
      */
-    public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, boolean relocate) throws BootImageException {
+    public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1, null);
-        this.relocate = relocate;
     }
 
     @Override
@@ -61,12 +57,12 @@ public final class ReadOnlyTeleVM extends TeleVM {
 
     @Override
     protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration().platform(), programFile());
+        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration.platform(), programFile());
     }
 
     @Override
     protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
-        if (bootImage().vmConfiguration().platform().operatingSystem != OperatingSystem.GUESTVM) {
+        if (bootImage().vmConfiguration.platform().operatingSystem != OperatingSystem.GUESTVM) {
             final ReadOnlyTeleProcess teleProcess = (ReadOnlyTeleProcess) teleProcess();
             return teleProcess.heap();
         }
@@ -74,12 +70,6 @@ public final class ReadOnlyTeleVM extends TeleVM {
     }
 
     @Override
-    public boolean isBootImageRelocated() {
-        return relocate;
-    }
-
-    @Override
     public void advanceToJavaEntryPoint() {
     }
-
 }
