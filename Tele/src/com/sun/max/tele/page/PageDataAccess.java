@@ -25,8 +25,8 @@ import java.nio.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * @author Bernd Mathiske

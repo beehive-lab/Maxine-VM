@@ -138,7 +138,7 @@ public class SPARCJitCompiler extends JitCompiler {
         final Pointer stackPointer;
         final int adapterTopFrameSize =  SPARCAdapterFrameGenerator.optToJitAdapterFrameSize(stackFrameWalker, optimizedEntryPoint);
 
-        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.minStackFrameSize();
+        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;
 
         final boolean inCallerRegisterWindow = BcdeTargetSPARCCompiler.inCallerRegisterWindow(instructionPointer, optimizedEntryPoint, adapterTopFrameSize);
 
@@ -271,7 +271,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
                     // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                     // mandatory output register. We also need to bias it.
-                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
+                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
                     final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
                     // found an exception handler, and thus we are done with the stack walker
@@ -328,7 +328,8 @@ public class SPARCJitCompiler extends JitCompiler {
         }
         final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, (SPARCJitTargetMethod) targetMethod);
         final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer());
-        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase, operandStackPointer);
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase,
+                                                     operandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE);
     }
 
 
@@ -425,7 +426,7 @@ public class SPARCJitCompiler extends JitCompiler {
             @Override
             Pointer localVariablesBase(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
                 final int offsetToCalleeFramePointer = targetMethod.stackFrameLayout().sizeOfNonParameterLocals()  +
-                    SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+                    SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
                 return stackFrameWalker.stackPointer().plus(offsetToCalleeFramePointer);
             }
        },
