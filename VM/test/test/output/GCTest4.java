@@ -45,11 +45,15 @@ public class GCTest4 {
         int len = 0;
         Node1 node = start;
         while (node != null) {
-            assert node.id.equals(String.valueOf(len));
+            if (!node.id.equals(String.valueOf(len))) {
+                throw new Error("assert fail");
+            }
             node = node.next;
             len++;
         }
-        assert len == length;
+        if (len != length) {
+            throw new Error("assert fail");
+        }
     }
 
     public static void printList(Node1 start) {

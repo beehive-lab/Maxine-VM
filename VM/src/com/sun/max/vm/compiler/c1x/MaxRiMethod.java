@@ -44,9 +44,10 @@ import com.sun.max.collect.Sequence;
 public class MaxRiMethod implements RiMethod {
 
     final MaxRiConstantPool constantPool;
-    MethodRefConstant methodRef;
+    final MethodRefConstant methodRef;
     final MethodActor methodActor;
     List<RiExceptionHandler> exceptionHandlers;
+    final int cpi;
 
     /**
      * Creates a new resolved compiler interface method from the specified method actor.
@@ -56,6 +57,8 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
+        this.methodRef = null;
+        this.cpi = 0;
         if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
             C1XIntrinsic.registerFoldableMethod(this, methodActor.toJava());
         }
@@ -65,11 +68,13 @@ public class MaxRiMethod implements RiMethod {
      * Creates a new unresolved compiler interface method from the specified method ref.
      * @param constantPool the constant pool
      * @param methodRef the method ref
+     * @param cpi the constant pool index
      */
-    public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef) {
+    public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef, int cpi) {
         this.constantPool = constantPool;
         this.methodRef = methodRef;
         this.methodActor = null;
+        this.cpi = cpi;
     }
 
     /**
