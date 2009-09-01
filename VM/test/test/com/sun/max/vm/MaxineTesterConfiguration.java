@@ -80,22 +80,22 @@ public class MaxineTesterConfiguration {
         output(test.output.StaticInitializers.class);
         output(test.output.LocalCatch.class);
         output(test.output.Printf.class);
-        output(test.output.GCTest0.class,                  RAND_SPARC);
+        output(test.output.GCTest0.class);
         output(test.output.GCTest1.class);
         output(test.output.GCTest2.class);
         output(test.output.GCTest3.class);
         output(test.output.GCTest4.class);
-        output(test.output.GCTest5.class,                  RAND_SPARC);
+        output(test.output.GCTest5.class);
         output(test.output.GCTest6.class);
         output(test.output.HelloWorldReflect.class);
         output(test.output.JREJarLoadTest.class);
         output(test.output.FileReader.class);
         output(test.output.ZipFileReader.class);
-        output(test.output.WeakReferenceTest01.class,      RAND_SPARC);
+        output(test.output.WeakReferenceTest01.class);
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class,              RAND_SPARC);
+        output(test.output.MegaThreads.class);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,                  FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                                   RAND_ALL);
