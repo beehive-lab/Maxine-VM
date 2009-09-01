@@ -98,13 +98,13 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         if (Trap.STACK_BANGING) {
             count = 2;  // The stack banging load instruction and the save instruction
             if (!SPARCAssembler.isSimm13(stackBangOffset)) {
-                count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
+                count += SPARCAssembler.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
             }
         } else {
             count = 1;  // The save instruction
         }
         if (!SPARCAssembler.isSimm13(-frameSize)) {
-            count += ASM.setswNumberOfInstructions(-frameSize);
+            count += SPARCAssembler.setswNumberOfInstructions(-frameSize);
         }
         return count * InstructionSet.SPARC.instructionWidth;
     }

@@ -588,14 +588,15 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final int offsetToCallSaveArea = SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE + stackFrameLayout.sizeOfTemplateSlots() + stackFrameLayout.sizeOfNonParameterLocals() + JIT_SLOT_SIZE;
         final boolean largeOffset =  !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
 
-        int numInstructions = 4;
+        int numInstructions;
         if (Trap.STACK_BANGING) {
+            numInstructions = 5; // includes the stack-banging ldub
             final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
-            if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                numInstructions += 1;
-            } else {
-                numInstructions += 2;
+            if (!SPARCAssembler.isSimm13(stackBangOffset)) {
+                numInstructions += SPARCAssembler.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
             }
+        } else {
+            numInstructions = 4;
         }
         if (largeFrame) {
             numInstructions += 2;
@@ -638,7 +639,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 // Skip over the frame adapter for calls from jit code
                 asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, jitEntryPoint);
                 if (largeFrame) {
-                    asm.sethi(asm.hi(jitedCodeFrameSize), scratchRegister);
+                    asm.sethi(SPARCAssembler.hi(jitedCodeFrameSize), scratchRegister);
                 } else {
                     asm.sub(stackPointerRegister, jitedCodeFrameSize, stackPointerRegister);
                 }
@@ -651,7 +652,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 assert jitEntryPoint.state().equals(Label.State.BOUND);
 
                 if (largeFrame) {
-                    asm.or(scratchRegister, asm.lo(jitedCodeFrameSize), scratchRegister);
+                    asm.or(scratchRegister, SPARCAssembler.lo(jitedCodeFrameSize), scratchRegister);
                     asm.sub(stackPointerRegister, scratchRegister, stackPointerRegister);
                 }
                 if (Trap.STACK_BANGING) {
