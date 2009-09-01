@@ -75,7 +75,7 @@ public abstract class XirRuntime {
         return null;
     }
 
-    public XirSnippet doPutStatic(RiField field) {
+    public XirSnippet doPutStatic(XirArgument value, RiField field) {
         return null;
     }
 

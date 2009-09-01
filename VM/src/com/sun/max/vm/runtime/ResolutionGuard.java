@@ -25,7 +25,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndfClassInitialization(ConstantPool, int)
+ * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndClassInitialization(ConstantPool, int)
  * resolution} of a constant pool entry to an {@link Actor}.
  *
  * This pattern of use is intended:
