@@ -115,7 +115,7 @@ public final class MaxineInspector {
         } catch (BootImageException bootImageException) {
             ProgramError.unexpected("could not load boot image", bootImageException);
         } catch (Exception exception) {
-            ProgramError.unexpected(tracePrefix + "failed: " + exception);
+            ProgramError.unexpected(tracePrefix + "failed: ", exception);
         }
         Trace.end(TRACE_VALUE, tracePrefix + "Initializing", startTimeMillis);
     }

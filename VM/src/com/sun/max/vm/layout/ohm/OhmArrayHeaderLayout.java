@@ -50,6 +50,10 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
         return headerSize;
     }
 
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
+    }
+
     OhmArrayHeaderLayout(GripScheme gripScheme) {
         super(gripScheme);
         lengthOffset = miscOffset + Word.size();

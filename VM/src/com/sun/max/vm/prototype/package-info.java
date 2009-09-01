@@ -28,7 +28,7 @@
  * 
  * An "image generator" writes a graph prototype to a "boot image".
  * We consider these variants:
- * - BinaryImageGenerator: creates a binary image file that will be mmap-ped by the substrate
+ * - BootImageGenerator: creates a binary image file that will be mmap-ped by the substrate
  * - MemoryImageGenerator: creates a binary image in main memory - for testing purposes
  * 
  * A boot image is a binary representation of the VM,

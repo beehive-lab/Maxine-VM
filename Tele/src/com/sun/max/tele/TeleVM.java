@@ -100,9 +100,9 @@ public abstract class TeleVM implements MaxVM {
     public static class Options extends OptionSet {
         public final Option<Boolean> debugOption = newBooleanOption("d", false,
             "Makes the inspector create a Maxine VM process as the target of inspection. If omitted or 'false', then the boot image is inspected.");
-        public final Option<File> bootImageFileOption = newFileOption("i", BinaryImageGenerator.getDefaultBootImageFilePath(),
+        public final Option<File> bootImageFileOption = newFileOption("i", BootImageGenerator.getDefaultBootImageFilePath(),
             "Path to boot image file.");
-        public final Option<File> bootJarOption = newFileOption("j", BinaryImageGenerator.getDefaultBootImageJarFilePath(),
+        public final Option<File> bootJarOption = newFileOption("j", BootImageGenerator.getDefaultBootImageJarFilePath(),
             "Boot jar file path.");
         public final Option<List<String>> classpathOption = newStringListOption("cp", null, File.pathSeparatorChar,
             "Additional locations to use when searching for Java class files. These locations are searched after the jar file containing the " +
@@ -181,7 +181,8 @@ public abstract class TeleVM implements MaxVM {
             }
 
         } else {
-            teleVM = createReadOnly(bootImageFile, sourcepath, !options.relocateOption.getValue());
+            teleVM = createReadOnly(bootImageFile, sourcepath);
+            teleVM.refresh(0);
         }
 
         return teleVM;
@@ -190,7 +191,7 @@ public abstract class TeleVM implements MaxVM {
     private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int processID) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
-        switch (bootImage.vmConfiguration().platform().operatingSystem) {
+        switch (bootImage.vmConfiguration.platform().operatingSystem) {
             case DARWIN:
                 teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
@@ -222,14 +223,13 @@ public abstract class TeleVM implements MaxVM {
      *
      * @param bootImageFile the file containing the boot image
      * @param sourcepath the source code path to search for class or interface definitions
-     * @param relocate specifies if the heap and code sections in the boot image are to be relocated
      * @return
      * @throws BootImageException
      * @throws IOException
      */
-    private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath, boolean relocate) throws BootImageException {
+    private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
-        return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath, relocate);
+        return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath);
     }
 
     private static final Logger LOGGER = Logger.getLogger(TeleVM.class.getName());
@@ -264,7 +264,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private static MaxineVM createVM(BootImage bootImage) {
-        final VMConfiguration b = bootImage.vmConfiguration();
+        final VMConfiguration b = bootImage.vmConfiguration;
         final VMConfiguration vmConfiguration = new VMConfiguration(
                 b.buildLevel(),
                 b.platform(),
@@ -407,7 +407,7 @@ public abstract class TeleVM implements MaxVM {
      * The immutable history of all VM states, as of the last state transition; thread safe
      * for access by client methods on any thread.
      */
-    private volatile TeleVMState teleVMState;
+    private volatile TeleVMState teleVMState = TeleVMState.NONE;
 
     /**
      * @return VM state; thread safe.
@@ -446,7 +446,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        nativeInitialize(bootImage.header().threadLocalsSize);
+        nativeInitialize(bootImage.header.threadLocalsSize);
         final MaxineVM vm = createVM(this.bootImage);
         this.vmConfiguration = vm.configuration;
 
@@ -460,7 +460,7 @@ public abstract class TeleVM implements MaxVM {
 
         if (commandLineArguments == null) {
             this.teleProcess = attachToTeleProcess(processID);
-            switch (bootImage.vmConfiguration().platform().operatingSystem) {
+            switch (bootImage.vmConfiguration.platform().operatingSystem) {
                 case GUESTVM:
                     this.bootImageStart = loadBootImage(agent);
                     break;
@@ -650,8 +650,11 @@ public abstract class TeleVM implements MaxVM {
         }
         // Heap regions
         regions.append(teleBootHeapRegion());
-        regions.append(teleImmortalHeapRegion());
+        if (teleImmortalHeapRegion() != null) {
+            regions.append(teleImmortalHeapRegion());
+        }
         for (MemoryRegion region : teleHeapRegions) {
+            assert region != null;
             regions.append(region);
         }
         // Code regions
@@ -803,37 +806,24 @@ public abstract class TeleVM implements MaxVM {
         return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(origin));
     }
 
-    public final Pointer referenceToCell(Reference reference) {
-        return layoutScheme().generalLayout.originToCell(reference.toOrigin());
-    }
-
-    public final Reference cellToReference(Pointer cell) {
-        return originToReference(layoutScheme().generalLayout.cellToOrigin(cell));
-    }
-
     public final Reference bootClassRegistryReference() {
-        return originToReference(bootImageStart.plus(bootImage.header().classRegistryOffset));
+        return originToReference(bootImageStart.plus(bootImage.header.classRegistryOffset));
     }
 
     public final boolean isValidOrigin(Pointer origin) {
         if (origin.isZero()) {
             return false;
         }
-        final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
-        Pointer p = cell;
-        if (bootImage.vmConfiguration().debugging()) {
-            // In a debugging build, each object is preceded by an extra tag word
-            p = p.minus(Word.size()); // can the tag be accessed?
-        }
         try {
-            if (!containsInHeap(p) && !containsInCode(p)) {
+            if (!containsInHeap(origin) && !containsInCode(origin)) {
                 return false;
             }
             if (false && isInGC() && containsInDynamicHeap(origin)) {
                 //  Assume that any reference to the dynamic heap is invalid during GC.
                 return false;
             }
-            if (bootImage.vmConfiguration().debugging()) {
+            if (bootImage.vmConfiguration.debugging()) {
+                final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
@@ -845,8 +835,8 @@ public abstract class TeleVM implements MaxVM {
             // Keep following hub pointers until the same hub is traversed twice or
             // an address outside of heap or code region(s) is encountered.
             //
-           // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
-           // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
+            // For all objects other than a {@link StaticTuple}, the maximum chain takes only two hops
+            // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
             Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
@@ -1115,9 +1105,9 @@ public abstract class TeleVM implements MaxVM {
         return teleObjectFactory.lookupObject(id);
     }
 
-    public final TeleObject findObjectAt(Address cellAddress) {
+    public final TeleObject findObjectAt(Address origin) {
         try {
-            return makeTeleObject(cellToReference(cellAddress.asPointer()));
+            return makeTeleObject(originToReference(origin.asPointer()));
         } catch (Throwable throwable) {
         }
         return null;
@@ -1131,10 +1121,11 @@ public abstract class TeleVM implements MaxVM {
             wordSearchExtent = maxSearchExtent / wordSize().toInt();
         }
         try {
+            Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
-                cellAddress = cellAddress.plus(wordSize());
-                if (isValidOrigin(cellAddress.asPointer())) {
-                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
+                origin = origin.plus(wordSize());
+                if (isValidOrigin(origin)) {
+                    return makeTeleObject(originToReference(origin));
                 }
             }
         } catch (Throwable throwable) {
@@ -1150,10 +1141,11 @@ public abstract class TeleVM implements MaxVM {
             wordSearchExtent = maxSearchExtent / wordSize().toInt();
         }
         try {
+            Pointer origin = cellAddress.asPointer();
             for (long count = 0; count < wordSearchExtent; count++) {
-                cellAddress = cellAddress.minus(wordSize());
-                if (isValidOrigin(cellAddress.asPointer())) {
-                    return makeTeleObject(cellToReference(cellAddress.asPointer()));
+                origin = origin.minus(wordSize());
+                if (isValidOrigin(origin)) {
+                    return makeTeleObject(originToReference(origin));
                 }
             }
         } catch (Throwable throwable) {
@@ -1527,7 +1519,7 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         messenger.enable();
-        final Address startEntryPoint = bootImageStart().plus(bootImage().header().vmRunMethodOffset);
+        final Address startEntryPoint = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
             runToInstruction(startEntryPoint, true, false);
         } catch (Exception exception) {

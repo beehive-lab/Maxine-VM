@@ -61,7 +61,7 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public final class BinaryImageGenerator {
+public final class BootImageGenerator {
 
     private static final String DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME = "maxine.object.tree";
     private static final String DEFAULT_IMAGE_METHOD_TREE_FILE_NAME = "maxine.method.tree";
@@ -74,7 +74,7 @@ public final class BinaryImageGenerator {
     private final OptionSet options = new OptionSet();
 
     private final Option<Boolean> help = options.newBooleanOption("help", false,
-            "Show help message and exits.");
+            "Show help message and exit.");
 
     private final Option<Boolean> treeOption = options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
@@ -83,23 +83,23 @@ public final class BinaryImageGenerator {
             "Create a file detailing the number and size of each type of object in the image.");
 
     private final Option<File> outputDirectoryOption = options.newFileOption("output-dir", getDefaultOutputDirectory(),
-            "Selects the output directory for the binary image generator.");
+            "The output directory for the binary image generator.");
 
     private final Option<String> imageFileOption = options.newStringOption("image-file", DEFAULT_IMAGE_FILE_NAME,
-            "Selects the name of the image file to generate.");
+            "The name of the image file to generate.");
 
     private final Option<String> jarFileOption = options.newStringOption("jar-file", DEFAULT_IMAGE_JAR_FILE_NAME,
-            "Selects the name of the jar file to generate, which contains all of the " +
+            "The name of the jar file to generate, which contains all of the " +
             "classes in a generated image.");
 
     private final Option<String> statsFileOption = options.newStringOption("stats-file", "maxine.stats",
-            "Specifies the name of the statistics file generated (if any).");
+            "The name of the statistics file generated (if any).");
 
     private final Option<String> objectTreeFileOption = options.newStringOption("object-tree-file", DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME,
-            "Specifies the name of the object tree file generated (if any).");
+            "The name of the object tree file generated (if any).");
 
     private final Option<String> methodTreeFileOption = options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
-            "Specifies the name of the method tree file generated (if any).");
+            "The name of the method tree file generated (if any).");
 
     private final Option<Boolean> testCallerJit = options.newBooleanOption("test-caller-jit", false,
             "For the Java tester, this option specifies that each test case's harness should be compiled " +
@@ -110,8 +110,8 @@ public final class BinaryImageGenerator {
             "with the JIT compiler (helpful for testing JIT->JIT and opt->JIT calls).");
 
     private final Option<Boolean> testCalleeC1X = options.newBooleanOption("test-callee-c1x", false,
-        "For the Java tester, this option specifies that each test case's method should be compiled " +
-        "with the C1X compiler (helpful for testing C1X->C1X and opt->C1X calls).");
+            "For the Java tester, this option specifies that each test case's method should be compiled " +
+            "with the C1X compiler (helpful for testing C1X->C1X and opt->C1X calls).");
 
     private final Option<Boolean> testUnlinked = options.newBooleanOption("test-unlinked", false,
             "For the Java tester, this option specifies that each test case method should be unlinked.");
@@ -198,7 +198,7 @@ public final class BinaryImageGenerator {
      *
      * @param programArguments the arguments from the command line
      */
-    public BinaryImageGenerator(String[] programArguments) {
+    public BootImageGenerator(String[] programArguments) {
         final long start = System.currentTimeMillis();
         CompilerScheme compilerScheme = null;
         try {
@@ -219,11 +219,11 @@ public final class BinaryImageGenerator {
                 VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
-            BinaryImageGenerator.calleeC1X = testCalleeC1X.getValue();
-            BinaryImageGenerator.calleeJit = testCalleeJit.getValue();
-            BinaryImageGenerator.callerJit = testCallerJit.getValue();
-            BinaryImageGenerator.unlinked = testUnlinked.getValue();
-            BinaryImageGenerator.nativeTests = testNative.getValue();
+            BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
+            BootImageGenerator.calleeJit = testCalleeJit.getValue();
+            BootImageGenerator.callerJit = testCallerJit.getValue();
+            BootImageGenerator.unlinked = testUnlinked.getValue();
+            BootImageGenerator.nativeTests = testNative.getValue();
 
             final File outputDirectory = outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
@@ -334,7 +334,7 @@ public final class BinaryImageGenerator {
         Trace.begin(1, "writing boot image object tree file: " + file);
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
         final DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(fileOutputStream, 1000000));
-        BinaryImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap());
+        BootImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap());
         dataOutputStream.flush();
         fileOutputStream.close();
         Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
@@ -352,7 +352,7 @@ public final class BinaryImageGenerator {
         Trace.begin(1, "writing boot image method tree file: " + file);
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
         final DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(fileOutputStream, 1000000));
-        BinaryImageMethodTree.saveTree(dataOutputStream, compiledPrototype.links());
+        BootImageMethodTree.saveTree(dataOutputStream, compiledPrototype.links());
         dataOutputStream.flush();
         fileOutputStream.close();
         Trace.end(1, "writing boot image method tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
@@ -364,7 +364,7 @@ public final class BinaryImageGenerator {
      * @param programArguments the arguments from the command line
      */
     public static void main(String[] programArguments) {
-        new BinaryImageGenerator(programArguments);
+        new BootImageGenerator(programArguments);
     }
 
     /**
