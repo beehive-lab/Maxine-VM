@@ -41,12 +41,8 @@ public class LIRLocation extends LIROperand {
     /**
      * Creates a new LIRLocation representing a CPU register.
      *
-     * @param basicType
-     *            the basic type of the location
-     * @param number
-     *            the register
-     * @param flags
-     *            the flags of this location
+     * @param basicType the basic type of the location
+     * @param number the register
      */
     LIRLocation(CiKind basicType, CiRegister number) {
         super(basicType);

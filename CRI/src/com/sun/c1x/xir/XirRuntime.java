@@ -38,7 +38,7 @@ public abstract class XirRuntime {
     public XirSnippet doInvokeInterface(XirArgument receiver, RiMethod method) {
         return null;
     }
-    
+
     public XirSnippet doIntrinsic(XirArgument[] arguments, RiMethod method) {
         return null;
     }
@@ -63,7 +63,7 @@ public abstract class XirRuntime {
         return null;
     }
 
-    public XirSnippet doGetField(XirArgument receiver, RiField field) {
+    public XirSnippet doGetField(XirArgument receiver, RiField field, char cpi, RiConstantPool constantPool) {
         return null;
     }
 
@@ -75,7 +75,7 @@ public abstract class XirRuntime {
         return null;
     }
 
-    public XirSnippet doPutStatic(RiField field) {
+    public XirSnippet doPutStatic(XirArgument value, RiField field) {
         return null;
     }
 

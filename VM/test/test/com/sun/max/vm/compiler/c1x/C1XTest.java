@@ -154,11 +154,11 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
+        final CiTarget target = createTarget();
         final MaxRiRuntime runtime = new MaxRiRuntime();
-        final XirRuntime xirRuntime = new MaxXirRuntime();
+        final XirRuntime xirRuntime = new MaxXirRuntime(VMConfiguration.target(), target);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        final CiTarget target = createTarget();
         final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
 
         MaxineVM.usingTarget(new Runnable() {

@@ -27,7 +27,7 @@ public class XirTemplate {
 
     public final XirAssembler.XirInstruction[] instructions;
     public final XirLabel[] labels;
-    public final XirAssembler.XirParameter[] parameters;
+    public final XirParameter[] parameters;
 
 
     XirTemplate(XirAssembler.XirInstruction[] instructions, XirLabel[] labels, XirParameter[] parameters) {
