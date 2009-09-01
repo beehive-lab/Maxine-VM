@@ -28,12 +28,41 @@ import com.sun.c1x.util.Util;
 import com.sun.c1x.target.x86.X86;
 import com.sun.max.vm.layout.Layout;
 import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.KindEnum;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.actor.holder.Hub;
 
 /**
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
 public class MaxXirRuntime extends XirRuntime {
+
+    private static final CiKind[] kindMapping;
+    private static final Kind[] ciKindMapping;
+
+    static void map(KindEnum k, CiKind ck) {
+        kindMapping[k.ordinal()] = ck;
+        ciKindMapping[ck.ordinal()] = k.asKind();
+    }
+
+    static {
+        kindMapping = new CiKind[KindEnum.values().length];
+        ciKindMapping = new Kind[CiKind.values().length];
+
+        map(KindEnum.VOID, CiKind.Void);
+        map(KindEnum.BYTE, CiKind.Byte);
+        map(KindEnum.BOOLEAN, CiKind.Boolean);
+        map(KindEnum.CHAR, CiKind.Char);
+        map(KindEnum.SHORT, CiKind.Short);
+        map(KindEnum.INT, CiKind.Int);
+        map(KindEnum.FLOAT, CiKind.Float);
+        map(KindEnum.LONG, CiKind.Long);
+        map(KindEnum.DOUBLE, CiKind.Double);
+        map(KindEnum.WORD, CiKind.Word);
+        map(KindEnum.REFERENCE, CiKind.Object);
+    }
 
     private final CiTarget target;
 
@@ -58,13 +87,26 @@ public class MaxXirRuntime extends XirRuntime {
     private XirTemplate resolvedInstanceofForLeafTemplate;
     private XirTemplate resolvedInstanceofForClassTemplate;
     private XirTemplate resolvedInstanceofForInterfaceTemplate;
+
     private XirTemplate throwCheckcastStub;
     private XirTemplate throwBoundsFailStub;
-    private final int hubOffset;
+    private XirTemplate monitorEnterStub;
+    private XirTemplate monitorExitStub;
 
-    public MaxXirRuntime(CiTarget target) {
+    private final int hubOffset;
+    private final int hub_mTableLength;
+    private final int hub_mTableStartIndex;
+    private final int wordSize;
+
+    public MaxXirRuntime(VMConfiguration vmConfiguration, CiTarget target) {
         this.target = target;
+        this.hubOffset = vmConfiguration.layoutScheme().generalLayout.getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
+        this.hub_mTableLength = FieldActor.findInstance(Hub.class, "mTableLength").offset();
+        this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
+        this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+
         CiKind[] kinds = CiKind.values();
+
         putFieldTemplates = new XirTemplate[kinds.length];
         getFieldTemplates = new XirTemplate[kinds.length];
         resolvedInvokeVirtualTemplates = new XirTemplate[kinds.length];
@@ -92,7 +134,9 @@ public class MaxXirRuntime extends XirRuntime {
         monitorEnterTemplate = buildMonitorEnter();
         monitorExitTemplate = buildMonitorExit();
         resolvedCheckcastForLeafTemplate = buildCheckcastForLeaf();
-        hubOffset = VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
+        resolvedCheckcastForClassTemplate = buildCheckcastForInterface(); // XXX: more efficient template for class checks
+        resolvedCheckcastForInterfaceTemplate = buildCheckcastForInterface();
+
     }
 
     @Override
@@ -121,17 +165,18 @@ public class MaxXirRuntime extends XirRuntime {
 
     private XirTemplate buildSafepoint() {
         XirAssembler asm = new XirAssembler(CiKind.Void);
-        XirParameter param = asm.createRegister(CiKind.Word, X86.r14);
+        XirVariable param = asm.createRegister(CiKind.Word, X86.r14);
         asm.pload(CiKind.Word, param, param);
-        return asm.finished();
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildArrayStore(CiKind kind, XirAssembler asm) {
         XirParameter array = asm.createInputParameter(CiKind.Object);
         XirParameter index = asm.createInputParameter(CiKind.Int);
         XirParameter value = asm.createInputParameter(kind);
-        XirParameter length = asm.createTemp(CiKind.Int);
+        XirTemp length = asm.createTemp(CiKind.Int);
         XirLabel fail = asm.createOutOfLineLabel();
+        // XXX: build a version that does not include a range check
         asm.pload(CiKind.Int, length, array, Layout.arrayHeaderLayout().arrayLengthOffset());
         asm.jugteq(fail, index, length);
         int elemSize = target.sizeInBytes(kind);
@@ -140,22 +185,23 @@ public class MaxXirRuntime extends XirRuntime {
         }
         if (kind == CiKind.Object) {
             // TODO: array store check for kind object
-            // TODO: write barrier for kind object
+            addWriteBarrier(asm, array, value);
         }
         asm.add(index, index, asm.i(Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt()));
         asm.pstore(kind, array, index, value);
-        asm.ret();
+        asm.end();
         asm.bind(fail);
-        asm.stub(throwBoundsFailStub);
-        return asm.finished();
+        asm.callStub(throwBoundsFailStub);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildArrayLoad(CiKind kind, XirAssembler asm) {
         XirParameter array = asm.createInputParameter(CiKind.Object);
         XirParameter index = asm.createInputParameter(CiKind.Int);
-        XirParameter length = asm.createTemp(CiKind.Int);
+        XirTemp length = asm.createTemp(CiKind.Int);
         XirParameter result = asm.getResultOperand();
         XirLabel fail = asm.createOutOfLineLabel();
+        // XXX: build a version that does not include a range check
         asm.pload(CiKind.Int, length, array, Layout.arrayHeaderLayout().arrayLengthOffset());
         asm.jugteq(fail, index, length);
         int elemSize = target.sizeInBytes(kind);
@@ -164,69 +210,159 @@ public class MaxXirRuntime extends XirRuntime {
         }
         asm.add(index, index, asm.i(Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt()));
         asm.pload(kind, result, array, index);
-        asm.ret();
+        asm.end();
         asm.bind(fail);
-        asm.stub(throwBoundsFailStub);
-        return asm.finished();
+        asm.callStub(throwBoundsFailStub);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildResolvedInvokeStatic(CiKind kind) {
-        return null;
+        XirAssembler asm = new XirAssembler(kind);
+        XirParameter addr = asm.createConstantInputParameter(CiKind.Word);
+        asm.callJava(asm.getResultOperand(), addr);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildResolvedInvokeSpecial(CiKind kind) {
-        return null;
+        XirAssembler asm = new XirAssembler(kind);
+        XirParameter receiver = asm.createInputParameter(CiKind.Object); // receiver object
+        XirParameter addr = asm.createConstantInputParameter(CiKind.Word); // address to call
+        asm.callJava(asm.getResultOperand(), addr);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildResolvedInvokeInterface(CiKind kind) {
-        return null;
+        XirAssembler asm = new XirAssembler(kind);
+        XirParameter receiver = asm.createInputParameter(CiKind.Object); // receiver object
+        XirParameter interfaceID = asm.createConstantInputParameter(CiKind.Int);
+        XirParameter methodIndex = asm.createConstantInputParameter(CiKind.Int);
+        XirTemp hub = asm.createTemp(CiKind.Object);
+        XirTemp mtableLength = asm.createTemp(CiKind.Int);
+        XirTemp mtableStartIndex = asm.createTemp(CiKind.Int);
+        XirTemp a = asm.createTemp(CiKind.Int);
+        XirTemp addr = asm.createTemp(CiKind.Word);
+        asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset));
+        asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength));
+        asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex));
+        asm.mod(a, interfaceID, mtableLength);
+        asm.add(a, a, mtableStartIndex);
+        asm.add(a, a, methodIndex);
+        asm.mul(a, a, asm.i(wordSize));
+        asm.pload(CiKind.Word, a, hub, a);
+        asm.callJava(asm.getResultOperand(), addr);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildResolvedInvokeVirtual(CiKind kind) {
-        return null;
+        XirAssembler asm = new XirAssembler(kind);
+        XirParameter receiver = asm.createInputParameter(CiKind.Object);
+        XirParameter vtableOffset = asm.createConstantInputParameter(CiKind.Int);
+        XirTemp hub = asm.createTemp(CiKind.Object);
+        XirTemp addr = asm.createTemp(CiKind.Word);
+        asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset));
+        asm.pload(CiKind.Word, addr, hub, vtableOffset);
+        asm.callJava(asm.getResultOperand(), addr);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildPutField(CiKind kind, XirAssembler asm) {
-        XirParameter receiver = asm.createInputParameter(CiKind.Object);
+        XirParameter object = asm.createInputParameter(CiKind.Object);
         XirParameter value = asm.createInputParameter(kind);
         XirParameter fieldOffset = asm.createConstantInputParameter(CiKind.Int);
-        asm.pstore(kind, receiver, fieldOffset, value);
-        return asm.finished();
+        asm.pstore(kind, object, fieldOffset, value);
+        if (kind == CiKind.Object) {
+            addWriteBarrier(asm, object, value);
+        }
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildGetField(CiKind kind, XirAssembler asm) {
-        XirParameter receiver = asm.createInputParameter(CiKind.Object);
+        XirParameter object = asm.createInputParameter(CiKind.Object);
         XirParameter fieldOffset = asm.createConstantInputParameter(CiKind.Int);
         XirParameter resultOperand = asm.getResultOperand();
-        asm.pload(kind, resultOperand, receiver, fieldOffset);
-        return asm.finished();
+        asm.pload(kind, resultOperand, object, fieldOffset);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildMonitorExit() {
-        return null; // TODO: unimplemented
+        XirAssembler asm = new XirAssembler(CiKind.Void);
+        XirParameter object = asm.createInputParameter(CiKind.Object);
+        asm.callStub(monitorExitStub, object);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildMonitorEnter() {
-        return null; // TODO: unimplemented
+        XirAssembler asm = new XirAssembler(CiKind.Void);
+        XirParameter object = asm.createInputParameter(CiKind.Object);
+        asm.callStub(monitorEnterStub, object);
+        return asm.finishTemplate();
     }
 
     private XirTemplate buildCheckcastForLeaf() {
         XirAssembler asm = new XirAssembler(CiKind.Object);
         XirParameter object = asm.createInputParameter(CiKind.Object);
         XirParameter hub = asm.createConstantInputParameter(CiKind.Object);
-        XirParameter temp = asm.createTemp(CiKind.Object);
+        XirTemp temp = asm.createTemp(CiKind.Object);
+        XirLabel pass = asm.createInlineLabel();
         XirLabel fail = asm.createOutOfLineLabel();
+        // XXX: build a version that does not include a null check
+        asm.jeq(pass, object, asm.o(null));
         asm.pload(CiKind.Object, temp, object, asm.i(hubOffset));
         asm.jneq(fail, hub, temp);
-        asm.ret();
+        asm.bind(pass);
+        asm.end();
         asm.bind(fail);
-        asm.stub(throwCheckcastStub);
-        // TODO: out of line code for throwing class cast exception
-        return asm.finished();
+        asm.callStub(throwCheckcastStub);
+        return asm.finishTemplate();
+    }
+
+    private XirTemplate buildCheckcastForInterface() {
+        XirAssembler asm = new XirAssembler(CiKind.Object);
+        XirParameter object = asm.createInputParameter(CiKind.Object);
+        XirParameter interfaceID = asm.createConstantInputParameter(CiKind.Int);
+        XirTemp hub = asm.createTemp(CiKind.Object);
+        XirTemp mtableLength = asm.createTemp(CiKind.Int);
+        XirTemp mtableStartIndex = asm.createTemp(CiKind.Int);
+        XirTemp a = asm.createTemp(CiKind.Int);
+        XirLabel pass = asm.createInlineLabel();
+        XirLabel fail = asm.createOutOfLineLabel();
+        // XXX: build a version that does not include a null check
+        asm.jeq(pass, object, asm.o(null));
+        asm.pload(CiKind.Object, hub, object, asm.i(hubOffset));
+        asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength));
+        asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex));
+        asm.mod(a, interfaceID, mtableLength);
+        asm.add(a, a, mtableStartIndex);
+        asm.mul(a, a, asm.i(wordSize));
+        asm.pload(CiKind.Int, a, hub, a);
+        asm.jneq(fail, a, interfaceID);
+        asm.bind(pass);
+        asm.end();
+        asm.bind(fail);
+        asm.callStub(throwCheckcastStub);
+        return asm.finishTemplate();
+    }
+
+    private void addWriteBarrier(XirAssembler asm, XirParameter object, XirParameter value) {
+        // XXX: add write barrier mechanism
     }
 
     private XirTemplate buildThrowCheckcastStub() {
-        return null;
+        XirAssembler asm = new XirAssembler(CiKind.Illegal);
+        XirParameter hub = asm.createInputParameter(CiKind.Object);
+        asm.callRuntime(new Object(), hub); // TODO: distinguish runtime call
+        return asm.finishStub();
     }
 
+    private void getfield(XirAssembler asm, XirParameter r, XirParameter o, FieldActor field) {
+        asm.pload(toCiKind(field.descriptor().toKind()), r, o, asm.i(field.offset()));
+    }
+
+    private CiKind toCiKind(Kind k) {
+        return kindMapping[k.asEnum.ordinal()];
+    }
+
+    private Kind toKind(CiKind k) {
+        return ciKindMapping[k.ordinal()];
+    }
 }
