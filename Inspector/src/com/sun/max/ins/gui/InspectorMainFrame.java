@@ -69,17 +69,16 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public final class MouseLocationListener implements AWTEventListener {
 
         public void eventDispatched(AWTEvent awtEvent) {
-            if (awtEvent instanceof MouseEvent) {
-                final Component source = (Component) awtEvent.getSource();
-                if (source != null) {
-                    mostRecentMouseLocation = DEFAULT_LOCATION;
-                    final MouseEvent mouseEvent = (MouseEvent) awtEvent;
-                    try {
-                        final Point eventLocationOnScreen = source.getLocationOnScreen();
-                        eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
-                        mostRecentMouseLocation = eventLocationOnScreen;
-                    } catch (IllegalComponentStateException e) {
-                    }
+            final Component source = (Component) awtEvent.getSource();
+            if (source != null) {
+                mostRecentMouseLocation = DEFAULT_LOCATION;
+                // We should only be getting mouse events; others are masked out.
+                final MouseEvent mouseEvent = (MouseEvent) awtEvent;
+                try {
+                    final Point eventLocationOnScreen = source.getLocationOnScreen();
+                    eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
+                    mostRecentMouseLocation = eventLocationOnScreen;
+                } catch (IllegalComponentStateException e) {
                 }
             }
         }
