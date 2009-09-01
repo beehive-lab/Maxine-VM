@@ -292,8 +292,8 @@ public class StackInspector extends Inspector {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(copyStackToClipboardAction);
+        getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
+        getMenu(DEFAULT_INSPECTOR_MENU).add(copyStackToClipboardAction);
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -427,7 +427,7 @@ public class StackInspector extends Inspector {
 
     private InspectorMenu getDynamicMenu(int row, MouseEvent mouseEvent) {
         final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(row);
-        final InspectorMenu menu = new InspectorMenu(null, "");
+        final InspectorMenu menu = new InspectorMenu("");
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {

@@ -44,31 +44,6 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
 
     private final InspectorMenuBar menuBar;
 
-    public InspectorMenuBar menuBar() {
-        return menuBar;
-    }
-
-    private InspectorMenu menu;
-
-    public InspectorMenu menu() {
-        return menu;
-    }
-
-    public void add(InspectorMenuItems inspectorMenuItems) {
-        menu().add(inspectorMenuItems);
-    }
-
-    public Inspection inspection() {
-        return inspector.inspection();
-    }
-
-    public void refresh(boolean force) {
-        menu().refresh(force);
-    }
-
-    public void redisplay() {
-    }
-
     public Container asContainer() {
         return this;
     }
@@ -80,12 +55,9 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
      */
     public InternalInspectorFrame(Inspector ins, InspectorMenu menu) {
         this.inspector = ins;
-        this.menu = (menu == null) ? new InspectorMenu(ins) : menu;
-        this.menuBar = new InspectorMenuBar(ins.inspection());
 
-        final JMenu standardMenu = this.menu.standardMenu();
-        standardMenu.setIcon(FRAME_ICON);
-        menuBar.add(standardMenu);
+        menuBar = new InspectorMenuBar(ins.inspection());
+        menuBar.add((menu == null) ? ins.createDefaultMenu() : menu);
         setJMenuBar(menuBar);
 
         setResizable(true);
@@ -105,6 +77,17 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
                 inspector.inspectorLosesWindowFocus();
             }
         });
+    }
+
+    public void refresh(boolean force) {
+        menuBar.refresh(force);
+    }
+
+    public void redisplay() {
+    }
+
+    public InspectorMenu getMenu(String name) {
+        return menuBar.findMenu(name);
     }
 
     public void setSelected() {

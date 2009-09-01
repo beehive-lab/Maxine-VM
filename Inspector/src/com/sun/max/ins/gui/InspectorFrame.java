@@ -37,19 +37,9 @@ import com.sun.max.ins.*;
  */
 public interface InspectorFrame extends Prober {
 
-    /**
-     * The bounds of the frame icon in a JFrame and JInternalFrame under the Metal look and feel. These
-     * bounds are relative to the frame's coordinate system.
-     */
-    Rectangle FRAME_ICON_BOUNDS = new Rectangle(1, 1, 20, 20);
-
-    ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(16, 16);
-
     Inspector inspector();
 
-    void add(InspectorMenuItems inspectorMenuItems);
-
-    InspectorMenu menu();
+    InspectorMenu getMenu(String menuName);
 
     void setVisible(boolean visible);
 
@@ -115,11 +105,7 @@ public interface InspectorFrame extends Prober {
      * <ul>
      * <li>Recording the last position of the mouse when it was over a component. This is used in positioning newly
      * created internal frames.</li>
-     * <li> Intercepting right mouse clicks on the icon rendered in the top left of a frame's title bar to trigger a
-     * frame's {@linkplain InspectorFrame#menu() pop-up menu}. This icon is not guaranteed to exist and be in the
-     * expected location under all "look and feel" implementations. For this reason, the inspector
-     * {@linkplain MaxineInspector#initializeSwing() forces} the UI to use the Metal look and feel which fulfills this
-     * requirement. </li>
+     *
      * </ul>
      */
     public final class TitleBarListener implements AWTEventListener {
@@ -152,15 +138,6 @@ public interface InspectorFrame extends Prober {
             final Object source = event.getSource();
 //            System.err.println(source.getClass());
             return source instanceof MetalInternalFrameTitlePane;
-        }
-
-        /**
-         * Determines if a given mouse event is a trigger for the {@linkplain InspectorFrame#menu() pop-up menu}
-         * available in the title bar of an inspector frame.
-         */
-        private static boolean isPopupTrigger(final MouseEvent mouseEvent) {
-            // Either button 1 or the system-dependent button+modifier(s) for triggering pop-up menus is accepted
-            return mouseEvent.isPopupTrigger() || (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1 && mouseEvent.getID() == MouseEvent.MOUSE_RELEASED);
         }
 
         private static Point getLocationOnScreen(MouseEvent mouseEvent) {

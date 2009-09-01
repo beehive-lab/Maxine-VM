@@ -250,22 +250,23 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public void createFrame(InspectorMenu menu) {
-        super.createFrame(new InspectorMenu());
-        frame().menu().add(getViewOptionsAction());
-        frame().menu().add(new InspectorAction(inspection(), "Refresh") {
+        final InspectorMenu methodMenu = new InspectorMenu(METHOD_INSPECTOR_MENU);
+        super.createFrame(methodMenu);
+        methodMenu.add(getViewOptionsAction());
+        methodMenu.add(new InspectorAction(inspection(), "Refresh") {
             @Override
             public void procedure() {
                 refreshView(true);
                 Trace.line(TRACE_VALUE, tracePrefix() + "Refreshing view: " + getTextForTitle());
             }
         });
-        frame().menu().add(new InspectorAction(inspection(), "Close tab") {
+        methodMenu.add(new InspectorAction(inspection(), "Close tab") {
             @Override
             protected void procedure() {
                 close();
             }
         });
-        frame().menu().add(new InspectorAction(inspection(), "Close all other tabs") {
+        methodMenu.add(new InspectorAction(inspection(), "Close all other tabs") {
             @Override
             public void procedure() {
                 closeOthers();

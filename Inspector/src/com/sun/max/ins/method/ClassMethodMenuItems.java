@@ -179,7 +179,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
     private final InvokeMethodAction invokeMethodAction;
 
-    private InspectorMenu inspectCompilationsMenu = new InspectorMenu(null, "Method Compilations");
+    private InspectorMenu inspectCompilationsMenu = new InspectorMenu("Method Compilations");
 
 
     public ClassMethodMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {

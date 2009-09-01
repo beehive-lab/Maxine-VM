@@ -34,46 +34,50 @@ import com.sun.max.program.*;
  */
 public final class InspectorMenu implements Prober {
 
-    private final Inspector inspector;
+    // TODO (mlvdv) not clear that we need this polymorphic menu any more; all uses seem to be one or the other.
+
+    private final String name;
     private AppendableSequence<InspectorMenuItems> inspectorMenuItems;
 
     private final JPopupMenu popupMenu;
+    private final JMenu standardMenu;
+
+    /**
+     * Creates a menu that can be used either as a standard pull-down or a pop-up menu.
+     * <br>
+     * Menu items may have state that gets update when refreshed.
+     */
+    public InspectorMenu(String name) {
+        this.name = name;
+        popupMenu =  new JPopupMenu(name);
+        standardMenu = new JMenu(name);
+    }
+
+    /**
+     * Creates an unnamed menu.
+     * <br>
+     * Menu items may have state that gets update when refreshed.
+     * <br>
+     * <strong>Menus created with this constructor have no name and must not be added to a {@link InspectorMenuBar}.
+     */
+    public InspectorMenu() {
+        this(null);
+    }
+
+    public int length() {
+        return standardMenu.getItemCount();
+    }
 
     public JPopupMenu popupMenu() {
         return popupMenu;
     }
 
-    private final JMenu standardMenu;
-
     public JMenu standardMenu() {
         return standardMenu;
     }
 
-    public InspectorMenu(Inspector inspector, String name) {
-        this.inspector = inspector;
-        popupMenu =  new JPopupMenu(name);
-        standardMenu = new JMenu(name);
-        if (inspector != null) {
-            add(inspector.getViewOptionsAction());
-            add(inspector.getRefreshAction());
-            addSeparator();
-            add(inspector.getCloseAction());
-            add(inspector.getCloseOtherInspectorsAction());
-            addSeparator();
-            add(inspector.getPrintAction());
-        }
-    }
-
-    public InspectorMenu(Inspector inspector) {
-        this(inspector, null);
-    }
-
-    public InspectorMenu() {
-        this(null, null);
-    }
-
-    public int length() {
-        return standardMenu.getItemCount();
+    public String name() {
+        return name;
     }
 
     /**
@@ -123,10 +127,6 @@ public final class InspectorMenu implements Prober {
     public void addSeparator() {
         standardMenu.addSeparator();
         popupMenu.addSeparator();
-    }
-
-    public Inspection inspection() {
-        return inspector.inspection();
     }
 
     public void refresh(boolean force) {

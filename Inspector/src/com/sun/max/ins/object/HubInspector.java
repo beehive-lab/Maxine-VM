@@ -74,7 +74,7 @@ public final class HubInspector extends ObjectInspector {
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.
             classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
-            frame().add(classMethodInspectorMenuItems);
+            getMenu(DEFAULT_INSPECTOR_MENU).add(classMethodInspectorMenuItems);
         } else {
             classMethodInspectorMenuItems = null;
         }

@@ -194,9 +194,9 @@ public final class MemoryBytesInspector extends Inspector {
 
     @Override
     protected void createView() {
-        frame().menu().addSeparator();
-        frame().menu().add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
-        frame().menu().add(actions().closeViews(allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
+        getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
+        getMenu(DEFAULT_INSPECTOR_MENU).add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
+        getMenu(DEFAULT_INSPECTOR_MENU).add(actions().closeViews(allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
 
         contentPane = new InspectorPanel(inspection());
         frame().setContentPane(contentPane);

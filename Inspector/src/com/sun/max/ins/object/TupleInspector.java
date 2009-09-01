@@ -53,10 +53,10 @@ public class TupleInspector extends ObjectInspector {
             targetMethodInspectorMenuItems = null;
         }
         if (classMethodInspectorMenuItems != null) {
-            frame().add(classMethodInspectorMenuItems);
+            getMenu(DEFAULT_INSPECTOR_MENU).add(classMethodInspectorMenuItems);
         }
         if (targetMethodInspectorMenuItems != null) {
-            frame().add(targetMethodInspectorMenuItems);
+            getMenu(DEFAULT_INSPECTOR_MENU).add(targetMethodInspectorMenuItems);
         }
     }
 

@@ -320,7 +320,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         createFrame(null);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-        frame().menu().add(frameMenuItems);
+        getMenu(DEFAULT_INSPECTOR_MENU).add(frameMenuItems);
 
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
