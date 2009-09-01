@@ -177,7 +177,7 @@ public class MaxXirRuntime extends XirRuntime {
         XirTemp length = asm.createTemp(CiKind.Int);
         XirLabel fail = asm.createOutOfLineLabel();
         // XXX: build a version that does not include a range check
-        asm.pload(CiKind.Int, length, array, Layout.arrayHeaderLayout().arrayLengthOffset());
+        asm.pload(CiKind.Int, length, array, asm.i(Layout.arrayHeaderLayout().arrayLengthOffset()));
         asm.jugteq(fail, index, length);
         int elemSize = target.sizeInBytes(kind);
         if (elemSize > 1) {
@@ -202,7 +202,7 @@ public class MaxXirRuntime extends XirRuntime {
         XirParameter result = asm.getResultOperand();
         XirLabel fail = asm.createOutOfLineLabel();
         // XXX: build a version that does not include a range check
-        asm.pload(CiKind.Int, length, array, Layout.arrayHeaderLayout().arrayLengthOffset());
+        asm.pload(CiKind.Int, length, array, asm.i(Layout.arrayHeaderLayout().arrayLengthOffset()));
         asm.jugteq(fail, index, length);
         int elemSize = target.sizeInBytes(kind);
         if (elemSize > 1) {
