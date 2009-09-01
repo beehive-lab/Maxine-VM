@@ -154,7 +154,8 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         assert SPARCAssembler.isSimm13(frameSize);
         eirMethod().setFrameSize(frameSize);
 
-        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister0 /* will not be used */);
+        asm.save(stackPointer, -frameSize, stackPointer);
+
         // Only need to save the %i and %g of the trap stub frame, plus the %f.
         // Can use all %l and %o of the trap stub frame as temporary registers, since these don't contain any state of the
         // trapped frame.
