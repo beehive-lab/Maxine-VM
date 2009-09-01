@@ -38,7 +38,7 @@ public class CallingConvention {
     private List<LIROperand> arguments;
     private CiLocation[] locations;
 
-    public CallingConvention(CiLocation[] locations) {
+    CallingConvention(CiLocation[] locations) {
         this.locations = locations;
         arguments = new ArrayList<LIROperand>(locations.length);
         for (CiLocation l : locations) {

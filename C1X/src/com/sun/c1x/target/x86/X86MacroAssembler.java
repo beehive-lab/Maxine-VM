@@ -2662,8 +2662,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    @Override
-    protected void bangStackWithOffset(int offset) {
+    private void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
         if (target.arch.is64bit()) {
@@ -2676,7 +2675,7 @@ public class X86MacroAssembler extends X86Assembler {
     @Override
     public void buildFrame(int frameSizeInBytes) {
         decrement(X86.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-        generateStackOverflowCheck();
+        bangStackWithOffset(C1XOptions.StackShadowPages * target.pageSize);
     }
 
     public void shouldNotReachHere() {

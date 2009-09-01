@@ -441,7 +441,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                     if (x.needsNullCheck()) {
                         assert x.hasReceiver();
-                        lir.nullCheck(receiver, new CodeEmitInfo(info));
+                        lir.nullCheck(receiver, info.copy());
                     }
                     lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                 } else {
@@ -485,18 +485,18 @@ public abstract class LIRGenerator extends ValueVisitor {
             TTY.println(String.format("   ###class not loaded at load_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
         }
 
-        if (x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
+        if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
             // emit an explicit null check because the offset is too large
-            lir.nullCheck(object.result(), new CodeEmitInfo(info));
+            lir.nullCheck(object.result(), info.copy());
         }
 
         LIROperand reg = rlockResult(x, fieldType);
         LIRAddress address;
-        if (needsPatching) {
+        if (info != null && needsPatching) {
 
 
             LIRLocation tempResult = this.newRegister(CiKind.Int);
-            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
+            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
 
@@ -770,17 +770,17 @@ public abstract class LIRGenerator extends ValueVisitor {
                 TTY.println(String.format("   ###class not loaded at store_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
             }
 
-            if (x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
+            if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
                 // emit an explicit null check because the offset is too large
-                lir.nullCheck(object.result(), new CodeEmitInfo(info));
+                lir.nullCheck(object.result(), info.copy());
             }
 
             LIRAddress address;
-            if (needsPatching) {
+            if (info != null && needsPatching) {
 
 
                 LIRLocation tempResult = this.newRegister(CiKind.Int);
-                lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
+                lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
                 address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
 
@@ -799,7 +799,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             if (isOop) {
                 // Do the pre-write barrier, if any.
-                preBarrier(address, needsPatching, (info != null ? new CodeEmitInfo(info) : null));
+                preBarrier(address, needsPatching, (info != null ? info.copy() : null));
             }
 
             if (isVolatile) {

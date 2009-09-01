@@ -237,7 +237,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeEmitInfo rangeCheckInfo = stateFor(x);
         CodeEmitInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
-            nullCheckInfo = new CodeEmitInfo(rangeCheckInfo);
+            nullCheckInfo = rangeCheckInfo.copy();
         }
 
         emitArrayStore((LIRLocation) array.result(), index.result(), value.result(), length.result(), x.elementType(), needsRangeCheck, needsStoreCheck, objStore, nullCheckInfo, rangeCheckInfo);
@@ -269,7 +269,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand tmp2 = newRegister(CiKind.Object);
             LIROperand tmp3 = newRegister(CiKind.Object);
 
-            CodeEmitInfo storeCheckInfo = new CodeEmitInfo(rangeCheckInfo);
+            CodeEmitInfo storeCheckInfo = rangeCheckInfo.copy();
             lir().storeCheck(value, array, tmp1, tmp2, tmp3, storeCheckInfo);
         }
 
