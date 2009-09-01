@@ -34,6 +34,9 @@ import com.sun.max.vm.template.*;
  * @author Laurent Daynes
  */
 public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenerator {
+
+    private static final int NUMBER_OF_BYTES_PER_BYTECODE = 16;
+
     private final boolean needsAdapterFrame;
 
     public SPARCTemplateBasedTargetGenerator(JitCompiler jitCompiler) {
@@ -58,10 +61,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
             final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
             optimizingCompilerAbi = (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
         }
-
         return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
     }
-
-    private static final int NUMBER_OF_BYTES_PER_BYTECODE = 16;
 
 }
