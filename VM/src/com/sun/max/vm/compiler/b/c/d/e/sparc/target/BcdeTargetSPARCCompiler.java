@@ -368,7 +368,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 }
 
                 final Pointer ignoredOperandStackPointer = Pointer.zero();
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer), ignoredOperandStackPointer)) {
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
+                                                           ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE)) {
                     return false;
                 }
                 break;

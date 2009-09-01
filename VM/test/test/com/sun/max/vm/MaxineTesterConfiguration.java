@@ -91,7 +91,7 @@ public class MaxineTesterConfiguration {
         output(test.output.JREJarLoadTest.class);
         output(test.output.FileReader.class);
         output(test.output.ZipFileReader.class);
-        output(test.output.WeakReferenceTest01.class,      FAIL_SPARC);
+        output(test.output.WeakReferenceTest01.class,      RAND_SPARC);
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
