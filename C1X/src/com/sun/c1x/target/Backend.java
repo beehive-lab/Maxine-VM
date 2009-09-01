@@ -22,7 +22,6 @@ package com.sun.c1x.target;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
@@ -34,15 +33,15 @@ import com.sun.c1x.ri.*;
  * @author Ben L. Titzer
  */
 public abstract class Backend {
-    public final CiTarget target;
+    public final C1XCompiler compiler;
 
-    protected Backend(CiTarget target) {
-        this.target = target;
+    protected Backend(C1XCompiler compiler) {
+        this.compiler = compiler;
     }
 
-    public abstract FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks);
+    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler(C1XCompiler compiler, int frameSize);
-    public abstract GlobalStubEmitter newGlobalStubEmitter(C1XCompiler compiler);
+    public abstract AbstractAssembler newAssembler(int frameSize);
+    public abstract GlobalStubEmitter newGlobalStubEmitter();
 }
