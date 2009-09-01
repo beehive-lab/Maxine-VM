@@ -74,8 +74,8 @@ public final class MemoryWordsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
-        final InspectorMenu menu = new InspectorMenu();
+    protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
+        final InspectorPopupMenu menu = new InspectorPopupMenu();
         if (maxVM().watchpointsEnabled()) {
             final MemoryRegion memoryRegion = model.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {

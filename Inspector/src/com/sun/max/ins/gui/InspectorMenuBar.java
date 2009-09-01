@@ -50,14 +50,14 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     public void add(InspectorMenu inspectorMenu) {
-        assert inspectorMenu.name() != null;
-        add(inspectorMenu.standardMenu());
+        assert inspectorMenu.getMenuName() != null;
+        super.add(inspectorMenu);
         menus.append(inspectorMenu);
     }
 
     public InspectorMenu findMenu(String name) {
         for (InspectorMenu inspectorMenu : menus) {
-            if (inspectorMenu.name().equals(name)) {
+            if (inspectorMenu.getMenuName().equals(name)) {
                 return inspectorMenu;
             }
         }

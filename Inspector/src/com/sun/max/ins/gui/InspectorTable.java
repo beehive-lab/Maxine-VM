@@ -110,9 +110,9 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
                         break;
                     case MouseEvent.BUTTON3:
                         // Pop up a menu, if provided by subclass.
-                        final InspectorMenu menu = getDynamicMenu(row, modelCol, mouseEvent);
-                        if (menu != null) {
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        final InspectorPopupMenu popupMenu = getPopupMenu(row, modelCol, mouseEvent);
+                        if (popupMenu != null) {
+                            popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                         break;
                 }
@@ -158,9 +158,9 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * @param row row in the table model where the click took place
      * @param col column in the column model where the click took place
      * @param mouseEvent the originating event
-     * @return a menu suitable for popup, null if none relevant to location and circumstances.
+     * @return a popup menu, null if none relevant to location and circumstances.
      */
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         return null;
     }
 

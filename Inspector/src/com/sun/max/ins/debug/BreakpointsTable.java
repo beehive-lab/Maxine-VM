@@ -61,9 +61,9 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         final BreakpointData breakpointData = tableModel.get(row);
-        final InspectorMenu menu = new InspectorMenu();
+        final InspectorPopupMenu menu = new InspectorPopupMenu("Breakpoints");
         final String shortName = breakpointData.shortName();
         menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
         if (breakpointData.enabled()) {

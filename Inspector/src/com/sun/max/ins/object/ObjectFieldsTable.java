@@ -120,9 +120,9 @@ public final class ObjectFieldsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
-            final InspectorMenu menu = new InspectorMenu();
+            final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {
 
                 @Override

@@ -76,8 +76,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         menu.add(getCloseOtherInspectorsAction());
         menu.addSeparator();
         menu.add(getPrintAction());
-        menu.standardMenu().setText(null);
-        menu.standardMenu().setIcon(FRAME_ICON);
+        menu.setText(null);
+        menu.setIcon(FRAME_ICON);
         return menu;
     }
 

@@ -303,9 +303,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         @Override
-        protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+        protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
             if (col == ObjectFieldColumnKind.TAG.ordinal()) {
-                final InspectorMenu menu = new InspectorMenu();
+                final InspectorPopupMenu menu = new InspectorPopupMenu();
                 final Address address = JTableTargetCodeViewer.this.model.rowToInstruction(row).address;
                 menu.add(actions().debugRunToInstructionWithBreakpoints(address, "Run to this instruction"));
                 menu.add(actions().debugRunToInstruction(address, "Run to this instruction (ignoring breakpoints)"));
@@ -652,7 +652,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 public void procedure(final MouseEvent mouseEvent) {
                     final BytecodeLocation bytecodeLocation = lastBytecodeLocation;
                     if (bytecodeLocation != null) {
-                        final JPopupMenu menu = new JPopupMenu();
+                        final InspectorPopupMenu menu = new InspectorPopupMenu();
                         for (BytecodeLocation location = bytecodeLocation; location != null; location = location.parent()) {
                             final StackTraceElement stackTraceElement = location.toStackTraceElement();
                             final String fileName = stackTraceElement.getFileName();

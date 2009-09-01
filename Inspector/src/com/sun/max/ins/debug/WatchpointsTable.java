@@ -63,9 +63,9 @@ public final class WatchpointsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled() && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
-            final InspectorMenu menu = new InspectorMenu();
+            final InspectorPopupMenu menu = new InspectorPopupMenu("Watchpoints");
             final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(row, col);
             final TeleObject teleObject = watchpoint.getTeleObject();
             if (teleObject != null) {

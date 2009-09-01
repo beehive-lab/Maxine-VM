@@ -22,37 +22,22 @@ package com.sun.max.ins.gui;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
+
 /**
- * A menu that can be manifest in the GUI by a {@linkplain JMenu standard menu}.
- * <br>
- * The important characteristic of this menu is that it can be refreshed, in case it depends on any state (e.g. for being enabled).
+ * A specialization of popup menus for use in the Inspector.
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorMenu extends JMenu implements Prober {
+public class InspectorPopupMenu extends JPopupMenu {
 
-    private final AppendableSequence<InspectorMenuItems> menuItems = new LinkSequence<InspectorMenuItems>();
-    private AppendableSequence<InspectorAction> actions = new LinkSequence<InspectorAction>();
-    private final String name;
-    /**
-     * Creates a standard menu that can be used on the Inspector menu bar.
-     * <br>
-     * Menu items may have state that gets update when refreshed.
-     */
-    public InspectorMenu(String name) {
+    public InspectorPopupMenu(String name) {
         super(name);
-        this.name = name;
     }
 
-    /**
-     * @return the name given the menu at creation; used as key to find the menu.
-     */
-    public String getMenuName() {
-        return name;
+    public InspectorPopupMenu() {
     }
 
     /**
@@ -69,29 +54,6 @@ public final class InspectorMenu extends JMenu implements Prober {
         } else {
             ProgramError.unexpected("Inappropriate argument");
         }
-    }
-
-    public void add(InspectorAction action) {
-        actions.append(action);
-        super.add(action);
-    }
-
-    public void add(InspectorMenuItems inspectorMenuItems) {
-        addSeparator();
-        menuItems.append(inspectorMenuItems);
-        inspectorMenuItems.addTo(this);
-    }
-
-    public void refresh(boolean force) {
-        for (InspectorMenuItems inspectorMenuItems : this.menuItems) {
-            inspectorMenuItems.refresh(force);
-        }
-        for (InspectorAction action : actions) {
-            action.refresh(force);
-        }
-    }
-
-    public void redisplay() {
     }
 
 }

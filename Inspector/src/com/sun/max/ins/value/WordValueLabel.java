@@ -195,7 +195,7 @@ public class WordValueLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON3: {
-                        final InspectorMenu menu = new InspectorMenu();
+                        final InspectorPopupMenu menu = new InspectorPopupMenu();
                         menu.add(new WordValueMenuItems(inspection(), value()));
                         switch (displayMode) {
                             case OBJECT_REFERENCE:
@@ -217,7 +217,7 @@ public class WordValueLabel extends ValueLabel {
                                 break;
                             }
                         }
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
             }
