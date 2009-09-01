@@ -308,7 +308,7 @@ public class C1XCompilation {
 
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
-            frameMap = this.compiler.backend.newFrameMap(this, method, hir.topScope.numberOfLocks());
+            frameMap = this.compiler.backend.newFrameMap(method, hir.topScope.numberOfLocks());
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.visitBlock(begin);
@@ -325,7 +325,7 @@ public class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = compiler.backend.newAssembler(compiler, this.frameMap.frameSize());
+            assembler = compiler.backend.newAssembler(this.frameMap.frameSize());
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 

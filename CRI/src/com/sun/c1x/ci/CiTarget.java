@@ -44,8 +44,10 @@ public class CiTarget {
     public int pageSize;
     public boolean isMP;
     public final CiRegister stackRegister;
+    public final CiRegister scratchRegister;
 
-    public CiTarget(CiArchitecture arch, CiRegister stackRegister, CiRegister[] allocatableRegisters, CiRegister[] callerSavedRegisters, CiRegister[] registerReferenceMapTemplate, int pageSize,
+    public CiTarget(CiArchitecture arch, CiRegister stackRegister, CiRegister scratchRegister, CiRegister[] allocatableRegisters, CiRegister[] callerSavedRegisters,
+            CiRegister[] registerReferenceMapTemplate, int pageSize,
             boolean isMP) {
 
         this.arch = arch;
@@ -57,6 +59,9 @@ public class CiTarget {
 
         assert stackRegister != null && !contains(stackRegister, allocatableRegisters);
         this.stackRegister = stackRegister;
+
+        assert scratchRegister != null && !contains(scratchRegister, allocatableRegisters) && scratchRegister != stackRegister;
+        this.scratchRegister = scratchRegister;
 
         this.callerSavedRegisters = callerSavedRegisters;
         this.registerReferenceMapTemplate = registerReferenceMapTemplate;

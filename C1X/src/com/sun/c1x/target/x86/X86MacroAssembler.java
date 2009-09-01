@@ -43,7 +43,7 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: make macro assembler compiler independent w.r.t global stubs
         this.compiler = compiler;
 
-        rscratch1 = X86FrameMap.rscratch1(this.target.arch);
+        rscratch1 = compiler.target.scratchRegister;
         wordSize = this.target.arch.wordSize;
     }
 
@@ -1643,7 +1643,7 @@ public class X86MacroAssembler extends X86Assembler {
         CiRegister end = t2;
         CiRegister thread = t1;
         if (target.arch.is64bit()) {
-            thread = X86FrameMap.r15thread;
+            thread = runtime.threadRegister();
         }
 
         verifyTlab(runtime);
@@ -2167,7 +2167,7 @@ public class X86MacroAssembler extends X86Assembler {
             Label next = new Label();
             Label ok = new Label();
             CiRegister t1 = X86.rsi;
-            CiRegister threadReg = (target.arch.is64bit()) ? X86FrameMap.r15thread : X86.rbx;
+            CiRegister threadReg = (target.arch.is64bit()) ? runtime.threadRegister() : X86.rbx;
 
             push(t1);
 

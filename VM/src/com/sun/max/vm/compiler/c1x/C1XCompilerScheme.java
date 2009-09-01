@@ -95,7 +95,9 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
 
         AMD64GeneralRegister64 stackPointer = (AMD64GeneralRegister64) targetABI.stackPointer();
+        AMD64GeneralRegister64 scratchPointer = (AMD64GeneralRegister64) targetABI.scratchRegister();
         CiRegister stackRegister = null;
+        CiRegister scratchRegister = null;
 
         CiRegister[] registerReferenceMapTemplate = new CiRegister[AMD64GeneralRegister64.ENUMERATOR.length()];
         // configure the allocatable registers
@@ -113,6 +115,10 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
 
                     if (reg == stackPointer) {
                         stackRegister = r;
+                    }
+
+                    if (reg == scratchPointer) {
+                        scratchRegister = r;
                     }
                 }
 
@@ -134,7 +140,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
 
         // TODO (tw): Initialize target differently
-        CiTarget target = new CiTarget(arch, stackRegister, allocRegs, allocRegs, registerReferenceMapTemplate, configuration.platform.pageSize, true);
+        CiTarget target = new CiTarget(arch, stackRegister, scratchRegister, allocRegs, allocRegs, registerReferenceMapTemplate, configuration.platform.pageSize, true);
         target.stackAlignment = targetABI.stackFrameAlignment();
         return target;
     }

@@ -63,7 +63,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         wordSize = compilation.target.arch.wordSize;
         referenceSize = compilation.target.referenceSize;
-        rscratch1 = X86FrameMap.rscratch1(compilation.target.arch);
+        rscratch1 = compilation.target.scratchRegister;
         if (compilation.target.arch.is64bit()) {
             callStubSize = 28;
             deoptHandlerSize = 17;
@@ -82,10 +82,6 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private Address asAddress(LIRAddress addr) {
-        return asAddress(addr, X86FrameMap.rscratch1(compilation.target.arch));
-    }
-
-    private Address asAddress(LIRAddress addr, CiRegister tmp) {
         if (addr.base().isIllegal()) {
             assert addr.index().isIllegal() : "must be illegal too";
             assert false : "(tw) should not occur?";
@@ -495,7 +491,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().movptr(asAddress(addr), NULLWORD);
                 } else {
                     if (isLiteralAddress(addr)) {
-                        masm().movoop(asAddress(addr, CiRegister.None), c.asObject());
+                        masm().movoop(asAddress(addr), c.asObject());
                         throw Util.shouldNotReachHere();
                     } else {
                         masm().movoop(asAddress(addr), c.asObject());
@@ -508,7 +504,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 if (compilation.target.arch.is64bit()) {
                     if (isLiteralAddress(addr)) {
-                        masm().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
+                        //masm().movptr(asAddress(addr, X86FrameMap.r15thread), c.asLongBits());
                         throw Util.shouldNotReachHere();
                     } else {
                         masm().movptr(rscratch1, c.asLongBits());
@@ -1203,7 +1199,7 @@ public class X86LIRAssembler extends LIRAssembler {
         LIROperand dest = op.resultOpr();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
-        CiRegister rscratch1 = X86FrameMap.rscratch1(this.compilation.target.arch);
+        CiRegister rscratch1 = compilation.target.scratchRegister;
         switch (op.bytecode) {
             case Bytecodes.I2L:
                 if (compilation.target.arch.is64bit()) {
@@ -2406,7 +2402,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (compilation.target.arch.is64bit()) {
                     // %%% Make this explode if addr isn't reachable until we figure out a
                     // better strategy by giving X86.noreg as the temp for asAddress
-                    masm().cmpptr(rscratch1, asAddress(addr, CiRegister.None));
+                    masm().cmpptr(rscratch1, asAddress(addr));
                 } else {
                     masm().cmpoop(asAddress(addr), c.asObject());
                 }
@@ -3178,7 +3174,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert resultReg.isRegister() : "check";
         if (compilation.target.arch.is64bit()) {
             // lir(). getThread(resultReg.asRegisterLo());
-            masm().mov(resultReg.asRegister(), X86FrameMap.r15thread);
+            masm().mov(resultReg.asRegister(), compilation.runtime.threadRegister());
         } else {
             masm().getThread(resultReg.asRegister());
         }

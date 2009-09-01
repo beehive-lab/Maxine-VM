@@ -31,20 +31,24 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class FrameMap {
+public class FrameMap {
 
     public static final int SpillSlotSize = 4;
 
-    private final C1XCompilation compilation;
-    private int frameSize;
-    private int monitorCount;
-    private int spillSlotCount;
-    private final CallingConvention incomingArguments;
+    private final C1XCompiler compilation;
 
+    private final CallingConvention incomingArguments;
+    private final int monitorCount;
+
+    // Values set after register allocation is complete
+    private int frameSize;
+    private int spillSlotCount;
+
+    // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
     private int reservedOutgoingArgumentsArea;
 
-    public FrameMap(C1XCompilation compilation, RiMethod method, int monitors) {
-        this.compilation = compilation;
+    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
+        this.compilation = compiler;
         frameSize = -1;
         spillSlotCount = -1;
 

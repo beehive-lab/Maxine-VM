@@ -658,7 +658,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.type().isVoid()) {
             lir.returnOp(LIROperandFactory.IllegalOperand);
         } else {
-            LIROperand reg = resultRegisterFor(x.type().basicType, /* callee= */true);
+            LIROperand reg = resultRegisterFor(x.type().basicType);
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(reg);
@@ -1188,9 +1188,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected LIROperand resultRegisterFor(CiKind type) {
-        return resultRegisterFor(type, false);
-    }
 
     protected LIROperand rlock(Value instr) {
         // Try to lock using register in hint
@@ -2186,15 +2183,20 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract void putObjectUnsafe(LIROperand src, LIROperand offset, LIROperand data, CiKind type, boolean isVolatile);
 
-    protected abstract LIROperand resultRegisterFor(CiKind type, boolean callee);
+    protected LIROperand resultRegisterFor(CiKind type) {
+        CiRegister returnRegister = compilation.runtime.returnRegister(type);
+        assert compilation.target.arch.is64bit();
+        if (type.size == 2) {
+            return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);
+        }
+        return LIROperandFactory.singleLocation(type, returnRegister);
+    }
 
     protected abstract LIROperand rlockByte(CiKind type);
 
     protected abstract LIROperand rlockCalleeSaved(CiKind type);
 
     protected abstract LIROperand safepointPollRegister();
-
-    protected abstract void storeStackParameter(LIROperand opr, int offsetFromSpInBytes);
 
     protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
 

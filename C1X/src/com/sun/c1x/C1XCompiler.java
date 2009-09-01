@@ -62,7 +62,7 @@ public class C1XCompiler extends CiCompiler {
 
         // TODO: Remove this fixed wiring to X86
         assert target.arch instanceof AMD64;
-        this.backend = new X86Backend(target);
+        this.backend = new X86Backend(this);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class C1XCompiler extends CiCompiler {
     }
 
     private void init() {
-        final GlobalStubEmitter emitter = backend.newGlobalStubEmitter(this);
+        final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);
             Object result = runtime.registerTargetMethod(targetMethod, globalStub.toString());
@@ -101,7 +101,7 @@ public class C1XCompiler extends CiCompiler {
 
         if (!runtimeCallStubs.containsKey(dest)) {
 
-            final GlobalStubEmitter emitter = backend.newGlobalStubEmitter(this);
+            final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
             final CiTargetMethod targetMethod = emitter.emitRuntimeStub(dest);
             Object result = runtime.registerTargetMethod(targetMethod, dest.toString());
             runtimeCallStubs.put(dest, result);
