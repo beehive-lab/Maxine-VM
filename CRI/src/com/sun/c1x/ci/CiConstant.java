@@ -389,9 +389,6 @@ public class CiConstant {
             final Double box = (Double) boxedJavaValue;
             return CiConstant.forDouble(box.doubleValue());
         }
-        if (boxedJavaValue instanceof Number) {
-            return CiConstant.forWord((Number) boxedJavaValue);
-        }
         return CiConstant.forObject(boxedJavaValue);
     }
 }
