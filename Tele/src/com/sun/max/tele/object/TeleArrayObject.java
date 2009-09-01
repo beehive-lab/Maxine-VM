@@ -45,8 +45,6 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
-    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH);
-
     private int length = -1;
 
     private final Kind componentKind;
@@ -62,8 +60,8 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public EnumSet<Layout.HeaderField> getHeaderFields() {
-        return headerFields;
+    public HeaderField[] getHeaderFields() {
+        return Layout.arrayHeaderLayout().headerFields();
     }
 
     /**

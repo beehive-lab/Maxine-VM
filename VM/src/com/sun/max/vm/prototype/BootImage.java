@@ -59,8 +59,8 @@ import com.sun.max.vm.type.*;
  *          struct StringInfo string_info;   // see declaration of image_StringInfo in Native/substrate/image.h
  *          byte[header.relocationDataSize] relocation_data;
  *          byte[] pad;                      // padding such that next field will be aligned on an OS page-size address
- *          byte[header.heapSize];       // header.bootHeapSize is a multiple of page-size
- *          byte[header.codeSize];       // header.bootCodeSize is a multiple of page-size
+ *          byte[header.heapSize];           // header.heapSize is a multiple of page-size
+ *          byte[header.codeSize];           // header.codeSize is a multiple of page-size
  *          struct Trailer trailer;          // see declaration of image_Trailer in Native/substrate/image.h
  *     }
  *
@@ -616,6 +616,7 @@ public class BootImage {
 
     private ByteBuffer heap;
     private ByteBuffer code;
+    private ByteBuffer heapAndCode;
     private final File imageFile;
 
     /**
@@ -714,14 +715,27 @@ public class BootImage {
         if (heap == null) {
             heap = mapSection(heapOffset(), header.heapSize);
         }
-        return heap;
+        ByteBuffer duplicate = heap.duplicate();
+        duplicate.order(heap.order());
+        return duplicate;
     }
 
     public synchronized ByteBuffer code() {
         if (code == null) {
             code = mapSection(codeOffset(), header.codeSize);
         }
-        return code;
+        ByteBuffer duplicate = code.duplicate();
+        duplicate.order(code.order());
+        return duplicate;
+    }
+
+    public synchronized ByteBuffer heapAndCode() {
+        if (heapAndCode == null) {
+            heapAndCode = mapSection(heapOffset(), header.heapSize + header.codeSize);
+        }
+        ByteBuffer duplicate = heapAndCode.duplicate();
+        duplicate.order(heapAndCode.order());
+        return duplicate;
     }
 
     /**
@@ -777,6 +791,7 @@ public class BootImage {
             raf.close();
             ByteOrder byteOrder = vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder();
             buffer.order(byteOrder);
+            raf.close();
             return buffer;
         } catch (IOException e) {
             throw new InternalError("Error trying to map section of image file: " + e);

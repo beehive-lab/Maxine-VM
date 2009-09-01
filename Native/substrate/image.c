@@ -123,7 +123,7 @@ static char *endiannessToString(jint isBigEndian) {
     }
 }
 
-static struct image_Header theImageHeaderStruct;
+static struct image_Header theHeaderStruct;
 
 /**
  * Reads the Header section from a boot image.
@@ -131,22 +131,22 @@ static struct image_Header theImageHeaderStruct;
  * @param fd a file descriptor  opened on the boot image file currently positioned at the start of the Header section
  */
 static void readHeader(int fd) {
+    theHeader = &theHeaderStruct;
 #if !MEMORY_IMAGE
-    int n = read(fd, &theHeader, sizeof(struct image_Header));
+    int n = read(fd, theHeader, sizeof(struct image_Header));
     if (n != sizeof(struct image_Header)) {
         log_exit(1, "could not read image header");
     }
 #else
-    memcpy((void *) &theHeader, (void *) &maxvm_image_start, sizeof(struct image_Header));
-#if log_LOADER
-    log_println("image.readHeader @ 0x%x,", &maxvm_image_start);
+    memcpy((void *) theHeader, (void *) &maxvm_image_start, sizeof(struct image_Header));
 #endif
+#if log_LOADER
+    log_println("image.readHeader @ %p", theHeader);
 #endif
 
     if ((theHeader->isBigEndian != 0) != (word_BIG_ENDIAN != 0)) {
         log_exit(3, "image has wrong endianness - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(theHeader->isBigEndian));
     }
-    theHeader = &theImageHeaderStruct;
 }
 
 static struct image_StringInfo theStringInfoStruct;
@@ -176,13 +176,13 @@ static void readStringInfo(int fd) {
 #if log_LOADER
     log_println("image.readStringInfo @ 0x%x", stringInfoData);
 #endif
+    theStringInfo = &theStringInfoStruct;
     p = (char **) theStringInfo;
     s = stringInfoData;
     while (p < (char **) &theStringInfo[1]) {
         *p++ = s;
         s = nextString(s);
     }
-    theStringInfo = &theStringInfoStruct;
 }
 
 #define checkThreadLocalIndex(name) do { \

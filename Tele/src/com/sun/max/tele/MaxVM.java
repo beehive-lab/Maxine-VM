@@ -334,12 +334,6 @@ public interface MaxVM {
     Reference originToReference(final Pointer origin);
 
     /**
-     * @param cell a pointer to the current absolute memory  location for a heap object in the VM.
-     * @return a reference to the object.
-     */
-    Reference cellToReference(Pointer cell);
-
-    /**
      * @return a reference to the {@link ClassRegistry} in the boot heap of the VM.
      */
     Reference bootClassRegistryReference();
@@ -409,12 +403,12 @@ public interface MaxVM {
     TeleObject findObjectByOID(long id);
 
     /**
-     * Finds an object whose memory cell begins at the specified address.
+     * Finds an object whose origin is at the specified address.
      *
-     * @param cellAddress memory location in the VM
+     * @param origin memory location in the VM
      * @return surrogate for a VM object, null if none found
      */
-    TeleObject findObjectAt(Address cellAddress);
+    TeleObject findObjectAt(Address origin);
 
     /**
      * Scans VM memory backwards (smaller address) for an object whose cell begins at the specified address.
