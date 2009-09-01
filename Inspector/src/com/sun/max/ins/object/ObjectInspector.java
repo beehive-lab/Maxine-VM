@@ -105,7 +105,7 @@ public abstract class ObjectInspector extends Inspector {
     public void createFrame(InspectorMenu menu) {
         super.createFrame(menu);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-        final InspectorMenu frameMenu = frame().menu();
+        final InspectorMenu frameMenu = getMenu(DEFAULT_INSPECTOR_MENU);
         frameMenu.addSeparator();
         frameMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect object's memory"));
         frameMenu.add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));

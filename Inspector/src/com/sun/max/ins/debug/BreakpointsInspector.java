@@ -69,7 +69,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         createFrame(null);
-        frame().add(new BreakpointFrameMenuItems());
+        getMenu(DEFAULT_INSPECTOR_MENU).add(new BreakpointFrameMenuItems());
         Trace.end(1,  tracePrefix() + " initializing");
     }
 

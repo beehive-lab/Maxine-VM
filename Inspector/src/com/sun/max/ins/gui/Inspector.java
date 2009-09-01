@@ -62,6 +62,25 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     private static final int TRACE_VALUE = 2;
 
+    private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(16, 16);
+    public static final String DEFAULT_INSPECTOR_MENU = "Default";
+    public static final String VIEW_INSPECTOR_MENU = "View";
+    public static final String METHOD_INSPECTOR_MENU = "Method";
+
+    public InspectorMenu createDefaultMenu() {
+        final InspectorMenu menu = new InspectorMenu(Inspector.DEFAULT_INSPECTOR_MENU);
+        menu.add(getViewOptionsAction());
+        menu.add(getRefreshAction());
+        menu.addSeparator();
+        menu.add(getCloseAction());
+        menu.add(getCloseOtherInspectorsAction());
+        menu.addSeparator();
+        menu.add(getPrintAction());
+        menu.standardMenu().setText(null);
+        menu.standardMenu().setIcon(FRAME_ICON);
+        return menu;
+    }
+
     private InspectorFrame frame;
 
     /**
@@ -199,6 +218,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected InspectorTable getTable() {
         return null;
+    }
+
+    protected InspectorMenu getMenu(String menuName) {
+        return frame.getMenu(menuName);
     }
 
     public void vmStateChanged(boolean force) {
