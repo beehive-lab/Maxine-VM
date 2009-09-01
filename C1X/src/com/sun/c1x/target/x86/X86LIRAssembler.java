@@ -99,7 +99,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (addr.index().isIllegal()) {
             return new Address(base, addr.displacement());
-        } else if (addr.index().isCpuRegister()) {
+        } else if (addr.index().isRegister()) {
             CiRegister index = addr.index().asPointerRegister(compilation.target.arch);
             return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
         } else {
@@ -332,19 +332,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void returnOp(LIROperand result) {
-
         assert result.isIllegal() || !result.isSingleCpu() || result.asRegister() == X86.rax : "word returns are in rax : ";
-        if (!result.isIllegal() && (result.kind.isFloat() || result.kind.isDouble()) && !result.isXmmRegister()) {
-            assert false : "no fpu stack";
-        }
 
         // Add again to the stack pointer
-
-        // Pop the stack before the safepoint code
         masm().increment(X86.rsp, initialFrameSizeInBytes());
 
         // TODO: Add Safepoint polling at return!
-
         masm().ret(0);
     }
 
@@ -756,8 +749,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private static CiRegister asXmmFloatReg(LIROperand src) {
-        assert src.isXmmRegister();
-        return src.asRegister();
+        CiRegister result = src.asRegister();
+        assert result.isXMM();
+        return result;
     }
 
     @Override
@@ -1694,7 +1688,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 throw Util.shouldNotReachHere();
         }
 
-        if (opr1.isCpuRegister()) {
+        if (opr1.isRegister()) {
             reg2reg(opr1, result);
         } else if (opr1.isStack()) {
             stack2reg(opr1, result, result.kind);
@@ -1730,7 +1724,7 @@ public class X86LIRAssembler extends LIRAssembler {
         } else {
             Label skip = new Label();
             masm().jcc(acond, skip);
-            if (opr2.isCpuRegister()) {
+            if (opr2.isRegister()) {
                 reg2reg(opr2, result);
             } else if (opr2.isStack()) {
                 stack2reg(opr2, result, result.kind);
@@ -3144,9 +3138,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private CiRegister asXmmDoubleReg(LIROperand dest) {
-        assert dest.isXmmRegister();
-        assert dest.isDoubleXmm();
-        return dest.asRegister();
+        CiRegister result = dest.asRegister();
+        assert result.isXMM();
+        return result;
     }
 
     @Override

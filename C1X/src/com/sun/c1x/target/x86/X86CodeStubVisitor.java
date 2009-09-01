@@ -357,7 +357,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         LIROperand index = stub.index();
-        if (index.isCpuRegister()) {
+        if (index.isRegister()) {
             masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
         } else {
             assert index.isConstant();

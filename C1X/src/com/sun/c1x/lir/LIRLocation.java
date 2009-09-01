@@ -132,10 +132,6 @@ public final class LIRLocation extends LIROperand {
         return isStack() && kind.sizeInSlots() == 2;
     }
 
-    @Override
-    public boolean isCpuRegister() {
-        return !isStack() && !location1.isXMM();
-    }
 
     @Override
     public boolean isVirtualCpu() {
@@ -158,8 +154,8 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isXmmRegister() {
-        return !isStack() && location1.isXMM();
+    public boolean isRegister() {
+        return !isStack();
     }
 
     @Override

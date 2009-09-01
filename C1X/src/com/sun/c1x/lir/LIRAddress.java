@@ -152,7 +152,7 @@ public class LIRAddress extends LIROperand {
             assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
             assert displacement == 0 || index.isIllegal() : "can't have both";
         } else if (architecture.is64bit()) {
-            assert base.isCpuRegister() : "wrong base operand";
+            assert base.isRegister() : "wrong base operand";
             assert index.isIllegal() || index.isDoubleCpu() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Long : "wrong type for addresses";
         } else {

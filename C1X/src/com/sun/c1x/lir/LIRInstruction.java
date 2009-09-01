@@ -99,9 +99,9 @@ public abstract class LIRInstruction {
                     LIRLocation indexOperand = LIROperandFactory.IllegalLocation;
                     if (!address.index.isIllegal()) {
                         indexOperand = inst.operands.get(base + 1);
-                        assert indexOperand.isCpuRegister();
+                        assert indexOperand.isRegister();
                     }
-                    assert baseOperand.isCpuRegister();
+                    assert baseOperand.isRegister();
                     result = address.createCopy(baseOperand, indexOperand);
                 } else if (base != -1) {
                     result = inst.operands.get(base);
@@ -182,7 +182,7 @@ public abstract class LIRInstruction {
             operands.add(address.index);
         }
 
-        if (address.base.isCpuRegister() && !address.base.isVirtual()) {
+        if (address.base.isRegister() && !address.base.isVirtual()) {
             assert address.index.isIllegal() || !address.index.isVirtual();
             return new OperandSlot(address);
         }
@@ -493,7 +493,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public LIROperand oprAt(OperandMode mode, int index) {
+    public LIRLocation oprAt(OperandMode mode, int index) {
         if (mode == OperandMode.OutputMode) {
             assert index < outputCount;
             return operands.get(index);
