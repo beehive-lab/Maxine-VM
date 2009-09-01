@@ -1003,11 +1003,11 @@ public class LinearScan {
         if ((con == null || con.isLive()) && opr.isRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
             CiKind registerKind = registerKind(opr);
-            addUse(opr, from, to, useKind, registerKind);
+            addUse((LIRLocation) opr, from, to, useKind, registerKind);
         }
     }
 
-    void addDef(LIROperand opr, int defPos, IntervalUseKind useKind, CiKind registerKind) {
+    void addDef(LIRLocation opr, int defPos, IntervalUseKind useKind, CiKind registerKind) {
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println(" def %s defPos %d (%s)", opr, defPos, useKind.name());
@@ -1017,7 +1017,6 @@ public class LinearScan {
         if (opr.isVirtualRegister()) {
             assert regNum(opr) == opr.vregNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
             addDef(opr.vregNumber(), defPos, useKind, registerKind);
-
         } else {
             int reg = regNum(opr);
             if (isProcessedRegNum(reg)) {
@@ -1041,7 +1040,7 @@ public class LinearScan {
         return operand.kind;
     }
 
-    void addUse(LIROperand opr, int from, int to, IntervalUseKind useKind, CiKind registerKind) {
+    void addUse(LIRLocation opr, int from, int to, IntervalUseKind useKind, CiKind registerKind) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print(" use %s from %d to %d (%s)", opr, from, to, useKind.name());
         }
@@ -1063,7 +1062,7 @@ public class LinearScan {
         }
     }
 
-    void addTemp(LIROperand opr, int tempPos, IntervalUseKind useKind, CiKind registerKind) {
+    void addTemp(LIRLocation opr, int tempPos, IntervalUseKind useKind, CiKind registerKind) {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println(" temp %s tempPos %d (%s)", opr, tempPos, useKind.name());
         }
@@ -1341,11 +1340,11 @@ public class LinearScan {
             if (move.resultOpr().isDoubleCpu() && inOpr.isLocation()) {
                 if (inOpr instanceof LIRAddress) {
                     final LIRAddress pointer = (LIRAddress) inOpr;
-                    LIROperand base = pointer.base();
+                    LIRLocation base = pointer.base();
                     if (!base.isIllegal()) {
                         addTemp(base, op.id(), IntervalUseKind.noUse, registerKind(base));
                     }
-                    LIROperand index = pointer.index();
+                    LIRLocation index = pointer.index();
                     if (!index.isIllegal()) {
                         addTemp(index, op.id(), IntervalUseKind.noUse, registerKind(index));
                     }
@@ -1472,14 +1471,14 @@ public class LinearScan {
                 int n;
                 n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
+                    LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addDef(opr, opId, useKindOfOutputOperand(op, opr), registerKind(opr));
                 }
 
                 n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
+                    LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addTemp(opr, opId, IntervalUseKind.mustHaveRegister, registerKind(opr));
                 }
@@ -1487,7 +1486,7 @@ public class LinearScan {
                 // visit uses (input operands)
                 n = op.oprCount(LIRInstruction.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
-                    LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
+                    LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
                     assert opr.isRegister() : "visitor should only return register operands";
                     addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr), registerKind(opr));
                 }
@@ -2807,8 +2806,8 @@ public class LinearScan {
             for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
                 int n = op.oprCount(mode);
                 for (int k = 0; k < n; k++) {
-                    LIROperand opr = op.oprAt(mode, k);
-                    if (opr instanceof LIRLocation && opr.isVirtualRegister()) {
+                    LIRLocation opr = op.oprAt(mode, k);
+                    if (opr.isVirtualRegister()) {
                         op.setOprAt(mode, k, colorLirOpr(opr, opId, mode));
                     }
                 }
@@ -3158,7 +3157,7 @@ public class LinearScan {
                                 for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
                                     int n = op.oprCount(mode);
                                     for (int k = 0; k < n; k++) {
-                                        LIROperand opr = op.oprAt(mode, k);
+                                        LIRLocation opr = op.oprAt(mode, k);
                                         if (opr.isFixedCpu()) {
                                             if (intervalAt(regNum(opr)) == interval) {
                                                 ok = true;

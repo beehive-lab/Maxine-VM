@@ -1977,7 +1977,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     LIROperand operandForInstruction(Value x) {
-        if (x.operand().isIllegal()) {
+        LIROperand operand = x.operand();
+        if (operand.isIllegal()) {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
@@ -1986,10 +1987,10 @@ public abstract class LIRGenerator extends ValueVisitor {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
                 x.setOperand(rlock(x));
-                instructionForOperand.put(x.operand().vregNumber(), x);
+                instructionForOperand.put(operand.vregNumber(), x);
             }
         }
-        return x.operand();
+        return operand;
     }
 
     private LIROperand operandForPhi(Phi phi) {

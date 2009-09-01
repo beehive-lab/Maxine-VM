@@ -39,12 +39,12 @@ public class LIROperand {
         this.kind = basicType;
     }
 
-    public boolean isIllegal() {
+    public final boolean isIllegal() {
         return this == LIROperandFactory.IllegalLocation;
     }
 
     public boolean isRegister() {
-        return isCpuRegister() || isXmmRegister();
+        return false;
     }
 
     public boolean isVirtual() {
@@ -114,10 +114,6 @@ public class LIROperand {
         return false;
     }
 
-    public boolean isCpuRegister() {
-        return false;
-    }
-
     public boolean isVirtualCpu() {
         return false;
     }
@@ -131,10 +127,6 @@ public class LIROperand {
     }
 
     public boolean isDoubleCpu() {
-        return false;
-    }
-
-    public boolean isXmmRegister() {
         return false;
     }
 
