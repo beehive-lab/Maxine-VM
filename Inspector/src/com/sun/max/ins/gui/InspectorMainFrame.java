@@ -60,6 +60,31 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private final InspectorPopupMenu desktopMenu = new InspectorPopupMenu("Maxine Inspector");
     private final JLabel unavailableDataTableCellRenderer;
 
+    private static final Point DEFAULT_LOCATION = new Point(100, 100);
+    private Point mostRecentMouseLocation = DEFAULT_LOCATION;
+
+    /**
+     * Records the last position of the mouse when it was over a component.
+     */
+    public final class MouseLocationListener implements AWTEventListener {
+
+        public void eventDispatched(AWTEvent awtEvent) {
+            if (awtEvent instanceof MouseEvent) {
+                final Component source = (Component) awtEvent.getSource();
+                if (source != null) {
+                    mostRecentMouseLocation = DEFAULT_LOCATION;
+                    final MouseEvent mouseEvent = (MouseEvent) awtEvent;
+                    try {
+                        final Point eventLocationOnScreen = source.getLocationOnScreen();
+                        eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
+                        mostRecentMouseLocation = eventLocationOnScreen;
+                    } catch (IllegalComponentStateException e) {
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Creates a new main window frame for the Maxine VM inspection session.
      *
@@ -76,7 +101,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         this.nameDisplay = nameDisplay;
 
         setDefaultLookAndFeelDecorated(true);
-        InspectorFrame.TitleBarListener.initialize();
+        Toolkit.getDefaultToolkit().addAWTEventListener(new MouseLocationListener(), AWTEvent.MOUSE_EVENT_MASK);
 
         // Set default geometry; may get overridden by settings when initialized
         setMinimumSize(inspection.geometry().inspectorFrameMinSize());
@@ -265,7 +290,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public void setLocationRelativeToMouse(JDialog dialog, int offset) {
-        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
+        final Point location = mostRecentMouseLocation;
         location.translate(offset, offset);
         dialog.setLocation(location);
     }
@@ -304,7 +329,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      * Set frame location to a point displaced by specified amount from the most recently known mouse position.
      */
     private void setLocationRelativeToMouse(Inspector inspector, int xOffset, int yOffset) {
-        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
+        final Point location = mostRecentMouseLocation;
         location.translate(xOffset, yOffset);
         setLocationOnScreen(inspector, location);
     }
