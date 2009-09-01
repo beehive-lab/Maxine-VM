@@ -50,39 +50,29 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
         }
     }
 
-    @Override
-    protected void emitPadding(int numberOfBytes) throws AssemblyException {
-        if ((numberOfBytes & 0x3) != 0) {
-            throw new AssemblyException("Cannot pad instruction stream with a number of bytes not divisble by 4");
-        }
-        for (int i = 0; i < numberOfBytes >> 2; i++) {
-            nop();
-        }
-    }
-
     // Utilities:
 
-    public int hi(int i) {
+    public static int hi(int i) {
         return (i & 0xfffffc00) >> 10;
     }
 
-    public int lo(int i) {
+    public static int lo(int i) {
         return i & 0x000003ff;
     }
 
-    public int hi(long i) {
+    public static int hi(long i) {
         return hi((int) i);
     }
 
-    public int lo(long i) {
+    public static int lo(long i) {
         return lo((int) i);
     }
 
-    public int uhi(long i) {
+    public static int uhi(long i) {
         return hi((int) (i >> 32));
     }
 
-    public int ulo(long i) {
+    public static int ulo(long i) {
         return lo((int) (i >> 32));
     }
 
@@ -102,7 +92,7 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
         return Ints.numberOfEffectiveSignedBits(value) <= 19;
     }
 
-    public int setswNumberOfInstructions(int imm) {
+    public static int setswNumberOfInstructions(int imm) {
         if (0 <= imm && lo(imm) == 0) {
             return 1;
         } else if (-4096 <= imm && imm <= 4095) {
@@ -114,13 +104,23 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
         }
     }
 
-    public int setuwNumberOfInstructions(int imm) {
+    public static int setuwNumberOfInstructions(int imm) {
         if (lo(imm) == 0) {
             return 1;
         } else if (0 <= imm && imm <= 4095) {
             return 1;
         } else {
             return 2;
+        }
+    }
+
+    @Override
+    protected void emitPadding(int numberOfBytes) throws AssemblyException {
+        if ((numberOfBytes & 0x3) != 0) {
+            throw new AssemblyException("Cannot pad instruction stream with a number of bytes not divisble by 4");
+        }
+        for (int i = 0; i < numberOfBytes >> 2; i++) {
+            nop();
         }
     }
 

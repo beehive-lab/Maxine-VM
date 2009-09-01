@@ -98,7 +98,7 @@ public final class MiscWordLabel extends ValueLabel {
     public void updateText() {
         final Word miscWord = value().asWord();
         final String hexString = miscWord.toHexString();
-        final MonitorScheme monitorScheme = maxVM().bootImage().vmConfiguration().monitorScheme();
+        final MonitorScheme monitorScheme = maxVM().bootImage().vmConfiguration.monitorScheme();
         if (monitorScheme instanceof ModalMonitorScheme) {
             teleJavaMonitor = null;
             if (modalLockWordDecoder == null) {

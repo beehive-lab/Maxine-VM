@@ -255,7 +255,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // We set an offset to that last argument (relative to the new stack pointer) and iterate over the arguments in
             // reverse order, from last to first.
 
-            int jitCallerStackOffset = SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer() + adapterFrameSize;
+            int jitCallerStackOffset = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + adapterFrameSize;
             for (int i = parameterLocations.length - 1; i > 0;  i--) {
                 final Kind parameterKind = parametersKinds[i];
                 adaptParameter(parameterKind, parameterLocations[i], jitCallerStackOffset);
@@ -273,7 +273,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Note that the adapter does not save the callee frame pointer nor the return address on the stack. Instead, it exploits the
             // pushing of a register window by the callee to save these in local registers:  the frame pointer is already in a local register;
             // the caller's address is saved in the SAVED_CALLER_ADDRESS register. Note that this is only for calls from JIT.
-            final int stackAmountInBytes = jitCallerStackOffset - SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+            final int stackAmountInBytes = jitCallerStackOffset - SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
 
             // Return to the JITed caller. The frame adapter saved the call address in local register SAVED_CALLER_ADDRESS.
             assembler().bindLabel(adapterReturnPoint);
@@ -283,7 +283,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
-            final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+            final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
             if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
                 assembler().ldx(optimizedCodeStackPointer, jitStackOffset32, longScratchRegister);
                 assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
@@ -445,7 +445,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             return targetABI.alignFrameSize(parameterSize +
                 Word.size() +
                 SPARCJitStackFrameLayout.FLOATING_POINT_TEMP_AREA_SIZE +
-                SPARCStackFrameLayout.minStackFrameSize());
+                SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE);
         }
 
         /**
@@ -457,7 +457,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         @Override
         protected void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPoint, Label methodEntryPoint) {
             final int adapterFrameSize = adapterFrameSize(parametersKinds, optimizedABI().targetABI());
-            int stackOffset = SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+            int stackOffset = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
             final int ripSaveAreaOffset =  SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA - Word.size();
 
             assert SPARCAssembler.isSimm13(adapterFrameSize);

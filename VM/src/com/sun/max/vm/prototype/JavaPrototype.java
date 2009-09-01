@@ -25,6 +25,7 @@ import static com.sun.max.annotate.SURROGATE.Static.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -56,8 +57,8 @@ public class JavaPrototype extends Prototype {
     private final Set<MaxPackage> loadedMaxPackages = new HashSet<MaxPackage>();
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
-    private final Map<ClassActor, Class> classActorMap = new HashMap<ClassActor, Class>();
-    private final Map<Class, ClassActor> javaClassMap = new HashMap<Class, ClassActor>();
+    private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
+    private final Map<Class, ClassActor> javaClassMap = new ConcurrentHashMap<Class, ClassActor>();
     private final Map<Method, MethodActor> javaMethodMap = new HashMap<Method, MethodActor>();
     private final Map<Constructor, MethodActor> javaConstructorMap = new HashMap<Constructor, MethodActor>();
     private final Map<Field, FieldActor> javaFieldMap = new HashMap<Field, FieldActor>();
@@ -424,19 +425,17 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection class for the specified class actor
      */
     public Class toJava(ClassActor classActor) {
-        synchronized (classActorMap) {
-            Class javaClass = classActorMap.get(classActor);
-            if (javaClass == null) {
-                try {
-                    javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
-                } catch (NoClassDefFoundError noClassDefFoundError) {
-                    // try again with the prototype class loader.
-                    javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
-                }
-                classActorMap.put(classActor, javaClass);
+        Class javaClass = classActorMap.get(classActor);
+        if (javaClass == null) {
+            try {
+                javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
+            } catch (NoClassDefFoundError noClassDefFoundError) {
+                // try again with the prototype class loader.
+                javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
             }
-            return javaClass;
+            classActorMap.put(classActor, javaClass);
         }
+        return javaClass;
     }
 
     /**

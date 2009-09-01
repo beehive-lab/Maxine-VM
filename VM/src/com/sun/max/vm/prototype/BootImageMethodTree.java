@@ -33,15 +33,15 @@ import com.sun.max.vm.prototype.CompiledPrototype.Link.*;
 /**
  * A mechanism for {@linkplain #saveTree(DataOutputStream, IterableWithLength) saving},
  * {@linkplain #loadTree(DataInputStream) loading} and
- * {@linkplain #printTree(com.sun.max.vm.prototype.BinaryImageMethodTree.Node, boolean, PrintWriter, boolean) printing}
+ * {@linkplain #printTree(Node, boolean, PrintWriter, boolean) printing}
  * the causality spanning-tree of the {@linkplain CompiledPrototype#links() method graph} in an
- * {@linkplain BinaryImageGenerator image}.
+ * {@linkplain BootImageGenerator image}.
  *
  * @author Doug Simon
  */
-public final class BinaryImageMethodTree {
+public final class BootImageMethodTree {
 
-    private BinaryImageMethodTree() {
+    private BootImageMethodTree() {
     }
 
     /**
@@ -260,7 +260,7 @@ public final class BinaryImageMethodTree {
 
     private static final Option<Integer> TRACE = options.newIntegerOption("trace", 1,
             "selects the trace level of the tool");
-    private static final Option<File> INPUT_FILE = options.newFileOption("in", BinaryImageGenerator.getDefaultBootImageMethodTreeFilePath(),
+    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getDefaultBootImageMethodTreeFilePath(),
             "the file from which to load the graph");
     private static final Option<File> OUTPUT_FILE = options.newFileOption("out", getDefaultOutputFile(),
             "the file to which the graph is printed");
@@ -272,7 +272,7 @@ public final class BinaryImageMethodTree {
            "show help message and exits.");
 
     private static File getDefaultOutputFile() {
-        return new File(BinaryImageGenerator.getDefaultBootImageMethodTreeFilePath().getAbsolutePath() + ".txt");
+        return new File(BootImageGenerator.getDefaultBootImageMethodTreeFilePath().getAbsolutePath() + ".txt");
     }
 
     /**

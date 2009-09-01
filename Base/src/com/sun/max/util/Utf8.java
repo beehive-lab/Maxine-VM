@@ -178,11 +178,23 @@ public final class Utf8 {
         }
     }
 
+    /**
+     * Reads a 0-terminated UTF8 encoded string from a given stream.
+     *
+     * @param inputStream the stream to read from
+     * @return the String constructed from the UTF8 encoded chars read from {@code inputStream}, omitting the terminating 0
+     */
     public static String readString(InputStream inputStream) throws IOException, Utf8Exception {
         final byte[] utf8Data = readZeroTerminatedBytes(inputStream);
         return Utf8.utf8ToString(false, utf8Data);
     }
 
+    /**
+     * Writes a 0-terminated UTF8 encoded string to a given stream.
+     *
+     * @param inputStream the stream to read from
+     * @param string the String to be written
+     */
     public static void writeString(OutputStream outputStream, String string) throws IOException {
         outputStream.write(stringToUtf8(string));
         outputStream.write((byte) 0);
