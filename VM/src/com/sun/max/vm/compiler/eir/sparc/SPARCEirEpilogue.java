@@ -59,7 +59,7 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         final GPR scratchRegister1 = GPR.L1;
         final GPR scratchRegister2 = GPR.L2;
         final int wordSize = Word.size();
-        final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+        final int trapStateOffset =  SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
         int offset = trapStateOffset;
         // Setup return address -- to enable stack walker
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, returnAddressRegister);

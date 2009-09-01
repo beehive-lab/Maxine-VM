@@ -66,7 +66,7 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
         return new TargetABI<GPR, FPR>(registerRoleAssignment, callEntryPoint,
                         integerIncomingParameterRegisters, integerOutgoingParameterRegisters, floatingPointParameterRegisters,
                         useRegisterWindows, callPushesReturnAddress,
-                        SPARCStackFrameLayout.STACK_FRAME_ALIGNMENT, SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer());
+                        SPARCStackFrameLayout.STACK_FRAME_ALIGNMENT, SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT);
     }
 
     @PROTOTYPE_ONLY

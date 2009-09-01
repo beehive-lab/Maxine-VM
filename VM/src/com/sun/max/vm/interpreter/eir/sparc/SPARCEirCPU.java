@@ -173,7 +173,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         writeRegister(abi.safepointLatchRegister(), new WordValue(vmThreadLocals));
 
         // Make sure our stack layout conform to the ABI.
-        final Address sp = topSP.asPointer().minus(SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer()).roundedUpBy(16 * Word.size());
+        final Address sp = topSP.asPointer().minus(SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT).roundedUpBy(16 * Word.size());
         stack.setSP(sp);
         writeRegister(abi.stackPointer(), new WordValue(sp));
     }
@@ -282,7 +282,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
             return slot.offset;
         }
         final int frameSize = interpreter.frame().method().frameSize();
-        return -frameSize + slot.offset + SPARCStackFrameLayout.minStackFrameSize();
+        return -frameSize + slot.offset + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;
     }
 
     @Override
