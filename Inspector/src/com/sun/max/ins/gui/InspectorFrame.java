@@ -21,7 +21,6 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.beans.*;
 
 import javax.swing.*;
@@ -123,7 +122,6 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
         inspector.inspectorClosing();
     }
 
-
     private InspectorAction frameClosingAction;
     private InternalFrameListener frameClosingListener;
 
@@ -141,45 +139,5 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
         };
         addInternalFrameListener(frameClosingListener);
     }
-
-    /**
-     * Records the last position of the mouse when it was over a component. This is used in positioning newly
-     * created internal frames.
-     */
-    public static final class TitleBarListener implements AWTEventListener {
-
-        private TitleBarListener() {
-        }
-
-        private static Point recentMouseLocationOnScreen = new Point(100, 100);
-
-        public static Point recentMouseLocationOnScreen() {
-            return recentMouseLocationOnScreen;
-        }
-
-        public void eventDispatched(AWTEvent event) {
-            if (event instanceof MouseEvent && event.getSource() != null) {
-                final MouseEvent mouseEvent = (MouseEvent) event;
-                recentMouseLocationOnScreen = getLocationOnScreen(mouseEvent);
-            }
-        }
-
-        private static Point getLocationOnScreen(MouseEvent mouseEvent) {
-            try {
-                final Component source = (Component) mouseEvent.getSource();
-                final Point eventLocationOnScreen = source.getLocationOnScreen();
-                eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
-                return eventLocationOnScreen;
-            } catch (IllegalComponentStateException e) {
-                return new Point(0, 0);
-            }
-
-        }
-
-        public static void initialize() {
-            Toolkit.getDefaultToolkit().addAWTEventListener(new TitleBarListener(), AWTEvent.MOUSE_EVENT_MASK);
-        }
-    }
-
 
 }
