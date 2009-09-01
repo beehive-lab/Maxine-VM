@@ -31,7 +31,7 @@ import com.sun.max.vm.stack.*;
  * @author Laurent Daynes
  * @author Paul Caprioli
  */
-public class SPARCStackFrameLayout {
+public final class SPARCStackFrameLayout {
 
     /**
      * Stack frame alignment requirement. 16 bytes on Solaris SPARC 64-bit.
@@ -158,5 +158,8 @@ public class SPARCStackFrameLayout {
 
     public static void setCallerFramePointer(Pointer framePointer, Pointer callerFramePointer) {
         unbias(framePointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
+    }
+
+    private SPARCStackFrameLayout() {
     }
 }
