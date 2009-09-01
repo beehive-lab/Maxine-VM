@@ -148,34 +148,6 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    public CiRegister getCRarg(int i) {
-        // TODO: move this out of the compiler interface
-        switch(i) {
-            case 0:
-                return X86.rdi;
-            case 1:
-                return X86.rsi;
-            case 2:
-                return X86.rdx;
-            case 3:
-                return X86.rcx;
-            case 4:
-                return X86.r8;
-            case 5:
-                return X86.r9;
-        }
-        Util.unimplemented();
-        throw Util.shouldNotReachHere();
-    }
-
-    public CiRegister getJRarg(int i) {
-        // TODO: move this out of the compiler interface
-        if (i == 5) {
-            return getCRarg(0);
-        }
-        return getCRarg(i + 1);
-    }
-
     ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
         if (method instanceof MaxRiMethod) {
             return ((MaxRiMethod) method).asClassMethodActor(operation);
@@ -293,10 +265,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public CiRegister javaCallingConventionReceiverRegister() {
-        return X86.rax;
-    }
-
     public int markOffsetInBytes() {
         throw Util.unimplemented();
     }
@@ -389,17 +357,17 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int runtimeCallingConvention(CiKind[] signature, CiLocation[] regs) {
-        return javaCallingConvention(signature, regs, true);
+    public CiLocation[] runtimeCallingConvention(CiKind[] signature) {
+        return javaCallingConvention(signature, true);
     }
 
-    public int javaCallingConvention(CiKind[] types, CiLocation[] result, boolean outgoing) {
-
-        assert result.length == types.length;
+    public CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing) {
+        CiLocation[] result = new CiLocation[types.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        int currentStackSlot = 1;
+        int currentStackSlot = 0;
+        final int wordSize = VMConfiguration.hostOrTarget().platform.wordWidth().numberOfBytes;
 
         for (int i = 0; i < types.length; i++) {
 
@@ -417,9 +385,9 @@ public class MaxRiRuntime implements RiRuntime {
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
                         if (kind == CiKind.Long) {
-                            result[i] = new CiLocation(register, register);
+                            result[i] = new CiLocation(kind, register, register);
                         } else {
-                            result[i] = new CiLocation(register);
+                            result[i] = new CiLocation(kind, register);
                         }
                     }
                     break;
@@ -429,9 +397,9 @@ public class MaxRiRuntime implements RiRuntime {
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
                         if (kind == CiKind.Float) {
-                            result[i] = new CiLocation(register);
+                            result[i] = new CiLocation(kind, register);
                         } else {
-                            result[i] = new CiLocation(register, register);
+                            result[i] = new CiLocation(kind, register, register);
                         }
                     }
                     break;
@@ -441,16 +409,12 @@ public class MaxRiRuntime implements RiRuntime {
             }
 
             if (result[i] == null) {
-                result[i] = new CiLocation(currentStackSlot);
-                currentStackSlot++; //+= kind.size;
+                result[i] = new CiLocation(kind, currentStackSlot, wordSize, !outgoing);
+                currentStackSlot += wordSize;
             }
         }
 
-        return currentStackSlot - 1;
-    }
-
-    public CiLocation receiverLocation() {
-        return new CiLocation(generalParameterRegisters[0]);
+        return result;
     }
 
     public int sizeofBasicObjectLock() {
@@ -498,7 +462,7 @@ public class MaxRiRuntime implements RiRuntime {
     public CiRegister returnRegister(CiKind object) {
 
         if (object == CiKind.Void) {
-            return CiRegister.noreg;
+            return CiRegister.None;
         }
 
         if (object == CiKind.Float || object == CiKind.Double) {
@@ -518,6 +482,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public CiRegister threadRegister() {
+        return X86.r14;
+    }
+
+    public CiRegister getSafepointRegister() {
         return X86.r14;
     }
 

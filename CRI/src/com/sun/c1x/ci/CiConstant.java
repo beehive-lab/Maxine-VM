@@ -29,7 +29,7 @@ package com.sun.c1x.ci;
  *
  * @author Ben L. Titzer
  */
-public class CiConstant {
+public final class CiConstant extends CiValue {
 
     public static final CiConstant NULL_OBJECT = new CiConstant(CiKind.Object, null);
     public static final CiConstant INT_MINUS_1 = forInt(-1);

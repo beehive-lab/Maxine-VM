@@ -111,7 +111,7 @@ public class MoveResolver {
             }
         }
 
-        BitMap usedRegs = new BitMap(allocator.nofRegs + allocator().frameMap().argcount() + allocator().maxSpills());
+        BitMap usedRegs = new BitMap(allocator.nofRegs + allocator().maxSpills());
         usedRegs.clearAll();
         if (!multipleReadsAllowed) {
             for (i = 0; i < mappingFrom.size(); i++) {

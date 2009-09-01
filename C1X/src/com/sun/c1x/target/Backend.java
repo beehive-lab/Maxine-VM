@@ -40,9 +40,9 @@ public abstract class Backend {
         this.target = target;
     }
 
-    public abstract FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack);
+    public abstract FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler(C1XCompiler compiler);
+    public abstract AbstractAssembler newAssembler(C1XCompiler compiler, int frameSize);
     public abstract GlobalStubEmitter newGlobalStubEmitter(C1XCompiler compiler);
 }

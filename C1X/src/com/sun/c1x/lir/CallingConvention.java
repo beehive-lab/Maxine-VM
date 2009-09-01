@@ -22,9 +22,11 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
+
 /**
- * This class represents a calling convention instance for a particular method invocation and describes
- * the ABI for outgoing arguments and the return value, both runtime calls and Java calls.
+ * This class represents a calling convention instance for a particular method invocation and describes the ABI for
+ * outgoing arguments and the return value, both runtime calls and Java calls.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
@@ -32,16 +34,46 @@ import java.util.*;
  */
 public class CallingConvention {
 
+    private int overflowArgumentsSize;
     private List<LIROperand> arguments;
-    private int reservedStackSlots;
+    private CiLocation[] locations;
 
-    public CallingConvention(List<LIROperand> arguments, int reservedStackSlots) {
-        this.arguments = arguments;
-        this.reservedStackSlots = reservedStackSlots;
+    public CallingConvention(CiLocation[] locations) {
+        this.locations = locations;
+        arguments = new ArrayList<LIROperand>(locations.length);
+        for (CiLocation l : locations) {
+            arguments.add(locationToOperand(l));
+
+            if (l.isStackOffset()) {
+                overflowArgumentsSize = Math.max(overflowArgumentsSize, l.stackOffset + l.stackSize);
+            }
+        }
+    }
+
+    private static LIROperand locationToOperand(CiLocation location) {
+        if (location.isStackOffset()) {
+            int stackOffset = location.stackOffset;
+            if (location.callerStack) {
+                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
+            } else {
+                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
+            }
+        } else if (location.second == null) {
+            assert location.first != null;
+            return new LIRLocation(location.kind, location.first);
+        } else {
+            assert location.first != null;
+            return new LIRLocation(location.kind, location.first, location.second);
+        }
+    }
+
+    public CiLocation[] locations() {
+        return locations;
     }
 
     /**
      * Returns the number of arguments.
+     *
      * @return the number of arguments
      */
     public int length() {
@@ -50,7 +82,9 @@ public class CallingConvention {
 
     /**
      * Get the LIROperand representing the argument at the specified index.
-     * @param i the index into the arguments
+     *
+     * @param i
+     *            the index into the arguments
      * @return the LIROperand representing the argument
      */
     public LIROperand at(int i) {
@@ -59,19 +93,15 @@ public class CallingConvention {
 
     /**
      * Gets a list of the LIROperands for all the arguments.
+     *
      * @return the list of arguments
      */
-    public List<LIROperand> args() {
+    public List<LIROperand> arguments() {
         return arguments;
     }
 
-    public int reservedStackSlots() {
-        return reservedStackSlots;
-    }
-
-    public void setArg(int i, LIROperand stack) {
-        arguments.set(i, stack);
-
+    public int overflowArgumentsSize() {
+        return overflowArgumentsSize;
     }
 
     @Override
@@ -81,9 +111,7 @@ public class CallingConvention {
         for (LIROperand op : arguments) {
             result.append(op.toString() + " ");
         }
-        result.append("reservedStack=" + reservedStackSlots);
         result.append("]");
         return result.toString();
     }
-
 }

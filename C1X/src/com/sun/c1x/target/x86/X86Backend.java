@@ -61,12 +61,12 @@ public class X86Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
-        return new X86FrameMap(compilation, method, numberOfLocks, maxStack);
+    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks) {
+        return new X86FrameMap(compilation, method, numberOfLocks);
     }
     @Override
-    public AbstractAssembler newAssembler(C1XCompiler compiler) {
-        return new X86MacroAssembler(compiler, compiler.target);
+    public AbstractAssembler newAssembler(C1XCompiler compiler, int frameSize) {
+        return new X86MacroAssembler(compiler, compiler.target, frameSize);
     }
 
     @Override

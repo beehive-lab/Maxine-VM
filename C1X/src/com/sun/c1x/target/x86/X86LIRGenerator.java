@@ -424,7 +424,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand result = rlockResult(x);
-            lir().callRuntime(entry, resultReg, cc.args(), null);
+            lir().callRuntime(entry, resultReg, cc.arguments(), null);
             lir().move(resultReg, result);
         } else if (x.opcode() == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap
@@ -807,13 +807,18 @@ public final class X86LIRGenerator extends LIRGenerator {
             // of the C convention we can process the java args trivially into C
             // args without worry of overwriting during the xfer
 
-            src.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(0)));
-            srcPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(1)));
-            dst.loadItemForce(X86FrameMap.asOopOpr(compilation.runtime.getJRarg(2)));
-            dstPos.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(3)));
-            length.loadItemForce(X86FrameMap.asOpr(compilation.runtime.getJRarg(4)));
 
-            tmp = X86FrameMap.asOpr(compilation.runtime.getJRarg(5));
+            CiLocation[] locations = compilation.runtime.javaCallingConvention(new CiKind[]{CiKind.Object, CiKind.Int, CiKind.Object, CiKind.Int, CiKind.Int, CiKind.Int}, true);
+            assert locations[0].isSingleRegister() && locations[1].isSingleRegister();
+            assert locations[2].isSingleRegister() && locations[3].isSingleRegister();
+            assert locations[4].isSingleRegister() && locations[5].isSingleRegister();
+            src.loadItemForce(X86FrameMap.asOopOpr(locations[0].first));
+            srcPos.loadItemForce(X86FrameMap.asOpr(locations[1].first));
+            dst.loadItemForce(X86FrameMap.asOopOpr(locations[2].first));
+            dstPos.loadItemForce(X86FrameMap.asOpr(locations[3].first));
+            length.loadItemForce(X86FrameMap.asOpr(locations[4].first));
+
+            tmp = X86FrameMap.asOpr(locations[5].first);
         }
 
         setNoResult(x);
@@ -978,19 +983,19 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensionArray, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
 
-        lir().move(dimensionArray, cc.args().get(1));
+        lir().move(dimensionArray, cc.arguments().get(1));
 
 
         if (x.elementType.isLoaded()) {
-            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.args().get(0));
+            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.arguments().get(0));
         } else {
-            lir.resolveInstruction(cc.args().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
+            lir.resolveInstruction(cc.arguments().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
         }
 
         // Create a new code emit info as they must not be shared!
         CodeEmitInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
-        lir().callRuntime(CiRuntimeCall.NewMultiArray, reg, cc.args(), info2);
+        lir().callRuntime(CiRuntimeCall.NewMultiArray, reg, cc.arguments(), info2);
 
         // Save result
         LIROperand result = rlockResult(x);
@@ -1031,7 +1036,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     protected LIROperand[] runtimeArguments(CiKind... arguments) {
-        return compilation.frameMap().runtimeCallingConvention(arguments).args().toArray(new LIROperand[0]);
+        return compilation.frameMap().runtimeCallingConvention(arguments).arguments().toArray(new LIROperand[0]);
     }
 
     @Override
@@ -1207,11 +1212,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected LIROperand osrBufferPointer() {
         return Util.nonFatalUnimplemented(null);
-    }
-
-    @Override
-    protected LIROperand receiverOpr() {
-        return compilation.frameMap().receiverOpr();
     }
 
     /**

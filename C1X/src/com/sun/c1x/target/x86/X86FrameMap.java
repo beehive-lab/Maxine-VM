@@ -52,12 +52,6 @@ public class X86FrameMap extends FrameMap {
     private static final LIROperand rspOpr64 = asPointerOpr64(X86.rsp);
 
 
-    @Override
-    public CiRegister stackRegister() {
-        // TODO Retrieve this from target or runtime!
-        return X86.rsp;
-    }
-
     static LIROperand rspOpr(CiArchitecture arch) {
         if (arch.is32bit()) {
             return rspOpr32;
@@ -144,17 +138,11 @@ public class X86FrameMap extends FrameMap {
     public static CiRegister rscratch1(CiArchitecture arch) {
 
         // TODO: assert that this register is never allocated!
-        return (arch.is32bit()) ? CiRegister.noreg : X86.r11;
+        return (arch.is32bit()) ? CiRegister.None : X86.r11;
     }
 
-    public X86FrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
-        super(compilation, method, numberOfLocks, maxStack);
-    }
-
-    @Override
-    public boolean allocatableRegister(CiRegister r) {
-        // TODO: (tw) Remove this hack
-        return r != X86.rsp && r != X86.rbp && r != X86.r11;
+    public X86FrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks) {
+        super(compilation, method, numberOfLocks);
     }
 
 }

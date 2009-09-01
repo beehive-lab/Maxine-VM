@@ -684,23 +684,23 @@ public abstract class LIRAssembler {
 
 
             case Resolve:
-                resolve(CiRuntimeCall.ResolveClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveArrayClass:
-                resolve(CiRuntimeCall.ResolveArrayClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveArrayClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveStaticFields:
-                resolve(CiRuntimeCall.ResolveStaticFields, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveStaticFields, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveJavaClass:
-                resolve(CiRuntimeCall.ResolveJavaClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveJavaClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveFieldOffset:
-                resolve(CiRuntimeCall.ResolveFieldOffset, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveFieldOffset, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case Cmove:
@@ -777,7 +777,7 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void resolve(CiRuntimeCall stub, LIROperand dest, LIROperand index, LIROperand cp);
+    protected abstract void resolve(CiRuntimeCall stub, CodeEmitInfo info, LIROperand dest, LIROperand index, LIROperand cp);
 
     public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {

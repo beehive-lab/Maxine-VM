@@ -173,16 +173,24 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
-    protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] stackMap) {
+    protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
 
-        assert pos >= 0 && globalStubCall != null && stackMap != null;
+        assert pos >= 0 && globalStubCall != null;
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Global stub call: pos = %d, name = %s, stackMap.length = %d", pos, globalStubCall, stackMap.length);
+            TTY.print("Global stub call: pos = %d, name = %s", pos, globalStubCall);
+
+            if (registerMap != null) {
+                TTY.print(", registerMap.length=%d", registerMap.length);
+            }
+
+            if (stackMap != null) {
+                TTY.print(", stackMap.length=%d", stackMap.length);
+            }
         }
 
         if (targetMethod != null) {
-            targetMethod.recordGlobalStubCall(pos, globalStubCall, stackMap);
+            targetMethod.recordGlobalStubCall(pos, globalStubCall, registerMap, stackMap);
         }
     }
 
@@ -191,7 +199,7 @@ public abstract class AbstractAssembler {
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
+            TTY.println("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
         if (targetMethod != null) {
@@ -204,11 +212,23 @@ public abstract class AbstractAssembler {
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
+            TTY.println("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
         if (targetMethod != null) {
             targetMethod.recordRuntimeCall(pos, call, stackMap);
+        }
+    }
+
+    protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {
+        assert pos >= 0 && registerMap != null && stackMap != null;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.print("Safepoint: pos = %d, registerMap.length = %d, stackMap.length = %d", pos, registerMap.length, stackMap.length);
+        }
+
+        if (targetMethod != null) {
+            targetMethod.recordSafepoint(pos, registerMap, stackMap);
         }
     }
 

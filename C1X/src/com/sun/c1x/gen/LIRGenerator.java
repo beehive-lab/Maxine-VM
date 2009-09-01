@@ -403,7 +403,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitInvoke(Invoke x) {
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
 
-        List<LIROperand> argList = cc.args();
+        List<LIROperand> argList = cc.arguments();
         List<LIRItem> args = visitInvokeArguments(x);
         LIROperand receiver = LIROperandFactory.IllegalOperand;
 
@@ -419,14 +419,14 @@ public abstract class LIRGenerator extends ValueVisitor {
         loadInvokeArguments(x, args, argList);
 
         if (x.hasReceiver()) {
-            args.get(0).loadItemForce(receiverOpr());
+            args.get(0).loadItemForce(cc.at(0));
             receiver = args.get(0).result();
         }
 
 
         // emit invoke code
         boolean optimized = x.target().isLoaded() && x.target().isFinalMethod();
-        assert receiver.isIllegal() || receiver.equals(receiverOpr()) : "must match";
+        assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
@@ -1695,7 +1695,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     }
                 }
             }
-            argumentList.addAll(cc.args());
+            argumentList.addAll(cc.arguments());
         } else {
             assert args == null;
         }
@@ -2185,8 +2185,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract LIROperand osrBufferPointer();
 
     protected abstract void putObjectUnsafe(LIROperand src, LIROperand offset, LIROperand data, CiKind type, boolean isVolatile);
-
-    protected abstract LIROperand receiverOpr();
 
     protected abstract LIROperand resultRegisterFor(CiKind type, boolean callee);
 

@@ -48,7 +48,7 @@ public class LIRAddress extends LIROperand {
     public final LIROperand base;
     public final LIROperand index;
     public final Scale scale;
-    public final int displacement;
+    private final int displacement;
 
     /**
      * Creates a new LIRAddress with the specified base address, index, and basic type.
@@ -58,11 +58,7 @@ public class LIRAddress extends LIROperand {
      * @param basicType the basic type of the resulting operand
      */
     public LIRAddress(LIROperand base, LIROperand index, CiKind basicType) {
-        super(basicType);
-        this.base = base;
-        this.index = index;
-        this.scale = Scale.Times1;
-        this.displacement = 0;
+        this(base, index, Scale.Times1, 0, basicType);
     }
 
     /**
@@ -73,11 +69,7 @@ public class LIRAddress extends LIROperand {
      * @param basicType the basic type of the resulting operand
      */
     public LIRAddress(LIROperand base, int displacement, CiKind basicType) {
-        super(basicType);
-        this.base = base;
-        this.index = LIROperand.ILLEGAL;
-        this.displacement = displacement;
-        this.scale = Scale.Times1;
+        this(base, LIROperandFactory.IllegalOperand, Scale.Times1, displacement, basicType);
     }
 
     /**
@@ -189,5 +181,9 @@ public class LIRAddress extends LIROperand {
             default:
                 throw Util.shouldNotReachHere();
         }
+    }
+
+    public LIROperand createCopy(LIROperand newBase, LIROperand newIndex) {
+        return new LIRAddress(newBase, newIndex, scale, displacement, basicType);
     }
 }

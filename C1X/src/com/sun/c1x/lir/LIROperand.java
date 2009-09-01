@@ -34,22 +34,12 @@ import com.sun.c1x.util.*;
  * @author Ben L. Titzer
  */
 
-public abstract class LIROperand {
+public class LIROperand {
 
     /**
      * The illegal operand singleton instance.
      */
-    public static final LIROperand ILLEGAL = new LIRIllegal();
-
-    private static final class LIRIllegal extends LIROperand {
-        private LIRIllegal() {
-            super(CiKind.Illegal);
-        }
-        @Override
-        public String toString() {
-            return "illegal";
-        }
-    }
+    public static final LIROperand ILLEGAL = new LIROperand(CiKind.Illegal);
 
     /**
      * The basic type of this operand.
@@ -68,10 +58,6 @@ public abstract class LIROperand {
         return this == ILLEGAL;
     }
 
-    public static LIROperand illegalOpr() {
-        return ILLEGAL;
-    }
-
     public CiKind type() {
         return basicType;
     }
@@ -79,10 +65,6 @@ public abstract class LIROperand {
     // checks whether types are same
     boolean isSameType(LIROperand opr) {
         return basicType == opr.basicType;
-    }
-
-    public boolean isSameRegister(LIROperand opr) {
-        throw Util.shouldNotReachHere();
     }
 
     public boolean isRegister() {
@@ -94,7 +76,7 @@ public abstract class LIROperand {
     }
 
     public boolean isConstant() {
-        return this instanceof LIRConstant && !isIllegal();
+        return this instanceof LIRConstant;
     }
 
     public boolean isAddress() {
@@ -118,7 +100,7 @@ public abstract class LIROperand {
 
         final StringBuffer out = new StringBuffer();
         out.append("[");
-        if (isPointer()) {
+        if (isLocation()) {
             out.append(valueToString());
         } else if (isSingleStack()) {
             out.append("stack:" + singleStackIx());
@@ -147,17 +129,8 @@ public abstract class LIROperand {
         return out.toString();
     }
 
-    public boolean isPointer() {
-        // TODO to be removed
+    public boolean isLocation() {
         return !(this instanceof LIRLocation);
-    }
-
-    public boolean isFloatKind() {
-        return basicType == CiKind.Float || basicType == CiKind.Double;
-    }
-
-    public boolean isOop() {
-        return basicType == CiKind.Object;
     }
 
     public boolean isStack() {
@@ -274,7 +247,7 @@ public abstract class LIROperand {
 
     public CiRegister asRegister() {
         if (this == LIROperand.ILLEGAL) {
-            return CiRegister.noreg;
+            return CiRegister.None;
         }
 
         throw Util.shouldNotReachHere();

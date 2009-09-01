@@ -55,7 +55,7 @@ public class X86CodeGen extends CodeGen {
 
     public X86CodeGen(C0XCompilation compilation, CiTarget target) {
         super(compilation, target);
-        asm = new X86MacroAssembler(null, target);
+        asm = new X86MacroAssembler(null, target, -1);
         is64bit = target.arch.is64bit();
     }
 

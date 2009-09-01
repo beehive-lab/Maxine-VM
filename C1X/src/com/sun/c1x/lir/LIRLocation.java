@@ -53,7 +53,7 @@ public class LIRLocation extends LIROperand {
         assert basicType.size == 1;
         assert number != null;
         this.location1 = number;
-        this.location2 = CiRegister.noreg;
+        this.location2 = CiRegister.None;
         index = 0;
     }
 
@@ -69,8 +69,8 @@ public class LIRLocation extends LIROperand {
     LIRLocation(CiKind basicType, int number) {
         super(basicType);
         assert number != 0;
-        this.location1 = CiRegister.noreg;
-        this.location2 = CiRegister.noreg;
+        this.location1 = CiRegister.None;
+        this.location2 = CiRegister.None;
         this.index = number;
     }
 
@@ -150,12 +150,12 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleCpu() {
-        return !isStack() && location2 == CiRegister.noreg && location1.isCpu();
+        return !isStack() && location2 == CiRegister.None && location1.isCpu();
     }
 
     @Override
     public boolean isDoubleCpu() {
-        return !isStack() && location2 != CiRegister.noreg && location1.isCpu() && location2.isCpu();
+        return !isStack() && location2 != CiRegister.None && location1.isCpu() && location2.isCpu();
     }
 
     @Override
@@ -211,7 +211,7 @@ public class LIRLocation extends LIROperand {
 
     @Override
     public CiRegister asRegister() {
-        assert location1 == location2 || location2 == CiRegister.noreg;
+        assert location1 == location2 || location2 == CiRegister.None;
         return this.location1;
     }
 

@@ -102,7 +102,7 @@ public abstract class LIRInstruction {
                         assert indexOperand.isCpuRegister();
                     }
                     assert baseOperand.isCpuRegister();
-                    result = new LIRAddress(baseOperand, indexOperand, address.scale, address.displacement, address.basicType);
+                    result = address.createCopy(baseOperand, indexOperand);
                 } else if (base != -1) {
                     result = inst.operands.get(base);
                 }
@@ -172,7 +172,6 @@ public abstract class LIRInstruction {
 
     private OperandSlot addAddress(LIRAddress address) {
         assert address.base.isRegister();
-
 
         int baseIndex = operands.size();
         inputCount++;

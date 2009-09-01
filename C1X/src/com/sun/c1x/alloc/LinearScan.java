@@ -41,7 +41,6 @@ import com.sun.c1x.value.*;
  */
 public class LinearScan {
 
-    private int nofCpuRegs;
     private int vregBase;
     private CiRegister[] registerMapping;
     private boolean[] allocatableRegister;
@@ -132,14 +131,15 @@ public class LinearScan {
                 xmmLast = Math.max(xmmLast, r.number);
             }
         }
+        assert xmmCnt > 0 && cpuCnt > 0 && byteCnt > 0 : "missing a register kind!";
 
         int maxReg = Math.max(cpuLast, xmmLast);
         registerMapping = new CiRegister[maxReg + 1];
         allocatableRegister = new boolean[maxReg + 1];
-        for (CiRegister r : registers) {
+        for (CiRegister r : this.compilation.target.allocatableRegisters) {
             assert registerMapping[r.number] == null : "duplicate register!";
             registerMapping[r.number] = r;
-            allocatableRegister[r.number] = frameMap().allocatableRegister(r);
+            allocatableRegister[r.number] = true;
         }
 
         pdFirstByteReg = byteFirst;
@@ -150,8 +150,6 @@ public class LinearScan {
 
         pdFirstXmmReg = xmmFirst;
         pdLastXmmReg = xmmLast;
-
-        nofCpuRegs = cpuCnt;
 
         nofRegs = registerMapping.length;
 
@@ -259,14 +257,10 @@ public class LinearScan {
             maxSpills++;
         }
 
-        int result = spillSlot + nofRegs + frameMap().argcount();
+        int result = spillSlot + nofRegs;
 
-        // the class OopMapValue uses only 11 bits for storing the name of the
-        // oop location. So a stack slot bigger than 2^11 leads to an overflow
-        // that is not reported in product builds. Prevent this by checking the
-        // spill slot here (altough this value and the later used location name
-        // are slightly different)
-        if (result > 2000) {
+        // Number of stack slots limited because of stack banging.
+        if (result > compilation.target.pageSize / FrameMap.SpillSlotSize) {
             bailout("too many stack slots used");
         }
 
@@ -282,12 +276,6 @@ public class LinearScan {
             int spill = allocateSpillSlot(numberOfSpillSlots(it.type()) == 2);
             it.setCanonicalSpillSlot(spill);
             it.assignReg(spill);
-        }
-    }
-
-    void propagateSpillSlots() {
-        if (!frameMap().finalizeFrame(maxSpills())) {
-            throw new CiBailout("frame too large");
         }
     }
 
@@ -1341,7 +1329,7 @@ public class LinearScan {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
-            if (move.resultOpr().isDoubleCpu() && move.inOpr().isPointer()) {
+            if (move.resultOpr().isDoubleCpu() && move.inOpr().isLocation()) {
                 final LIRAddress pointer = move.inOpr().asAddressPtr();
                 if (pointer != null) {
                     if (pointer.base().isValid()) {
@@ -2150,12 +2138,12 @@ public class LinearScan {
             reg = vmRegForOperand(operandForInterval(interval));
             interval.setCachedVmReg(reg);
         }
-        assert reg == vmRegForOperand(operandForInterval(interval)) : "wrong cached value";
+        assert reg.equals(vmRegForOperand(operandForInterval(interval))) : "wrong cached value";
         return reg;
     }
 
     CiLocation vmRegForOperand(LIROperand opr) {
-        assert opr.isOop() : "currently only implemented for oop operands";
+        assert opr.basicType == CiKind.Object : "currently only implemented for oop operands";
         return frameMap().regname(opr);
     }
 
@@ -2315,65 +2303,13 @@ public class LinearScan {
 
     // some methods used to check correctness of debug information
 
-    void assertNoRegisterValuesScope(List<ScopeValue> values) {
-        if (values == null) {
-            return;
-        }
 
-        for (int i = 0; i < values.size(); i++) {
-            ScopeValue value = values.get(i);
-
-            if (value.isLocation()) {
-                Location location = ((LocationValue) value).location();
-                assert location.where() == Location.Where.OnStack : "value is in register";
-            }
-        }
-    }
-
-    void assertNoRegisterValuesMonitor(List<MonitorValue> values) {
-        if (values == null) {
-            return;
-        }
-
-        for (int i = 0; i < values.size(); i++) {
-            MonitorValue value = values.get(i);
-
-            if (value.owner().isLocation()) {
-                Location location = ((LocationValue) value.owner()).location();
-                assert location.where() == Location.Where.OnStack : "owner is in register";
-            }
-            assert value.basicLock().where() == Location.Where.OnStack : "basicLock is in register";
-        }
-    }
-
-    void assertEqual(Location l1, Location l2) {
-        assert l1.where() == l2.where() && l1.type() == l2.type() && l1.offset() == l2.offset() : "";
-    }
-
-    void assertEqual(ScopeValue v1, ScopeValue v2) {
-        if (v1.isLocation()) {
-            assert v2.isLocation() : "";
-            assertEqual(((LocationValue) v1).location(), ((LocationValue) v2).location());
-        } else if (v1.isConstantInt()) {
-            assert v2.isConstantInt() : "";
-            assert ((ConstantIntValue) v1).value() == ((ConstantIntValue) v2).value() : "";
-        } else if (v1.isConstantDouble()) {
-            assert v2.isConstantDouble() : "";
-            assert ((ConstantDoubleValue) v1).value() == ((ConstantDoubleValue) v2).value() : "";
-        } else if (v1.isConstantLong()) {
-            assert v2.isConstantLong() : "";
-            assert ((ConstantLongValue) v1).value() == ((ConstantLongValue) v2).value() : "";
-        } else if (v1.isConstantOop()) {
-            assert v2.isConstantOop() : "";
-            assert ((ConstantOopWriteValue) v1).value() == ((ConstantOopWriteValue) v2).value() : "";
+    void assertEqual(CiValue m1, CiValue m2) {
+        if (m1 == null) {
+            assert m2 == null;
         } else {
-            Util.shouldNotReachHere();
+            assert m1.equals(m2);
         }
-    }
-
-    void assertEqual(MonitorValue m1, MonitorValue m2) {
-        assertEqual(m1.owner(), m2.owner());
-        assertEqual(m1.basicLock(), m2.basicLock());
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
@@ -2475,7 +2411,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id());
 
-        OopMap map = new OopMap();
+        OopMap map = new OopMap(compilation.frameMap(), compilation.frameMap().frameSize(), compilation.target);
 
         // Check if this is a patch site.
         boolean isPatchInfo = false;
@@ -2515,17 +2451,19 @@ public class LinearScan {
                     assert interval.canonicalSpillSlot() >= nofRegs : "no spill slot assigned";
                     assert interval.assignedReg() < nofRegs : "interval is on stack :  so stack slot is registered twice";
 
-                    map.setOop(frameMap().slotRegname(interval.canonicalSpillSlot() - nofRegs));
+                    map.setOop(frameMap().objectSlotRegname(interval.canonicalSpillSlot() - nofRegs));
                 }
             }
         }
 
         // add oops from lock stack
+        // TODO: check what to do here!
+        /*
         assert info.stack() != null : "CodeEmitInfo must always have a stack";
         int locksCount = info.stack().locksSize();
         for (int i = 0; i < locksCount; i++) {
             map.setOop(frameMap().monitorObjectRegname(i));
-        }
+        }*/
 
         return map;
     }
@@ -2565,14 +2503,6 @@ public class LinearScan {
         }
     }
 
-    // frequently used constants
-    ConstantOopWriteValue oopNullScopeValue = new ConstantOopWriteValue(null);
-    ConstantIntValue intM1ScopeValue = new ConstantIntValue(-1);
-    ConstantIntValue int0ScopeValue = new ConstantIntValue(0);
-    ConstantIntValue int1ScopeValue = new ConstantIntValue(1);
-    ConstantIntValue int2ScopeValue = new ConstantIntValue(2);
-    LocationValue illegalValue = new LocationValue(new Location());
-    private ScopeValue[] scopeValueCache;
     int pdFirstCpuReg;
     int pdLastCpuReg;
     int pdFirstByteReg;
@@ -2580,83 +2510,32 @@ public class LinearScan {
     int pdFirstXmmReg;
     int pdLastXmmReg;
 
-    void initComputeDebugInfo() {
-        // cache for frequently used scope values
-        // (cpu registers and stack slots)
-        scopeValueCache = new ScopeValue[(nofCpuRegs + frameMap().argcount() + maxSpills()) * 2];
+    CiLocation locationForMonitorIndex(int monitorIndex) {
+        return frameMap().locationForMonitor(monitorIndex);
     }
 
-    MonitorValue locationForMonitorIndex(int monitorIndex) {
-        Location[] loc = new Location[1];
-
-        if (!frameMap().locationForMonitorObject(monitorIndex, loc)) {
-            bailout("too large frame");
-        }
-        ScopeValue objectScopeValue = new LocationValue(loc[0]);
-
-        if (!frameMap().locationForMonitorLock(monitorIndex, loc)) {
-            bailout("too large frame");
-        }
-        return new MonitorValue(objectScopeValue, loc[0]);
-    }
-
-    LocationValue locationForName(int name, Location.LocationType locType) {
-        Location[] loc = new Location[1];
-        if (!frameMap().locationsForSlot(name, locType, loc)) {
-            bailout("too large frame");
-        }
-        return new LocationValue(loc[0]);
-    }
-
-    int appendScopeValueForConstant(LIROperand opr, List<ScopeValue> scopeValues) {
+    int appendScopeValueForConstant(LIROperand opr, List<CiValue> scopeValues) {
         assert opr.isConstant() : "should not be called otherwise";
 
         LIRConstant c = opr.asConstantPtr();
         CiKind t = c.type();
         switch (t) {
-            case Object: {
-                Object value = c.asObject();
-                if (value == null) {
-                    scopeValues.add(oopNullScopeValue);
-                } else {
-                    scopeValues.add(new ConstantOopWriteValue(c.asObject()));
-                }
-                return 1;
-            }
-
+            case Object: // fall through
             case Int: // fall through
             case Float: {
-                int value = c.asIntBits();
-                switch (value) {
-                    case -1:
-                        scopeValues.add(intM1ScopeValue);
-                        break;
-                    case 0:
-                        scopeValues.add(int0ScopeValue);
-                        break;
-                    case 1:
-                        scopeValues.add(int1ScopeValue);
-                        break;
-                    case 2:
-                        scopeValues.add(int2ScopeValue);
-                        break;
-                    default:
-                        scopeValues.add(new ConstantIntValue(c.asIntBits()));
-                        break;
-                }
+                scopeValues.add(c.value);
                 return 1;
             }
 
             case Long: // fall through
             case Double: {
                 if (compilation.target.arch.hiWordOffsetInBytes > compilation.target.arch.loWordOffsetInBytes) {
-                    scopeValues.add(new ConstantIntValue(c.asIntHiBits()));
-                    scopeValues.add(new ConstantIntValue(c.asIntLoBits()));
+                    scopeValues.add(CiConstant.forInt(c.asIntHiBits()));
+                    scopeValues.add(CiConstant.forInt(c.asIntLoBits()));
                 } else {
-                    scopeValues.add(new ConstantIntValue(c.asIntLoBits()));
-                    scopeValues.add(new ConstantIntValue(c.asIntHiBits()));
+                    scopeValues.add(CiConstant.forInt(c.asIntLoBits()));
+                    scopeValues.add(CiConstant.forInt(c.asIntHiBits()));
                 }
-
                 return 2;
             }
 
@@ -2666,115 +2545,62 @@ public class LinearScan {
         }
     }
 
-    int appendScopeValueForOperand(LIROperand opr, List<ScopeValue> scopeValues) {
+    int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIx();
-            boolean isOop = opr.isOopRegister();
-            int cacheIdx = (stackIdx + nofCpuRegs) * 2 + (isOop ? 1 : 0);
-
-            ScopeValue sv = scopeValueCache[cacheIdx];
-            if (sv == null) {
-                Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
-                sv = locationForName(stackIdx, locType);
-                scopeValueCache[cacheIdx] = sv;
-            }
-
-            // check if cached value is correct
-            assertEqual(sv, locationForName(stackIdx, isOop ? Location.LocationType.Oop : Location.LocationType.Normal));
-
-            scopeValues.add(sv);
+            //boolean isOop = opr.isOopRegister();
+            CiLocation location = new CiLocation(opr.basicType, stackIdx, FrameMap.SpillSlotSize, false);
+            scopeValues.add(location);
+//            if (isOop) {
+//                oopValues.add(location);
+//            }
             return 1;
 
         } else if (opr.isSingleCpu()) {
-            boolean isOop = opr.isOopRegister();
-            int cacheIdx = opr.cpuRegnr() * 2 + (isOop ? 1 : 0);
-
-            ScopeValue sv = scopeValueCache[cacheIdx];
-            if (sv == null) {
-                Location.LocationType locType = isOop ? Location.LocationType.Oop : Location.LocationType.Normal;
-                CiLocation rname = frameMap().regname(opr);
-                sv = new LocationValue(Location.newRegLoc(locType, rname));
-                scopeValueCache[cacheIdx] = sv;
-            }
-
-            // check if cached value is correct
-            assertEqual(sv, new LocationValue(Location.newRegLoc(isOop ? Location.LocationType.Oop : Location.LocationType.Normal, frameMap().regname(opr))));
-
-            scopeValues.add(sv);
+            //boolean isOop = opr.isOopRegister();
+            CiLocation location = new CiLocation(opr.basicType, opr.asRegister());
+            scopeValues.add(location);
+//            if (isOop) {
+//                oopValues.add(location);
+//            }
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            CiLocation rname = opr.asRegister().asVMReg();
-            LocationValue sv = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rname));
-
-            scopeValues.add(sv);
+            CiLocation location = new CiLocation(opr.basicType, opr.asRegister());
+            scopeValues.add(location);
             return 1;
 
         } else {
             // double-size operands
 
-            ScopeValue first;
-            ScopeValue second;
+            CiValue first = null;
+            CiValue second = null;
 
             if (opr.isDoubleStack()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    Location[] loc1 = new Location[1];
-                    Location.LocationType locType = opr.type() == CiKind.Long ? Location.LocationType.Long : Location.LocationType.Double;
-                    if (!frameMap().locationsForSlot(opr.doubleStackIx(), locType, loc1, null)) {
-                        bailout("too large frame");
-                    }
-                    // Does this reverse on x86 vs. sparc?
-                    first = new LocationValue(loc1[0]);
-                    second = int0ScopeValue;
+                    first = new CiLocation(opr.basicType, opr.doubleStackIx(), FrameMap.SpillSlotSize * 2, false);
                 } else {
-                    Location[] loc1 = new Location[1];
-                    Location[] loc2 = new Location[1];
-                    if (!frameMap().locationsForSlot(opr.doubleStackIx(), Location.LocationType.Normal, loc1, loc2)) {
-                        bailout("too large frame");
-                    }
-                    first = new LocationValue(loc1[0]);
-                    second = new LocationValue(loc2[0]);
+                    Util.shouldNotReachHere();
                 }
 
             } else if (opr.isDoubleCpu()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
-                    first = new LocationValue(Location.newRegLoc(Location.LocationType.Long, rnameFirst));
-                    second = int0ScopeValue;
+                    first = new CiLocation(opr.basicType, opr.asRegister());
                 } else {
-                    CiLocation rnameFirst = opr.asRegisterLo().asVMReg();
-                    CiLocation rnameSecond = opr.asRegisterHi().asVMReg();
-
-                    if (compilation.target.arch.hiWordOffsetInBytes < compilation.target.arch.loWordOffsetInBytes) {
-                        // lo/hi and swapped relative to first and second, so swap them
-                        CiLocation tmp = rnameFirst;
-                        rnameFirst = rnameSecond;
-                        rnameSecond = tmp;
-                    }
-
-                    first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
-                    second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
+                    Util.shouldNotReachHere();
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.asRegisterLo() == opr.asRegisterHi() : "assumed in calculation";
-                CiLocation rnameFirst = opr.asRegister().asVMReg();
-                first = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameFirst));
-                // %%% This is probably a waste but we'll keep things as they were for now
-                if (true) {
-                    CiLocation rnameSecond = nextLocation(rnameFirst);
-                    second = new LocationValue(Location.newRegLoc(Location.LocationType.Normal, rnameSecond));
-                }
+                first = new CiLocation(opr.basicType, opr.asRegister());
 
             } else {
                 Util.shouldNotReachHere();
-                first = null;
-                second = null;
             }
 
-            assert first != null && second != null : "must be set";
+            assert first != null : "must be set";
             // The convention the interpreter uses is that the second local
             // holds the first raw word of the native double representation.
             // This is actually reasonable, since locals and stack arrays
@@ -2787,11 +2613,7 @@ public class LinearScan {
         }
     }
 
-    private CiLocation nextLocation(CiLocation rnameFirst) {
-        return Util.nonFatalUnimplemented(null);
-    }
-
-    int appendScopeValue(int opId, Value value, List<ScopeValue> scopeValues) {
+    int appendScopeValue(int opId, Value value, List<CiValue> scopeValues) {
         if (value != null) {
             LIROperand opr = value.operand();
             Constant con = null;
@@ -2843,7 +2665,7 @@ public class LinearScan {
             }
         } else {
             // append a dummy value because real value not needed
-            scopeValues.add(illegalValue);
+            scopeValues.add(CiLocation.InvalidLocation);
             return 1;
         }
     }
@@ -2867,14 +2689,14 @@ public class LinearScan {
         // initialize these to null.
         // If we don't need deopt info or there are no locals, expressions or monitors,
         // then these get recorded as no information and avoids the allocation of 0 length arrays.
-        List<ScopeValue> locals = null;
-        List<ScopeValue> expressions = null;
-        List<MonitorValue> monitors = null;
+        List<CiValue> locals = null;
+        List<CiValue> expressions = null;
+        List<CiLocation> monitors = null;
 
         // describe local variable values
         int nofLocals = curScope.method.maxLocals();
         if (nofLocals > 0) {
-            locals = new ArrayList<ScopeValue>(nofLocals);
+            locals = new ArrayList<CiValue>(nofLocals);
 
             int pos = 0;
             while (pos < nofLocals) {
@@ -2901,7 +2723,7 @@ public class LinearScan {
 
         int nofStack = stackEnd - stackBegin;
         if (nofStack > 0) {
-            expressions = new ArrayList<ScopeValue>(nofStack);
+            expressions = new ArrayList<CiValue>(nofStack);
 
             int pos = stackBegin;
             while (pos < stackEnd) {
@@ -2916,7 +2738,7 @@ public class LinearScan {
         assert locksBegin <= locksEnd : "error in scope iteration";
         int nofLocks = locksEnd - locksBegin;
         if (nofLocks > 0) {
-            monitors = new ArrayList<MonitorValue>(nofLocks);
+            monitors = new ArrayList<CiLocation>(nofLocks);
             for (int i = locksBegin; i < locksEnd; i++) {
                 monitors.add(locationForMonitorIndex(i));
             }
@@ -3017,7 +2839,7 @@ public class LinearScan {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.inOpr();
                 LIROperand dst = move.resultOpr();
-                if (dst == src || !dst.isPointer() && !src.isPointer() && src.equals(dst)) {
+                if (dst == src || !dst.isLocation() && !src.isLocation() && src.equals(dst)) {
                     instructions.set(j, null);
                     hasDead = true;
                 }
@@ -3042,8 +2864,6 @@ public class LinearScan {
 
     void assignRegNum() {
         // TIMELINEARSCAN(timerAssignRegNum);
-
-        initComputeDebugInfo();
         IntervalWalker iw = initComputeOopMaps();
 
         int numBlocks = blockCount();
@@ -3075,8 +2895,9 @@ public class LinearScan {
         if (compilation().hasExceptionHandlers()) {
             resolveExceptionHandlers();
         }
+
         // fill in number of spill slots into frameMap
-        propagateSpillSlots();
+        frameMap().finalizeFrame(maxSpills());
 
         printIntervals("After X86Register Allocation");
         printLir(1, "LIR after register allocation:", true);
@@ -3452,6 +3273,6 @@ public class LinearScan {
     }
 
     static int getAnyreg() {
-        return CiRegister.noreg.number;
+        return CiRegister.None.number;
     }
 }
