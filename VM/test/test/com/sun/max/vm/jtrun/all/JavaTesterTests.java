@@ -58,7 +58,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -86,7 +86,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -258,7 +258,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // ("") ==
+        // ("") == 
             runString = "(\"\")";
             if (!"".equals(jtt.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -5840,19 +5840,91 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_bytecode_BC_multianewarray() {
-        JavaTesterRunScheme.begin("jtt.bytecode.BC_multianewarray");
+    static void jtt_bytecode_BC_multianewarray01() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_multianewarray01");
         String runString = null;
         try {
         // (0) == 0
             runString = "(0)";
-            if (0 != BC_multianewarray01.test(0)) {
+            if (0 != jtt.bytecode.BC_multianewarray01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // (1) == 1
             runString = "(1)";
-            if (1 != BC_multianewarray01.test(1)) {
+            if (1 != jtt.bytecode.BC_multianewarray01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_bytecode_BC_multianewarray02() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_multianewarray02");
+        String runString = null;
+        try {
+        // (0) == 0
+            runString = "(0)";
+            if (0 != jtt.bytecode.BC_multianewarray02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 1
+            runString = "(1)";
+            if (1 != jtt.bytecode.BC_multianewarray02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_bytecode_BC_multianewarray03() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_multianewarray03");
+        String runString = null;
+        try {
+        // (1) == 4
+            runString = "(1)";
+            if (4 != jtt.bytecode.BC_multianewarray03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 8
+            runString = "(2)";
+            if (8 != jtt.bytecode.BC_multianewarray03.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == 12
+            runString = "(3)";
+            if (12 != jtt.bytecode.BC_multianewarray03.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_bytecode_BC_multianewarray04() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_multianewarray04");
+        String runString = null;
+        try {
+        // (1) == 41
+            runString = "(1)";
+            if (41 != jtt.bytecode.BC_multianewarray04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 81
+            runString = "(2)";
+            if (81 != jtt.bytecode.BC_multianewarray04.test(2)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -13975,6 +14047,52 @@ public class JavaTesterTests {
         // (25) == ok0
             runString = "(25)";
             if (!"ok0".equals(jtt.micro.LoopSwitch01.test(25))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_micro_Matrix01() {
+        JavaTesterRunScheme.begin("jtt.micro.Matrix01");
+        String runString = null;
+        try {
+        // (0) == 8
+            runString = "(0)";
+            if (8 != jtt.micro.Matrix01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 34
+            runString = "(1)";
+            if (34 != jtt.micro.Matrix01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 152
+            runString = "(2)";
+            if (152 != jtt.micro.Matrix01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == 204
+            runString = "(3)";
+            if (204 != jtt.micro.Matrix01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (4) == 1547
+            runString = "(4)";
+            if (1547 != jtt.micro.Matrix01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (5) == 42
+            runString = "(5)";
+            if (42 != jtt.micro.Matrix01.test(5)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
