@@ -189,7 +189,7 @@ public class MaxineTesterConfiguration {
         imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
+        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
         imageConfig("java", "-run=com.sun.max.vm.run.java");
 
         maxvmConfig("std");

@@ -48,7 +48,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.template.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A collection of objects that represent the compiled target code
@@ -195,24 +194,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final int stopPosition(int stopIndex) {
         return StopPositions.get(stopPositions, stopIndex);
-    }
-
-    /**
-     * Determines if a given stop denotes a call whose return type is a {@linkplain Kind#REFERENCE reference} type.
-     *
-     * @param stopIndex an index into the {@link #stopPositions()} array
-     */
-    public final boolean isReferenceCall(int stopIndex) {
-        return StopPositions.isReferenceCall(stopPositions, stopIndex);
-    }
-
-    /**
-     * Determines if a given stop denotes a native function call.
-     *
-     * @param stopIndex an index into the {@link #stopPositions()} array
-     */
-    public final boolean isNativeFunctionCall(int stopIndex) {
-        return StopPositions.isNativeFunctionCall(stopPositions, stopIndex);
     }
 
     /**
@@ -799,20 +780,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return IrTraceObserver.class;
     }
 
-    public final boolean contains(final Builtin builtin, boolean defaultResult) {
-        return defaultResult;
-    }
-
-    public final int count(final Builtin builtin, int defaultResult) {
-        return defaultResult;
-    }
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
-    }
-
-    public Pointer homogeneousCallEntryPoint() {
-        return abi().callEntryPoint().in(this);
     }
 
     public abstract void patchCallSite(int callOffset, Word callEntryPoint);
@@ -921,10 +890,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return -1;
     }
 
-    public boolean isAtSafepoint(Pointer instructionPointer) {
-        return findSafepointIndex(instructionPointer) >= 0;
-    }
-
     /**
      * Gets the target code position for a machine code instruction address.
      *
@@ -934,7 +899,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         -1 if {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will
      *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
      */
-    public int targetCodePositionFor(Pointer instructionPointer) {
+    public final int targetCodePositionFor(Pointer instructionPointer) {
         final int targetCodePosition = instructionPointer.minus(codeStart).toInt();
         if (targetCodePosition >= 0 && targetCodePosition < code.length) {
             return targetCodePosition;
@@ -960,7 +925,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
             final int callPosition = stopPosition(stopIndex);
-            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || isNativeFunctionCall(stopIndex))) {
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
                 closestCallPosition = callPosition;
             }
         }
@@ -1031,6 +996,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
 
         return stopIndexWithClosestPosition;
+    }
+
+    @Override
+    public boolean contains(Builtin builtin, boolean defaultResult) {
+        return defaultResult;
+    }
+
+    @Override
+    public int count(Builtin builtin, int defaultResult) {
+        return defaultResult;
     }
 
     /**

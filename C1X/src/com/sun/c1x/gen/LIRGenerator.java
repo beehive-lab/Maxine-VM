@@ -673,7 +673,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         throw Util.shouldNotReachHere();
     }
 
-    private XirArgument toXirArgument(Value i) {
+    XirArgument toXirArgument(Value i) {
         return XirArgument.forInternalObject(i.operand());
     }
 
@@ -698,7 +698,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    private void emitXir(XirSnippet snippet) {
+    void emitXir(XirSnippet snippet) {
 
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
@@ -726,12 +726,12 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitStoreField(StoreField x) {
 
 
-        XirGenerator xirGenerator = compilation.xirGenerator;
+        //XirGenerator xirGenerator = compilation.xirGenerator;
 
-        final XirSnippet snippet = xirGenerator.genPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
-        if (snippet != null) {
-            emitXir(snippet);
-        } else {
+        //final XirSnippet snippet = xirGenerator.genPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
+        //if (snippet != null) {
+        //    emitXir(snippet);
+        //} else {
 
             boolean needsPatching = x.needsPatching();
             boolean isVolatile = x.isLoaded() && x.isVolatile();
@@ -816,7 +816,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (isVolatile && compilation.runtime.isMP()) {
                 lir.membar();
             }
-        }
+       // }
     }
 
     @Override

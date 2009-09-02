@@ -81,6 +81,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     protected final DynamicCompilerScheme jitCompiler;
 
     /**
+     * The C1X compiler.
+     */
+    protected DynamicCompilerScheme c1xCompiler;
+
+    /**
      * The optimizing compiler, if any.
      */
     protected final CompilerScheme optimizingCompiler;
@@ -260,9 +265,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
             } else if (CompiledPrototype.c1xCompile(classMethodActor)) {
-                final DynamicCompilerScheme result = new C1XCompilerScheme(vmConfiguration());
-                result.initialize(Phase.PROTOTYPING);
-                return result;
+                synchronized (this) {
+                    if (c1xCompiler == null) {
+                        c1xCompiler = new C1XCompilerScheme(vmConfiguration());
+                        c1xCompiler.initialize(Phase.PROTOTYPING);
+                    }
+                    return c1xCompiler;
+                }
             }
 
             return prototypeCompiler;
