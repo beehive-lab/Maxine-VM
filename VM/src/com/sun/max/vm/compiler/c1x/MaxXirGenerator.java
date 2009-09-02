@@ -211,12 +211,9 @@ public class MaxXirGenerator extends XirGenerator {
             XirArgument interfaceID = XirArgument.forInt(methodActor.holder().id);
             XirArgument methodIndex = XirArgument.forInt(methodActor.iIndexInInterface());
             return new XirSnippet(pair.resolved, receiver, interfaceID, methodIndex);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(method));
-            return new XirSnippet(pair.unresolved, receiver, guard);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field));
-        return new XirSnippet(templates.unresolved, null, null, receiver, value, guard);
+        XirArgument guard = XirArgument.forObject(guardFor(method));
+        return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
     @Override
@@ -226,12 +223,9 @@ public class MaxXirGenerator extends XirGenerator {
             VirtualMethodActor methodActor = ((MaxRiMethod) method).asVirtualMethodActor("invokevirtual");
             XirArgument vtableIndex = XirArgument.forInt(methodActor.vTableIndex());
             return new XirSnippet(pair.resolved, receiver, vtableIndex);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(method));
-            return new XirSnippet(pair.unresolved, receiver, guard);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field));
-        return new XirSnippet(templates.unresolved, receiver, guard);
+        XirArgument guard = XirArgument.forObject(guardFor(method));
+        return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
     @Override
@@ -260,10 +254,9 @@ public class MaxXirGenerator extends XirGenerator {
         if (field.isLoaded()) {
             XirArgument offset = XirArgument.forInt(field.offset());
             return new XirSnippet(pair.resolved, receiver, offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(pair.unresolved, receiver, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
     @Override
@@ -272,10 +265,9 @@ public class MaxXirGenerator extends XirGenerator {
         if (field.isLoaded()) {
             XirArgument offset = XirArgument.forInt(field.offset());
             return new XirSnippet(pair.resolved, receiver, value, offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(pair.unresolved, receiver, value, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, value, guard);
     }
 
     @Override
@@ -285,10 +277,9 @@ public class MaxXirGenerator extends XirGenerator {
             XirArgument offset = XirArgument.forInt(field.offset());
             Object tuple = ((MaxRiField) field).fieldActor.holder().staticTuple();
             return new XirSnippet(template.resolved, XirArgument.forObject(tuple), offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(template.unresolved, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(template.unresolved, guard);
     }
 
     @Override
@@ -307,12 +298,9 @@ public class MaxXirGenerator extends XirGenerator {
     public XirSnippet genNewInstance(RiType type) {
         if (type.isLoaded() && type.isInitialized()) {
             return new XirSnippet(newInstanceTemplate.resolved, XirArgument.forObject(hubFor(type)));
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(type));
-            return new XirSnippet(newInstanceTemplate.unresolved, guard);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(field));
-        return new XirSnippet(template.unresolved, guard);
+        XirArgument guard = XirArgument.forObject(guardFor(type));
+        return new XirSnippet(newInstanceTemplate.unresolved, guard);
     }
 
     private DynamicHub hubFor(RiType type) {
@@ -325,10 +313,9 @@ public class MaxXirGenerator extends XirGenerator {
         if (elementType.isLoaded()) {
             Object hub = hubFor(elementType.arrayOf());
             return new XirSnippet(pair.resolved, XirArgument.forObject(hub));
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(elementType));
-            return new XirSnippet(pair.unresolved, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(elementType));
+        return new XirSnippet(pair.unresolved, guard);
     }
 
     @Override
@@ -344,10 +331,9 @@ public class MaxXirGenerator extends XirGenerator {
             }
             XirArgument hub = XirArgument.forObject(hubFor(type));
             return new XirSnippet(template, receiver, hub);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(type));
-            return new XirSnippet(checkcastForInterfaceTemplate.unresolved, receiver, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(type));
+        return new XirSnippet(checkcastForInterfaceTemplate.unresolved, receiver, guard);
     }
 
     @Override
@@ -363,10 +349,9 @@ public class MaxXirGenerator extends XirGenerator {
             }
             XirArgument hub = XirArgument.forObject(hubFor(type));
             return new XirSnippet(template, receiver, hub);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(type));
-            return new XirSnippet(instanceofForInterfaceTemplate.unresolved, receiver, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(type));
+        return new XirSnippet(instanceofForInterfaceTemplate.unresolved, receiver, guard);
     }
 
     @Override
@@ -385,10 +370,9 @@ public class MaxXirGenerator extends XirGenerator {
         XirPair pair = templateArray[method.signatureType().returnBasicType().ordinal()];
         if (method.isLoaded()) {
             return new XirSnippet(pair.resolved, XirArgument.forWord(0));
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(method));
-            return new XirSnippet(pair.unresolved, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(method));
+        return new XirSnippet(pair.unresolved, guard);
     }
 
 

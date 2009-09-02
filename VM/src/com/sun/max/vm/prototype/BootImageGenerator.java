@@ -28,7 +28,6 @@ import java.util.zip.*;
 
 import test.com.sun.max.vm.compiler.c1x.*;
 
-import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
