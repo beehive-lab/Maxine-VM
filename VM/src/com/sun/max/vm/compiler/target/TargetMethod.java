@@ -198,24 +198,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Determines if a given stop denotes a call whose return type is a {@linkplain Kind#REFERENCE reference} type.
-     *
-     * @param stopIndex an index into the {@link #stopPositions()} array
-     */
-    public final boolean isReferenceCall(int stopIndex) {
-        return StopPositions.isReferenceCall(stopPositions, stopIndex);
-    }
-
-    /**
-     * Determines if a given stop denotes a native function call.
-     *
-     * @param stopIndex an index into the {@link #stopPositions()} array
-     */
-    public final boolean isNativeFunctionCall(int stopIndex) {
-        return StopPositions.isNativeFunctionCall(stopPositions, stopIndex);
-    }
-
-    /**
      * Gets the {@linkplain #referenceMaps() frame reference map} for a stop position denoted by a given index into
      * {@link #stopPositions()}.
      *
@@ -921,10 +903,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return -1;
     }
 
-    public boolean isAtSafepoint(Pointer instructionPointer) {
-        return findSafepointIndex(instructionPointer) >= 0;
-    }
-
     /**
      * Gets the target code position for a machine code instruction address.
      *
@@ -934,7 +912,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         -1 if {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will
      *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
      */
-    public int targetCodePositionFor(Pointer instructionPointer) {
+    public final int targetCodePositionFor(Pointer instructionPointer) {
         final int targetCodePosition = instructionPointer.minus(codeStart).toInt();
         if (targetCodePosition >= 0 && targetCodePosition < code.length) {
             return targetCodePosition;
@@ -960,7 +938,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfCalls; stopIndex++) {
             final int callPosition = stopPosition(stopIndex);
-            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || isNativeFunctionCall(stopIndex))) {
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition && (!nativeFunctionCall || StopPositions.isNativeFunctionCall(stopPositions, stopIndex))) {
                 closestCallPosition = callPosition;
             }
         }
