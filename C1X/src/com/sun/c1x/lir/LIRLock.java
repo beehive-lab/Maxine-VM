@@ -42,7 +42,7 @@ public class LIRLock extends LIRInstruction {
      * @param stub
      */
     public LIRLock(LIROpcode opcode, LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info, false, stub, 0, 3, obj, lock, hdr, scratch);
+        super(opcode, LIROperandFactory.IllegalLocation, info, false, stub, 0, 3, obj, lock, hdr, scratch);
     }
 
     /**
@@ -101,15 +101,7 @@ public class LIRLock extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        hdrOpr().print(out);
-        out.print(" ");
-        objOpr().print(out);
-        out.print(" ");
-        lockOpr().print(out);
-        if (scratchOpr().isValid()) {
-            scratchOpr().print(out);
-            out.print(" ");
-        }
+        super.printInstruction(out);
         out.printf("[lbl:%s]", stub.entry.toString());
     }
 }

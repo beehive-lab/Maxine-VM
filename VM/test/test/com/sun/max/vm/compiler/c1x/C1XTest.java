@@ -30,7 +30,6 @@ import com.sun.c0x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -548,18 +547,6 @@ public class C1XTest {
     }
 
     private static CiTarget createTarget() {
-        // TODO: configure architecture according to host platform
-        final CiArchitecture arch = CiArchitecture.findArchitecture("amd64");
-
-
-        // configure the allocatable registers
-        List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
-        for (CiRegister r : arch.registers) {
-            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
-                allocatable.add(r);
-            }
-        }
-        CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
-        return new CiTarget(arch, allocRegs, arch.registers, 1024, true);
+        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
     }
 }

@@ -20,9 +20,7 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -34,59 +32,19 @@ import com.sun.c1x.util.*;
  * @author Ben L. Titzer
  */
 
-public abstract class LIROperand {
-
-    /**
-     * The illegal operand singleton instance.
-     */
-    public static final LIROperand ILLEGAL = new LIRIllegal();
-
-    private static final class LIRIllegal extends LIROperand {
-        private LIRIllegal() {
-            super(CiKind.Illegal);
-        }
-        @Override
-        public String toString() {
-            return "illegal";
-        }
-    }
-
-    /**
-     * The basic type of this operand.
-     */
-    public final CiKind basicType;
+public class LIROperand {
+    public final CiKind kind;
 
     protected LIROperand(CiKind basicType) {
-        this.basicType = basicType;
+        this.kind = basicType;
     }
 
-    public boolean isValid() {
-        return this != ILLEGAL;
-    }
-
-    public boolean isIllegal() {
-        return this == ILLEGAL;
-    }
-
-    public static LIROperand illegalOpr() {
-        return ILLEGAL;
-    }
-
-    public CiKind type() {
-        return basicType;
-    }
-
-    // checks whether types are same
-    boolean isSameType(LIROperand opr) {
-        return basicType == opr.basicType;
-    }
-
-    public boolean isSameRegister(LIROperand opr) {
-        throw Util.shouldNotReachHere();
+    public final boolean isIllegal() {
+        return this == LIROperandFactory.IllegalLocation;
     }
 
     public boolean isRegister() {
-        return isCpuRegister() || isXmmRegister();
+        return false;
     }
 
     public boolean isVirtual() {
@@ -94,19 +52,15 @@ public abstract class LIROperand {
     }
 
     public boolean isConstant() {
-        return this instanceof LIRConstant && !isIllegal();
+        return this instanceof LIRConstant;
     }
 
     public boolean isAddress() {
         return this instanceof LIRAddress;
     }
 
-    public void print(LogStream out) {
-        out.print(this.toString());
-    }
-
-    public String valueToString() {
-        throw Util.shouldNotReachHere();
+    public boolean isLocation() {
+        return !(this instanceof LIRLocation);
     }
 
     @Override
@@ -118,8 +72,8 @@ public abstract class LIROperand {
 
         final StringBuffer out = new StringBuffer();
         out.append("[");
-        if (isPointer()) {
-            out.append(valueToString());
+        if (isLocation()) {
+            //out.append(valueToString());
         } else if (isSingleStack()) {
             out.append("stack:" + singleStackIx());
         } else if (isDoubleStack()) {
@@ -141,24 +95,12 @@ public abstract class LIROperand {
             out.append("Unknown Operand");
         }
         if (!isIllegal()) {
-            out.append(String.format("|%c", this.type().basicChar));
+            out.append(String.format("|%c", this.kind.basicChar));
         }
         out.append("]");
         return out.toString();
     }
 
-    public boolean isPointer() {
-        // TODO to be removed
-        return !(this instanceof LIRLocation);
-    }
-
-    public boolean isFloatKind() {
-        return basicType == CiKind.Float || basicType == CiKind.Double;
-    }
-
-    public boolean isOop() {
-        return basicType == CiKind.Object;
-    }
 
     public boolean isStack() {
         return false;
@@ -169,10 +111,6 @@ public abstract class LIROperand {
     }
 
     public boolean isDoubleStack() {
-        return false;
-    }
-
-    public boolean isCpuRegister() {
         return false;
     }
 
@@ -192,10 +130,6 @@ public abstract class LIROperand {
         return false;
     }
 
-    public boolean isXmmRegister() {
-        return false;
-    }
-
     public boolean isSingleXmm() {
         return false;
     }
@@ -206,26 +140,6 @@ public abstract class LIROperand {
 
     public boolean isVirtualRegister() {
         return false;
-    }
-
-    public boolean isOopRegister() {
-        return false;
-    }
-
-    public boolean isLastUse() {
-        return false;
-    }
-
-    public boolean isFpuStackOffset() {
-        return false;
-    }
-
-    public LIROperand makeLastUse() {
-        throw new Error(getClass().getSimpleName() + " does not have a makeLastUse");
-    }
-
-    public LIROperand makeFpuStackOffset() {
-        throw new Error(getClass().getSimpleName() + " does not have a makeFpuStackOffset");
     }
 
     public int stackIx() {
@@ -256,25 +170,9 @@ public abstract class LIROperand {
         throw new Error(getClass().getSimpleName() + " does not have a vregNumber");
     }
 
-    public LIRConstant asConstantPtr() {
-        if (this instanceof LIRConstant) {
-            return (LIRConstant) this;
-        } else {
-            return null;
-        }
-    }
-
-    public LIRAddress asAddressPtr() {
-        if (this instanceof LIRAddress) {
-            return (LIRAddress) this;
-        } else {
-            return null;
-        }
-    }
-
     public CiRegister asRegister() {
-        if (this == LIROperand.ILLEGAL) {
-            return CiRegister.noreg;
+        if (this == LIROperandFactory.IllegalLocation) {
+            return CiRegister.None;
         }
 
         throw Util.shouldNotReachHere();
@@ -294,60 +192,5 @@ public abstract class LIROperand {
             return asRegisterLo();
         }
         return asRegister();
-    }
-
-    public int asInt() {
-        throw Util.unimplemented();
-    }
-
-    public long asLong() {
-        throw Util.unimplemented();
-    }
-
-    boolean isOopPointer() {
-        return type() == CiKind.Object;
-    }
-
-    boolean isFloat() {
-        CiKind t = type();
-        return (t == CiKind.Float) || (t == CiKind.Double);
-    }
-
-    public LIRAddress asAddress() {
-        if (this instanceof LIRAddress) {
-            return (LIRAddress) this;
-        }
-        return null;
-    }
-
-    public CiKind typeRegister() {
-        assert this.isRegister();
-
-        if (type() == CiKind.Boolean || type() == CiKind.Char || type() == CiKind.Byte) {
-            return CiKind.Int;
-        }
-
-        return type();
-    }
-
-    public void assignPhysicalRegister(LIROperand colorLirOpr) {
-        Util.shouldNotReachHere();
-    }
-
-    public RegisterOrConstant asRegisterOrConstant() {
-        if (isRegister()) {
-            return new RegisterOrConstant(asRegister());
-        } else if (this.isConstant()) {
-            final LIRConstant c = (LIRConstant) this;
-            if (c.value.basicType == CiKind.Int) {
-                return new RegisterOrConstant(c.value.asInt());
-            } else if (c.value.basicType == CiKind.Object) {
-                return new RegisterOrConstant(c.value.asObject());
-            } else {
-                throw Util.shouldNotReachHere();
-            }
-        } else {
-            throw Util.shouldNotReachHere();
-        }
     }
 }
