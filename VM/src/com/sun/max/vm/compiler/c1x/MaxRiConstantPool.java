@@ -336,7 +336,7 @@ public class MaxRiConstantPool implements RiConstantPool {
             // the resolution can occur without side effects
             return runtime.canonicalRiType(constant.resolve(constantPool, cpi), this);
         }
-        return new MaxRiType(this, constant); // unresolved
+        return new MaxRiType(this, constant, cpi); // unresolved
     }
 
     private boolean attemptResolution(ResolvableConstant constant) {

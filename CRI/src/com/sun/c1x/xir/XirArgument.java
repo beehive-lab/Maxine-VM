@@ -63,6 +63,10 @@ public class XirArgument {
         return new XirArgument(CiConstant.forInt(x));
     }
 
+    public static XirArgument forWord(long x) {
+        return new XirArgument(CiConstant.forWord(x));
+    }
+
     public static XirArgument forObject(Object o) {
         return new XirArgument(CiConstant.forObject(o));
     }

@@ -21,7 +21,7 @@
 package com.sun.c1x.ci;
 
 import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.xir.XirRuntime;
+import com.sun.c1x.xir.XirGenerator;
 
 /**
  * The <code>CiCompiler</code> class represents a compiler instance which has been
@@ -36,7 +36,7 @@ public abstract class CiCompiler {
      * @param method the method to compile
      * @return a {@link CiResult result} representing the compilation result
      */
-    public abstract CiResult compileMethod(RiMethod method, XirRuntime xirRuntime);
+    public abstract CiResult compileMethod(RiMethod method, XirGenerator xirGenerator);
 
     /**
      * Compile the specified method.
@@ -44,5 +44,5 @@ public abstract class CiCompiler {
      * @param osrBCI the bytecode index of the entrypoint for an on-stack-replacement
      * @return a {@link CiResult result} representing the compilation result
      */
-    public abstract CiResult compileMethod(RiMethod method, int osrBCI, XirRuntime xirRuntime);
+    public abstract CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator);
 }
