@@ -2545,13 +2545,8 @@ public class X86LIRAssembler extends LIRAssembler {
         } else {
             // Resolved method
             masm.movl(rscratch1, method.interfaceID());
-<<<<<<< local
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, rscratch1, receiver.asRegister(), rscratch1);
-            masm.addq(rscratch1, method.iIndexInInterface() * compilation.target.arch.wordSize);
-=======
             masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, info, rscratch1, receiver.asRegister(), rscratch1);
-            masm.addq(rscratch1, method.iIndexInInterface() * 8);
->>>>>>> other
+            masm.addq(rscratch1, method.iIndexInInterface() * compilation.target.arch.wordSize);
         }
 
         addCallInfoHere(info);
