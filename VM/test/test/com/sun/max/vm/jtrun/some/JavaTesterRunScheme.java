@@ -27,7 +27,7 @@ import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-
+import jtt.bytecode.BC_multianewarray01;
 
 public class JavaTesterRunScheme extends AbstractTester {
 
@@ -217,7 +217,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.bytecode.BC_lushr.class,
         jtt.bytecode.BC_lxor.class,
         jtt.bytecode.BC_monitorenter.class,
-        jtt.bytecode.BC_multianewarray.class,
+        BC_multianewarray01.class,
         jtt.bytecode.BC_new.class,
         jtt.bytecode.BC_newarray.class,
         jtt.bytecode.BC_putfield.class,
