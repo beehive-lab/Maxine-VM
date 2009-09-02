@@ -998,12 +998,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return stopIndexWithClosestPosition;
     }
 
-    @Override
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
 
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
