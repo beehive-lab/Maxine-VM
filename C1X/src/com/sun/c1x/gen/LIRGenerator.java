@@ -165,7 +165,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 info = stateFor(nc);
             }
         }
-        lir.load(new LIRAddress(array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info, LIRPatchCode.PatchNone);
+        lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info, LIRPatchCode.PatchNone);
 
     }
 
@@ -193,7 +193,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         for (int i = 0; i < args.length(); i++) {
             LIROperand src = args.at(i);
             assert !src.isIllegal() : "check";
-            CiKind t = src.type().stackType();
+            CiKind t = src.kind.stackType();
 
             LIROperand dest = newRegister(t);
             lir.move(src, dest);
@@ -233,7 +233,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             setResult(x, loadConstant(x));
         } else {
             LIROperand res = x.operand();
-            if (!res.isValid()) {
+            if (!(!res.isIllegal())) {
                 res = LIROperandFactory.basicType(x);
             }
             if (res.isConstant()) {
@@ -257,7 +257,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand result = newRegister(CiKind.Object);
-        LIROperand threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
+        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
         lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), CiKind.Object), result);
         setResult(x, result);
     }
@@ -403,12 +403,12 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitInvoke(Invoke x) {
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
 
-        List<LIROperand> argList = cc.args();
+        List<LIROperand> argList = cc.arguments();
         List<LIRItem> args = visitInvokeArguments(x);
-        LIROperand receiver = LIROperandFactory.IllegalOperand;
+        LIROperand receiver = LIROperandFactory.IllegalLocation;
 
         // setup result register
-        LIROperand resultRegister = LIROperandFactory.IllegalOperand;
+        LIROperand resultRegister = LIROperandFactory.IllegalLocation;
         if (!x.type().isVoid()) {
             resultRegister = resultRegisterFor(x.type().basicType);
         }
@@ -419,14 +419,14 @@ public abstract class LIRGenerator extends ValueVisitor {
         loadInvokeArguments(x, args, argList);
 
         if (x.hasReceiver()) {
-            args.get(0).loadItemForce(receiverOpr());
+            args.get(0).loadItemForce(cc.at(0));
             receiver = args.get(0).result();
         }
 
 
         // emit invoke code
         boolean optimized = x.target().isLoaded() && x.target().isFinalMethod();
-        assert receiver.isIllegal() || receiver.equals(receiverOpr()) : "must match";
+        assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
@@ -441,7 +441,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                     if (x.needsNullCheck()) {
                         assert x.hasReceiver();
-                        lir.nullCheck(receiver, new CodeEmitInfo(info));
+                        lir.nullCheck(receiver, info.copy());
                     }
                     lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                 } else {
@@ -458,7 +458,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 break;
         }
 
-        if (resultRegister.isValid()) {
+        if (!resultRegister.isIllegal()) {
             LIROperand result = rlockResult(x);
             lir.move(resultRegister, result);
         }
@@ -485,19 +485,19 @@ public abstract class LIRGenerator extends ValueVisitor {
             TTY.println(String.format("   ###class not loaded at load_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
         }
 
-        if (x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
+        if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
             // emit an explicit null check because the offset is too large
-            lir.nullCheck(object.result(), new CodeEmitInfo(info));
+            lir.nullCheck(object.result(), info.copy());
         }
 
         LIROperand reg = rlockResult(x, fieldType);
         LIRAddress address;
-        if (needsPatching) {
+        if (info != null && needsPatching) {
 
 
-            LIROperand tempResult = this.newRegister(CiKind.Int);
-            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
-            address = new LIRAddress(object.result(), tempResult, fieldType);
+            LIRLocation tempResult = this.newRegister(CiKind.Int);
+            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
+            address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
 
             // we need to patch the offset in the instruction so don't allow
@@ -506,7 +506,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // instruction to patch.
             //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
-            address = generateAddress(object.result(), LIROperandFactory.IllegalOperand, 0, x.offset(), fieldType);
+            address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
         }
 
         if (isVolatile) {
@@ -553,7 +553,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = emitArrayAddress(array.result(), index.result(), x.elementType(), false);
+        LIRAddress arrayAddr = emitArrayAddress((LIRLocation) array.result(), index.result(), x.elementType(), false);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
             if (useLength) {
@@ -633,7 +633,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitProfileCall(ProfileCall x) {
         // Need recv in a temporary register so it interferes with the other temporaries
-        LIROperand recv = LIROperandFactory.IllegalOperand;
+        LIROperand recv = LIROperandFactory.IllegalLocation;
         LIROperand mdo = newRegister(CiKind.Object);
         LIROperand tmp = newRegister(CiKind.Int);
         if (x.object() != null) {
@@ -649,16 +649,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitProfileCounter(ProfileCounter x) {
         LIRItem mdo = new LIRItem(x.mdo(), this);
         mdo.loadItem();
-        incrementCounter(new LIRAddress(mdo.result(), x.offset(), CiKind.Int), x.increment());
+        incrementCounter(new LIRAddress((LIRLocation) mdo.result(), x.offset(), CiKind.Int), x.increment());
     }
 
     @Override
     public void visitReturn(Return x) {
 
         if (x.type().isVoid()) {
-            lir.returnOp(LIROperandFactory.IllegalOperand);
+            lir.returnOp(LIROperandFactory.IllegalLocation);
         } else {
-            LIROperand reg = resultRegisterFor(x.type().basicType, /* callee= */true);
+            LIROperand reg = resultRegisterFor(x.type().basicType);
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(reg);
@@ -703,7 +703,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
         //final List<LIROperand> tempOperands = new ArrayList<LIROperand>();
-        LIROperand outputOperand = LIROperand.ILLEGAL;
+        LIROperand outputOperand = LIROperandFactory.IllegalLocation;
         for (int i = 0; i < snippet.arguments.length; i++) {
             XirArgument arg = snippet.arguments[i];
             if (arg != null) {
@@ -770,18 +770,18 @@ public abstract class LIRGenerator extends ValueVisitor {
                 TTY.println(String.format("   ###class not loaded at store_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
             }
 
-            if (x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
+            if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
                 // emit an explicit null check because the offset is too large
-                lir.nullCheck(object.result(), new CodeEmitInfo(info));
+                lir.nullCheck(object.result(), info.copy());
             }
 
             LIRAddress address;
-            if (needsPatching) {
+            if (info != null && needsPatching) {
 
 
-                LIROperand tempResult = this.newRegister(CiKind.Int);
-                lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), new CodeEmitInfo(info));
-                address = new LIRAddress(object.result(), tempResult, fieldType);
+                LIRLocation tempResult = this.newRegister(CiKind.Int);
+                lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
+                address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
 
                 // we need to patch the offset in the instruction so don't allow
@@ -790,7 +790,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 // instruction to patch.
                 //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
             } else {
-                address = generateAddress(object.result(), LIROperandFactory.IllegalOperand, 0, x.offset(), fieldType);
+                address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
             }
 
             if (isVolatile && compilation.runtime.isMP()) {
@@ -799,7 +799,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             if (isOop) {
                 // Do the pre-write barrier, if any.
-                preBarrier(address, needsPatching, (info != null ? new CodeEmitInfo(info) : null));
+                preBarrier(address, needsPatching, (info != null ? info.copy() : null));
             }
 
             if (isVolatile) {
@@ -910,12 +910,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         off.loadItem();
         src.loadItem();
 
-        LIROperand reg = rlockResult(x, x.basicType());
+        LIRLocation reg = rlockResult(x, x.basicType());
 
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
         }
-        getObjectUnsafe(reg, src.result(), off.result(), type, x.isVolatile());
+        getObjectUnsafe(reg, (LIRLocation) src.result(), (LIRLocation) off.result(), type, x.isVolatile());
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membar();
         }
@@ -942,7 +942,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         assert !x.hasIndex() || idx.value() == x.index() : "should match";
 
-        LIROperand baseOp = base.result();
+        LIRLocation baseOp = (LIRLocation) base.result();
 
         if (compilation.target.arch.is32bit()) {
             // XXX: what about floats and doubles and objects? (used in OSR)
@@ -960,17 +960,18 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand addr = null;
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
-            addr = new LIRAddress(baseOp, indexOp.asInt(), dstType);
+            LIRConstant constantIndexOp = (LIRConstant) indexOp;
+            addr = new LIRAddress(baseOp, constantIndexOp.asInt(), dstType);
         } else {
 
             if (compilation.target.arch.isX86()) {
-                addr = new LIRAddress(baseOp, indexOp, LIRAddress.Scale.values()[log2scale], 0, dstType);
+                addr = new LIRAddress(baseOp, (LIRLocation) indexOp, LIRAddress.Scale.values()[log2scale], 0, dstType);
 
             } else if (compilation.target.arch.isSPARC()) {
                 if (indexOp.isIllegal() || log2scale == 0) {
-                    addr = new LIRAddress(baseOp, indexOp, dstType);
+                    addr = new LIRAddress(baseOp, (LIRLocation) indexOp, dstType);
                 } else {
-                    LIROperand tmp = newRegister(CiKind.Int);
+                    LIRLocation tmp = newRegister(CiKind.Int);
                     lir.shiftLeft(indexOp, log2scale, tmp);
                     addr = new LIRAddress(baseOp, tmp, dstType);
                 }
@@ -1017,7 +1018,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarRelease();
         }
-        putObjectUnsafe(src.result(), off.result(), data.result(), type, x.isVolatile());
+        putObjectUnsafe((LIRLocation) src.result(), (LIRLocation) off.result(), data.result(), type, x.isVolatile());
     }
 
     @Override
@@ -1048,7 +1049,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        LIROperand baseOp = base.result();
+        LIRLocation baseOp = (LIRLocation) base.result();
 
         if (compilation.target.arch.is32bit()) {
             // XXX: what about floats and doubles and objects? (used in OSR)
@@ -1059,7 +1060,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 assert x.base().type().isInt() : "must be";
             }
         }
-        LIROperand indexOp = idx.result();
+        LIRLocation indexOp = (LIRLocation) idx.result();
         if (log2scale != 0) {
             // temporary fix (platform dependent code without shift on Intel would be better)
             indexOp = newRegister(CiKind.Int);
@@ -1092,7 +1093,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         lir.branchDestination(block.label());
         if (block == ir.startBlock) {
-            lir.stdEntry(LIROperandFactory.IllegalOperand);
+            lir.stdEntry(LIROperandFactory.IllegalLocation);
             setOperandsForLocals(block.end().stateAfter());
         }
 
@@ -1103,11 +1104,11 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     LIROperand forceToSpill(LIROperand value, CiKind t) {
-        assert value.isValid() : "value should not be illegal";
-        assert t.size == value.type().size : "size mismatch";
+        assert !value.isIllegal() : "value should not be illegal";
+        assert t.size == value.kind.size : "size mismatch";
         if (!value.isRegister()) {
             // force into a register
-            LIROperand r = newRegister(value.type());
+            LIROperand r = newRegister(value.kind);
             lir.move(value, r);
             value = r;
         }
@@ -1122,15 +1123,15 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        return loadConstant(LIROperandFactory.basicType(x).asConstantPtr());
+        return loadConstant((LIRConstant) LIROperandFactory.basicType(x));
     }
 
     protected LIROperand loadConstant(LIRConstant c) {
-        CiKind t = c.type();
+        CiKind t = c.kind;
         for (int i = 0; i < constants.size(); i++) {
             // XXX: linear search might be kind of slow for big basic blocks
             LIRConstant other = constants.get(i);
-            if (t == other.type()) {
+            if (t == other.kind) {
                 switch (t) {
                     case Int:
                     case Float:
@@ -1173,12 +1174,12 @@ public abstract class LIRGenerator extends ValueVisitor {
                 int takenCountOffset = md.branchTakenCountOffset(ifInstr.profiledBCI());
 
                 int notTakenCountOffset = md.branchNotTakenCountOffset(ifInstr.profiledBCI());
-                LIROperand mdReg = newRegister(CiKind.Object);
+                LIRLocation mdReg = newRegister(CiKind.Object);
                 lir.move(LIROperandFactory.oopConst(md.encoding().asObject()), mdReg);
-                LIROperand dataOffsetReg = newRegister(CiKind.Int);
+                LIRLocation dataOffsetReg = newRegister(CiKind.Int);
                 lir.cmove(lirCond(cond), LIROperandFactory.intConst(takenCountOffset), LIROperandFactory.intConst(notTakenCountOffset), dataOffsetReg);
-                LIROperand dataReg = newRegister(CiKind.Int);
-                LIROperand dataAddr = new LIRAddress(mdReg, dataOffsetReg, CiKind.Int);
+                LIRLocation dataReg = newRegister(CiKind.Int);
+                LIRAddress dataAddr = new LIRAddress(mdReg, dataOffsetReg, CiKind.Int);
                 lir.move(dataAddr, dataReg);
                 LIROperand fakeIncrValue = new LIRAddress(dataReg, 1, CiKind.Int);
                 // Use leal instead of add to avoid destroying condition codes on x86
@@ -1188,11 +1189,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected LIROperand resultRegisterFor(CiKind type) {
-        return resultRegisterFor(type, false);
-    }
 
-    protected LIROperand rlock(Value instr) {
+    protected LIRLocation rlock(Value instr) {
         // Try to lock using register in hint
         return newRegister(instr.type().basicType);
     }
@@ -1204,9 +1202,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         return reg;
     }
 
-    private LIROperand rlockResult(Instruction x, CiKind type) {
+    private LIRLocation rlockResult(Instruction x, CiKind type) {
         // does an rlock and sets result
-        LIROperand reg;
+        LIRLocation reg;
         switch (type) {
 
             // TODO (tw): Check why we need char here too?
@@ -1251,8 +1249,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore().copyLocks());
         }
-        lir.move(new LIRAddress(rcvr.result(), compilation.runtime.hubOffsetInBytes(), CiKind.Object), result, info);
-        lir.move(new LIRAddress(result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
+        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffsetInBytes(), CiKind.Object), result, info);
+        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
     }
 
     private void visitNIOCheckIndex(Intrinsic x) {
@@ -1266,20 +1264,22 @@ public abstract class LIRGenerator extends ValueVisitor {
         index.loadItem();
 
         LIROperand result = rlockResult(x);
+        LIROperand indexResult = index.result();
         if (C1XOptions.GenerateBoundsChecks) {
             CodeEmitInfo info = stateFor(x);
-            CodeStub stub = new RangeCheckStub(info, index.result(), true);
-            if (index.result().isConstant()) {
-                cmpMemInt(LIRCondition.BelowEqual, buf.result(), compilation.runtime.javaNioBufferLimitOffset(), index.result().asInt(), info);
+            CodeStub stub = new RangeCheckStub(info, indexResult, true);
+            if (indexResult.isConstant()) {
+                LIRConstant indexResultConstant = (LIRConstant) indexResult;
+                cmpMemInt(LIRCondition.BelowEqual, (LIRLocation) buf.result(), compilation.runtime.javaNioBufferLimitOffset(), indexResultConstant.asInt(), info);
                 lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub);
             } else {
-                cmpRegMem(LIRCondition.AboveEqual, index.result(), buf.result(), compilation.runtime.javaNioBufferLimitOffset(), CiKind.Int, info);
+                cmpRegMem(LIRCondition.AboveEqual, (LIRLocation) indexResult, (LIRLocation) buf.result(), compilation.runtime.javaNioBufferLimitOffset(), CiKind.Int, info);
                 lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub);
             }
-            lir.move(index.result(), result);
+            lir.move(indexResult, result);
         } else {
             // Just load the index into the result register
-            lir.move(index.result(), result);
+            lir.move(indexResult, result);
         }
     }
 
@@ -1338,7 +1338,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        LIRAddress addr = generateAddress(src.result(), off.result(), 0, 0, CiKind.Byte);
+        LIRAddress addr = generateAddress((LIRLocation) src.result(), off.result(), 0, 0, CiKind.Byte);
         lir.prefetch(addr, isStore);
 
     }
@@ -1373,7 +1373,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
                 if (right.isConstant()) {
-                    int c = right.asInt();
+                    LIRConstant rightConstant = (LIRConstant) right;
+                    int c = rightConstant.asInt();
                     if (Util.isPowerOf2(c)) {
                         // do not need tmp here
                         lir.shiftLeft(leftOp, Util.log2(c), resultOp);
@@ -1439,7 +1440,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
                 if (right.isConstant()) {
-                    int c = right.asInt();
+                    LIRConstant rightConstant = (LIRConstant) right;
+                    int c = rightConstant.asInt();
                     if (Util.isPowerOf2(c)) {
                         // do not need tmp here
                         lir.shiftLeft(leftOp, Util.log2(c), resultOp);
@@ -1476,7 +1478,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
-        LIROperand tmpOp = LIROperandFactory.IllegalOperand;
+        LIROperand tmpOp = LIROperandFactory.IllegalLocation;
         LIROperand resultOp = result;
         LIROperand leftOp = left;
         LIROperand rightOp = right;
@@ -1506,7 +1508,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.IMUL:
                 boolean didStrengthReduce = false;
                 if (right.isConstant()) {
-                    int c = right.asInt();
+                    LIRConstant rightConstant = (LIRConstant) right;
+                    int c = rightConstant.asInt();
                     if (Util.isPowerOf2(c)) {
                         // do not need tmp here
                         lir.shiftLeft(leftOp, Util.log2(c), resultOp);
@@ -1659,18 +1662,19 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert nullCheckInfo != rangeCheckInfo;
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
-            cmpMemInt(LIRCondition.BelowEqual, array, compilation.runtime.arrayLengthOffsetInBytes(), index.asInt(), nullCheckInfo);
+            LIRConstant indexConstant = (LIRConstant) index;
+            cmpMemInt(LIRCondition.BelowEqual, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
             lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub); // forward branch
         } else {
-            cmpRegMem(LIRCondition.AboveEqual, index, array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
+            cmpRegMem(LIRCondition.AboveEqual, (LIRLocation) index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
             lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub); // forward branch
         }
     }
 
-    protected final LIROperand callRuntime(CiKind[] signature, List<LIROperand> args, CiRuntimeCall l, CiKind resultType, CodeEmitInfo info) {
+    protected final LIROperand callRuntime(CiKind[] signature, List<? extends LIROperand> args, CiRuntimeCall l, CiKind resultType, CodeEmitInfo info) {
         // get a result register
-        LIROperand physReg = LIROperandFactory.IllegalOperand;
-        LIROperand result = LIROperandFactory.IllegalOperand;
+        LIROperand physReg = LIROperandFactory.IllegalLocation;
+        LIROperand result = LIROperandFactory.IllegalLocation;
         if (!resultType.isVoid()) {
             result = newRegister(resultType.basicType);
             physReg = resultRegisterFor(resultType.basicType);
@@ -1687,22 +1691,23 @@ public abstract class LIRGenerator extends ValueVisitor {
                 if (loc.isRegister()) {
                     lir.move(arg, loc);
                 } else {
-                    LIROperand addr = loc.asAddressPtr();
-                    if (addr.type() == CiKind.Long || addr.type() == CiKind.Double) {
+                    assert loc.isAddress();
+                    LIROperand addr = loc;
+                    if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
                         lir.unalignedMove(arg, addr);
                     } else {
                         lir.move(arg, addr);
                     }
                 }
             }
-            argumentList.addAll(cc.args());
+            argumentList.addAll(cc.arguments());
         } else {
             assert args == null;
         }
 
         lir.callRuntime(l, physReg, argumentList, info);
 
-        if (result.isValid()) {
+        if (!result.isIllegal()) {
             lir.move(physReg, result);
         }
         return result;
@@ -1786,7 +1791,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 TTY.println("Operand for " + instr + " = " + instr.operand());
             }
 
-            assert instr.operand().isValid() || !isUsedForValue(instr) : "operand was not set for live instruction";
+            assert (!instr.operand().isIllegal()) || !isUsedForValue(instr) : "operand was not set for live instruction";
         } finally {
             currentInstruction = prev;
         }
@@ -1797,7 +1802,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     // increment a counter returning the incremented value
-    LIROperand incrementAndReturnCounter(LIROperand base, int offset, int increment) {
+    LIROperand incrementAndReturnCounter(LIRLocation base, int offset, int increment) {
         LIRAddress counter = new LIRAddress(base, offset, CiKind.Int);
         LIROperand result = newRegister(CiKind.Int);
         lir.load(counter, result);
@@ -1829,9 +1834,10 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (loc.isRegister()) {
                 param.loadItemForce(loc);
             } else {
-                LIROperand addr = loc.asAddressPtr();
-                param.loadForStore(addr.type());
-                if (addr.type() == CiKind.Long || addr.type() == CiKind.Double) {
+                assert loc.isAddress();
+                LIROperand addr = loc;
+                param.loadForStore(addr.kind);
+                if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
                     lir.unalignedMove(param.result(), addr);
                 } else {
                     lir.move(param.result(), addr);
@@ -1845,7 +1851,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (loc.isRegister()) {
                 receiver.loadItemForce(loc);
             } else {
-                assert loc.isAddress() : "just checking";
+                assert loc.isAddress();
                 receiver.loadForStore(CiKind.Object);
                 lir.move(receiver.result(), loc);
             }
@@ -1952,7 +1958,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected final LIROperand newPointerRegister() {
+    protected final LIRLocation newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a basic type for Pointers
         if (compilation.target.arch.is64bit()) {
@@ -1962,7 +1968,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    public LIROperand newRegister(CiKind type) {
+    public LIRLocation newRegister(CiKind type) {
         int vreg = virtualRegisterNumber++;
         if (type == CiKind.Jsr) {
             type = CiKind.Int;
@@ -1971,7 +1977,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     LIROperand operandForInstruction(Value x) {
-        if (x.operand().isIllegal()) {
+        LIROperand operand = x.operand();
+        if (operand.isIllegal()) {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
@@ -1980,10 +1987,10 @@ public abstract class LIRGenerator extends ValueVisitor {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
                 x.setOperand(rlock(x));
-                instructionForOperand.put(x.operand().vregNumber(), x);
+                instructionForOperand.put(operand.vregNumber(), x);
             }
         }
-        return x.operand();
+        return operand;
     }
 
     private LIROperand operandForPhi(Phi phi) {
@@ -2007,7 +2014,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void setResult(Instruction x, LIROperand opr) {
-        assert opr.isValid() : "must set to valid value";
+        assert !opr.isIllegal() : "must set to valid value";
         assert x.operand().isIllegal() : "operand should never change";
         assert !opr.isRegister() || opr.isVirtual() : "should never set result to a physical register";
         x.setOperand(opr);
@@ -2096,7 +2103,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             } else if (value.operand().isIllegal()) {
                 // instruction doesn't have an operand yet
                 walk(value);
-                assert value.operand().isValid() : "must be evaluated now";
+                assert !value.operand().isIllegal() : "must be evaluated now";
             }
         }
     }
@@ -2131,11 +2138,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         currentInstruction = instr;
         try {
             if (instr instanceof Phi) {
-                assert instr.isLive() || !instr.operand().isValid() : "phi must be pinned or illegal";
+                assert instr.isLive() || !(!instr.operand().isIllegal()) : "phi must be pinned or illegal";
             }
             // stop walk when encounter a root
-            if (instr.isLive() && (!(instr instanceof Phi)) || instr.operand().isValid()) {
-                assert instr.operand().isValid() || instr instanceof Constant : "this root has not yet been visited";
+            if (instr.isLive() && (!(instr instanceof Phi)) || (!instr.operand().isIllegal())) {
+                assert (!instr.operand().isIllegal()) || instr instanceof Constant : "this root has not yet been visited";
             } else {
                 assert instr.subst() == instr : "shouldn't have missed substitution";
                 instr.accept(this);
@@ -2151,11 +2158,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract boolean canStoreAsConstant(Value i, CiKind type);
 
-    protected abstract void cmpMemInt(LIRCondition condition, LIROperand base, int disp, int c, CodeEmitInfo info);
+    protected abstract void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, CodeEmitInfo info);
 
-    protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIROperand base, int disp, CiKind type, CodeEmitInfo info);
+    protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, CodeEmitInfo info);
 
-    protected abstract LIRAddress emitArrayAddress(LIROperand arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
+    protected abstract LIRAddress emitArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
 
     protected abstract LIROperand exceptionPcOpr();
 
@@ -2170,11 +2177,11 @@ public abstract class LIRGenerator extends ValueVisitor {
      * @param type the basic type of the elements of the array
      * @return the LIRAddress representing the array element's location
      */
-    protected abstract LIRAddress generateAddress(LIROperand base, LIROperand index, int shift, int disp, CiKind type);
+    protected abstract LIRAddress generateAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type);
 
-    protected abstract void getObjectUnsafe(LIROperand dest, LIROperand src, LIROperand offset, CiKind type, boolean isVolatile);
+    protected abstract void getObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
 
-    protected abstract LIROperand getThreadPointer();
+    protected abstract LIRLocation getThreadPointer();
 
     protected abstract LIROperand getThreadTemp();
 
@@ -2184,19 +2191,22 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract LIROperand osrBufferPointer();
 
-    protected abstract void putObjectUnsafe(LIROperand src, LIROperand offset, LIROperand data, CiKind type, boolean isVolatile);
+    protected abstract void putObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
 
-    protected abstract LIROperand receiverOpr();
+    protected LIRLocation resultRegisterFor(CiKind type) {
+        CiRegister returnRegister = compilation.runtime.returnRegister(type);
+        assert compilation.target.arch.is64bit();
+        if (type.size == 2) {
+            return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);
+        }
+        return LIROperandFactory.singleLocation(type, returnRegister);
+    }
 
-    protected abstract LIROperand resultRegisterFor(CiKind type, boolean callee);
-
-    protected abstract LIROperand rlockByte(CiKind type);
+    protected abstract LIRLocation rlockByte(CiKind type);
 
     protected abstract LIROperand rlockCalleeSaved(CiKind type);
 
     protected abstract LIROperand safepointPollRegister();
-
-    protected abstract void storeStackParameter(LIROperand opr, int offsetFromSpInBytes);
 
     protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
 

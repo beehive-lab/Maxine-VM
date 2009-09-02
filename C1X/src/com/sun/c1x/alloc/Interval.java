@@ -354,7 +354,7 @@ public class Interval {
         this.assignedReg = LinearScan.getAnyreg();
         this.assignedRegHi = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperandFactory.IllegalOperand;
+        this.cachedOpr = LIROperandFactory.IllegalLocation;
         this.cachedVmReg = null; // TODO: Check if to use VMReg.Bad
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
@@ -823,10 +823,8 @@ public class Interval {
         }
 
         out.printf("%d %s ", regNum(), typeName());
-        if (opr.isValid()) {
-            out.print("\"");
-            opr.print(out);
-            out.print("\" ");
+        if (!opr.isIllegal()) {
+            out.printf("\"%s\"", opr);
         }
         out.printf("%d %d ", splitParent().regNum(), registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1);
 
