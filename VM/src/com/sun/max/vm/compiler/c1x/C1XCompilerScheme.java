@@ -73,26 +73,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
-<<<<<<< local
-
-            // configure the allocatable registers
-            List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
-            for (CiRegister r : arch.registers) {
-                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.threadRegister()) {
-                    allocatable.add(r);
-                }
-            }
-            CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
-
-            // TODO (tw): Initialize target differently
-            c1xTarget = new CiTarget(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
-            c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
             xirRuntime = new MaxXirRuntime(vmConfiguration(), c1xTarget);
-
-=======
-            xirRuntime = new MaxXirRuntime();
             c1xTarget = createTarget(c1xRuntime, vmConfiguration());
->>>>>>> other
             compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
