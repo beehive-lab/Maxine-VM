@@ -49,7 +49,7 @@ public class C1XCompilation {
     public final RiMethod method;
     public final CiStatistics stats;
     public final int osrBCI;
-    public final XirRuntime xirRuntime;
+    public final XirGenerator xirGenerator;
 
     boolean needsDebugInfo;
     boolean hasExceptionHandlers;
@@ -75,11 +75,11 @@ public class C1XCompilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirRuntime xirRuntime, RiMethod method, int osrBCI) {
+    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirGenerator xirGenerator, RiMethod method, int osrBCI) {
         this.compiler = compiler;
         this.target = target;
         this.runtime = runtime;
-        this.xirRuntime = xirRuntime;
+        this.xirGenerator = xirGenerator;
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
@@ -93,8 +93,8 @@ public class C1XCompilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirRuntime xirRuntime, RiMethod method) {
-        this(compiler, target, runtime, xirRuntime, method, -1);
+    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirGenerator xirGenerator, RiMethod method) {
+        this(compiler, target, runtime, xirGenerator, method, -1);
     }
 
     public IR hir() {

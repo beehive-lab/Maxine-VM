@@ -65,13 +65,13 @@ public class C1XCompiler extends CiCompiler {
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, XirRuntime xirRuntime) {
-        return compileMethod(method, -1, xirRuntime);
+    public CiResult compileMethod(RiMethod method, XirGenerator xirGenerator) {
+        return compileMethod(method, -1, xirGenerator);
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, int osrBCI, XirRuntime xirRuntime) {
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirRuntime, method, osrBCI);
+    public CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator) {
+        C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirGenerator, method, osrBCI);
         return compilation.compile();
     }
 

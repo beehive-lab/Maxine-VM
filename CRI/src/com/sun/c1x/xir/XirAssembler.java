@@ -370,6 +370,10 @@ public class XirAssembler {
         return createConstantTemp(CiConstant.forInt(b));
     }
 
+    public XirTemp b(boolean t) {
+        return createConstantTemp(CiConstant.forBoolean(t));
+    }
+
     public XirTemp w(long b) {
         return createConstantTemp(CiConstant.forWord(b));
     }
