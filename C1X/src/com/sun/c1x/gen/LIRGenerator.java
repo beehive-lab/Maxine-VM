@@ -726,12 +726,12 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitStoreField(StoreField x) {
 
 
-        XirRuntime xirRuntime = compilation.xirRuntime;
+        XirGenerator xirGenerator = compilation.xirGenerator;
 
-       // final XirSnippet snippet = xirRuntime.doPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
-       // if (snippet != null) {
-       //     emitXir(snippet);
-       // } else {
+        //final XirSnippet snippet = xirGenerator.genPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
+        //if (snippet != null) {
+        //    emitXir(snippet);
+        //} else {
 
             boolean needsPatching = x.needsPatching();
             boolean isVolatile = x.isLoaded() && x.isVolatile();

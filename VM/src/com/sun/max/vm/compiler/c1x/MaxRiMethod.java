@@ -96,7 +96,8 @@ public class MaxRiMethod implements RiMethod {
         if (methodActor != null) {
             return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool);
         }
-        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool));
+        // TODO: get the correct CPI of the holder
+        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), 0);
     }
 
     /**
@@ -332,6 +333,20 @@ public class MaxRiMethod implements RiMethod {
     ClassMethodActor asClassMethodActor(String operation) {
         if (methodActor instanceof ClassMethodActor) {
             return (ClassMethodActor) methodActor;
+        }
+        throw unresolved(operation);
+    }
+
+    InterfaceMethodActor asInterfaceMethodActor(String operation) {
+        if (methodActor instanceof InterfaceMethodActor) {
+            return (InterfaceMethodActor) methodActor;
+        }
+        throw unresolved(operation);
+    }
+
+    VirtualMethodActor asVirtualMethodActor(String operation) {
+        if (methodActor instanceof VirtualMethodActor) {
+            return (VirtualMethodActor) methodActor;
         }
         throw unresolved(operation);
     }

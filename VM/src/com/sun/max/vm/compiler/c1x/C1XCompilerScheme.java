@@ -51,7 +51,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
-    private XirRuntime xirRuntime;
+    private XirGenerator xirGenerator;
 
     @PROTOTYPE_ONLY
     private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
@@ -73,8 +73,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
+            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
             c1xTarget = createTarget(c1xRuntime, vmConfiguration());
-            xirRuntime = new MaxXirRuntime(vmConfiguration(), c1xTarget);
             compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
@@ -191,8 +191,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
     public final IrMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-        CiResult result = compiler.compileMethod(method, xirRuntime);
-        CiTargetMethod compiledMethod = result.targetMethod();
+        CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {
 
             C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);
