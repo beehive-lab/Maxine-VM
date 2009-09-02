@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,55 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.bytecode;
 
-import com.sun.c1x.lir.ScopeValue.*;
-
-/**
- * The <code>DebugInfoReadStream</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+/*
+ * @Harness: java
+ * @Runs: 1 = 4; 2 = 8; 3 = 12
  */
-public class DebugInfoReadStream extends CompressedReadStream {
-
-    // TODO: Not finished!
-
-    /**
-     * @param buffer
-     */
-    public DebugInfoReadStream(byte[] buffer) {
-        super(buffer);
-
+public class BC_multianewarray03 {
+    public static int test(int a) {
+        final BC_multianewarray03[][][][] v = new BC_multianewarray03[a][a][a][a];
+        return v.length + v[0].length + v[0][0].length + v[0][0][0].length;
     }
-
-    public ScopeValueCode readScopeValueCode() {
-        return ScopeValueCode.fromInt(readInt());
-    }
-
-    /**
-     * @return
-     */
-    public ScopeValue readObjectValue() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @return
-     */
-    public ScopeValue getCachedObject() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * @return
-     */
-    public Object readOop() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

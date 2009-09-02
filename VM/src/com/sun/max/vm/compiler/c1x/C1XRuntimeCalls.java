@@ -229,10 +229,9 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
-
-        for (int i = 0; i < lengths.length; i++) {
-            if (lengths[i] < 0) {
-                Throw.negativeArraySizeException(lengths[i]);
+        for (int length : lengths) {
+            if (length < 0) {
+                Throw.negativeArraySizeException(length);
             }
         }
         return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);

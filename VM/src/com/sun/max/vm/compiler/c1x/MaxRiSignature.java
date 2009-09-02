@@ -34,6 +34,7 @@ public class MaxRiSignature implements RiSignature {
 
     final MaxRiConstantPool constantPool;
     final SignatureDescriptor descriptor;
+    int argSlots = -1;
     CiKind[] basicTypes;
     CiKind basicReturnType;
     MaxRiType[] riTypes;
@@ -135,8 +136,10 @@ public class MaxRiSignature implements RiSignature {
      * @return the size in slots of the arguments to this signature
      */
     public int argumentSlots(boolean withReceiver) {
-        // XXX: cache the argument size
-        return descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
+        if (argSlots == -1) {
+            argSlots = descriptor.computeNumberOfSlots();
+        }
+        return argSlots + (withReceiver ? 1 : 0);
     }
 
     private CiKind descriptorToBasicType(TypeDescriptor typeDescriptor) {
@@ -145,7 +148,7 @@ public class MaxRiSignature implements RiSignature {
 
     private MaxRiType descriptorToRiType(TypeDescriptor typeDescriptor) {
          // TODO: resolve the descriptor if possible in the constant pool
-        return new MaxRiType(constantPool, typeDescriptor);
+        return new MaxRiType(constantPool, typeDescriptor, 0);
     }
 
 }

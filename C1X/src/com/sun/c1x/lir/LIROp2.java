@@ -45,7 +45,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info, false, null, 0, 0, opr1, opr2);
+        super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr1, opr2);
         this.type = CiKind.Illegal;
         this.condition = condition;
         assert opcode == LIROpcode.Cmp : "Instruction opcode should be of type LIROpcode.Cmp";
@@ -194,15 +194,7 @@ public class LIROp2 extends LIRInstruction {
             printCondition(out, condition());
             out.print(" ");
         }
-        opr1().print(out);
-        out.print(" ");
-        opr2().print(out);
-        out.print(" ");
-        if (tmp().isValid()) {
-            tmp().print(out);
-            out.print(" ");
-        }
-        result().print(out);
+        super.printInstruction(out);
     }
 }
 

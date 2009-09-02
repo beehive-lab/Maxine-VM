@@ -56,7 +56,6 @@ public class PrototypeTupleLayout extends PrototypeGeneralLayout implements Tupl
         throw ProgramError.unexpected();
     }
 
-    @Override
     public HeaderField[] headerFields() {
         throw ProgramError.unexpected();
     }

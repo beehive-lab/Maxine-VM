@@ -30,7 +30,6 @@ import com.sun.c0x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -154,17 +153,17 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
+        final CiTarget target = createTarget();
         final MaxRiRuntime runtime = new MaxRiRuntime();
-        final XirRuntime xirRuntime = new MaxXirRuntime();
+        final XirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        final CiTarget target = createTarget();
         final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                doWarmup(compiler, runtime, xirRuntime, methods);
-                doCompile(compiler, runtime, xirRuntime, methods, progress);
+                doWarmup(compiler, runtime, xirGenerator, methods);
+                doCompile(compiler, runtime, xirGenerator, methods, progress);
             }
         });
 
@@ -175,13 +174,13 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
             out.println("Timing...");
             for (int i = 0; i < max; i++) {
-                doTimingRun(compiler, runtime, xirRuntime, methods);
+                doTimingRun(compiler, runtime, xirGenerator, methods);
                 // only aggressively resolve on the first run
                 C1XOptions.AggressivelyResolveCPEs = false;
             }
@@ -189,7 +188,7 @@ public class C1XTest {
             // compile all the methods and report progress
             for (MethodActor methodActor : methods) {
                 progress.begin(methodActor.toString());
-                final boolean result = compile(compiler, runtime, xirRuntime, methodActor, printBailoutOption.getValue(), false);
+                final boolean result = compile(compiler, runtime, xirGenerator, methodActor, printBailoutOption.getValue(), false);
                 if (result) {
                     progress.pass();
                 } else {
@@ -203,20 +202,20 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods) {
+    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
         long start = System.nanoTime();
         totalBytes = 0;
         totalInlinedBytes = 0;
         totalNs = 0;
         totalInstrs = 0;
         for (MethodActor methodActor : methods) {
-            compile(compiler, runtime, xirRuntime, methodActor, false, true);
+            compile(compiler, runtime, xirGenerator, methodActor, false, true);
         }
         lastRunNs = System.nanoTime() - start;
         reportAverage();
     }
 
-    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods) {
+    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -225,19 +224,19 @@ public class C1XTest {
                 out.print(".");
                 out.flush();
                 for (MethodActor actor : methods) {
-                    compile(compiler, runtime, xirRuntime, actor, false, false);
+                    compile(compiler, runtime, xirGenerator, actor, false, false);
                 }
             }
             out.println();
         }
     }
 
-    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, MethodActor method, boolean printBailout, boolean timing) {
+    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
 
         RiMethod riMethod = runtime.getRiMethod((ClassMethodActor) method);
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(riMethod, xirRuntime);
+        CiResult result = compiler.compileMethod(riMethod, xirGenerator);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
@@ -548,18 +547,6 @@ public class C1XTest {
     }
 
     private static CiTarget createTarget() {
-        // TODO: configure architecture according to host platform
-        final CiArchitecture arch = CiArchitecture.findArchitecture("amd64");
-
-
-        // configure the allocatable registers
-        List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
-        for (CiRegister r : arch.registers) {
-            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
-                allocatable.add(r);
-            }
-        }
-        CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
-        return new CiTarget(arch, allocRegs, arch.registers, 1024, true);
+        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
     }
 }

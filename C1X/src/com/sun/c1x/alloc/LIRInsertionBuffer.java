@@ -101,7 +101,7 @@ public class LIRInsertionBuffer {
     }
 
     void move(int index, LIROperand src, LIROperand dst, CodeEmitInfo info) {
-        append(index, new LIROp1(LIROpcode.Move, src, dst, dst.type(), LIRPatchCode.PatchNone, info));
+        append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, LIRPatchCode.PatchNone, info));
     }
 
     // Implementation of LIRInsertionBuffer

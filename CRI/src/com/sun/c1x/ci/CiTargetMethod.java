@@ -20,9 +20,11 @@
  */
 package com.sun.c1x.ci;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.sun.c1x.ri.*;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiType;
 
 /**
  * This interface represents the result which encapsulates compiler output, including
@@ -75,14 +77,16 @@ public class CiTargetMethod {
         public final Object globalStubID;
         public final boolean direct;
         public final boolean[] stackMap;
+        public final boolean[] registerMap;
 
-        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
+        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] registerMap, boolean[] stackMap) {
             this.codePos = codePos;
             this.runtimeCall = runtimeCall;
             this.method = method;
             this.direct = direct;
             this.stackMap = stackMap;
             this.globalStubID = globalStubID;
+            this.registerMap = registerMap;
         }
 
         @Override
@@ -110,7 +114,14 @@ public class CiTargetMethod {
                 sb.append(" (indirect)");
             }
 
-            sb.append(mapToString("stackMap", stackMap));
+            if (stackMap != null) {
+                sb.append(mapToString("stackMap", stackMap));
+            }
+
+            if (registerMap != null) {
+                sb.append(mapToString("registerMap", registerMap));
+            }
+
             return sb.toString();
         }
     }
@@ -212,13 +223,13 @@ public class CiTargetMethod {
      * @param stackMap     the bitmap that indicates which stack locations
      */
     public void recordRuntimeCall(int codePosition, CiRuntimeCall runtimeCall, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, runtimeCall, null, null, true, stackMap));
+        callSites.add(new CallSite(codePosition, runtimeCall, null, null, true, null, stackMap));
         directCalls++;
         //assert stackMap.length == frameSize;
     }
 
-    public void recordGlobalStubCall(int codePosition, Object globalStubCall, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, null, globalStubCall, true, stackMap));
+    public void recordGlobalStubCall(int codePosition, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
+        callSites.add(new CallSite(codePosition, null, null, globalStubCall, true, registerMap, stackMap));
         directCalls++;
         //assert stackMap.length == frameSize;
     }
@@ -253,7 +264,7 @@ public class CiTargetMethod {
      * @param stackMap the bitmap that indicates which stack locations
      */
     public void recordDirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, true, stackMap));
+        callSites.add(new CallSite(codePosition, null, method, null, true, null, stackMap));
         directCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
     }
@@ -265,7 +276,7 @@ public class CiTargetMethod {
      * @param stackMap the bitmap that indicates which stack locations
      */
     public void recordIndirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, false, stackMap));
+        callSites.add(new CallSite(codePosition, null, method, null, false, null, stackMap));
         indirectCalls++;
         //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
     }
@@ -313,7 +324,8 @@ public class CiTargetMethod {
             registerSize = registerMap.length;
         }
         assert registerSize == registerMap.length : "compiler produced register maps of different sizes";
-        assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+        // assert stackMap.length == frameSize :
+        // "compiler produced stack map that doesn't cover whole frame";
     }
 
     public int directCalls() {

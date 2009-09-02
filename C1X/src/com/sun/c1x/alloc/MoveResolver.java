@@ -111,7 +111,7 @@ public class MoveResolver {
             }
         }
 
-        BitMap usedRegs = new BitMap(allocator.nofRegs + allocator().frameMap().argcount() + allocator().maxSpills());
+        BitMap usedRegs = new BitMap(allocator.nofRegs + allocator().maxSpills());
         usedRegs.clearAll();
         if (!multipleReadsAllowed) {
             for (i = 0; i < mappingFrom.size(); i++) {
@@ -240,7 +240,7 @@ public class MoveResolver {
     }
 
     void insertMove(LIROperand fromOpr, Interval toInterval) {
-        assert fromOpr.type() == toInterval.type() : "move between different types";
+        assert fromOpr.kind == toInterval.type() : "move between different types";
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
@@ -248,9 +248,7 @@ public class MoveResolver {
         insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.print("MoveResolver: inserted move from constant ");
-            fromOpr.print(TTY.out);
-            TTY.println("  to %d (%d, %d)", toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
+            TTY.print("MoveResolver: inserted move from constant %s to %d (%d, %d)", fromOpr, toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
         }
     }
 
@@ -371,15 +369,13 @@ public class MoveResolver {
                         toInterval.assignedReg(), toInterval.assignedRegHi());
 
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperandFactory.IllegalOperand);
+        mappingFromOpr.add(LIROperandFactory.IllegalLocation);
         mappingTo.add(toInterval);
     }
 
     void addMapping(LIROperand fromOpr, Interval toInterval) {
-        Util.traceLinearScan(4, "MoveResolver: adding mapping from ");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            fromOpr.print(TTY.out);
-            TTY.println(" to %d (%d, %d)", toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
+            TTY.println("MoveResolver: adding mapping from %s to %d (%d, %d)", fromOpr, toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
         }
         assert fromOpr.isConstant() : "only for constants";
 

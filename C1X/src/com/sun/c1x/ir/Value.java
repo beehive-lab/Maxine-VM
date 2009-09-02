@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ri.RiType;
-import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiConstant;
 
@@ -267,7 +267,7 @@ public abstract class Value {
      * @param operand the operand to associate with this instruction
      */
     public void setOperand(LIROperand operand) {
-        assert operand != LIROperand.ILLEGAL : "operand must exist";
+        assert operand != LIROperandFactory.IllegalLocation : "operand must exist";
         lirOperand = operand;
     }
 
@@ -275,7 +275,7 @@ public abstract class Value {
      * Clears the LIR operand associated with this instruction.
      */
     public void clearOperand() {
-        lirOperand = LIROperand.ILLEGAL;
+        lirOperand = LIROperandFactory.IllegalLocation;
     }
 
     /**

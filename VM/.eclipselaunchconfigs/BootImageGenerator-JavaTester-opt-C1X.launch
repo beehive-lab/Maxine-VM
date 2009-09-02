@@ -12,5 +12,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.prototype.BootImageGenerator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -build=PRODUCT -native-tests&#10;-test-callee-c1x -C1X::-SimplifyPhis -C1X::-CanonicalizeInstructions -C1X::-ComputeStoresInLoops&#10;-run=test.com.sun.max.vm.jtrun.all"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -Xss2m -Xms1G -Xmx3G"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea -Xss2m -Xms1G -Xmx3G"/>
 </launchConfiguration>
