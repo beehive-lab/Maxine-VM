@@ -728,10 +728,10 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         XirRuntime xirRuntime = compilation.xirRuntime;
 
-        final XirSnippet snippet = xirRuntime.doPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
-        if (snippet != null) {
-            emitXir(snippet);
-        } else {
+       // final XirSnippet snippet = xirRuntime.doPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
+       // if (snippet != null) {
+       //     emitXir(snippet);
+       // } else {
 
             boolean needsPatching = x.needsPatching();
             boolean isVolatile = x.isLoaded() && x.isVolatile();
@@ -816,7 +816,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (isVolatile && compilation.runtime.isMP()) {
                 lir.membar();
             }
-        }
+       // }
     }
 
     @Override

@@ -143,6 +143,10 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    private void verifyReferenceMap() {
+
+    }
+
     protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
 
         assert pos >= 0 && globalStubCall != null;
@@ -159,9 +163,8 @@ public abstract class AbstractAssembler {
             }
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordGlobalStubCall(pos, globalStubCall, registerMap, stackMap);
-        }
+        verifyReferenceMap();
+        targetMethod.recordGlobalStubCall(pos, globalStubCall, registerMap, stackMap);
     }
 
     protected void recordDirectCall(int pos, RiMethod call, boolean[] stackMap) {
@@ -172,9 +175,8 @@ public abstract class AbstractAssembler {
             TTY.println("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordDirectCall(pos, call, stackMap);
-        }
+        verifyReferenceMap();
+        targetMethod.recordDirectCall(pos, call, stackMap);
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
@@ -185,9 +187,8 @@ public abstract class AbstractAssembler {
             TTY.println("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordRuntimeCall(pos, call, stackMap);
-        }
+        verifyReferenceMap();
+        targetMethod.recordRuntimeCall(pos, call, stackMap);
     }
 
     protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {
@@ -197,9 +198,8 @@ public abstract class AbstractAssembler {
             TTY.print("Safepoint: pos = %d, registerMap.length = %d, stackMap.length = %d", pos, registerMap.length, stackMap.length);
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordSafepoint(pos, registerMap, stackMap);
-        }
+        verifyReferenceMap();
+        targetMethod.recordSafepoint(pos, registerMap, stackMap);
     }
 
     protected void recordDataReferenceInCode(int pos, int dataOffset) {
@@ -210,22 +210,17 @@ public abstract class AbstractAssembler {
             TTY.print("Object reference in code: pos = %d, dataOffset = %d", pos, dataOffset);
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordDataReferenceInCode(pos, dataOffset);
-        }
+        targetMethod.recordDataReferenceInCode(pos, dataOffset);
     }
 
     protected Address recordObjectReferenceInCode(Object obj) {
-//        assert obj != null;
+        assert obj != null : "null must not be recorded";
 
         if (C1XOptions.TraceRelocation) {
             TTY.print("Object reference in code: pos = %d, object= %s", codeBuffer.position(), obj);
         }
 
-        if (targetMethod != null) {
-            targetMethod.recordObjectReferenceInCode(codeBuffer.position(), obj);
-        }
-
+        targetMethod.recordObjectReferenceInCode(codeBuffer.position(), obj);
         return Address.InternalRelocation;
     }
 

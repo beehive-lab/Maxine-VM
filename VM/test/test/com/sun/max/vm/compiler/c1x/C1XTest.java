@@ -90,17 +90,21 @@ public class C1XTest {
 
     private static final Option<Integer> optLevel;
 
-    static {
+
+    public static void addOptions(OptionSet options) {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "XX");
         // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(optLevel, Syntax.REQUIRES_EQUALS);
+    }
+    static {
         optLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
             @Override
             public void setValue(Integer value) {
                 C1XOptions.setOptimizationLevel(value);
             }
         };
-        options.addOption(optLevel, Syntax.REQUIRES_EQUALS);
+        addOptions(options);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();

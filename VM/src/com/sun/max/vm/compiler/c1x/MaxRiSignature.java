@@ -35,9 +35,9 @@ public class MaxRiSignature implements RiSignature {
     final MaxRiConstantPool constantPool;
     final SignatureDescriptor descriptor;
     int argSlots = -1;
-    CiKind[] basicTypes;
+    final CiKind[] basicTypes;
     CiKind basicReturnType;
-    MaxRiType[] riTypes;
+    final MaxRiType[] riTypes;
     MaxRiType ciReturnType;
 
     /**
@@ -48,6 +48,19 @@ public class MaxRiSignature implements RiSignature {
     public MaxRiSignature(MaxRiConstantPool constantPool, SignatureDescriptor descriptor) {
         this.constantPool = constantPool;
         this.descriptor = descriptor;
+        final int max = descriptor.numberOfParameters();
+
+        basicTypes = new CiKind[max];
+        for (int i = 0; i < max; i++) {
+            basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
+        }
+
+        final int numberOfParameters = descriptor.numberOfParameters();
+
+        riTypes = new MaxRiType[numberOfParameters];
+        for (int i = 0; i < numberOfParameters; i++) {
+            riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));
+        }
     }
 
     /**
@@ -65,15 +78,6 @@ public class MaxRiSignature implements RiSignature {
      * @return the type of the specified argument
      */
     public RiType argumentTypeAt(int index) {
-        if (riTypes == null) {
-            final int max = descriptor.numberOfParameters();
-
-            riTypes = new MaxRiType[max];
-            for (int i = 0; i < max; i++) {
-                riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));
-            }
-
-        }
         return riTypes[index];
     }
 
@@ -84,13 +88,6 @@ public class MaxRiSignature implements RiSignature {
      * @return the basic type of the argument
      */
     public CiKind argumentBasicTypeAt(int index) {
-        if (basicTypes == null) {
-            final int max = descriptor.numberOfParameters();
-            basicTypes = new CiKind[max];
-            for (int i = 0; i < max; i++) {
-                basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
-            }
-        }
         return basicTypes[index];
     }
 

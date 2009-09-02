@@ -122,11 +122,6 @@ public class MaxXirRuntime extends XirRuntime {
     final XirTemplates instanceofForClassTemplate;
     final XirTemplates instanceofForInterfaceTemplate;
 
-    final Object runtimeResolveStaticMethod = SignatureDescriptor.create("(Lcom/sun/max/vm/ResolutionGuard;)Lcom/sun/max/unsafe/Word;");
-    final Object runtimeResolveSpecialMethod = SignatureDescriptor.create("(Lcom/sun/max/vm/ResolutionGuard;)Lcom/sun/max/unsafe/Word;");
-    final Object runtimeResolveVirtualMethod = SignatureDescriptor.create("(Lcom/sun/max/vm/ResolutionGuard;)I");
-    final Object runtimeResolveInterfaceMethod = SignatureDescriptor.create("(Lcom/sun/max/vm/ResolutionGuard;)I");
-
     final int hubOffset;
     final int hub_mTableLength;
     final int hub_mTableStartIndex;
@@ -203,11 +198,10 @@ public class MaxXirRuntime extends XirRuntime {
         XirTemplates templates = putFieldTemplates[field.basicType().ordinal()];
         if (field.isLoaded()) {
             XirArgument offset = XirArgument.forInt(field.offset());
-            return new XirSnippet(templates.resolved, receiver, value, offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(templates.unresolved, receiver, value, guard);
+            return new XirSnippet(templates.resolved, null, null, receiver, value, offset);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(templates.unresolved, null, null, receiver, value, guard);
     }
 
     @Override
@@ -216,10 +210,9 @@ public class MaxXirRuntime extends XirRuntime {
         if (field.isLoaded()) {
             XirArgument offset = XirArgument.forInt(field.offset());
             return new XirSnippet(templates.resolved, receiver, offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(templates.unresolved, receiver, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(templates.unresolved, receiver, guard);
     }
 
     @Override
@@ -229,10 +222,9 @@ public class MaxXirRuntime extends XirRuntime {
             XirArgument offset = XirArgument.forInt(field.offset());
             Object tuple = ((MaxRiField) field).fieldActor.holder().staticTuple();
             return new XirSnippet(template.resolved, XirArgument.forObject(tuple), value, offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(template.unresolved, value, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(template.unresolved, value, guard);
     }
 
     @Override
@@ -242,10 +234,9 @@ public class MaxXirRuntime extends XirRuntime {
             XirArgument offset = XirArgument.forInt(field.offset());
             Object tuple = ((MaxRiField) field).fieldActor.holder().staticTuple();
             return new XirSnippet(template.resolved, XirArgument.forObject(tuple), offset);
-        } else {
-            XirArgument guard = XirArgument.forObject(guardFor(field));
-            return new XirSnippet(template.unresolved, guard);
         }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(template.unresolved, guard);
     }
 
     private ResolutionGuard guardFor(RiField field) {

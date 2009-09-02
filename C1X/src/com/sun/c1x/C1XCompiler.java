@@ -38,8 +38,6 @@ public class C1XCompiler extends CiCompiler {
     private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
     private final Map<CiRuntimeCall, Object> runtimeCallStubs = new HashMap<CiRuntimeCall, Object>();
 
-    private boolean initialized;
-
     /**
      * The target that this compiler has been configured for.
      */
@@ -63,6 +61,7 @@ public class C1XCompiler extends CiCompiler {
         // TODO: Remove this fixed wiring to X86
         assert target.arch instanceof AMD64;
         this.backend = new X86Backend(this);
+        init();
     }
 
     @Override
@@ -72,13 +71,6 @@ public class C1XCompiler extends CiCompiler {
 
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, XirRuntime xirRuntime) {
-
-
-        if (!initialized) {
-            initialized = true;
-            init();
-        }
-
         C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirRuntime, method, osrBCI);
         return compilation.compile();
     }
