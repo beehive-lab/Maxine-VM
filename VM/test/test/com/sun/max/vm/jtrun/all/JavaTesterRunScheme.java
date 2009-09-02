@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
 import test.com.sun.max.vm.jtrun.*;
-import jtt.bytecode.BC_multianewarray01;
 
 public class JavaTesterRunScheme extends AbstractTester {
 
