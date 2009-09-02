@@ -701,7 +701,8 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     private XirPair buildNewMultiArray() {
-        XirTemplate resolved, unresolved;
+        XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // TODO: resolved new multi array
             resolved = null;
@@ -904,7 +905,8 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     private XirPair buildCheckcastForLeaf(boolean nonnull) {
-        XirTemplate resolved, unresolved;
+        XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved checkcast for a leaf class
             XirAssembler asm = new XirAssembler(CiKind.Object);
@@ -933,7 +935,8 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     private XirPair buildCheckcastForInterface(boolean nonnull) {
-        XirTemplate resolved, unresolved;
+        XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved checkcast against an interface class
             XirAssembler asm = new XirAssembler(CiKind.Object);
@@ -994,7 +997,8 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     private XirPair buildInstanceofForLeaf(boolean nonnull) {
-        XirTemplate resolved, unresolved;
+        XirTemplate resolved;
+        XirTemplate unresolved;
         {
             XirAssembler asm = new XirAssembler(CiKind.Boolean);
             XirParameter result = asm.getResultOperand();
@@ -1025,7 +1029,8 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     private XirPair buildInstanceofForInterface(boolean nonnull) {
-        XirTemplate resolved, unresolved;
+        XirTemplate resolved;
+        XirTemplate unresolved;
         {
             // resolved instanceof for interface
             XirAssembler asm = new XirAssembler(CiKind.Boolean);
