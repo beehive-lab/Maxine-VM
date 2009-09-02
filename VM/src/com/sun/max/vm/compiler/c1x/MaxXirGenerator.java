@@ -139,7 +139,7 @@ public class MaxXirGenerator extends XirGenerator {
     final int hub_mTableStartIndex;
     final int hub_componentHub;
     final int wordSize;
-    final int arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
+    final int arrayLengthOffset;
 
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target) {
         this.target = target;
@@ -148,6 +148,8 @@ public class MaxXirGenerator extends XirGenerator {
         this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
         this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+        assert wordSize == target.arch.wordSize : "word size mismatch";
+        this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
 
         CiKind[] kinds = CiKind.values();
 
@@ -190,7 +192,7 @@ public class MaxXirGenerator extends XirGenerator {
 
         multiNewArrayTemplate = new XirPair[MAX_MULTIANEWARRAY_RANK + 1];
 
-        for (int i = 1; i < MAX_MULTIANEWARRAY_RANK; i++) {
+        for (int i = 1; i < MAX_MULTIANEWARRAY_RANK + 1; i++) {
             multiNewArrayTemplate[i] = buildNewMultiArray(i);
         }
 
