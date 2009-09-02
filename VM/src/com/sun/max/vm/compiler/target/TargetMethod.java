@@ -48,7 +48,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.template.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A collection of objects that represent the compiled target code
@@ -781,20 +780,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return IrTraceObserver.class;
     }
 
-    public final boolean contains(final Builtin builtin, boolean defaultResult) {
-        return defaultResult;
-    }
-
-    public final int count(final Builtin builtin, int defaultResult) {
-        return defaultResult;
-    }
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
-    }
-
-    public Pointer homogeneousCallEntryPoint() {
-        return abi().callEntryPoint().in(this);
     }
 
     public abstract void patchCallSite(int callOffset, Word callEntryPoint);
@@ -1009,6 +996,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
 
         return stopIndexWithClosestPosition;
+    }
+
+    @Override
+    public boolean contains(Builtin builtin, boolean defaultResult) {
+        return defaultResult;
+    }
+
+    @Override
+    public int count(Builtin builtin, int defaultResult) {
+        return defaultResult;
     }
 
     /**
