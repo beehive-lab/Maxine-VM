@@ -28,12 +28,15 @@ import com.sun.c1x.util.Util;
 import com.sun.c1x.target.x86.X86;
 import com.sun.max.vm.layout.Layout;
 import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.object.ArrayAccess;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet;
 import com.sun.max.vm.compiler.CompilationScheme;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.runtime.ResolutionGuard;
+import com.sun.max.vm.runtime.Throw;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.KindEnum;
 import com.sun.max.vm.type.SignatureDescriptor;
@@ -42,10 +45,14 @@ import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.holder.DynamicHub;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.unsafe.Word;
+import com.sun.max.unsafe.UnsafeLoophole;
 import com.sun.max.program.ProgramError;
+import com.sun.max.lang.Arrays;
+import com.sun.max.annotate.INLINE;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 
 /**
@@ -60,6 +67,8 @@ public class MaxXirGenerator extends XirGenerator {
     private static final CiKind[] kindMapping;
     private static final Kind[] ciKindMapping;
     private int offsetOfFirstArrayElement;
+    private static final int SMALL_MULTIANEWARRAY_RANK = 4;
+    private static final int MAX_MULTIANEWARRAY_RANK = 255;
 
     static void map(KindEnum k, CiKind ck) {
         kindMapping[k.ordinal()] = ck;
@@ -111,12 +120,13 @@ public class MaxXirGenerator extends XirGenerator {
     final XirTemplate[] arrayLoadTemplates;
     final XirTemplate[] arrayStoreTemplates;
 
+    final XirPair[] multiNewArrayTemplate;
+
     final XirTemplate safepointTemplate;
     final XirTemplate monitorEnterTemplate;
     final XirTemplate monitorExitTemplate;
     final XirTemplate resolveClassTemplate;
     final XirPair newInstanceTemplate;
-    final XirPair multiNewArrayTemplate;
     final XirPair checkcastForLeafTemplate;
     final XirPair checkcastForClassTemplate;
     final XirPair checkcastForInterfaceTemplate;
@@ -129,7 +139,7 @@ public class MaxXirGenerator extends XirGenerator {
     final int hub_mTableStartIndex;
     final int hub_componentHub;
     final int wordSize;
-    final int arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
+    final int arrayLengthOffset;
 
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target) {
         this.target = target;
@@ -138,6 +148,8 @@ public class MaxXirGenerator extends XirGenerator {
         this.hub_mTableStartIndex = FieldActor.findInstance(Hub.class, "mTableStartIndex").offset();
         this.hub_componentHub = FieldActor.findInstance(Hub.class, "componentHub").offset();
         this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
+        assert wordSize == target.arch.wordSize : "word size mismatch";
+        this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
 
         CiKind[] kinds = CiKind.values();
 
@@ -178,6 +190,12 @@ public class MaxXirGenerator extends XirGenerator {
             invokeStaticTemplates[index] = buildInvokeStatic(kind);
         }
 
+        multiNewArrayTemplate = new XirPair[MAX_MULTIANEWARRAY_RANK + 1];
+
+        for (int i = 1; i < MAX_MULTIANEWARRAY_RANK + 1; i++) {
+            multiNewArrayTemplate[i] = buildNewMultiArray(i);
+        }
+
         resolveClassTemplate = buildResolveClassObject();
 
         safepointTemplate = buildSafepoint();
@@ -185,7 +203,6 @@ public class MaxXirGenerator extends XirGenerator {
         monitorExitTemplate = buildMonitorExit();
 
         newInstanceTemplate = buildNewInstance();
-        multiNewArrayTemplate = buildNewMultiArray();
 
         checkcastForLeafTemplate = buildCheckcastForLeaf(false);
         checkcastForClassTemplate = buildCheckcastForInterface(false); // XXX: more efficient template for class checks
@@ -316,6 +333,18 @@ public class MaxXirGenerator extends XirGenerator {
         }
         XirArgument guard = XirArgument.forObject(guardFor(elementType));
         return new XirSnippet(pair.unresolved, guard);
+    }
+
+    @Override
+    public XirSnippet genNewMultiArray(XirArgument[] lengths, RiType type) {
+        int rank = lengths.length;
+        if (!type.isLoaded() || rank >= SMALL_MULTIANEWARRAY_RANK) {
+            XirArgument guard = XirArgument.forObject(guardFor(type));
+            return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, guard));
+        } else {
+            XirArgument hub = XirArgument.forObject(hubFor(type));
+            return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, hub));
+        }
     }
 
     @Override
@@ -689,19 +718,37 @@ public class MaxXirGenerator extends XirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildNewMultiArray() {
-        XirTemplate resolved;
+    private XirPair buildNewMultiArray(int rank) {
+        XirTemplate resolved = null;
         XirTemplate unresolved;
-        {
-            // TODO: resolved new multi array
-            resolved = null;
-        }
-        {
-            // TODO: unresolved new multi array
-            unresolved = null;
+        if (rank < SMALL_MULTIANEWARRAY_RANK) {
+            // "small" resolved multianewarray (rank 3 or less)
+            XirAssembler asm = new XirAssembler(CiKind.Object);
+            XirParameter[] lengths = new XirParameter[rank];
+            for (int i = 0; i < rank; i++) {
+                lengths[i] = asm.createInputParameter(CiKind.Int);
+            }
+            XirParameter hub = asm.createConstantInputParameter(CiKind.Object);
+            callRuntimeThroughStub(asm, "allocateMultiArray" + rank, asm.getResultOperand(), Arrays.prepend(lengths, hub));
+            resolved = asm.finishTemplate();
         }
 
-        return new XirPair(resolved, unresolved);
+        // unresolved or large multianewarray
+        XirAssembler asm = new XirAssembler(CiKind.Object);
+        XirParameter[] lengths = new XirParameter[rank];
+        for (int i = 0; i < rank; i++) {
+            lengths[i] = asm.createInputParameter(CiKind.Int);
+        }
+        XirParameter guard = asm.createConstantInputParameter(CiKind.Object);
+        XirTemp lengthArray = asm.createTemp(CiKind.Object);
+        callRuntimeThroughStub(asm, "allocateIntArray", lengthArray, asm.i(rank));
+        for (int i = 0; i < rank; i++) {
+            asm.pstore(CiKind.Int, lengthArray, asm.i(offsetOfFirstArrayElement + i * target.sizeInBytes(CiKind.Int)), lengths[i]);
+        }
+        callRuntimeThroughStub(asm, "allocateMultiArrayN", asm.getResultOperand(), guard, lengthArray);
+        unresolved = asm.finishTemplate();
+
+        return new XirPair(resolved == null ? unresolved : resolved, unresolved);
     }
 
     private XirPair buildNewInstance() {
@@ -1218,20 +1265,95 @@ public class MaxXirGenerator extends XirGenerator {
             return Heap.createTuple(hub);
         }
 
-        public static Object allocateMultiArray1(Hub hub, int l1) {
-            throw ProgramError.unexpected();
+        public static int[] allocateIntArray(int length) {
+            return new int[length];
         }
 
-        public static Object allocateMultiArray2(Hub hub, int l1, int l2) {
-            throw ProgramError.unexpected();
+        public static Object allocateMultiArray1(DynamicHub hub, int l1) {
+            if (l1 < 0) {
+                throw new NegativeArraySizeException();
+            }
+            return createArray(hub, l1);
         }
 
-        public static Object allocateMultiArray3(Hub hub, int l1, int l2, int l3) {
-            throw ProgramError.unexpected();
+        public static Object allocateMultiArray2(DynamicHub hub1, int l1, int l2) {
+            if (l1 < 0 | l2 < 0) {
+                throw new NegativeArraySizeException();
+            }
+            Object[] result = UnsafeLoophole.cast(createObjectArray(hub1, l1));
+            DynamicHub hub2 = UnsafeLoophole.cast(hub1.componentHub);
+            for (int i1 = 0; i1 < l1; i1++) {
+                ArrayAccess.setObject(result, i1, createArray(hub2, l2));
+            }
+            return result;
         }
 
-        public static Object allocateMultiArrayN(Hub hub, int[] lengths) {
-            throw ProgramError.unexpected();
+        public static Object allocateMultiArray3(DynamicHub hub1, int l1, int l2, int l3) {
+            if (l1 < 0 | l2 < 0 | l3 < 0) {
+                throw new NegativeArraySizeException();
+            }
+            Object[] result = UnsafeLoophole.cast(createObjectArray(hub1, l1));
+            DynamicHub hub2 = UnsafeLoophole.cast(hub1.componentHub);
+            DynamicHub hub3 = UnsafeLoophole.cast(hub2.componentHub);
+            for (int i1 = 0; i1 < l1; i1++) {
+                Object[] result2 = createObjectArray(hub2, l2);
+                safeArrayStore(result, i1, result2);
+                for (int i2 = 0; i2 < l2; i2++) {
+                    safeArrayStore(result2, i2, createArray(hub3, l3));
+                }
+            }
+            return result;
+        }
+
+        public static Object allocateMultiArrayN(ResolutionGuard guard, int[] lengths) {
+            for (int length : lengths) {
+                if (length < 0) {
+                    Throw.negativeArraySizeException(length);
+                }
+            }
+            ClassActor actor = ResolutionSnippet.ResolveClass.resolveClass(guard);
+            return recursiveNewMultiArray(0, actor, lengths);
+        }
+
+        private static Object recursiveNewMultiArray(int index, ClassActor arrayClassActor, int[] lengths) {
+            final int length = lengths[index];
+            final Object result = createArray(arrayClassActor.dynamicHub(), length);
+            if (length > 0) {
+                final int nextIndex = index + 1;
+                if (nextIndex < lengths.length) {
+                    Object[] array = (Object[]) result;
+                    final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
+                    for (int i = 0; i < length; i++) {
+                        safeArrayStore(array, i, recursiveNewMultiArray(nextIndex, subArrayClassActor, lengths));
+                    }
+                }
+            }
+            return result;
+        }
+
+        @INLINE
+        private static Object[] createObjectArray(DynamicHub hub, int length) {
+            if (MaxineVM.isPrototyping()) {
+                return (Object[]) Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
+            }
+            return UnsafeLoophole.cast(Heap.createArray(hub, length));
+        }
+
+        @INLINE
+        private static Object createArray(DynamicHub hub, int length) {
+            if (MaxineVM.isPrototyping()) {
+                return Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
+            }
+            return Heap.createArray(hub, length);
+        }
+
+        @INLINE
+        private static void safeArrayStore(Object[] array, int index, Object val) {
+            if (MaxineVM.isPrototyping()) {
+                array[index] = val;
+            } else {
+                ArrayAccess.setObject(array, index, val);
+            }
         }
 
         public static Hub unresolvedCheckcast(Object object, ResolutionGuard guard) {
