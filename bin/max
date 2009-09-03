@@ -66,6 +66,16 @@ jvm_args_suffix=""
 jvm_dbg_port=""
 maxine_dir=""
 make_arg=
+base_ide_dir=shell
+if [ x${MAXINE_IDE} = xINTELLIJ ]; then
+    base_ide_dir=intellij
+fi
+if [ x${MAXINE_IDE} = xNETBEANS ]; then
+    base_ide_dir=netbeans
+fi
+if [ x${MAXINE_IDE} = xECLIPSE ]; then
+    base_ide_dir=eclipse
+fi
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -202,17 +212,17 @@ function get_project_cp() {
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 projects=( \
-    CRI:src               \
-    C1X:src               \
-    C0X:src               \
-    Base:src,test,shell   \
-    Assembler:src,test    \
-    VM:src,test           \
-    VMDI:src              \
-    Tele:src              \
-    JDWP:src              \
-    TeleJDWP:src          \
-    Inspector:src,test    \
+    CRI:src                       \
+    C1X:src                       \
+    C0X:src                       \
+    Base:src,test,$base_ide_dir   \
+    Assembler:src,test            \
+    VM:src,test                   \
+    VMDI:src                      \
+    Tele:src                      \
+    JDWP:src                      \
+    TeleJDWP:src                  \
+    Inspector:src,test            \
 )
 
 if [ "$OS" != "Darwin" ]; then
