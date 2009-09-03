@@ -994,7 +994,15 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         CodeEmitInfo info = stateFor(x, x.stateBefore());
-        CallingConvention cc = compilation.frameMap().runtimeCallingConvention(CiRuntimeCall.NewMultiArray.arguments);
+
+        List<LIROperand> arguments = new ArrayList<LIROperand>();
+        LIROperand hubRegister = resultRegisterFor(CiKind.Object);
+        if (x.elementType.isLoaded()) {
+            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), hubRegister);
+        } else {
+            lir.resolveInstruction(hubRegister, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
+        }
+        arguments.add(hubRegister);
 
         LIROperand length = LIROperandFactory.singleLocation(CiKind.Int, X86.rbx);
         lir().move(LIROperandFactory.intConst(dims.length), length);
@@ -1004,20 +1012,13 @@ public final class X86LIRGenerator extends LIRGenerator {
             size.loadNonconstant();
             emitSafeArrayStore(dimensionArray, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
+        arguments.add(dimensionArray);
 
-        lir().move(dimensionArray, cc.arguments().get(1));
-
-
-        if (x.elementType.isLoaded()) {
-            lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), cc.arguments().get(0));
-        } else {
-            lir.resolveInstruction(cc.arguments().get(0), LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
-        }
 
         // Create a new code emit info as they must not be shared!
         CodeEmitInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type().basicType);
-        lir().callRuntime(CiRuntimeCall.NewMultiArray, reg, cc.arguments(), info2);
+        lir().callRuntimeCalleeSaved(CiRuntimeCall.NewMultiArray, reg, arguments, info2);
 
         // Save result
         LIROperand result = rlockResult(x);

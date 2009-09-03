@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class Compilation implements Future<TargetMethod> {
     public final CompilationScheme compilationScheme;
-    public final DynamicCompilerScheme compilerScheme;
+    public final RuntimeCompilerScheme compilerScheme;
     public final ClassMethodActor classMethodActor;
     @INSPECTED
     public final Object previousTargetState;
@@ -55,7 +55,7 @@ public class Compilation implements Future<TargetMethod> {
     public boolean done;
 
     public Compilation(CompilationScheme compilationScheme,
-                       DynamicCompilerScheme compilerScheme,
+                       RuntimeCompilerScheme compilerScheme,
                        ClassMethodActor classMethodActor,
                        Object previousTargetState,
                        Thread compilingThread) {
@@ -132,7 +132,7 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that is the result of the compilation
      */
     public TargetMethod compile(List<CompilationObserver> observers) {
-        DynamicCompilerScheme compiler = compilerScheme;
+        RuntimeCompilerScheme compiler = compilerScheme;
         TargetMethod targetMethod = null;
 
         // notify any compilation observers
@@ -180,7 +180,7 @@ public class Compilation implements Future<TargetMethod> {
         return targetMethod;
     }
 
-    private String logBeforeCompilation(DynamicCompilerScheme compiler) {
+    private String logBeforeCompilation(RuntimeCompilerScheme compiler) {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
@@ -190,7 +190,7 @@ public class Compilation implements Future<TargetMethod> {
         return methodString;
     }
 
-    private void logAfterCompilation(DynamicCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+    private void logAfterCompilation(RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printVmThread(VmThread.current(), false);
             Log.print(": " + compiler.name() + ": Compiled  " + methodString + " @ ");
@@ -200,14 +200,14 @@ public class Compilation implements Future<TargetMethod> {
         }
     }
 
-    private void observeBeforeCompilation(List<CompilationObserver> observers, DynamicCompilerScheme compiler) {
+    private void observeBeforeCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeBeforeCompilation(classMethodActor, compiler);
             }
         }
     }
-    private void observeAfterCompilation(List<CompilationObserver> observers, DynamicCompilerScheme compiler, TargetMethod result) {
+    private void observeAfterCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler, TargetMethod result) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeAfterCompilation(classMethodActor, compiler, result);

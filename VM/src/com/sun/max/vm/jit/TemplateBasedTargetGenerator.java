@@ -70,7 +70,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         }
     }
 
-    protected TemplateBasedTargetGenerator(DynamicCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
+    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
         super(dynamicCompilerScheme, instructionSet);
     }
 

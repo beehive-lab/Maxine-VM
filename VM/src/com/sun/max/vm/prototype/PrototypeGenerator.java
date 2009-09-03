@@ -85,7 +85,7 @@ public final class PrototypeGenerator {
             "Specifies the monitor scheme for the target.");
     private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
             "Specifies the compiler scheme for the target.");
-    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
+    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
     private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");

@@ -36,7 +36,7 @@ import com.sun.max.vm.stack.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public interface BootstrapCompilerScheme extends DynamicCompilerScheme {
+public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
 
     /**
      * Starts up the compiler by building built-in operations.
