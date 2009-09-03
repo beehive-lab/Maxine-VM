@@ -53,7 +53,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     private final ObjectInspector objectInspector;
     private final Inspection inspection;
     private final TeleObject teleObject;
-    private final IndexedSequence<Layout.HeaderField> headerFields;
+    private final Layout.HeaderField[] headerFields;
     private TeleHub teleHub;
 
     private final ObjectHeaderTableModel model;
@@ -76,7 +76,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         protected void procedure() {
             final Sequence<MaxWatchpoint> watchpoints = model.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
-                final HeaderField headerField = headerFields.get(row);
+                final HeaderField headerField = headerFields[row];
                 actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory").perform();
             } else {
                 for (MaxWatchpoint watchpoint : watchpoints) {
@@ -96,7 +96,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.objectInspector = objectInspector;
         this.inspection = objectInspector.inspection();
         this.teleObject = objectInspector.teleObject();
-        headerFields = new ArrayListSequence<Layout.HeaderField>(teleObject.getHeaderFields());
+        headerFields = teleObject.getHeaderFields();
         this.model = new ObjectHeaderTableModel(inspection, teleObject.getCurrentOrigin());
         this.columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
         this.columnModel = new ObjectHeaderTableColumnModel(objectInspector);
@@ -117,7 +117,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         if (maxVM().watchpointsEnabled()) {
             final InspectorMenu menu = new InspectorMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
-            final HeaderField headerField = headerFields.get(row);
+            final HeaderField headerField = headerFields[row];
             menu.add(actions().setHeaderWatchpoint(teleObject, headerField, "Watch this field's memory"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
             menu.add(Watchpoints.createEditMenu(inspection, model.getWatchpoints(row)));
@@ -208,7 +208,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return teleObject.getHeaderFields().size();
+            return headerFields.length;
         }
 
         public Object getValueAt(int row, int col) {
@@ -227,17 +227,17 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         @Override
         public MemoryRegion getMemoryRegion(int row) {
-            return teleObject.getCurrentMemoryRegion(headerFields.get(row));
+            return teleObject.getCurrentMemoryRegion(headerFields[row]);
         }
 
         @Override
         public Offset getOffset(int row) {
-            return teleObject.getHeaderOffset(headerFields.get(row));
+            return teleObject.getHeaderOffset(headerFields[row]);
         }
 
         @Override
         public int findRow(Address address) {
-            for (int row = 0; row < headerFields.length(); row++) {
+            for (int row = 0; row < headerFields.length; row++) {
                 if (getAddress(row).equals(address)) {
                     return row;
                 }
@@ -246,11 +246,11 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public TypeDescriptor rowToType(int row) {
-            return teleObject.getHeaderType(headerFields.get(row));
+            return teleObject.getHeaderType(headerFields[row]);
         }
 
         public String rowToName(int row) {
-            return headerFields.get(row).toString();
+            return headerFields[row].toString();
         }
     }
 
@@ -360,13 +360,13 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[headerFields.length()];
+        private InspectorLabel[] labels = new InspectorLabel[headerFields.length];
 
         public ValueRenderer() {
 
-            for (int row = 0; row < headerFields.length(); row++) {
+            for (int row = 0; row < headerFields.length; row++) {
                 // Create a label suitable for the kind of header field
-                switch(headerFields.get(row)) {
+                switch(headerFields[row]) {
                     case HUB:
                         labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
@@ -460,7 +460,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return headerFields.get(row) == HeaderField.HUB ? regionLabel : dummyLabel;
+            return headerFields[row] == HeaderField.HUB ? regionLabel : dummyLabel;
         }
     }
 

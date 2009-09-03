@@ -635,7 +635,7 @@ public class MaxineTester {
         if (generatedImages.containsKey(imageConfig)) {
             return generatedImages.get(imageConfig) != null;
         }
-        final JavaCommand javaCommand = new JavaCommand(BinaryImageGenerator.class);
+        final JavaCommand javaCommand = new JavaCommand(BootImageGenerator.class);
         javaCommand.addArguments(MaxineTesterConfiguration.getImageConfigArgs(imageConfig));
         javaCommand.addArgument("-output-dir=" + imageDir);
         javaCommand.addArgument("-trace=1");
@@ -663,7 +663,7 @@ public class MaxineTester {
             generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-            out().println("(image build timed out): " + new File(imageDir, BinaryImageGenerator.getDefaultBootImageFilePath().getName()));
+            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getDefaultBootImageFilePath().getName()));
         }
         generatedImages.put(imageConfig, null);
         return false;
@@ -787,14 +787,14 @@ public class MaxineTester {
     }
 
     /**
-     * Copies a binary file from the default output directory used by the {@link BinaryImageGenerator} for
+     * Copies a binary file from the default output directory used by the {@link BootImageGenerator} for
      * the output files it generates to a given directory.
      *
      * @param imageDir the destination directory
      * @param binary the name of the file in the source directory that is to be copied to {@code imageDir}
      */
     private static void copyBinary(File imageDir, String binary) {
-        final File defaultImageDir = BinaryImageGenerator.getDefaultBootImageFilePath().getParentFile();
+        final File defaultImageDir = BootImageGenerator.getDefaultBootImageFilePath().getParentFile();
         final File defaultBinaryFile = new File(defaultImageDir, binary);
         final File binaryFile = new File(imageDir, binary);
         try {

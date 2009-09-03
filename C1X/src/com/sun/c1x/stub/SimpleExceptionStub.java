@@ -33,7 +33,6 @@ import com.sun.c1x.lir.*;
  */
 public class SimpleExceptionStub extends CodeStub {
 
-    public LIROperand obj;
     public final GlobalStub stub;
 
         /**
@@ -43,7 +42,7 @@ public class SimpleExceptionStub extends CodeStub {
      */
     public SimpleExceptionStub(LIROperand obj, GlobalStub stub, CodeEmitInfo info) {
         super(info);
-        this.obj = obj;
+        this.setOperands(0, 0, obj);
         this.stub = stub;
     }
 
@@ -57,11 +56,8 @@ public class SimpleExceptionStub extends CodeStub {
         return true;
     }
 
-    @Override
-    public void visit(LIRVisitState visitor) {
-        if (obj.isValid()) {
-            obj = visitor.doInput(obj);
-        }
-        visitor.doSlowCase(info);
+    public LIROperand obj() {
+        return operand(0);
     }
+
 }

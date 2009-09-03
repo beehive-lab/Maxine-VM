@@ -26,16 +26,36 @@ import com.sun.c1x.xir.*;
 public class LIRXirInstruction extends LIRInstruction {
 
 
-    public final LIROperand[] operands;
-    public final LIRVisitState.OperandMode[] modes;
 
+    public final LIROperand[] originalOperands;
     public final XirSnippet snippet;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] operands, LIRVisitState.OperandMode[] modes) {
-        super(LIROpcode.Xir, LIROperandFactory.IllegalOperand, null);
+    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands) {
+        super(LIROpcode.Xir, outputOperand, null, false, null, inputTempCount, tempCount, operands);
         this.snippet = snippet;
-        this.operands = operands;
-        this.modes = modes;
+        this.originalOperands = originalOperands;
+    }
+
+    public LIROperand[] getOperands() {
+        final LIROperand[] result = new LIROperand[snippet.template.parameters.length];
+
+        int inputParameterIndex = 0;
+        for (int i = 0; i < result.length; i++) {
+            if (i == snippet.template.getResultParameterIndex()) {
+                result[i] = this.result();
+            } else {
+                if (snippet.arguments[i] != null) {
+                    if (snippet.arguments[i].constant == null) {
+
+                        result[i] = operand(inputParameterIndex++);
+                    } else {
+                        result[i] = originalOperands[i];
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -56,5 +76,12 @@ public class LIRXirInstruction extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         out.print("LIRXIR");
+
+        for (LIROperand op : getOperands()) {
+            if (op != null) {
+                out.print(" | ");
+                out.print(op.toString());
+            }
+        }
     }
 }

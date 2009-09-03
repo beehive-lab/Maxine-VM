@@ -21,7 +21,6 @@
 package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
-import java.util.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -45,10 +44,8 @@ import com.sun.max.vm.value.*;
   */
 public class TeleTupleObject extends TeleObject {
 
-    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC);
-
     protected TeleTupleObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+        super(teleVM, reference, teleVM.vmConfiguration().layoutScheme().tupleLayout);
     }
 
     @Override
@@ -57,8 +54,8 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
-    public EnumSet<Layout.HeaderField> getHeaderFields() {
-        return headerFields;
+    public HeaderField[] getHeaderFields() {
+        return Layout.tupleLayout().headerFields();
     }
 
     @Override
@@ -127,20 +124,25 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         final ClassActor classActor = classActorForType();
         final Class<?> javaClass = classActor.toJava();
         final String classMessage = "Copying instance fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);
         try {
             final Object newTuple = Objects.allocateInstance(javaClass);
+
+            if (javaClass.getName().startsWith("java.lang") && !Number.class.isAssignableFrom(javaClass)) {
+                ProgramWarning.message("Deep copying instance of " + javaClass.getName());
+            }
+
             context.register(this, newTuple);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
-                    final String fieldMessage = "Copying instance field " + fieldActor.format("%t %n") + " from VM";
+                    final String fieldMessage = fieldActor.format("Copying instance field '%n' of type '%t' from VM");
                     Trace.begin(COPY_TRACE_VALUE, fieldMessage);
-                    copyField(context, this, newTuple, fieldActor);
+                    context.copyField(this, newTuple, fieldActor);
                     Trace.end(COPY_TRACE_VALUE, fieldMessage);
                 }
                 holderClassActor = holderClassActor.superClassActor;

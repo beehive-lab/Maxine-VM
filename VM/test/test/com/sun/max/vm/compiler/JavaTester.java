@@ -42,7 +42,7 @@ public final class JavaTester {
     private JavaTester() {
     }
 
-    private static final OptionSet options = new OptionSet(true);
+    public static final OptionSet options = new OptionSet(true);
 
     private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
                     "Displays usage message and exits.");
@@ -142,7 +142,7 @@ public final class JavaTester {
             Trace.line(0, "Generating target image...");
             final String[] generatorArgs = {"-trace=1", "-run=" + AbstractTester.class.getPackage().getName() + "." + RUNSCHEME_PACKAGE.getValue()};
             final String[] systemProperties = {"sun.misc.ProxyGenerator.saveGeneratedFiles=true", "sun.reflect.noInflation=false", "sun.reflect.inflationThreshold=1000000"};
-            final String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class,
+            final String[] javaArgs = buildJavaArgs(BootImageGenerator.class,
                             appendArgs(systemProperties, GEN_IMAGE_PROPS.getValue()),
                             appendArgs(generatorArgs, GEN_IMAGE_ARGS.getValue()));
             exec(null, javaArgs, System.out, System.err, System.in);
@@ -150,7 +150,7 @@ public final class JavaTester {
         if (RUN_IMAGE.getValue()) {
             // generate the run scheme if necessary
             Trace.line(0, "Running target image...");
-            final File defaultImagePath = BinaryImageGenerator.getDefaultBootImageFilePath().getParentFile();
+            final File defaultImagePath = BootImageGenerator.getDefaultBootImageFilePath().getParentFile();
             final String[] imageArgs = {"./maxvm"};
             exec(defaultImagePath, appendArgs(imageArgs, RUN_IMAGE_ARGS.getValue()), System.out, System.err, System.in);
         }

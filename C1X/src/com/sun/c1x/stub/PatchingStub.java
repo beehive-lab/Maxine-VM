@@ -170,11 +170,6 @@ public class PatchingStub extends CodeStub {
     }
 
     @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
-
-    @Override
     public void accept(CodeStubVisitor visitor) {
         visitor.visitPatchingStub(this);
     }

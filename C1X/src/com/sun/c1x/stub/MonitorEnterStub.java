@@ -30,7 +30,7 @@ import com.sun.c1x.lir.*;
  * @author Thomas Wuerthinger
  *
  */
-public class MonitorEnterStub extends MonitorAccessStub {
+public class MonitorEnterStub extends CodeStub {
 
     /**
      * Creates a new instance of <code>MonitorEnterStub</code>.
@@ -40,7 +40,8 @@ public class MonitorEnterStub extends MonitorAccessStub {
      * @param info the debug information for this code stub
      */
     public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
-        super(objReg, lockReg, info);
+        super(info);
+        setOperands(0, 0, objReg, lockReg);
     }
 
     @Override
@@ -48,10 +49,11 @@ public class MonitorEnterStub extends MonitorAccessStub {
         visitor.visitMonitorEnterStub(this);
     }
 
-    @Override
-    public void visit(LIRVisitState visitor) {
-        objReg = visitor.doInput(objReg);
-        lockReg = visitor.doInput(lockReg);
-        visitor.doSlowCase(info);
+    public LIROperand objReg() {
+        return operand(0);
+    }
+
+    public LIROperand lockReg() {
+        return operand(1);
     }
 }

@@ -218,7 +218,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
      * @see com.sun.max.tele.MaxWatchpoint#remove()
      */
     public boolean dispose() {
-        return  factory.removeWatchpoint(this);
+        return factory.removeWatchpoint(this);
     }
 
     /* (non-Javadoc)

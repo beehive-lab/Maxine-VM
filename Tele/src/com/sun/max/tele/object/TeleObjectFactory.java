@@ -246,7 +246,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 // Check map again, just in case there's a race
                 teleObject = referenceToTeleObject.get(reference);
                 if (teleObject == null) {
-                    teleObject = new TeleArrayObject(teleVM(), reference);
+                    teleObject = new TeleArrayObject(teleVM(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
                 }
             }
         } else if (classActor.isHybridClassActor()) {

@@ -30,7 +30,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.lir.LIRVisitState.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -688,7 +687,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
 
             LIROperand result = newRegister(arg.runtimeCall.resultType);
-            lir.callRuntimeCalleeSaved(arg.runtimeCall, LIROperand.ILLEGAL, result, arguments, null);
+            lir.callRuntimeCalleeSaved(arg.runtimeCall, result, arguments, null);
             return result;
 
         } else if (arg.constant != null) {
@@ -702,23 +701,25 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void emitXir(XirSnippet snippet) {
 
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
-        final LIRVisitState.OperandMode[] operandModes = new LIRVisitState.OperandMode[snippet.arguments.length];
+        final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
+        //final List<LIROperand> tempOperands = new ArrayList<LIROperand>();
+        LIROperand outputOperand = LIROperand.ILLEGAL;
         for (int i = 0; i < snippet.arguments.length; i++) {
             XirArgument arg = snippet.arguments[i];
             if (arg != null) {
                 operands[i] = allocateOperand(arg);
                 if (operands[i].isRegister()) {
                     if (i == snippet.template.getResultParameterIndex()) {
-                        operandModes[i] = OperandMode.OutputMode;
+                        outputOperand = operands[i];
                     } else {
                         // TODO: Determine tempModes
-                        operandModes[i] = OperandMode.InputMode;
+                        inputOperands.add(operands[i]);
                     }
                 }
             }
         }
 
-        lir.xir(snippet, operands, operandModes);
+        lir.xir(snippet, operands, outputOperand, 0, 0, inputOperands.toArray(new LIROperand[inputOperands.size()]));
     }
 
     @Override
@@ -1699,7 +1700,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert args == null;
         }
 
-        lir.callRuntime(l, getThreadTemp(), physReg, argumentList, info);
+        lir.callRuntime(l, physReg, argumentList, info);
 
         if (result.isValid()) {
             lir.move(physReg, result);
@@ -1986,7 +1987,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand operandForPhi(Phi phi) {
-        if (phi.operand().isIllegal()) {
+        if (phi.operand() == null || phi.operand().isIllegal()) {
             // allocate a virtual register for this phi
             phi.setOperand(rlock(phi));
             instructionForOperand.put(phi.operand().vregNumber(), phi);

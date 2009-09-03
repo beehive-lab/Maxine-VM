@@ -21,6 +21,7 @@
 package com.sun.max.vm.layout;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -46,4 +47,10 @@ public interface ArrayHeaderLayout extends GeneralLayout {
 
     int headerSize();
 
+    /**
+     * Gets the header fields of this array header layout.
+     *
+     * @return an array of header field descriptors sorted by ascending order of the field addresses in memory
+     */
+    HeaderField[] headerFields();
 }

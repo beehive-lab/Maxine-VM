@@ -203,7 +203,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.MonitorEnter, CiRegister.noreg, stub.objReg.asRegister(), stub.lockReg.asRegister());
+        masm.callGlobalStub(GlobalStub.MonitorEnter, CiRegister.noreg, stub.objReg().asRegister(), stub.lockReg().asRegister());
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         masm.jmp(stub.continuation);
@@ -213,11 +213,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         if (stub.computeLock) {
             // lockReg was destroyed by fast unlocking attempt => recompute it
-            ce.monitorAddress(stub.monitorIx, stub.lockReg);
+            ce.monitorAddress(stub.monitorIx, stub.lockReg());
         }
 
 
-        masm.callGlobalStub(GlobalStub.MonitorExit, CiRegister.noreg, stub.objReg.asRegister(), stub.lockReg.asRegister());
+        masm.callGlobalStub(GlobalStub.MonitorExit, CiRegister.noreg, stub.objReg().asRegister(), stub.lockReg().asRegister());
         masm.jmp(stub.continuation);
     }
 
@@ -225,29 +225,29 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        masm.callGlobalStub(stub.stubId, stub.result.asRegister(), stub.klassReg.asRegister());
+        masm.callGlobalStub(stub.stubId, stub.result().asRegister(), stub.klassReg().asRegister());
         masm.jmp(stub.continuation);
     }
 
     public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
         masm.bind(stub.entry);
-        assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
-        assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
+        assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
+        assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
         masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        assert stub.result.asRegister() == X86.rax : "result must in X86Register.rax : ";
+        assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
     }
 
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
         masm.bind(stub.entry);
-        assert stub.length.asRegister() == X86.rbx : "length must in X86Register.rbx : ";
-        assert stub.klassReg.asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
+        assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
+        assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
         masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        assert stub.result.asRegister() == X86.rax : "result must in X86Register.rax : ";
+        assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
     }
 
@@ -374,10 +374,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             stubId = GlobalStub.ThrowRangeCheckFailed;
         }
 
-        if (stub.index.isCpuRegister()) {
-            masm.callGlobalStub(stubId, CiRegister.noreg, stub.index.asRegister());
+        if (stub.index().isCpuRegister()) {
+            masm.callGlobalStub(stubId, CiRegister.noreg, stub.index().asRegister());
         } else {
-            masm.callGlobalStub(stubId, CiRegister.noreg, new RegisterOrConstant(stub.index.asInt()));
+            masm.callGlobalStub(stubId, CiRegister.noreg, new RegisterOrConstant(stub.index().asInt()));
         }
 
         ce.addCallInfoHere(stub.info);
@@ -392,10 +392,10 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         masm.bind(stub.entry);
-        if (stub.obj.isIllegal()) {
+        if (stub.obj().isIllegal()) {
             masm.callGlobalStub(stub.stub);
         } else {
-            masm.callGlobalStub(stub.stub, CiRegister.noreg, stub.obj.asRegister());
+            masm.callGlobalStub(stub.stub, CiRegister.noreg, stub.obj().asRegister());
         }
         ce.addCallInfoHere(stub.info);
 

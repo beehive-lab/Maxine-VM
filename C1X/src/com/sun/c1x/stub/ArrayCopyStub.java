@@ -31,50 +31,45 @@ import com.sun.c1x.lir.*;
  */
 public class ArrayCopyStub extends CodeStub {
 
-    private LIRArrayCopy arrayCopy;
-
     /**
      * Creates a new ArrayCopyStub.
      *
      * @param arrayCopy the LIR operation representing the array copy
      */
-    public ArrayCopyStub(LIRArrayCopy arrayCopy) {
+    public ArrayCopyStub() {
         super(null);
-        this.arrayCopy = arrayCopy;
+    }
+
+    private LIRArrayCopy arrayCopy() {
+        return (LIRArrayCopy) instruction;
     }
 
     public LIROperand source() {
-        return arrayCopy.src();
+        return arrayCopy().src();
     }
 
     public LIROperand sourcePos() {
-        return arrayCopy.srcPos();
+        return arrayCopy().srcPos();
     }
 
     public LIROperand dest() {
-        return arrayCopy.dst();
+        return arrayCopy().dst();
     }
 
     public LIROperand destPos() {
-        return arrayCopy.dstPos();
+        return arrayCopy().dstPos();
     }
 
     public LIROperand length() {
-        return arrayCopy.length();
+        return arrayCopy().length();
     }
 
     public LIROperand tmp() {
-        return arrayCopy.tmp();
+        return arrayCopy().tmp();
     }
 
     @Override
     public void accept(CodeStubVisitor visitor) {
         visitor.visitArrayCopyStub(this);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        // don't pass in the code emit info since it's processed in the fast path
-        visitor.doSlowCase();
     }
 }
