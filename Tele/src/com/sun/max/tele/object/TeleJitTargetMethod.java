@@ -47,4 +47,8 @@ public class TeleJitTargetMethod extends TeleTargetMethod {
         return teleBytecodeInfoArray == null ? null : (BytecodeInfo[]) teleBytecodeInfoArray.deepCopy();
     }
 
+    @Override
+    protected DeepCopier reducedDeepCopier() {
+        return new ReducedDeepCopier().omit(teleVM().fields().JitTargetMethod_referenceMapEditor.fieldActor());
+    }
 }

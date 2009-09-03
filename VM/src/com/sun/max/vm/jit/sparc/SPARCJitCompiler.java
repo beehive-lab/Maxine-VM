@@ -350,13 +350,13 @@ public class SPARCJitCompiler extends JitCompiler {
         if (instructionPointer.greaterEqual(endOfFrameBuilder)) {
             final int currentInstruction = stackFrameWalker.readInt(instructionPointer, 0);
             final int prevInstruction = stackFrameWalker.readInt(instructionPointer, -InstructionSet.SPARC.instructionWidth);
-            if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction ==  BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
+            if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
                 return FRAME_STATE.EXITING_CALLEE;
             }
             return FRAME_STATE.NORMAL;
         }
         // We're in the frame builder
-        // If the target method's frame size is large, the ABI frame pointer is change by the second instruction only.
+        // If the target method's frame size is large, the ABI frame pointer is changed by the second instruction only.
         // So we're still in IN_CALLER_FRAME state if we haven't passed the first two instructions of the frame builder.
         if (!SPARCAssembler.isSimm13(targetMethod.frameSize())) {
             if (instructionPointer.equals(startOfFrameBuilder) ||

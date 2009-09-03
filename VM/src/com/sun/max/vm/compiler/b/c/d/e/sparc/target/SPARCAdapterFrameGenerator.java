@@ -32,6 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
+import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -164,29 +165,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     }
 
 
-    protected void adaptParameter(Kind kind, EirLocation parameterLocation, int offset32) {
-        switch (parameterLocation.category()) {
-            case INTEGER_REGISTER:
-                assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
-                adapt(kind, (SPARCEirRegister.GeneralPurpose) parameterLocation, offset32);
-                break;
-            case FLOATING_POINT_REGISTER:
-                assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
-                adapt(kind, (SPARCEirRegister.FloatingPoint) parameterLocation, offset32);
-                break;
-            case STACK_SLOT:
-                //assert parameterLocation instanceof EirStackSlot && parameterLocation.asStackSlot().purpose() == EirStackSlot.Purpose.PARAMETER;
-                adapt(kind, parameterLocation.asStackSlot().offset, offset32);
-                break;
-            default:
-                ProgramError.unexpected();
-        }
-    }
-
-    abstract void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32);
-    abstract void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32);
-    abstract void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32);
-
     /**
      * Frame Adapter Generator for calls from JIT-ed code to optimized code.
      * No extra spaces needs to be allocated on the stack when entering optimized code from JIT code, except if some arguments cannot be passed by registers.
@@ -195,7 +173,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
      * Further, no caller context need to be saved on the stack: the register window pushed by the optimizing code prologue already take care of this.
      * Parameter-less calls don't need any adapter code. Their prologue can just nops.
      */
-    static class JitToOptimizedFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
+    static final class JitToOptimizedFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
         JitToOptimizedFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
             super(classMethodActor, optimizingCompilerAbi);
         }
@@ -281,57 +259,61 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             assembler().add(optimizedCodeStackPointer, stackAmountInBytes, optimizedCodeStackPointer);
         }
 
-        @Override
-        void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
-            final int biasedOptToStackOffset32 = optoCompilerStackOffset32 + SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
-            if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                assembler().ldx(optimizedCodeStackPointer, jitStackOffset32, longScratchRegister);
-                assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-            } else {
-                assembler().lduw(optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
-                assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-            }
-        }
-
-        @Override
-        void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
-            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum) {
-                case BYTE:
-                case BOOLEAN:
-                    assembler().ldsb(optimizedCodeStackPointer, offset, parameterRegister.as());
+        protected void adaptParameter(Kind kind, EirLocation parameterLocation, int offset32) {
+            final int offset = offset32 +  JitStackFrameLayout.offsetWithinWord(kind);
+            switch (parameterLocation.category()) {
+                case INTEGER_REGISTER:
+                    assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
+                    GPR gprParameterRegister = ((SPARCEirRegister.GeneralPurpose) parameterLocation).as();
+                    switch (kind.asEnum) {
+                        case BYTE:
+                        case BOOLEAN:
+                            assembler().ldsb(optimizedCodeStackPointer, offset, gprParameterRegister);
+                            break;
+                        case SHORT:
+                        case CHAR:
+                            assembler().ldsh(optimizedCodeStackPointer, offset, gprParameterRegister);
+                            break;
+                        case INT:
+                            assembler().ldsw(optimizedCodeStackPointer, offset, gprParameterRegister);
+                            break;
+                        case LONG:
+                        case WORD:
+                        case REFERENCE:
+                            assembler().ldx(optimizedCodeStackPointer, offset, gprParameterRegister);
+                            break;
+                        default: {
+                            ProgramError.unexpected();
+                        }
+                    }
                     break;
-                case SHORT:
-                case CHAR:
-                    assembler().ldsh(optimizedCodeStackPointer, offset, parameterRegister.as());
+                case FLOATING_POINT_REGISTER:
+                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
+                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    switch (kind.asEnum) {
+                        case FLOAT:
+                            assembler().ld(optimizedCodeStackPointer, offset, fpParameterRegister.asSinglePrecision());
+                            break;
+                        case DOUBLE:
+                            assembler().ldd(optimizedCodeStackPointer, offset, fpParameterRegister.asDoublePrecision());
+                            break;
+                        default: {
+                            ProgramError.unexpected();
+                        }
+                    }
                     break;
-                case INT:
-                    assembler().ldsw(optimizedCodeStackPointer, offset, parameterRegister.as());
+                case STACK_SLOT:
+                    final int biasedOptToStackOffset32 = parameterLocation.asStackSlot().offset + SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
+                    if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
+                        assembler().ldx(optimizedCodeStackPointer, offset32, longScratchRegister);
+                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
+                    } else {
+                        assembler().lduw(optimizedCodeStackPointer, offset32 +  JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
+                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
+                    }
                     break;
-                case LONG:
-                case WORD:
-                case REFERENCE:
-                    assembler().ldx(optimizedCodeStackPointer, offset, parameterRegister.as());
-                    break;
-                default: {
+                default:
                     ProgramError.unexpected();
-                }
-            }
-        }
-
-        @Override
-        void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
-            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum) {
-                case FLOAT:
-                    assembler().ld(optimizedCodeStackPointer, offset, parameterRegister.asSinglePrecision());
-                    break;
-                case DOUBLE:
-                    assembler().ldd(optimizedCodeStackPointer, offset, parameterRegister.asDoublePrecision());
-                    break;
-                default: {
-                    ProgramError.unexpected();
-                }
             }
         }
     }
@@ -363,7 +345,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
      *                                                  == bottom of JIT frame.
      *
      */
-    static class OptimizedToJitFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
+    static final class OptimizedToJitFrameAdapterGenerator extends SPARCAdapterFrameGenerator {
         private Label jitEntryPoint;
 
         OptimizedToJitFrameAdapterGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
@@ -384,58 +366,64 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             emitFrameAdapter(assembler);
         }
 
-        @Override
-        void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
-            if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                assembler().ldx(optimizedCodeFramePointer, optoCompilerStackOffset32, longScratchRegister);
-                assembler().stx(longScratchRegister, optimizedCodeStackPointer, jitStackOffset32);
-            } else {
-                assembler().lduw(optimizedCodeFramePointer, optoCompilerStackOffset32, intScratchRegister);
-                assembler().stw(intScratchRegister, optimizedCodeStackPointer, jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind));
+        protected void adaptParameter(Kind kind, EirLocation parameterLocation, int offset32) {
+            final int offset = offset32 +  JitStackFrameLayout.offsetWithinWord(kind);
+            switch (parameterLocation.category()) {
+                case INTEGER_REGISTER:
+                    assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
+                    GPR gprParameterRegister = ((SPARCEirRegister.GeneralPurpose) parameterLocation).as();
+                    switch (kind.asEnum) {
+                        case BYTE:
+                        case BOOLEAN:
+                            assembler().stb(gprParameterRegister, optimizedCodeStackPointer, offset);
+                            break;
+                        case SHORT:
+                        case CHAR:
+                            assembler().sth(gprParameterRegister, optimizedCodeStackPointer, offset);
+                            break;
+                        case INT:
+                            assembler().stw(gprParameterRegister, optimizedCodeStackPointer, offset);
+                            break;
+                        case LONG:
+                        case WORD:
+                        case REFERENCE:
+                            assembler().stx(gprParameterRegister, optimizedCodeStackPointer, offset);
+                            break;
+                        default: {
+                            ProgramError.unexpected();
+                        }
+                    }
+                    break;
+                case FLOATING_POINT_REGISTER:
+                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
+                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    switch (kind.asEnum) {
+                        case FLOAT:
+                            assembler().st(fpParameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
+                            break;
+                        case DOUBLE:
+                            assembler().std(fpParameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
+                            break;
+                        default: {
+                            ProgramError.unexpected();
+                        }
+                    }
+                    break;
+                case STACK_SLOT:
+                    final int slotOffsetFromFP = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + parameterLocation.asStackSlot().offset;
+                    if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
+                        assembler().ldx(optimizedCodeFramePointer, slotOffsetFromFP, longScratchRegister);
+                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, offset);
+                    } else {
+                        assembler().lduw(optimizedCodeFramePointer, slotOffsetFromFP + JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
+                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, offset);
+                    }
+                    break;
+                default:
+                    ProgramError.unexpected();
             }
         }
 
-        @Override
-        void adapt(Kind kind, SPARCEirRegister.GeneralPurpose parameterRegister, int jitStackOffset32) {
-            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum) {
-                case BYTE:
-                case BOOLEAN:
-                    assembler().stb(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                    break;
-                case SHORT:
-                case CHAR:
-                    assembler().sth(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                    break;
-                case INT:
-                    assembler().stw(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                    break;
-                case LONG:
-                case WORD:
-                case REFERENCE:
-                    assembler().stx(parameterRegister.as(), optimizedCodeStackPointer, offset);
-                    break;
-                default: {
-                    ProgramError.unexpected();
-                }
-            }
-        }
-
-        @Override
-        void adapt(Kind kind, SPARCEirRegister.FloatingPoint parameterRegister, int jitStackOffset32) {
-            final int offset = jitStackOffset32 +  JitStackFrameLayout.offsetWithinWord(kind);
-            switch (kind.asEnum) {
-                case FLOAT:
-                    assembler().st(parameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
-                    break;
-                case DOUBLE:
-                    assembler().std(parameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
-                    break;
-                default: {
-                    ProgramError.unexpected();
-                }
-            }
-        }
 
         static int adapterFrameSize(Kind[] parametersKinds, TargetABI targetABI) {
             // The adapter frame comprises space for the arguments plus spaces for the mandatory SPARC register save area,
@@ -471,6 +459,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 adaptParameter(parametersKinds[i], parameterLocations[i], stackOffset);
                 stackOffset += JitStackFrameLayout.stackSlotSize(parametersKinds[i]);
             }
+
             // Initialized JIT frame pointer. Stack walker assumes that they have a valid frame pointer in the JIT frame pointer
             // FIXME: we may remove this if we change the JIT abi to use %i6 as well as their frame pointer.
 

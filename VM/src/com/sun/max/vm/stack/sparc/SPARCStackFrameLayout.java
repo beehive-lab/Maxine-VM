@@ -64,7 +64,8 @@ public final class SPARCStackFrameLayout {
     public static final int MIN_STACK_FRAME_SIZE = SAVE_AREA_SIZE + ARGUMENT_SLOTS_SIZE;
 
     /**
-     * The offset relative to the stack pointer register of the first slot (i.e., the first slot following the frame's save and argument slot area).
+     * The offset relative to the stack pointer register of the first slot.
+     * I.e., the first slot following the frame's save area and 6-argument slot area.
      */
     public static final int OFFSET_FROM_SP_TO_FIRST_SLOT = STACK_BIAS + MIN_STACK_FRAME_SIZE;
 
