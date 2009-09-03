@@ -133,10 +133,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean traceAllocation() {
-        if (!MaxineVM.isDebug()) {
-            return false;
-        }
-        return traceAllocation;
+        return MaxineVM.isDebug() && traceAllocation;
     }
 
     /**
