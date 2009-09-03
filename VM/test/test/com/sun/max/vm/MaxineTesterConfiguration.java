@@ -98,14 +98,130 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class);
+        output(test.output.MegaThreads.class,             RAND_SPARC);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,                  FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                                   RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                                   RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  FAIL_SPARC);
-        jtt(jtt.hotpath.HP_array02.class,                 FAIL_SPARC);
-
+        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
+        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
+        jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
+        jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
+        jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
+        jtt(jtt.lang.ClassLoader_loadClass01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Class_asSubclass01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Object_clone01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Object_notify01.class,               RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Object_notifyAll01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Object_wait01.class,                 RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_get01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_get02.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_get03.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getBoolean01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getByte01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getChar01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getDouble01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getFloat01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getInt01.class,             RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getLength01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getLong01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_getShort01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_set01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_set02.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_set03.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setBoolean01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setByte01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setChar01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setDouble01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setFloat01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setInt01.class,             RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setLong01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Array_setShort01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getDeclaredField01.class,   RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getDeclaredMethod01.class,  RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getField01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getField02.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getMethod01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_getMethod02.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_newInstance02.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_newInstance03.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_newInstance06.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.reflect.Class_newInstance07.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.threads.Thread_holdsLock01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.threads.Thread_setPriority01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
+        jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
+        jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
+        jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
+        jtt(jtt.bytecode.BC_athrow.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_aaload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_aastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_anewarray.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_arraylength.class,              RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_athrow.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_athrow1.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_athrow2.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_athrow3.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_baload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_bastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_caload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_castore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_checkcast.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_checkcast1.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_checkcast2.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_daload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_dastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_fastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_getfield.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_iaload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_iastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_idiv.class,                     RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_invokevirtual01.class,          RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_irem.class,                     RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_laload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_lastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_ldiv.class,                     RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_lrem.class,                     RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_monitorenter.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_multianewarray.class,           RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_newarray.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_putfield.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_saload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_sastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_InCatch01.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_InCatch02.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_InCatch03.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_NPE_01.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_Synchronized01.class,        RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_Synchronized02.class,        RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_Synchronized03.class,        RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_Synchronized04.class,        RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.except.Throw_Synchronized05.class,        RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.lang.Object_toString02.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_String01.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_boolean01.class,            RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_byte01.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_char01.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_float01.class,              RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_double01.class,             RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_int01.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_long01.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.micro.VarArgs_short01.class,              RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.optimize.Fold_Cast01.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.optimize.VN_Cast01.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.optimize.VN_Cast02.class,                 RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.optimize.VN_Field01.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.optimize.VN_Field02.class,                RAND_SPARC);  // Fails:                   @jitopt
 
         dacapo("antlr",              FAIL_SPARC);
         dacapo("bloat",              FAIL_SPARC);
@@ -257,11 +373,8 @@ public class MaxineTesterConfiguration {
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
-        if (platform.operatingSystem == OperatingSystem.SOLARIS) {
-            final ProcessorKind processorKind = platform.processorKind;
-            if (processorKind.processorModel == ProcessorModel.SPARCV9) {
-                return "optopt";
-            }
+        if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
+            return "optopt,optjit";
         }
         return "optc1x,optopt,jitopt,optjit,jitjit";
     }

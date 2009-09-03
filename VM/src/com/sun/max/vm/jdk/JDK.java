@@ -74,6 +74,7 @@ public class JDK {
 
     public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new ClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new ClassRef(java.util.concurrent.atomic.AtomicInteger.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicLong = new ClassRef(java.util.concurrent.atomic.AtomicLong.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicReference = new ClassRef(java.util.concurrent.atomic.AtomicReference.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class, "AtomicReferenceFieldUpdaterImpl");
     public static final ClassRef java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class, "AtomicIntegerFieldUpdaterImpl");
