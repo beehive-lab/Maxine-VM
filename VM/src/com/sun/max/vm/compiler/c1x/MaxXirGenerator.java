@@ -341,10 +341,9 @@ public class MaxXirGenerator extends XirGenerator {
         if (!type.isLoaded() || rank >= SMALL_MULTIANEWARRAY_RANK) {
             XirArgument guard = XirArgument.forObject(guardFor(type));
             return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, guard));
-        } else {
-            XirArgument hub = XirArgument.forObject(hubFor(type));
-            return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, hub));
         }
+        XirArgument hub = XirArgument.forObject(hubFor(type));
+        return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, hub));
     }
 
     @Override
