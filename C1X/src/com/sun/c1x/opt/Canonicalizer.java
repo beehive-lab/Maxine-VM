@@ -41,11 +41,13 @@ public class Canonicalizer extends ValueVisitor {
 
     private static final Object[] NO_ARGUMENTS = {};
 
+    final RiRuntime runtime;
     Value canonical;
     int bci;
     List<Instruction> extra;
 
-    public Canonicalizer() {
+    public Canonicalizer(RiRuntime runtime) {
+        this.runtime = runtime;
     }
 
     public Value canonicalize(Instruction original, int bci) {
@@ -691,9 +693,7 @@ public class Canonicalizer extends ValueVisitor {
         if (i.targetClass().isLoaded()) {
             Value o = i.object();
             RiType exact = o.exactType();
-            if (exact != null && exact.isLoaded() && (o instanceof NewArray || o instanceof NewInstance)) {
-                // compute instanceof statically for NewArray and NewInstance
-                // XXX: why is it necessary to check (o instanceof New)? isn't exact type sufficient?
+            if (exact != null && exact.isLoaded()) {
                 setIntConstant(exact.isSubtypeOf(i.targetClass()) ? 1 : 0);
             }
             if (o.isConstant()) {
@@ -703,8 +703,7 @@ public class Canonicalizer extends ValueVisitor {
                     setIntConstant(0);
                 } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectInstanceOf) {
                     // fold the instanceof test
-                    final boolean result = i.targetClass().isInstance(obj);
-                    setIntConstant(result ? 1 : 0);
+                    setIntConstant(i.targetClass().isInstance(obj) ? 1 : 0);
                 }
             }
         }
@@ -715,29 +714,61 @@ public class Canonicalizer extends ValueVisitor {
         if (!C1XOptions.CanonicalizeIntrinsics) {
             return;
         }
+        if (!foldIntrinsic(i)) {
+            // folding did not work, try recognizing special intrinsics
+            reduceIntrinsic(i);
+        }
+        assert Value.sameBasicType(i, canonical);
+    }
+
+    private void reduceIntrinsic(Intrinsic i) {
+        Value[] args = i.arguments();
+        if (C1XOptions.IntrinsifyClassOps && i.intrinsic() == C1XIntrinsic.java_lang_Class$isInstance) {
+            // try to convert a call to Class.isInstance into an InstanceOf
+            RiType type = asRiType(args[0]);
+            if (type != null) {
+                setCanonical(new InstanceOf(type, Constant.forObject(type.getEncoding(RiType.Representation.TypeInfo)), args[1], i.stateBefore()));
+                return;
+            }
+        }
+        if (C1XOptions.IntrinsifyArrayOps && i.intrinsic() == C1XIntrinsic.java_lang_reflect_Array$newArray) {
+            // try to convert a call to Array.newInstance into a NewObjectArray or NewTypeArray
+            RiType type = asRiType(args[0]);
+            if (type != null) {
+                if (type.basicType() == CiKind.Object) {
+                    setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
+                } else {
+                    setCanonical(new NewTypeArray(args[1], type.basicType(), i.stateBefore()));
+                }
+                return;
+            }
+        }
+        assert Value.sameBasicType(i, canonical);
+    }
+
+    private boolean foldIntrinsic(Intrinsic i) {
         Value[] args = i.arguments();
         for (Value arg : args) {
             if (arg != null && !arg.isConstant()) {
                 // one input is not constant, give up
-                return;
+                return true;
             }
         }
         switch (i.intrinsic()) {
-            // XXX: using Java reflection is a tempting option to simplify this code a LOT,
-            // but is relatively heavyweight and causes bootstrap problems
+            // do not use reflection here due to efficiency and potential bootstrap problems
             case java_lang_Object$hashCode: {
                 Object object = argAsObject(args, 0);
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
-                return;
+                return true;
             }
             case java_lang_Object$getClass: {
                 Object object = argAsObject(args, 0);
                 if (object != null) {
                     setObjectConstant(object.getClass());
                 }
-                return;
+                return true;
             }
 
             // java.lang.Class
@@ -747,7 +778,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (javaClass != null && otherClass != null) {
                     setBooleanConstant(javaClass.isAssignableFrom(otherClass));
                 }
-                return;
+                return true;
             }
             case java_lang_Class$isInstance: {
                 Class<?> javaClass = argAsClass(args, 0);
@@ -755,49 +786,49 @@ public class Canonicalizer extends ValueVisitor {
                 if (javaClass != null && object != null) {
                     setBooleanConstant(javaClass.isInstance(object));
                 }
-                return;
+                return true;
             }
             case java_lang_Class$getModifiers: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setIntConstant(javaClass.getModifiers());
                 }
-                return;
+                return true;
             }
             case java_lang_Class$isInterface: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setBooleanConstant(javaClass.isInterface());
                 }
-                return;
+                return true;
             }
             case java_lang_Class$isArray: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setBooleanConstant(javaClass.isArray());
                 }
-                return;
+                return true;
             }
             case java_lang_Class$isPrimitive: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setBooleanConstant(javaClass.isPrimitive());
                 }
-                return;
+                return true;
             }
             case java_lang_Class$getSuperclass: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setObjectConstant(javaClass.getSuperclass());
                 }
-                return;
+                return true;
             }
             case java_lang_Class$getComponentType: {
                 Class<?> javaClass = argAsClass(args, 0);
                 if (javaClass != null) {
                     setObjectConstant(javaClass.getComponentType());
                 }
-                return;
+                return true;
             }
 
             // java.lang.String
@@ -807,7 +838,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (s1 != null && s2 != null) {
                     setIntConstant(s1.compareTo(s2));
                 }
-                return;
+                return true;
             }
             case java_lang_String$indexOf: {
                 String s1 = argAsString(args, 0);
@@ -815,7 +846,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (s1 != null && s2 != null) {
                     setIntConstant(s1.indexOf(s2));
                 }
-                return;
+                return true;
             }
             case java_lang_String$equals: {
                 String s1 = argAsString(args, 0);
@@ -823,40 +854,40 @@ public class Canonicalizer extends ValueVisitor {
                 if (s1 != null && s2 != null) {
                     setBooleanConstant(s1.equals(s2));
                 }
-                return;
+                return true;
             }
 
             // java.lang.Math
-            case java_lang_Math$abs:   setDoubleConstant(Math.abs(argAsDouble(args, 0))); return;
-            case java_lang_Math$sin:   setDoubleConstant(Math.sin(argAsDouble(args, 0))); return;
-            case java_lang_Math$cos:   setDoubleConstant(Math.cos(argAsDouble(args, 0))); return;
-            case java_lang_Math$tan:   setDoubleConstant(Math.tan(argAsDouble(args, 0))); return;
-            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 2))); return;
-            case java_lang_Math$sqrt:  setDoubleConstant(Math.sqrt(argAsDouble(args, 0))); return;
-            case java_lang_Math$log:   setDoubleConstant(Math.log(argAsDouble(args, 0))); return;
-            case java_lang_Math$log10: setDoubleConstant(Math.log10(argAsDouble(args, 0))); return;
-            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 2))); return;
-            case java_lang_Math$exp:   setDoubleConstant(Math.exp(argAsDouble(args, 0))); return;
-            case java_lang_Math$min:   setIntConstant(Math.min(argAsInt(args, 0), argAsInt(args, 1))); return;
-            case java_lang_Math$max:   setIntConstant(Math.max(argAsInt(args, 0), argAsInt(args, 1))); return;
+            case java_lang_Math$abs:   setDoubleConstant(Math.abs(argAsDouble(args, 0))); return true;
+            case java_lang_Math$sin:   setDoubleConstant(Math.sin(argAsDouble(args, 0))); return true;
+            case java_lang_Math$cos:   setDoubleConstant(Math.cos(argAsDouble(args, 0))); return true;
+            case java_lang_Math$tan:   setDoubleConstant(Math.tan(argAsDouble(args, 0))); return true;
+            case java_lang_Math$atan2: setDoubleConstant(Math.atan2(argAsDouble(args, 0), argAsDouble(args, 2))); return true;
+            case java_lang_Math$sqrt:  setDoubleConstant(Math.sqrt(argAsDouble(args, 0))); return true;
+            case java_lang_Math$log:   setDoubleConstant(Math.log(argAsDouble(args, 0))); return true;
+            case java_lang_Math$log10: setDoubleConstant(Math.log10(argAsDouble(args, 0))); return true;
+            case java_lang_Math$pow:   setDoubleConstant(Math.pow(argAsDouble(args, 0), argAsDouble(args, 2))); return true;
+            case java_lang_Math$exp:   setDoubleConstant(Math.exp(argAsDouble(args, 0))); return true;
+            case java_lang_Math$min:   setIntConstant(Math.min(argAsInt(args, 0), argAsInt(args, 1))); return true;
+            case java_lang_Math$max:   setIntConstant(Math.max(argAsInt(args, 0), argAsInt(args, 1))); return true;
 
             // java.lang.Float
-            case java_lang_Float$floatToRawIntBits: setIntConstant(Float.floatToRawIntBits(argAsFloat(args, 0))); return;
-            case java_lang_Float$floatToIntBits: setIntConstant(Float.floatToIntBits(argAsFloat(args, 0))); return;
-            case java_lang_Float$intBitsToFloat: setFloatConstant(Float.intBitsToFloat(argAsInt(args, 0))); return;
+            case java_lang_Float$floatToRawIntBits: setIntConstant(Float.floatToRawIntBits(argAsFloat(args, 0))); return true;
+            case java_lang_Float$floatToIntBits: setIntConstant(Float.floatToIntBits(argAsFloat(args, 0))); return true;
+            case java_lang_Float$intBitsToFloat: setFloatConstant(Float.intBitsToFloat(argAsInt(args, 0))); return true;
 
             // java.lang.Double
-            case java_lang_Double$doubleToRawLongBits: setLongConstant(Double.doubleToRawLongBits(argAsDouble(args, 0))); return;
-            case java_lang_Double$doubleToLongBits: setLongConstant(Double.doubleToLongBits(argAsDouble(args, 0))); return;
-            case java_lang_Double$longBitsToDouble: setDoubleConstant(Double.longBitsToDouble(argAsLong(args, 0))); return;
+            case java_lang_Double$doubleToRawLongBits: setLongConstant(Double.doubleToRawLongBits(argAsDouble(args, 0))); return true;
+            case java_lang_Double$doubleToLongBits: setLongConstant(Double.doubleToLongBits(argAsDouble(args, 0))); return true;
+            case java_lang_Double$longBitsToDouble: setDoubleConstant(Double.longBitsToDouble(argAsLong(args, 0))); return true;
 
             // java.lang.Integer
-            case java_lang_Integer$bitCount: setIntConstant(Integer.bitCount(argAsInt(args, 0))); return;
-            case java_lang_Integer$reverseBytes: setIntConstant(Integer.reverseBytes(argAsInt(args, 0))); return;
+            case java_lang_Integer$bitCount: setIntConstant(Integer.bitCount(argAsInt(args, 0))); return true;
+            case java_lang_Integer$reverseBytes: setIntConstant(Integer.reverseBytes(argAsInt(args, 0))); return true;
 
             // java.lang.Long
-            case java_lang_Long$bitCount: setIntConstant(Long.bitCount(argAsLong(args, 0))); return;
-            case java_lang_Long$reverseBytes: setLongConstant(Long.reverseBytes(argAsLong(args, 0))); return;
+            case java_lang_Long$bitCount: setIntConstant(Long.bitCount(argAsLong(args, 0))); return true;
+            case java_lang_Long$reverseBytes: setLongConstant(Long.reverseBytes(argAsLong(args, 0))); return true;
 
             // java.lang.System
             case java_lang_System$identityHashCode: {
@@ -864,19 +895,19 @@ public class Canonicalizer extends ValueVisitor {
                 if (object != null) {
                     setIntConstant(System.identityHashCode(object));
                 }
-                return;
+                return true;
             }
 
             // java.lang.reflect.Array
             case java_lang_reflect_Array$getLength: {
                 Object object = argAsObject(args, 0);
                 if (object != null && object.getClass().isArray()) {
-                    setIntConstant(java.lang.reflect.Array.getLength(object));
+                    setIntConstant(Array.getLength(object));
                 }
-                return;
+                return true;
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        return false;
     }
 
     @Override
@@ -1221,6 +1252,16 @@ public class Canonicalizer extends ValueVisitor {
                 // folding failed; too bad
             } catch (InvocationTargetException e) {
                 // folding failed; too bad
+            }
+        }
+        return null;
+    }
+
+    private RiType asRiType(Value x) {
+        if (x.isConstant()) {
+            Object o = x.asConstant().asObject();
+            if (o instanceof Class) {
+                return runtime.getRiType((Class) o);
             }
         }
         return null;

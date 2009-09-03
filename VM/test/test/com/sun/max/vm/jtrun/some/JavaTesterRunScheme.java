@@ -27,6 +27,7 @@ import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import jtt.bytecode.BC_checkcast01;
 
 public class JavaTesterRunScheme extends AbstractTester {
 
@@ -58,7 +59,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.bytecode.BC_bastore.class,
         jtt.bytecode.BC_caload.class,
         jtt.bytecode.BC_castore.class,
-        jtt.bytecode.BC_checkcast.class,
+        BC_checkcast01.class,
         jtt.bytecode.BC_d2f.class,
         jtt.bytecode.BC_d2i.class,
         jtt.bytecode.BC_d2i_nan.class,

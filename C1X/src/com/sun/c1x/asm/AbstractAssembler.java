@@ -94,13 +94,13 @@ public abstract class AbstractAssembler {
             TTY.println("Register size: %d", targetMethod.registerSize);
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode, targetMethod.targetCodeSize, C1XOptions.BytesPerLine);
+            Util.printBytes("Code", targetMethod.targetCode, targetMethod.targetCodeSize, C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
             TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode, targetMethod.targetCodeSize)));
 
             Util.printSection("Data", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Data", targetMethod.data, targetMethod.dataSize, C1XOptions.BytesPerLine);
+            Util.printBytes("Data", targetMethod.data, targetMethod.dataSize, C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.SafepointRefMap x : targetMethod.safepointRefMaps) {
