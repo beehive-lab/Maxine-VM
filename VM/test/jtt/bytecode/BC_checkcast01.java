@@ -24,10 +24,10 @@ package jtt.bytecode;
  * @Harness: java
  * @Runs: 0 = -1; 1 = -1; 4 = 4
  */
-public class BC_checkcast {
+public class BC_checkcast01 {
     static Object object2 = new Object();
     static Object object3 = "";
-    static Object object4 = new BC_checkcast();
+    static Object object4 = new BC_checkcast01();
 
     public static int test(int arg) {
         Object obj;
@@ -40,7 +40,7 @@ public class BC_checkcast {
         } else {
             obj = null;
         }
-        final BC_checkcast bc = (BC_checkcast) obj;
+        final BC_checkcast01 bc = (BC_checkcast01) obj;
         if (bc != null) {
             return arg;
         }

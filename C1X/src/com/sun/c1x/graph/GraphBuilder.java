@@ -68,7 +68,7 @@ public class GraphBuilder {
         this.stats = compilation.stats;
         this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
-        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer() : null;
+        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer(compilation.runtime) : null;
         RiMethod rootMethod = compilation.method;
 
         // 1. create the start block
@@ -117,7 +117,7 @@ public class GraphBuilder {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
             curState = initialState.copy();
             lastInstr = curBlock;
-            if (C1XOptions.InlineIntrinsics) {
+            if (C1XOptions.Intrinsify) {
                 // try to inline an Intrinsic node
                 boolean isStatic = rootMethod.isStatic();
                 int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
@@ -1368,7 +1368,7 @@ public class GraphBuilder {
 
     boolean tryOptimizeCall(RiMethod target, Value[] args, boolean isStatic) {
         if (target.isLoaded()) {
-            if (C1XOptions.InlineIntrinsics) {
+            if (C1XOptions.Intrinsify) {
                 // try to create an intrinsic node
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
                 if (intrinsic != null && tryInlineIntrinsic(target, args, isStatic, intrinsic)) {
