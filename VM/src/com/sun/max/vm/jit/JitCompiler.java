@@ -35,7 +35,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Laurent Daynes
  */
-public abstract class JitCompiler extends AbstractVMScheme implements DynamicCompilerScheme {
+public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
 
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 

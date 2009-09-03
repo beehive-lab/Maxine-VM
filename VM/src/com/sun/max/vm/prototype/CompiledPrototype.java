@@ -166,7 +166,7 @@ public class CompiledPrototype extends Prototype {
         return (TargetGeneratorScheme) compilerScheme();
     }
 
-    public DynamicCompilerScheme jitScheme() {
+    public RuntimeCompilerScheme jitScheme() {
         return vmConfiguration().jitScheme();
     }
 
@@ -277,7 +277,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void processNewTargetMethod(DynamicCompilerScheme dynamicCompilerScheme, TargetMethod targetMethod) {
+    private void processNewTargetMethod(RuntimeCompilerScheme dynamicCompilerScheme, TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // if this method contains anonymous classes, add them:
@@ -396,7 +396,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        final DynamicCompilerScheme dynamicCompilerScheme = compilerScheme();
+        final RuntimeCompilerScheme dynamicCompilerScheme = compilerScheme();
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             processNewTargetMethod(dynamicCompilerScheme, targetMethod);
         }

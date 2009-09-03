@@ -42,7 +42,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     private int[] catchBlockPositions;
 
-    public CPSTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public CPSTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 

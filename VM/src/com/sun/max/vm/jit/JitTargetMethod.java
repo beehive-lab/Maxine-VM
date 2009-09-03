@@ -80,7 +80,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 

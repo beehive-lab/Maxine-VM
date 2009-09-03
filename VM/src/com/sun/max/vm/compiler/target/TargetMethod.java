@@ -63,7 +63,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * The compiler scheme that produced this target method.
      */
     @INSPECTED
-    public final DynamicCompilerScheme compilerScheme;
+    public final RuntimeCompilerScheme compilerScheme;
 
     @INSPECTED
     private final ClassMethodActor classMethodActor;
@@ -119,11 +119,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     @INSPECTED
     private TargetABI abi;
 
-    public TargetMethod(String description, DynamicCompilerScheme compilerScheme) {
+    public TargetMethod(String description, RuntimeCompilerScheme compilerScheme) {
         this((ClassMethodActor) null, compilerScheme);
     }
 
-    public TargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public TargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         this.classMethodActor = classMethodActor;
         this.compilerScheme = compilerScheme;
         setDescription("Target-" + name());

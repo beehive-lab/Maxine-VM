@@ -37,6 +37,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.*;
@@ -608,6 +609,8 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         private final FieldActor abi;
         private final FieldActor compilerScheme;
 
+        private C1XCompilerScheme c1xCompilerScheme;
+
         @Override
         protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
             if (fieldActor.equals(compilerScheme)) {
@@ -616,6 +619,11 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
                     return VMConfiguration.hostOrTarget().compilerScheme();
                 } else if (VMConfiguration.hostOrTarget().jitScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().jitScheme();
+                } else if (C1XCompilerScheme.class == type) {
+                    if (c1xCompilerScheme == null) {
+                        c1xCompilerScheme = new C1XCompilerScheme(VMConfiguration.hostOrTarget());
+                    }
+                    return c1xCompilerScheme;
                 }
                 throw ProgramError.unexpected();
             } else if (fieldActor.equals(abi)) {

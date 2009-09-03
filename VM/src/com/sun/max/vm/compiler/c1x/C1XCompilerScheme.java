@@ -44,7 +44,7 @@ import com.sun.max.vm.stack.*;
 /**
  * @author Ben L. Titzer
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements DynamicCompilerScheme {
+public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
 
     private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
