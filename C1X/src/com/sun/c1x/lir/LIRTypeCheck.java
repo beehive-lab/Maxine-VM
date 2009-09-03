@@ -59,7 +59,7 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
                         CodeEmitInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
-        super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalOperand, tmp1, tmp2, tmp3);
+        super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
         this.klass = klass;
@@ -84,7 +84,7 @@ public class LIRTypeCheck extends LIRInstruction {
     public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
                         LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
                         CodeEmitInfo infoForException, RiMethod profiledMethod, int profiledBci) {
-        super(opcode, LIROperandFactory.IllegalOperand, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
+        super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;
         this.profiledMethod = profiledMethod;
@@ -197,11 +197,6 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        object().print(out);                  out.print(" ");
-        if (code == LIROpcode.StoreCheck) {
-          array().print(out);
-          out.print(" ");
-        }
         if (code != LIROpcode.StoreCheck) {
           out.print(klass().name());
           out.print(" ");
@@ -209,14 +204,7 @@ public class LIRTypeCheck extends LIRInstruction {
               out.print("fastCheck ");
           }
         }
-        tmp1().print(out);
-        out.print(" ");
-        tmp2().print(out);
-        out.print(" ");
-        tmp3().print(out);
-        out.print(" ");
-        result().print(out);
-        out.print(" ");
+        super.printInstruction(out);
         if (info != null) {
             out.printf(" [bci:%d]", info.bci());
         }

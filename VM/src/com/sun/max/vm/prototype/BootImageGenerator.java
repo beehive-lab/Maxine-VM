@@ -26,7 +26,8 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
-import com.sun.c1x.*;
+import test.com.sun.max.vm.compiler.c1x.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -206,7 +207,7 @@ public final class BootImageGenerator {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            options.addFieldOptions(C1XOptions.class, "C1X:");
+            C1XTest.addOptions(options);
             options.parseArguments(programArguments);
 
             if (help.getValue()) {

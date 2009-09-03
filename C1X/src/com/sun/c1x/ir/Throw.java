@@ -32,13 +32,16 @@ public class Throw extends BlockEnd {
 
     Value exception;
 
+    ValueStack stateBefore;
+
     /**
      * Creates a new Throw instruction.
      * @param exception the instruction that generates the exception to throw
      * @param stateBefore the state before the exception is thrown
      */
     public Throw(Value exception, ValueStack stateBefore) {
-        super(CiKind.Illegal, stateBefore, true);
+        super(CiKind.Illegal, null, true);
+        this.stateBefore = stateBefore;
         this.exception = exception;
     }
 
@@ -48,6 +51,15 @@ public class Throw extends BlockEnd {
      */
     public Value exception() {
         return exception;
+    }
+
+    /**
+     * Returns the state before this throw would occur.
+     * @return the state before the throw
+     */
+    @Override
+    public ValueStack stateBefore() {
+        return stateBefore;
     }
 
     /**

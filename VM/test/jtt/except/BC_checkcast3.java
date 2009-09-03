@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,52 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.except;
 
-import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
-
-/**
- * The <code>ConstantOopReadValue</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+/*
+ * @Harness: java
+ * @Runs: 0 = !java.lang.ClassCastException; 1 = !java.lang.ClassCastException; 2 = -1; 3 = -1
  */
-public class ConstantOopReadValue extends ScopeValue {
+public class BC_checkcast3 {
 
-    private Object value;
+    static Object[] o1 = {new Object()};
+    static String[] o2 = {""};
+    static BC_checkcast3[] o3 = {new BC_checkcast3()};
 
-    /**
-     * @param stream
-     */
-    public ConstantOopReadValue(DebugInfoReadStream stream) {
-        value = stream.readOop();
-    }
-
-    public Object value() {
-        return value;
-    }
-
-    @Override
-    public boolean isConstantOop() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(ScopeValue other) {
-        return false;
-    }
-
-    // Serialization of debugging information
-
-    @Override
-    public void writeOn(DebugInfoWriteStream stream) {
-        Util.shouldNotReachHere();
-    }
-
-    @Override
-    public void printOn(LogStream out) {
-        out.print(value.toString());
+    public static int test(int arg) {
+        Object obj = null;
+        if (arg == 0) {
+            obj = o1;
+        }
+        if (arg == 1) {
+            obj = o2;
+        }
+        if (arg == 2) {
+            obj = o3;
+        }
+        Object[] r = (BC_checkcast3[]) obj;
+        return r == null ? -1 : -1;
     }
 }

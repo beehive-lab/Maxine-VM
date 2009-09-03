@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,52 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.bytecode;
 
-import com.sun.c1x.debug.*;
-
-/**
- * The <code>ConstantDoubleValue</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; 1 = 1
  */
-public class ConstantDoubleValue extends ScopeValue {
-
-    private double value;
-
-    public ConstantDoubleValue(double value) {
-        this.value = value;
-    }
-
-    // Serialization of debugging information
-    public ConstantDoubleValue(DebugInfoReadStream stream) {
-        value = stream.readDouble();
-    }
-
-    public double value() {
-        return value;
-    }
-
-    @Override
-    public boolean isConstantDouble() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(ScopeValue other) {
-        return false;
-    }
-
-    @Override
-    public void writeOn(DebugInfoWriteStream stream) {
-        stream.writeInt(ScopeValueCode.ConstantDoubleCode.ordinal());
-        stream.writeDouble(value);
-    }
-
-    @Override
-    public void printOn(LogStream out) {
-        out.printf("%f", value);
+public class BC_multianewarray01 {
+    public static int test(int a) {
+        final BC_multianewarray01[][] v = new BC_multianewarray01[3][3];
+        return v != null ? a : -1;
     }
 }

@@ -34,7 +34,6 @@ public class C1XOptions {
 
     // inlining settings
     public static boolean InlineMethods                      = ____;
-    public static boolean InlineIntrinsics                   = ____;
     public static boolean InlineMethodsWithExceptionHandlers = ____;
     public static boolean InlineSynchronizedMethods          = ____;
     public static int     MaximumInstructionCount            = 37000;
@@ -45,10 +44,24 @@ public class C1XOptions {
     public static int     MaximumRecursiveInlineLevel        = 1;
     public static int     MaximumDesiredSize                 = 8000;
 
+    // intrinsification settings
+    public static boolean Intrinsify                         = ____;
+    public static boolean IntrinsifyObjectOps                = true;
+    public static boolean IntrinsifyClassOps                 = true;
+    public static boolean IntrinsifyIntOps                   = true;
+    public static boolean IntrinsifyLongOps                  = true;
+    public static boolean IntrinsifyStringOps                = true;
+    public static boolean IntrinsifyArrayOps                 = true;
+    public static boolean IntrinsifyReflection               = true;
+    public static boolean IntrinsifyMath                     = true;
+    public static boolean IntrinsifyAtomic                   = true;
+    public static boolean IntrinsifyUnsafe                   = true;
+
     // floating point settings
     public static int     SSEVersion                         = 2;
     public static boolean RoundFPResults                     = ____;
 
+    public static boolean IRChecking                         = ____;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
@@ -60,12 +73,16 @@ public class C1XOptions {
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
     public static boolean PrintNotLoaded                     = ____;
-    public static boolean IRChecking                         = ____;
     public static boolean FatalUnimplemented                 = ____;
-    public static boolean InterpretInvokedMethods            = ____;
+    public static boolean InterpretInvokedMethods            = true;
+    public static boolean PrintStateInInterpreter            = ____;
+    public static boolean PrintAssembly                      = ____;
+    public static int     PrintAssemblyBytesPerLine          = 16;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = true;
+    public static boolean CanonicalizeClassIsInstance        = true;
+    public static boolean CanonicalizeIfInstanceOf           = ____;
     public static boolean CanonicalizeIntrinsics             = true;
     public static boolean CanonicalizeFloatingPoint          = true;
     public static boolean CanonicalizeNarrowingInStores      = true;
@@ -125,16 +142,6 @@ public class C1XOptions {
     public static boolean OptimizeControlFlow                = ____;
     public static boolean OptimizeMoves                      = ____;
 
-    // future settings
-    public static boolean DoArrayBoundsCheckElimination      = ____;
-    public static boolean DistinguishExceptionHandlerCode    = ____;
-    public static boolean DoProfileGuidedInlining            = ____;
-    public static boolean DoTypeFlowAnalysis                 = ____;
-    public static boolean DetectCascadingInstanceOf          = ____;
-    public static float   MonomorphicProfileRatio            = 0.85f;
-    public static float   BimorphicProfileRatio              = 0.90f;
-    public static int     MaximumTypeSwitchInlining          = 10;
-
     // Linear scan settings
     public static boolean StressLinearScan                   = ____;
     public static int     TraceLinearScanLevel               = 0;
@@ -186,12 +193,9 @@ public class C1XOptions {
     public static boolean UseIncDec                          = ____;
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
-    public static boolean CMSIncrementalMode                 = ____;
     public static boolean GenerateAssertionCode              = ____;
     public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
-    public static boolean PrintAssembly                      = ____;
-    public static int     BytesPerLine                       = 16;
     public static boolean TraceLIRVisit                      = ____;
 
     public static void setOptimizationLevel(int level) {
@@ -225,8 +229,6 @@ public class C1XOptions {
         DoGlobalValueNumbering             = ____;
         DoCEElimination                    = ____;
         DoBlockMerging                     = ____;
-        DoArrayBoundsCheckElimination      = ____;
-        DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
@@ -258,8 +260,6 @@ public class C1XOptions {
         DoGlobalValueNumbering             = ____;
         DoCEElimination                    = ____;
         DoBlockMerging                     = ____;
-        DoArrayBoundsCheckElimination      = ____;
-        DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = true;
         DoIterativeNCE                     = ____; // don't iterate NCE
         DoFlowSensitiveNCE                 = ____;
@@ -293,8 +293,6 @@ public class C1XOptions {
         DoGlobalValueNumbering             = ____;
         DoCEElimination                    = ____;
         DoBlockMerging                     = true;
-        DoArrayBoundsCheckElimination      = ____;
-        DistinguishExceptionHandlerCode    = ____;
         DoNullCheckElimination             = true;
         DoIterativeNCE                     = ____; // don't iterate NCE
         DoFlowSensitiveNCE                 = ____;
@@ -329,8 +327,6 @@ public class C1XOptions {
         DoCEElimination                    = true;
         DoBlockMerging                     = true;
         DoBlockSkipping                    = true;
-        DoArrayBoundsCheckElimination      = true;
-        DistinguishExceptionHandlerCode    = true;
         DoNullCheckElimination             = true;
         DoIterativeNCE                     = true;
         DoFlowSensitiveNCE                 = true;

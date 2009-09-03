@@ -56,7 +56,7 @@ public class PhiResolver {
         this.gen = gen;
         state = new PhiResolverState();
         state.reset(maxVregs);
-        temp = LIROperandFactory.IllegalOperand;
+        temp = LIROperandFactory.IllegalLocation;
     }
 
     public void dispose() {
@@ -84,8 +84,8 @@ public class PhiResolver {
     public void move(LIROperand src, LIROperand dest) {
         assert dest.isVirtual() :  "";
         // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
-        assert src.isValid() :  "";
-        assert dest.isValid() :  "";
+        assert !src.isIllegal() :  "";
+        assert !dest.isIllegal() :  "";
         ResolveNode source = sourceNode(src);
         source.append(destinationNode(dest));
       }
@@ -118,8 +118,8 @@ public class PhiResolver {
     }
 
     private void emitMove(LIROperand src, LIROperand dest) {
-        assert src.isValid();
-        assert dest.isValid();
+        assert !src.isIllegal();
+        assert !dest.isIllegal();
         gen().lir.move(src, dest);
     }
 
@@ -160,14 +160,14 @@ public class PhiResolver {
     }
 
     private void moveTempTo(LIROperand dest) {
-        assert temp.isValid();
+        assert !temp.isIllegal();
         emitMove(temp, dest);
-        temp = LIROperandFactory.IllegalOperand;
+        temp = LIROperandFactory.IllegalLocation;
     }
 
     private void moveToTemp(LIROperand src) {
         assert temp.isIllegal();
-        temp = gen().newRegister(src.type());
+        temp = gen().newRegister(src.kind);
         emitMove(src, temp);
     }
 

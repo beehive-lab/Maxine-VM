@@ -22,13 +22,27 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0 = 0; 1 = 1
+ * @Runs: 0 = -1; 1 = -1; 4 = 4
  */
-public class BC_multianewarray {
-    public static int test(int a) {
-        final BC_multianewarray[][] v = new BC_multianewarray[3][3];
-        if (v != null) {
-            return a;
+public class BC_checkcast01 {
+    static Object object2 = new Object();
+    static Object object3 = "";
+    static Object object4 = new BC_checkcast01();
+
+    public static int test(int arg) {
+        Object obj;
+        if (arg == 2) {
+            obj = object2;
+        } else if (arg == 3) {
+            obj = object3;
+        } else if (arg == 4) {
+            obj = object4;
+        } else {
+            obj = null;
+        }
+        final BC_checkcast01 bc = (BC_checkcast01) obj;
+        if (bc != null) {
+            return arg;
         }
         return -1;
     }
