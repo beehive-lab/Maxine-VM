@@ -65,9 +65,8 @@ public class LIROperand {
 
     @Override
     public String toString() {
-
         if (isIllegal()) {
-            return "";
+            return "illegal";
         }
 
         final StringBuffer out = new StringBuffer();

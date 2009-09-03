@@ -231,8 +231,11 @@ public class C1XTest {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
         }
+        if (printBailout && result.bailout() != null) {
+            result.bailout().printStackTrace();
+        }
 
-        return true;
+        return result.bailout() == null;
     }
 
     private static boolean isCompilable(MethodActor method) {

@@ -223,7 +223,11 @@ public class MaxRiType implements RiType {
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstance(Object obj) {
-        return asClassActor("isInstance()").isInstance(obj);
+        ClassActor classActor = asClassActor("isInstance()");
+        if (MaxineVM.isPrototyping()) {
+            return classActor.toJava().isInstance(obj);            
+        }
+        return classActor.isInstance(obj);
     }
 
     /**
