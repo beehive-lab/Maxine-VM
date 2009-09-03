@@ -44,7 +44,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
+public abstract class JitTargetMethod extends CPSTargetMethod {
 
     private int adapterReturnPosition;
     private int optimizedCallerAdapterFrameCodeSize;
@@ -80,7 +80,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 

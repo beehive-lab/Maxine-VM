@@ -682,7 +682,7 @@ public class GraphBuilder {
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
         CheckCast c = new CheckCast(type, typeInstruction, apop(), stateBefore);
         apush(append(c));
-        if (assumeLeafClass(type)) {
+        if (assumeLeafClass(type) && !type.isArrayKlass()) {
             c.setDirectCompare();
         }
         if (C1XOptions.ProfileCheckcasts) {
@@ -697,7 +697,7 @@ public class GraphBuilder {
         Value typeInstruction = genResolveClass(RiType.Representation.ObjectHub, type, !C1XOptions.TestPatching && type.isLoaded() && type.isInitialized(), cpi, stateBefore);
         InstanceOf i = new InstanceOf(type, typeInstruction, apop(), stateBefore);
         ipush(append(i));
-        if (assumeLeafClass(type)) {
+        if (assumeLeafClass(type) && !type.isArrayKlass()) {
             i.setDirectCompare();
         }
     }

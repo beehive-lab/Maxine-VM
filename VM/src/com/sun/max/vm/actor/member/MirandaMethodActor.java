@@ -71,7 +71,7 @@ public class MirandaMethodActor extends VirtualMethodActor {
     }
 
     @Override
-    public boolean isDeclaredInline(CompilerScheme compilerScheme) {
+    public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
         return false;
     }
 

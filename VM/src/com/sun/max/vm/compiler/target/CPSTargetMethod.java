@@ -26,6 +26,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
 
 /**
  *
@@ -33,15 +35,25 @@ import com.sun.max.vm.compiler.*;
  *
  * @author Thomas Wuerthinger
  */
-public abstract class ExceptionRangeTargetMethod extends TargetMethod {
+public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @INSPECTED
     private int[] catchRangePositions;
     @INSPECTED
     private int[] catchBlockPositions;
 
-    public ExceptionRangeTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public CPSTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
+    }
+
+    @Override
+    public boolean contains(Builtin builtin, boolean defaultResult) {
+        return defaultResult;
+    }
+
+    @Override
+    public int count(Builtin builtin, int defaultResult) {
+        return defaultResult;
     }
 
     /**
@@ -138,7 +150,7 @@ public abstract class ExceptionRangeTargetMethod extends TargetMethod {
 
     public final TargetMethod duplicate() {
         final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme;
-        final ExceptionRangeTargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
+        final CPSTargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         Code.allocate(targetBundleLayout, duplicate);
         duplicate.setGenerated(

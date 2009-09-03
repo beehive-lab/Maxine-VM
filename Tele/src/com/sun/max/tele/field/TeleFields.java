@@ -114,8 +114,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "next", Entry.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
-    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchBlockPositions", int[].class);
-    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchRangePositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "catchBlockPositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "catchRangePositions", int[].class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "classActor", ClassActor.class);
     public final TeleInstanceIntFieldAccess Hub_mTableLength = new TeleInstanceIntFieldAccess(Hub.class, "mTableLength");
@@ -158,7 +158,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "classMethodActor", ClassMethodActor.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");
-    public final TeleInstanceReferenceFieldAccess TargetMethod_compilerScheme = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compilerScheme", DynamicCompilerScheme.class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_compilerScheme = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compilerScheme", RuntimeCompilerScheme.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compressedJavaFrameDescriptors", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "directCallees", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "encodedInlineDataDescriptors", byte[].class);

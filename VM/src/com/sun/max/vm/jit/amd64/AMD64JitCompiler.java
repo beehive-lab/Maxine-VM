@@ -95,6 +95,8 @@ public class AMD64JitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
         if (MaxineVM.isPrototyping()) {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }

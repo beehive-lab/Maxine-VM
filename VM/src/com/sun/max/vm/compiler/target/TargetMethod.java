@@ -37,8 +37,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
@@ -56,7 +54,7 @@ import com.sun.max.vm.template.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
+public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     @PROTOTYPE_ONLY
     public static boolean COLLECT_TARGET_METHOD_STATS;
@@ -65,7 +63,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * The compiler scheme that produced this target method.
      */
     @INSPECTED
-    public final DynamicCompilerScheme compilerScheme;
+    public final RuntimeCompilerScheme compilerScheme;
 
     @INSPECTED
     private final ClassMethodActor classMethodActor;
@@ -121,11 +119,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @INSPECTED
     private TargetABI abi;
 
-    public TargetMethod(String description, DynamicCompilerScheme compilerScheme) {
+    public TargetMethod(String description, RuntimeCompilerScheme compilerScheme) {
         this((ClassMethodActor) null, compilerScheme);
     }
 
-    public TargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public TargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         this.classMethodActor = classMethodActor;
         this.compilerScheme = compilerScheme;
         setDescription("Target-" + name());
@@ -995,14 +993,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
 
         return stopIndexWithClosestPosition;
-    }
-
-    public boolean contains(Builtin builtin, boolean defaultResult) {
-        return defaultResult;
-    }
-
-    public int count(Builtin builtin, int defaultResult) {
-        return defaultResult;
     }
 
     /**

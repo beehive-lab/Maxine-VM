@@ -135,7 +135,7 @@ public final class Throw {
      * atomic from the perspective of the garbage collector. To achieve this, safepoints are
      * {@linkplain Safepoint#disable() disabled} here and must be {@linkplain Safepoint#enable() re-enabled} just prior
      * jumping to the exception handler. The latter is the responsibility of every implementation of
-     * {@link DynamicCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker, boolean, com.sun.max.vm.compiler.target.TargetMethod, Purpose, Object)}
+     * {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker, boolean, com.sun.max.vm.compiler.target.TargetMethod, Purpose, Object)}
      * .
      *
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a

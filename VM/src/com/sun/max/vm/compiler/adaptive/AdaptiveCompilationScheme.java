@@ -73,22 +73,22 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The compiler that is used as the default at prototyping time.
      */
     @PROTOTYPE_ONLY
-    protected final CompilerScheme prototypeCompiler;
+    protected final BootstrapCompilerScheme prototypeCompiler;
 
     /**
      * The baseline (JIT) compiler.
      */
-    protected final DynamicCompilerScheme jitCompiler;
+    protected final RuntimeCompilerScheme jitCompiler;
 
     /**
      * The C1X compiler.
      */
-    protected DynamicCompilerScheme c1xCompiler;
+    protected RuntimeCompilerScheme c1xCompiler;
 
     /**
      * The optimizing compiler, if any.
      */
-    protected final CompilerScheme optimizingCompiler;
+    protected final BootstrapCompilerScheme optimizingCompiler;
 
     /**
      * List of attached Compilation observers.
@@ -191,7 +191,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             Object targetState = classMethodActor.targetState;
             if (targetState == null) {
                 // this is the first compilation.
-                DynamicCompilerScheme compiler = selectCompiler(classMethodActor, true);
+                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, true);
                 compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                 classMethodActor.targetState = compilation;
             } else if (targetState instanceof Compilation) {
@@ -204,7 +204,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
             } else {
                 // this method has already been compiled
-                DynamicCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0);
+                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0);
                 TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                 if (targetMethod != null && targetMethod.compilerScheme == compiler) {
                     return targetMethod;
@@ -254,7 +254,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param firstCompile {@code true} if this is the first compilation of this method
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    DynamicCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile) {
+    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile) {
         if (classMethodActor.isUnsafe()) {
             // the JIT cannot handle unsafe features
             return optimizingCompiler;

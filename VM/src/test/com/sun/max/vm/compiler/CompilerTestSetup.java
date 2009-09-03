@@ -161,7 +161,7 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
     }
 
 
-    public static CompilerScheme compilerScheme() {
+    public static BootstrapCompilerScheme compilerScheme() {
         return javaPrototype().vmConfiguration().compilerScheme();
     }
 
