@@ -48,7 +48,7 @@ public class TypeLabel extends InspectorLabel {
 
         @Override
         public void procedure(MouseEvent mouseEvent) {
-            switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+            switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {

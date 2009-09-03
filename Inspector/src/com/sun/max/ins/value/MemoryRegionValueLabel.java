@@ -51,7 +51,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         @Override
         public void procedure(MouseEvent mouseEvent) {
             if (memoryRegion != null) {
-                switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         inspection().focus().setMemoryRegion(memoryRegion);
                         break;

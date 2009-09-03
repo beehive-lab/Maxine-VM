@@ -99,7 +99,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             final int row = rowAtPoint(p);
             //System.out.println("(" + row + "," + col + ")");
             if ((col != -1) && (row != -1)) {
-                switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Give subclass an opportunity to handle a left-click specially.
                         mouseButton1Clicked(row, modelCol, mouseEvent);

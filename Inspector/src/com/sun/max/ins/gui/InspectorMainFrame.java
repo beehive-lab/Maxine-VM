@@ -123,7 +123,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                     desktopMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
