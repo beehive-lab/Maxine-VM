@@ -1149,7 +1149,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void traceBlockEntry(BlockBegin block) {
-        callRuntime(new CiKind[]{CiKind.Int}, Arrays.asList(LIROperandFactory.intConst(block.id())), CiRuntimeCall.TraceBlockEntry, CiKind.Void, null);
+        callRuntime(new CiKind[]{CiKind.Int}, Arrays.asList(LIROperandFactory.intConst(block.blockID)), CiRuntimeCall.TraceBlockEntry, CiKind.Void, null);
     }
 
     @Override
