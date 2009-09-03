@@ -258,11 +258,6 @@ public final class PrototypeClassLoader extends ClassLoader {
                         return findArrayClass(JavaTypeDescriptor.parseTypeDescriptor(elementTypeName));
                     }
                     final Class<?> javaType = findClass(classpath(), name);
-                    if (!MaxineVM.isPrototypeOnly(javaType)) {
-                        makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
-                    } else {
-                        Trace.line(1, "Ignoring prototype only type: " + javaType);
-                    }
                     makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
                     return javaType;
                 }

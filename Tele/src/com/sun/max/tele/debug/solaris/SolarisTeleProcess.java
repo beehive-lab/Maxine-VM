@@ -29,6 +29,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
 /**
@@ -68,6 +69,14 @@ public final class SolarisTeleProcess extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (processHandle == 0) {
+            String exe = programFile.getName();
+            Log.println("This may be due to resources being consumed by zombie maxvm processes. Try running:");
+            Log.println();
+            Log.println("    pgrep " + exe + "; pkill -9 " + exe);
+            Log.println();
+            throw new BootImageException("Could not start VM process");
+        }
         dataAccess = new PageDataAccess(this, platform.processorKind.dataModel);
         try {
             resume();

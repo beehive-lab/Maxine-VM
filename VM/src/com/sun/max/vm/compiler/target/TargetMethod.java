@@ -63,8 +63,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public static boolean COLLECT_TARGET_METHOD_STATS;
 
     /**
-     *  The compiler scheme that produced this target method.
+     * The compiler scheme that produced this target method.
      */
+    @INSPECTED
     public final DynamicCompilerScheme compilerScheme;
 
     @INSPECTED
@@ -122,9 +123,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     private TargetABI abi;
 
     public TargetMethod(String description, DynamicCompilerScheme compilerScheme) {
-        this.compilerScheme = compilerScheme;
-        this.classMethodActor = null;
-        setDescription(description);
+        this((ClassMethodActor) null, compilerScheme);
     }
 
     public TargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {

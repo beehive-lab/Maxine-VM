@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import java.util.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -36,10 +34,12 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -575,34 +575,54 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
 
     /**
-     * Speeds up repeated copying. This is safe as long as TargetMethods are immutable and don't move.
+     * Cache for {@link #reducedDeepCopy()}.
      */
-    private static final Map<TeleTargetMethod, TargetMethod> teleTargetMethodToTargetMethod = new HashMap<TeleTargetMethod, TargetMethod>();
+    private TargetMethod targetMethod;
 
     /**
-     * Gets a special, reduced shallow copy, (newly created if not in cache)  that excludes the
-     * {@linkplain TargetMethod#scalarLiterals()} or {@linkplain TargetMethod#referenceLiterals() reference}
-     * literals of the method or its {@linkplain TargetMethod#code() compiled code}.
+     * Gets a special, reduced deep copy, (newly created if not in cache) that is suitable for use by
+     * {@link StackFrameWalker#targetMethodFor(Pointer)}.
      */
-    public synchronized TargetMethod reducedShallowCopy() {
-        TargetMethod targetMethod = teleTargetMethodToTargetMethod.get(this);
+    public TargetMethod reducedDeepCopy() {
         if (targetMethod == null) {
-            targetMethod = (TargetMethod) deepCopy(new OmittedTargetMethodFields(teleVM()));
-            teleTargetMethodToTargetMethod.put(this, targetMethod);
+            targetMethod = (TargetMethod) deepCopy(reducedDeepCopier());
         }
         return targetMethod;
     }
 
-    private static class OmittedTargetMethodFields implements FieldIncludeChecker {
-        public OmittedTargetMethodFields(TeleVM teleVM) {
-            scalarLiterals = teleVM.fields().TargetMethod_scalarLiterals.fieldActor();
-            referenceLiterals = teleVM.fields().TargetMethod_referenceLiterals.fieldActor();
-        }
-        private final FieldActor scalarLiterals;
-        private final FieldActor referenceLiterals;
+    protected DeepCopier reducedDeepCopier() {
+        return new ReducedDeepCopier();
+    }
 
-        public boolean include(int level, FieldActor fieldActor) {
-            return !(fieldActor.equals(referenceLiterals) || fieldActor.equals(scalarLiterals));
+    /**
+     * A copier to be used for implementing {@link TeleTargetMethod#reducedDeepCopy()}.
+     */
+    class ReducedDeepCopier extends DeepCopier {
+        public ReducedDeepCopier() {
+            TeleFields teleFields = teleVM().fields();
+            omit(teleFields.TargetMethod_scalarLiterals.fieldActor());
+            omit(teleFields.TargetMethod_referenceLiterals.fieldActor());
+            abi = teleFields.TargetMethod_abi.fieldActor();
+            compilerScheme = teleFields.TargetMethod_compilerScheme.fieldActor();
+        }
+        private final FieldActor abi;
+        private final FieldActor compilerScheme;
+
+        @Override
+        protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
+            if (fieldActor.equals(compilerScheme)) {
+                Class<?> type = teleObject.classActorForType().toJava();
+                if (VMConfiguration.hostOrTarget().compilerScheme().getClass() == type) {
+                    return VMConfiguration.hostOrTarget().compilerScheme();
+                } else if (VMConfiguration.hostOrTarget().jitScheme().getClass() == type) {
+                    return VMConfiguration.hostOrTarget().jitScheme();
+                }
+                throw ProgramError.unexpected();
+            } else if (fieldActor.equals(abi)) {
+                return getAbi();
+            } else {
+                return super.makeDeepCopy(fieldActor, teleObject);
+            }
         }
     }
 

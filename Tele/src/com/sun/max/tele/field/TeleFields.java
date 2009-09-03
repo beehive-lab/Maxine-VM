@@ -48,6 +48,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jit.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -137,6 +138,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticIntFieldAccess InspectableHeapInfo_totalCardTableEntries = new TeleStaticIntFieldAccess(InspectableHeapInfo.class, "totalCardTableEntries");
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeInfos = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeInfos", BytecodeInfo[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeToTargetCodePositionMap = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeToTargetCodePositionMap", int[].class);
+    public final TeleInstanceReferenceFieldAccess JitTargetMethod_referenceMapEditor = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "referenceMapEditor", AtomicReference.class);
+    public final TeleInstanceReferenceFieldAccess JitTargetMethod_stackFrameLayout = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "stackFrameLayout", JitStackFrameLayout.class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
     public final TeleStaticWordFieldAccess MaxineMessenger_info = new TeleStaticWordFieldAccess(MaxineMessenger.class, "info");
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
@@ -155,6 +158,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "classMethodActor", ClassMethodActor.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");
+    public final TeleInstanceReferenceFieldAccess TargetMethod_compilerScheme = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compilerScheme", DynamicCompilerScheme.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compressedJavaFrameDescriptors", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "directCallees", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "encodedInlineDataDescriptors", byte[].class);

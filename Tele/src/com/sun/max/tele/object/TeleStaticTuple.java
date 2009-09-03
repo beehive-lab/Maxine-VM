@@ -60,7 +60,7 @@ public class TeleStaticTuple extends TeleTupleObject {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         return classActorForType().staticTuple();
     }
 

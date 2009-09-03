@@ -51,12 +51,13 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
     private int frameReferenceMapOffset;
+    @INSPECTED
     private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
-     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
      * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
+    @INSPECTED
     private JitStackFrameLayout stackFrameLayout;
 
     /**
@@ -246,6 +247,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
         this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         this.adapterReturnPosition = adapterReturnPosition;
+        this.stackFrameLayout = jitStackFrameLayout;
         if (stopPositions != null) {
             final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
             this.referenceMapEditor.set(referenceMapEditor);
@@ -281,7 +283,6 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
                 }
             } else if (result != null) {
                 referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
-                stackFrameLayout = referenceMapEditor.stackFrameLayout();
                 this.referenceMapEditor.set(null);
             }
         }

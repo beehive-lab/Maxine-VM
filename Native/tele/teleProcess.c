@@ -28,14 +28,14 @@
 #include "threadLocals.h"
 #include "teleProcess.h"
 
-static jmethodID _jniGatherThreadID = NULL;
+static jmethodID jniGatherThreadID = NULL;
 
 void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
-    if (_jniGatherThreadID == NULL) {
+    if (jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
-        _jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJIJJJJJJ)V");
-        c_ASSERT(_jniGatherThreadID != NULL);
+        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJIJJJJJJ)V");
+        c_ASSERT(jniGatherThreadID != NULL);
     }
 
     ThreadLocals noThreadLocals = (ThreadLocals) alloca(threadLocalsSize());
@@ -69,7 +69,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     getThreadLocal(ThreadLocals, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
                     getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
 
-    (*env)->CallVoidMethod(env, teleProcess, _jniGatherThreadID, threadSequence,
+    (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadSequence,
                     getThreadLocal(int, tl, ID),
                     handle,
                     state,
