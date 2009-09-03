@@ -77,9 +77,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * Controls tracing for object copying.
+     * Controls tracing for deep object copying.
      */
-    protected static final int COPY_TRACE_VALUE = 4;
+    protected static final int COPY_TRACE_VALUE = 2;
 
     private final TeleReference reference;
     private final LayoutScheme layoutScheme;
@@ -328,45 +328,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public abstract Object shallowCopy();
 
-    /**
-     * Filter for pruning the object graph copied during a {@linkplain TeleObject#deepCopy}.
-     */
-    protected static interface FieldIncludeChecker {
+    protected static class DeepCopier {
 
-        /**
-         * Determines if a given field is to be traversed and copied during a deep copy.
-         *
-         * @param level  the depth of the sub-graph currently being copied
-         * @param fieldActor  the field to be queried
-         */
-        boolean include(int level, FieldActor fieldActor);
-    }
-
-    protected static final class DeepCopyContext {
-
-        private int level = 0;
-        private final FieldIncludeChecker fieldIncludeChecker;
-        private final Map<TeleObject, Object> teleObjectToObject = new HashMap<TeleObject, Object>();
-
-        private static final FieldIncludeChecker defaultIFieldIncludeChecker = new FieldIncludeChecker() {
-            public boolean include(int level, FieldActor fieldActor) {
-                return true;
-            }
-        };
-
-        /**
-         * Creates a context for a deep copy.
-         */
-        protected DeepCopyContext() {
-            this.fieldIncludeChecker = defaultIFieldIncludeChecker;
-        }
-
-        /**
-         * Creates a context for a deep copy in which a filter suppresses copying of specified fields.
-         */
-        protected DeepCopyContext(FieldIncludeChecker fieldIncludeChecker) {
-            this.fieldIncludeChecker = fieldIncludeChecker;
-        }
+        int level = 0;
+        final Map<TeleObject, Object> teleObjectToObject = new HashMap<TeleObject, Object>();
+        final Set<FieldActor> omittedFields = new HashSet<FieldActor>();
 
         /**
          * @return the depth of the object graph currently being copied
@@ -375,79 +341,46 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
             return level;
         }
 
+        static int totalCopies;
+
         /**
          * Registers a newly copied object in the context to avoid duplication.
          */
         protected void register(TeleObject teleObject, Object newObject) {
-            teleObjectToObject.put(teleObject, newObject);
+            Object oldValue = teleObjectToObject.put(teleObject, newObject);
+            int numberOfCopies = numberOfCopies();
+            if (oldValue == null) {
+                totalCopies++;
+                if ((numberOfCopies % 100) == 0) {
+                    Trace.line(1, "Deep object copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
+                }
+            }
+        }
+
+        protected DeepCopier omit(FieldActor fieldActor) {
+            omittedFields.add(fieldActor);
+            return this;
         }
 
         /**
-         * @return whether the specified object field at this level of the object graph should be copied.
+         * Gets the number of unique object copied by this copier.
          */
-        protected boolean include(int level, FieldActor fieldActor) {
-            return fieldIncludeChecker.include(level, fieldActor);
+        public int numberOfCopies() {
+            return teleObjectToObject.size();
         }
 
-    }
+        /**
+         * Updates the field of an object or class from the {@link TeleVM}.
+         *
+         * @param teleObject surrogate for a tuple in the {@link TeleVM}. This will be a static tuple if the field is static.
+         * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
+         * @param fieldActor the field to be copied/updated
+         */
+        protected void copyField(TeleObject teleObject, Object newTuple, FieldActor fieldActor) {
+            if (!omittedFields.isEmpty() && omittedFields.contains(fieldActor)) {
+                return;
+            }
 
-    /**
-     * @return produces a deep copy of an object as part of
-     * a larger deep copy in which this particular object may have
-     * already been copied.
-     */
-    protected final Object makeDeepCopy(DeepCopyContext context) {
-        Object newObject = context.teleObjectToObject.get(this);
-        if (newObject == null) {
-            context.level++;
-            newObject = createDeepCopy(context);
-            context.register(this, newObject);
-            context.level--;
-        }
-        return newObject;
-    }
-
-    /**
-     * @return creates a local deep copy of the object, using Maxine-specific shortcuts when
-     * possible to produce a local equivalent without copying.
-     * Implementations that copy recursively must call {@link TeleObject#makeDeepCopy(DeepCopyContext)},
-     * and must register newly allocated objects before doing so.  This will result in redundant registrations
-     * in those cases.
-     */
-    protected abstract Object createDeepCopy(DeepCopyContext context);
-
-    /**
-     * @return a best effort deep copy - with certain substitutions
-     */
-    public final Object deepCopy() {
-        Trace.begin(2, "Deep copying from VM: " + this);
-        long start = System.currentTimeMillis();
-        final Object objectCopy = makeDeepCopy(new DeepCopyContext());
-        Trace.end(2, "Deep copying from VM: " + this, start);
-        return objectCopy;
-    }
-
-    /**
-     * @return a best effort deep copy - with certain substitutions, and with
-     * certain specified field omissions.
-     */
-    public final Object deepCopy(FieldIncludeChecker fieldIncludeChecker) {
-        Trace.begin(2, "Deep copying from VM: " + this);
-        long start = System.currentTimeMillis();
-        final Object objectCopy = makeDeepCopy(new DeepCopyContext(fieldIncludeChecker));
-        Trace.end(2, "Deep copying from VM: " + this, start);
-        return objectCopy;
-    }
-
-    /**
-     * Updates the field of an object or class from the {@link TeleVM}.
-     *
-     * @param teleObject surrogate for a tuple in the {@link TeleVM}. This will be a static tuple if the field is static.
-     * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
-     * @param fieldActor the field to be copied/updated
-     */
-    protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) {
-        if (context.include(context.level(), fieldActor)) {
             if (!fieldActor.isInjected()) {
                 final Field field = fieldActor.toJava();
                 field.setAccessible(true);
@@ -459,7 +392,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
-                            newJavaValue = teleFieldReferenceObject.makeDeepCopy(context);
+                            newJavaValue = makeDeepCopy(fieldActor, teleFieldReferenceObject);
                         }
                     } else if (fieldActor.kind == Kind.WORD) {
                         final Class<Class< ? extends Word>> type = null;
@@ -474,6 +407,59 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                 }
             }
         }
+
+        protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
+            return teleObject.makeDeepCopy(this);
+        }
+    }
+
+    /**
+     * @return produces a deep copy of an object as part of
+     * a larger deep copy in which this particular object may have
+     * already been copied.
+     */
+    protected final Object makeDeepCopy(DeepCopier context) {
+        Object newObject = context.teleObjectToObject.get(this);
+        if (newObject == null) {
+            context.level++;
+            newObject = createDeepCopy(context);
+            context.register(this, newObject);
+            context.level--;
+        }
+        return newObject;
+    }
+
+    /**
+     * @return creates a local deep copy of the object, using Maxine-specific shortcuts when
+     * possible to produce a local equivalent without copying.
+     * Implementations that copy recursively must call {@link TeleObject#makeDeepCopy(DeepCopier)},
+     * and must register newly allocated objects before doing so.  This will result in redundant registrations
+     * in those cases.
+     */
+    protected abstract Object createDeepCopy(DeepCopier context);
+
+    /**
+     * @return a best effort deep copy - with certain substitutions
+     */
+    public final Object deepCopy() {
+        Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        long start = System.currentTimeMillis();
+        DeepCopier copier = new DeepCopier();
+        final Object objectCopy = makeDeepCopy(copier);
+        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
+        return objectCopy;
+    }
+
+    /**
+     * @return a best effort deep copy - with certain substitutions, and with
+     * certain specified field omissions.
+     */
+    public final Object deepCopy(DeepCopier copier) {
+        Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
+        long start = System.currentTimeMillis();
+        final Object objectCopy = makeDeepCopy(copier);
+        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
+        return objectCopy;
     }
 
     /**
@@ -486,15 +472,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
 
         final String classMessage = "Copying static fields of " + javaClass + " from VM";
         Trace.begin(COPY_TRACE_VALUE, classMessage);
+        DeepCopier copier = new DeepCopier();
         try {
             for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
-                final String fieldMessage = "Copying static field " + fieldActor.format("%t %n") + " from VM";
+                final String fieldMessage = fieldActor.format("Copying static field '%n' of type '%t' from VM");
                 Trace.begin(COPY_TRACE_VALUE, fieldMessage);
-                copyField(new DeepCopyContext(), teleStaticTuple, null, fieldActor);
+                copier.copyField(teleStaticTuple, null, fieldActor);
                 Trace.end(COPY_TRACE_VALUE, fieldMessage);
             }
         } finally {
-            Trace.end(COPY_TRACE_VALUE, classMessage);
+            Trace.end(COPY_TRACE_VALUE, classMessage + " [" + copier.numberOfCopies() + " objects]");
         }
     }
 

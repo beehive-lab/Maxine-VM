@@ -472,8 +472,13 @@ public abstract class TeleVM implements MaxVM {
             if (agent != null) {
                 agent.start();
             }
-            this.teleProcess = createTeleProcess(commandLineArguments, agent);
-            this.bootImageStart = loadBootImage(agent);
+            try {
+                this.teleProcess = createTeleProcess(commandLineArguments, agent);
+                this.bootImageStart = loadBootImage(agent);
+            } catch (BootImageException e) {
+                agent.close();
+                throw e;
+            }
         }
         this.fields = new TeleFields(this);
         this.methods = new TeleMethods(this);
@@ -526,6 +531,7 @@ public abstract class TeleVM implements MaxVM {
             final Pointer heap = Word.read(stream, endianness).asPointer();
             Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
             socket.close();
+            agent.close();
             return heap;
         } catch (IOException ioException) {
             throw new BootImageException("Error while reading boot image address from VM process", ioException);

@@ -77,7 +77,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv 
 
     struct ps_prochandle *ph = proc_Pcreate(argv[0], argv, &error, path, sizeof(path));
     if (error != 0) {
-        log_println("could not create child process: %s", Pcreate_error(error));
+        log_println("Could not create child process: %s", Pcreate_error(error));
         return NULL;
     }
 

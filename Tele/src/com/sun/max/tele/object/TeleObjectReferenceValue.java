@@ -45,7 +45,7 @@ public class TeleObjectReferenceValue extends TeleTupleObject {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return getTeleReferenceValue();
     }
