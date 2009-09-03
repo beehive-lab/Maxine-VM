@@ -58,7 +58,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -86,7 +86,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -258,7 +258,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // ("") ==
+        // ("") == 
             runString = "(\"\")";
             if (!"".equals(jtt.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -492,25 +492,59 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void jtt_bytecode_BC_checkcast() {
-        JavaTesterRunScheme.begin("jtt.bytecode.BC_checkcast");
+    static void jtt_bytecode_BC_checkcast01() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_checkcast01");
         String runString = null;
         try {
         // (0) == -1
             runString = "(0)";
-            if (-1 != BC_checkcast01.test(0)) {
+            if (-1 != jtt.bytecode.BC_checkcast01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // (1) == -1
             runString = "(1)";
-            if (-1 != BC_checkcast01.test(1)) {
+            if (-1 != jtt.bytecode.BC_checkcast01.test(1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // (4) == 4
             runString = "(4)";
-            if (4 != BC_checkcast01.test(4)) {
+            if (4 != jtt.bytecode.BC_checkcast01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_bytecode_BC_checkcast02() {
+        JavaTesterRunScheme.begin("jtt.bytecode.BC_checkcast02");
+        String runString = null;
+        try {
+        // (0) == -1
+            runString = "(0)";
+            if (-1 != jtt.bytecode.BC_checkcast02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == -1
+            runString = "(1)";
+            if (-1 != jtt.bytecode.BC_checkcast02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == -1
+            runString = "(2)";
+            if (-1 != jtt.bytecode.BC_checkcast02.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == -1
+            runString = "(3)";
+            if (-1 != jtt.bytecode.BC_checkcast02.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -7169,6 +7203,52 @@ public class JavaTesterTests {
         // (4) == 4
             runString = "(4)";
             if (4 != jtt.except.BC_checkcast2.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_except_BC_checkcast3() {
+        JavaTesterRunScheme.begin("jtt.except.BC_checkcast3");
+        String runString = null;
+        try {
+        // (0) == !java.lang.ClassCastException
+            try {
+                runString = "(0)";
+                jtt.except.BC_checkcast3.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // (1) == !java.lang.ClassCastException
+            try {
+                runString = "(1)";
+                jtt.except.BC_checkcast3.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // (2) == -1
+            runString = "(2)";
+            if (-1 != jtt.except.BC_checkcast3.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == -1
+            runString = "(3)";
+            if (-1 != jtt.except.BC_checkcast3.test(3)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
