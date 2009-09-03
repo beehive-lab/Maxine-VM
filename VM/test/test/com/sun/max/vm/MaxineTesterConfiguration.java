@@ -146,12 +146,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.reflect.Class_newInstance07.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.threads.Thread_holdsLock01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.threads.Thread_setPriority01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.micro.BigIntParams02.class,               RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.micro.BigLongParams02.class,              RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.micro.BigMixedParams02.class,             RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.micro.BigMixedParams03.class,             RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.micro.BigObjectParams01.class,            RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.micro.BigObjectParams02.class,            RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
@@ -371,7 +365,7 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
         if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
-            return "optopt";
+            return "optopt,optjit";
         }
         return "optopt,jitopt,optjit,jitjit";
     }
