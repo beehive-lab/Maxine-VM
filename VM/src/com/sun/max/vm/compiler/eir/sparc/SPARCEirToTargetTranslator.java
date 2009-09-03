@@ -42,7 +42,7 @@ public final class SPARCEirToTargetTranslator extends EirToTargetTranslator {
     }
 
     @Override
-    public ExceptionRangeTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
+    public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
         final SPARCOptimizedTargetMethod targetMethod = new SPARCOptimizedTargetMethod(classMethodActor, compilerScheme());
         notifyAllocation(targetMethod);
         return targetMethod;

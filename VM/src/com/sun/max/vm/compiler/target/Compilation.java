@@ -142,7 +142,7 @@ public class Compilation implements Future<TargetMethod> {
         try {
             // attempt the compilation
             String methodString = logBeforeCompilation(compiler);
-            targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(classMethodActor));
+            targetMethod = compiler.compile(classMethodActor);
             if (targetMethod == null) {
                 error = new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             } else {

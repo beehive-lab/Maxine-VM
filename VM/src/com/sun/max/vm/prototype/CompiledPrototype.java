@@ -32,6 +32,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -157,7 +158,7 @@ public class CompiledPrototype extends Prototype {
         return methodActors.values();
     }
 
-    public CompilerScheme compilerScheme() {
+    public BootstrapCompilerScheme compilerScheme() {
         return vmConfiguration().compilerScheme();
     }
 
@@ -312,7 +313,7 @@ public class CompiledPrototype extends Prototype {
         final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
-        dynamicCompilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
+        targetMethod.compilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
@@ -338,11 +339,7 @@ public class CompiledPrototype extends Prototype {
 
     CompiledPrototype(JavaPrototype javaPrototype, int numberCompilerThreads) {
         super(javaPrototype.vmConfiguration());
-
-        compilerScheme().compileSnippets();
-        // Initialization of the JIT compiler comes second as it may rely on features of the optimizing compiler.
-        jitScheme().initializeForJitCompilations();
-
+        this.vmConfiguration().initializeSchemes(Phase.CREATING_COMPILED_PROTOTYPE);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }
@@ -518,7 +515,7 @@ public class CompiledPrototype extends Prototype {
         final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
         int submittedCompilations = totalCompilations;
-        final long initialNumberOfCompilations = numberOfCompilations();
+        final int initialNumberOfCompilations = totalCompilations;
 
         final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
         final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
@@ -565,7 +562,7 @@ public class CompiledPrototype extends Prototype {
         }
 
         compilationService.shutdown();
-        final long newCompilations = numberOfCompilations() - initialNumberOfCompilations;
+        final int newCompilations = totalCompilations - initialNumberOfCompilations;
         Trace.end(1, "new compilations: " + newCompilations);
         if (newCompilations == 0) {
             ProgramError.check(region.getAllocationMark().equals(oldMark));
@@ -607,10 +604,6 @@ public class CompiledPrototype extends Prototype {
         }
         compileWorklist();
         Trace.end(1, "compiling unsafe methods");
-    }
-
-    private long numberOfCompilations() {
-        return jitScheme().numberOfCompilations() + compilerScheme().numberOfCompilations();
     }
 
     private boolean hasCode(MethodActor methodActor) {

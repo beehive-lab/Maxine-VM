@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        registerScheme(CompilerScheme.class, BcdeCompiler.class);
+        registerScheme(BootstrapCompilerScheme.class, BcdeCompiler.class);
     }
 
     @Override

@@ -108,16 +108,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         stackPointer.setWord(callSite); // patch return address
     }
 
-    @Override
-    public Word createInitialVTableEntry(int vTableIndex, VirtualMethodActor dynamicMethodActor) {
-        return  vmConfiguration().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
-    }
-
-    @Override
-    public Word createInitialITableEntry(int iIndex, VirtualMethodActor dynamicMethodActor) {
-        return  vmConfiguration().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
-    }
-
     public void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
         final Pointer callSite = targetMethod.codeStart().plus(callOffset).asPointer();
         final AMD64Assembler assembler = new AMD64Assembler(callSite.toLong());

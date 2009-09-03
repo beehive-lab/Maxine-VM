@@ -558,6 +558,8 @@ public class SPARCJitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
         if (phase == MaxineVM.Phase.STARTING) {
             final TargetABI jitABI = vmConfiguration().targetABIsScheme().jitABI();
             jitFramePointerRegister = (GPR) jitABI.framePointer();

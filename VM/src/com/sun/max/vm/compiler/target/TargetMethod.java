@@ -37,8 +37,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
@@ -56,7 +54,7 @@ import com.sun.max.vm.template.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
+public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     @PROTOTYPE_ONLY
     public static boolean COLLECT_TARGET_METHOD_STATS;
@@ -996,16 +994,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
 
         return stopIndexWithClosestPosition;
-    }
-
-    @Override
-    public boolean contains(Builtin builtin, boolean defaultResult) {
-        return defaultResult;
-    }
-
-    @Override
-    public int count(Builtin builtin, int defaultResult) {
-        return defaultResult;
     }
 
     /**

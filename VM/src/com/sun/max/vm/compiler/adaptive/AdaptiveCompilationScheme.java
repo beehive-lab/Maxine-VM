@@ -73,7 +73,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The compiler that is used as the default at prototyping time.
      */
     @PROTOTYPE_ONLY
-    protected final CompilerScheme prototypeCompiler;
+    protected final BootstrapCompilerScheme prototypeCompiler;
 
     /**
      * The baseline (JIT) compiler.
@@ -88,7 +88,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * The optimizing compiler, if any.
      */
-    protected final CompilerScheme optimizingCompiler;
+    protected final BootstrapCompilerScheme optimizingCompiler;
 
     /**
      * List of attached Compilation observers.

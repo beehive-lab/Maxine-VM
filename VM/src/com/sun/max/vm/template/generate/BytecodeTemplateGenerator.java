@@ -79,7 +79,7 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         return MaxineVM.usingTarget(new Function<CompiledBytecodeTemplate>() {
             public CompiledBytecodeTemplate call() {
                 ProgramError.check(!targetGenerator().hasStackParameters(bytecodeSourceTemplate), "Template must not have *any* stack parameters: " + bytecodeSourceTemplate);
-                final ExceptionRangeTargetMethod targetMethod = targetGenerator().makeIrMethod(bytecodeSourceTemplate);
+                final CPSTargetMethod targetMethod = targetGenerator().makeIrMethod(bytecodeSourceTemplate);
                 if (!(targetMethod.referenceLiterals() == null)) {
                     ProgramError.unexpected("Template must not have *any* reference literals: " + targetMethod + " " + Arrays.toString(targetMethod.referenceLiterals()), null);
                 }

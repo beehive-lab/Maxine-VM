@@ -26,19 +26,17 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -46,12 +44,14 @@ import com.sun.max.vm.stack.*;
 /**
  * @author Ben L. Titzer
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements CompilerScheme {
+public class C1XCompilerScheme extends AbstractVMScheme implements DynamicCompilerScheme {
 
     private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
     private XirGenerator xirGenerator;
+
+    public static final Option<Integer> OptLevel;
 
     @PROTOTYPE_ONLY
     private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
@@ -60,12 +60,21 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         super(vmConfiguration);
     }
 
-    public IrGenerator irGenerator() {
-        return null;
+    static {
+        OptLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+            @Override
+            public void setValue(Integer value) {
+                C1XOptions.setOptimizationLevel(value);
+            }
+        };
     }
 
-    public Sequence<IrGenerator> irGenerators() {
-        return null;
+    public static void addOptions(OptionSet options) {
+        // add all the fields from C1XOptions as options
+        options.addFieldOptions(C1XOptions.class, "XX");
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(OptLevel, Syntax.REQUIRES_EQUALS);
+
     }
 
     @Override
@@ -73,8 +82,8 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
-            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
             c1xTarget = createTarget(c1xRuntime, vmConfiguration());
+            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
             compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
@@ -156,39 +165,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         }
     }
 
-    public long numberOfCompilations() {
-        return 0;
-    }
-
-    public void createBuiltins(PackageLoader packageLoader) {
-        // do nothing.
-    }
-
-    public void createSnippets(PackageLoader packageLoader) {
-        // do nothing.
-    }
-
-    public boolean areSnippetsCompiled() {
-        return true;
-    }
-
-    public void compileSnippets() {
-        // do nothing
-    }
-
-    public Word createInitialVTableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        return Word.zero();
-    }
-
-    public Word createInitialITableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        return Word.zero();
-    }
-
-    public void staticTrampoline() {
-        throw new UnsupportedOperationException();
-    }
-
-    public final IrMethod compile(ClassMethodActor classMethodActor) {
+    public final TargetMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
@@ -218,19 +195,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         ciTargetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
     }
 
-    @PROTOTYPE_ONLY
-    public void initializeForJitCompilations() {
-    }
-
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, StackFrameWalker.Purpose purpose, Object context) {
         return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
-    }
-
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return stackPointer;
-    }
-
-    public boolean isBuiltinImplemented(Builtin builtin) {
-        return true;
     }
 }

@@ -113,8 +113,8 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "next", Entry.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "string", String.class);
-    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchBlockPositions", int[].class);
-    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(ExceptionRangeTargetMethod.class, "catchRangePositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "catchBlockPositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess ExceptionRangeTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "catchRangePositions", int[].class);
     public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "classActor", ClassActor.class);
     public final TeleInstanceIntFieldAccess Hub_mTableLength = new TeleInstanceIntFieldAccess(Hub.class, "mTableLength");

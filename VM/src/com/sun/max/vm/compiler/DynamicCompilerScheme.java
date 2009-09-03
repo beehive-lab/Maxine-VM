@@ -22,10 +22,8 @@ package com.sun.max.vm.compiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
@@ -36,32 +34,9 @@ import com.sun.max.vm.stack.StackFrameWalker.*;
  *
  * @author Laurent Daynes
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
 public interface DynamicCompilerScheme extends VMScheme {
-
-    /**
-     * Gets the initial value for a virtual method table for the specified table index and method actor. This may be a
-     * compiled version of the method if it exists, or could be an entrypoint to a trampoline method.
-     *
-     * @param vTableIndex the virtual method table index for the method
-     * @param virtualMethodActor the method actor
-     * @return a word representing a valid entrypoint to code for the specified table index and method
-     *
-     * @see com.sun.max.vm.trampoline.TrampolineGenerator
-     */
-    Word createInitialVTableEntry(int vTableIndex, VirtualMethodActor virtualMethodActor);
-
-    /**
-     * Gets the initial value for an interface method table for the specified table index and method actor. This may be
-     * a compiled version of the method if it exists, or could be an entrypoint to a trampoline method.
-     *
-     * @param iIndex the interface method table index for the method
-     * @param virtualMethodActor the method actor
-     * @return a word representing a valid entrypoint to code for the specified table index and method
-     *
-     * @see com.sun.max.vm.trampoline.TrampolineGenerator
-     */
-    Word createInitialITableEntry(int iIndex, VirtualMethodActor virtualMethodActor);
 
     /**
      * Compiles a method to an internal representation (typically a {@link TargetMethod}).
@@ -69,14 +44,7 @@ public interface DynamicCompilerScheme extends VMScheme {
      * @param classMethodActor the method to compile
      * @return a reference to the IR method created by this compiler for the specified method
      */
-    IrMethod compile(ClassMethodActor classMethodActor);
-
-    /**
-     * Returns a list of the internal IR generators that this compiler uses, e.g. for instrumentation.
-     *
-     * @return a sequence of IR generators internal to this compiler
-     */
-    Sequence<IrGenerator> irGenerators();
+    TargetMethod compile(ClassMethodActor classMethodActor);
 
     /**
      * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
@@ -90,18 +58,6 @@ public interface DynamicCompilerScheme extends VMScheme {
      */
     @PROTOTYPE_ONLY
     void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
-
-    /**
-     * Returns the number of compilations completed by this compiler.
-     * @return the number of compilations completed
-     */
-    long numberOfCompilations(); // TODO: move uses of this method to CompilationScheme.isCompiling()
-
-    /**
-     * Method to initialize the dynamic compiler.
-     */
-    @PROTOTYPE_ONLY
-    void initializeForJitCompilations(); // TODO: move to using the basic initialize(Phase) method?
 
     /**
      * Walks a frame for a target method that was produced by this compiler.

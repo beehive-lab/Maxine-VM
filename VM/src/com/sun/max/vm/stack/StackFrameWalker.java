@@ -56,9 +56,9 @@ public abstract class StackFrameWalker {
      */
     public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
-    private final CompilerScheme compilerScheme;
+    private final BootstrapCompilerScheme compilerScheme;
 
-    protected StackFrameWalker(CompilerScheme compilerScheme) {
+    protected StackFrameWalker(BootstrapCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
     }
 
