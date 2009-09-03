@@ -64,7 +64,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public CiTargetMethod emitHelper(GlobalStub stub, CiRuntimeCall runtimeCall) {
-        asm = new X86MacroAssembler(compiler, compiler.target);
+        asm = new X86MacroAssembler(compiler, compiler.target, -1);
         this.frameSize = 0;
         this.registerRestoreEpilogueOffset = -1;
 
@@ -350,8 +350,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         saveRegisters();
 
         // Load arguments
-        CiLocation[] result = new CiLocation[call.arguments.length];
-        runtime.runtimeCallingConvention(call.arguments, result);
+        CiLocation[] result = runtime.runtimeCallingConvention(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
             loadArgument(i, result[i].first);
         }

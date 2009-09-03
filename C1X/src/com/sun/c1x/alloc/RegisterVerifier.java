@@ -243,7 +243,7 @@ public class RegisterVerifier {
             int j;
             int n = op.oprCount(LIRInstruction.OperandMode.InputMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
+                LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {

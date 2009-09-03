@@ -375,7 +375,7 @@ public abstract class StackFrameWalker {
      * @param instructionPointer the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
      *            {@link NativeCallPrologueForC}
      * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if the native
-     *            stub has no {@linkplain TargetMethod#isNativeFunctionCall(int)} just after {@code instructionPointer}.
+     *            stub has no native call just after {@code instructionPointer}.
      *            If this value is false and the search fails, then {@code instructionPointer} is returned.
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */

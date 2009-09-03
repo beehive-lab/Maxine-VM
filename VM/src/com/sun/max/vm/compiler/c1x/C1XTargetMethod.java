@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.runtime.*;
@@ -41,7 +42,6 @@ import com.sun.max.unsafe.*;
  */
 public class C1XTargetMethod extends TargetMethod {
 
-    private int registerReferenceMapSize = 2; // TODO: Set this appropriately
     private int[] exceptionPositionsToCatchPositions;
     private ClassActor[] exceptionClassActors;
 
@@ -65,7 +65,7 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public final int registerReferenceMapSize() {
-        return registerReferenceMapSize;
+        return AMD64TargetMethod.registerReferenceMapSize();
     }
 
     @Override

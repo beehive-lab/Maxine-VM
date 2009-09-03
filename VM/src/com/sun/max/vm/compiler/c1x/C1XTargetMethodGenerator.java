@@ -220,7 +220,10 @@ public class C1XTargetMethodGenerator {
                 indirectPos++;
             }
             // fill in the reference map for this call site
-            setBits(bitMap, callSite.stackMap);
+            if (callSite.stackMap != null) {
+                // TODO: (tw) remove the if
+                setBits(bitMap, callSite.stackMap);
+            }
             assert directPos <= directCalls;
             assert indirectPos <= directCalls + indirectCalls;
         }
