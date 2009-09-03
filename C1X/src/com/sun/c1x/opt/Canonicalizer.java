@@ -397,7 +397,7 @@ public class Canonicalizer extends ValueVisitor {
             if (v instanceof Convert) {
                 Value nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
                 // limit this optimization to the current basic block
-                // TODO: why is this limited to the current block?
+                // XXX: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
                     setCanonical(new StoreField(i.object(), i.field(), nv, i.isStatic(),
                                                 i.stateBefore(), i.isLoaded(), i.cpi, i.constantPool));
@@ -431,7 +431,7 @@ public class Canonicalizer extends ValueVisitor {
                     setIntConstant(java.lang.reflect.Array.getLength(obj));
                 }
             }
-        } else if (C1XOptions.SupportObjectConstants && array instanceof Constant) {
+        } else if (array.isConstant()) {
             // the array itself is a constant object reference
             Object obj = array.asConstant().asObject();
             if (obj != null) {
@@ -723,16 +723,17 @@ public class Canonicalizer extends ValueVisitor {
 
     private void reduceIntrinsic(Intrinsic i) {
         Value[] args = i.arguments();
-        if (C1XOptions.IntrinsifyClassOps && i.intrinsic() == C1XIntrinsic.java_lang_Class$isInstance) {
-            // try to convert a call to Class.isInstance into an InstanceOf
+        C1XIntrinsic intrinsic = i.intrinsic();
+        if (C1XOptions.IntrinsifyClassOps && intrinsic == C1XIntrinsic.java_lang_Class$isInstance) {
+            // try to convert a call to Class.isInstance() into an InstanceOf
             RiType type = asRiType(args[0]);
             if (type != null) {
                 setCanonical(new InstanceOf(type, Constant.forObject(type.getEncoding(RiType.Representation.TypeInfo)), args[1], i.stateBefore()));
                 return;
             }
         }
-        if (C1XOptions.IntrinsifyArrayOps && i.intrinsic() == C1XIntrinsic.java_lang_reflect_Array$newArray) {
-            // try to convert a call to Array.newInstance into a NewObjectArray or NewTypeArray
+        if (C1XOptions.IntrinsifyArrayOps && intrinsic == C1XIntrinsic.java_lang_reflect_Array$newArray) {
+            // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = asRiType(args[0]);
             if (type != null) {
                 if (type.basicType() == CiKind.Object) {
