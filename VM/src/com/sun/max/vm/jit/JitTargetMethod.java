@@ -51,12 +51,13 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
     private int frameReferenceMapOffset;
+    @INSPECTED
     private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
-     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
      * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
+    @INSPECTED
     private JitStackFrameLayout stackFrameLayout;
 
     /**
