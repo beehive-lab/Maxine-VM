@@ -59,8 +59,8 @@ import java.util.HashMap;
  * This class implements the VM interface for generating XIR snippets that express
  * the low-level implementation of each bytecode for C1X compilation.
  *
- * @author Thomas Wuerthinger
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
 public class MaxXirGenerator extends XirGenerator {
 
@@ -341,10 +341,9 @@ public class MaxXirGenerator extends XirGenerator {
         if (!type.isLoaded() || rank >= SMALL_MULTIANEWARRAY_RANK) {
             XirArgument guard = XirArgument.forObject(guardFor(type));
             return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, guard));
-        } else {
-            XirArgument hub = XirArgument.forObject(hubFor(type));
-            return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, hub));
         }
+        XirArgument hub = XirArgument.forObject(hubFor(type));
+        return new XirSnippet(multiNewArrayTemplate[rank].resolved, Arrays.prepend(lengths, hub));
     }
 
     @Override

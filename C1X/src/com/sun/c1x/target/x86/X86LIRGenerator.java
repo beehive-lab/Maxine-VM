@@ -290,6 +290,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem obj = new LIRItem(x.object(), this);
         obj.loadItem();
 
+        assert !obj.result().isIllegal();
+
         setNoResult(x);
 
         // "lock" stores the address of the monitor stack slot, so this is not an oop
