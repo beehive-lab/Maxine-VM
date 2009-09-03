@@ -166,4 +166,16 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
         FatalError.unexpected("Non implemented");
     }
 
+    @Override
+    public Pointer getForwardedObjectPointer(Pointer value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

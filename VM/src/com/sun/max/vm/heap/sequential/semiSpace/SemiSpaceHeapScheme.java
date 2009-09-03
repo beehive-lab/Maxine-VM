@@ -36,6 +36,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -490,6 +491,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      */
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
+
         if (verifyReferences) {
             DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
         }
@@ -1142,5 +1144,22 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }
+    }
+
+    public Pointer getForwardedObjectPointer(Pointer oldObject) {
+        if (oldObject.and(1).toLong() == 1) {
+            return oldObject.minus(1);
+        }
+        return oldObject;
+    }
+
+    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+        if (!pointer.isZero()) {
+            Word word = dataAccess.readWord(pointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
+            if (word.asPointer().and(1).toLong() == 1) {
+                return word.asPointer().minus(1);
+            }
+        }
+        return pointer;
     }
 }

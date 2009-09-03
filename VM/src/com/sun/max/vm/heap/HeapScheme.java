@@ -238,4 +238,20 @@ public interface HeapScheme extends VMScheme {
      * heap.
      */
     void disableImmortalMemoryAllocation();
+
+    /**
+     * Get the pointer to the forwarded object if such an object exists.
+     * @param forwardingPointer forwardingPointer in old object location
+     * @return the forwarded object pointer, otherwise returns the given pointer
+     */
+    Pointer getForwardedObjectPointer(Pointer forwardingPointer);
+
+    /**
+     * Returns the forwarded object to a given object, if given object got forwarded; otherwise
+     * it returns the old object pointer.
+     * @param pointer old object pointer
+     * @param dataAccess data access
+     * @return forwarded or old object
+     */
+    Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess);
 }

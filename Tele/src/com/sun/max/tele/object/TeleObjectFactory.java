@@ -29,6 +29,8 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -182,21 +184,52 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             return null;
         }
 
-        Reference hubReference;
-        Reference classActorReference;
-        ClassActor classActor;
+        Reference hubReference = null;
+        Reference classActorReference = null;
+        ClassActor classActor = null;
+        Word word = null;
 
         try {
-            hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            // check first if object got relocated
+            Pointer forwarded = teleVM().getForwardedObject(reference.toOrigin());
+            if (!forwarded.equals(reference.toOrigin())) {
+                word = teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(Reference.fromOrigin(forwarded));
+            } else {
+                word = teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference);
+            }
+
+            //then handle the hub
+            word = teleVM().getForwardedObject(word.asPointer());
+            hubReference = teleVM().wordToReference(word);
+
+            // class actor is next
             classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
+            word = teleVM().getForwardedObject(classActorReference.toOrigin());
+            if (!classActorReference.toOrigin().equals(word)) {
+                classActorReference = Reference.fromOrigin(word.asPointer());
+            }
+
             classActor = teleVM().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
+            Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
+                " hubReference: " + hubReference + "/" + hubReference.toOrigin() + " classActorReference: " +
+                classActorReference + "/" + classActorReference.toOrigin() + " classActor: " + classActor);
             return null;
         }
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
-        final Reference hubClassActorReference = teleVM().fields().Hub_classActor.readReference(hubhubReference);
+        Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
+        word = teleVM().getForwardedObject(hubhubReference.toOrigin());
+        if (!word.equals(hubhubReference.toOrigin())) {
+            hubhubReference = teleVM().wordToReference(word);
+        }
+
+        Reference hubClassActorReference = teleVM().fields().Hub_classActor.readReference(hubhubReference);
+        word = teleVM().getForwardedObject(hubClassActorReference.toOrigin());
+        if (!word.equals(hubClassActorReference.toOrigin())) {
+            hubClassActorReference = teleVM().wordToReference(word);
+        }
+
         final ClassActor hubClassActor = teleVM().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
