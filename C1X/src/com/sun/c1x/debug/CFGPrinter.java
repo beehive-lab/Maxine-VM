@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-
 import java.io.*;
 import java.util.*;
 

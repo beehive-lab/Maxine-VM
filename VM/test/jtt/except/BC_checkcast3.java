@@ -30,7 +30,6 @@ public class BC_checkcast3 {
     static String[] o2 = {""};
     static BC_checkcast3[] o3 = {new BC_checkcast3()};
 
-    @SuppressWarnings("unused")
     public static int test(int arg) {
         Object obj = null;
         if (arg == 0) {
