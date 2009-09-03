@@ -107,7 +107,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return classActor();
     }
