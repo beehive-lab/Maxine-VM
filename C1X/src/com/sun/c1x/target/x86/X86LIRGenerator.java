@@ -998,7 +998,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeEmitInfo info = stateFor(x, x.stateBefore());
 
         List<LIROperand> arguments = new ArrayList<LIROperand>();
-        LIROperand hubRegister = resultRegisterFor(CiKind.Object);
+        LIROperand hubRegister = newRegister(CiKind.Object);
         if (x.elementType.isLoaded()) {
             lir.oop2reg(x.elementType.getEncoding(RiType.Representation.ObjectHub).asObject(), hubRegister);
         } else {
