@@ -50,6 +50,7 @@
 #if os_GUESTVMXEN
 #define MEMORY_IMAGE 1
 #include <guestvmXen.h>
+#include <string.h>
 #else
 #define MEMORY_IMAGE 0
 #endif
@@ -159,9 +160,10 @@ static struct image_StringInfo theStringInfoStruct;
 static void readStringInfo(int fd) {
     char **p;
     char *s;
+    char *stringInfoData;
 #if !MEMORY_IMAGE
     int n;
-    char *stringInfoData = malloc(theHeader->stringDataSize);
+    stringInfoData = malloc(theHeader->stringDataSize);
     if (stringInfoData == NULL) {
         log_exit(1, "could not allocate string info");
     }
