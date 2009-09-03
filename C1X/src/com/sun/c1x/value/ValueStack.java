@@ -770,7 +770,7 @@ public class ValueStack {
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
             if (instr instanceof Phi) {
-                if (block == null || ((Phi) instr).block() == block) {
+                if (block == null || ((Phi) instr).block() == block && !instr.isDeadPhi()) {
                     phis.add((Phi) instr);
                 }
             }
@@ -789,7 +789,7 @@ public class ValueStack {
         int max = this.valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
-            if (instr instanceof Phi && instr.isLive()) {
+            if (instr instanceof Phi && instr.isLive() && !instr.isDeadPhi()) {
                 if (block == null || ((Phi) instr).block() == block) {
                     phis.add((Phi) instr);
                 }
@@ -807,7 +807,7 @@ public class ValueStack {
         int max = valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
-            if (instr instanceof Phi) {
+            if (instr instanceof Phi && !instr.isDeadPhi()) {
                 if (block == null || ((Phi) instr).block() == block) {
                     return true;
                 }

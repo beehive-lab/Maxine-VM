@@ -225,7 +225,7 @@ public class MaxRiType implements RiType {
     public boolean isInstance(Object obj) {
         ClassActor classActor = asClassActor("isInstance()");
         if (MaxineVM.isPrototyping()) {
-            return classActor.toJava().isInstance(obj);            
+            return classActor.toJava().isInstance(obj);
         }
         return classActor.isInstance(obj);
     }

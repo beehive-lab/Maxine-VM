@@ -42,6 +42,6 @@ public class BC_checkcast02 {
             obj = o3;
         }
         Object[] r = (Object[]) obj;
-        return -1;
+        return r == null ? -1 : -1;
     }
 }
