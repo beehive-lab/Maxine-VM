@@ -45,11 +45,11 @@ public class C1XTargetMethod extends TargetMethod {
     private int[] exceptionPositionsToCatchPositions;
     private ClassActor[] exceptionClassActors;
 
-    public C1XTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public C1XTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 
-    public C1XTargetMethod(String stubName, DynamicCompilerScheme compilerScheme) {
+    public C1XTargetMethod(String stubName, RuntimeCompilerScheme compilerScheme) {
         super(stubName, compilerScheme);
     }
 

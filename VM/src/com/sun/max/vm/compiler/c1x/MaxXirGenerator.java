@@ -104,7 +104,7 @@ public class MaxXirGenerator extends XirGenerator {
 
     final HashMap<String, XirTemplate> runtimeCallStubs = new HashMap<String, XirTemplate>();
 
-    final CiTarget target;
+    private final CiTarget target;
 
     final XirPair[] putFieldTemplates;
     final XirPair[] getFieldTemplates;

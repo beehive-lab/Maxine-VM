@@ -57,7 +57,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -85,7 +85,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // (2) ==
+        // (2) == 
             runString = "(2)";
             if (!"".equals(jtt.bytecode.BC_aaload_1.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -257,7 +257,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // ("") ==
+        // ("") == 
             runString = "(\"\")";
             if (!"".equals(jtt.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);

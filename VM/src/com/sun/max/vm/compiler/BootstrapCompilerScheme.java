@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.stack.*;
@@ -35,7 +36,7 @@ import com.sun.max.vm.stack.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public interface CompilerScheme extends DynamicCompilerScheme {
+public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
 
     /**
      * Starts up the compiler by building built-in operations.
@@ -59,6 +60,9 @@ public interface CompilerScheme extends DynamicCompilerScheme {
      */
     @PROTOTYPE_ONLY
     void compileSnippets();
+
+
+    IrMethod compileIR(ClassMethodActor classMethodActor);
 
     /**
      * Checks whether the compiler has finished compiling its internal snippets.

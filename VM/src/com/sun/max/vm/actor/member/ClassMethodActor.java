@@ -106,7 +106,7 @@ public abstract class ClassMethodActor extends MethodActor {
         return compilee().isNeverInline();
     }
 
-    public boolean isDeclaredInline(CompilerScheme compilerScheme) {
+    public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
         if (compilee().isInline()) {
             if (MaxineVM.isPrototyping()) {
                 if (compilee().isInlineAfterSnippetsAreCompiled()) {

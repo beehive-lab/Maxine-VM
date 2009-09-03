@@ -44,7 +44,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMethod> {
+public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMethod> {
 
     protected static String fieldActorToString(FieldActor fieldActor) {
         final StringBuilder sb = new StringBuilder();
@@ -224,7 +224,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
                 final Bytecode bytecode = template.bytecode;
-                final ExceptionRangeTargetMethod targetMethod = template.targetMethod;
+                final CPSTargetMethod targetMethod = template.targetMethod;
                 final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {
@@ -280,8 +280,8 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
     }
 
     @Override
-    protected CompilerTestSetup<TargetMethod> compilerTestSetup() {
-        final Class<CompilerTestSetup<TargetMethod>> compilerTestSetupType = null;
+    protected CompilerTestSetup<CPSTargetMethod> compilerTestSetup() {
+        final Class<CompilerTestSetup<CPSTargetMethod>> compilerTestSetupType = null;
         return StaticLoophole.cast(compilerTestSetupType, CompilerTestSetup.compilerTestSetup());
     }
 

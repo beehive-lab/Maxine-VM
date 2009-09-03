@@ -33,7 +33,7 @@ import com.sun.max.vm.compiler.eir.sparc.*;
 public class Package extends VMPackage {
     public Package() {
         super();
-        registerScheme(DynamicCompilerScheme.class, SPARCJitCompiler.class);
+        registerScheme(RuntimeCompilerScheme.class, SPARCJitCompiler.class);
     }
 
     @Override

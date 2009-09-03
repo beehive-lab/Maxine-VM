@@ -56,15 +56,15 @@ public abstract class StackFrameWalker {
      */
     public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
-    private final CompilerScheme compilerScheme;
+    private final BootstrapCompilerScheme compilerScheme;
 
-    protected StackFrameWalker(CompilerScheme compilerScheme) {
+    protected StackFrameWalker(BootstrapCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
     }
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link DynamicCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
+     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
      * must deal with each type of stack walk.
      *
      * @author Doug Simon
@@ -178,7 +178,7 @@ public abstract class StackFrameWalker {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme;
+                final RuntimeCompilerScheme compilerScheme = targetMethod.compilerScheme;
 
                 TargetMethod oldLastJavaCallee = lastJavaCallee;
 

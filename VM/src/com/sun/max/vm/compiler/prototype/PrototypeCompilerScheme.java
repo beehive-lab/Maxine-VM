@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.ir.*;
 /**
  * @author Bernd Mathiske
  */
-public class PrototypeCompilerScheme extends AbstractCompiler {
+public class PrototypeCompilerScheme extends CPSAbstractCompiler {
 
     public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -40,6 +40,7 @@ public class PrototypeCompilerScheme extends AbstractCompiler {
         throw ProgramError.unexpected();
     }
 
+    @Override
     public Sequence<IrGenerator> irGenerators() {
         return Sequence.Static.empty(IrGenerator.class);
     }

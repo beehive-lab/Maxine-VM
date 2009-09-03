@@ -23,7 +23,6 @@ package com.sun.max.vm.jit;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -36,7 +35,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Laurent Daynes
  */
-public abstract class JitCompiler extends AbstractVMScheme implements DynamicCompilerScheme {
+public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
 
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
@@ -48,12 +47,34 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         super(vmConfiguration);
     }
 
+    @Override
+    public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
+        if (MaxineVM.isPrototyping() && phase == MaxineVM.Phase.CREATING_COMPILED_PROTOTYPE) {
+            init();
+        }
+    }
+
     @PROTOTYPE_ONLY
-    public void initializeForJitCompilations() {
-        targetGenerator().initialize();
+    private boolean isInitialized;
+
+    @PROTOTYPE_ONLY
+    private void init() {
+        synchronized (this) {
+            if (!isInitialized) {
+                targetGenerator().initialize();
+                isInitialized = true;
+            }
+        }
     }
 
     public JitTargetMethod compile(ClassMethodActor classMethodActor) {
+
+        if (MaxineVM.isPrototyping()) {
+            init();
+        }
+
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
     }
 
@@ -66,17 +87,5 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         } catch (Throwable throwable) {
             ProgramError.unexpected("could not scan byte code", throwable);
         }
-    }
-
-    public long numberOfCompilations() {
-        return  targetGenerator().numberOfCompilations();
-    }
-
-    public Word createInitialVTableEntry(int vTableIndex, VirtualMethodActor dynamicMethodActor) {
-        return vmConfiguration().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
-    }
-
-    public Word createInitialITableEntry(int iIndex, VirtualMethodActor dynamicMethodActor) {
-        return vmConfiguration().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
     }
 }
