@@ -106,7 +106,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public final TargetMethod compile(ClassMethodActor classMethodActor) {
         IrMethod method = compileIR(classMethodActor);
         if (method instanceof TargetMethod) {
@@ -116,7 +115,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         return null;
     }
 
-    @Override
     public final IrMethod compileIR(ClassMethodActor classMethodActor) {
         return irGenerator().makeIrMethod(classMethodActor);
     }

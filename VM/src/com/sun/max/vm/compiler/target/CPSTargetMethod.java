@@ -46,12 +46,10 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super(classMethodActor, compilerScheme);
     }
 
-    @Override
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
 
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
