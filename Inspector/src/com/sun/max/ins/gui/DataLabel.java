@@ -445,7 +445,7 @@ public abstract class DataLabel extends InspectorLabel {
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                    switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
                             final InspectorMenu menu = new InspectorMenu();
                             menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));

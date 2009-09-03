@@ -120,7 +120,7 @@ public interface InspectorFrame extends Prober {
      * <li> Intercepting right mouse clicks on the icon rendered in the top left of a frame's title bar to trigger a
      * frame's {@linkplain InspectorFrame#menu() pop-up menu}. This icon is not guaranteed to exist and be in the
      * expected location under all "look and feel" implementations. For this reason, the inspector
-     * {@linkplain MaxineInspector#initializeSwing() forces} the UI to use the Metal look and feel which fulfills this
+     * {@linkplain Inspection#initializeSwing() forces} the UI to use the Metal look and feel which fulfills this
      * requirement. </li>
      * </ul>
      */
@@ -175,7 +175,7 @@ public interface InspectorFrame extends Prober {
          */
         private static boolean isPopupTrigger(final MouseEvent mouseEvent) {
             // Either button 1 or the system-dependent button+modifier(s) for triggering pop-up menus is accepted
-            return mouseEvent.isPopupTrigger() || (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1 && mouseEvent.getID() == MouseEvent.MOUSE_RELEASED);
+            return mouseEvent.isPopupTrigger() || (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1 && mouseEvent.getID() == MouseEvent.MOUSE_RELEASED);
         }
 
         private static Point getLocationOnScreen(MouseEvent mouseEvent) {

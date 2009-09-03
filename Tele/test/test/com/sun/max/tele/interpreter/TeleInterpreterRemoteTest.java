@@ -74,7 +74,7 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
         synchronized (getClass()) {
             if (teleVM == null) {
                 try {
-                    teleVM = TeleVM.create(new Options());
+                    teleVM = TeleVM.create(new Options(true));
                     teleVM.refresh(0);
                 } catch (BootImageException e) {
                     throw ProgramError.unexpected(e);
