@@ -250,10 +250,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
-        if (teleHub == null) {
-            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
-        }
+        Pointer pointer = teleVM().getForwardedObject(reference.toOrigin());
+        Word word = teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(Reference.fromOrigin(pointer));
+        pointer = teleVM().getForwardedObject(word.asPointer());
+        final Reference hubReference = teleVM().wordToReference(pointer);
+        teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
         return teleHub;
     }
 

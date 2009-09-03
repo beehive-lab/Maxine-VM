@@ -371,8 +371,8 @@ public final class ObjectHeaderTable extends InspectorTable {
                         labels[row] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
                             @Override
-                            public Value fetchValue() {
-                                return teleHub == null ? WordValue.ZERO : WordValue.from(teleHub.getCurrentOrigin());
+                            public Value fetchValue() { // TODO: handle the reading of the hub value in a better way
+                                return teleHub == null ? WordValue.ZERO : WordValue.from(inspection().maxVM().readWord(teleObject.getCurrentOrigin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
                             }
                         };
                         break;
