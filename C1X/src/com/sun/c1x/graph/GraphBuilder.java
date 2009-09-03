@@ -52,8 +52,6 @@ public class GraphBuilder {
     ValueStack curState;                   // the current execution state
     Instruction lastInstr;                 // the last instruction added
 
-    ValueStack initialState;               // The state for the start block
-    ValueStack exceptionState;             // state that will be used by handleException
     boolean skipBlock;                     // skip processing of the rest of this block
     private Value rootMethodSynchronizedObject;
 
@@ -71,47 +69,65 @@ public class GraphBuilder {
         this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
         this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer() : null;
-        int osrBCI = compilation.osrBCI;
-        BlockMap blockMap = compilation.getBlockMap(scope.method, osrBCI);
-        BlockBegin start = blockMap.get(0);
+        RiMethod rootMethod = compilation.method;
 
-        pushRootScope(scope, blockMap, start);
+        // 1. create the start block
+        ir.startBlock = new BlockBegin(0, ir.nextBlockNumber());
+        BlockBegin startBlock = ir.startBlock;
 
-        this.initialState = stateAtEntry();
-        start.merge(initialState);
-
+        // 2. compute the block map and get the entrypoint(s)
+        BlockMap blockMap = compilation.getBlockMap(scope.method, compilation.osrBCI);
+        BlockBegin stdEntry = blockMap.get(0);
+        BlockBegin osrEntry = compilation.osrBCI < 0 ? null : blockMap.get(compilation.osrBCI);
+        pushRootScope(scope, blockMap, startBlock);
+        ValueStack initialState = stateAtEntry(rootMethod);
+        startBlock.merge(initialState);
         BlockBegin syncHandler = null;
-        RiMethod method = method();
-        if (method.isSynchronized()) {
-            // setup and exception handler
+
+        // 3. setup internal state for appending instructions
+        curBlock = startBlock;
+        lastInstr = startBlock;
+        curState = initialState;
+
+        if (rootMethod.isSynchronized()) {
+            // 4A.1 add a monitor enter to the start block
+            rootMethodSynchronizedObject = synchronizedObject(initialState, compilation.method);
+            genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+            // 4A.2 finish the start block
+            finishStartBlock(startBlock, stdEntry, osrEntry);
+
+            // 4A.3 setup an exception handler to unlock the root method synchronized object
             syncHandler = new BlockBegin(Instruction.SYNCHRONIZATION_ENTRY_BCI, ir.nextBlockNumber());
             syncHandler.setExceptionEntry();
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
             syncHandler.setBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler);
 
-            RiExceptionHandler desc = newDefaultExceptionHandler(method);
+            RiExceptionHandler desc = newDefaultExceptionHandler(rootMethod);
             ExceptionHandler h = new ExceptionHandler(desc);
             h.setEntryBlock(syncHandler);
             scopeData.addExceptionHandler(h);
+        } else {
+            // 4B.1 simply finish the start block
+            finishStartBlock(startBlock, stdEntry, osrEntry);
         }
 
         scope().computeLockStackSize();
-        C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method);
+        C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(rootMethod);
         if (intrinsic != null) {
-            // the root method is an intrinsic; load the parameters onto the stack and try to inline it
+            // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
             curState = initialState.copy();
             lastInstr = curBlock;
             if (C1XOptions.InlineIntrinsics) {
                 // try to inline an Intrinsic node
-                boolean isStatic = method.isStatic();
-                int argsSize = method.signatureType().argumentSlots(!isStatic);
+                boolean isStatic = rootMethod.isStatic();
+                int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
                 Value[] args = new Value[argsSize];
                 for (int i = 0; i < args.length; i++) {
                     args[i] = curState.localAt(i);
                 }
-                if (tryInlineIntrinsic(method, args, isStatic, intrinsic)) {
+                if (tryInlineIntrinsic(rootMethod, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    CiKind rt = returnBasicType(method);
+                    CiKind rt = returnBasicType(rootMethod);
                     Value result = null;
                     if (rt != CiKind.Void) {
                         result = pop(rt);
@@ -122,42 +138,43 @@ public class GraphBuilder {
                     end.setStateAfter(curState.immutableCopy());
                 }  else {
                     // try intrinsic failed; do the normal parsing
-                    scopeData.addToWorkList(start);
+                    scopeData.addToWorkList(stdEntry);
                     iterateAllBlocks();
                 }
             } else {
-                // do the normal parsing
-                scopeData.addToWorkList(start);
+                // 6B.1 do the normal parsing
+                scopeData.addToWorkList(stdEntry);
                 iterateAllBlocks();
             }
         } else {
-            // do the normal parsing
-            scopeData.addToWorkList(start);
+            // 6B.1 do the normal parsing
+            scopeData.addToWorkList(stdEntry);
             iterateAllBlocks();
         }
 
         if (syncHandler != null && syncHandler.stateBefore() != null) {
-            Value lock = null;
-            if (method.isSynchronized()) {
-                curBlock = syncHandler;
-                lastInstr = syncHandler;
-                curState = syncHandler.stateBefore().copy();
-                lock = rootMethodSynchronizedObject;
-                syncHandler.stateBefore().unlock(); // pop the null off the stack
-                syncHandler.stateBefore().lock(scope, lock);
-            }
-            fillSyncHandler(lock, syncHandler, true);
+            // generate unlocking code if the exception handler is reachable
+            fillSyncHandler(rootMethodSynchronizedObject, syncHandler, false);
         }
 
-        ir.startBlock = setupStartBlock(osrBCI, start, ir.osrEntryBlock, initialState);
-
-        if (osrBCI >= 0) {
-            BlockBegin osrBlock = blockMap.get(osrBCI);
+        if (compilation.osrBCI >= 0) {
+            BlockBegin osrBlock = blockMap.get(compilation.osrBCI);
             assert osrBlock.wasVisited();
             if (!osrBlock.stateBefore().stackEmpty()) {
                 throw new CiBailout("cannot OSR with non-empty stack");
             }
         }
+    }
+
+    private void finishStartBlock(BlockBegin startBlock, BlockBegin stdEntry, BlockBegin osrEntry) {
+        assert curBlock == startBlock;
+        Base base = new Base(stdEntry, osrEntry);
+        appendWithoutOptimization(base, 0);
+        ValueStack stateAfter = curState.immutableCopy();
+        base.setStateAfter(stateAfter);
+        startBlock.setEnd(base);
+        assert stdEntry.stateBefore() == null;
+        stdEntry.merge(stateAfter);
     }
 
     private RiExceptionHandler newDefaultExceptionHandler(RiMethod method) {
@@ -169,38 +186,6 @@ public class GraphBuilder {
         RiConstantPool constantPool = compilation.runtime.getConstantPool(scope.method);
         scopeData = new ScopeData(null, scope, blockMap, stream, constantPool);
         curBlock = start;
-    }
-
-    BlockBegin setupStartBlock(int osrBCI, BlockBegin stdEntry, BlockBegin osrEntry, ValueStack state) {
-        BlockBegin start = new BlockBegin(0, ir.nextBlockNumber());
-
-        BlockBegin newHeaderBlock;
-        if (stdEntry.predecessors().size() == 0 && !C1XOptions.ProfileBranches) {
-            newHeaderBlock = stdEntry;
-        } else {
-            newHeaderBlock = headerBlock(stdEntry, BlockBegin.BlockFlag.StandardEntry, state);
-        }
-
-        curBlock = start;
-        lastInstr = start;
-        curState = state;
-
-        start.setStateBefore(state.copy());
-        if (method().isSynchronized()) {
-            rootMethodSynchronizedObject = synchronizedObject(initialState, method());
-            genMonitorEnter(rootMethodSynchronizedObject, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-        }
-
-        Base base = new Base(newHeaderBlock, osrEntry);
-        appendWithoutOptimization(base, 0);
-        base.setStateAfter(curState.immutableCopy());
-        start.setEnd(base);
-
-        if (base.standardEntry().stateBefore() == null) {
-            base.standardEntry().merge(state);
-        }
-        assert base.standardEntry().stateBefore() != null;
-        return start;
     }
 
     BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
@@ -377,17 +362,18 @@ public class GraphBuilder {
         return x;
     }
 
-    List<ExceptionHandler> handleException(int bci) {
+    List<ExceptionHandler> handleException(Instruction x, int bci) {
         if (!hasHandler()) {
             return Util.uncheckedCast(Collections.EMPTY_LIST);
         }
 
         List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
         ScopeData curScopeData = scopeData;
-        ValueStack s = exceptionState;
+        ValueStack s = x.stateBefore();
         int scopeCount = 0;
 
-        assert s != null : "exception handler state must be set";
+        assert s != null : "exception handler state must be available for " + x;
+        s = s.copy();
         do {
             assert curScopeData.scope == s.scope() : "scopes do not match";
             assert bci == Instruction.SYNCHRONIZATION_ENTRY_BCI || bci == curScopeData.stream.currentBCI() : "invalid bci";
@@ -1063,7 +1049,7 @@ public class GraphBuilder {
         if (method().isSynchronized()) {
             ValueStack stateBefore = curState.immutableCopy();
             // unlock before exiting the method
-            append(new MonitorExit(synchronizedObject(initialState, method()), curState.unlock(), stateBefore));
+            append(new MonitorExit(rootMethodSynchronizedObject, curState.unlock(), stateBefore));
         }
         append(new Return(x));
     }
@@ -1244,11 +1230,14 @@ public class GraphBuilder {
             // the instruction has already been added
             return x;
         }
-        if (C1XOptions.UseLocalValueNumbering) {
+        if (localValueMap != null) {
             // look in the local value map
             Value r = localValueMap.findInsert(x);
             if (r != x) {
                 C1XMetrics.LocalValueNumberHits++;
+                if (r instanceof Instruction) {
+                    assert ((Instruction) r).isAppended() : "instruction " + r + "is not appended";
+                }
                 return r;
             }
         }
@@ -1261,17 +1250,14 @@ public class GraphBuilder {
             throw new CiBailout("Method and/or inlining is too large");
         }
 
-        if (hasUncontrollableSideEffects(x)) {
+        if (memoryMap != null && hasUncontrollableSideEffects(x)) {
             // conservatively kill all memory if there are unknown side effects
-            if (memoryMap != null) {
-                memoryMap.kill();
-            }
+            memoryMap.kill();
         }
 
         if (x.canTrap()) {
             // connect the instruction to any exception handlers
-            assert exceptionState != null || !hasHandler() : "must have setup exception state";
-            x.setExceptionHandlers(handleException(bci));
+            x.setExceptionHandlers(handleException(x, bci));
         }
 
         return x;
@@ -1354,8 +1340,7 @@ public class GraphBuilder {
         scopeData = data;
     }
 
-    ValueStack stateAtEntry() {
-        RiMethod method = method();
+    ValueStack stateAtEntry(RiMethod method) {
         ValueStack state = new ValueStack(scope(), method.maxLocals(), method.maxStackSize());
         int index = 0;
         if (!method.isStatic()) {
@@ -1377,10 +1362,6 @@ public class GraphBuilder {
             }
             state.storeLocal(index, local);
             index += vt.sizeInSlots();
-        }
-
-        if (method.isSynchronized()) {
-            state.lock(scope(), null); // XXX: why do we lock null?
         }
         return state;
     }
@@ -1639,7 +1620,6 @@ public class GraphBuilder {
     }
 
     void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
-        exceptionState = curState.copy();
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
         lastInstr.setFlag(Value.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
@@ -1650,7 +1630,7 @@ public class GraphBuilder {
         scopeData.addExceptionHandler(h);
     }
 
-    void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean defaultHandler) {
+    void fillSyncHandler(Value lock, BlockBegin syncHandler, boolean inlinedMethod) {
         BlockBegin origBlock = curBlock;
         ValueStack origState = curState;
         Instruction origLast = lastInstr;
@@ -1662,34 +1642,28 @@ public class GraphBuilder {
         }
         curState = syncHandler.stateBefore().copy();
 
-        assert !syncHandler.wasVisited() : "synch handler already visited";
-
-        curBlock.setWasVisited(true);
         Value exception = appendWithoutOptimization(new ExceptionObject(), Instruction.SYNCHRONIZATION_ENTRY_BCI);
 
         int bci = Instruction.SYNCHRONIZATION_ENTRY_BCI;
-        if (lock != null) {
-            assert curState.locksSize() > 0 && curState.lockAt(curState.locksSize() - 1) == lock;
-            if (lock instanceof Instruction) {
-                Instruction l = (Instruction) lock;
-                if (!l.isAppended()) {
-                    lock = appendWithoutOptimization(l, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-                }
+        assert lock != null;
+        assert curState.locksSize() > 0 && curState.lockAt(curState.locksSize() - 1) == lock;
+        if (lock instanceof Instruction) {
+            Instruction l = (Instruction) lock;
+            if (!l.isAppended()) {
+                lock = appendWithoutOptimization(l, Instruction.SYNCHRONIZATION_ENTRY_BCI);
             }
-            // exit the monitor
-            genMonitorExit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
+        }
+        // exit the monitor
+        genMonitorExit(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
 
-            // exit the context of the synchronized method
-            if (!defaultHandler) {
-                popScope();
-                curState = curState.copy();
-                bci = curState.scope().callerBCI();
-                curState = curState.popScope().copy();
-            }
+        // exit the context of the synchronized method
+        if (inlinedMethod) {
+            popScope();
+            bci = curState.scope().callerBCI();
+            curState = curState.popScope().copy();
         }
 
         apush(exception);
-        exceptionState = curState.copy();
         genThrow(bci);
         BlockEnd end = (BlockEnd) lastInstr;
         curBlock.setEnd(end);
@@ -1817,9 +1791,6 @@ public class GraphBuilder {
             }
             // read the opcode
             int opcode = s.currentBC();
-
-            // check whether the bytecode can cause an exception
-            exceptionState = hasHandler() && Bytecodes.canTrap(opcode) ? curState.copy() : null;
 
             // check for active JSR during OSR compilation
             if (compilation.isOsrCompilation() && scope().isTopScope() && scopeData.parsingJsr() && s.currentBCI() == compilation.osrBCI) {
