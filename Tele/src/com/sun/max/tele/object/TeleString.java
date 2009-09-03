@@ -46,7 +46,7 @@ public class TeleString extends TeleTupleObject implements StringProvider {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return getString();
     }

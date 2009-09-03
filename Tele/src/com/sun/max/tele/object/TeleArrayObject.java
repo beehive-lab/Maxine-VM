@@ -130,7 +130,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         final Kind componentKind = componentKind();
         final int length = getLength();
         final Class<?> componentJavaClass = classActorForType().componentClassActor().toJava();

@@ -38,7 +38,7 @@ public final class TeleSignatureDescriptor extends TeleDescriptor {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return SignatureDescriptor.create(string());
     }
