@@ -367,7 +367,7 @@ static void relocate(int fd) {
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
 #endif
 
-    relocation_apply((void *) theHeap, relocationData, theHeader->relocationDataSize, theHeader->cacheAlignment, word_BIG_ENDIAN, theHeader->wordSize);
+    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);

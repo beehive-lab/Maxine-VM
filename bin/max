@@ -894,7 +894,7 @@ function run_dis() {
 inspect_usage="[options] [class | -jar jarfile]  [args...]"
 inspect_help="launch a given program under the Inspector
 
-    Run the Maxine VM under the Inspector. The arguments accepted by this command
+    Run Maxine under the Inspector. The arguments accepted by this command
     are those accepted by the 'max vm' command plus the Inspector specific
     options. To debug a program in the Inspector, simply replace 'vm' on the
     command line that launches the program with 'inspect'.
@@ -940,7 +940,22 @@ function run_inspect() {
         shift
     done    
 
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a="$vm_args"
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+}
+
+#=======================================
+# 'view' command
+#=======================================
+
+view_usage="[options]"
+view_help="browse the boot image under the Inspector
+
+    Browse a Maxine boot image under the Inspector.
+    
+    Use \"max view -help\" to see what the Inspector options are."
+
+function run_view() {
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineViewer -trace=1 $@
 }
 
 #=======================================

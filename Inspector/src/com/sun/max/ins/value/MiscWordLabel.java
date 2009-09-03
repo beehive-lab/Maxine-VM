@@ -55,7 +55,7 @@ public final class MiscWordLabel extends ValueLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         final InspectorAction inspectAction = getInspectJavaMonitorAction();
                         if (inspectAction.isEnabled()) {
