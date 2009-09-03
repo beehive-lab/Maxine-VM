@@ -59,6 +59,7 @@ public class LIRRTCall extends LIRCall {
     @Override
     public void printInstruction(LogStream out) {
         out.print(nameForAddress());
+        super.printInstruction(out);
     }
 
     /**
