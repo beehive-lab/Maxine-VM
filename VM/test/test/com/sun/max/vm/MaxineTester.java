@@ -1195,7 +1195,7 @@ public class MaxineTester {
         public boolean run() {
             final List<String> javaTesterConfigs = javaTesterConfigsOption.getValue();
             for (final String config : javaTesterConfigs) {
-                if (!stopTesting()) {
+                if (!stopTesting() && MaxineTesterConfiguration.isSupported(config)) {
                     JavaTesterHarness.runJavaTesterTests(config);
                 }
             }
