@@ -959,7 +959,7 @@ public class LinearScan {
                 for (int i = 0; i < ir().startBlock.liveIn().size(); i++) {
                     if (ir().startBlock.liveIn().get(i)) {
                         Value instr = gen().instructionForVreg(i);
-                        TTY.println(" vreg %d (HIR instruction %c%d)", i, instr == null ? ' ' : instr.type().tchar(), instr == null ? 0 : instr.id());
+                        TTY.println(" vreg %d (HIR instruction %s)", i, instr == null ? " " : instr.toString());
 
                         for (int j = 0; j < numBlocks; j++) {
                             BlockBegin block = blockAt(j);
@@ -974,10 +974,8 @@ public class LinearScan {
                 }
             }
 
-            // when this fails, virtual registers are used before they are defined.
-            assert false : "liveIn set of first block must be empty";
             // bailout of if this occurs in product mode.
-            bailout("liveIn set of first block not empty");
+            bailout("liveIn set of first block must be empty");
         }
     }
 
