@@ -107,6 +107,11 @@ public class MaxineTesterConfiguration {
         jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
         jtt(jtt.lang.ClassLoader_loadClass01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Class_asSubclass01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
         jtt(jtt.lang.Object_clone01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Object_notify01.class,               RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Object_notifyAll01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
@@ -199,11 +204,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.except.Throw_Synchronized03.class,        RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.except.Throw_Synchronized04.class,        RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.except.Throw_Synchronized05.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.lang.Object_toString02.class,             RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.micro.VarArgs_String01.class,             RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.micro.VarArgs_boolean01.class,            RAND_SPARC);  // Fails:                   @jitopt
