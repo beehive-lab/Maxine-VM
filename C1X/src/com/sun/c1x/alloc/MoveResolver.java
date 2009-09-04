@@ -234,7 +234,9 @@ public class MoveResolver {
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr);
 
-        Util.traceLinearScan(4, "MoveResolver: inserted move from register %d (%d, %d) to %d (%d, %d)", fromInterval.regNum(), fromInterval.assignedReg(), fromInterval.assignedRegHi(), toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
+        Util.traceLinearScan(4, "MoveResolver: inserted move from register %d (%d, %d) to %d (%d, %d)",
+                             fromInterval.regNum(), fromInterval.assignedReg(), fromInterval.assignedRegHi(),
+                             toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
     }
 
     void insertMove(LIROperand fromOpr, Interval toInterval) {
@@ -363,7 +365,9 @@ public class MoveResolver {
     }
 
     void addMapping(Interval fromInterval, Interval toInterval) {
-        Util.traceLinearScan(4, "MoveResolver: adding mapping from %d (%d, %d) to %d (%d, %d)", fromInterval.regNum(), fromInterval.assignedReg(), fromInterval.assignedRegHi(), toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
+        Util.traceLinearScan(4, "MoveResolver: adding mapping from %d (%d, %d) to %d (%d, %d)",
+                             fromInterval.regNum(), fromInterval.assignedReg(), fromInterval.assignedRegHi(),
+                             toInterval.regNum(), toInterval.assignedReg(), toInterval.assignedRegHi());
 
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(LIROperandFactory.IllegalLocation);

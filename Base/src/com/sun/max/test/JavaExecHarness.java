@@ -159,7 +159,8 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         final BufferedReader r = new BufferedReader(new FileReader(file));
 
         // search for the package statement in the file.
-        for (String line = r.readLine(); line != null; line = r.readLine()) {
+        String line = r.readLine();
+        for (; line != null; line = r.readLine()) {
             line = line.trim();
             if (line.startsWith("package")) {
                 // this is probably a java file
