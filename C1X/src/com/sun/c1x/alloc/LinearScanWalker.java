@@ -345,8 +345,7 @@ public class LinearScanWalker extends IntervalWalker {
                         // of the interval (normally, only mustHaveRegister causes a reloading)
                         BlockBegin loopBlock = allocator().blockOfOpWithId(loopEndPos);
 
-                        Util.traceLinearScan(4, "      interval is used in loop that ends in block B%d, so trying to move maxBlock back from B%d to B%d", loopBlock.blockID, maxBlock.blockID,
-                                loopBlock.blockID);
+                        Util.traceLinearScan(4, "      interval is used in loop that ends in block B%d, so trying to move maxBlock back from B%d to B%d", loopBlock.blockID, maxBlock.blockID, loopBlock.blockID);
                         assert loopBlock != minBlock : "loopBlock and minBlock must be different because block boundary is needed between";
 
                         optimalSplitPos = findOptimalSplitPos(minBlock, loopBlock, loopBlock.lastLirInstructionId() + 2);
