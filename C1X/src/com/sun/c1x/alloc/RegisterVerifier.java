@@ -145,7 +145,7 @@ public class RegisterVerifier {
     }
 
     void processXhandler(ExceptionHandler xhandler, List<Interval> inputState) {
-        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
+        // Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
 
         // must copy state because it is modified
         inputState = copy(inputState);
@@ -175,23 +175,23 @@ public class RegisterVerifier {
                         savedStateCorrect = false;
                         savedState.set(i, null);
 
-                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
+                        // Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
                     }
                 }
             }
 
             if (savedStateCorrect) {
                 // already processed block with correct inputState
-                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
+                // Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
             } else {
                 // must re-visit this block
-                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
+                // Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
                 addToWorkList(block);
             }
 
         } else {
             // block was not processed before, so set initial inputState
-            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
+            // Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
 
             setStateForBlock(block, copy(inputState));
             addToWorkList(block);
@@ -207,9 +207,9 @@ public class RegisterVerifier {
     void statePut(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (interval != null) {
-                Util.traceLinearScan(4, "        reg[%d] = %d", reg, interval.regNum());
+                // Util.traceLinearScan(4, "        reg[%d] = %d", reg, interval.regNum());
             } else if (inputState.get(reg) != null) {
-                Util.traceLinearScan(4, "        reg[%d] = null", reg);
+                // Util.traceLinearScan(4, "        reg[%d] = null", reg);
             }
 
             inputState.set(reg, interval);

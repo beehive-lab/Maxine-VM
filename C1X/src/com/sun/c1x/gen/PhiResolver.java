@@ -82,10 +82,10 @@ public class PhiResolver {
     }
 
     public void move(LIROperand src, LIROperand dest) {
-        assert dest.isVirtual() :  "";
+        assert dest.isVirtual() : "destination must be virtual";
         // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
-        assert !src.isIllegal() :  "";
-        assert !dest.isIllegal() :  "";
+        assert !src.isIllegal() : "source for phi move is illegal";
+        assert !dest.isIllegal() : "destination for phi move is illegal";
         ResolveNode source = sourceNode(src);
         source.append(destinationNode(dest));
       }

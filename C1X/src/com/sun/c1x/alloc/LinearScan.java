@@ -198,7 +198,7 @@ public class LinearScan {
         } else if (opr.isDoubleXmm()) {
             return -1;
         } else {
-            Util.shouldNotReachHere();
+            bailout("should not reach here (with " + opr + ")");
             return -1;
         }
     }
@@ -516,7 +516,7 @@ public class LinearScan {
     // called once before asignment of register numbers
     void eliminateSpillMoves() {
         // TIMELINEARSCAN(timerEliminateSpillMoves);
-        Util.traceLinearScan(3, " Eliminating unnecessary spill moves");
+        // Util.traceLinearScan(3, " Eliminating unnecessary spill moves");
 
         // collect all intervals that must be stored after their definion.
         // the list is sorted by Interval.spillDefinitionPos
@@ -537,7 +537,7 @@ public class LinearScan {
                 assert temp.spillDefinitionPos() >= temp.from() : "invalid order";
                 assert temp.spillDefinitionPos() <= temp.from() + 2 : "only intervals defined once at their start-pos can be optimized";
 
-                Util.traceLinearScan(4, "interval %d (from %d to %d) must be stored at %d", temp.regNum(), temp.from(), temp.to(), temp.spillDefinitionPos());
+                // Util.traceLinearScan(4, "interval %d (from %d to %d) must be stored at %d", temp.regNum(), temp.from(), temp.to(), temp.spillDefinitionPos());
 
                 // TODO: Check if this is correct?!
                 prev = temp;
@@ -569,7 +569,7 @@ public class LinearScan {
 
                     if (curInterval.assignedReg() >= nofRegs && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
-                        Util.traceLinearScan(4, "eliminating move from interval %d to %d", op1.inOpr().vregNumber(), op1.resultOpr().vregNumber());
+                        // Util.traceLinearScan(4, "eliminating move from interval %d to %d", op1.inOpr().vregNumber(), op1.resultOpr().vregNumber());
                         instructions.set(j, null); // null-instructions are deleted by assignRegNum
                     }
 
@@ -591,7 +591,7 @@ public class LinearScan {
                         assert toOpr.isStack() : "to operand must be a stack slot";
 
                         insertionBuffer.move(j, fromOpr, toOpr);
-                        Util.traceLinearScan(4, "inserting move after definition of interval %d to stack slot %d at opId %d", interval.regNum(), interval.canonicalSpillSlot() - nofRegs, opId);
+                        // Util.traceLinearScan(4, "inserting move after definition of interval %d to stack slot %d at opId %d", interval.regNum(), interval.canonicalSpillSlot() - nofRegs, opId);
 
                         interval = interval.next();
                     }
@@ -674,7 +674,7 @@ public class LinearScan {
             int reg = opr.vregNumber();
             if (!liveKill.get(reg)) {
                 liveGen.set(reg);
-                Util.traceLinearScan(4, "  Setting liveGen for value %c%d, LIR opId %d, register number %d", value.type().tchar(), value.id(), op.id(), reg);
+                // Util.traceLinearScan(4, "  Setting liveGen for value %c%d, LIR opId %d, register number %d", value.type().tchar(), value.id(), op.id(), reg);
             }
         }
     }
@@ -733,7 +733,7 @@ public class LinearScan {
                         reg = opr.vregNumber();
                         if (!liveKill.get(reg)) {
                             liveGen.set(reg);
-                            Util.traceLinearScan(4, "  Setting liveGen for register %d at instruction %d", reg, op.id());
+                            // Util.traceLinearScan(4, "  Setting liveGen for register %d at instruction %d", reg, op.id());
                         }
                         if (block.loopIndex() >= 0) {
                             localIntervalInLoop.setBit(reg, block.loopIndex());
@@ -839,11 +839,11 @@ public class LinearScan {
             block.setLiveIn(new BitMap(liveSize));
             block.setLiveOut(new BitMap(liveSize));
 
-            Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
+            // Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveGen().toString());
             }
-            Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
+            // Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println(block.liveKill().toString());
             }
@@ -1099,7 +1099,7 @@ public class LinearScan {
                 // also add useKind for dead intervals
                 interval.addRange(defPos, defPos + 1);
                 interval.addUsePos(defPos, useKind);
-                Util.traceLinearScan(2, "Warning: def of reg %d at %d occurs without use", regNum, defPos);
+                // Util.traceLinearScan(2, "Warning: def of reg %d at %d occurs without use", regNum, defPos);
             }
 
         } else {
@@ -1112,7 +1112,7 @@ public class LinearScan {
 
             interval.addRange(defPos, defPos + 1);
             interval.addUsePos(defPos, useKind);
-            Util.traceLinearScan(2, "Warning: dead value %d at %d in live intervals", regNum, defPos);
+            // Util.traceLinearScan(2, "Warning: dead value %d at %d in live intervals", regNum, defPos);
         }
 
         changeSpillDefinitionPos(interval, defPos);
@@ -1306,7 +1306,7 @@ public class LinearScan {
                     assert blockOfOpWithId(move.id()).numberOfPreds() == 0 : "move from stack must be in first block";
                     assert move.resultOpr().isVirtual() : "result of move must be a virtual register";
 
-                    Util.traceLinearScan(4, "found move from stack slot %d to vreg %d", o.isSingleStack() ? o.singleStackIx() : o.doubleStackIx(), regNum(move.resultOpr()));
+                    // Util.traceLinearScan(4, "found move from stack slot %d to vreg %d", o.isSingleStack() ? o.singleStackIx() : o.doubleStackIx(), regNum(move.resultOpr()));
                 }
 
                 Interval interval = intervalAt(regNum(move.resultOpr()));
@@ -1357,7 +1357,7 @@ public class LinearScan {
                     Interval to = intervalAt(regNum(moveTo));
                     if (from != null && to != null) {
                         to.setRegisterHint(from);
-                        Util.traceLinearScan(4, "operation at opId %d: added hint from interval %d to %d", move.id(), from.regNum(), to.regNum());
+                        // Util.traceLinearScan(4, "operation at opId %d: added hint from interval %d to %d", move.id(), from.regNum(), to.regNum());
                     }
                 }
                 break;
@@ -1373,7 +1373,7 @@ public class LinearScan {
                     Interval to = intervalAt(regNum(moveTo));
                     if (from != null && to != null) {
                         to.setRegisterHint(from);
-                        Util.traceLinearScan(4, "operation at opId %d: added hint from interval %d to %d", cmove.id(), from.regNum(), to.regNum());
+                        // Util.traceLinearScan(4, "operation at opId %d: added hint from interval %d to %d", cmove.id(), from.regNum(), to.regNum());
                     }
                 }
                 break;
@@ -1419,7 +1419,7 @@ public class LinearScan {
             for (int number = live.getNextOneOffset(0, size); number < size; number = live.getNextOneOffset(number + 1, size)) {
                 assert live.get(number) : "should not stop here otherwise";
                 assert number >= CiRegister.vregBase : "fixed intervals must not be live on block bounds";
-                Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
+                // Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
 
                 addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, CiKind.Illegal);
 
@@ -1450,7 +1450,7 @@ public class LinearScan {
                             addTemp(callerSaveRegisters[k], opId, IntervalUseKind.noUse, CiKind.Illegal);
                         }
                     }
-                    Util.traceLinearScan(4, "operation destroys all caller-save registers");
+                    // Util.traceLinearScan(4, "operation destroys all caller-save registers");
                 }
 
                 // Add any platform dependent temps
@@ -1839,7 +1839,7 @@ public class LinearScan {
 
     void resolveFindInsertPos(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
         if (fromBlock.numberOfSux() <= 1) {
-            Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID);
+            // Util.traceLinearScan(4, "inserting moves at end of fromBlock B%d", fromBlock.blockID);
 
             List<LIRInstruction> instructions = fromBlock.lir().instructionsList();
             LIRInstruction instr = instructions.get(instructions.size() - 1);
@@ -1853,7 +1853,7 @@ public class LinearScan {
             }
 
         } else {
-            Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID);
+            // Util.traceLinearScan(4, "inserting moves at beginning of toBlock B%d", toBlock.blockID);
 
             if (C1XOptions.DetailedAsserts) {
                 assert fromBlock.lir().instructionsList().get(0) instanceof LIRLabel : "block does not start with a label";
@@ -1898,7 +1898,7 @@ public class LinearScan {
 
                     // prevent optimization of two consecutive blocks
                     if (!blockCompleted.get(pred.linearScanNumber()) && !blockCompleted.get(sux.linearScanNumber())) {
-                        Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID, pred.blockID, sux.blockID);
+                        // Util.traceLinearScan(3, " optimizing empty block B%d (pred: B%d, sux: B%d)", block.blockID, pred.blockID, sux.blockID);
                         blockCompleted.set(block.linearScanNumber());
 
                         // directly resolve between pred and sux (without looking at the empty block between)
@@ -1923,7 +1923,7 @@ public class LinearScan {
 
                     // check for duplicate edges between the same blocks (can happen with switch blocks)
                     if (!alreadyResolved.get(toBlock.linearScanNumber())) {
-                        Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID, toBlock.blockID);
+                        // Util.traceLinearScan(3, " processing edge between B%d and B%d", fromBlock.blockID, toBlock.blockID);
                         alreadyResolved.set(toBlock.linearScanNumber());
 
                         // collect all intervals that have been split between fromBlock and toBlock
@@ -2055,7 +2055,7 @@ public class LinearScan {
     }
 
     void resolveExceptionEdge(ExceptionHandler handler, int throwingOpId, MoveResolver moveResolver) {
-        Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID, throwingOpId);
+        // Util.traceLinearScan(4, "resolving exception handler B%d: throwingOpId=%d", handler.entryBlock().blockID, throwingOpId);
 
         assert moveResolver.checkEmpty();
         assert handler.lirOpId() == -1 : "already processed this xhandler";
@@ -2404,7 +2404,7 @@ public class LinearScan {
     }
 
     OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, CodeEmitInfo info, boolean isCallSite) {
-        Util.traceLinearScan(3, "creating oop map at opId %d", op.id());
+        // Util.traceLinearScan(3, "creating oop map at opId %d", op.id());
 
         // walk before the current operation . intervals that start at
         // the operation (= output operands of the operation) are not
@@ -2751,7 +2751,7 @@ public class LinearScan {
         if (!compilation().needsDebugInformation()) {
             return;
         }
-        Util.traceLinearScan(3, "creating debug information at opId %d", opId);
+        // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
         IRScope innermostScope = info.scope();
         ValueStack innermostState = info.stack();
@@ -2977,19 +2977,19 @@ public class LinearScan {
     // (check that all intervals have a correct register and that no registers are overwritten)
 
     boolean verify() {
-        Util.traceLinearScan(2, " verifying intervals *");
+        // Util.traceLinearScan(2, " verifying intervals *");
         verifyIntervals();
 
-        Util.traceLinearScan(2, " verifying that no oops are in fixed intervals *");
+        // Util.traceLinearScan(2, " verifying that no oops are in fixed intervals *");
         //verifyNoOopsInFixedIntervals();
 
-        Util.traceLinearScan(2, " verifying that unpinned constants are not alive across block boundaries");
+        // Util.traceLinearScan(2, " verifying that unpinned constants are not alive across block boundaries");
         verifyConstants();
 
-        Util.traceLinearScan(2, " verifying register allocation *");
+        // Util.traceLinearScan(2, " verifying register allocation *");
         verifyRegisters();
 
-        Util.traceLinearScan(2, " no errors found *");
+        // Util.traceLinearScan(2, " no errors found *");
 
         return true;
     }
@@ -3219,7 +3219,7 @@ public class LinearScan {
 
             // visit all registers where the liveAtEdge bit is set
             for (int r = liveAtEdge.getNextOneOffset(0, size); r < size; r = liveAtEdge.getNextOneOffset(r + 1, size)) {
-                Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
+                // Util.traceLinearScan(4, "checking interval %d of block B%d", r, block.blockID);
 
                 Value value = gen().instructionForVreg(r);
 

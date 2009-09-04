@@ -1994,7 +1994,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 instructionForOperand.put(operand.vregNumber(), x);
             }
         }
-        return operand;
+        return x.operand();
     }
 
     private LIROperand operandForPhi(Phi phi) {

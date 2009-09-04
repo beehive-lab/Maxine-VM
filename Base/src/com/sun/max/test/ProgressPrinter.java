@@ -41,6 +41,7 @@ public class ProgressPrinter {
     private String current;
     private boolean color;
     private int passed;
+    private int failed;
     private int finished;
     private int verbose;
 
@@ -84,6 +85,7 @@ public class ProgressPrinter {
      * @param message the message to associate with the specified test failure
      */
     public void fail(String message) {
+        failed++;
         failedTests[finished] = current;
         failedMessages[finished] = message;
         if (verbose > 0) {
@@ -162,7 +164,6 @@ public class ProgressPrinter {
      */
     public void report() {
         if (total > 0) {
-            final int failed = total - passed;
             if (failed == 0) {
                 output.print(passed);
                 output.println(" passed");
@@ -171,7 +172,7 @@ public class ProgressPrinter {
                 output.print(" of ");
                 output.print(total);
                 output.print(" passed (");
-                output.print(total - passed);
+                output.print(failed);
                 output.println(" failed)");
             }
         }

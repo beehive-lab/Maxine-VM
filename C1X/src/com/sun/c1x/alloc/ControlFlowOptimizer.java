@@ -73,7 +73,7 @@ public final class ControlFlowOptimizer {
             if (endBlock.numberOfSux() == 1 && endBlock.suxAt(0) == headerBlock) {
                 // short loop from headerIdx to endIdx found . reorder blocks such that
                 // the headerBlock is the last block instead of the first block of the loop
-                Util.traceLinearScan(1, "Reordering short loop: length %d, header B%d, end B%d", endIdx - headerIdx + 1, headerBlock.blockID, endBlock.blockID);
+                // Util.traceLinearScan(1, "Reordering short loop: length %d, header B%d, end B%d", endIdx - headerIdx + 1, headerBlock.blockID, endBlock.blockID);
 
                 for (int j = headerIdx; j < endIdx; j++) {
                     code.set(j, code.get(j + 1));
@@ -122,7 +122,7 @@ public final class ControlFlowOptimizer {
 
     // substitute branch targets in all branch-instructions of this blocks
     void substituteBranchTarget(BlockBegin block, BlockBegin targetFrom, BlockBegin targetTo) {
-        Util.traceLinearScan(3, "Deleting empty block: substituting from B%d to B%d inside B%d", targetFrom.blockID, targetTo.blockID, block.blockID);
+        // Util.traceLinearScan(3, "Deleting empty block: substituting from B%d to B%d inside B%d", targetFrom.blockID, targetTo.blockID, block.blockID);
 
         List<LIRInstruction> instructions = block.lir().instructionsList();
 
@@ -209,7 +209,7 @@ public final class ControlFlowOptimizer {
                 if (lastBranch.info == null) {
                     if (lastBranch.block() == code.get(i + 1)) {
 
-                        Util.traceLinearScan(3, "Deleting unconditional branch at end of block B%d", block.blockID);
+                        // Util.traceLinearScan(3, "Deleting unconditional branch at end of block B%d", block.blockID);
 
                         // delete last branch instruction
                         Util.truncate(instructions, instructions.size() - 1);
@@ -222,7 +222,7 @@ public final class ControlFlowOptimizer {
 
                             if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
 
-                                Util.traceLinearScan(3, "Negating conditional branch and deleting unconditional branch at end of block B%d", block.blockID);
+                                // Util.traceLinearScan(3, "Negating conditional branch and deleting unconditional branch at end of block B%d", block.blockID);
 
                                 // eliminate a conditional branch to the immediate successor
                                 prevBranch.changeBlock(lastBranch.block());

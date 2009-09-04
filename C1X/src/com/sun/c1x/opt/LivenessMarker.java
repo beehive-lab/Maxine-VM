@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.opt;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
@@ -38,14 +36,8 @@ public class LivenessMarker {
 
     final IR ir;
 
-    final Queue<Value> valueQueue = new LinkedList<Value>();
-    final Queue<Value> deoptQueue = new LinkedList<Value>();
-
-    final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt, deoptQueue);
-    final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue, valueQueue);
-
-    boolean removeDeadCode;
-    boolean clearLiveMarks;
+    final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt);
+    final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue);
 
     /**
      * Creates a new liveness marking instance and marks live instructions.
@@ -65,33 +57,12 @@ public class LivenessMarker {
                     // visit all instructions first, marking control dependent and side-effects
                     markRootInstr(i);
                 }
-
-                Value x;
-                // process queue of instructions which are used for their values
-                while ((x = valueQueue.poll()) != null) {
-                    markInputs(x, valueMarker);
-                }
-                // process queue of instructions which are used to generate deoptimization code
-                while ((x = deoptQueue.poll()) != null) {
-                    markInputs(x, deoptMarker);
-                }
             }
         });
-    }
 
-    private void markInputs(Value i, ValueClosure marker) {
-        if (!i.isDeadPhi()) {
-            i.inputValuesDo(marker);
-            if (i instanceof Phi) {
-                // phis are special
-                Phi phi = (Phi) i;
-                int max = phi.operandCount();
-                for (int j = 0; j < max; j++) {
-                    Value x = phi.operandAt(j);
-                    marker.apply(x);
-                }
-            }
-        }
+        // propagate liveness flags to inputs of instructions
+        valueMarker.markAll();
+        deoptMarker.markAll();
     }
 
     public void removeDeadCode() {
@@ -103,7 +74,6 @@ public class LivenessMarker {
                 while ((i = i.next()) != null) {
                     if (i.isLive()) {
                         prev.resetNext(i); // skip any previous dead instructions
-                        i.clearLive();     // clear the live marks for later DCE passes
                     } else {
                         C1XMetrics.DeadCodeEliminated++;
                     }
@@ -111,26 +81,70 @@ public class LivenessMarker {
                 }
             }
         });
+        // clear all marks on all instructions
+        valueMarker.clearAll();
+        deoptMarker.clearAll();
+    }
+
+    private static class Link {
+        final Value value;
+        Link next;
+
+        Link(Value v) {
+            this.value = v;
+        }
     }
 
     private class InstrMarker implements ValueClosure {
         final Value.Flag reason;
-        final Queue<Value> queue;
+        Link head;
+        Link tail;
 
-        public InstrMarker(Value.Flag reason, Queue<Value> queue) {
+        public InstrMarker(Value.Flag reason) {
             this.reason = reason;
-            this.queue = queue;
         }
 
         public Value apply(Value i) {
-            markLive(i);
+            if (!i.checkFlag(reason) && !i.isDeadPhi()) {
+                // set the flag and add to the queue
+                i.setFlag(reason);
+                if (head == null) {
+                    head = tail = new Link(i);
+                } else {
+                    tail.next = new Link(i);
+                    tail = tail.next;
+                }
+            }
             return i;
         }
 
-        final void markLive(Value i) {
-            if (!i.checkFlag(reason) && !i.isDeadPhi()) {
-                i.setFlag(reason);
-                queue.offer(i);
+        private void markAll() {
+            Link cursor = head;
+            while (cursor != null) {
+                markInputs(cursor.value);
+                cursor = cursor.next;
+            }
+        }
+
+        private void clearAll() {
+            Link cursor = head;
+            while (cursor != null) {
+                cursor.value.clearLive();
+                cursor = cursor.next;
+            }
+        }
+
+        private void markInputs(Value i) {
+            if (!i.isDeadPhi()) {
+                i.inputValuesDo(this);
+                if (i instanceof Phi) {
+                    // phis are special
+                    Phi phi = (Phi) i;
+                    int max = phi.operandCount();
+                    for (int j = 0; j < max; j++) {
+                        apply(phi.operandAt(j));
+                    }
+                }
             }
         }
     }

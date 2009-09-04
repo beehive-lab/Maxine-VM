@@ -119,7 +119,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockEnd(BlockBegin block) {
-        Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
+        // Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
 
         if (block.isPredecessor(block)) {
             // currently we can't handle this correctly.
@@ -185,7 +185,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockBegin(BlockBegin block) {
-        Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
+        // Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
 
         initInstructions();
         int numSux = block.numberOfSux();
