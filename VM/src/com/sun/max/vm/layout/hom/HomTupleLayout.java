@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -134,25 +133,28 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();
         int offset;
-        if (superClassActor == null || superClassActor.toJava() == Hybrid.class) {
+        if (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) {
             offset = 0;
         } else {
-            offset = superClassActor.dynamicTupleSize().toInt() - headerSize();
+            offset = superClassActor.dynamicTupleSize().toInt() - headerSize;
         }
         assert offset >= 0;
-        if (offset % nAlignmentBytes != 0) {
-            offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
-        }
-        for (int scale = 8; scale >= 1; scale /= 2) {
-            for (FieldActor fieldActor : fieldActors) {
-                if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
-                    assert offset >= 0;
-                    fieldActor.setOffset(offset);
-                    offset += scale;
+        if (fieldActors.length != 0) {
+            if (offset % nAlignmentBytes != 0) {
+                offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
+            }
+
+            for (int scale = 8; scale >= 1; scale /= 2) {
+                for (FieldActor fieldActor : fieldActors) {
+                    if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind.width.numberOfBytes == scale) {
+                        assert offset >= 0;
+                        fieldActor.setOffset(offset);
+                        offset += scale;
+                    }
                 }
             }
+            assert hasValidOffsets(fieldActors);
         }
-        assert hasValidOffsets(fieldActors);
         offset = Ints.roundUp(offset, nAlignmentBytes);
         return Size.fromInt(offset + headerSize);
     }

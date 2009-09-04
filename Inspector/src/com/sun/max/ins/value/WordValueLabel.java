@@ -388,10 +388,18 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setText(hexString);
-                if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject) + toolTipSuffix);
-                } else {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                try {
+                    if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject) + toolTipSuffix);
+                    } else {
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                    }
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    teleObject = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
                 }
                 break;
             }
@@ -408,11 +416,14 @@ public class WordValueLabel extends ValueLabel {
                         }
                         break;
                     }
-                } catch (NoClassDefFoundError noClassDefFoundError) {
-                    // some required class is only known in the tele VM
-                    System.out.println("WVL: setAlternateReferenceText error" + noClassDefFoundError);
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    teleObject = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
+                    break;
                 }
-                System.out.println("WVL:  set AlternateReferenceText failed");
                 displayMode = DisplayMode.OBJECT_REFERENCE;
                 updateText();
                 break;
