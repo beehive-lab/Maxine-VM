@@ -426,9 +426,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
-        final Size newSize = Layout.hybridLayout().getArraySize(length);
-        final Pointer newCell = tlabAllocate(newSize);
-        return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
+        final Size size = Layout.hybridLayout().getArraySize(length);
+        final Pointer cell = tlabAllocate(size);
+        return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")

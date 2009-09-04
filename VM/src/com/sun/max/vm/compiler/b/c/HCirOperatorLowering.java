@@ -653,14 +653,14 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
     @Override
     public void visit(NewArray operator) {
-        final CirValue count = arguments[0];
+        final CirValue length = arguments[0];
         if (operator.primitiveElementKind() != null) {
             final CirValue kind = CirConstant.fromObject(operator.primitiveElementKind());
             final CirSnippet createPrimitiveArray = CirSnippet.get(NonFoldableSnippet.CreatePrimitiveArray.SNIPPET);
             set(call(
                     createPrimitiveArray,
                     kind,
-                    count,
+                    length,
                     cc(),
                     ce()));
         } else {
@@ -671,7 +671,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                     return call(
                                createReferenceArray,
                                arrayClassActor,
-                               count,
+                               length,
                                cc(),
                                ce());
                 }

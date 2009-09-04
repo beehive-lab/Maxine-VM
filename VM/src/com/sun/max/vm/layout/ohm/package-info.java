@@ -23,26 +23,26 @@
  * <p>
  * Tuples object are packed for minimal space consumption, observing alignment
  * restrictions. They have a 2 word header and are layed out as shown below:
- * 
+ *
  * <p><blockquote><pre>
  * cell/origin --> +-------------+
  *                 |    class    |
  *                 +-------------+
- *                 |   extras    |  // monitor and hashcode
+ *                 |    misc     |  // monitor and hashcode
  *        data --> +=============+
  *                 |             |
  *                 :   fields    :  // mixed reference and scalar data
  *                 |             |
  *                 +-------------+
  * </pre></blockquote></p>
- * 
+ *
  * Array objects have a 3 word header and are layed out as shown below:
- * 
+ *
  * <p><blockquote><pre>
  * cell/origin --> +-------------+
  *                 |    class    |
  *                 +-------------+
- *                 |   extras    |  // monitor and hashcode
+ *                 |    misc     |  // monitor and hashcode
  *                 +-------------+
  *                 |   length    |
  *        data --> +=============+
@@ -51,14 +51,10 @@
  *                 |             |
  *                 +-------------+
  * </pre></blockquote></p>
- * 
+ *
  * Unless stated otherwise, all offsets mentioned in this layout implementation are in terms of
  * bytes and are relative to the origin pointer.
- * 
- * TODO This description of an OHM layout is only currently true for a 32-bit system. It needs to be updated
- *      for a 64-bit system where the 'extras' and 'length' components (which are always 4 bytes) are
- *      packed into a single 8 byte word.
- * 
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.vm.layout.ohm;
