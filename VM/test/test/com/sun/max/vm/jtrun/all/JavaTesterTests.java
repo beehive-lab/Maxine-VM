@@ -13969,6 +13969,46 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_micro_Loop00() {
+        JavaTesterRunScheme.begin("jtt.micro.Loop00");
+        String runString = null;
+        try {
+        // (0) == -1
+            runString = "(0)";
+            if (-1 != jtt.micro.Loop00.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == -1
+            runString = "(1)";
+            if (-1 != jtt.micro.Loop00.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == -1
+            runString = "(2)";
+            if (-1 != jtt.micro.Loop00.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == -1
+            runString = "(3)";
+            if (-1 != jtt.micro.Loop00.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (111) == -1
+            runString = "(111)";
+            if (-1 != jtt.micro.Loop00.test(111)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_micro_Loop01() {
         JavaTesterRunScheme.begin("jtt.micro.Loop01");
         String runString = null;
