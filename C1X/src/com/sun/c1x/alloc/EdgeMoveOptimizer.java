@@ -30,7 +30,7 @@ import com.sun.c1x.util.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public final class EdgeMoveOptimizer {

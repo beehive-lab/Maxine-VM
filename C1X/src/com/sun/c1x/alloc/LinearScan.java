@@ -338,11 +338,6 @@ public class LinearScan {
         throw new CiBailout(msg);
     }
 
-    // TODO: Inline
-    boolean bailedOut() {
-        return false;
-    }
-
     // access to block list (sorted in linear scan order)
     int blockCount() {
         assert cachedBlocks.size() == ir().linearScanOrder().size() : "invalid cached block list";
@@ -716,9 +711,6 @@ public class LinearScan {
             for (int j = 1; j < numInst; j++) {
                 LIRInstruction op = instructions.get(j);
 
-                // visit operation to collect all operands
-                //visitor.visit(op);
-
                 if (op.hasCall()) {
                     hasCall.set(op.id() >> 1);
                     localNumCalls++;
@@ -947,9 +939,9 @@ public class LinearScan {
             for (int i = 0; i < numBlocks; i++) {
                 BlockBegin block = blockAt(i);
                 for (int j = 0; j < CiRegister.vregBase; j++) {
-                    assert block.liveIn().get(j) == false : "liveIn  set of fixed register must be empty";
-                    assert block.liveOut().get(j) == false : "liveOut set of fixed register must be empty";
-                    assert block.liveGen().get(j) == false : "liveGen set of fixed register must be empty";
+                    assert !block.liveIn().get(j) : "liveIn  set of fixed register must be empty";
+                    assert !block.liveOut().get(j) : "liveOut set of fixed register must be empty";
+                    assert !block.liveGen().get(j) : "liveGen set of fixed register must be empty";
                 }
             }
         }
