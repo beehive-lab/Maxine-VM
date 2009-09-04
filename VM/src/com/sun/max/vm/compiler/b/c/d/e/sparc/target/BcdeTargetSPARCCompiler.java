@@ -379,7 +379,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 final Throwable throwable = stackUnwindingContext.throwable;
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    if (StackFrameWalker.traceStackWalk.getValue()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");
                         Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                         Log.print(" is ");

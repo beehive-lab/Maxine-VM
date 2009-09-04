@@ -54,7 +54,7 @@ public abstract class StackFrameWalker {
     /**
      * A VM option for enabling stack frame walk tracing.
      */
-    public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
+    public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
     private final CompilerScheme compilerScheme;
 
@@ -136,8 +136,8 @@ public abstract class StackFrameWalker {
      *            {@code purpose}
      */
     private void walk(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Purpose purpose, Object context) {
-
-        if (traceStackWalk.getValue()) {
+        final boolean traceStackWalk = TRACE_STACK_WALK.getValue();
+        if (traceStackWalk) {
             Log.print("StackFrameWalk: Start stack frame walk for purpose ");
             Log.println(purpose);
         }
@@ -161,7 +161,7 @@ public abstract class StackFrameWalker {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
 
-                if (traceStackWalk.getValue()) {
+                if (traceStackWalk) {
                     Log.print("StackFrameWalk: Frame for ");
                     if (targetMethod.classMethodActor() == null) {
                         Log.print(targetMethod.description());
@@ -196,7 +196,7 @@ public abstract class StackFrameWalker {
                 }
             } else {
                 final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
-                if (traceStackWalk.getValue()) {
+                if (traceStackWalk) {
                     if (stub != null) {
                         Log.print("StackFrameWalk: Frame for stub ");
                         Log.print(stub.description());
@@ -271,7 +271,7 @@ public abstract class StackFrameWalker {
             isTopFrame = false;
         }
 
-        if (traceStackWalk.getValue()) {
+        if (traceStackWalk) {
             Log.println("Finished walking the stack, returning! ");
         }
     }
@@ -475,7 +475,7 @@ public abstract class StackFrameWalker {
      */
     @INLINE
     public final void reset() {
-        if (traceStackWalk.getValue()) {
+        if (TRACE_STACK_WALK.getValue()) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
             Log.println(purpose);
         }

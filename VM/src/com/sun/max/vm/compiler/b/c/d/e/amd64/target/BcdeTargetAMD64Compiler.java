@@ -301,7 +301,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    if (StackFrameWalker.traceStackWalk.getValue()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");
                         Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
                         Log.print(" is ");
