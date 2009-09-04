@@ -915,8 +915,8 @@ function run_inspect() {
                 vm_args="$vm_args $1"
                 TELE_LOG_FILE=tele-${1/*=/}
                 if $verbose ; then
-                       echo "TELE_LOG_FILE=$TELE_LOG_FILE"
-                   fi
+                    echo "TELE_LOG_FILE=$TELE_LOG_FILE"
+                fi
                 export TELE_LOG_FILE
                 ;;
             -cp | -classpath )

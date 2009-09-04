@@ -456,9 +456,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 if (objectReferenceRenderer != null) {
                     try {
                         return objectReferenceRenderer.referenceLabelText(teleObject);
-                    } catch (RuntimeException e) {
-                        e.printStackTrace();
-                        return "(Unexpected " + e.getClass().getName() + " when getting reference label)";
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace(Trace.stream());
+                        return "(Unexpected error when getting reference label: " + throwable + ")";
                     }
                 }
                 teleObjectClass = teleObjectClass.getSuperclass();
@@ -480,9 +480,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                     if (objectReferenceRenderer != null) {
                         try {
                             return objectReferenceRenderer.referenceToolTipText(teleObject);
-                        } catch (RuntimeException e) {
-                            e.printStackTrace();
-                            return "(Unexpected " + e.getClass().getName() + " when getting tooltip)";
+                        } catch (Throwable throwable) {
+                            throwable.printStackTrace(Trace.stream());
+                            return "(Unexpected error when getting tool tip label: " + throwable + ")";
                         }
                     }
                     teleObjectClass = teleObjectClass.getSuperclass();

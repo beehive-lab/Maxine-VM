@@ -46,6 +46,10 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return true;
     }
 
+    public boolean isArrayLayout() {
+        return false;
+    }
+
     @INLINE
     public Size specificSize(Accessor accessor) {
         final Hub hub = UnsafeLoophole.cast(readHubReference(accessor).toJava());
@@ -120,7 +124,12 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();
-        int offset = (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
+        int offset;
+        if (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) {
+            offset = headerSize;
+        } else {
+            offset = superClassActor.dynamicTupleSize().toInt();
+        }
         if (Size.fromInt(offset).dividedBy(nAlignmentBytes).toInt() != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
         }

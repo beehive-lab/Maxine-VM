@@ -34,6 +34,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
@@ -536,6 +537,8 @@ public final class MemoryWordsTable extends InspectorTable {
                 setValue(WordValue.from(word));
                 setBackground(getRowBackgroundColor(row));
                 return this;
+            } catch (InvalidReferenceException invalidReferenceException) {
+                return gui().getUnavailableDataTableCellRenderer();
             } catch (DataIOError dataIOError) {
                 return gui().getUnavailableDataTableCellRenderer();
             }
