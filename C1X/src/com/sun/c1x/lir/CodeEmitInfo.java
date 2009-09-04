@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
@@ -44,10 +43,6 @@ public class CodeEmitInfo {
     private ValueStack stack; // used by deoptimization (contains also monitors
     private int bci;
 
-    public CodeEmitInfo(CodeEmitInfo info) {
-        this(info, false);
-    }
-
     // use scope from ValueStack
     public CodeEmitInfo(int bci, ValueStack stack, List<ExceptionHandler> exceptionHandlers) {
         this.scope = stack.scope();
@@ -57,37 +52,16 @@ public class CodeEmitInfo {
         this.stack = stack;
         this.exceptionHandlers = exceptionHandlers;
         assert this.stack != null : "must be non null";
-        // TODO: lame assertion, bci should always point at real bytecode
-        assert bci == Instruction.INVOCATION_ENTRY_BCI || Bytecodes.isDefined(scope().method.javaCodeAtBci(bci)) : "make sure bci points at a real bytecode";
-    }
-
-    // used by natives
-    public CodeEmitInfo(IRScope scope, int bci) {
-        this.scope = scope;
-        this.bci = bci;
-        this.oopMap = null;
-        this.scopeDebugInfo = null;
-        this.stack = null;
-        this.exceptionHandlers = null;
     }
 
     // make a copy
-    public CodeEmitInfo(CodeEmitInfo info, boolean lockStackOnly) {
+    private CodeEmitInfo(CodeEmitInfo info) {
         this.scope = info.scope;
         this.exceptionHandlers = null;
         this.bci = info.bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
-
-        if (lockStackOnly) {
-            if (info.stack != null) {
-                stack = info.stack.copyLocks();
-            } else {
-                stack = null;
-            }
-        } else {
-            stack = info.stack;
-        }
+        stack = info.stack;
 
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
@@ -96,6 +70,10 @@ public class CodeEmitInfo {
                 exceptionHandlers.add(new ExceptionHandler(h));
             }
         }
+    }
+
+    public CodeEmitInfo copy() {
+        return new CodeEmitInfo(this);
     }
 
     FrameMap frameMap() {

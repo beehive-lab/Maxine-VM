@@ -34,9 +34,10 @@ public class MaxRiSignature implements RiSignature {
 
     final MaxRiConstantPool constantPool;
     final SignatureDescriptor descriptor;
-    CiKind[] basicTypes;
+    int argSlots = -1;
+    final CiKind[] basicTypes;
     CiKind basicReturnType;
-    MaxRiType[] riTypes;
+    final MaxRiType[] riTypes;
     MaxRiType ciReturnType;
 
     /**
@@ -47,6 +48,19 @@ public class MaxRiSignature implements RiSignature {
     public MaxRiSignature(MaxRiConstantPool constantPool, SignatureDescriptor descriptor) {
         this.constantPool = constantPool;
         this.descriptor = descriptor;
+        final int max = descriptor.numberOfParameters();
+
+        basicTypes = new CiKind[max];
+        for (int i = 0; i < max; i++) {
+            basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
+        }
+
+        final int numberOfParameters = descriptor.numberOfParameters();
+
+        riTypes = new MaxRiType[numberOfParameters];
+        for (int i = 0; i < numberOfParameters; i++) {
+            riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));
+        }
     }
 
     /**
@@ -64,15 +78,6 @@ public class MaxRiSignature implements RiSignature {
      * @return the type of the specified argument
      */
     public RiType argumentTypeAt(int index) {
-        if (riTypes == null) {
-            final int max = descriptor.numberOfParameters();
-
-            riTypes = new MaxRiType[max];
-            for (int i = 0; i < max; i++) {
-                riTypes[i] = descriptorToRiType(descriptor.parameterDescriptorAt(i));
-            }
-
-        }
         return riTypes[index];
     }
 
@@ -83,13 +88,6 @@ public class MaxRiSignature implements RiSignature {
      * @return the basic type of the argument
      */
     public CiKind argumentBasicTypeAt(int index) {
-        if (basicTypes == null) {
-            final int max = descriptor.numberOfParameters();
-            basicTypes = new CiKind[max];
-            for (int i = 0; i < max; i++) {
-                basicTypes[i] = descriptorToBasicType(descriptor.parameterDescriptorAt(i));
-            }
-        }
         return basicTypes[index];
     }
 
@@ -135,8 +133,10 @@ public class MaxRiSignature implements RiSignature {
      * @return the size in slots of the arguments to this signature
      */
     public int argumentSlots(boolean withReceiver) {
-        // XXX: cache the argument size
-        return descriptor.computeNumberOfSlots() + (withReceiver ? 1 : 0);
+        if (argSlots == -1) {
+            argSlots = descriptor.computeNumberOfSlots();
+        }
+        return argSlots + (withReceiver ? 1 : 0);
     }
 
     private CiKind descriptorToBasicType(TypeDescriptor typeDescriptor) {
@@ -145,7 +145,7 @@ public class MaxRiSignature implements RiSignature {
 
     private MaxRiType descriptorToRiType(TypeDescriptor typeDescriptor) {
          // TODO: resolve the descriptor if possible in the constant pool
-        return new MaxRiType(constantPool, typeDescriptor);
+        return new MaxRiType(constantPool, typeDescriptor, 0);
     }
 
 }

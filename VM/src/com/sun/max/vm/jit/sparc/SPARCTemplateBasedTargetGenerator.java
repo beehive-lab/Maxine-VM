@@ -45,7 +45,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
     }
 
     @Override
-    public ExceptionRangeTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
+    public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
         final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor, compilerScheme());
         notifyAllocation(targetMethod);
         return targetMethod;

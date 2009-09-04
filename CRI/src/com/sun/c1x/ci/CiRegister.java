@@ -30,7 +30,13 @@ package com.sun.c1x.ci;
 public final class CiRegister {
 
     // Invalid register
-    public static final CiRegister noreg = new CiRegister(-1, -1, "noreg");
+    public static final CiRegister None = new CiRegister(-1, -1, "noreg");
+
+    // Stack register
+    public static final CiRegister Stack = new CiRegister(-2, -2, "stackreg", RegisterFlag.CPU);
+
+    // Stack register (caller stack)
+    public static final CiRegister CallerStack = new CiRegister(-3, -3, "caller-stackreg", RegisterFlag.CPU);
 
     public static final int vregBase = 40;
 
@@ -71,10 +77,6 @@ public final class CiRegister {
 
     public boolean isXMM() {
         return checkFlag(RegisterFlag.XMM);
-    }
-
-    public CiLocation asVMReg() {
-		return null;
     }
 
     public boolean isCpu() {

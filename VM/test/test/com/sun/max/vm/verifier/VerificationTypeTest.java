@@ -40,7 +40,7 @@ import com.sun.max.vm.verifier.types.*;
  * @author David Liu
  * @author Doug Simon
  */
-public class VerificationTypeTest extends CompilerTestCase<TargetMethod> {
+public class VerificationTypeTest extends CompilerTestCase<CPSTargetMethod> {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(VerificationTypeTest.class.getSimpleName());

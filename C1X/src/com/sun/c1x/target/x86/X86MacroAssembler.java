@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
@@ -37,12 +38,12 @@ public class X86MacroAssembler extends X86Assembler {
     private final int wordSize;
     private final C1XCompiler compiler;
 
-    public X86MacroAssembler(C1XCompiler compiler, CiTarget target) {
-        super(target);
+    public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
+        super(target, frameSize);
         // TODO: make macro assembler compiler independent w.r.t global stubs
         this.compiler = compiler;
 
-        rscratch1 = X86FrameMap.rscratch1(this.target.arch);
+        rscratch1 = compiler.target.scratchRegister;
         wordSize = this.target.arch.wordSize;
     }
 
@@ -56,45 +57,45 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    public final void callGlobalStub(GlobalStub stub, CiRegister result, CiRegister... args) {
+    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callGlobalStub(stub, result, rc);
+        callGlobalStub(stub, info, result, rc);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CiRegister result, CiRegister... args) {
+    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callRuntimeCalleeSaved(stub, result, rc);
+        callRuntimeCalleeSaved(stub, info, result, rc);
     }
 
-    public final void callGlobalStub(GlobalStub stub) {
-        emitGlobalStubCall(compiler.lookupGlobalStub(stub));
+    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info) {
+        emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
     }
 
-    public final void callGlobalStub(GlobalStub stub, CiRegister result, RegisterOrConstant...args) {
+    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), result, args);
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CiRegister result, RegisterOrConstant...args) {
+    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), result, args);
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    private void callGlobalStubHelper(Object stub, CiRegister result, RegisterOrConstant... args) {
+    private void callGlobalStubHelper(Object stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
         }
 
-        emitGlobalStubCall(stub);
+        emitGlobalStubCall(stub, info);
 
-        if (result != CiRegister.noreg) {
+        if (result != CiRegister.None) {
 
             this.loadResult(result, 0);
         }
@@ -1460,7 +1461,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void restoreRax(CiRegister tmp) {
-        if (tmp == CiRegister.noreg) {
+        if (tmp == CiRegister.None) {
             pop(X86.rax);
         } else if (tmp != X86.rax) {
             mov(X86.rax, tmp);
@@ -1473,7 +1474,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void saveRax(CiRegister tmp) {
-        if (tmp == CiRegister.noreg) {
+        if (tmp == CiRegister.None) {
             push(X86.rax);
         } else if (tmp != X86.rax) {
             mov(tmp, X86.rax);
@@ -1642,7 +1643,7 @@ public class X86MacroAssembler extends X86Assembler {
         CiRegister end = t2;
         CiRegister thread = t1;
         if (target.arch.is64bit()) {
-            thread = X86FrameMap.r15thread;
+            thread = runtime.threadRegister();
         }
 
         verifyTlab(runtime);
@@ -1652,7 +1653,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
 
         movptr(obj, new Address(thread, runtime.threadTlabTopOffset()));
-        if (varSizeInBytes == CiRegister.noreg) {
+        if (varSizeInBytes == CiRegister.None) {
             lea(end, new Address(obj, conSizeInBytes));
         } else {
             lea(end, new Address(obj, varSizeInBytes, Address.ScaleFactor.times1));
@@ -1851,7 +1852,7 @@ public class X86MacroAssembler extends X86Assembler {
         // TODO: Also use the fast path!
         //Label lFailure = new Label();
         //checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
-        checkKlassSubtypeSlowPath(runtime, subKlass, superKlass, tempReg, CiRegister.noreg, lSuccess, null, false);
+        checkKlassSubtypeSlowPath(runtime, subKlass, superKlass, tempReg, CiRegister.None, lSuccess, null, false);
         //bind(lFailure);
     }
 
@@ -1866,7 +1867,7 @@ public class X86MacroAssembler extends X86Assembler {
         if (superCheckOffset.isRegister()) {
             assert CiRegister.assertDifferentRegisters(subKlass, superKlass, superCheckOffset.asRegister());
         } else if (mustLoadSco) {
-            assert tempReg != CiRegister.noreg : "supply either a temp or a register offset";
+            assert tempReg != CiRegister.None : "supply either a temp or a register offset";
         }
 
         Label lFallthrough = new Label();
@@ -2003,7 +2004,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void checkKlassSubtypeSlowPath(RiRuntime runtime, CiRegister subKlass, CiRegister superKlass, CiRegister tempReg, CiRegister temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
         assert CiRegister.assertDifferentRegisters(subKlass, superKlass, tempReg);
-        if (temp2Reg != CiRegister.noreg) {
+        if (temp2Reg != CiRegister.None) {
             assert CiRegister.assertDifferentRegisters(subKlass, superKlass, tempReg, temp2Reg);
         }
 
@@ -2166,7 +2167,7 @@ public class X86MacroAssembler extends X86Assembler {
             Label next = new Label();
             Label ok = new Label();
             CiRegister t1 = X86.rsi;
-            CiRegister threadReg = (target.arch.is64bit()) ? X86FrameMap.r15thread : X86.rbx;
+            CiRegister threadReg = (target.arch.is64bit()) ? runtime.threadRegister() : X86.rbx;
 
             push(t1);
 
@@ -2531,22 +2532,22 @@ public class X86MacroAssembler extends X86Assembler {
         assert obj != t1 && obj != t2 && t1 != t2 : "registers must be different"; // XXX really?
         assert headerSize >= 0 && objectSize >= headerSize : "illegal sizes";
 
-        tryAllocate(runtime, obj, CiRegister.noreg, objectSize * wordSize, t1, t2, slowCase);
+        tryAllocate(runtime, obj, CiRegister.None, objectSize * wordSize, t1, t2, slowCase);
 
-        initializeObject(runtime, obj, klass, CiRegister.noreg, objectSize * wordSize, t1, t2);
+        initializeObject(runtime, obj, klass, CiRegister.None, objectSize * wordSize, t1, t2);
     }
 
     void initializeObject(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2) {
         assert (conSizeInBytes & runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
         int hdrSizeInBytes = runtime.instanceOopDescBaseOffsetInBytes();
 
-        initializeHeader(runtime, obj, klass, CiRegister.noreg, t1, t2);
+        initializeHeader(runtime, obj, klass, CiRegister.None, t1, t2);
 
         // clear rest of allocated space
         CiRegister t1Zero = t1;
         CiRegister index = t2;
         int threshold = 6 * wordSize; // approximate break even point for code size (see comments below)
-        if (varSizeInBytes != CiRegister.noreg) {
+        if (varSizeInBytes != CiRegister.None) {
             mov(index, varSizeInBytes);
             initializeBody(obj, index, hdrSizeInBytes, t1Zero);
         } else if (conSizeInBytes <= threshold) {
@@ -2661,8 +2662,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    @Override
-    protected void bangStackWithOffset(int offset) {
+    private void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
         if (target.arch.is64bit()) {
@@ -2675,7 +2675,7 @@ public class X86MacroAssembler extends X86Assembler {
     @Override
     public void buildFrame(int frameSizeInBytes) {
         decrement(X86.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-        generateStackOverflowCheck();
+        bangStackWithOffset(C1XOptions.StackShadowPages * target.pageSize);
     }
 
     public void shouldNotReachHere() {
@@ -2692,5 +2692,11 @@ public class X86MacroAssembler extends X86Assembler {
 
     public int heapWordsPerLong() {
         return 8 / target.arch.wordSize;
+    }
+
+    public void safepoint(CodeEmitInfo info) {
+        CiRegister safepointRegister = compiler.runtime.getSafepointRegister();
+        this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
+        movq(safepointRegister, new Address(safepointRegister));
     }
 }

@@ -56,15 +56,15 @@ public abstract class StackFrameWalker {
      */
     public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
-    private final CompilerScheme compilerScheme;
+    private final BootstrapCompilerScheme compilerScheme;
 
-    protected StackFrameWalker(CompilerScheme compilerScheme) {
+    protected StackFrameWalker(BootstrapCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
     }
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link DynamicCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
+     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
      * must deal with each type of stack walk.
      *
      * @author Doug Simon
@@ -178,7 +178,7 @@ public abstract class StackFrameWalker {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme;
+                final RuntimeCompilerScheme compilerScheme = targetMethod.compilerScheme;
 
                 TargetMethod oldLastJavaCallee = lastJavaCallee;
 
@@ -375,7 +375,7 @@ public abstract class StackFrameWalker {
      * @param instructionPointer the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
      *            {@link NativeCallPrologueForC}
      * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if the native
-     *            stub has no {@linkplain TargetMethod#isNativeFunctionCall(int)} just after {@code instructionPointer}.
+     *            stub has no native call just after {@code instructionPointer}.
      *            If this value is false and the search fails, then {@code instructionPointer} is returned.
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */

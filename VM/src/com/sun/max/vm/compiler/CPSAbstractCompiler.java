@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.trampoline.*;
@@ -42,13 +41,15 @@ import com.sun.max.vm.trampoline.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class AbstractCompiler extends AbstractVMScheme implements CompilerScheme {
+public abstract class CPSAbstractCompiler extends AbstractVMScheme implements BootstrapCompilerScheme {
 
-    public AbstractCompiler(VMConfiguration vmConfiguration) {
+    public CPSAbstractCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
     public abstract IrGenerator irGenerator();
+
+    protected abstract Sequence<IrGenerator> irGenerators();
 
     @Override
     public void initialize(Phase phase) {
@@ -56,6 +57,10 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
 
         if (phase == Phase.PROTOTYPING || phase == Phase.STARTING) {
             IrObserverConfiguration.attach(irGenerators());
+        }
+
+        if (MaxineVM.isPrototyping() && phase == MaxineVM.Phase.CREATING_COMPILED_PROTOTYPE) {
+            compileSnippets();
         }
     }
 
@@ -68,10 +73,6 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
                 generator.notifyAfterFinish();
             }
         }
-    }
-
-    public long numberOfCompilations() {
-        return irGenerator().numberOfCompilations();
     }
 
     @PROTOTYPE_ONLY
@@ -101,25 +102,20 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         ClassActor.DEFERRABLE_QUEUE_2.runAll();
     }
 
-    public Word createInitialVTableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        // This default implementation is for testing purposes only:
-        assert MaxineVM.isPrototyping();
-        // During IR interpretation we can map this token back to a specific IR method representation:
-        return MethodID.fromMethodActor(dynamicMethodActor);
-    }
-
-    public Word createInitialITableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        // This default implementation is for testing purposes only:
-        assert MaxineVM.isPrototyping();
-        // During IR interpretation we can map this token back to a specific IR method representation:
-        return MethodID.fromMethodActor(dynamicMethodActor);
-    }
-
     public void staticTrampoline() {
         throw new UnsupportedOperationException();
     }
 
-    public final IrMethod compile(ClassMethodActor classMethodActor) {
+    public final TargetMethod compile(ClassMethodActor classMethodActor) {
+        IrMethod method = compileIR(classMethodActor);
+        if (method instanceof TargetMethod) {
+            return (TargetMethod) method;
+        }
+
+        return null;
+    }
+
+    public final IrMethod compileIR(ClassMethodActor classMethodActor) {
         return irGenerator().makeIrMethod(classMethodActor);
     }
 

@@ -177,10 +177,8 @@ indexable view of the enum constants. For example:
 The use of 'final'
 ------------------
 
-Local variables and fields that can be declared final MUST be declared final.
-
-Parameters, run variables in for-loops and exception variables
-should only be declared final if required due to access by an inner class.
+Parameters, variables in for-loops and exception variables
+should only be declared final if required due to access by an anonymous class.
 
 CheckStyle has a rule that forbids assignments to parameters.
 We use that rule. This effectively makes all parameters final without requiring us to declare it.
@@ -190,17 +188,6 @@ Type Casts
 ----------
 
 A white space is required after a type cast.
-
-Do not mix casting and operators in expressions.
-For example do not write:
-
-	((Foo) anObject).bar();
-	
-Instead, you must write:
-
-	final Foo foo = (Foo) anObject;
-	foo.bar();
-
 
 Using @SuppressWarnings("unchecked") is strictly prohibited,
 except for implementing 'StaticLoophole.cast()'.
@@ -255,9 +242,6 @@ Important points to note from the guidelines mentioned above as well as addition
 o Use a Javadoc tag instead of a HTML construct if possible. For example,
   use {@code ...} instead of <code>...</code>.
   
-o Put a blank line between the main text of a javadoc comment and the parameter/return type section.
-  For example:
-
 o Use 3rd person (descriptive) not 2nd person (prescriptive). For example:
     Gets the label.  (preferred)
     Get the label. 	 (avoid) 

@@ -20,9 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.*;
-
-
 /**
  * The <code>LIROp0</code> class definition.
  *
@@ -37,7 +34,7 @@ public class LIROp0 extends LIRInstruction {
      * @param opcode the opcode of the new instruction
      */
     public LIROp0(LIROpcode opcode) {
-        this(opcode, LIROperandFactory.IllegalOperand);
+        this(opcode, LIROperandFactory.IllegalLocation);
     }
 
     /**
@@ -58,7 +55,7 @@ public class LIROp0 extends LIRInstruction {
      * @param info used to emit debug information associated to this instruction
      */
     public LIROp0(LIROpcode opcode, LIROperand result, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info, false, null, 0, 0);
+        super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0);
         assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
     }
 
@@ -69,14 +66,5 @@ public class LIROp0 extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitOp0(this);
-    }
-
-    /**
-     * Prints this LIROp0 instruction.
-     * @param out the output stream to print the instruction
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        result().print(out);
     }
 }

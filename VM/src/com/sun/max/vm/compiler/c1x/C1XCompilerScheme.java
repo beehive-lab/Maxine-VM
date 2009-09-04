@@ -26,18 +26,17 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
-import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -45,12 +44,14 @@ import com.sun.max.vm.stack.*;
 /**
  * @author Ben L. Titzer
  */
-public class C1XCompilerScheme extends AbstractVMScheme implements CompilerScheme {
+public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
 
     private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
-    private XirRuntime xirRuntime;
+    private XirGenerator xirGenerator;
+
+    public static final Option<Integer> OptLevel;
 
     @PROTOTYPE_ONLY
     private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
@@ -59,55 +60,101 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         super(vmConfiguration);
     }
 
-    public IrGenerator irGenerator() {
-        return null;
+    static {
+        OptLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+            @Override
+            public void setValue(Integer value) {
+                C1XOptions.setOptimizationLevel(value);
+            }
+        };
     }
 
-    public Sequence<IrGenerator> irGenerators() {
-        return null;
+    public static void addOptions(OptionSet options) {
+        // add all the fields from C1XOptions as options
+        options.addFieldOptions(C1XOptions.class, "XX");
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(OptLevel, Syntax.REQUIRES_EQUALS);
+
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PROTOTYPING) {
-            // create the Target object passed to C1X
-            InstructionSet isa = vmConfiguration().platform().processorKind.instructionSet;
-            CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
-            TargetABI targetABI = vmConfiguration().targetABIsScheme().optimizedJavaABI();
-
-            // get the unallocatable registers
-            Set<String> unallocatable = new HashSet<String>();
-            RegisterRoleAssignment roles = targetABI.registerRoleAssignment();
-            markUnallocatable(unallocatable, roles, VMRegister.Role.SAFEPOINT_LATCH);
-            markUnallocatable(unallocatable, roles, VMRegister.Role.CPU_STACK_POINTER);
-            markUnallocatable(unallocatable, roles, VMRegister.Role.CPU_FRAME_POINTER);
-            markUnallocatable(unallocatable, roles, VMRegister.Role.ABI_SCRATCH);
-            markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
-
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
-
-            xirRuntime = new MaxXirRuntime();
-
-            // configure the allocatable registers
-            List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
-            for (CiRegister r : arch.registers) {
-                if (!unallocatable.contains(r.name.toLowerCase()) && r != c1xRuntime.threadRegister()) {
-                    allocatable.add(r);
-                }
-            }
-            CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
-
-            // TODO (tw): Initialize target differently
-            c1xTarget = new CiTarget(arch, allocRegs, allocRegs, vmConfiguration().platform.pageSize, true);
-            c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
-
-
+            c1xTarget = createTarget(c1xRuntime, vmConfiguration());
+            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
             compiler = new C1XCompiler(c1xRuntime, c1xTarget);
         }
     }
 
-    private void markUnallocatable(Set<String> unallocatable, RegisterRoleAssignment roles, VMRegister.Role register) {
+    public static CiTarget createTarget(RiRuntime runtime, VMConfiguration configuration) {
+        // create the Target object passed to C1X
+        InstructionSet isa = configuration.platform().processorKind.instructionSet;
+        CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
+        TargetABI targetABI = configuration.targetABIsScheme().optimizedJavaABI();
+
+        // get the unallocatable registers
+        Set<String> unallocatable = new HashSet<String>();
+        RegisterRoleAssignment roles = targetABI.registerRoleAssignment();
+        markUnallocatable(unallocatable, roles, VMRegister.Role.SAFEPOINT_LATCH);
+        markUnallocatable(unallocatable, roles, VMRegister.Role.CPU_STACK_POINTER);
+        markUnallocatable(unallocatable, roles, VMRegister.Role.CPU_FRAME_POINTER);
+        markUnallocatable(unallocatable, roles, VMRegister.Role.ABI_SCRATCH);
+        markUnallocatable(unallocatable, roles, VMRegister.Role.LITERAL_BASE_POINTER);
+
+        AMD64GeneralRegister64 stackPointer = (AMD64GeneralRegister64) targetABI.stackPointer();
+        AMD64GeneralRegister64 scratchPointer = (AMD64GeneralRegister64) targetABI.scratchRegister();
+        CiRegister stackRegister = null;
+        CiRegister scratchRegister = null;
+
+        CiRegister[] registerReferenceMapTemplate = new CiRegister[AMD64GeneralRegister64.ENUMERATOR.length()];
+        // configure the allocatable registers
+        List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
+        int index = 0;
+        for (AMD64GeneralRegister64 reg : AMD64GeneralRegister64.ENUMERATOR) {
+            for (CiRegister r : arch.registers) {
+
+                if (r.name.toLowerCase().equals(reg.name().toLowerCase())) {
+                    if (!unallocatable.contains(r.name.toLowerCase()) && r != runtime.threadRegister()) {
+                        allocatable.add(r);
+                        registerReferenceMapTemplate[index] = r;
+                        break;
+                    }
+
+                    if (reg == stackPointer) {
+                        stackRegister = r;
+                    }
+
+                    if (reg == scratchPointer) {
+                        scratchRegister = r;
+                    }
+                }
+
+            }
+            index++;
+        }
+
+        assert stackRegister != null;
+
+        for (AMD64XMMRegister reg : AMD64XMMRegister.ENUMERATOR) {
+            for (CiRegister r : arch.registers) {
+                if (!unallocatable.contains(r.name.toLowerCase()) && r != runtime.threadRegister() && r.name.toLowerCase().equals(reg.name().toLowerCase())) {
+                    allocatable.add(r);
+                    break;
+                }
+            }
+        }
+
+        CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
+
+        // TODO (tw): Initialize target differently
+        CiTarget target = new CiTarget(arch, stackRegister, scratchRegister, allocRegs, allocRegs, registerReferenceMapTemplate, configuration.platform.pageSize, true);
+        target.stackAlignment = targetABI.stackFrameAlignment();
+        return target;
+    }
+
+    private static void markUnallocatable(Set<String> unallocatable, RegisterRoleAssignment roles, VMRegister.Role register) {
         Symbol intReg = roles.integerRegisterActingAs(register);
         if (intReg != null) {
             unallocatable.add(intReg.name().toLowerCase());
@@ -118,42 +165,10 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         }
     }
 
-    public long numberOfCompilations() {
-        return 0;
-    }
-
-    public void createBuiltins(PackageLoader packageLoader) {
-        // do nothing.
-    }
-
-    public void createSnippets(PackageLoader packageLoader) {
-        // do nothing.
-    }
-
-    public boolean areSnippetsCompiled() {
-        return true;
-    }
-
-    public void compileSnippets() {
-        // do nothing
-    }
-
-    public Word createInitialVTableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        return Word.zero();
-    }
-
-    public Word createInitialITableEntry(int index, VirtualMethodActor dynamicMethodActor) {
-        return Word.zero();
-    }
-
-    public void staticTrampoline() {
-        throw new UnsupportedOperationException();
-    }
-
-    public final IrMethod compile(ClassMethodActor classMethodActor) {
+    public final TargetMethod compile(ClassMethodActor classMethodActor) {
         // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-        CiTargetMethod compiledMethod = compiler.compileMethod(method, xirRuntime).targetMethod();
+        CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {
 
             C1XTargetMethodGenerator generator = new C1XTargetMethodGenerator(this, classMethodActor, null, compiledMethod);
@@ -180,19 +195,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements CompilerSchem
         ciTargetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
     }
 
-    @PROTOTYPE_ONLY
-    public void initializeForJitCompilations() {
-    }
-
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, StackFrameWalker.Purpose purpose, Object context) {
         return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
-    }
-
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return stackPointer;
-    }
-
-    public boolean isBuiltinImplemented(Builtin builtin) {
-        return true;
     }
 }

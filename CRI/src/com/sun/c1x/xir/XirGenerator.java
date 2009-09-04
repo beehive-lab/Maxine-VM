@@ -29,81 +29,81 @@ import com.sun.c1x.ri.RiType;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public abstract class XirRuntime {
+public abstract class XirGenerator {
 
-    public XirSnippet doResolveClassObject(RiType type) {
+    public XirSnippet genResolveClassObject(RiType type) {
         return null;
     }
 
-    public XirSnippet doInvokeInterface(XirArgument receiver, RiMethod method) {
-        return null;
-    }
-    
-    public XirSnippet doIntrinsic(XirArgument[] arguments, RiMethod method) {
+    public XirSnippet genIntrinsic(XirArgument[] arguments, RiMethod method) {
         return null;
     }
 
-    public XirSnippet doInvokeVirtual(XirArgument receiver, RiMethod method) {
+    public XirSnippet genInvokeInterface(XirArgument receiver, RiMethod method) {
         return null;
     }
 
-    public XirSnippet doInvokeSpecial(XirArgument receiver, RiMethod method) {
+    public XirSnippet genInvokeVirtual(XirArgument receiver, RiMethod method) {
         return null;
     }
 
-    public XirSnippet doInvokeStatic(RiMethod method) {
+    public XirSnippet genInvokeSpecial(XirArgument receiver, RiMethod method) {
         return null;
     }
 
-    public XirSnippet doMonitorEnter(XirArgument receiver) {
+    public XirSnippet genInvokeStatic(RiMethod method) {
         return null;
     }
 
-    public XirSnippet doMonitorExit(XirArgument receiver) {
+    public XirSnippet genMonitorEnter(XirArgument receiver) {
         return null;
     }
 
-    public XirSnippet doGetField(XirArgument receiver, RiField field) {
+    public XirSnippet genMonitorExit(XirArgument receiver) {
         return null;
     }
 
-    public XirSnippet doPutField(XirArgument receiver, XirArgument value, RiField field, char cpi, RiConstantPool constantPool) {
+    public XirSnippet genGetField(XirArgument receiver, RiField field, char cpi, RiConstantPool constantPool) {
         return null;
     }
 
-    public XirSnippet doGetStatic(RiField field) {
+    public XirSnippet genPutField(XirArgument receiver, XirArgument value, RiField field, char cpi, RiConstantPool constantPool) {
         return null;
     }
 
-    public XirSnippet doPutStatic(RiField field) {
+    public XirSnippet genGetStatic(RiField field) {
         return null;
     }
 
-    public XirSnippet doNewInstance(RiType type) {
+    public XirSnippet genPutStatic(XirArgument value, RiField field) {
         return null;
     }
 
-    public XirSnippet doNewArray(XirArgument length, RiType elementType) {
+    public XirSnippet genNewInstance(RiType type) {
         return null;
     }
 
-    public XirSnippet doNewMultiArray(XirArgument[] lengths, RiType type) {
+    public XirSnippet genNewArray(XirArgument length, RiType elementType) {
         return null;
     }
 
-    public XirSnippet doCheckCast(XirArgument receiver, RiType type) {
+    public XirSnippet genNewMultiArray(XirArgument[] lengths, RiType type) {
         return null;
     }
 
-    public XirSnippet doInstanceOf(XirArgument receiver, RiType type) {
+    public XirSnippet genCheckCast(XirArgument receiver, RiType type) {
         return null;
     }
 
-    public XirSnippet doArrayLoad(XirArgument array, XirArgument index, XirArgument length, RiType elementType) {
+    public XirSnippet genInstanceOf(XirArgument receiver, RiType type) {
         return null;
     }
 
-    public XirSnippet doArrayStore(XirArgument array, XirArgument index, XirArgument length, XirArgument value, RiType elementType) {
+    public XirSnippet genArrayLoad(XirArgument array, XirArgument index, XirArgument length, RiType elementType) {
+        return null;
+    }
+
+    public XirSnippet genArrayStore(XirArgument array, XirArgument index, XirArgument length, XirArgument value, RiType elementType) {
         return null;
     }
 }

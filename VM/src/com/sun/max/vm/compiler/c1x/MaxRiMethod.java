@@ -44,9 +44,10 @@ import com.sun.max.collect.Sequence;
 public class MaxRiMethod implements RiMethod {
 
     final MaxRiConstantPool constantPool;
-    MethodRefConstant methodRef;
+    final MethodRefConstant methodRef;
     final MethodActor methodActor;
     List<RiExceptionHandler> exceptionHandlers;
+    final int cpi;
 
     /**
      * Creates a new resolved compiler interface method from the specified method actor.
@@ -56,6 +57,8 @@ public class MaxRiMethod implements RiMethod {
     public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
+        this.methodRef = null;
+        this.cpi = 0;
         if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
             C1XIntrinsic.registerFoldableMethod(this, methodActor.toJava());
         }
@@ -65,11 +68,13 @@ public class MaxRiMethod implements RiMethod {
      * Creates a new unresolved compiler interface method from the specified method ref.
      * @param constantPool the constant pool
      * @param methodRef the method ref
+     * @param cpi the constant pool index
      */
-    public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef) {
+    public MaxRiMethod(MaxRiConstantPool constantPool, MethodRefConstant methodRef, int cpi) {
         this.constantPool = constantPool;
         this.methodRef = methodRef;
         this.methodActor = null;
+        this.cpi = cpi;
     }
 
     /**
@@ -91,7 +96,8 @@ public class MaxRiMethod implements RiMethod {
         if (methodActor != null) {
             return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool);
         }
-        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool));
+        // TODO: get the correct CPI of the holder
+        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), 0);
     }
 
     /**
@@ -327,6 +333,20 @@ public class MaxRiMethod implements RiMethod {
     ClassMethodActor asClassMethodActor(String operation) {
         if (methodActor instanceof ClassMethodActor) {
             return (ClassMethodActor) methodActor;
+        }
+        throw unresolved(operation);
+    }
+
+    InterfaceMethodActor asInterfaceMethodActor(String operation) {
+        if (methodActor instanceof InterfaceMethodActor) {
+            return (InterfaceMethodActor) methodActor;
+        }
+        throw unresolved(operation);
+    }
+
+    VirtualMethodActor asVirtualMethodActor(String operation) {
+        if (methodActor instanceof VirtualMethodActor) {
+            return (VirtualMethodActor) methodActor;
         }
         throw unresolved(operation);
     }

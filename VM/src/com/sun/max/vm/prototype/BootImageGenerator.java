@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
-import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -43,6 +42,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -200,13 +200,13 @@ public final class BootImageGenerator {
      */
     public BootImageGenerator(String[] programArguments) {
         final long start = System.currentTimeMillis();
-        CompilerScheme compilerScheme = null;
+        BootstrapCompilerScheme compilerScheme = null;
         try {
             TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            options.addFieldOptions(C1XOptions.class, "C1X:");
+            C1XCompilerScheme.addOptions(options);
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
@@ -403,7 +403,7 @@ public final class BootImageGenerator {
      * @param compilerScheme the compiler, which typically includes compilation statistics
      * @param out the output stream to which to write the statistics
      */
-    private static void writeMiscStatistics(CompilerScheme compilerScheme, PrintStream out) {
+    private static void writeMiscStatistics(BootstrapCompilerScheme compilerScheme, PrintStream out) {
         Trace.line(1, "# utf8 constants: " + SymbolTable.length());
         Trace.line(1, "# type descriptors: " + TypeDescriptor.numberOfDescriptors());
         Trace.line(1, "# signature descriptors: " + SignatureDescriptor.totalNumberOfDescriptors());
@@ -474,8 +474,8 @@ public final class BootImageGenerator {
                 }
             }
             zeroLiterals += savingsFrom(headerSize, referenceLiterals);
-            zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchRangePositions() : null);
-            zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchBlockPositions() : null);
+            zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
+            zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
             zeroStopPositions += savingsFrom(headerSize, targetMethod.stopPositions());
             zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
             zeroReferenceMaps += savingsFrom(headerSize, targetMethod.referenceMaps());

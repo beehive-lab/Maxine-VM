@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  * @author David Liu
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<TargetMethod> {
+public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<CPSTargetMethod> {
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(AMD64TranslatorTest_switchbytecodes.suite());
