@@ -29,8 +29,8 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * The compiler interface describes the extended interface compiler interface, which
- * includes more operations than a basic dynamic compiler.
+ * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
+ * required for a compiler that can be used to boot strap the Maxine VM.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
