@@ -747,4 +747,8 @@ public class BlockBegin extends Instruction {
     public boolean isPredecessor(BlockBegin block) {
         return this.predecessors.contains(block);
     }
+
+    public Iterable<Phi> allLivePhis() {
+        return stateBefore.allLivePhis(this);
+    }
 }
