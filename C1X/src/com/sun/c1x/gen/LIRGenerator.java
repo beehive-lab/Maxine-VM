@@ -103,7 +103,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return x.isLive();
     }
 
-    public void visitBlock(BlockBegin block) {
+    public void doBlock(BlockBegin block) {
         blockDoProlog(block);
         this.currentBlock = block;
 
@@ -182,6 +182,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         // increment invocation counters if needed
         incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
 
+        // emit phi-instruction move after safepoint since this simplifies
+        // describing the state at the safepoint.
+        moveToPhi(x.stateAfter());
+
         // all blocks with a successor must end with an unconditional jump
         // to the successor even if they are consecutive
         lir.jump(x.defaultSuccessor());
@@ -202,7 +206,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             Value instr = state.localAt(javaIndex);
             assert instr instanceof Local;
             Local local = ((Local) instr);
-            assert t == local.type().basicType : "check";
+            assert t == local.type().basicType.stackType() : "check";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.vregNumber(), local);
@@ -252,7 +256,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // no moves are created for phi functions at the begin of exception
         // handlers, so assign operands manually here
-        for (Phi phi : currentBlock.stateBefore().allLivePhis(currentBlock)) {
+        for (Phi phi : currentBlock.allLivePhis()) {
             operandForPhi(phi);
         }
 
@@ -282,7 +286,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         // emit phi-instruction move after safepoint since this simplifies
-        // describing the state as the safepoint.
+        // describing the state at the safepoint.
         moveToPhi(x.stateAfter());
 
         lir.jump(x.defaultSuccessor());
@@ -2138,7 +2142,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         currentInstruction = instr;
         try {
             if (instr instanceof Phi) {
-                assert instr.isLive() || !(!instr.operand().isIllegal()) : "phi must be pinned or illegal";
+                assert instr.isLive() || instr.operand().isIllegal() : "phi must be pinned or illegal";
             }
             // stop walk when encounter a root
             if (instr.isLive() && (!(instr instanceof Phi)) || (!instr.operand().isIllegal())) {

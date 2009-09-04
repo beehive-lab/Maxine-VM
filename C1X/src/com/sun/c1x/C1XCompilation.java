@@ -311,7 +311,7 @@ public class C1XCompilation {
             frameMap = this.compiler.backend.newFrameMap(method, hir.topScope.numberOfLocks());
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
-                lirGenerator.visitBlock(begin);
+                lirGenerator.doBlock(begin);
             }
 
             new LinearScan(this, hir, lirGenerator, frameMap()).allocate();

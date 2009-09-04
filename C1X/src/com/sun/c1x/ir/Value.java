@@ -267,7 +267,7 @@ public abstract class Value {
      * @param operand the operand to associate with this instruction
      */
     public void setOperand(LIROperand operand) {
-        assert operand != LIROperandFactory.IllegalLocation : "operand must exist";
+        assert operand != null && !operand.isIllegal() : "operand must exist";
         lirOperand = operand;
     }
 
