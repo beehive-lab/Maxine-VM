@@ -66,6 +66,16 @@ jvm_args_suffix=""
 jvm_dbg_port=""
 maxine_dir=""
 make_arg=
+base_ide_dir=shell
+if [ x${MAXINE_IDE} = xINTELLIJ ]; then
+    base_ide_dir=intellij
+fi
+if [ x${MAXINE_IDE} = xNETBEANS ]; then
+    base_ide_dir=netbeans
+fi
+if [ x${MAXINE_IDE} = xECLIPSE ]; then
+    base_ide_dir=eclipse
+fi
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -190,7 +200,8 @@ if [ -z "${MAXINE_OS}" ]; then
     fi
 fi
 
-function get_project_cp() {
+# gets the destination for classes for the project
+function get_project_dest() {
 	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
 		echo ${maxine_dir}/out/production/$1
 	else
@@ -198,21 +209,35 @@ function get_project_cp() {
 	fi
 }
 
+# gets the classpath entry for a project
+function get_project_cp() {
+	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
+		zee_project_cp="${maxine_dir}/out/production/$1"
+	else
+		zee_project_cp="${maxine_dir}/$1/bin"
+	fi
+	if [ -d ${maxine_dir}/$1/classes ]; then
+	    # the project has a "classes" directory
+	    zee_project_cp="$zee_project_cp:${maxine_dir}/$1/classes"
+	fi
+	echo $zee_project_cp
+}
+
 # The set of projects whose sources are to be compiled. The order of this list must
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 projects=( \
-    CRI:src               \
-    C1X:src               \
-    C0X:src               \
-    Base:src,test,shell   \
-    Assembler:src,test    \
-    VM:src,test           \
-    VMDI:src              \
-    Tele:src              \
-    JDWP:src              \
-    TeleJDWP:src          \
-    Inspector:src,test    \
+    CRI:src                       \
+    C1X:src                       \
+    C0X:src                       \
+    Base:src,test,$base_ide_dir   \
+    Assembler:src,test            \
+    VM:src,test                   \
+    VMDI:src                      \
+    Tele:src                      \
+    JDWP:src                      \
+    TeleJDWP:src                  \
+    Inspector:src,test            \
 )
 
 if [ "$OS" != "Darwin" ]; then
@@ -384,11 +409,12 @@ function run_build() {
         if [ $project_build_match -eq 0 ] ; then
             continue
         fi
+	project_dest=$(get_project_dest ${project_dir})
         set_project_dir_parent ${project}
         if $clean ; then
-            run rm -rf ${project_dir_parent}/${project_dir}/bin
+            run rm -rf ${project_dest}
         fi
-        run mkdir -p ${project_dir_parent}/${project_dir}/bin
+        run mkdir -p ${project_dest}
 
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }        
@@ -397,7 +423,7 @@ function run_build() {
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
 	        echo "Compiling Java sources in ${project_dir_parent}/${project_dir}/${source_dir}..."
-                run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ../bin @$javac_input 2>&1 | \
+                run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ${project_dest} @$javac_input 2>&1 | \
                    awk ' BEGIN                    { s=0; c=-1}
                          /is Sun proprietary API/ { s++; c=2; }
                                                   { if (c-- >= 0) next; print; }
@@ -407,8 +433,8 @@ function run_build() {
             if [ $result -eq 0 ]; then
                 # Copying non Java source files from 'src' to 'bin'
                 for file in `find . -type f | grep -v '.java$'`; do
-                    if [ -d ../bin/$(dirname $file) ]; then
-                       run cp $file ../bin/$file
+                    if [ -d ${project_dest}/$(dirname $file) ]; then
+                       run cp $file ${project_dest}/$file
                     fi
                 done
             fi
@@ -443,7 +469,7 @@ function run_clean() {
 
     for project in ${projects[@]}; do
 	project_dir=${project/:*/}
-	project_cp=$(get_project_cp ${project_dir})
+	project_cp=$(get_project_dest ${project_dir})
 	if [ "x$project_cp" != "x" ]; then
 	    echo Removing $project_cp...
 	    rm -rf $project_cp

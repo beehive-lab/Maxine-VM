@@ -339,8 +339,7 @@ public class ComputeLinearScanOrder {
             cur.setDominator(parent);
 
         } else if (!(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) && parent.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd))) {
-            Util.traceLinearScan(4, "DOM: computing dominator of B%d: common dominator of B%d and B%d is B%d", cur.blockID, parent.blockID, cur.dominator().blockID, commonDominator(
-                    cur.dominator(), parent).blockID);
+            Util.traceLinearScan(4, "DOM: computing dominator of B%d: common dominator of B%d and B%d is B%d", cur.blockID, parent.blockID, cur.dominator().blockID, commonDominator(cur.dominator(), parent).blockID);
             assert cur.numberOfPreds() > 1 : "";
             cur.setDominator(commonDominator(cur.dominator(), parent));
         }

@@ -22,14 +22,14 @@ package com.sun.max.vm.compiler.target;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.compiler.DynamicCompilerScheme;
+import com.sun.max.vm.compiler.RuntimeCompilerScheme;
 
 /**
  * @author Bernd Mathiske
  */
-public abstract class OptimizedTargetMethod extends ExceptionRangeTargetMethod {
+public abstract class OptimizedTargetMethod extends CPSTargetMethod {
 
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    protected OptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 

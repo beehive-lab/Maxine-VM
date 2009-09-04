@@ -24,12 +24,9 @@ package jtt.bytecode;
  * @Harness: java
  * @Runs: 0 = 0; 1 = 1
  */
-public class BC_multianewarray {
+public class BC_multianewarray01 {
     public static int test(int a) {
-        final BC_multianewarray[][] v = new BC_multianewarray[3][3];
-        if (v != null) {
-            return a;
-        }
-        return -1;
+        final BC_multianewarray01[][] v = new BC_multianewarray01[3][3];
+        return v != null ? a : -1;
     }
 }

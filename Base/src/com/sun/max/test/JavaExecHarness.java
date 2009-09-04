@@ -159,8 +159,11 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         final BufferedReader r = new BufferedReader(new FileReader(file));
 
         // search for the package statement in the file.
-        for (String line = r.readLine().trim(); line != null; line = r.readLine().trim()) {
+        String line = r.readLine();
+        for (; line != null; line = r.readLine()) {
+            line = line.trim();
             if (line.startsWith("package")) {
+                // this is probably a java file
                 r.close();
                 int indx = line.indexOf(' ');
                 while (line.charAt(indx) == ' ') {
@@ -173,6 +176,18 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
                 }
                 // use the package name plus the name of the file to load the class.
                 return Class.forName(packageName + "." + className);
+            }
+            if (line.startsWith(".class")) {
+                // this is probably a jasm file
+                String[] tokens = line.split(" ");
+                String className = null;
+                for (String s : tokens) {
+                    if (!".class".equals(s) && !"public".equals(s) && !"abstract".equals(s)) {
+                        className = s;
+                        break;
+                    }
+                }
+                return Class.forName(className.replace('/', '.'));
             }
         }
         r.close();

@@ -47,7 +47,6 @@ public class LIRConstant extends LIROperand {
      *
      * @return the int value of the constant, if it is an int
      */
-    @Override
     public int asInt() {
         assertType(this, CiKind.Int);
         return value.asInt();
@@ -58,7 +57,6 @@ public class LIRConstant extends LIROperand {
      *
      * @return the long value of the constant, if it is a long
      */
-    @Override
     public long asLong() {
         assertType(this, CiKind.Long);
         return value.asLong();
@@ -120,7 +118,7 @@ public class LIRConstant extends LIROperand {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, CiKind t) {
-        assert c.type() == t : "constant has wrong type";
+        assert c.kind == t : "constant has wrong type";
         return c;
     }
 
@@ -130,9 +128,9 @@ public class LIRConstant extends LIROperand {
      * @return the int value of the constant.
      */
     public int asIntBits() {
-        if (this.isFloat()) {
+        if (this.kind.isFloat()) {
             return Float.floatToIntBits(this.asFloat());
-        } else if (this.type() == CiKind.Int) {
+        } else if (this.kind == CiKind.Int) {
             return this.asInt();
         } else {
             throw Util.shouldNotReachHere();
@@ -226,8 +224,8 @@ public class LIRConstant extends LIROperand {
     }
 
     @Override
-    public String valueToString() {
-        switch (type()) {
+    public String toString() {
+        switch (kind) {
             case Int:
                 return String.format("int:%d", asInt());
             case Long:
@@ -239,7 +237,7 @@ public class LIRConstant extends LIROperand {
             case Object:
                 return String.format("obj:%s", this.asObject());
             default:
-                return String.format("%3d:0x%x", type(), this.asDouble());
+                return String.format("%3d:0x%x", kind, this.asDouble());
         }
     }
 }
