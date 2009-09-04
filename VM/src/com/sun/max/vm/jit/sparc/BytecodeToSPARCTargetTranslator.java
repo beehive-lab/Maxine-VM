@@ -749,7 +749,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 }
                 asm.rd(StateRegister.PC, TARGET_ABI.literalBaseRegister());
                 int numInstructions = 1;
-                if (classMethodActor().codeAttribute().exceptionHandlerTable() != null) {
+                if (classMethodActor.codeAttribute().exceptionHandlerTable() != null) {
                     // Conservatively assume that the method may catch an implicit exception.
                     // In that case, we must initialize the save area with the literal base pointer to make sure
                     // stack unwind can set it correctly.

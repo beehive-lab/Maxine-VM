@@ -50,6 +50,8 @@ public class JavaTesterGenerator {
                     "Specifies the verbose level of the generated tests.");
     private static final Option<Boolean> compileOption = options.newBooleanOption("compile", true,
                     "Compiles the generate Java source code automatically using a Java source compiler.");
+    private static final Option<Boolean> forceCompileOption = options.newBooleanOption("force-compile", false,
+                    "Forces compilation of the generated Java source code, even if it was not updated.");
     private static final Option<String> packageOption = options.newStringOption("package", "some",
                     "");
     private static final Option<Boolean> sortOption = options.newBooleanOption("alphabetical", true,
@@ -102,7 +104,7 @@ public class JavaTesterGenerator {
                 System.out.println(testRunsFile + " updated.");
             }
 
-            if (filesUpdated && compileOption.getValue())  {
+            if (forceCompileOption.getValue() || (filesUpdated && compileOption.getValue()))  {
                 ToolChain.compile(new String[] {className("JavaTesterRunScheme"), className("JavaTesterTests")});
                 System.out.println(runSchemeFile + " recompiled.");
                 System.out.println(testRunsFile + " recompiled.");

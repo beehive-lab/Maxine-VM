@@ -200,12 +200,27 @@ if [ -z "${MAXINE_OS}" ]; then
     fi
 fi
 
-function get_project_cp() {
+# gets the destination for classes for the project
+function get_project_dest() {
 	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
 		echo ${maxine_dir}/out/production/$1
 	else
 		echo ${maxine_dir}/$1/bin
 	fi
+}
+
+# gets the classpath entry for a project
+function get_project_cp() {
+	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
+		zee_project_cp="${maxine_dir}/out/production/$1"
+	else
+		zee_project_cp="${maxine_dir}/$1/bin"
+	fi
+	if [ -d ${maxine_dir}/$1/classes ]; then
+	    # the project has a "classes" directory
+	    zee_project_cp="$zee_project_cp:${maxine_dir}/$1/classes"
+	fi
+	echo $zee_project_cp
 }
 
 # The set of projects whose sources are to be compiled. The order of this list must
@@ -394,7 +409,7 @@ function run_build() {
         if [ $project_build_match -eq 0 ] ; then
             continue
         fi
-	project_dest=$(get_project_cp ${project_dir})
+	project_dest=$(get_project_dest ${project_dir})
         set_project_dir_parent ${project}
         if $clean ; then
             run rm -rf ${project_dest}
@@ -454,7 +469,7 @@ function run_clean() {
 
     for project in ${projects[@]}; do
 	project_dir=${project/:*/}
-	project_cp=$(get_project_cp ${project_dir})
+	project_cp=$(get_project_dest ${project_dir})
 	if [ "x$project_cp" != "x" ]; then
 	    echo Removing $project_cp...
 	    rm -rf $project_cp
