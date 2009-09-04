@@ -413,6 +413,12 @@ public class AMD64JitCompiler extends JitCompiler {
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
 
         if (!catchAddress.isZero()) {
+            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                Log.print("StackFrameWalk: Handler position for exception at position ");
+                Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
+                Log.print(" is ");
+                Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+            }
             final Throwable throwable = stackUnwindingContext.throwable;
             final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
             // The Java operand stack of the method that handles the exception is always cleared.

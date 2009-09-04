@@ -257,6 +257,12 @@ public class SPARCJitCompiler extends JitCompiler {
                 final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                        Log.print("StackFrameWalk: Handler position for exception at position ");
+                        Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                        Log.print(" is ");
+                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+                    }
                     // The Java operand stack of the method that handles the exception is always cleared.
                     // A null object is then pushed to ensure the depth of the stack is as expected upon
                     // entry to an exception handler. However, the handler must have a prologue that loads
