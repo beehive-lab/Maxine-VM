@@ -18,24 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jit.prototype;
+package jtt.bytecode;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-
-/**
- *
- *
- * @author Laurent Daynes
+/*
+ * @Harness: java
+ * @Runs: 0 = -1; 1 = -1; 4 = 4
  */
-public class Package extends VMPackage {
+public class BC_checkcast01 {
+    static Object object2 = new Object();
+    static Object object3 = "";
+    static Object object4 = new BC_checkcast01();
 
-    public Package() {
-        registerScheme(DynamicCompilerScheme.class, PrototypeJitCompiler.class);
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerPackage.equals(this);
+    public static int test(int arg) {
+        Object obj;
+        if (arg == 2) {
+            obj = object2;
+        } else if (arg == 3) {
+            obj = object3;
+        } else if (arg == 4) {
+            obj = object4;
+        } else {
+            obj = null;
+        }
+        final BC_checkcast01 bc = (BC_checkcast01) obj;
+        if (bc != null) {
+            return arg;
+        }
+        return -1;
     }
 }

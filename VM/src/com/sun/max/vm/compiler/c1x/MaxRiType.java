@@ -49,6 +49,7 @@ public class MaxRiType implements RiType {
     TypeDescriptor typeDescriptor;
     final CiKind basicType;
     final ClassConstant classRef;
+    final int cpi;
 
     /**
      * Creates a new resolved compiler interface type for the specified class actor.
@@ -61,26 +62,30 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.classRef = null;
+        this.cpi = 0;
     }
 
     /**
      * Creates a new unresolved compiler interface type for the specified class ref.
      * @param constantPool the constant pool
      * @param classRef the class ref
+     * @param cpi the constant pool index
      */
-    public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef) {
+    public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
         this.classRef = classRef;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.cpi = cpi;
     }
 
     /**
      * Creates a new unresolved compiler interface type for the specified type descriptor.
      * @param constantPool the constant pool
      * @param typeDescriptor the type descriptor
+     * @param cpi the constant pool index
      */
-    public MaxRiType(MaxRiConstantPool constantPool, TypeDescriptor typeDescriptor) {
+    public MaxRiType(MaxRiConstantPool constantPool, TypeDescriptor typeDescriptor, int cpi) {
         this.constantPool = constantPool;
         if (typeDescriptor instanceof JavaTypeDescriptor.AtomicTypeDescriptor) {
             final JavaTypeDescriptor.AtomicTypeDescriptor atom = (JavaTypeDescriptor.AtomicTypeDescriptor) typeDescriptor;
@@ -90,6 +95,7 @@ public class MaxRiType implements RiType {
         this.classRef = null;
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.cpi = cpi;
     }
 
     /**
@@ -217,7 +223,11 @@ public class MaxRiType implements RiType {
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstance(Object obj) {
-        return asClassActor("isInstance()").isInstance(obj);
+        ClassActor classActor = asClassActor("isInstance()");
+        if (MaxineVM.isPrototyping()) {
+            return classActor.toJava().isInstance(obj);
+        }
+        return classActor.isInstance(obj);
     }
 
     /**
@@ -231,7 +241,8 @@ public class MaxRiType implements RiType {
             return constantPool.runtime.canonicalRiType(classActor.componentClassActor(), constantPool);
         }
         // the type is not resolved, but we can get the type of the elements
-        return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor());
+        // TODO: what type to use for an unresolved component type?
+        return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor(), 0);
     }
 
     /**
@@ -265,7 +276,8 @@ public class MaxRiType implements RiType {
             });
             return constantPool.runtime.canonicalRiType(arrayClassActor, constantPool);
         }
-        return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1));
+        // TODO: what cpi to use for an unresolved constant?
+        return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), 0);
     }
 
     /**

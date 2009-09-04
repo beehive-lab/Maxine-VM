@@ -42,16 +42,15 @@ public class JITTest_compileBootImage extends JitCompilerTestCase {
         final LinkedList<TargetMethod> toDo = new LinkedList<TargetMethod>();
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                final DynamicCompilerScheme jit = MaxineVM.target().configuration.jitScheme();
-                jit.initializeForJitCompilations();
+                final RuntimeCompilerScheme jit = MaxineVM.target().configuration.jitScheme();
 
                 final ClassActor classActor = ClassActor.fromJava(com.sun.max.vm.run.jitTest.JitTest.class);
 
                 for (VirtualMethodActor dynamicMethodActor : classActor.localVirtualMethodActors()) {
-                    toDo.add((TargetMethod) jit.compile(dynamicMethodActor));
+                    toDo.add(jit.compile(dynamicMethodActor));
                 }
                 for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                    toDo.add((TargetMethod) jit.compile(staticMethodActor));
+                    toDo.add(jit.compile(staticMethodActor));
                 }
             }
         });

@@ -128,16 +128,6 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         callSite.writeInt(0, instr);
     }
 
-    @Override
-    public Word createInitialVTableEntry(int vTableIndex, VirtualMethodActor dynamicMethodActor) {
-        return  vmConfiguration().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
-    }
-
-    @Override
-    public Word createInitialITableEntry(int iIndex, VirtualMethodActor dynamicMethodActor) {
-        return  vmConfiguration().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
-    }
-
     public void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
         final Pointer callSite = targetMethod.codeStart().plus(callOffset).asPointer();
         final Label label = new Label();
@@ -379,7 +369,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 final Throwable throwable = stackUnwindingContext.throwable;
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
-                    if (StackFrameWalker.traceStackWalk.getValue()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
                         Log.print("StackFrameWalk: Handler position for exception at position ");
                         Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                         Log.print(" is ");

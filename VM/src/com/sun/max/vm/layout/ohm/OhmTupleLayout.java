@@ -67,7 +67,6 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return headerSize;
     }
 
-    @Override
     public HeaderField[] headerFields() {
         return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
     }

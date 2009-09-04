@@ -23,7 +23,7 @@ package com.sun.max.vm.compiler.bir;
 import com.sun.max.vm.compiler.*;
 
 
-public interface BirGeneratorScheme extends CompilerScheme {
+public interface BirGeneratorScheme extends BootstrapCompilerScheme {
 
     BirGenerator birGenerator();
 

@@ -18,55 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.debug.*;
-
+package com.sun.c1x.ci;
 
 /**
- * The <code>ConstantLongValue</code> class definition.
- *
- * @author Marcelo Cintra
+ * 
  * @author Thomas Wuerthinger
- *
+ * 
  */
-public class ConstantLongValue extends ScopeValue {
+public class CiValue {
 
-    private long value;
-
-    public ConstantLongValue(long value) {
-        this.value = value;
-    }
-
-    /**
-     * @param stream
-     */
-    public ConstantLongValue(DebugInfoReadStream stream) {
-        value = stream.readLong();
-    }
-
-    public long value() {
-        return value;
-    }
-
-    @Override
-    public boolean isConstantLong() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(ScopeValue other) {
-        return false;
-    }
-
-    @Override
-    public void writeOn(DebugInfoWriteStream stream) {
-        stream.writeInt(ScopeValueCode.ConstantLongCode.ordinal());
-        stream.writeLong(value());
-    }
-
-    @Override
-    public void printOn(LogStream out) {
-        out.printf("%d", value());
-    }
 }
