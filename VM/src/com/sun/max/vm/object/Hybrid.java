@@ -28,6 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 
 /**
  * Classes that extend this class define objects that have a hybrid layout,
@@ -36,22 +37,19 @@ import com.sun.max.vm.heap.*;
  * for example, to implement hubs, which contain metadata about an
  * object as well as the vtable and itable.
  *
- * We declare "Hybrid" as an abstract class as close as possible
- * to the top of the hierarchy rather than as an interface
- * to prevent inheriting any fields before inheriting from subclasses of "Hybrid".
- * Thus we can rely on all fields existing in any hybrid class
- * referring to hybrid objects exclusively.
- * This provides the freedom to configure the object headers
- * and origins of tuples and hybrids independently,
- * i.e. otherwise field offsets in tuples would have to be aligned with field offsets in hybrids.
+ * We declare "Hybrid" as an abstract class that directly subclasses {@link Object}
+ * so that all hybrid objects only contain fields that refer to hybrid objects exclusively.
+ * This allows tuples and hybrids object to have different header sizes which,
+ * depending on the configured {@link Layout}, may affect field offsets.
+ * Otherwise field offsets in tuples would have to be aligned with field offsets in hybrids.
  *
  * @author Bernd Mathiske
  */
-public abstract class Hybrid<Hybrid_Type extends Hybrid> {
+public abstract class Hybrid {
 
     /**
      * Hybrid objects cannot be directly represented in the Java language,
-     * so during prototyping that are represented as as tuples an expansion.
+     * so during prototyping that are represented as tuples plus an expansion.
      *
      * @author Bernd Mathiske
      */
@@ -69,7 +67,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
     }
 
     /**
-     * A map that stores the association between a hybrid and its expansion, used only at prototyping time.
+     * A map that stores the association between a hybrid and its expansion.
      */
     @PROTOTYPE_ONLY
     private static final Map<Hybrid, Expansion> hybridToExpansion = Collections.synchronizedMap(new IdentityHashMap<Hybrid, Expansion>());

@@ -61,7 +61,6 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
         headerSize = elementsOffset;
     }
 
-    @Override
     public boolean isArrayLayout() {
         return true;
     }
