@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
