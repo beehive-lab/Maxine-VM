@@ -36,6 +36,7 @@ static int trace = 0;         // set to non-zero to trace thread resumption/bloc
 static int terminated = 0;    // target domain has terminated
 static struct db_thread *threads_at_rest = NULL;  // cache of threads on return from resume
 static int num_threads_at_rest;
+static volatile int suspend_all_request = 0;
 
 struct db_regs *checked_get_regs(char *f, int threadId) {
     struct db_regs *db_regs;
@@ -47,10 +48,15 @@ struct db_regs *checked_get_regs(char *f, int threadId) {
     return db_regs;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeSuspendAll(JNIEnv *env, jclass c) {
+	suspend_all_request = 1;
+	return true;
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeSuspend(JNIEnv *env, jclass c, jint threadId) {
     suspend(threadId);
-
     return 1;
 }
 
@@ -270,39 +276,43 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
     if (trace) log_println("resuming all runnable threads");
     if (threads_at_rest != NULL) free(threads_at_rest);
     resume_all();
-    /* Poll waiting for the thread to block */
-again:
-    if (trace) log_println("waiting for a thread to block");
-    threads = gather_threads(&num_threads);
-    if (threads == NULL) {
-        // target domain has explicitly terminated
-        // send signoff
-        db_signoff();
-        terminated = 1;
-        return 1;
-    }
-    trace_threads(threads, num_threads);
+    /* Poll waiting for the thread to block on we get a suspendAll request */
+    while(suspend_all_request == 0) {
+        if (trace) log_println("waiting for a thread to block");
+        threads = gather_threads(&num_threads);
+        if (threads == NULL) {
+            // target domain has explicitly terminated
+            // send signoff
+            db_signoff();
+            terminated = 1;
+            return 1;
+        }
+        trace_threads(threads, num_threads);
 
-    for (i=0; i<num_threads; i++) {
-        if (is_th_state(&threads[i], DEBUG_SUSPEND_FLAG))
-            goto out;
+        for (i=0; i<num_threads; i++) {
+            if (is_th_state(&threads[i], DEBUG_SUSPEND_FLAG)) {
+            	suspend_all_request = 1;
+                break;
+            }
+        }
+        free(threads);
+        if (suspend_all_request == 0) {
+            sleep_time += 1000000;  // usecs
+            usleep(sleep_time);
+        }
     }
-    free(threads);
-    sleep_time += 1000000;  // usecs
-    usleep(sleep_time);
-    goto again;
 
 out:
-// At this point at least one thread is debug_suspend'ed.
-// Now suspend any other runnable threads.
+// At this point at least one thread is debug_suspend'ed or we
+// got a suspendAll request. Now suspend any other runnable threads.
 // N.B. This is not an atomic operation and threads
 // may become runnable, e.g., if a sleep expires
 // or a driver thread is woken by an interrupt.
 // However, those threads will debug_suspend themselves in that case.
 
+    suspend_all_request = 0;
     if (trace) log_println("suspending all threads");
     suspend_all();
-    free(threads);
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
     threads_at_rest = threads;
