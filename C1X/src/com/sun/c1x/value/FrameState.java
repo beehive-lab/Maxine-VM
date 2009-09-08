@@ -33,12 +33,14 @@ import com.sun.c1x.util.*;
  */
 public class FrameState {
 
+    public final FrameState parent;
     private final IRScope scope;
     private final Value[] state;
     private final char localsSize;
     private final char stackSize;
 
     public FrameState(ValueStack state) {
+        parent = null;
         scope = state.scope();
         localsSize = (char) state.localsSize();
         stackSize = (char) state.stackSize();
