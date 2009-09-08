@@ -22,12 +22,11 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
+import com.sun.c1x.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.graph.IR;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.debug.TTY;
 
 /**
  * This class performs basic optimizations on the control flow graph after LIR generation.
@@ -166,11 +165,6 @@ public final class ControlFlowOptimizer {
                     newTarget.setBlockFlag(BlockBegin.BlockFlag.BackwardBranchTarget);
                 }
 
-                // adjust successor and predecessor lists
-                if ( C1XOptions.PrintBlocksDeleted) {
-                    TTY.println("deleting empty block " + block);
-                }
-
                 // update the block references in any LIRBranches
                 for (BlockBegin pred : block.predecessors()) {
                     for (LIRInstruction instr : pred.lir().instructionsList()) {
@@ -180,7 +174,9 @@ public final class ControlFlowOptimizer {
                     }
                 }
 
+                // adjust successor and predecessor lists
                 ir.replaceBlock(block, newTarget);
+                C1XMetrics.BlocksDeleted++;
             } else {
                 // adjust position of this block in the block list if blocks before
                 // have been deleted
