@@ -18,31 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package jtt.except;
 
-import com.sun.c1x.ci.*;
-
-/**
- * The <code>ExceptionObject</code> instruction represents the incoming exception object to an exception handler.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0="java.lang.NullPointerException"; 1="java.lang.ArithmeticException"; 3="none13"
  */
-public class ExceptionObject extends Instruction {
+public class Catch_Two02 {
 
-    /**
-     * Constructs a new ExceptionObject instruction.
-     */
-    public ExceptionObject() {
-        super(CiKind.Object);
-        setFlag(Flag.NonNull);
+    public static String test(int arg) {
+        try {
+            throwSomething(arg + 10);
+        } catch (NullPointerException e) {
+            return e.getClass().getName();
+        } catch (ArithmeticException e) {
+            return e.getClass().getName();
+        }
+        return "none" + (arg + 10);
     }
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitExceptionObject(this);
+    private static void throwSomething(int arg) {
+        if (arg == 10) {
+            throw new NullPointerException();
+        }
+        if (arg == 11) {
+            throw new ArithmeticException();
+        }
     }
 }

@@ -1621,7 +1621,6 @@ public class GraphBuilder {
 
     void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-        lastInstr.setFlag(Value.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
         RiExceptionHandler handler = newDefaultExceptionHandler(method());

@@ -189,4 +189,16 @@ public class LIRBranch extends LIRInstruction {
             out.printf("unordered: [B%d] ", ublock().blockID);
         }
     }
+
+    public void substitute(BlockBegin oldBlock, BlockBegin newBlock) {
+        if (block == oldBlock) {
+            block = newBlock;
+            LIRInstruction instr = newBlock.lir().instructionsList().get(0);
+            assert instr instanceof LIRLabel : "first instruction of block must be label";
+            label = ((LIRLabel) instr).label();
+        }
+        if (ublock == oldBlock) {
+            ublock = newBlock;
+        }
+    }
 }

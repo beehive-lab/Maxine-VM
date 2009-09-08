@@ -52,6 +52,7 @@ public class BlockBegin extends Instruction {
         IsOnWorkList,
         WasVisited,
         DefaultExceptionHandler,
+        Merged,
         ParserLoopHeader,
         CriticalEdgeSplit,
         LinearScanLoopHeader,
@@ -277,16 +278,7 @@ public class BlockBegin extends Instruction {
      */
     public void iteratePreOrder(BlockClosure closure) {
         // XXX: identity hash map might be too slow, consider a boolean array or a mark field
-        iterate(new IdentityHashMap<BlockBegin, BlockBegin>(), closure, true);
-    }
-
-    /**
-     * Iterate over this block's exception handlers, its successors, and itself, in that order.
-     * @param closure the closure to apply to each block
-     */
-    public void iteratePostOrder(BlockClosure closure) {
-        // XXX: identity hash map might be too slow, consider a boolean array or a mark field
-        iterate(new IdentityHashMap<BlockBegin, BlockBegin>(), closure, false);
+        iterate(new IdentityHashMap<BlockBegin, BlockBegin>(), closure);
     }
 
     /**
@@ -319,27 +311,22 @@ public class BlockBegin extends Instruction {
         }
     }
 
-    private void iterate(IdentityHashMap<BlockBegin, BlockBegin> mark, BlockClosure closure, boolean pre) {
+    private void iterate(IdentityHashMap<BlockBegin, BlockBegin> mark, BlockClosure closure) {
         if (!mark.containsKey(this)) {
             mark.put(this, this);
-            if (pre) {
-                closure.apply(this);
-            }
+            closure.apply(this);
             BlockEnd e = end();
             if (exceptionHandlerBlocks != null) {
-                iterateReverse(mark, closure, exceptionHandlerBlocks, pre);
+                iterateReverse(mark, closure, exceptionHandlerBlocks);
             }
             assert e != null : "block must have block end";
-            iterateReverse(mark, closure, e.successors(), pre);
-            if (!pre) {
-                closure.apply(this);
-            }
+            iterateReverse(mark, closure, e.successors());
         }
     }
 
-    private void iterateReverse(IdentityHashMap<BlockBegin, BlockBegin> mark, BlockClosure closure, List<BlockBegin> list, boolean pre) {
+    private void iterateReverse(IdentityHashMap<BlockBegin, BlockBegin> mark, BlockClosure closure, List<BlockBegin> list) {
         for (int i = list.size() - 1; i >= 0; i--) {
-            list.get(i).iterate(mark, closure, pre);
+            list.get(i).iterate(mark, closure);
         }
     }
 
