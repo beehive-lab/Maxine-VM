@@ -47,21 +47,24 @@ public class IRChecker extends ValueVisitor {
     public static class IRCheckException extends RuntimeException {
         public static final long serialVersionUID = 8974598793158772L;
 
-        public IRCheckException(String msg) {
-            super(msg);
+        public IRCheckException(String phase, String msg) {
+            super("IRCheck error " + phase + ": " + msg);
         }
     }
 
     private final IR ir;
+    private final String phase;
     private final HashMap<Integer, BlockBegin> idMap = new HashMap<Integer, BlockBegin>();
     private final BasicValueChecker basicChecker = new BasicValueChecker();
 
     /**
      * Creates a new IRChecker for the specified IR.
      * @param ir the IR to check
+     * @param phase the phase of compilation when verification is being run
      */
-    public IRChecker(IR ir) {
+    public IRChecker(IR ir, String phase) {
         this.ir = ir;
+        this.phase = phase;
     }
 
     public void check() {
@@ -102,6 +105,12 @@ public class IRChecker extends ValueVisitor {
             // check that the block was reachable in the first pass
             if (idMap.get(block.blockID) != block) {
                 fail("Block is not reachable from start block: " + block);
+            }
+            List<BlockBegin> linearScanOrder = ir.linearScanOrder();
+            if (linearScanOrder != null) {
+                if (!linearScanOrder.contains(block)) {
+                    fail("Block not in linear scan list: " + block);
+                }
             }
         }
     }
@@ -1002,7 +1011,7 @@ public class IRChecker extends ValueVisitor {
     }
 
     private void fail(String msg) {
-        throw new IRCheckException(msg);
+        throw new IRCheckException(phase, msg);
     }
 
     private class BasicValueChecker implements ValueClosure {

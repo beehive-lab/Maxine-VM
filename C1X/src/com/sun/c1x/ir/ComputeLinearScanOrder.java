@@ -373,7 +373,7 @@ public class ComputeLinearScanOrder {
 
         // critical edge split blocks are prefered because than they have a bigger
         // probability to be completely empty
-        if (cur.checkBlockFlag(BlockBegin.BlockFlag.CriticalEdgeSplit)) {
+        if (cur.isCriticalEdgeSplit()) {
             weight |= (1 << curBit);
         }
         curBit--;
@@ -574,9 +574,7 @@ public class ComputeLinearScanOrder {
     public void printBlocks() {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println("----- loop information:");
-            for (int blockIdx = 0; blockIdx < linearScanOrder.size(); blockIdx++) {
-                BlockBegin cur = linearScanOrder.get(blockIdx);
-
+            for (BlockBegin cur : linearScanOrder) {
                 TTY.println(String.format("%4d: B%2d: ", cur.linearScanNumber(), cur.blockID));
                 for (int loopIdx = 0; loopIdx < numLoops; loopIdx++) {
                     TTY.println(String.format("%d = %b ", loopIdx, isBlockInLoop(loopIdx, cur)));
@@ -587,12 +585,11 @@ public class ComputeLinearScanOrder {
 
         if (C1XOptions.TraceLinearScanLevel >= 1) {
             TTY.println("----- linear-scan block order:");
-            for (int blockIdx = 0; blockIdx < linearScanOrder.size(); blockIdx++) {
-                BlockBegin cur = linearScanOrder.get(blockIdx);
+            for (BlockBegin cur : linearScanOrder) {
                 TTY.print(String.format("%4d: B%2d    loop: %2d  depth: %2d", cur.linearScanNumber(), cur.blockID, cur.loopIndex(), cur.loopDepth()));
 
-                TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry) ? " ex" : "   ");
-                TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.CriticalEdgeSplit) ? " ce" : "   ");
+                TTY.print(cur.isExceptionEntry() ? " ex" : "   ");
+                TTY.print(cur.isCriticalEdgeSplit() ? " ce" : "   ");
                 TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) ? " lh" : "   ");
                 TTY.print(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) ? " le" : "   ");
 
@@ -646,10 +643,7 @@ public class ComputeLinearScanOrder {
             assert cur.linearScanNumber() == i : "incorrect linearScanNumber";
             assert cur.linearScanNumber() >= 0 && cur.linearScanNumber() == linearScanOrder.indexOf(cur) : "incorrect linearScanNumber";
 
-            int j;
-            for (j = cur.numberOfSux() - 1; j >= 0; j--) {
-                BlockBegin sux = cur.suxAt(j);
-
+            for (BlockBegin sux : cur.end().successors()) {
                 assert sux.linearScanNumber() >= 0 && sux.linearScanNumber() == linearScanOrder.indexOf(sux) : "incorrect linearScanNumber";
                 if (!cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd)) {
                     assert cur.linearScanNumber() < sux.linearScanNumber() : "invalid order";
@@ -659,9 +653,7 @@ public class ComputeLinearScanOrder {
                 }
             }
 
-            for (j = cur.numberOfPreds() - 1; j >= 0; j--) {
-                BlockBegin pred = cur.predAt(j);
-
+            for (BlockBegin pred : cur.predecessors()) {
                 assert pred.linearScanNumber() >= 0 && pred.linearScanNumber() == linearScanOrder.indexOf(pred) : "incorrect linearScanNumber";
                 if (!cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
                     assert cur.linearScanNumber() > pred.linearScanNumber() : "invalid order";
@@ -670,7 +662,7 @@ public class ComputeLinearScanOrder {
                     assert cur.loopIndex() == pred.loopIndex() || cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) : "successing blocks with same loop depth must have same loop index";
                 }
 
-                assert cur.dominator().linearScanNumber() <= cur.predAt(j).linearScanNumber() : "dominator must be before predecessors";
+                assert cur.dominator().linearScanNumber() <= pred.linearScanNumber() : "dominator must be before predecessors";
             }
 
             // check dominator
