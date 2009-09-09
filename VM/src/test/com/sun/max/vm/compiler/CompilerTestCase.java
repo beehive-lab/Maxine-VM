@@ -349,8 +349,8 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
                     assertNotNull(method);
 
-                    if (Trace.hasLevel(3) && method instanceof TargetMethod) {
-                        final TargetMethod targetMethod = (TargetMethod) method;
+                    if (Trace.hasLevel(3) && method instanceof CPSTargetMethod) {
+                        final CPSTargetMethod targetMethod = (CPSTargetMethod) method;
                         Trace.line(3, "Bundle and code for " + targetMethod);
                         traceBundleAndDisassemble(targetMethod);
                     }
@@ -791,7 +791,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      * the compiled code. If a disassembler is not available for the code, then only the metadata is traced.
      * The trace is sent to the standard {@linkplain Trace#stream() trace stream}.
      */
-    public void traceBundleAndDisassemble(TargetMethod targetMethod) {
+    public void traceBundleAndDisassemble(CPSTargetMethod targetMethod) {
         targetMethod.traceBundle(INDENT_WRITER);
         disassemble(targetMethod);
     }

@@ -202,7 +202,6 @@ public final class BootImageGenerator {
         final long start = System.currentTimeMillis();
         BootstrapCompilerScheme compilerScheme = null;
         try {
-            TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
@@ -476,9 +475,9 @@ public final class BootImageGenerator {
             zeroLiterals += savingsFrom(headerSize, referenceLiterals);
             zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
             zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
-            zeroStopPositions += savingsFrom(headerSize, targetMethod.stopPositions());
+            zeroStopPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
             zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
-            zeroReferenceMaps += savingsFrom(headerSize, targetMethod.referenceMaps());
+            zeroReferenceMaps += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
             zeroScalarLiterals += savingsFrom(headerSize, targetMethod.scalarLiterals());
         }
         int redundantReferenceLiterals = 0;

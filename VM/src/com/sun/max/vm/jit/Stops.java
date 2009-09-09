@@ -119,7 +119,7 @@ public class Stops {
         }
 
         public void add(CompiledBytecodeTemplate template, int targetCodePosition, int bytecodePosition) {
-            final TargetMethod targetMethod = template.targetMethod;
+            final CPSTargetMethod targetMethod = template.targetMethod;
             if (targetMethod.numberOfStopPositions() == 0) {
                 return;
             }

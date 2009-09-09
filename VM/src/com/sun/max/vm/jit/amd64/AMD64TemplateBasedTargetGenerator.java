@@ -42,7 +42,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     @Override
     public AMD64JitTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor, compilerScheme());
+        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor, compilerScheme(), BytecodeToAMD64TargetTranslator.TARGET_ABI);
         notifyAllocation(targetMethod);
         return targetMethod;
     }

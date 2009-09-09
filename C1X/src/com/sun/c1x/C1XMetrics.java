@@ -27,6 +27,7 @@ package com.sun.c1x;
  * @author Ben L. Titzer
  */
 public class C1XMetrics {
+    public static int TargetMethods;
     public static int LocalValueNumberHits;
     public static int GlobalValueNumberHits;
     public static int ValueMapResizes;
@@ -46,4 +47,12 @@ public class C1XMetrics {
     public static int BlocksSkipped;
     public static int DeadCodeEliminated;
     public static int ResolveCPEAttempts;
+    public static int DataBytesEmitted;
+    public static int CodeBytesEmitted;
+    public static int SafepointsEmitted;
+    public static int ExceptionHandlersEmitted;
+    public static int ReferencePatches;
+    public static int DataPatches;
+    public static int DirectCallSitesEmitted;
+    public static int IndirectCallSitesEmitted;
 }

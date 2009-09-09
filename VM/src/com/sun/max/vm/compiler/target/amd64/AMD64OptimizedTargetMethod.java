@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -38,11 +37,6 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     @Override
     public int topFrameInstructionAdjustment() {
         return -1;
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
     }
 
     @Override

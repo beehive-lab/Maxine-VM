@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.vm.type.*;
 
 /**
  * Utilities for manipulating and decoding the entries of a
@@ -30,19 +29,17 @@ import com.sun.max.vm.type.*;
  * <pre>
  *   0                                                        29  30  31
  *  +------------------------------------------------------------+---+---+
- *  |                         position                           | N | R |
+ *  |                         position                           | N |   |
  *  +------------------------------------------------------------+---+---+
  *
  *  N: If set, then 'position' denotes a native function call
- *  R: If set, then 'position' denotes a call that returns a reference value
  * </pre>
  *
  * @author Doug Simon
  */
 public class StopPositions {
-    public static final int REFERENCE_RETURN = 0x80000000;
     public static final int NATIVE_FUNCTION_CALL = 0x40000000;
-    public static final int POSITION_MASK = ~(REFERENCE_RETURN | NATIVE_FUNCTION_CALL);
+    public static final int POSITION_MASK = ~NATIVE_FUNCTION_CALL;
 
     private final int[] stopPositions;
 
@@ -101,17 +98,6 @@ public class StopPositions {
 
     /**
      * Determines if a given index in a given stop positions array denotes the position
-     * of a call whose return type is a {@linkplain Kind#REFERENCE reference} type.
-     *
-     * @param stopPositions a target method's {@linkplain TargetMethod#stopPositions() stop positions} array
-     * @param index an index within {@code stopPositions}
-     */
-    public static boolean isReferenceCall(int[] stopPositions, int index) {
-        return (stopPositions[index] & REFERENCE_RETURN) != 0;
-    }
-
-    /**
-     * Determines if a given index in a given stop positions array denotes the position
      * of a native function call.
      *
      * @param stopPositions a target method's {@linkplain TargetMethod#stopPositions() stop positions} array
@@ -157,9 +143,6 @@ public class StopPositions {
             sb.append(i).append(" -> ").append(get(i));
             if (isNativeFunctionCall(stopPositions, i)) {
                 sb.append(" | NFC");
-            }
-            if (isReferenceCall(stopPositions, i)) {
-                sb.append(" | RR");
             }
         }
         return sb.append("}").toString();
