@@ -2112,18 +2112,13 @@ public class LinearScan {
                     //visitor.visit(op);
                     assert op.infoCount() > 0 : "should not visit otherwise";
 
-                    List<ExceptionHandler> xhandlers = op.allXhandler();
-                    int n = xhandlers.size();
-                    for (int k = 0; k < n; k++) {
-                        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
-                            TTY.println("resolving exception edge for handler " + xhandlers.get(k) + ", opId=" + opId);
-                        }
-                        resolveExceptionEdge(xhandlers.get(k), opId, moveResolver);
+                    for (ExceptionHandler h : op.exceptionEdges()) {
+                        resolveExceptionEdge(h, opId, moveResolver);
                     }
 
                 } else if (C1XOptions.DetailedAsserts) {
                     //visitor.visit(op);
-                    assert op.allXhandler().size() == 0 : "missed exception handler";
+                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
             }
         }
@@ -2808,7 +2803,7 @@ public class LinearScan {
             if (op.infoCount() > 0) {
                 // exception handling
                 if (compilation().hasExceptionHandlers()) {
-                    List<ExceptionHandler> xhandlers = op.allXhandler();
+                    List<ExceptionHandler> xhandlers = op.exceptionEdges();
                     int n = xhandlers.size();
                     for (int k = 0; k < n; k++) {
                         ExceptionHandler handler = xhandlers.get(k);
@@ -2817,7 +2812,7 @@ public class LinearScan {
                         }
                     }
                 } else {
-                    assert op.allXhandler().size() == 0 : "missed exception handler";
+                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
 
                 // compute oop map

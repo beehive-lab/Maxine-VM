@@ -505,9 +505,9 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             if (!C1XOptions.UseImplicitDiv0Checks && !x.checkFlag(Flag.NoZeroCheck)) {
                 lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
-
-                // Create copy of code emit info as they must not be shared!
-                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(stateFor(x)));
+                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
+                 // don't need code emit info when using explicit checks
+                info = null;
             }
             LIROperand tmp = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx); // idiv and irem use rdx in their implementation
             if (x.opcode() == Bytecodes.IREM) {
