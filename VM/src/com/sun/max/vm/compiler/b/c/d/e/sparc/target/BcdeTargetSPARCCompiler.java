@@ -350,13 +350,20 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                                 // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                                 // the register references based on its Java frame descriptor.
                                 FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                                cpsTargetMethod.prepareRegisterReferenceMap(trapState, catchAddress.asPointer(), preparer);
+                                Pointer callerCatchAddress = catchAddress.asPointer();
+                                final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
+                                if (callerTargetMethod != null) {
+                                    cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerCatchAddress, preparer);
+                                }
                             }
                         } else {
                             // Only scan with references in registers for a caller that did not trap due to an implicit exception.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = trapStateAccess.getInstructionPointer(trapState);
-                            cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerInstructionPointer, preparer);
+                            final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
+                            if (callerTargetMethod != null) {
+                                cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerInstructionPointer, preparer);
+                            }
                         }
                     }
                 }

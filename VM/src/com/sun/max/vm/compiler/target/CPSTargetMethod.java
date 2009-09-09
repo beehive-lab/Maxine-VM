@@ -405,6 +405,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @param registerState a pointer to the saved register state
      * @param instructionPointer the instruction pointer at the safepoint trap
      */
+    @Override
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
         preparer.tracePrepareReferenceMap(this, this.findClosestStopIndex(instructionPointer, true), Pointer.zero(), "registers");
         final int safepointIndex = this.findSafepointIndex(instructionPointer);
