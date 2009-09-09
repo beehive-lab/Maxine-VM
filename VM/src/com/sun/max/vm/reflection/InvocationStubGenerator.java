@@ -45,7 +45,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.verifier.*;
 
 /**
  *
@@ -234,7 +233,6 @@ public class InvocationStubGenerator<T> {
                             ClassActor.NO_ENCLOSING_METHOD_INFO);
 
             try {
-               Verifier.verifierFor(stubClassActor).verify();
                 ClassfileWriter.saveGeneratedClass(new ClassInfo(stubClassActor), constantPoolEditor.copy());
                 if (MaxineVM.isPrototyping() && saveJavaSource) {
                     traceStubAsJavaSource(superClass, name, declaringClass, returnType, parameterTypes, isStatic, classToInstantiate, target, boxing, stubClassName);

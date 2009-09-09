@@ -2911,25 +2911,13 @@ public class LinearScan {
 
         printLir(1, "LIR after assignment of register numbers:", true);
 
-        // TODO: Check if we want to do statistics!
-        // LinearScanStatistic.compute(this, statAfterAsign);
-
-
         EdgeMoveOptimizer.optimize(ir().linearScanOrder());
         if (C1XOptions.OptimizeControlFlow) {
-            ControlFlowOptimizer.optimize(ir().linearScanOrder());
+            ControlFlowOptimizer.optimize(ir());
         }
         // check that cfg is still correct after optimizations
         ir().verifyAndPrint("After LIR optimization");
         printLir(1, "Before Code Generation", false);
-    }
-
-    void printTimers(double total) {
-        // TODO: print timers
-    }
-
-    void printStatistics() {
-        // TODO: Gather & print stats
     }
 
     void printIntervals(String label) {
