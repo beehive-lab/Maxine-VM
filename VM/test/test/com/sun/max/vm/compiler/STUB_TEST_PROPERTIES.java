@@ -18,13 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package test.com.sun.max.vm.compiler;
 
 import java.lang.annotation.*;
 
 /**
  * Refines testing of the reflection invocation stub generated for the annotated method.
- * 
+ *
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
