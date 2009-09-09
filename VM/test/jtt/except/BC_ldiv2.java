@@ -20,14 +20,14 @@
  */
 /*
  * @Harness: java
- * @Runs: (1,2)=0;
- * @Runs: (11,0)=-11
+ * @Runs: (1L, 2L) = 0L;
+ * @Runs: (11L, 0L) = -11L;
  */
 
 package jtt.except;
 
-public class BC_idiv2 {
-    public static int test(int a, int b) {
+public class BC_ldiv2 {
+    public static long test(long a, long b) {
         try {
             return a / b;
         } catch (Exception e) {
