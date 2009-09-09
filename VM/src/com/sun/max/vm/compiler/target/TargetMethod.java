@@ -467,4 +467,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     public final String toString() {
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
+
+
+    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+
+    }
 }

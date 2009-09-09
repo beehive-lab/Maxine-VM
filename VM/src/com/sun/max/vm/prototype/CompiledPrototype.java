@@ -333,7 +333,7 @@ public class CompiledPrototype extends Prototype {
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
         if (Trace.hasLevel(2)) {
-            Trace.line(2, "new target method: " + targetMethod.classMethodActor().format("%H.%n(%P)"));
+            Trace.line(2, "new target method: " + (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor().format("%H.%n(%P)")));
         }
     }
 
