@@ -30,8 +30,8 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 
 /**
- *
- * Target method that saves for each catch block the ranges in the code that can refer to them. Does not include the type of the catched exception.
+ * Target method that saves for each catch block the ranges in the code that can
+ * refer to them. Does not include the type of the caught exception.
  *
  * @author Thomas Wuerthinger
  */
