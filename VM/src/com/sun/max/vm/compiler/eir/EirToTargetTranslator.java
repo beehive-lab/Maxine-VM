@@ -137,9 +137,6 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         if (extraCallInfo.isNativeFunctionCall) {
                             stopPositions[stopIndex] |= StopPositions.NATIVE_FUNCTION_CALL;
                         }
-                        if (extraCallInfo.isReferenceCall) {
-                            stopPositions[stopIndex] |= StopPositions.REFERENCE_RETURN;
-                        }
                     }
                 }
             } catch (AssemblyException assemblyException) {
@@ -292,7 +289,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final int numberOfIndirectCalls = emitter.indirectCallLabels().length();
         final int numberOfSafepoints = emitter.safepointLabels().length();
         final int registerReferenceMapSize = targetMethod.registerReferenceMapSize();
-        int referenceMapsSize = TargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
+        int referenceMapsSize = CPSTargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
 
         targetMethod.setGenerated(
                         packLabelPositions(emitter.catchRangeLabels()),
@@ -308,8 +305,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
-                        frameReferenceMapSize,
-                        eirMethod.abi().targetABI()
+                        frameReferenceMapSize
         );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +

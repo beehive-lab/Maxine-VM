@@ -322,6 +322,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         // Modify rsp
         asm.subq(X86.rsp, this.frameSize);
+
+        asm.setFrameSize(this.frameSize);
     }
 
     private void epilogue() {

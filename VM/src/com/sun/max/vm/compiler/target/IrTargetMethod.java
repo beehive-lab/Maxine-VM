@@ -20,13 +20,12 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.asm.*;
-import com.sun.max.io.*;
+import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * This class exists solely as a work around when running the IR tests where compilation stops at some IR level
@@ -49,7 +48,7 @@ public class IrTargetMethod extends TargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor(), null);
+        super(irMethod.classMethodActor(), null, null);
         this.irMethod = irMethod;
     }
 
@@ -64,22 +63,7 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public InstructionSet instructionSet() {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
     public void patchCallSite(int callOffset, Word callTarget) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public int registerReferenceMapSize() {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public JavaStackFrameLayout stackFrameLayout() {
         throw ProgramError.unexpected();
     }
 
@@ -89,7 +73,7 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
+    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         throw ProgramError.unexpected();
     }
 }

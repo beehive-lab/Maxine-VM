@@ -80,8 +80,8 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
+        super(classMethodActor, compilerScheme, abi);
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
@@ -129,11 +129,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
         return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
-    }
-
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
     }
 
     /**
@@ -236,8 +231,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             codeOrCodeBuffer,
             encodedInlineDataDescriptors,
             jitStackFrameLayout.frameSize(),
-            jitStackFrameLayout.frameReferenceMapSize(),
-            abi
+            jitStackFrameLayout.frameReferenceMapSize()
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -286,9 +280,13 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         }
     }
 
-    @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
         finalizeReferenceMaps();
+
+        if (stackReferenceMapPreparer.checkIgnoreCurrentFrame()) {
+            return true;
+        }
+
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter);
     }
 

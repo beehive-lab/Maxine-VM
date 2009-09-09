@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,35 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc;
+package com.sun.max.tele.object;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.runtime.sparc.*;
+import com.sun.max.tele.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.reference.*;
 
 /**
- * @author Bernd Mathiske
+ * @author Thomas Wuerthinger
  */
-public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements SPARCTargetMethod {
+public class TeleC1XTargetMethod extends TeleTargetMethod {
 
-    public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    TeleC1XTargetMethod(TeleVM teleVM, Reference ref) {
+        super(teleVM, ref);
     }
 
     @Override
-    public final int registerReferenceMapSize() {
-        return SPARCTrapStateAccess.registerReferenceMapSize();
+    public BytecodeInfo[] bytecodeInfos() {
+        return null;
     }
 
     @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        SPARCTargetMethod.Static.patchCallSite(this, callOffset, callEntryPoint);
+    public int[] bytecodeToTargetCodePositionMap() {
+        return null;
+    }
+
+
+    @Override
+    public int[] getCatchRangePositions() {
+        return null;
     }
 
     @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
+    public int[] getCatchBlockPositions() {
+        return null;
     }
 }

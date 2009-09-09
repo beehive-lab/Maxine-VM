@@ -45,7 +45,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_forward_ifne() {
-        final TargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_ifne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_ifne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -76,7 +76,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_ifne() {
-        final TargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -109,7 +109,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_ifgt() {
-        final TargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifgt", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifgt", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -142,7 +142,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_iflt() {
-        final TargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_iflt", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_iflt", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -177,7 +177,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_forward_if_icmpne() {
-        final TargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_if_icmpne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_if_icmpne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -203,7 +203,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
         traceCompiledMethod(targetMethod);
     }
 
-    private void traceCompiledMethod(final TargetMethod targetMethod) {
+    private void traceCompiledMethod(final CPSTargetMethod targetMethod) {
         traceBundleAndDisassemble(targetMethod);
     }
 

@@ -68,7 +68,7 @@ public abstract class JavaStackFrame extends StackFrame {
         if (classMethodActor != null) {
             return classMethodActor.format("%H.%n(%p)@") + instructionPointer.toHexString();
         }
-        return targetMethod.name() + "@" + instructionPointer.toHexString();
+        return targetMethod.description() + "@" + instructionPointer.toHexString();
     }
 
 }

@@ -36,6 +36,8 @@ import com.sun.c1x.ri.RiType;
  */
 public class CiTargetMethod {
 
+    // TODO: Remove data array, convert to CiConstant array
+
     public static class SafepointRefMap {
         public final int codePos;
         public final boolean[] registerMap;
@@ -75,15 +77,13 @@ public class CiTargetMethod {
         public final CiRuntimeCall runtimeCall;
         public final RiMethod method;
         public final Object globalStubID;
-        public final boolean direct;
         public final boolean[] stackMap;
         public final boolean[] registerMap;
 
-        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] registerMap, boolean[] stackMap) {
+        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean[] registerMap, boolean[] stackMap) {
             this.codePos = codePos;
             this.runtimeCall = runtimeCall;
             this.method = method;
-            this.direct = direct;
             this.stackMap = stackMap;
             this.globalStubID = globalStubID;
             this.registerMap = registerMap;
@@ -107,12 +107,6 @@ public class CiTargetMethod {
 
             sb.append(" at pos ");
             sb.append(codePos);
-
-            if (direct) {
-                sb.append(" (direct)");
-            } else {
-                sb.append(" (indirect)");
-            }
 
             if (stackMap != null) {
                 sb.append(mapToString("stackMap", stackMap));
@@ -176,14 +170,17 @@ public class CiTargetMethod {
     public CiBailout bailout;
 
     public final List<SafepointRefMap> safepointRefMaps = new ArrayList<SafepointRefMap>();
-    public final List<CallSite> callSites = new ArrayList<CallSite>();
+    public final List<CallSite> directCallSites = new ArrayList<CallSite>();
+    public final List<CallSite> indirectCallSites = new ArrayList<CallSite>();
     public final List<DataPatchSite> dataPatchSites = new ArrayList<DataPatchSite>();
     public final List<RefPatchSite> refPatchSites = new ArrayList<RefPatchSite>();
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
 
-    public int registerSize;
-    public int frameSize;
-    public int registerRestoreEpilogueOffset;
+    private final int wordSize;
+
+    private final int referenceRegisterCount;
+    private int frameSize = -1;
+    public int registerRestoreEpilogueOffset = -1;
     public byte[] targetCode;
     public int targetCodeSize;
     public byte[] data;
@@ -214,6 +211,10 @@ public class CiTargetMethod {
         targetCodeSize = size;
     }
 
+    public CiTargetMethod(int wordSize, int referenceRegisterCount) {
+        this.wordSize = wordSize;
+        this.referenceRegisterCount = referenceRegisterCount;
+    }
 
     /**
      * Records a reference map at a call location in the code array.
@@ -223,15 +224,18 @@ public class CiTargetMethod {
      * @param stackMap     the bitmap that indicates which stack locations
      */
     public void recordRuntimeCall(int codePosition, CiRuntimeCall runtimeCall, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, runtimeCall, null, null, true, null, stackMap));
+        directCallSites.add(new CallSite(codePosition, runtimeCall, null, null, null, stackMap));
         directCalls++;
-        //assert stackMap.length == frameSize;
+        assert stackMap.length == frameSize / wordSize;
     }
 
     public void recordGlobalStubCall(int codePosition, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, null, globalStubCall, true, registerMap, stackMap));
+        directCallSites.add(new CallSite(codePosition, null, null, globalStubCall, registerMap, stackMap));
         directCalls++;
-        //assert stackMap.length == frameSize;
+
+        // Global stubs need not necessarily need a reference map
+        assert stackMap == null || stackMap.length == frameSize / wordSize;
+        assert registerMap == null || registerMap.length == referenceRegisterCount;
     }
 
     /**
@@ -264,9 +268,9 @@ public class CiTargetMethod {
      * @param stackMap the bitmap that indicates which stack locations
      */
     public void recordDirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, true, null, stackMap));
+        directCallSites.add(new CallSite(codePosition, null, method, null, null, stackMap));
         directCalls++;
-        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+        assert stackMap.length == frameSize / wordSize;
     }
 
     /**
@@ -276,9 +280,9 @@ public class CiTargetMethod {
      * @param stackMap the bitmap that indicates which stack locations
      */
     public void recordIndirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, false, null, stackMap));
+        indirectCallSites.add(new CallSite(codePosition, null, method, null, null, stackMap));
         indirectCalls++;
-        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+        assert stackMap.length == frameSize / wordSize;
     }
 
     /**
@@ -320,12 +324,8 @@ public class CiTargetMethod {
      */
     public void recordSafepoint(int codePosition, boolean[] registerMap, boolean[] stackMap) {
         safepointRefMaps.add(new SafepointRefMap(codePosition, registerMap, stackMap));
-        if (registerSize == 0) {
-            registerSize = registerMap.length;
-        }
-        assert registerSize == registerMap.length : "compiler produced register maps of different sizes";
-        // assert stackMap.length == frameSize :
-        // "compiler produced stack map that doesn't cover whole frame";
+        assert referenceRegisterCount == registerMap.length : "compiler produced register maps of different sizes";
+        assert stackMap.length == frameSize / wordSize;
     }
 
     public int directCalls() {
@@ -338,6 +338,14 @@ public class CiTargetMethod {
 
     public void setRegisterRestoreEpilogueOffset(int registerRestoreEpilogueOffset) {
         this.registerRestoreEpilogueOffset = registerRestoreEpilogueOffset;
+    }
+
+    public int frameSize() {
+        return frameSize;
+    }
+
+    public int referenceRegisterCount() {
+        return referenceRegisterCount;
     }
 
 }

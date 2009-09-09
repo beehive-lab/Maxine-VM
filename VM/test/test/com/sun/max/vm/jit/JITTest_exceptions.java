@@ -140,7 +140,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     public void printExceptionHandlers(CPSTargetMethod targetMethod) {
         final int[] catchRangePositions = targetMethod.catchRangePositions();
         if (catchRangePositions == null) {
-            Trace.line(1, "Target method " + targetMethod.name() + " has no exception handlers");
+            Trace.line(1, "Target method " + targetMethod.description() + " has no exception handlers");
             return;
         }
         final int[] catchBlockPositions = targetMethod.catchBlockPositions();
