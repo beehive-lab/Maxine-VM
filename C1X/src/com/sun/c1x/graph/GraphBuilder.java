@@ -210,9 +210,7 @@ public class GraphBuilder {
         l.setNext(g, entry.bci());
         h.setEnd(g);
         h.setBlockFlag(f);
-        ValueStack s = state.copy();
-        assert s.stackEmpty();
-        g.setStateAfter(s);
+        g.setStateAfter(state.immutableCopy());
         return h;
     }
 
@@ -1621,7 +1619,6 @@ public class GraphBuilder {
 
     void inlineSyncEntry(Value lock, BlockBegin syncHandler) {
         genMonitorEnter(lock, Instruction.SYNCHRONIZATION_ENTRY_BCI);
-        lastInstr.setFlag(Value.Flag.NonNull, true);
         syncHandler.setExceptionEntry();
         syncHandler.setBlockFlag(BlockBegin.BlockFlag.IsOnWorkList);
         RiExceptionHandler handler = newDefaultExceptionHandler(method());
@@ -1667,7 +1664,7 @@ public class GraphBuilder {
         genThrow(bci);
         BlockEnd end = (BlockEnd) lastInstr;
         curBlock.setEnd(end);
-        end.setStateAfter(curState);
+        end.setStateAfter(curState.immutableCopy());
 
         curBlock = origBlock;
         curState = origState;

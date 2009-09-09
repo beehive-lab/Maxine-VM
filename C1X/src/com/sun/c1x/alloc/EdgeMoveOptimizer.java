@@ -26,7 +26,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
@@ -198,7 +197,7 @@ public final class EdgeMoveOptimizer {
         assert ((LIRBranch) curInstructions.get(curInstructions.size() - 1)).cond() == LIRCondition.Always : "block must end with unconditional branch";
 
         if (curInstructions.get(curInstructions.size() - 1).info != null) {
-            // can no optimize instructions when debug info is needed
+            // cannot optimize instructions when debug info is needed
             return;
         }
 

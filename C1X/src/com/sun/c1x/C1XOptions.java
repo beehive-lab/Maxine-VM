@@ -78,6 +78,8 @@ public class C1XOptions {
     public static boolean PrintStateInInterpreter            = ____;
     public static boolean PrintAssembly                      = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
+    public static int     TraceLinearScanLevel               = 0;
+    public static boolean PrintBlocksDeleted                 = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = true;
@@ -144,7 +146,6 @@ public class C1XOptions {
 
     // Linear scan settings
     public static boolean StressLinearScan                   = ____;
-    public static int     TraceLinearScanLevel               = 0;
 
     // LIR settings
     public static boolean GenerateLIR                        = true;
