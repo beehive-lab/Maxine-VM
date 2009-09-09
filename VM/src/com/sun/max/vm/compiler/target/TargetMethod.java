@@ -456,7 +456,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
      * supplied.
      *
-     * @param targetMethod the target method to analyze
      * @param directCalls a sequence of the direct calls to which this method should append
      * @param virtualCalls a sequence of virtual calls to which this method should append
      * @param interfaceCalls a sequence of interface calls to which this method should append
