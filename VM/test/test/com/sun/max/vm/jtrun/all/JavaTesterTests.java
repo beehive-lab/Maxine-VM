@@ -7625,6 +7625,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_except_BC_idiv2() {
+        JavaTesterRunScheme.begin("jtt.except.BC_idiv2");
+        String runString = null;
+        try {
+        // (1,2) == 0
+            runString = "(1,2)";
+            if (0 != jtt.except.BC_idiv2.test(1, 2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (11,0) == -11
+            runString = "(11,0)";
+            if (-11 != jtt.except.BC_idiv2.test(11, 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_except_BC_invokevirtual01() {
         JavaTesterRunScheme.begin("jtt.except.BC_invokevirtual01");
         String runString = null;
@@ -7806,6 +7828,28 @@ public class JavaTesterTests {
                     JavaTesterRunScheme.end(runString, e);
                     return;
                 }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_except_BC_ldiv2() {
+        JavaTesterRunScheme.begin("jtt.except.BC_ldiv2");
+        String runString = null;
+        try {
+        // (1,2) == 0
+            runString = "(1,2)";
+            if (0L != jtt.except.BC_ldiv2.test(1L, 2L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (11,0) == -11
+            runString = "(11,0)";
+            if (-11L != jtt.except.BC_ldiv2.test(11L, 0L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
             }
         } catch (Throwable t) {
             JavaTesterRunScheme.end(runString, t);
@@ -13315,6 +13359,46 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_micro_BigByteParams01() {
+        JavaTesterRunScheme.begin("jtt.micro.BigByteParams01");
+        String runString = null;
+        try {
+        // (0) == 45
+            runString = "(0)";
+            if (45 != jtt.micro.BigByteParams01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 45
+            runString = "(1)";
+            if (45 != jtt.micro.BigByteParams01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 45
+            runString = "(2)";
+            if (45 != jtt.micro.BigByteParams01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == 45
+            runString = "(3)";
+            if (45 != jtt.micro.BigByteParams01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (4) == 0
+            runString = "(4)";
+            if (0 != jtt.micro.BigByteParams01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_micro_BigDoubleParams02() {
         JavaTesterRunScheme.begin("jtt.micro.BigDoubleParams02");
         String runString = null;
@@ -13900,6 +13984,46 @@ public class JavaTesterTests {
         // (6) == 0
             runString = "(6)";
             if (0 != jtt.micro.BigParamsAlignment.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_micro_BigShortParams01() {
+        JavaTesterRunScheme.begin("jtt.micro.BigShortParams01");
+        String runString = null;
+        try {
+        // (0) == 45
+            runString = "(0)";
+            if (45 != jtt.micro.BigShortParams01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 45
+            runString = "(1)";
+            if (45 != jtt.micro.BigShortParams01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 45
+            runString = "(2)";
+            if (45 != jtt.micro.BigShortParams01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == 45
+            runString = "(3)";
+            if (45 != jtt.micro.BigShortParams01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (4) == 0
+            runString = "(4)";
+            if (0 != jtt.micro.BigShortParams01.test(4)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
