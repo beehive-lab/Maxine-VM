@@ -139,8 +139,8 @@ public class RegisterVerifier {
         processOperations(block.lir(), inputState);
 
         // iterate all successors
-        for (int i = 0; i < block.numberOfSux(); i++) {
-            processSuccessor(block.suxAt(i), inputState);
+        for (BlockBegin succ : block.end().successors()) {
+            processSuccessor(succ, inputState);
         }
     }
 
@@ -263,7 +263,7 @@ public class RegisterVerifier {
             }
 
             // process xhandler before output and temp operands
-            List<ExceptionHandler> xhandlers = op.allXhandler();
+            List<ExceptionHandler> xhandlers = op.exceptionEdges();
             n = xhandlers.size();
             for (int k = 0; k < n; k++) {
                 processXhandler(xhandlers.get(k), inputState);

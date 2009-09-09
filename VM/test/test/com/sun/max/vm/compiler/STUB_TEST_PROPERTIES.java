@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
+package test.com.sun.max.vm.compiler;
 
-import com.sun.c1x.ci.*;
+import java.lang.annotation.*;
 
 /**
- * The <code>ExceptionObject</code> instruction represents the incoming exception object to an exception handler.
+ * Refines testing of the reflection invocation stub generated for the annotated method.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public class ExceptionObject extends Instruction {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface STUB_TEST_PROPERTIES {
 
     /**
-     * Constructs a new ExceptionObject instruction.
+     * Specifies if the stub should be executed. Methods that have side effects on the test result should not have their stub executed.
      */
-    public ExceptionObject() {
-        super(CiKind.Object);
-        setFlag(Flag.NonNull);
-    }
+    boolean execute() default true;
 
     /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
+     * Specifies if the result of executing the stub should be compared against the result of executed the method.
      */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitExceptionObject(this);
-    }
+    boolean compareResult() default true;
 }

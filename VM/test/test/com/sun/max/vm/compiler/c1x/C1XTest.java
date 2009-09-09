@@ -60,6 +60,8 @@ public class C1XTest {
         "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
+    private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
+        "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
@@ -76,6 +78,8 @@ public class C1XTest {
         "Report timings in X\\tY\\n format for easy cut and paste to scatter plot.");
     private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
         "Report only the average compilation speed.");
+    private static final Option<Boolean> spreadsheetOption = options.newBooleanOption("spreadsheet", false,
+        "Report timing information in a spreadsheet-friendly format with tab characters.");
     private static final Option<Long> longerThanOption = options.newLongOption("longer-than", 0L,
         "Report only the compilation times that took longer than the specified number of nanoseconds.");
     private static final Option<Long> slowerThanOption = options.newLongOption("slower-than", 10000000000L,
@@ -232,6 +236,10 @@ public class C1XTest {
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
         }
         if (printBailout && result.bailout() != null) {
+            out.println("");
+            if (printBailoutSizeOption.getValue()) {
+                out.println(method + " = " + result.statistics().byteCount + " bytes");
+            }
             result.bailout().printStackTrace();
         }
 
@@ -465,14 +473,27 @@ public class C1XTest {
     }
 
     private static void reportAverage() {
-        out.print("Time: " + formatDouble(lastRunNs / ONE_BILLION, 14, 6) + " seconds   ");
         double totalBcps = ONE_BILLION * (totalBytes / (double) totalNs);
         double totalIBcps = ONE_BILLION * (totalInlinedBytes / (double) totalNs);
         double totalIps = ONE_BILLION * (totalInstrs / (double) totalNs);
-        out.print(formatDouble(totalBcps, 12, 2) + " bytes/s   ");
-        out.print(formatDouble(totalIBcps, 12, 2) + " bytes/s   ");
-        out.print(formatDouble(totalIps, 12, 2) + " insts/s");
-        out.println();
+        double seconds = lastRunNs / ONE_BILLION;
+        String secs = formatDouble(seconds, 14, 6);
+        String bcps = formatDouble(totalBcps, 12, 2);
+        String ibcps = formatDouble(totalIBcps, 12, 2);
+        String ips = formatDouble(totalIps, 12, 2);
+        if (!spreadsheetOption.getValue()) {
+            out.print("Time: " + secs + " seconds   ");
+            out.print(bcps + " bytes/s   ");
+            out.print(ibcps + " bytes/s   ");
+            out.print(ips + " insts/s");
+            out.println();
+        } else {
+            out.print(seconds + "\t");
+            out.print(totalBcps + "\t");
+            out.print(totalIBcps + "\t");
+            out.print(totalIps + "\t");
+            out.println();
+        }
     }
 
     private static String formatDouble(double val, int width, int places) {

@@ -45,6 +45,7 @@ public class C1XMetrics {
     public static int ConditionalEliminations;
     public static int BlocksMerged;
     public static int BlocksSkipped;
+    public static int BlocksDeleted;
     public static int DeadCodeEliminated;
     public static int ResolveCPEAttempts;
     public static int DataBytesEmitted;

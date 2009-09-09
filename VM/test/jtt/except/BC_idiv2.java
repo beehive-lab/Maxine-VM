@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
-
-import com.sun.c1x.ci.*;
-
-/**
- * The <code>ExceptionObject</code> instruction represents the incoming exception object to an exception handler.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: (1,2)=0;
+ * @Runs: (11,0)=-11
  */
-public class ExceptionObject extends Instruction {
 
-    /**
-     * Constructs a new ExceptionObject instruction.
-     */
-    public ExceptionObject() {
-        super(CiKind.Object);
-        setFlag(Flag.NonNull);
-    }
+package jtt.except;
 
-    /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
-     */
-    @Override
-    public void accept(ValueVisitor v) {
-        v.visitExceptionObject(this);
+public class BC_idiv2 {
+    public static int test(int a, int b) {
+        try {
+            return a / b;
+        } catch (Exception e) {
+            return -11;
+        }
     }
 }

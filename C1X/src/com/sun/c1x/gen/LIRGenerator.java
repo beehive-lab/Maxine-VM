@@ -612,12 +612,14 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitNullCheck(NullCheck x) {
+        LIRItem value = new LIRItem(x.object(), this);
+        // TODO: this is suboptimal because it may result in an unnecessary move
+        value.loadItem();
         if (x.canTrap()) {
-            LIRItem value = new LIRItem(x.object(), this);
-            value.loadItem();
             CodeEmitInfo info = stateFor(x);
             lir.nullCheck(value.result(), info);
         }
+        x.setOperand(value.result());
     }
 
     @Override
