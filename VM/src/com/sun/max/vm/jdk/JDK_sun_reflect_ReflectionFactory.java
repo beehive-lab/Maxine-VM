@@ -28,7 +28,6 @@ import java.util.*;
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -94,10 +93,8 @@ public class JDK_sun_reflect_ReflectionFactory {
      * Casts this reference to its corresponding {@code sun.reflect.ReflectionFactory} instance.
      * @return this object cast to a {@code sun.reflect.ReflectionFactory} instance
      */
-    @INLINE
-    private ReflectionFactory thisReflectionFactory() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native ReflectionFactory thisReflectionFactory();
 
     /**
      * Creates a new method accessor for the specified method.

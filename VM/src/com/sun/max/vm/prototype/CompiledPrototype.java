@@ -609,6 +609,7 @@ public class CompiledPrototype extends Prototype {
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
+            !methodActor.isUnsafeCast() &&
             (methodActor.isHiddenToReflection() || !methodActor.isBuiltin());
     }
 
