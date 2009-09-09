@@ -91,6 +91,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess CPSTargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "catchRangePositions", int[].class);
     public final TeleInstanceReferenceFieldAccess CPSTargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "compressedJavaFrameDescriptors", byte[].class);
     public final TeleInstanceReferenceFieldAccess CPSTargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(CPSTargetMethod.class, "encodedInlineDataDescriptors", byte[].class);
+    public final TeleInstanceIntFieldAccess CPSTargetMethod_frameReferenceMapSize = new TeleInstanceIntFieldAccess(CPSTargetMethod.class, "frameReferenceMapSize");
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping_table = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.class, "table", Entry[].class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classLoader = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classLoader", ClassLoader.class);
     public final TeleInstanceReferenceFieldAccess ClassActor_classfile = new TeleInstanceReferenceFieldAccess(ClassActor.class, "classfile", byte[].class);
@@ -162,7 +163,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "codeStart");
     public final TeleInstanceReferenceFieldAccess TargetMethod_compilerScheme = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "compilerScheme", RuntimeCompilerScheme.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "directCallees", Object[].class);
-    public final TeleInstanceIntFieldAccess TargetMethod_frameReferenceMapSize = new TeleInstanceIntFieldAccess(TargetMethod.class, "frameReferenceMapSize");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfIndirectCalls = new TeleInstanceIntFieldAccess(TargetMethod.class, "numberOfIndirectCalls");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfSafepoints = new TeleInstanceIntFieldAccess(TargetMethod.class, "numberOfSafepoints");
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "referenceLiterals", Object[].class);
