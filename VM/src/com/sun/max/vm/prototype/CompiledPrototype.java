@@ -317,7 +317,9 @@ public class CompiledPrototype extends Prototype {
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
-        clearCirCache(targetMethod);
+        if (targetMethod instanceof CPSTargetMethod) {
+            clearCirCache(targetMethod);
+        }
     }
 
     private void clearCirCache(TargetMethod targetMethod) {

@@ -166,6 +166,7 @@ public class C1XTargetMethod extends TargetMethod {
     private void initFrameLayout(CiTargetMethod ciTargetMethod) {
         this.referenceRegisterCount = ciTargetMethod.referenceRegisterCount();
         this.setFrameSize(ciTargetMethod.frameSize());
+        this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset);
     }
 
     private void initStopPositions(CiTargetMethod ciTargetMethod) {
@@ -300,15 +301,6 @@ public class C1XTargetMethod extends TargetMethod {
             final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
             callSite.writeWord(0, patch);
         }
-    }
-
-    public void setGenerated(int[] stopPositions, Object[] directCallees,
-                    int indirectCalls, int safepoints, byte[] data, Object[] refLiterals, byte[] targetCode, int frameSize, int registerRestoreEpilogueOffset) {
-
-        super.setStopPositions(stopPositions, directCallees, indirectCalls, safepoints);
-        super.setFrameSize(frameSize);
-        super.setData(data, refLiterals, targetCode);
-        super.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
     }
 
     @Override
