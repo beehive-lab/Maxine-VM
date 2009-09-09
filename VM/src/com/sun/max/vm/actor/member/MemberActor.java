@@ -47,11 +47,6 @@ public abstract class MemberActor extends Actor {
         this.descriptor = descriptor;
     }
 
-//    @INLINE(override = true)
-//    public Descriptor descriptor() {
-//        return descriptor;
-//    }
-
     @CONSTANT
     @INSPECTED
     private ClassActor holder;
