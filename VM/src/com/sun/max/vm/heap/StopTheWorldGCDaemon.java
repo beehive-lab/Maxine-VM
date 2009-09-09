@@ -302,7 +302,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     @PROTOTYPE_ONLY
     public static void checkInvariants() {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
-        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
+        final CPSTargetMethod targetMethod = (CPSTargetMethod) CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
         if (targetMethod != null) {
             final Object[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {

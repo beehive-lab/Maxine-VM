@@ -315,7 +315,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#catchRangePositions()
      */
     public int[] getCatchRangePositions() {
-        final Reference intArrayReference = teleVM().fields().ExceptionRangeTargetMethod_catchRangePositions.readReference(reference());
+        final Reference intArrayReference = teleVM().fields().CPSTargetMethod_catchRangePositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;
@@ -327,7 +327,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#catchBlockPositions()
      */
     public int[] getCatchBlockPositions() {
-        final Reference intArrayReference = teleVM().fields().ExceptionRangeTargetMethod_catchBlockPositions.readReference(reference());
+        final Reference intArrayReference = teleVM().fields().CPSTargetMethod_catchBlockPositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;
@@ -379,7 +379,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
      * @see TargetMethod#encodedInlineDataDescriptors()
      */
     public final byte[] getEncodedInlineDataDescriptors() {
-        final Reference encodedInlineDataDescriptorsReference = teleVM().fields().TargetMethod_encodedInlineDataDescriptors.readReference(reference());
+        final Reference encodedInlineDataDescriptorsReference = teleVM().fields().CPSTargetMethod_encodedInlineDataDescriptors.readReference(reference());
         final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) teleVM().makeTeleObject(encodedInlineDataDescriptorsReference);
         return teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
     }
@@ -388,7 +388,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
         if (javaFrameDescriptors == null) {
-            final Reference byteArrayReference = teleVM().fields().TargetMethod_compressedJavaFrameDescriptors.readReference(reference());
+            final Reference byteArrayReference = teleVM().fields().CPSTargetMethod_compressedJavaFrameDescriptors.readReference(reference());
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) teleVM().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 return null;
@@ -470,7 +470,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     /**
      * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
      *
-     * @see TargetMethod#traceDirectCallees(IndentWriter)
+     * @see CPSTargetMethod#traceDirectCallees(IndentWriter)
      */
     public final void traceDirectCallees(IndentWriter writer) {
         final Reference[] directCallees = getDirectCallees();

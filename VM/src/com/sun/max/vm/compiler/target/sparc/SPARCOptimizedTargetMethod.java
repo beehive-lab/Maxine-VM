@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target.sparc;
 
-import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -34,11 +33,6 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
 
     public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
-        return SPARCTargetMethod.Static.instructionSet();
     }
 
     @Override

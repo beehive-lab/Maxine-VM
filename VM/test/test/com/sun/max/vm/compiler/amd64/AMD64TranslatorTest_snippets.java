@@ -57,7 +57,7 @@ public class AMD64TranslatorTest_snippets extends CompilerTestCase {
         AMD64Disassembler disassembler;
         for (Snippet snippet : Snippet.snippets()) {
             Trace.line(1, "snippet " + snippet.name() + ":");
-            final TargetMethod targetMethod = (TargetMethod) compilerTestSetup().translate(snippet.classMethodActor());
+            final CPSTargetMethod targetMethod = (CPSTargetMethod) compilerTestSetup().translate(snippet.classMethodActor());
             targetMethod.traceBundle(IndentWriter.traceStreamWriter());
             disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
             final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));

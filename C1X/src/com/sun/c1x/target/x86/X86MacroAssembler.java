@@ -2699,4 +2699,5 @@ public class X86MacroAssembler extends X86Assembler {
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));
     }
+
 }

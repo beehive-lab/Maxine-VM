@@ -230,9 +230,9 @@ public class GraphStats {
         total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
-        total += sizeOf(targetMethod.referenceMaps());
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
         total += sizeOf(targetMethod.scalarLiterals());
-        total += sizeOf(targetMethod.stopPositions());
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
         return total;
     }
 

@@ -97,14 +97,14 @@ public abstract class Stop {
         /**
          * The template containing this derived stop.
          */
-        final TargetMethod template;
+        final CPSTargetMethod template;
 
         /**
          * The stop-type specific index of this stop.
          */
         final int index;
 
-        public TemplateStop(int position, int bytecodePosition, TargetMethod template, int index) {
+        public TemplateStop(int position, int bytecodePosition, CPSTargetMethod template, int index) {
             super(position, bytecodePosition);
             this.template = template;
             this.index = index;
@@ -125,7 +125,7 @@ public abstract class Stop {
      * Represents an {@linkplain StopType#INDIRECT_CALL indirect call} stop copied from a template.
      */
     public static class TemplateIndirectCall extends TemplateStop {
-        public TemplateIndirectCall(int position, int bytecodePosition, TargetMethod template, int indirectCallIndex) {
+        public TemplateIndirectCall(int position, int bytecodePosition, CPSTargetMethod template, int indirectCallIndex) {
             super(position, bytecodePosition, template, indirectCallIndex);
         }
 
@@ -139,7 +139,7 @@ public abstract class Stop {
      * Represents a {@linkplain StopType#DIRECT_CALL direct call} stop copied from a template.
      */
     public static class TemplateDirectCall extends TemplateStop {
-        public TemplateDirectCall(int position, int bytecodePosition, TargetMethod template, int directCallIndex) {
+        public TemplateDirectCall(int position, int bytecodePosition, CPSTargetMethod template, int directCallIndex) {
             super(position, bytecodePosition, template, directCallIndex);
         }
 
@@ -163,7 +163,7 @@ public abstract class Stop {
      * Represents a {@linkplain StopType#SAFEPOINT safepoint} stop copied from a template.
      */
     public static class TemplateSafepoint extends TemplateStop {
-        public TemplateSafepoint(int position, int bytecodePosition, TargetMethod template, int safepointIndex) {
+        public TemplateSafepoint(int position, int bytecodePosition, CPSTargetMethod template, int safepointIndex) {
             super(position, bytecodePosition, template, safepointIndex);
         }
 

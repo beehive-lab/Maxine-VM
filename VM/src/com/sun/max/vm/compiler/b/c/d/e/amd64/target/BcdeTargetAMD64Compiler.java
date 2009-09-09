@@ -237,6 +237,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
+
+                assert targetMethod instanceof CPSTargetMethod;
+                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
                 Pointer trapState = stackFrameWalker.trapState();
@@ -270,18 +273,23 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                                 // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                                 // the register references based on its Java frame descriptor.
                                 FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                                preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), catchAddress.asPointer());
+                                cpsTargetMethod.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), catchAddress.asPointer(), preparer);
                             }
                         } else {
                             // Only scan with references in registers for a caller that did not trap due to an implicit exception.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-                            preparer.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerInstructionPointer);
+                            cpsTargetMethod.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerInstructionPointer, preparer);
                         }
                     }
                 }
                 final Pointer ignoredOperandStackPointer = Pointer.zero();
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
+
+                if (preparer.checkIgnoreCurrentFrame()) {
+                    break;
+                }
+
+                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
                     return false;
                 }
                 break;

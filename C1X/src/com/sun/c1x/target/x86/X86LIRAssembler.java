@@ -2474,17 +2474,17 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool) {
+    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         // (tw) TODO: Find out if we need to align calls!
         //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
 
 
         if (method.isLoaded()) {
-            masm.call(method);
+            masm.call(method, info.oopMap.stackMap());
         } else {
             assert entry != null;
             masm().callRuntimeCalleeSaved(entry, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
-            masm().call(rscratch1);
+            masm().call(rscratch1, method, info.oopMap.stackMap());
         }
         addCallInfoHere(info);
     }
@@ -2527,7 +2527,7 @@ public class X86LIRAssembler extends LIRAssembler {
             callAddress = new Address(rscratch1);
         }
 
-        masm.call(callAddress);
+        masm.call(callAddress, method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 
@@ -2551,7 +2551,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         addCallInfoHere(info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffsetInBytes()));
-        masm.call(new Address(rscratch1, 0));
+        masm.call(new Address(rscratch1, 0), method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 

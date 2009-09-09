@@ -901,8 +901,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 LOGGER.info("Processing stackframe " + stackFrame);
 
                 int index = -1;
-                if (stackFrame.targetMethod() != null) {
-                    index = stackFrame.targetMethod().findClosestStopIndex(stackFrame.instructionPointer, true);
+                if (stackFrame.targetMethod() != null && stackFrame.targetMethod() instanceof CPSTargetMethod) {
+                    index = ((CPSTargetMethod) stackFrame.targetMethod()).findClosestStopIndex(stackFrame.instructionPointer, true);
                 }
                 if (index != -1) {
                     final int stopIndex = index;
