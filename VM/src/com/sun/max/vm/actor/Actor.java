@@ -92,8 +92,12 @@ public abstract class Actor {
     public static final int ACC_STRICT =       0x00000800;
 
     // VM-internal flags for methods:
+    public static final int NO_SAFEPOINTS =        0x00004000;
+    public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
+                                                   0x00010000;
     public static final int UNSAFE_CAST =          0x00020000;
     public static final int WRAPPER =              0x00100000;
+    // see above            TEMPLATE =             0x00200000;
     public static final int CLASS_INITIALIZER =    0x00400000;
     public static final int INSTANCE_INITIALIZER = 0x00800000;
     public static final int C_FUNCTION =           0x01000000;
@@ -104,9 +108,6 @@ public abstract class Actor {
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
-    public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
-                                                   0x00010000;
-    public static final int NO_SAFEPOINTS =        0x00004000;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -167,6 +168,11 @@ public abstract class Actor {
     protected Actor(Utf8Constant name, int flags) {
         this.flags = flags;
         this.name = name;
+    }
+
+    @Override
+    public final boolean equals(Object object) {
+        return object == this;
     }
 
     /**
