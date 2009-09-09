@@ -8439,6 +8439,90 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_except_Catch_Two01() {
+        JavaTesterRunScheme.begin("jtt.except.Catch_Two01");
+        String runString = null;
+        try {
+        // (0) == java.lang.NullPointerException
+            runString = "(0)";
+            if (!"java.lang.NullPointerException".equals(jtt.except.Catch_Two01.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == java.lang.ArithmeticException
+            runString = "(1)";
+            if (!"java.lang.ArithmeticException".equals(jtt.except.Catch_Two01.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == none
+            runString = "(3)";
+            if (!"none".equals(jtt.except.Catch_Two01.test(3))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_except_Catch_Two02() {
+        JavaTesterRunScheme.begin("jtt.except.Catch_Two02");
+        String runString = null;
+        try {
+        // (0) == java.lang.NullPointerException
+            runString = "(0)";
+            if (!"java.lang.NullPointerException".equals(jtt.except.Catch_Two02.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == java.lang.ArithmeticException
+            runString = "(1)";
+            if (!"java.lang.ArithmeticException".equals(jtt.except.Catch_Two02.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == none13
+            runString = "(3)";
+            if (!"none13".equals(jtt.except.Catch_Two02.test(3))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void jtt_except_Catch_Two03() {
+        JavaTesterRunScheme.begin("jtt.except.Catch_Two03");
+        String runString = null;
+        try {
+        // (0) == none4
+            runString = "(0)";
+            if (!"none4".equals(jtt.except.Catch_Two03.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == none4
+            runString = "(1)";
+            if (!"none4".equals(jtt.except.Catch_Two03.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == java.lang.NullPointerException3
+            runString = "(2)";
+            if (!"java.lang.NullPointerException3".equals(jtt.except.Catch_Two03.test(2))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_except_Except_Synchronized01() {
         JavaTesterRunScheme.begin("jtt.except.Except_Synchronized01");
         String runString = null;
