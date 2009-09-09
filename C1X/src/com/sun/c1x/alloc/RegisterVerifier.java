@@ -263,7 +263,7 @@ public class RegisterVerifier {
             }
 
             // process xhandler before output and temp operands
-            List<ExceptionHandler> xhandlers = op.allXhandler();
+            List<ExceptionHandler> xhandlers = op.exceptionEdges();
             n = xhandlers.size();
             for (int k = 0; k < n; k++) {
                 processXhandler(xhandlers.get(k), inputState);

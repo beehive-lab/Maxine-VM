@@ -157,7 +157,7 @@ public class CiTarget {
     }
 
     public boolean isP6() {
-        return false;
+        return true;
     }
 
     public boolean supportsCx8() {
