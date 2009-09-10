@@ -354,6 +354,7 @@ public class CompiledPrototype extends Prototype {
         if (methodActor == null) {
             return false;
         }
+
         if (isIndirectCall(relationship)) {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
@@ -611,6 +612,7 @@ public class CompiledPrototype extends Prototype {
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
+            !methodActor.isUnsafeCast() &&
             (methodActor.isHiddenToReflection() || !methodActor.isBuiltin());
     }
 
@@ -641,7 +643,6 @@ public class CompiledPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             if (targetMethod.classMethodActor() == null || (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor()))) {
                 if (!targetMethod.linkDirectCalls()) {
-                    targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             } else {
