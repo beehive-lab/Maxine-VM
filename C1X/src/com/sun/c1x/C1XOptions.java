@@ -93,7 +93,7 @@ public class C1XOptions {
     public static boolean CanonicalizeMultipliesToShifts     = true;
     public static boolean CanonicalizeObjectCheckCast        = true;
     public static boolean CanonicalizeObjectInstanceOf       = true;
-    public static boolean CanonicalizeFoldableMethods        = ____;
+    public static boolean CanonicalizeFoldableMethods        = true;
 
     // local value numbering / load elimination settings
     public static boolean UseLocalValueNumbering             = ____;

@@ -168,7 +168,7 @@ public @interface UNSAFE {
                     if (methodRefConstant.holder(pool).toJavaString().startsWith(vmPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
                         try {
                             final MethodActor methodActor = methodRefConstant.resolve(pool, index);
-                            if (methodActor.isUnsafe()) {
+                            if (methodActor.isUnsafe() || methodActor.isBuiltin() || methodActor.isUnsafeCast()) {
                                 isUnsafe.setValue(true);
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
@@ -216,7 +216,7 @@ public @interface UNSAFE {
         }
 
         private static final String unsafePackageName = new com.sun.max.unsafe.Package().name();
-        private static final String vmPackageName = new com.sun.max.vm.Package().name();
+        private static final String vmPackageName = new com.sun.max.Package().name();
         private static final String asmPackageName = new com.sun.max.vm.asm.Package().name();
 
         /**
@@ -239,6 +239,7 @@ public @interface UNSAFE {
             }
             // Only now set the flag, because it is NOT transitive that a method that calls another unsafe one is also unsafe:
             for (ClassMethodActor classMethodActor : list) {
+                Trace.line(2, "unsafe method: " + classMethodActor.toString());
                 classMethodActor.beUnsafe();
             }
             Trace.end(1, "determining unsafe methods");
