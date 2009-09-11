@@ -84,7 +84,7 @@ public abstract class LIRAssembler {
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, CiRegister obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.machineCodeMoveConstInstructionSize) {
             asm.nop();
         }
         patch.install(asm, patchCode, obj, info);

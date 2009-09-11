@@ -506,7 +506,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         CiRegister s = X86.rcx; // shift count
-        int n = target.arch.bitsPerWord;
+        int n = target.arch.wordSize * Byte.SIZE;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)
@@ -525,7 +525,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         CiRegister s = X86.rcx; // shift count
-        int n = target.arch.bitsPerWord;
+        int n = target.arch.wordSize * Byte.SIZE;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)
