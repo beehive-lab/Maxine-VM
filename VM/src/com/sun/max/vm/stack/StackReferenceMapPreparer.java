@@ -663,11 +663,7 @@ public final class StackReferenceMapPreparer {
      * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
      */
     private void prepareTrampolineFrameForJITCaller(JitTargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
-        // The instruction pointer is now just beyond the call machine instruction.
-        // Just in case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
-        // Thus we always look up what bytecode we were in during the call,
-        final int bytecodePosition = caller.bytecodePositionFor(instructionPointer.minus(1));
-
+        final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
         final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool();
         final byte[] code = codeAttribute.code();
