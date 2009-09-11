@@ -448,10 +448,10 @@ public class X86LIRAssembler extends LIRAssembler {
             case Double:
 
                 if (compilation.target.arch.is64bit()) {
-                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes), c.asLongBits());
+                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.lowWordOffset), c.asLongBits());
                 } else {
-                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes), c.asIntLoBits());
-                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.hiWordOffsetInBytes), c.asIntHiBits());
+                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.lowWordOffset), c.asIntLoBits());
+                    masm().movptr(frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.highWordOffset), c.asIntHiBits());
                 }
                 break;
 
@@ -618,12 +618,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
         } else if (src.isDoubleCpu()) {
             if (!compilation.target.arch.is64bit()) {
-                Address dstLO = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes);
+                Address dstLO = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.lowWordOffset);
                 masm().movptr(dstLO, src.asRegisterLo());
-                Address dstHI = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.hiWordOffsetInBytes);
+                Address dstHI = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.highWordOffset);
                 masm().movptr(dstHI, src.asRegisterHi());
             } else {
-                Address dstLO = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes);
+                Address dstLO = frameMap().addressForSlot(dest.doubleStackIx(), compilation.target.arch.lowWordOffset);
                 masm().movptr(dstLO, src.asRegisterLo());
 
             }
@@ -768,8 +768,8 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
         } else if (dest.isDoubleCpu()) {
-            Address srcAddrLO = frameMap().addressForSlot(src.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes);
-            Address srcAddrHI = frameMap().addressForSlot(src.doubleStackIx(), compilation.target.arch.hiWordOffsetInBytes);
+            Address srcAddrLO = frameMap().addressForSlot(src.doubleStackIx(), compilation.target.arch.lowWordOffset);
+            Address srcAddrHI = frameMap().addressForSlot(src.doubleStackIx(), compilation.target.arch.highWordOffset);
             masm().movptr(dest.asRegisterLo(), srcAddrLO);
             if (!compilation.target.arch.is64bit()) {
                 masm().movptr(dest.asRegisterHi(), srcAddrHI);
@@ -1713,9 +1713,9 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (opr2.isSingleStack()) {
                 masm().cmovl(ncond, result.asRegister(), frameMap().addressForSlot(opr2.singleStackIx()));
             } else if (opr2.isDoubleStack()) {
-                masm().cmovptr(ncond, result.asRegisterLo(), frameMap().addressForSlot(opr2.doubleStackIx(), compilation.target.arch.loWordOffsetInBytes));
+                masm().cmovptr(ncond, result.asRegisterLo(), frameMap().addressForSlot(opr2.doubleStackIx(), compilation.target.arch.lowWordOffset));
                 if (!compilation.target.arch.is64bit()) {
-                    masm().cmovptr(ncond, result.asRegisterHi(), frameMap().addressForSlot(opr2.doubleStackIx(), compilation.target.arch.hiWordOffsetInBytes));
+                    masm().cmovptr(ncond, result.asRegisterHi(), frameMap().addressForSlot(opr2.doubleStackIx(), compilation.target.arch.highWordOffset));
                 }
             } else {
                 throw Util.shouldNotReachHere();
@@ -2457,10 +2457,10 @@ public class X86LIRAssembler extends LIRAssembler {
             switch (code) {
                 case StaticCall:
                 case OptVirtualCall:
-                    offset += compilation.target.arch.nativeCallDisplacementOffset;
+                    offset += compilation.target.arch.machineCodeCallDisplacementOffset;
                     break;
                 case IcVirtualCall:
-                    offset += compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize;
+                    offset += compilation.target.arch.machineCodeCallDisplacementOffset + compilation.target.arch.machineCodeMoveConstInstructionSize;
                     break;
                 case VirtualCall:
                     break;

@@ -3429,8 +3429,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     @Override
     public final void patchJumpTarget(int branch, int branchTarget) {
-        assert target.arch.isX86();
-
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
                         ||

@@ -109,12 +109,12 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int vregNumber() {
-        assert index >= virtualRegisterBase();
+        assert index >= CiRegister.FirstVirtualRegisterNumber;
         return index;
     }
 
     public int pregNumber() {
-        assert index < virtualRegisterBase() && index >= 0;
+        assert index < CiRegister.FirstVirtualRegisterNumber && index >= 0;
         return index;
     }
 
@@ -131,12 +131,12 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVirtualCpu() {
-        return !isStack() && index >= virtualRegisterBase();
+        return !isStack() && index >= CiRegister.FirstVirtualRegisterNumber;
     }
 
     @Override
     public boolean isFixedCpu() {
-        return !isStack() && index < virtualRegisterBase();
+        return !isStack() && index < CiRegister.FirstVirtualRegisterNumber;
     }
 
     @Override
@@ -220,12 +220,5 @@ public final class LIRLocation extends LIROperand {
     public int cpuRegnrHi() {
         assert this.isRegister() && !this.isVirtualRegister();
         return location2.number;
-    }
-
-    /**
-     * @return the minimum virtual register value
-     */
-    public static int virtualRegisterBase() {
-        return CiRegister.vregBase;
     }
 }
