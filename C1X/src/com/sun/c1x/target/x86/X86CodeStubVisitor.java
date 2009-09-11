@@ -55,7 +55,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // save the caller's RBP
 
 
-        final int wordSize =  masm.target.arch.wordSize;
+        final int wordSize =  compilation.target.arch.wordSize;
 
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
@@ -87,7 +87,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             CiLocation location = cc.locations()[i];
             CiKind t = location.kind;
             LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, t);
-            ce.moveOp(src, cc.at(i), t, LIRPatchCode.PatchNone, null, false);
+            ce.moveOp(src, cc.at(i), t, null, false);
             jitCallerStackOffset += t.size * jitSlotSize;
         }
 
@@ -231,120 +231,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         ce.verifyOopMap(stub.info);
         assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
-    }
-
-    public void visitPatchingStub(PatchingStub stub) {
-        assert compilation.target.arch.machineCodeMoveConstInstructionSize <= stub.bytesToCopy && stub.bytesToCopy <= 0xFF : "not enough room for call";
-
-        // TODO: Implement this properly!
-//
-// Label callPatch = new Label();
-//
-// // static field accesses have special semantics while the class
-// // initializer is being run so we emit a test which can be used to
-// // check that this code is being executed by the initializing
-// // thread.
-// Pointer beingInitializedEntry = lir(). pc();
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment(" patch template");
-// }
-// if (stub.id() == PatchID.LoadKlassId) {
-// // produce a copy of the load klass instruction for use by the being initialized case
-// Pointer start = lir(). pc();
-// Object o = null;
-// lir(). movoop(stub.obj, o);
-//
-// if (C1XOptions.DetailedAsserts) {
-// for (int i = 0; i < stub.bytesToCopy; i++) {
-// Pointer ptr = (Pointer)(stub.pcStart + i);
-// int aByte = (ptr) & 0xFF;
-// assert aByte == *start++ : "should be the same code";
-// }
-// }
-// } else {
-// // make a copy the code which is going to be patched.
-// for ( int i = 0; i < bytesToCopy; i++) {
-// Pointer ptr = (Pointer)(pcStart + i);
-// int aByte = (ptr) & 0xFF;
-// lir(). aByte (aByte);
-// *ptr = 0x90; // make the site look like a nop
-// }
-// }
-//
-// Pointer endOfPatch = lir(). pc();
-// int bytesToSkip = 0;
-// if (stub.id() == PatchID.LoadKlassId) {
-// int offset = lir(). offset();
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment(" beingInitialized check");
-// }
-// assert stub.obj != Register.noreg : "must be a valid register";
-// Register tmp = X86Register.rax;
-// if (stub.obj == tmp) tmp = X86Register.rbx;
-// lir(). push(tmp);
-// lir(). getThread(tmp);
-// lir(). cmpptr(tmp, new Address(stub.obj, compilation.runtime.initThreadOffsetInBytes() +
-        // compilation.runtime.sizeofKlassOopDesc()));
-// lir(). pop(tmp);
-// lir(). jcc(X86Assembler.Condition.notEqual, callPatch);
-//
-// // accessField patches may execute the patched code before it's
-// // copied back into place so we need to jump back into the main
-// // code of the nmethod to continue execution.
-// lir(). jmp(stub.patchSiteContinuation);
-//
-// // make sure this extra code gets skipped
-// bytesToSkip += lir(). offset() - offset;
-// }
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment("patch data encoded as movl");
-// }
-// // Now emit the patch record telling the runtime how to find the
-// // pieces of the patch. We only need 3 bytes but for readability of
-// // the disassembly we make the data look like a movl reg, imm32,
-// // which requires 5 bytes
-// int sizeofPatchRecord = 5;
-// bytesToSkip += sizeofPatchRecord;
-//
-// // emit the offsets needed to find the code to patch
-// int beingInitializedEntryOffset = lir(). pc() - beingInitializedEntry + sizeofPatchRecord;
-//
-// lir(). aByte(0xB8);
-// lir(). aByte(0);
-// lir(). aByte(beingInitializedEntryOffset);
-// lir(). aByte(bytesToSkip);
-// lir(). aByte(stub.bytesToCopy);
-// Pointer patchInfoPc = lir(). pc();
-// assert patchInfoPc - endOfPatch == bytesToSkip : "incorrect patch info";
-//
-// Pointer entry = lir(). pc();
-// NativeGeneralJump.insertUnconditional((Pointer)pcStart, entry);
-// CiRuntimeCall target = null;
-// switch (stub.id()) {
-// case AccessFieldId: target = CiRuntimeCall.AccessFieldPatching; break;
-// case LoadKlassId: target = CiRuntimeCall.LoadKlassPatching; break;
-// default: throw Util.shouldNotReachHere();
-// }
-// lir(). bind(callPatch);
-//
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment("patch entry point");
-// }
-// lir(). call(new RuntimeAddress(target));
-// assert patchInfoOffset == (patchInfoPc - lir(). pc()) : "must not change";
-// ce.addCallInfoHere(info);
-// int jmpOff = lir(). offset();
-// lir(). jmp(stub.patchSiteEntry);
-// // Add enough nops so deoptimization can overwrite the jmp above with a call
-// // and not destroy the world.
-// for (int j = lir(). offset() ; j < jmpOff + 5 ; j++ ) {
-// lir(). nop();
-// }
-// if (stub.id() == PatchID.LoadKlassId) {
-// CodeSection cs = lir(). codeSection();
-// RelocIterator iter(cs, (Pointer)pcStart, (Pointer)(pcStart + 1));
-// RelocInfo.Type.changeRelocInfoForAddress(&iter, (Pointer) pcStart, RelocInfo.Type.oopType, RelocInfo.Type.none);
-// }
     }
 
     public void visitRangeCheckStub(RangeCheckStub stub) {

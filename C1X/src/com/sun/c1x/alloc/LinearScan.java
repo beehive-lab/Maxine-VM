@@ -41,7 +41,6 @@ import com.sun.c1x.value.*;
  */
 public class LinearScan {
 
-    private int vregBase;
     private CiRegister[] registerMapping;
     private boolean[] allocatableRegister;
     int nofRegs;
@@ -86,8 +85,6 @@ public class LinearScan {
         this.cachedBlocks = new ArrayList<BlockBegin>(ir.linearScanOrder());
 
         initializeRegisters(compilation.target.allocatableRegisters);
-
-        vregBase = nofRegs;
 
         // note: to use more than on instance of LinearScan at a time this function call has to
         // be moved somewhere outside of this constructor:
@@ -206,20 +203,20 @@ public class LinearScan {
     // * functions for classification of intervals
 
     boolean isPrecoloredInterval(Interval i) {
-        return i.regNum() < nofRegs;
+        return i.registerNumber() < nofRegs;
     }
 
     IntervalClosure isPrecoloredInterval = new IntervalClosure() {
 
         public boolean apply(Interval i) {
-            return isCpu(i.regNum()) || isXmm(i.regNum());
+            return isCpu(i.registerNumber()) || isXmm(i.registerNumber());
         }
     };
 
     IntervalClosure isVirtualInterval = new IntervalClosure() {
 
         public boolean apply(Interval i) {
-            return i.regNum() >= vregBase;
+            return i.registerNumber() >= CiRegister.FirstVirtualRegisterNumber;
         }
     };
 
@@ -227,7 +224,7 @@ public class LinearScan {
 
         public boolean apply(Interval i) {
             // fixed intervals never contain oops
-            return i.regNum() >= nofRegs && i.type() == CiKind.Object;
+            return i.registerNumber() >= nofRegs && i.type() == CiKind.Object;
         }
     };
 
@@ -289,7 +286,7 @@ public class LinearScan {
         intervals.set(regNum, interval);
 
         // assign register number for precolored intervals
-        if (regNum < vregBase) {
+        if (regNum < CiRegister.FirstVirtualRegisterNumber) {
             interval.assignReg(regNum);
         }
         return interval;
@@ -298,18 +295,18 @@ public class LinearScan {
     // assign a new regNum to the interval and append it to the list of intervals
     // (only used for child intervals that are created during register allocation)
     void appendInterval(Interval it) {
-        it.setRegNum(intervals.size());
+        it.setRegisterNumber(intervals.size());
         intervals.add(it);
         newIntervalsFromAllocation.add(it);
     }
 
     // copy the vreg-flags if an interval is split
     void copyRegisterFlags(Interval from, Interval to) {
-        if (gen().isVregFlagSet(from.regNum(), LIRGenerator.VregFlag.ByteReg)) {
-            gen().setVregFlag(to.regNum(), LIRGenerator.VregFlag.ByteReg);
+        if (gen().isVregFlagSet(from.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
+            gen().setVregFlag(to.registerNumber(), LIRGenerator.VregFlag.ByteReg);
         }
-        if (gen().isVregFlagSet(from.regNum(), LIRGenerator.VregFlag.CalleeSaved)) {
-            gen().setVregFlag(to.regNum(), LIRGenerator.VregFlag.CalleeSaved);
+        if (gen().isVregFlagSet(from.registerNumber(), LIRGenerator.VregFlag.CalleeSaved)) {
+            gen().setVregFlag(to.registerNumber(), LIRGenerator.VregFlag.CalleeSaved);
         }
 
         // Note: do not copy the mustStartInMemory flag because it is not necessary for child
@@ -526,7 +523,7 @@ public class LinearScan {
         if (C1XOptions.DetailedAsserts) {
             Interval prev = null;
             Interval temp = interval;
-            while (temp != Interval.end()) {
+            while (temp != Interval.EndMarker) {
                 assert temp.spillDefinitionPos() > 0 : "invalid spill definition pos";
                 if (prev != null) {
                     assert temp.from() >= prev.from() : "intervals not sorted";
@@ -575,10 +572,10 @@ public class LinearScan {
 
                 } else {
                     // insert move from register to stack just after the beginning of the interval
-                    assert interval == Interval.end() || interval.spillDefinitionPos() >= opId : "invalid order";
-                    assert interval == Interval.end() || (interval.isSplitParent() && interval.spillState() == IntervalSpillState.storeAtDefinition) : "invalid interval";
+                    assert interval == Interval.EndMarker || interval.spillDefinitionPos() >= opId : "invalid order";
+                    assert interval == Interval.EndMarker || (interval.isSplitParent() && interval.spillState() == IntervalSpillState.storeAtDefinition) : "invalid interval";
 
-                    while (interval != Interval.end() && interval.spillDefinitionPos() == opId) {
+                    while (interval != Interval.EndMarker && interval.spillDefinitionPos() == opId) {
                         if (!hasNew) {
                             // prepare insertion buffer (appended when all instructions of the block are processed)
                             insertionBuffer.init(block.lir());
@@ -590,7 +587,7 @@ public class LinearScan {
                         assert fromOpr.isFixedCpu() : "from operand must be a register";
                         assert toOpr.isStack() : "to operand must be a stack slot";
 
-                        insertionBuffer.move(j, fromOpr, toOpr);
+                        insertionBuffer.move(j, fromOpr, toOpr, null);
                         // Util.traceLinearScan(4, "inserting move after definition of interval %d to stack slot %d at opId %d", interval.regNum(), interval.canonicalSpillSlot() - nofRegs, opId);
 
                         interval = interval.next();
@@ -603,7 +600,7 @@ public class LinearScan {
             }
         } // end of block iteration
 
-        assert interval == Interval.end() : "missed an interval";
+        assert interval == Interval.EndMarker : "missed an interval";
     }
 
     // * Phase 1: number all instructions in all blocks
@@ -1081,7 +1078,7 @@ public class LinearScan {
     void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind type) {
         Interval interval = intervalAt(regNum);
         if (interval != null) {
-            assert interval.regNum() == regNum : "wrong interval";
+            assert interval.registerNumber() == regNum : "wrong interval";
 
             if (type != CiKind.Illegal) {
                 interval.setType(type);
@@ -1128,7 +1125,7 @@ public class LinearScan {
         if (interval == null) {
             interval = createInterval(regNum);
         }
-        assert interval.regNum() == regNum : "wrong interval";
+        assert interval.registerNumber() == regNum : "wrong interval";
 
         if (type != CiKind.Illegal) {
             interval.setType(type);
@@ -1143,7 +1140,7 @@ public class LinearScan {
         if (interval == null) {
             interval = createInterval(regNum);
         }
-        assert interval.regNum() == regNum : "wrong interval";
+        assert interval.registerNumber() == regNum : "wrong interval";
 
         if (type != CiKind.Illegal) {
             interval.setType(type);
@@ -1619,8 +1616,8 @@ public class LinearScan {
     Interval[] createUnhandledLists(IntervalClosure isList1, IntervalClosure isList2) {
         assert isSorted(sortedIntervals) : "interval list is not sorted";
 
-        Interval list1 = Interval.end();
-        Interval list2 = Interval.end();
+        Interval list1 = Interval.EndMarker;
+        Interval list2 = Interval.EndMarker;
 
         Interval[] result = new Interval[2];
         Interval list1Prev = null;
@@ -1644,14 +1641,14 @@ public class LinearScan {
         }
 
         if (list1Prev != null) {
-            list1Prev.setNext(Interval.end());
+            list1Prev.setNext(Interval.EndMarker);
         }
         if (list2Prev != null) {
-            list2Prev.setNext(Interval.end());
+            list2Prev.setNext(Interval.EndMarker);
         }
 
-        assert list1Prev == null || list1Prev.next() == Interval.end() : "linear list ends not with sentinel";
-        assert list2Prev == null || list2Prev.next() == Interval.end() : "linear list ends not with sentinel";
+        assert list1Prev == null || list1Prev.next() == Interval.EndMarker : "linear list ends not with sentinel";
+        assert list2Prev == null || list2Prev.next() == Interval.EndMarker : "linear list ends not with sentinel";
 
         result[0] = list1;
         result[1] = list2;
@@ -2411,22 +2408,13 @@ public class LinearScan {
 
         OopMap map = new OopMap(compilation.frameMap(), compilation.frameMap().frameSize(), compilation.target);
 
-        // Check if this is a patch site.
-        boolean isPatchInfo = false;
-        if (op.code == LIROpcode.Move) {
-            assert !isCallSite : "move must not be a call site";
-            LIROp1 move = (LIROp1) op;
-
-            isPatchInfo = move.patchCode() != LIRPatchCode.PatchNone;
-        }
-
         // Iterate through active intervals
-        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.end(); interval = interval.next()) {
+        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.EndMarker; interval = interval.next()) {
             int assignedReg = interval.assignedReg();
 
             assert interval.currentFrom() <= op.id() && op.id() <= interval.currentTo() : "interval should not be active otherwise";
             assert interval.assignedRegHi() == getAnyreg() : "oop must be single word";
-            assert interval.regNum() >= CiRegister.FirstVirtualRegisterNumber : "fixed interval found";
+            assert interval.registerNumber() >= CiRegister.FirstVirtualRegisterNumber : "fixed interval found";
 
             // Check if this range covers the instruction. Intervals that
             // start or end at the current operation are not included in the
@@ -2434,7 +2422,7 @@ public class LinearScan {
             // moves, any intervals which end at this instruction are included
             // in the oop map since we may safepoint while doing the patch
             // before we've consumed the inputs.
-            if (isPatchInfo || op.id() < interval.currentTo()) {
+            if (op.id() < interval.currentTo()) {
 
                 // caller-save registers must not be included into oop-maps at calls
                 assert !isCallSite || assignedReg >= nofRegs || !isCallerSave(assignedReg) : "interval is in a caller-save register at a call . register will be overwritten";
@@ -2996,51 +2984,51 @@ public class LinearScan {
 
             i1.checkSplitChildren();
 
-            if (i1.regNum() != i) {
-                TTY.println("Interval %d is on position %d in list", i1.regNum(), i);
+            if (i1.registerNumber() != i) {
+                TTY.println("Interval %d is on position %d in list", i1.registerNumber(), i);
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
-            if (i1.regNum() >= CiRegister.FirstVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
-                TTY.println("Interval %d has no type assigned", i1.regNum());
+            if (i1.registerNumber() >= CiRegister.FirstVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
+                TTY.println("Interval %d has no type assigned", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
             if (i1.assignedReg() == getAnyreg()) {
-                TTY.println("Interval %d has no register assigned", i1.regNum());
+                TTY.println("Interval %d has no register assigned", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
             if (i1.assignedReg() == i1.assignedRegHi()) {
-                TTY.println("Interval %d: low and high register equal", i1.regNum());
+                TTY.println("Interval %d: low and high register equal", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
-                TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg);
+                TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg());
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
-            if (i1.first() == Range.end()) {
-                TTY.println("Interval %d has no Range", i1.regNum());
+            if (i1.first() == Range.EndMarker) {
+                TTY.println("Interval %d has no Range", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
                 assert false;
             }
 
-            for (Range r = i1.first(); r != Range.end(); r = r.next()) {
+            for (Range r = i1.first(); r != Range.EndMarker; r = r.next()) {
                 if (r.from() >= r.to()) {
-                    TTY.println("Interval %d has zero length range", i1.regNum());
+                    TTY.println("Interval %d has zero length range", i1.registerNumber());
                     i1.print(TTY.out, this);
                     TTY.cr();
                     assert false;
@@ -3068,7 +3056,7 @@ public class LinearScan {
                 int r2Hi = i2.assignedRegHi();
                 if (i1.intersects(i2) && (r1 == r2 || r1 == r2Hi || (r1Hi != getAnyreg() && (r1Hi == r2 || r1Hi == r2Hi)))) {
                     if (C1XOptions.DetailedAsserts) {
-                        TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.regNum(), i2.regNum());
+                        TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.registerNumber(), i2.registerNumber());
                         i1.print(TTY.out, this);
                         TTY.cr();
                         i2.print(TTY.out, this);
@@ -3107,10 +3095,6 @@ public class LinearScan {
                 if (op.infoCount() > 0) {
                     iw.walkBefore(op.id());
                     boolean checkLive = true;
-                    if (op.code == LIROpcode.Move) {
-                        LIROp1 move = (LIROp1) op;
-                        checkLive = (move.patchCode() == LIRPatchCode.PatchNone);
-                    }
                     LIRBranch branch = null;
                     if (op instanceof LIRBranch) {
                         branch = (LIRBranch) op;
@@ -3124,7 +3108,7 @@ public class LinearScan {
                     // Make sure none of the fixed registers is live across an
                     // oopmap since we can't handle that correctly.
                     if (checkLive) {
-                        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.end(); interval = interval.next()) {
+                        for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.EndMarker; interval = interval.next()) {
                             if (interval.currentTo() > op.id() + 1) {
                                 // This interval is live out of this op so make sure
                                 // that this interval represents some value that's

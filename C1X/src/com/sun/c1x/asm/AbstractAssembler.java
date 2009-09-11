@@ -92,7 +92,6 @@ public abstract class AbstractAssembler {
 
         if (C1XOptions.PrintAssembly) {
 
-
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Frame size: %d", framesize);
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
@@ -100,22 +99,18 @@ public abstract class AbstractAssembler {
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
             Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCode().length, C1XOptions.PrintAssemblyBytesPerLine);
 
-
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
             TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
-
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
                 TTY.println(x.toString());
             }
 
-
             Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.directCalls) {
                 TTY.println(x.toString());
             }
-
 
             Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Call x : targetMethod.indirectCalls) {

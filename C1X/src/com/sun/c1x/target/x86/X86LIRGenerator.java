@@ -1165,7 +1165,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(value, spill);
-            lir().volatileMove(spill, tempDouble, CiKind.Long);
+            lir().volatileMove(spill, tempDouble, CiKind.Long, null);
             lir().volatileMove(tempDouble, address, CiKind.Long, info);
         } else {
             lir().store(value, address, info);
@@ -1182,7 +1182,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // SSE2+ mode it can be moved directly.
             LIROperand tempDouble = newRegister(CiKind.Double);
             lir().volatileMove(address, tempDouble, CiKind.Long, info);
-            lir().volatileMove(tempDouble, result, CiKind.Long);
+            lir().volatileMove(tempDouble, result, CiKind.Long, null);
             if (C1XOptions.SSEVersion < 2) {
                 // no spill slot needed in SSE2 mode because xmm.cpu register move is possible
                 setVregFlag(result, VregFlag.MustStartInMemory);
