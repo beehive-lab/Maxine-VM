@@ -30,13 +30,11 @@ import com.sun.c0x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -62,6 +60,8 @@ public class C1XTest {
         "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
+    private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
+        "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
@@ -78,6 +78,8 @@ public class C1XTest {
         "Report timings in X\\tY\\n format for easy cut and paste to scatter plot.");
     private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
         "Report only the average compilation speed.");
+    private static final Option<Boolean> spreadsheetOption = options.newBooleanOption("spreadsheet", false,
+        "Report timing information in a spreadsheet-friendly format with tab characters.");
     private static final Option<Long> longerThanOption = options.newLongOption("longer-than", 0L,
         "Report only the compilation times that took longer than the specified number of nanoseconds.");
     private static final Option<Long> slowerThanOption = options.newLongOption("slower-than", 10000000000L,
@@ -89,19 +91,10 @@ public class C1XTest {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
 
-    private static final Option<Integer> optLevel;
+
 
     static {
-        // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX");
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        optLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
-            @Override
-            public void setValue(Integer value) {
-                C1XOptions.setOptimizationLevel(value);
-            }
-        };
-        options.addOption(optLevel, Syntax.REQUIRES_EQUALS);
+        C1XCompilerScheme.addOptions(options);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -116,7 +109,7 @@ public class C1XTest {
 
     public static void main(String[] args) {
         // set the default optimization level before parsing options
-        C1XOptions.setOptimizationLevel(optLevel.getDefaultValue());
+        C1XOptions.setOptimizationLevel(C1XCompilerScheme.OptLevel.getDefaultValue());
         options.parseArguments(args);
         reportC1XOptions();
         final String[] arguments = options.getArguments();
@@ -154,17 +147,17 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
+        final CiTarget target = createTarget();
         final MaxRiRuntime runtime = new MaxRiRuntime();
-        final XirRuntime xirRuntime = new MaxXirRuntime();
+        final XirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        final CiTarget target = createTarget();
         final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                doWarmup(compiler, runtime, xirRuntime, methods);
-                doCompile(compiler, runtime, xirRuntime, methods, progress);
+                doWarmup(compiler, runtime, xirGenerator, methods);
+                doCompile(compiler, runtime, xirGenerator, methods, progress);
             }
         });
 
@@ -175,13 +168,13 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
             out.println("Timing...");
             for (int i = 0; i < max; i++) {
-                doTimingRun(compiler, runtime, xirRuntime, methods);
+                doTimingRun(compiler, runtime, xirGenerator, methods);
                 // only aggressively resolve on the first run
                 C1XOptions.AggressivelyResolveCPEs = false;
             }
@@ -189,7 +182,7 @@ public class C1XTest {
             // compile all the methods and report progress
             for (MethodActor methodActor : methods) {
                 progress.begin(methodActor.toString());
-                final boolean result = compile(compiler, runtime, xirRuntime, methodActor, printBailoutOption.getValue(), false);
+                final boolean result = compile(compiler, runtime, xirGenerator, methodActor, printBailoutOption.getValue(), false);
                 if (result) {
                     progress.pass();
                 } else {
@@ -203,20 +196,20 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods) {
+    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
         long start = System.nanoTime();
         totalBytes = 0;
         totalInlinedBytes = 0;
         totalNs = 0;
         totalInstrs = 0;
         for (MethodActor methodActor : methods) {
-            compile(compiler, runtime, xirRuntime, methodActor, false, true);
+            compile(compiler, runtime, xirGenerator, methodActor, false, true);
         }
         lastRunNs = System.nanoTime() - start;
         reportAverage();
     }
 
-    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, List<MethodActor> methods) {
+    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -225,25 +218,32 @@ public class C1XTest {
                 out.print(".");
                 out.flush();
                 for (MethodActor actor : methods) {
-                    compile(compiler, runtime, xirRuntime, actor, false, false);
+                    compile(compiler, runtime, xirGenerator, actor, false, false);
                 }
             }
             out.println();
         }
     }
 
-    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, XirRuntime xirRuntime, MethodActor method, boolean printBailout, boolean timing) {
+    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
 
         RiMethod riMethod = runtime.getRiMethod((ClassMethodActor) method);
         final long startNs = System.nanoTime();
-        CiResult result = compiler.compileMethod(riMethod, xirRuntime);
+        CiResult result = compiler.compileMethod(riMethod, xirGenerator);
         if (timing && result.bailout() == null) {
             long timeNs = System.nanoTime() - startNs;
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
         }
+        if (printBailout && result.bailout() != null) {
+            out.println("");
+            if (printBailoutSizeOption.getValue()) {
+                out.println(method + " = " + result.statistics().byteCount + " bytes");
+            }
+            result.bailout().printStackTrace();
+        }
 
-        return true;
+        return result.bailout() == null;
     }
 
     private static boolean isCompilable(MethodActor method) {
@@ -473,14 +473,27 @@ public class C1XTest {
     }
 
     private static void reportAverage() {
-        out.print("Time: " + formatDouble(lastRunNs / ONE_BILLION, 14, 6) + " seconds   ");
         double totalBcps = ONE_BILLION * (totalBytes / (double) totalNs);
         double totalIBcps = ONE_BILLION * (totalInlinedBytes / (double) totalNs);
         double totalIps = ONE_BILLION * (totalInstrs / (double) totalNs);
-        out.print(formatDouble(totalBcps, 12, 2) + " bytes/s   ");
-        out.print(formatDouble(totalIBcps, 12, 2) + " bytes/s   ");
-        out.print(formatDouble(totalIps, 12, 2) + " insts/s");
-        out.println();
+        double seconds = lastRunNs / ONE_BILLION;
+        String secs = formatDouble(seconds, 14, 6);
+        String bcps = formatDouble(totalBcps, 12, 2);
+        String ibcps = formatDouble(totalIBcps, 12, 2);
+        String ips = formatDouble(totalIps, 12, 2);
+        if (!spreadsheetOption.getValue()) {
+            out.print("Time: " + secs + " seconds   ");
+            out.print(bcps + " bytes/s   ");
+            out.print(ibcps + " bytes/s   ");
+            out.print(ips + " insts/s");
+            out.println();
+        } else {
+            out.print(seconds + "\t");
+            out.print(totalBcps + "\t");
+            out.print(totalIBcps + "\t");
+            out.print(totalIps + "\t");
+            out.println();
+        }
     }
 
     private static String formatDouble(double val, int width, int places) {
@@ -548,18 +561,6 @@ public class C1XTest {
     }
 
     private static CiTarget createTarget() {
-        // TODO: configure architecture according to host platform
-        final CiArchitecture arch = CiArchitecture.findArchitecture("amd64");
-
-
-        // configure the allocatable registers
-        List<CiRegister> allocatable = new ArrayList<CiRegister>(arch.registers.length);
-        for (CiRegister r : arch.registers) {
-            if (r != X86.rsp && r != MaxRiRuntime.globalRuntime.threadRegister()) {
-                allocatable.add(r);
-            }
-        }
-        CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
-        return new CiTarget(arch, allocRegs, arch.registers, 1024, true);
+        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
     }
 }

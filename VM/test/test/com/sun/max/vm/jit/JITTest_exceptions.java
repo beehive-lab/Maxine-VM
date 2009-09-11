@@ -70,7 +70,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     }
 
     private void check_num_handlers(String methodName, int num) {
-        final ExceptionRangeTargetMethod targetMethod = compileMethod(methodName);
+        final CPSTargetMethod targetMethod = compileMethod(methodName);
         assert targetMethod.numberOfCatchRanges() == num;
         assert targetMethod.catchRangePositions() != null && targetMethod.catchRangePositions().length == num;
         assert targetMethod.catchBlockPositions() != null && targetMethod.catchBlockPositions().length == num;
@@ -137,10 +137,10 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
         }
     }
 
-    public void printExceptionHandlers(ExceptionRangeTargetMethod targetMethod) {
+    public void printExceptionHandlers(CPSTargetMethod targetMethod) {
         final int[] catchRangePositions = targetMethod.catchRangePositions();
         if (catchRangePositions == null) {
-            Trace.line(1, "Target method " + targetMethod.name() + " has no exception handlers");
+            Trace.line(1, "Target method " + targetMethod.description() + " has no exception handlers");
             return;
         }
         final int[] catchBlockPositions = targetMethod.catchBlockPositions();
@@ -154,7 +154,7 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     private static final Throwable[] THROWABLES = new Throwable[]{new ArrayIndexOutOfBoundsException(), new ClassCastException() };
 
     private void compileMethodWithExceptionHandlers(String methodName) {
-        final ExceptionRangeTargetMethod targetMethod = compileMethod(methodName,  SignatureDescriptor.create(JITTest_exceptions.class, Object[].class, int.class));
+        final CPSTargetMethod targetMethod = compileMethod(methodName,  SignatureDescriptor.create(JITTest_exceptions.class, Object[].class, int.class));
         printExceptionHandlers(targetMethod);
 
         // Get handler at random address, walking 5 bytes at a time.

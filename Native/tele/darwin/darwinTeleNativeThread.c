@@ -40,7 +40,7 @@
 #include "jni.h"
 #include "word.h"
 
-Boolean thread_read_registers(thread_t thread,
+boolean thread_read_registers(thread_t thread,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters) {

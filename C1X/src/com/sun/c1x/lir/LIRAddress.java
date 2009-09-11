@@ -45,10 +45,10 @@ public class LIRAddress extends LIROperand {
         }
     }
 
-    public final LIROperand base;
-    public final LIROperand index;
+    public final LIRLocation base;
+    public final LIRLocation index;
     public final Scale scale;
-    public final int displacement;
+    private final int displacement;
 
     /**
      * Creates a new LIRAddress with the specified base address, index, and basic type.
@@ -57,12 +57,8 @@ public class LIRAddress extends LIROperand {
      * @param index the LIROperand representing the index
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, LIROperand index, CiKind basicType) {
-        super(basicType);
-        this.base = base;
-        this.index = index;
-        this.scale = Scale.Times1;
-        this.displacement = 0;
+    public LIRAddress(LIRLocation base, LIRLocation index, CiKind basicType) {
+        this(base, index, Scale.Times1, 0, basicType);
     }
 
     /**
@@ -72,12 +68,8 @@ public class LIRAddress extends LIROperand {
      * @param displacement the constant displacement from the base address
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, int displacement, CiKind basicType) {
-        super(basicType);
-        this.base = base;
-        this.index = LIROperand.ILLEGAL;
-        this.displacement = displacement;
-        this.scale = Scale.Times1;
+    public LIRAddress(LIRLocation base, int displacement, CiKind basicType) {
+        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, basicType);
     }
 
     /**
@@ -89,7 +81,7 @@ public class LIRAddress extends LIROperand {
      * @param displacement the constant displacement from the base address
      * @param basicType the basic type of the resulting operand
      */
-    public LIRAddress(LIROperand base, LIROperand index, Scale scale, int displacement, CiKind basicType) {
+    public LIRAddress(LIRLocation base, LIRLocation index, Scale scale, int displacement, CiKind basicType) {
         super(basicType);
         this.base = base;
         this.index = index;
@@ -97,11 +89,11 @@ public class LIRAddress extends LIROperand {
         this.displacement = displacement;
     }
 
-    public LIROperand base() {
+    public LIRLocation base() {
         return base;
     }
 
-    public LIROperand index() {
+    public LIRLocation index() {
         return index;
     }
 
@@ -127,13 +119,8 @@ public class LIRAddress extends LIROperand {
         return false;
     }
 
-    /**
-     * Prints this operand on the specified output stream.
-     *
-     * @param out the output stream to print to
-     */
     @Override
-    public String valueToString() {
+    public String toString() {
         final StringBuffer out = new StringBuffer();
         out.append("Base:" + base);
         if (!index.isIllegal()) {
@@ -165,13 +152,13 @@ public class LIRAddress extends LIROperand {
             assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
             assert displacement == 0 || index.isIllegal() : "can't have both";
         } else if (architecture.is64bit()) {
-            assert base.isCpuRegister() : "wrong base operand";
+            assert base.isRegister() : "wrong base operand";
             assert index.isIllegal() || index.isDoubleCpu() : "wrong index operand";
-            assert base.type() == CiKind.Object || base.type() == CiKind.Long : "wrong type for addresses";
+            assert base.kind == CiKind.Object || base.kind == CiKind.Long : "wrong type for addresses";
         } else {
             assert base.isSingleCpu() : "wrong base operand";
             assert index.isIllegal() || index.isSingleCpu() : "wrong index operand";
-            assert base.type() == CiKind.Object || base.type() == CiKind.Int : "wrong type for addresses";
+            assert base.kind == CiKind.Object || base.kind == CiKind.Int : "wrong type for addresses";
         }
     }
 
@@ -189,5 +176,9 @@ public class LIRAddress extends LIROperand {
             default:
                 throw Util.shouldNotReachHere();
         }
+    }
+
+    public LIROperand createCopy(LIRLocation newBase, LIRLocation newIndex) {
+        return new LIRAddress(newBase, newIndex, scale, displacement, kind);
     }
 }

@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * @author Bernd Mathiske
  */
-public class AMD64TranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
+public class AMD64TranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod> {
 
     public AMD64TranslatorTestSetup(Test test) {
         super(test);
@@ -47,7 +47,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
     }
 
     @Override
-    public TargetMethod translate(ClassMethodActor classMethodActor) {
+    public CPSTargetMethod translate(ClassMethodActor classMethodActor) {
         return targetGenerator().makeIrMethod(classMethodActor);
     }
 

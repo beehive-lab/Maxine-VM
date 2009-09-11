@@ -1077,14 +1077,14 @@ public abstract class TeleVM implements MaxVM {
         try {
             return makeClassActor(name);
         } catch (ClassNotFoundException classNotFoundException) {
-            // Not loaded and not available on local classpath; load by copying
-            // classfile from the VM
+            // Not loaded and not available on local classpath; load by copying classfile from the VM
             final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
-            ProgramError.check(teleByteArrayObject != null, "could not find class actor: " + name);
+            if (teleByteArrayObject == null) {
+                throw new NoClassDefFoundError("Could not retrieve class file from VM for " + name);
+            }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(
-                    name, classfile);
+            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(name, classfile);
         }
     }
 

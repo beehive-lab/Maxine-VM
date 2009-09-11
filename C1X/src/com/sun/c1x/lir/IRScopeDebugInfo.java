@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 
 
@@ -34,14 +35,14 @@ import com.sun.c1x.ir.*;
  */
 public class IRScopeDebugInfo {
 
-    private IRScope scope;
-    private int bci;
-    private List<ScopeValue> locals;
-    private List<ScopeValue> expressions;
-    private List<MonitorValue> monitors;
-    private IRScopeDebugInfo caller;
+    private final IRScope scope;
+    private final int bci;
+    private final List<CiValue> locals;
+    private final List<CiValue> expressions;
+    private final List<CiLocation> monitors;
+    private final IRScopeDebugInfo caller;
 
-    public IRScopeDebugInfo(IRScope scope, int bci, List<ScopeValue> locals, List<ScopeValue> expressions, List<MonitorValue> monitors, IRScopeDebugInfo caller) {
+    public IRScopeDebugInfo(IRScope scope, int bci, List<CiValue> locals, List<CiValue> expressions, List<CiLocation> monitors, IRScopeDebugInfo caller) {
         this.scope = scope;
         this.locals = locals;
         this.bci = bci;
@@ -58,15 +59,15 @@ public class IRScopeDebugInfo {
         return bci;
     }
 
-    public List<ScopeValue> locals() {
+    public List<CiValue> locals() {
         return locals;
     }
 
-    public List<ScopeValue> expressions() {
+    public List<CiValue> expressions() {
         return expressions;
     }
 
-    public List<MonitorValue> monitors() {
+    public List<CiLocation> monitors() {
         return monitors;
     }
 
@@ -76,13 +77,13 @@ public class IRScopeDebugInfo {
 
      // TODO : Need to define the implementation of DebugInformationRecorder
      public  void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-          if (caller() != null) {
+      /*    if (caller() != null) {
             // Order is significant:  Must record caller first.
             caller().recordDebugInfo(recorder, pcOffset);
           }
           long locvals = recorder.createScopeValues(locals());
           long expvals = recorder.createScopeValues(expressions());
           long monvals = recorder.createMonitorValues(monitors());
-          recorder.describeScope(pcOffset, scope.method, bci(), locvals, expvals, monvals);
+          recorder.describeScope(pcOffset, scope.method, bci(), locvals, expvals, monvals);*/
         }
 }

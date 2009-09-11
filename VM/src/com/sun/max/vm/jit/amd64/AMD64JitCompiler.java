@@ -95,6 +95,8 @@ public class AMD64JitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
         if (MaxineVM.isPrototyping()) {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
@@ -353,7 +355,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, framePointerState)) {
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, (AMD64JitTargetMethod) targetMethod, context, framePointerState)) {
                     return false;
                 }
                 break;
@@ -390,7 +392,7 @@ public class AMD64JitCompiler extends JitCompiler {
         return stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, flags);
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, AMD64JitTargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");

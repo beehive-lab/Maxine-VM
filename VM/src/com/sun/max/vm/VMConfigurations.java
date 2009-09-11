@@ -80,11 +80,12 @@ public final class VMConfigurations {
     }
 
     private static VMPackage defaultLayoutPackage(Platform platform) {
-        if (false && platform.instructionSet().category == Category.RISC) {
-            // The HOM layout does not work yet. Also, debugging the reason why with
-            // the inspector is not yet possible as the inspector relies on
-            // GeneralLayout.originToCell() to work *without* reading memory.
-            // This is not the case for HomGeneralLayout.
+        if (platform.instructionSet().category == Category.RISC) {
+            // On SPARC, the HOM layout enables more optimized code for accessing array elements
+            // smaller than a word as there is no need to perform address arithmetic to skip
+            // over the header; the origin is pointing at array element 0.
+            // A disadvantage of HOM is that the converting between the cell and origin address
+            // of an object is not a nop (which is not the case for OHM).
             return new com.sun.max.vm.layout.hom.Package();
         }
         return new com.sun.max.vm.layout.ohm.Package();

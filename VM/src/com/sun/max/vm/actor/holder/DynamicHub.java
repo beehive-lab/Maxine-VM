@@ -89,7 +89,7 @@ public final class DynamicHub extends Hub {
             final int vTableIndex = firstWordIndex() + i;
             assert dynamicMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
-            setWord(vTableIndex, VMConfiguration.hostOrTarget().compilerScheme().createInitialVTableEntry(vTableIndex, dynamicMethodActor));
+            setWord(vTableIndex, VMConfiguration.hostOrTarget().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex));
         }
     }
 
@@ -98,11 +98,10 @@ public final class DynamicHub extends Hub {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
                 final int interfaceIndex = getITableIndex(interfaceActor.id);
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
-                    final VirtualMethodActor dynamicMethodActor = methodLookup.get(interfaceMethodActor);
                     final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();
                     final int iIndex = iTableIndex - iTableStartIndex;
                     assert getWord(iTableIndex).isZero();
-                    setWord(iTableIndex, VMConfiguration.hostOrTarget().compilerScheme().createInitialITableEntry(iIndex, dynamicMethodActor));
+                    setWord(iTableIndex, VMConfiguration.hostOrTarget().trampolineScheme().makeInterfaceCallEntryPoint(iIndex));
                 }
             }
         }

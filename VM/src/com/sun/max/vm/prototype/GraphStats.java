@@ -226,13 +226,13 @@ public class GraphStats {
     private int computeTargetMethodSize(TargetMethod targetMethod) {
         int total = sizeOf(targetMethod);
         total += sizeOf(targetMethod.code());
-        total += sizeOf((targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchRangePositions() : null);
-        total += sizeOf((targetMethod instanceof ExceptionRangeTargetMethod) ? ((ExceptionRangeTargetMethod) targetMethod).catchBlockPositions() : null);
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
-        total += sizeOf(targetMethod.referenceMaps());
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
         total += sizeOf(targetMethod.scalarLiterals());
-        total += sizeOf(targetMethod.stopPositions());
+        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
         return total;
     }
 

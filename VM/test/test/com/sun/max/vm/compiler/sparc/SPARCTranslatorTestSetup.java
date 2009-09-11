@@ -30,7 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
-public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
+public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod> {
 
     public SPARCTranslatorTestSetup(Test test) {
         super(test);
@@ -45,7 +45,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
     }
 
     @Override
-    public TargetMethod translate(ClassMethodActor classMethodActor) {
+    public CPSTargetMethod translate(ClassMethodActor classMethodActor) {
         return targetGenerator().makeIrMethod(classMethodActor);
     }
 

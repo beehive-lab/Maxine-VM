@@ -172,6 +172,21 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         super.compileSnippets();
     }
 
+
+    private void traceBeforeFindMethodActors(TargetMethod targetMethod) {
+        if (Trace.hasLevel(5)) {
+            Trace.begin(5, "methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
+        }
+    }
+
+    private void traceAfterFindMethodActors(TargetMethod targetMethod, AppendableSequence<MethodActor> result) {
+        if (Trace.hasLevel(5)) {
+            Trace.end(5, result.length() + " methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
+        }
+    }
+
+
+
     @PROTOTYPE_ONLY
     @Override
     public void gatherCalls(final TargetMethod targetMethod,
@@ -214,17 +229,5 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         };
         CirVisitingTraversal.apply(cirMethod.closure(), collector);
         traceAfterFindMethodActors(targetMethod, directCalls);
-    }
-
-    private void traceBeforeFindMethodActors(TargetMethod targetMethod) {
-        if (Trace.hasLevel(5)) {
-            Trace.begin(5, "methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
-        }
-    }
-
-    private void traceAfterFindMethodActors(TargetMethod targetMethod, AppendableSequence<MethodActor> result) {
-        if (Trace.hasLevel(5)) {
-            Trace.end(5, result.length() + " methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
-        }
     }
 }

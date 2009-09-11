@@ -48,17 +48,17 @@ public class LIRItem {
 
     public void setInstruction(Value value) {
         this.value = value;
-        this.result = LIROperandFactory.IllegalOperand;
+        this.result = LIROperandFactory.IllegalLocation;
         if (value != null) {
             gen.walk(value);
             result = value.operand();
         }
-        newResult = LIROperandFactory.IllegalOperand;
+        newResult = LIROperandFactory.IllegalLocation;
     }
 
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
-        result = LIROperandFactory.IllegalOperand;
+        result = LIROperandFactory.IllegalLocation;
         setInstruction(null);
     }
 
@@ -69,9 +69,9 @@ public class LIRItem {
     public void loadItemForce(LIROperand reg) {
         LIROperand r = result();
         if (r != reg) {
-            if (r.type() != reg.type()) {
+            if (r.kind != reg.kind) {
                 // moves between different types need an intervening spill slot
-                LIROperand tmp = gen.forceToSpill(r, reg.type());
+                LIROperand tmp = gen.forceToSpill(r, reg.kind);
                 lir().move(tmp, reg);
             } else {
                 lir().move(r, reg);

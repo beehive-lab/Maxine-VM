@@ -39,7 +39,7 @@ import com.sun.max.vm.template.source.*;
  *
  * @author Laurent Daynes
  */
-public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
+public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod> {
 
     public static final class JavaStack {
         private JavaStack() {

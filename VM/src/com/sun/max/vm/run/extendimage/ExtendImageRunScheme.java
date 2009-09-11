@@ -49,6 +49,8 @@ import com.sun.max.vm.run.java.*;
  * <dd>Loads all the classes in package packagename.</dd>
  * <dt> class classname</dt>
  * <dd>Loads the class classname.</dd>
+ * <dd>omitclass classname
+ * <dt> Do not include the class classname (typically used to suppress nested classes)
  * <dt> classinit classname</dt>
  * <dd>Loads and eagerly initializes the class classname.</dd>
  * <dt> forcemethod methodname</dt>
@@ -225,6 +227,8 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 }
                 if (command.equals("class")) {
                     forceClass(argument, false);
+                } else if (command.equals("omitclass")) {
+                    omitClass(argument);
                 } else if (command.equals("classinit")) {
                     forceClassInit(argument);
                 } else if (command.equals("package")) {
@@ -286,7 +290,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         try {
             JavaPrototype.javaPrototype().loadClass(className);
         } catch (NoClassDefFoundError ex) {
-            ProgramWarning.message("class " + className + " not found");
+            Trace.line(1, "WARNING: class " + className + " not found");
         }
         if (isMain) {
             mainClassName = className;
@@ -299,6 +303,16 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             } catch (Exception ex) {
                 ProgramError.unexpected("failed to find main method in class: " + className);
             }
+        }
+    }
+
+    @PROTOTYPE_ONLY
+    protected void omitClass(String className) {
+        Trace.line(1, "omitting class " + className + " from image");
+        try {
+            PrototypeClassLoader.omitClass(Class.forName(className));
+        } catch (ClassNotFoundException classNotFoundException) {
+            Trace.line(1, "WARNING: omitclass: " + className + " not found");
         }
     }
 
@@ -463,7 +477,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             staticTuple.resetField(fieldName, true);
             */
         }  catch (Exception ex) {
-            ProgramError.unexpected("failed to reset: " + argument);
+            ProgramError.unexpected("failed to reset: " + argument, ex);
         }
     }
 

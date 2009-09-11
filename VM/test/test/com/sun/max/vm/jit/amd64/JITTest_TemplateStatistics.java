@@ -59,7 +59,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
                 }
                 if (numStopPositions > 0) {
                     final TargetMethod targetTemplate = template.targetMethod;
-                    Trace.stream().println(targetTemplate.name() + " comprises #"  + numStopPositions + "stop positions (#direct calls: " + targetTemplate.numberOfDirectCalls() +
+                    Trace.stream().println(targetTemplate.description() + " comprises #"  + numStopPositions + "stop positions (#direct calls: " + targetTemplate.numberOfDirectCalls() +
                                     ", #indirect calls " + targetTemplate.numberOfIndirectCalls() + ")");
 
                 }

@@ -175,23 +175,29 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
         instructionPointerLabel.refresh(force);
         final boolean isTopFrame = stackFrame.isTopFrame();
         int stopIndex = -1;
+
+        if (!(targetMethod instanceof CPSTargetMethod)) {
+            return;
+        }
+
+        final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
         if (focusedInstructionPointer == null) {
             final Pointer instructionPointer = stackFrame.instructionPointer;
-            stopIndex = targetMethod.findClosestStopIndex(instructionPointer, !isTopFrame);
+            stopIndex = cpsTargetMethod.findClosestStopIndex(instructionPointer, !isTopFrame);
             if (stopIndex != -1 && isTopFrame) {
-                final int stopPosition = targetMethod.stopPosition(stopIndex);
-                final int targetCodePosition = targetMethod.targetCodePositionFor(instructionPointer);
+                final int stopPosition = cpsTargetMethod.stopPosition(stopIndex);
+                final int targetCodePosition = cpsTargetMethod.targetCodePositionFor(instructionPointer);
                 if (targetCodePosition != stopPosition) {
                     stopIndex = -1;
                 }
             }
         } else {
             final int position = focusedInstructionPointer.minus(targetMethod.codeStart()).toInt();
-            stopIndex = StopPositions.indexOf(targetMethod.stopPositions(), position);
+            stopIndex = StopPositions.indexOf(cpsTargetMethod.stopPositions(), position);
         }
 
         // Update the color of the slot labels to denote if a reference map indicates they are holding object references:
-        final ByteArrayBitMap referenceMap = stopIndex == -1 ? null : targetMethod.frameReferenceMapFor(stopIndex);
+        final ByteArrayBitMap referenceMap = stopIndex == -1 ? null : cpsTargetMethod.frameReferenceMapFor(stopIndex);
         for (int slotIndex = 0; slotIndex < slots.length(); ++slotIndex) {
             final Slot slot = slots.slot(slotIndex);
             final TextLabel slotLabel = slotLabels[slotIndex];

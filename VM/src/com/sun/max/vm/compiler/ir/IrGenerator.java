@@ -28,7 +28,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 
-public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerScheme, IrMethod_Type extends IrMethod> {
+public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerScheme, IrMethod_Type extends IrMethod> {
 
     private long numberOfCompilations = 0L;
 

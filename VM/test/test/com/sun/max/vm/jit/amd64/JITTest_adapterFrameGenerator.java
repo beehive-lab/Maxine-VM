@@ -96,10 +96,10 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
 
     public void test_jni_function_entryPoints() {
         final CriticalMethod[] jniFunctions = JniNativeInterface.jniFunctions();
-        final CompilerScheme compiler = VMConfiguration.target().compilerScheme();
+        final BootstrapCompilerScheme compiler = VMConfiguration.target().compilerScheme();
         for (CriticalMethod m : jniFunctions) {
             final ClassMethodActor classMethodActor = m.classMethodActor;
-            final TargetMethod targetMethod = (TargetMethod) compiler.compile(classMethodActor);
+            final TargetMethod targetMethod = compiler.compile(classMethodActor);
             final Pointer entryPoint = targetMethod.getEntryPoint(CallEntryPoint.C_ENTRY_POINT).asPointer();
             assert targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT);
             assert entryPoint.equals(targetMethod.codeStart());

@@ -34,6 +34,7 @@ public class ExceptionObject extends Instruction {
      */
     public ExceptionObject() {
         super(CiKind.Object);
+        setFlag(Flag.NonNull);
     }
 
     /**

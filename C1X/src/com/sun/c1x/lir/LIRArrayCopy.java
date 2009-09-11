@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 
@@ -62,7 +61,7 @@ public class LIRArrayCopy extends LIRInstruction {
      * @param tmp
      */
     public LIRArrayCopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int arrayCopyFlags, CodeEmitInfo info) {
-        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalOperand, info, true, new ArrayCopyStub(), 5, 1, src, srcPos, dst, dstPos, length, tmp);
+        super(LIROpcode.ArrayCopy, LIROperandFactory.IllegalLocation, info, true, new ArrayCopyStub(), 5, 1, src, srcPos, dst, dstPos, length, tmp);
         this.expectedType = expectedType;
         this.arrayCopyFlags = arrayCopyFlags;
     }
@@ -146,26 +145,5 @@ public class LIRArrayCopy extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitArrayCopy(this);
-    }
-
-     /**
-     * Prints this instruction.
-     *
-     * @param out the output stream
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        src().print(out);
-        out.print(" ");
-        srcPos().print(out);
-        out.print(" ");
-        dst().print(out);
-        out.print(" ");
-        dstPos().print(out);
-        out.print(" ");
-        length().print(out);
-        out.print(" ");
-        tmp().print(out);
-        out.print(" ");
     }
 }

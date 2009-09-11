@@ -208,7 +208,16 @@ public abstract class Hub extends Hybrid {
     }
 
     protected final Hub expand() {
-        return (Hub) expand(Unsigned.idiv(Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
+        return (Hub) expand(computeLength(referenceMapStartIndex, referenceMapLength));
+    }
+
+    /**
+     * Computes the number of words that the non-header part of a hub occupies. That is,
+     * if a hub is viewed as a word array, the returned value is the length of the array.
+     */
+    protected static int computeLength(int referenceMapStartIndex, int referenceMapLength) {
+        int referenceMapSize = Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size());
+        return Unsigned.idiv(referenceMapSize, Word.size());
     }
 
     @INLINE

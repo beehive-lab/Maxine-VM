@@ -23,10 +23,10 @@
  * <p>
  * Tuples object are packed for minimal space consumption, observing alignment
  * restrictions. They have a 2 word header and are layed out as shown below:
- * 
+ *
  * <p><hr><blockquote><pre>
  *        cell --> +-------------+
- *                 |   extras    |  // monitor and hashcode
+ *                 |    misc     |  // monitor and hashcode
  *                 +-------------+
  *                 |   class     |
  * origin/data --> +=============+
@@ -35,14 +35,14 @@
  *                 |             |
  *                 +-------------+
  * </pre></blockquote><hr></p>
- * 
+ *
  * Array objects have a 3 word header and are layed out as shown below:
- * 
+ *
  * <p><hr><blockquote><pre>
  *        cell --> +-------------+
  *                 |   length    |
  *                 +-------------+
- *                 |   extras    |  // monitor and hashcode
+ *                 |    misc     |  // monitor and hashcode
  *                 +-------------+
  *                 |   class     |
  * origin/data --> +=============+
@@ -51,14 +51,14 @@
  *                 |             |
  *                 +-------------+
  * </pre></blockquote><hr></p>
- * 
- * The first word of the header (i.e. {@code extras} word for tuple objects and {@code length}
+ *
+ * The first word of the header (i.e. {@code misc} word for tuple objects and {@code length}
  * word for arrays) encodes the type of the cell (tuple or array) in its low-order bit.
- * If the bit is set, the cell containes an array otherwise it contains a tuple.
+ * If the bit is set, the cell contains an array otherwise it contains a tuple.
  * <p>
  * Unless stated otherwise, all offsets mentioned in this layout implementation are in terms of
  * bytes and are relative to the origin pointer.
- * 
+ *
  * @author Doug Simon
  */
 package com.sun.max.vm.layout.hom;

@@ -550,7 +550,7 @@ public class Util {
         return ((numVirtualRegs + v - 1) / v) * v;
     }
 
-    public static void truncate(List< ? > instructions, int length) {
+    public static void truncate(List<?> instructions, int length) {
         while (instructions.size() > length) {
             instructions.remove(instructions.size() - 1);
         }

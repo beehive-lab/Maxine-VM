@@ -35,12 +35,12 @@ public class RegisterOrConstant {
 
     public RegisterOrConstant(int i) {
         this.constant = i;
-        this.register = CiRegister.noreg;
+        this.register = CiRegister.None;
         object = null;
     }
 
     public RegisterOrConstant(CiRegister r) {
-        assert r != CiRegister.noreg;
+        assert r != CiRegister.None;
         this.constant = 0;
         this.register = r;
         object = null;
@@ -49,13 +49,13 @@ public class RegisterOrConstant {
     public RegisterOrConstant(Object o) {
         assert o != null;
         this.constant = 0;
-        this.register = CiRegister.noreg;
+        this.register = CiRegister.None;
         object = o;
 
     }
 
     public boolean isConstant() {
-        return register == CiRegister.noreg && object == null;
+        return register == CiRegister.None && object == null;
     }
 
     public CiRegister asRegister() {
@@ -67,7 +67,7 @@ public class RegisterOrConstant {
     }
 
     public boolean isRegister() {
-        return register != CiRegister.noreg;
+        return register != CiRegister.None;
     }
 
     public int asConstant() {

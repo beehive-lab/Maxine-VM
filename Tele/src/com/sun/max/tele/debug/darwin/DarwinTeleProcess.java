@@ -61,7 +61,7 @@ public final class DarwinTeleProcess extends TeleProcess {
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         task = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (task == -1) {
-            ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
+            throw new BootImageException(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
                 "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
                 "where <java executable> is the platform dependent executable found under or relative to " + System.getProperty("java.home") + "."));
         }

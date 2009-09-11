@@ -143,22 +143,7 @@ public class LIRAllocArray extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        klass().print(out);
-        out.print(" ");
-        length().print(out);
-        out.print(" ");
-        obj().print(out);
-        out.print(" ");
-        result().print(out);
-        out.print(" ");
-        tmp1().print(out);
-        out.print(" ");
-        tmp2().print(out);
-        out.print(" ");
-        tmp3().print(out);
-        out.print(" ");
-        tmp4().print(out);
-        out.print(" ");
+        super.printInstruction(out);
         out.printf("[type:%s] ", type().name());
         out.printf("[label:%s]", stub.entry.toString());
     }

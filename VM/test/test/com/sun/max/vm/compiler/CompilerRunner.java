@@ -209,12 +209,11 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
 
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
-        return javaPrototype().vmConfiguration().compilerScheme().compile(classMethodActor);
+        return javaPrototype().vmConfiguration().compilerScheme().compileIR(classMethodActor);
     }
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitScheme();
-        jitScheme.initializeForJitCompilations();
         return jitScheme;
     }
 

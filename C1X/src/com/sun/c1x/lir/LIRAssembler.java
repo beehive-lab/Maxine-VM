@@ -84,7 +84,7 @@ public abstract class LIRAssembler {
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, CiRegister obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.machineCodeMoveConstInstructionSize) {
             asm.nop();
         }
         patch.install(asm, patchCode, obj, info);
@@ -298,7 +298,7 @@ public abstract class LIRAssembler {
     private int lastDecodeStart;
     private void printAssembly(AbstractAssembler asm) {
         byte[] currentBytes = asm.codeBuffer.getData(lastDecodeStart, asm.codeBuffer.position());
-        Util.printBytes("Code Part", currentBytes, C1XOptions.BytesPerLine);
+        Util.printBytes("Code Part", currentBytes, C1XOptions.PrintAssemblyBytesPerLine);
         if (currentBytes.length > 0) {
             TTY.println(compilation.runtime.disassemble(currentBytes));
         }
@@ -477,10 +477,10 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case StaticCall:
-                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info);
@@ -496,7 +496,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
+    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void emitStaticCallStub();
 
@@ -566,7 +566,7 @@ public abstract class LIRAssembler {
                 break;
 
             case Monaddr:
-                monitorAddress(op.inOpr().asConstantPtr().asInt(), op.result());
+                monitorAddress(((LIRConstant) op.inOpr()).asInt(), op.result());
                 break;
 
             default:
@@ -684,23 +684,23 @@ public abstract class LIRAssembler {
 
 
             case Resolve:
-                resolve(CiRuntimeCall.ResolveClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveArrayClass:
-                resolve(CiRuntimeCall.ResolveArrayClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveArrayClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveStaticFields:
-                resolve(CiRuntimeCall.ResolveStaticFields, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveStaticFields, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveJavaClass:
-                resolve(CiRuntimeCall.ResolveJavaClass, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveJavaClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case ResolveFieldOffset:
-                resolve(CiRuntimeCall.ResolveFieldOffset, op.result(), op.opr1(), op.opr2());
+                resolve(CiRuntimeCall.ResolveFieldOffset, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
             case Cmove:
@@ -711,7 +711,7 @@ public abstract class LIRAssembler {
             case Shr:
             case Ushr:
                 if (op.opr2().isConstant()) {
-                    shiftOp(op.code, op.opr1(), op.opr2().asConstantPtr().asInt(), op.result());
+                    shiftOp(op.code, op.opr1(), ((LIRConstant) op.opr2()).asInt(), op.result());
                 } else {
                     shiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
                 }
@@ -777,7 +777,7 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void resolve(CiRuntimeCall stub, LIROperand dest, LIROperand index, LIROperand cp);
+    protected abstract void resolve(CiRuntimeCall stub, CodeEmitInfo info, LIROperand dest, LIROperand index, LIROperand cp);
 
     public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
         if (src.isRegister()) {

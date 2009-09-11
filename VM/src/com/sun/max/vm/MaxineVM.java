@@ -133,6 +133,11 @@ public final class MaxineVM {
         PROTOTYPING,
 
         /**
+         * Creating the compiled prototype.
+         */
+        CREATING_COMPILED_PROTOTYPE,
+
+        /**
          * Executing target VM code, but many features do not work yet.
          */
         PRIMORDIAL,
@@ -150,7 +155,7 @@ public final class MaxineVM {
         /**
          * Executing application code.
          */
-        RUNNING
+        RUNNING,
     }
 
     /**

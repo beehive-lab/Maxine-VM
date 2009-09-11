@@ -106,7 +106,7 @@ public abstract class ClassMethodActor extends MethodActor {
         return compilee().isNeverInline();
     }
 
-    public boolean isDeclaredInline(CompilerScheme compilerScheme) {
+    public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
         if (compilee().isInline()) {
             if (MaxineVM.isPrototyping()) {
                 if (compilee().isInlineAfterSnippetsAreCompiled()) {
@@ -153,7 +153,7 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */
-    public synchronized ClassMethodActor compilee() {
+    public final synchronized ClassMethodActor compilee() {
         if (compilee == null) {
             compilee = this;
             if (!isHiddenToReflection()) {

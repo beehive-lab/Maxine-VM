@@ -64,7 +64,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public CiTargetMethod emitHelper(GlobalStub stub, CiRuntimeCall runtimeCall) {
-        asm = new X86MacroAssembler(compiler, compiler.target);
+        asm = new X86MacroAssembler(compiler, compiler.target, -1);
         this.frameSize = 0;
         this.registerRestoreEpilogueOffset = -1;
 
@@ -177,14 +177,14 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitDNEG() {
         negatePrologue();
-        asm.movsd(negateTemp, asm.longConstant(DoubleSignFlip));
+        asm.movsd(negateTemp, asm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
         asm.xorpd(negateArgument, negateTemp);
         negateEpilogue();
     }
 
     private void emitFNEG() {
         negatePrologue();
-        asm.movsd(negateTemp, asm.longConstant(FloatSignFlip));
+        asm.movsd(negateTemp, asm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
         asm.xorps(negateArgument, negateTemp);
         negateEpilogue();
     }
@@ -203,32 +203,32 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private void emitD2L() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
-        asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
+        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(Double.NaN)));
+        asm.cmovq(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forLong(0L)));
         convertEpilogue();
     }
 
     private void emitD2I() {
         convertPrologue();
         asm.mov64(convertResult, Long.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.doubleConstant(Double.NaN));
-        asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
+        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(Double.NaN)));
+        asm.cmovl(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forInt(0)));
         convertEpilogue();
     }
 
     private void emitF2L() {
         convertPrologue();
         asm.movl(convertResult, Integer.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
-        asm.cmovq(Condition.equal, convertResult, asm.longConstant(0L));
+        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(Float.NaN)));
+        asm.cmovq(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forLong(0L)));
         convertEpilogue();
     }
 
     private void emitF2I() {
         convertPrologue();
         asm.movl(convertResult, Integer.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.floatConstant(Float.NaN));
-        asm.cmovl(Condition.equal, convertResult, asm.intConstant(0));
+        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(Float.NaN)));
+        asm.cmovl(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forInt(0)));
         convertEpilogue();
     }
 
@@ -322,6 +322,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         // Modify rsp
         asm.subq(X86.rsp, this.frameSize);
+
+        asm.setFrameSize(this.frameSize);
     }
 
     private void epilogue() {
@@ -350,8 +352,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         saveRegisters();
 
         // Load arguments
-        CiLocation[] result = new CiLocation[call.arguments.length];
-        runtime.runtimeCallingConvention(call.arguments, result);
+        CiLocation[] result = runtime.runtimeCallingConvention(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
             loadArgument(i, result[i].first);
         }

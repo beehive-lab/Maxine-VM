@@ -9,5 +9,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C0X"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CRI"/>
+	<classpathentry kind="lib" path="classes"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

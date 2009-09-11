@@ -167,8 +167,6 @@ public interface RiRuntime {
 
     int arrayHeaderSize(CiKind type);
 
-    CiRegister javaCallingConventionReceiverRegister();
-
     int interpreterFrameMonitorSize();
 
     int basicObjectLockSize();
@@ -184,10 +182,6 @@ public interface RiRuntime {
     int methodDataNullSeenByteConstant();
 
     int secondarySuperCacheOffsetInBytes();
-
-    CiRegister getCRarg(int i); // TODO: appears only used for array copy intrinsic
-
-    CiRegister getJRarg(int i); // TODO: appears only used for array copy intrinsic
 
     int markOffsetInBytes();
 
@@ -230,7 +224,15 @@ public interface RiRuntime {
     int instanceOopDescBaseOffsetInBytes();
 
     // TODO: why not pass the RiSignature instead?
-    int javaCallingConvention(CiKind[] types, CiLocation[] result, boolean outgoing);
+    CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing);
+
+    CiLocation[] runtimeCallingConvention(CiKind[] signature);
+
+    CiRegister returnRegister(CiKind object);
+
+    int overflowArgumentsSize(CiKind basicType);
+
+    int getJITStackSlotSize();
 
     int sizeofBasicObjectLock();
 
@@ -238,20 +240,13 @@ public interface RiRuntime {
 
     String disassemble(byte[] copyOf);
 
-    CiLocation receiverLocation();
-
-    CiRegister returnRegister(CiKind object);
-
-    int runtimeCallingConvention(CiKind[] signature, CiLocation[] regs);
-
     Object registerTargetMethod(CiTargetMethod targetMethod, String name);
 
     RiType primitiveArrayType(CiKind elemType);
 
     CiRegister threadRegister();
 
-    int getJITStackSlotSize();
-
-    int overflowArgumentsSize(CiKind basicType);
     public RiType getRiType(Class<?> javaClass);
+
+    CiRegister getSafepointRegister();
 }

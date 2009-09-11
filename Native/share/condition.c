@@ -78,7 +78,7 @@ void condition_destroy(Condition condition) {
  * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified).
  *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
-Boolean condition_wait(Condition condition, Mutex mutex) {
+boolean condition_wait(Condition condition, Mutex mutex) {
 #if log_MONITORS
     log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ")", thread_self(), condition, mutex);
 #endif
@@ -154,7 +154,7 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
  * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified or the timeout expired).
  *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
-Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
+boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
     if (timeoutMilliSeconds <= 0) {
         return condition_wait(condition, mutex);
     }
@@ -220,7 +220,7 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 	return true;
 }
 
-Boolean condition_notify(Condition condition) {
+boolean condition_notify(Condition condition) {
 #if log_MONITORS
     log_println("condition_notify    (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
@@ -235,7 +235,7 @@ Boolean condition_notify(Condition condition) {
 #endif
 }
 
-Boolean condition_notifyAll(Condition condition) {
+boolean condition_notifyAll(Condition condition) {
 #if log_MONITORS
     log_println("condition_notifyAll (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif

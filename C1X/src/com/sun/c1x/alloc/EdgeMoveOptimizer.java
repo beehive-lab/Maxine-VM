@@ -26,11 +26,10 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public final class EdgeMoveOptimizer {
@@ -119,7 +118,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockEnd(BlockBegin block) {
-        Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
+        // Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
 
         if (block.isPredecessor(block)) {
             // currently we can't handle this correctly.
@@ -185,7 +184,7 @@ public final class EdgeMoveOptimizer {
     }
 
     void optimizeMovesAtBlockBegin(BlockBegin block) {
-        Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
+        // Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
 
         initInstructions();
         int numSux = block.numberOfSux();
@@ -198,7 +197,7 @@ public final class EdgeMoveOptimizer {
         assert ((LIRBranch) curInstructions.get(curInstructions.size() - 1)).cond() == LIRCondition.Always : "block must end with unconditional branch";
 
         if (curInstructions.get(curInstructions.size() - 1).info != null) {
-            // can no optimize instructions when debug info is needed
+            // cannot optimize instructions when debug info is needed
             return;
         }
 

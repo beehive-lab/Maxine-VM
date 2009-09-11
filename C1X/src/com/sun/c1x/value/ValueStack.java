@@ -22,7 +22,6 @@ package com.sun.c1x.value;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
@@ -582,11 +581,13 @@ public class ValueStack {
      */
     public void setupPhiForStack(BlockBegin block, int i) {
         Value p = stackAt(i);
-        if (p != null) {
-            assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-            Value phi = new Phi(p.type(), block, -i - 1);
-            values[maxLocals + i] = phi;
+        if (p instanceof Phi) {
+            Phi phi = (Phi) p;
+            if (phi.block() == block && phi.isOnStack() && phi.stackIndex() == i) {
+                return;
+            }
         }
+        values[maxLocals + i] = new Phi(p.type(), block, -i - 1);
     }
 
     /**
@@ -597,9 +598,13 @@ public class ValueStack {
      */
     public void setupPhiForLocal(BlockBegin block, int i) {
         Value p = values[i];
-        assert !(p instanceof Phi) || ((Phi) p).block() != block : "phi already created for this block";
-        Value phi = new Phi(p.type(), block, i);
-        storeLocal(i, phi);
+        if (p instanceof Phi) {
+            Phi phi = (Phi) p;
+            if (phi.block() == block && phi.isLocal() && phi.localIndex() == i) {
+                return;
+            }
+        }
+        storeLocal(i, new Phi(p.type(), block, i));
     }
 
     /**
@@ -628,25 +633,6 @@ public class ValueStack {
         }
     }
 
-    public void invalidateMismatchedLocalPhis(BlockBegin block, ValueStack other) {
-        checkSize(other);
-        for (int i = 0; i < maxLocals; i++) {
-            Value x = values[i];
-            if (x != null) {
-                Value y = other.values[i];
-                if (x != y) {
-                    if (typeMismatch(x, y)) {
-                        if (x instanceof Phi && ((Phi) x).block() == block) {
-                            values[i] = null;
-                        } else {
-                            throw new CiBailout("type mismatch at " + i + " @ " + block.bci() + " in " + block + " in " + scope().method);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public int valuesSize() {
         return maxLocals + stackIndex;
     }
@@ -658,10 +644,18 @@ public class ValueStack {
             Value x = values[i];
             Value y = other.values[i];
             if (x != null && x != y) {
-                if (!(x instanceof Phi) || ((Phi) x).block() != block) {
-                    // x is not a phi, or is not a phi for this block
-                    throw new CiBailout("instruction is not a phi or null at " + i);
+                if (x instanceof Phi) {
+                    Phi phi = (Phi) x;
+                    if (phi.block() == block) {
+                        for (int j = 0; j < phi.operandCount(); j++) {
+                            if (phi.operandIn(other) == null) {
+                                throw new CiBailout("phi " + phi + " has null operand at new predecessor");
+                            }
+                        }
+                        continue;
+                    }
                 }
+                throw new CiBailout("instruction is not a phi or null at " + i);
             }
         }
     }
@@ -674,43 +668,35 @@ public class ValueStack {
         }
     }
 
-    public void merge(BlockBegin block, ValueStack other) {
+    public void mergeAndInvalidate(BlockBegin block, ValueStack other) {
         checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Value x = values[i];
-            Value y = other.values[i];
-            // XXX: profile each of these branches and reorder tests appropriately
-            if (x != null && x != y) {
-                if (x instanceof Phi && ((Phi) x).block() == block) {
-                    continue; // phi already exists, continue
-                }
-                if (C1XOptions.MergeEquivalentConstants) {
-                    // check to see if x and y are the same constant
-                    if (y != null) {
-                        if (x.isConstant()) {
-                            C1XMetrics.EquivalentConstantsChecked++;
-                            if (y.isConstant() && x.asConstant().equivalent(y.asConstant())) {
-                                // x and y are equivalent constants
-                                C1XMetrics.EquivalentConstantsMerged++;
-                                continue;
+            if (x != null) {
+                Value y = other.values[i];
+                if (x != y) {
+                    if (typeMismatch(x, y)) {
+                        if (x instanceof Phi) {
+                            Phi phi = (Phi) x;
+                            if (phi.block() == block) {
+                                phi.makeDead();
                             }
                         }
+                        values[i] = null;
+                        continue;
                     }
-                }
-                if (i < maxLocals) {
-                    // this a local
-                    if (typeMismatch(x, y)) {
-                        invalidateLocal(i); // it has become invalid
+                    if (i < maxLocals) {
+                        // this a local
+                        setupPhiForLocal(block, i);
                     } else {
-                        setupPhiForLocal(block, i); // it needs a phi
+                        // this is a stack slot
+                        setupPhiForStack(block, i - maxLocals);
                     }
-                } else {
-                    // this is a stack slot
-                    setupPhiForStack(block, i - maxLocals);
                 }
             }
         }
     }
+
 
     private static boolean typeMismatch(Value x, Value y) {
         return y == null || x.type().basicType != y.type().basicType;
@@ -770,7 +756,7 @@ public class ValueStack {
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
             if (instr instanceof Phi) {
-                if (block == null || ((Phi) instr).block() == block) {
+                if (block == null || ((Phi) instr).block() == block && !instr.isDeadPhi()) {
                     phis.add((Phi) instr);
                 }
             }
@@ -789,7 +775,7 @@ public class ValueStack {
         int max = this.valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
-            if (instr instanceof Phi && instr.isLive()) {
+            if (instr instanceof Phi && instr.isLive() && !instr.isDeadPhi()) {
                 if (block == null || ((Phi) instr).block() == block) {
                     phis.add((Phi) instr);
                 }
@@ -807,7 +793,7 @@ public class ValueStack {
         int max = valuesSize();
         for (int i = 0; i < max; i++) {
             Value instr = values[i];
-            if (instr instanceof Phi) {
+            if (instr instanceof Phi && !instr.isDeadPhi()) {
                 if (block == null || ((Phi) instr).block() == block) {
                     return true;
                 }
