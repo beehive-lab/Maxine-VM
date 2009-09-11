@@ -403,7 +403,6 @@ public class BlockBegin extends Instruction {
 
             stateBefore = newState;
         } else {
-
             if (!C1XOptions.AssumeVerifiedBytecode && !existingState.isSameAcrossScopes(newState)) {
                 // stacks or locks do not match--bytecodes would not verify
                 throw new CiBailout("stack or locks do not match");
@@ -418,26 +417,11 @@ public class BlockBegin extends Instruction {
             assert existingState.localsSize() == newState.localsSize();
             assert existingState.stackSize() == newState.stackSize();
 
-            if (wasVisited()) {
-                if (!isParserLoopHeader()) {
-                    // not a loop header => jsr/ret structure too complicated
-                    throw new CiBailout("jsr/ret too complicated");
-                }
-
-                if (!C1XOptions.AssumeVerifiedBytecode) {
-                    // check that all local and stack tags match
-                    existingState.invalidateMismatchedLocalPhis(this, newState);
-
-                    // verify all phis in locals and the stack
-                    if (C1XOptions.ExtraPhiChecking) {
-                        existingState.checkPhis(this, newState);
-                    }
-                }
-            } else {
-                // there is an existing state, but the block was not visited yet
-                // do a merge of the stacks and locals
-                existingState.merge(this, newState);
+            if (wasVisited() && !isParserLoopHeader()) {
+                throw new CiBailout("jsr/ret too complicated");
             }
+
+            existingState.mergeAndInvalidate(this, newState);
         }
     }
 

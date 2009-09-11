@@ -234,6 +234,8 @@ public class C1XTest {
             recordTime(method, result.statistics().byteCount, result.statistics().nodeCount, timeNs);
         }
         if (printBailout && result.bailout() != null) {
+            out.println("");
+            // out.println(method + " = " + result.statistics().byteCount + " bytes");
             result.bailout().printStackTrace();
         }
 

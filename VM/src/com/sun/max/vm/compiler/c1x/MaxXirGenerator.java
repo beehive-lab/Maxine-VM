@@ -1044,7 +1044,7 @@ public class MaxXirGenerator extends XirGenerator {
             XirLabel fail = asm.createInlineLabel();
             if (!nonnull) {
                 // first check for null
-                asm.jeq(pass, object, asm.o(null));
+                asm.jeq(fail, object, asm.o(null));
             }
             asm.pload(CiKind.Object, temp, object, asm.i(hubOffset));
             asm.jneq(fail, hub, temp);
