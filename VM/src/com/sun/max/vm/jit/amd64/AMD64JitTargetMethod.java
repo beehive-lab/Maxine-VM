@@ -34,8 +34,8 @@ import com.sun.max.vm.jit.*;
  */
 public class AMD64JitTargetMethod extends JitTargetMethod {
 
-    public AMD64JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
-        super(classMethodActor, compilerScheme, abi);
+    public AMD64JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

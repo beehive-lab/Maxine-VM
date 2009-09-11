@@ -38,8 +38,8 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTargetMethod {
 
-    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
-        super(classMethodActor, compilerScheme, abi);
+    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     @Override

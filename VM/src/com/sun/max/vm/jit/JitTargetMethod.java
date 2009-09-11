@@ -80,8 +80,8 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
-        super(classMethodActor, compilerScheme, abi);
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme);
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
@@ -231,7 +231,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             codeOrCodeBuffer,
             encodedInlineDataDescriptors,
             jitStackFrameLayout.frameSize(),
-            jitStackFrameLayout.frameReferenceMapSize()
+            jitStackFrameLayout.frameReferenceMapSize(), abi
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
