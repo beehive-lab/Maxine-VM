@@ -48,11 +48,9 @@ public class C1XMetrics {
     public static int BlocksDeleted;
     public static int DeadCodeEliminated;
     public static int ResolveCPEAttempts;
-    public static int DataBytesEmitted;
     public static int CodeBytesEmitted;
     public static int SafepointsEmitted;
     public static int ExceptionHandlersEmitted;
-    public static int ReferencePatches;
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;

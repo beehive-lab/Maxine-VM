@@ -133,14 +133,15 @@ public class X86MacroAssembler extends X86Assembler {
         if (rc.isConstant()) {
             storeParameter(rc.asConstant(), offsetFromRspInWords);
         } else if (rc.isOopConstant()) {
-            storeParameter(rc.asOop(), offsetFromRspInWords);
+            storeParameter(CiConstant.forObject(rc.asOop()), offsetFromRspInWords);
         } else {
             assert rc.isRegister();
             storeParameter(rc.asRegister(), offsetFromRspInWords);
         }
     }
 
-    void storeParameter(Object o, int index) {
+    void storeParameter(CiConstant o, int index) {
+        assert o.basicType == CiKind.Object;
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
         movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
     }
@@ -546,15 +547,16 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void movoop(CiRegister dst, Object obj) {
+    void movoop(CiRegister dst, CiConstant obj) {
+        assert obj.basicType == CiKind.Object;
         if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
         } else if (target.arch.is64bit()) {
-            if (obj == null) {
+            if (obj.asObject() == null) {
                 this.xorq(dst, dst);
             } else {
-                this.movq(dst, recordObjectReferenceInCode(obj));
+                this.movq(dst, recordDataReferenceInCode(obj));
             }
         } else {
             Util.shouldNotReachHere();
@@ -562,17 +564,18 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
 
-    void movoop(Address dst, Object obj) {
+    void movoop(Address dst, CiConstant obj) {
+        assert obj.basicType == CiKind.Object;
 
         if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
             //movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
         } else if (target.arch.is64bit()) {
-            if (obj == null) {
+            if (obj.asObject() == null) {
                 xorq(rscratch1, rscratch1);
             } else {
-                this.movq(rscratch1, recordObjectReferenceInCode(obj));
+                this.movq(rscratch1, recordDataReferenceInCode(obj));
             }
             movq(dst, rscratch1);
         } else {
@@ -587,20 +590,6 @@ public class X86MacroAssembler extends X86Assembler {
         } else if (target.arch.is64bit()) {
             mov64(rscratch1, src);
             movq(dst, rscratch1);
-        } else {
-            Util.shouldNotReachHere();
-        }
-    }
-
-    void pushoop(Object obj) {
-
-        if (target.arch.is32bit()) {
-            // Cannot embed obj as an immediate here!
-            throw Util.unimplemented();
-            //pushLiteral32(compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-        } else if (target.arch.is64bit()) {
-            movoop(rscratch1, obj);
-            push(rscratch1);
         } else {
             Util.shouldNotReachHere();
         }
@@ -818,7 +807,7 @@ public class X86MacroAssembler extends X86Assembler {
         Label specialCase = new Label();
 
         // check for special case
-        cmpq(X86.rax, longConstant(minLong));
+        cmpq(X86.rax, recordDataReferenceInCode(CiConstant.forLong(minLong)));
         jcc(X86Assembler.Condition.notEqual, normalCase);
         xorl(X86.rdx, X86.rdx); // prepare X86Register.rdx for possible special case (where
         // remainder = 0)
