@@ -47,21 +47,24 @@ public class IRChecker extends ValueVisitor {
     public static class IRCheckException extends RuntimeException {
         public static final long serialVersionUID = 8974598793158772L;
 
-        public IRCheckException(String msg) {
-            super(msg);
+        public IRCheckException(String phase, String msg) {
+            super("IRCheck error " + phase + ": " + msg);
         }
     }
 
     private final IR ir;
+    private final String phase;
     private final HashMap<Integer, BlockBegin> idMap = new HashMap<Integer, BlockBegin>();
     private final BasicValueChecker basicChecker = new BasicValueChecker();
 
     /**
      * Creates a new IRChecker for the specified IR.
      * @param ir the IR to check
+     * @param phase the phase of compilation when verification is being run
      */
-    public IRChecker(IR ir) {
+    public IRChecker(IR ir, String phase) {
         this.ir = ir;
+        this.phase = phase;
     }
 
     public void check() {
@@ -73,11 +76,11 @@ public class IRChecker extends ValueVisitor {
     private class CheckBlock implements BlockClosure {
         public void apply(BlockBegin block) {
             // check every instruction in the block top to bottom
-            BlockBegin b = idMap.get(block.id());
+            BlockBegin b = idMap.get(block.blockID);
             if (b != null && b != block) {
                 fail("Block id is not unique " + block + " and " + b);
             }
-            idMap.put(block.id(), block);
+            idMap.put(block.blockID, block);
             Instruction instr = block;
             Instruction prev = block;
             while (instr != null) {
@@ -100,8 +103,14 @@ public class IRChecker extends ValueVisitor {
     private class CheckReachable implements BlockClosure {
         public void apply(BlockBegin block) {
             // check that the block was reachable in the first pass
-            if (idMap.get(block.id()) != block) {
+            if (idMap.get(block.blockID) != block) {
                 fail("Block is not reachable from start block: " + block);
+            }
+            List<BlockBegin> linearScanOrder = ir.linearScanOrder();
+            if (linearScanOrder != null) {
+                if (!linearScanOrder.contains(block)) {
+                    fail("Block not in linear scan list: " + block);
+                }
             }
         }
     }
@@ -502,7 +511,7 @@ public class IRChecker extends ValueVisitor {
 
     private void checkPhi(Phi i) {
         BlockBegin block = i.block();
-        if (idMap.get(block.id()) != block) {
+        if (idMap.get(block.blockID) != block) {
             fail("Phi refers to unreachable block " + i + " " + block);
         }
         // if the phi instruction corresponds to a local variable, checks if the local index is valid
@@ -584,11 +593,11 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitBlockBegin(BlockBegin i) {
-        BlockBegin b = idMap.get(i.id());
+        BlockBegin b = idMap.get(i.blockID);
         if (b != null && b != i) {
             fail("Block id is not unique " + i + " and " + b);
         }
-        idMap.put(i.id(), i);
+        idMap.put(i.blockID, i);
         assertNonNull(i.stateBefore(), "Block must have initial state");
         assertBasicType(i, CiKind.Illegal);
         if (i.depthFirstNumber() < -1) {
@@ -1002,7 +1011,7 @@ public class IRChecker extends ValueVisitor {
     }
 
     private void fail(String msg) {
-        throw new IRCheckException(msg);
+        throw new IRCheckException(phase, msg);
     }
 
     private class BasicValueChecker implements ValueClosure {

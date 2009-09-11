@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.ir.*;
 /**
  * @author Bernd Mathiske
  */
-public class BCompiler extends AbstractCompiler implements BirGeneratorScheme {
+public class BCompiler extends CPSAbstractCompiler implements BirGeneratorScheme {
 
     private final ActorToBirTranslator actorToBirTranslator;
 
@@ -47,6 +47,7 @@ public class BCompiler extends AbstractCompiler implements BirGeneratorScheme {
         return actorToBirTranslator;
     }
 
+    @Override
     public Sequence<IrGenerator> irGenerators() {
         return new ArraySequence<IrGenerator>(actorToBirTranslator);
     }

@@ -1974,13 +1974,18 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        FatalError.unexpected("GetStringCritical is unimplemented");
-        return null;
+        setCopyPointer(isCopy, true);
+        final char[] a = ((String) string.unhand()).toCharArray();
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
+        for (int i = 0; i < a.length; i++) {
+            pointer.setChar(i, a[i]);
+        }
+        return pointer;
     }
 
     @JNI_FUNCTION
-    private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer cString) {
-        FatalError.unexpected("ReleaseStringCritical is unimplemented");
+    private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
+        Memory.deallocate(chars);
     }
 
     @JNI_FUNCTION

@@ -80,9 +80,9 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private MonitorScheme monitorScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private CompilerScheme compilerScheme = null;
+    private BootstrapCompilerScheme compilerScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private DynamicCompilerScheme jitScheme = null;
+    private RuntimeCompilerScheme jitScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme compilationScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
@@ -164,12 +164,12 @@ public final class VMConfiguration {
     }
 
     @INLINE
-    public CompilerScheme compilerScheme() {
+    public BootstrapCompilerScheme compilerScheme() {
         return compilerScheme;
     }
 
     @INLINE
-    public DynamicCompilerScheme jitScheme() {
+    public RuntimeCompilerScheme jitScheme() {
         return jitScheme;
     }
 
@@ -247,10 +247,10 @@ public final class VMConfiguration {
         monitorScheme = loadAndInstantiateScheme(monitorPackage, MonitorScheme.class, this);
         heapScheme = loadAndInstantiateScheme(heapPackage, HeapScheme.class, this);
         targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
-        compilerScheme = loadAndInstantiateScheme(compilerPackage, CompilerScheme.class, this);
+        compilerScheme = loadAndInstantiateScheme(compilerPackage, BootstrapCompilerScheme.class, this);
         trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
         if (jitPackage != null) {
-            jitScheme = loadAndInstantiateScheme(jitPackage, DynamicCompilerScheme.class, this);
+            jitScheme = loadAndInstantiateScheme(jitPackage, RuntimeCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
             jitScheme = compilerScheme;

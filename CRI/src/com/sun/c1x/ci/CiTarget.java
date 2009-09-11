@@ -38,22 +38,46 @@ public class CiTarget {
     public int codeAlignment;
     public int heapAlignment;
     public final CiRegister[] allocatableRegisters;
+    public final CiRegister[] registerReferenceMapTemplate;
     public final CiRegister[] callerSavedRegisters;
     public int firstAvailableSpInFrame;
     public int pageSize;
     public boolean isMP;
+    public final CiRegister stackRegister;
+    public final CiRegister scratchRegister;
 
-    public CiTarget(CiArchitecture arch, CiRegister[] allocatableRegisters, CiRegister[] callerSavedRegisters, int pageSize, boolean isMP) {
+    public CiTarget(CiArchitecture arch, CiRegister stackRegister, CiRegister scratchRegister, CiRegister[] allocatableRegisters, CiRegister[] callerSavedRegisters,
+            CiRegister[] registerReferenceMapTemplate, int pageSize,
+            boolean isMP) {
+
         this.arch = arch;
         referenceSize = arch.wordSize;
         stackAlignment = arch.wordSize;
         cacheAlignment = arch.wordSize;
         heapAlignment = arch.wordSize;
         codeAlignment = 16;
+
+        assert stackRegister != null && !contains(stackRegister, allocatableRegisters);
+        this.stackRegister = stackRegister;
+
+        assert scratchRegister != null && !contains(scratchRegister, allocatableRegisters) && scratchRegister != stackRegister;
+        this.scratchRegister = scratchRegister;
+
         this.callerSavedRegisters = callerSavedRegisters;
+        this.registerReferenceMapTemplate = registerReferenceMapTemplate;
         this.allocatableRegisters = allocatableRegisters;
         this.pageSize = pageSize;
         this.isMP = isMP;
+    }
+
+    private static boolean contains(CiRegister reg, CiRegister[] arr) {
+        for (CiRegister r : arr) {
+            if (r == reg) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -133,22 +157,10 @@ public class CiTarget {
     }
 
     public boolean isP6() {
-        return false;
-    }
-
-    public boolean supportsCx8() {
         return true;
     }
 
-    public boolean isWin64() {
-        return false;
-    }
-
-    public boolean isWindows() {
-        return false;
-    }
-
-    public boolean isSolaris() {
+    public boolean supportsCx8() {
         return true;
     }
 }

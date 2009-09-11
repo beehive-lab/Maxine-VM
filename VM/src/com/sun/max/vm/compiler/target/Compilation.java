@@ -20,10 +20,9 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.util.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 import static com.sun.max.vm.VMOptions.verboseOption;
@@ -41,7 +40,7 @@ import java.util.List;
  */
 public class Compilation implements Future<TargetMethod> {
     public final CompilationScheme compilationScheme;
-    public final DynamicCompilerScheme compilerScheme;
+    public final RuntimeCompilerScheme compilerScheme;
     public final ClassMethodActor classMethodActor;
     @INSPECTED
     public final Object previousTargetState;
@@ -55,7 +54,7 @@ public class Compilation implements Future<TargetMethod> {
     public boolean done;
 
     public Compilation(CompilationScheme compilationScheme,
-                       DynamicCompilerScheme compilerScheme,
+                       RuntimeCompilerScheme compilerScheme,
                        ClassMethodActor classMethodActor,
                        Object previousTargetState,
                        Thread compilingThread) {
@@ -97,7 +96,7 @@ public class Compilation implements Future<TargetMethod> {
         if (!done) {
             synchronized (classMethodActor) {
                 if (compilingThread == Thread.currentThread()) {
-                    throw FatalError.unexpected("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive");
+                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + this.compilationScheme);
                 }
 
                 // the class method actor is used here as the condition variable
@@ -132,22 +131,24 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that is the result of the compilation
      */
     public TargetMethod compile(List<CompilationObserver> observers) {
-        DynamicCompilerScheme compiler = compilerScheme;
+        RuntimeCompilerScheme compiler = compilerScheme;
         TargetMethod targetMethod = null;
 
         // notify any compilation observers
         observeBeforeCompilation(observers, compiler);
 
         Throwable error = null;
+        String methodString = "";
         try {
             // attempt the compilation
-            String methodString = logBeforeCompilation(compiler);
-            targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(classMethodActor));
+            methodString = logBeforeCompilation(compiler);
+            targetMethod = compiler.compile(classMethodActor);
+
             if (targetMethod == null) {
-                error = new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
-            } else {
-                logAfterCompilation(compiler, targetMethod, methodString);
+                throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
+
+            logAfterCompilation(compiler, targetMethod, methodString);
         } catch (Throwable t) {
             error = t;
         } finally {
@@ -172,15 +173,29 @@ public class Compilation implements Future<TargetMethod> {
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);
-
-            if (error != null) {
-                throw Exceptions.cast(Error.class, error);
-            }
         }
+
+        if (error != null) {
+
+            logCompilationError(error, compiler, targetMethod, methodString);
+
+            throw new RuntimeException(error);
+        }
+
         return targetMethod;
     }
 
-    private String logBeforeCompilation(DynamicCompilerScheme compiler) {
+    private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+        if (verboseOption.verboseCompilation) {
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": " + compiler.name() + ": Compilation failed  " + methodString + " @ ");
+            Log.print(error.toString());
+            error.printStackTrace(Log.out);
+            Log.println();
+        }
+    }
+
+    private String logBeforeCompilation(RuntimeCompilerScheme compiler) {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
@@ -190,7 +205,7 @@ public class Compilation implements Future<TargetMethod> {
         return methodString;
     }
 
-    private void logAfterCompilation(DynamicCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+    private void logAfterCompilation(RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printVmThread(VmThread.current(), false);
             Log.print(": " + compiler.name() + ": Compiled  " + methodString + " @ ");
@@ -200,14 +215,14 @@ public class Compilation implements Future<TargetMethod> {
         }
     }
 
-    private void observeBeforeCompilation(List<CompilationObserver> observers, DynamicCompilerScheme compiler) {
+    private void observeBeforeCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeBeforeCompilation(classMethodActor, compiler);
             }
         }
     }
-    private void observeAfterCompilation(List<CompilationObserver> observers, DynamicCompilerScheme compiler, TargetMethod result) {
+    private void observeAfterCompilation(List<CompilationObserver> observers, RuntimeCompilerScheme compiler, TargetMethod result) {
         if (observers != null) {
             for (CompilationObserver observer : observers) {
                 observer.observeAfterCompilation(classMethodActor, compiler, result);

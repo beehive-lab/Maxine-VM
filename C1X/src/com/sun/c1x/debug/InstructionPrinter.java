@@ -499,7 +499,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed load) {
-        out.print(load).print('[').print(load.index()).print("] (").print(load.type().tchar()).print(')');
+        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.type().tchar()).print(')');
     }
 
     @Override
@@ -632,7 +632,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
+        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
     }
 
     @Override

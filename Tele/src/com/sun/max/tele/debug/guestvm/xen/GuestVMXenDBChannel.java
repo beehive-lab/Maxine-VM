@@ -144,6 +144,14 @@ public final class GuestVMXenDBChannel {
         return nativeSingleStep(threadId);
     }
 
+    /**
+     * This is not synchronized because it is used to interrupt a resume that already holds the lock.
+     * @return
+     */
+    public static boolean suspendAll() {
+        return nativeSuspendAll();
+    }
+
     public static synchronized boolean suspend(int threadId) {
         return nativeSuspend(threadId);
     }
@@ -178,6 +186,7 @@ public final class GuestVMXenDBChannel {
     private static native boolean nativeWriteByte(int domainId, long address, byte value);
     private static native int nativeSetInstructionPointer(int threadId, long ip);
     private static native boolean nativeSingleStep(int threadId);
+    private static native boolean nativeSuspendAll();
     private static native boolean nativeSuspend(int threadId);
     private static native boolean nativeActivateWatchpoint(int domainId, long start, long size, boolean after, boolean read, boolean write, boolean exec);
     private static native boolean nativeDeactivateWatchpoint(int domainId, long start, long size);

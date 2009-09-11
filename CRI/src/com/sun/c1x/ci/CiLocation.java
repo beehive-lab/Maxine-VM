@@ -26,37 +26,64 @@ package com.sun.c1x.ci;
  * @author Thomas Wuerthinger
  *
  */
-public final class CiLocation {
+public final class CiLocation extends CiValue {
 
+    /**
+     * Singleton object representing an invalid location.
+     */
     public static final CiLocation InvalidLocation = new CiLocation();
 
+    public final CiKind kind;
     public final CiRegister first;
     public final CiRegister second;
     public final int stackOffset;
+    public final int stackSize;
+    public final boolean callerStack;
 
-    public CiLocation(CiRegister register) {
+    /**
+     * Location representing a single register.
+     * 
+     * @param kind
+     *            the kind of the new location
+     * @param register
+     *            the register representing the new location
+     */
+    public CiLocation(CiKind kind, CiRegister register) {
+        assert kind.size == 1;
+        this.kind = kind;
         first = register;
         second = null;
         stackOffset = 0;
+        stackSize = 0;
+        this.callerStack = false;
     }
 
-    public CiLocation(CiRegister first, CiRegister second) {
+    public CiLocation(CiKind kind, CiRegister first, CiRegister second) {
+        assert kind.size == 2;
+        this.kind = kind;
         this.first = first;
         this.second = second;
         stackOffset = 0;
+        stackSize = 0;
+        this.callerStack = false;
     }
 
     private CiLocation() {
+        this.kind = CiKind.Illegal;
         this.first = null;
         this.second = null;
         this.stackOffset = 0;
+        this.stackSize = 0;
+        this.callerStack = false;
     }
 
-    public CiLocation(int stackOffset) {
-        assert stackOffset > 0;
+    public CiLocation(CiKind kind, int stackOffset, int stackSize, boolean callerStack) {
+        this.kind = kind;
         this.first = null;
         this.second = null;
         this.stackOffset = stackOffset;
+        this.stackSize = stackSize;
+        this.callerStack = callerStack;
     }
 
     public boolean isSingleRegister() {
@@ -72,12 +99,31 @@ public final class CiLocation {
     }
 
     public boolean isStackOffset() {
-        return stackOffset > 0;
+        return !isRegister() && isValid();
     }
 
     public boolean isValid() {
-        return isStackOffset() || isRegister();
+        return this != InvalidLocation;
+    }
 
+    @Override
+    public int hashCode() {
+        return first.hashCode() * 13 + second.hashCode() * 7 + stackOffset;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj instanceof CiLocation) {
+            final CiLocation other = (CiLocation) obj;
+            return other.first == first && other.second == second && other.stackOffset == stackOffset;
+        }
+
+        return false;
     }
 
     @Override
@@ -87,7 +133,7 @@ public final class CiLocation {
         } else if (isDoubleRegister()) {
             return first.name + "+" + second.name;
         } else if (isStackOffset()) {
-            return "STACKED REG";
+            return "STACKED REG at " + stackOffset;
         } else {
             assert !this.isValid();
             return "BAD";

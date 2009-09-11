@@ -101,10 +101,10 @@ public class PatchingStub extends CodeStub {
             int fieldOffset = 0;
             switch (patchCode) {
                 case PatchLow:
-                    fieldOffset = masm.target.arch.loWordOffsetInBytes;
+                    fieldOffset = masm.target.arch.lowWordOffset;
                     break;
                 case PatchHigh:
-                    fieldOffset = masm.target.arch.hiWordOffsetInBytes;
+                    fieldOffset = masm.target.arch.highWordOffset;
                     break;
                 case PatchNormal:
                     fieldOffset = 0;

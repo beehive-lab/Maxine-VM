@@ -32,6 +32,7 @@ import com.sun.c1x.ri.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.test.JavaExecHarness.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -61,9 +62,7 @@ public class HIRTestExecutor implements Executor {
     }
 
     private static CiTarget createTarget() {
-        // TODO: configure architecture according to host platform
-        final CiArchitecture arch = CiArchitecture.findArchitecture("amd64");
-        return new CiTarget(arch, arch.registers, arch.registers, 4096, true);
+        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

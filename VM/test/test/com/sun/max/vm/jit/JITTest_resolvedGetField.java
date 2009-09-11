@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
+public class JITTest_resolvedGetField extends CompilerTestCase<CPSTargetMethod> {
 
     private int intField;
 

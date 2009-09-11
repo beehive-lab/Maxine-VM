@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
 import com.sun.c1x.ci.*;
+import com.sun.c1x.util.*;
 
 /**
  * The <code>OopMap</code> class definition.
@@ -34,15 +33,55 @@ import com.sun.c1x.ci.*;
 public class OopMap {
 
 
-    private final List<CiLocation> oopLocations = new ArrayList<CiLocation>();
+    private final int frameSize;
+    private final CiTarget target;
+    private final FrameMap frameMap;
+
+    private BitMap stackMap;
+    private BitMap registerMap;
+
+    public OopMap(FrameMap frameMap, int frameSize, CiTarget target) {
+        this.frameSize = frameSize;
+        this.target = target;
+        this.frameMap = frameMap;
+        initMaps();
+    }
+
+    private void initMaps() {
+        assert frameSize % target.arch.wordSize == 0 : "must be aligned";
+        stackMap = new BitMap(frameSize / target.arch.wordSize);
+        registerMap = new BitMap(target.registerReferenceMapTemplate.length);
+    }
 
     public void setOop(CiLocation location) {
-        oopLocations.add(location);
+        if (location.isStackOffset()) {
+            int offset = location.stackOffset;
+            assert offset % target.arch.wordSize == 0 : "must be aligned";
+            int stackMapIndex = offset / target.arch.wordSize;
+            stackMap.set(stackMapIndex);
+        } else {
+            assert location.isSingleRegister() : "objects can only be in a single register";
+            for (int i = 0; i < target.registerReferenceMapTemplate.length; i++) {
+                if (target.registerReferenceMapTemplate[i] == location.first) {
+                    assert !registerMap.get(i) : "bit already set";
+                    registerMap.set(i);
+                }
+            }
+        }
     }
 
     public OopMap deepCopy() {
-        OopMap result = new OopMap();
-        result.oopLocations.addAll(oopLocations);
+        OopMap result = new OopMap(frameMap, frameSize, target);
+        result.stackMap = stackMap.copy();
+        result.registerMap = registerMap.copy();
         return result;
+    }
+
+    public boolean[] registerMap() {
+        return registerMap.toArray();
+    }
+
+    public boolean[] stackMap() {
+        return stackMap.toArray();
     }
 }

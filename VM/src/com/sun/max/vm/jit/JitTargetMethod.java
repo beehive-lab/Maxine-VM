@@ -44,7 +44,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
+public abstract class JitTargetMethod extends CPSTargetMethod {
 
     private int adapterReturnPosition;
     private int optimizedCallerAdapterFrameCodeSize;
@@ -80,7 +80,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 
@@ -129,11 +129,6 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
         return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
-    }
-
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
     }
 
     /**
@@ -236,8 +231,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
             codeOrCodeBuffer,
             encodedInlineDataDescriptors,
             jitStackFrameLayout.frameSize(),
-            jitStackFrameLayout.frameReferenceMapSize(),
-            abi
+            jitStackFrameLayout.frameReferenceMapSize(), abi
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -286,9 +280,13 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         }
     }
 
-    @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
         finalizeReferenceMaps();
+
+        if (stackReferenceMapPreparer.checkIgnoreCurrentFrame()) {
+            return true;
+        }
+
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter);
     }
 

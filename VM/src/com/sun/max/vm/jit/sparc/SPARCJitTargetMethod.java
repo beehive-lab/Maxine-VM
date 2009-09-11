@@ -20,13 +20,12 @@
  */
 package com.sun.max.vm.jit.sparc;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.sparc.*;
-import com.sun.max.vm.compiler.DynamicCompilerScheme;
+import com.sun.max.vm.compiler.RuntimeCompilerScheme;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
@@ -39,18 +38,13 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTargetMethod {
 
-    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
-        return SPARCTargetMethod.Static.instructionSet();
     }
 
     @Override

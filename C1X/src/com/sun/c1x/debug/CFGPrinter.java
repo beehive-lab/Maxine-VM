@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -265,7 +263,6 @@ public class CFGPrinter {
         begin("HIR");
         out.disableIndentation();
         for (Instruction i = block.next(); i != null; i = i.next()) {
-            assert i.next() == null || !Instruction.valueString(i).equals(valueString(i.next()));
             printInstructionHIR(i);
         }
         out.enableIndentation();

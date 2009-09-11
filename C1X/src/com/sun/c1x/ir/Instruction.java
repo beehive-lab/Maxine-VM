@@ -53,7 +53,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind type) {
         super(type);
         bci = BCI_NOT_APPENDED;
-        lirOperand = LIROperand.ILLEGAL;
+        lirOperand = LIROperandFactory.IllegalLocation;
     }
 
     /**

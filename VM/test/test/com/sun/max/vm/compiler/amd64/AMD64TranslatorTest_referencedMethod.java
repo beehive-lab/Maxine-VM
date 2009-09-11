@@ -46,7 +46,7 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<TargetMethod> {
+public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTargetMethod> {
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(AMD64TranslatorTest_referencedMethod.suite());
@@ -98,7 +98,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<Targe
         final AppendableSequence<MethodActor> directCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
-        targetMethod.compilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
+        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
         for (MethodActor methodActor : virtualCalls) {
             listMethodActor(methodActor, methodActors);
         }

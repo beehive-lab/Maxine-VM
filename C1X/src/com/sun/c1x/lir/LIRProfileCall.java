@@ -46,7 +46,7 @@ public class LIRProfileCall extends LIRInstruction {
      * @param tmp1
      */
     public LIRProfileCall(LIROpcode opcode, RiMethod profiledMethod, int profiledBci, LIROperand mdo, LIROperand recv, LIROperand tmp1, RiType knownHolder) {
-        super(opcode, LIROperandFactory.IllegalOperand, null, false, null, 0, 3, recv, mdo, tmp1);
+        super(opcode, LIROperandFactory.IllegalLocation, null, false, null, 0, 3, recv, mdo, tmp1);
         this.profiledMethod = profiledMethod;
         this.profiledBci = profiledBci;
         this.knownHolder = knownHolder;
@@ -127,10 +127,6 @@ public class LIRProfileCall extends LIRInstruction {
         out.print(".");
         out.print(profiledMethod.holder().name().toString());
         out.printf(" @ %d", profiledBci);
-        mdo().print(out);
-        out.print(" ");
-        recv().print(out);
-        out.print(" ");
-        tmp1().print(out);
+        super.printInstruction(out);
     }
 }

@@ -35,8 +35,10 @@ import com.sun.c1x.value.*;
 public class BlockMerger implements BlockClosure {
 
     private final BlockBegin startBlock;
+    private final IR ir;
 
     public BlockMerger(IR ir) {
+        this.ir = ir;
         startBlock = ir.startBlock;
         startBlock.iteratePreOrder(this);
     }
@@ -69,6 +71,7 @@ public class BlockMerger implements BlockClosure {
                     assert !(prev instanceof BlockEnd) : "must not be a BlockEnd";
                     prev.setNext(next, next.bci());
                     BlockUtil.disconnectFromGraph(sux);
+                    sux.setBlockFlag(BlockBegin.BlockFlag.Merged);
                     newEnd = sux.end();
                     block.setEnd(newEnd);
                     // add exception handlers of deleted block, if any
@@ -84,7 +87,7 @@ public class BlockMerger implements BlockClosure {
                     }
 
                     C1XMetrics.BlocksMerged++;
-                } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd) {
+                } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd && !block.isExceptionEntry()) {
                     // the successor has multiple predecessors, but this block is empty
                     final ValueStack oldState = oldEnd.stateAfter();
                     assert sux.stateBefore().scope() == oldState.scope();
@@ -108,16 +111,7 @@ public class BlockMerger implements BlockClosure {
                             }
                         }
                     }
-                    sux.removePredecessor(block); // remove this block from the successor
-                    for (BlockBegin pred : block.predecessors()) {
-                        // substitute the new successor for this block in each predecessor
-                        pred.end().substituteSuccessor(block, sux);
-                        // and add each predecessor to the successor
-                        sux.addPredecessor(pred);
-                    }
-                    // this block is now disconnected; remove all its incoming and outgoing edges
-                    block.predecessors().clear();
-                    oldEnd.successors().clear();
+                    ir.replaceBlock(block, sux);
                     C1XMetrics.BlocksSkipped++;
                 }
             }

@@ -34,7 +34,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
+public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
 
     public void perform_unresolved_invokespecial(UnresolvedAtCompileTime o) {
         new UnresolvedAtCompileTime();

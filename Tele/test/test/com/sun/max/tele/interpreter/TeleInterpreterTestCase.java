@@ -37,8 +37,8 @@ import com.sun.max.vm.value.*;
  *
  * @author Doug Simon
  */
-public abstract class TeleInterpreterTestCase extends CompilerTestCase<ActorIrMethod> {
 
+public abstract class TeleInterpreterTestCase extends CompilerTestCase<ActorIrMethod> {
     public TeleInterpreterTestCase() {
         super();
     }

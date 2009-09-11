@@ -111,11 +111,7 @@ public class Constant extends Instruction {
      * @return an instruction representing the object
      */
     public static Constant forObject(Object o) {
-        final Constant constant = new Constant(CiConstant.forObject(o));
-        if (o != null) {
-            constant.setFlag(Value.Flag.NonNull);
-        }
-        return constant;
+        return new Constant(CiConstant.forObject(o));
     }
 
     @Override

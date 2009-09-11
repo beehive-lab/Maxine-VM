@@ -35,7 +35,6 @@ import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
 import com.sun.c1x.target.x86.X86;
 import com.sun.c1x.target.x86.X86Assembler;
-import com.sun.c1x.target.x86.X86FrameMap;
 import com.sun.c1x.target.x86.X86MacroAssembler;
 import com.sun.c1x.util.Util;
 
@@ -55,7 +54,7 @@ public class X86CodeGen extends CodeGen {
 
     public X86CodeGen(C0XCompilation compilation, CiTarget target) {
         super(compilation, target);
-        asm = new X86MacroAssembler(null, target);
+        asm = new X86MacroAssembler(null, target, -1);
         is64bit = target.arch.is64bit();
     }
 
@@ -315,7 +314,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.F2L: {
                 Label endLabel = new Label();
-                CiRegister rscratch1 = X86FrameMap.rscratch1(target.arch);
+            CiRegister rscratch1 = target.scratchRegister;
                 asm.cvttss2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
@@ -338,7 +337,7 @@ public class X86CodeGen extends CodeGen {
             }
             case Bytecodes.D2L: {
                 Label endLabel = new Label();
-                CiRegister rscratch1 = X86FrameMap.rscratch1(target.arch);
+            CiRegister rscratch1 = target.scratchRegister;
                 asm.cvttsd2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);

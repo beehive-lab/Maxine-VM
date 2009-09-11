@@ -137,9 +137,6 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         if (extraCallInfo.isNativeFunctionCall) {
                             stopPositions[stopIndex] |= StopPositions.NATIVE_FUNCTION_CALL;
                         }
-                        if (extraCallInfo.isReferenceCall) {
-                            stopPositions[stopIndex] |= StopPositions.REFERENCE_RETURN;
-                        }
                     }
                 }
             } catch (AssemblyException assemblyException) {
@@ -224,7 +221,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
     @Override
     public TargetMethod makeIrMethod(EirMethod eirMethod) {
-        final ExceptionRangeTargetMethod targetMethod = createIrMethod(eirMethod.classMethodActor());
+        final CPSTargetMethod targetMethod = createIrMethod(eirMethod.classMethodActor());
         generateTarget(targetMethod, eirMethod);
         return targetMethod;
     }
@@ -232,7 +229,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
     private static final TimerMetric timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
 
     @Override
-    protected void generateIrMethod(ExceptionRangeTargetMethod targetMethod) {
+    protected void generateIrMethod(CPSTargetMethod targetMethod) {
         final EirGeneratorScheme eirGeneratorScheme = (EirGeneratorScheme) compilerScheme();
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
@@ -242,7 +239,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         timer.stop();
     }
 
-    private void generateTarget(ExceptionRangeTargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
+    private void generateTarget(CPSTargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
         final EirTargetEmitter<?> emitter = createEirTargetEmitter(eirMethod);
         emitter.emitFrameAdapterPrologue();
         eirMethod.emit(emitter);
@@ -292,7 +289,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final int numberOfIndirectCalls = emitter.indirectCallLabels().length();
         final int numberOfSafepoints = emitter.safepointLabels().length();
         final int registerReferenceMapSize = targetMethod.registerReferenceMapSize();
-        int referenceMapsSize = TargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
+        int referenceMapsSize = CPSTargetMethod.computeReferenceMapsSize(numberOfDirectCalls, numberOfIndirectCalls, numberOfSafepoints, frameReferenceMapSize, registerReferenceMapSize);
 
         targetMethod.setGenerated(
                         packLabelPositions(emitter.catchRangeLabels()),
@@ -308,8 +305,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
-                        frameReferenceMapSize,
-                        eirMethod.abi().targetABI()
+                        frameReferenceMapSize, eirMethod.abi().targetABI()
         );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +

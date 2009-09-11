@@ -33,7 +33,7 @@ import com.sun.max.vm.compiler.eir.amd64.*;
 public class Package extends VMPackage {
     public Package() {
         super();
-        registerScheme(DynamicCompilerScheme.class, AMD64JitCompiler.class);
+        registerScheme(RuntimeCompilerScheme.class, AMD64JitCompiler.class);
     }
 
     @Override

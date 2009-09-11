@@ -237,7 +237,7 @@ public final class DynamicLinker {
                     }
                 }
             } catch (InvocationTargetException e) {
-                throw ProgramError.unexpected(e);
+                throw new RuntimeException(e);
             } catch (IllegalAccessException e) {
                 throw ProgramError.unexpected(e);
             }

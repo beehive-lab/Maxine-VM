@@ -65,7 +65,7 @@ public class Address {
         }
     }
 
-    public static final Address InternalRelocation = new Address(CiRegister.noreg, 0);
+    public static final Address InternalRelocation = new Address(CiRegister.None, 0);
 
     public final CiRegister base;
     public final int disp;
@@ -73,7 +73,7 @@ public class Address {
     public final CiRegister index;
 
     public Address(CiRegister base, int displacement) {
-        this(base, CiRegister.noreg, ScaleFactor.noScale, displacement);
+        this(base, CiRegister.None, ScaleFactor.noScale, displacement);
     }
 
     public Address(CiRegister base, CiRegister index, ScaleFactor scale) {

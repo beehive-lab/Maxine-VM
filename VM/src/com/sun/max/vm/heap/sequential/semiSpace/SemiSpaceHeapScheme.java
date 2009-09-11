@@ -490,13 +490,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      */
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
-        if (verifyReferences) {
-            DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
-        }
         if (fromSpace.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
             if (!forwardGrip.isZero()) {
                 return forwardGrip;
+            }
+            if (verifyReferences) {
+                DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
