@@ -157,18 +157,20 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compilationThread.start();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (jitOption.isPresent()) {
-                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
-                setMode(Mode.JIT);
-            } else if (optOption.isPresent()) {
-                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
-                setMode(Mode.OPTIMIZED);
-            } else {
-                defaultRecompilationThreshold0 = thresholdOption.getValue();
-                JitInstrumentation.enable();
-                setMode(Mode.MIXED);
+            if (mode == null) {
+                if (jitOption.isPresent()) {
+                    defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                    defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+                    setMode(Mode.JIT);
+                } else if (optOption.isPresent()) {
+                    defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                    defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+                    setMode(Mode.OPTIMIZED);
+                } else {
+                    defaultRecompilationThreshold0 = thresholdOption.getValue();
+                    JitInstrumentation.enable();
+                    setMode(Mode.MIXED);
+                }
             }
 
             if (BACKGROUND_COMPILATION) {

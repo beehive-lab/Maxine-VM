@@ -42,7 +42,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
@@ -222,7 +221,6 @@ public final class BootImageGenerator {
                 VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
-
             BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
             BootImageGenerator.calleeJit = testCalleeJit.getValue();
             BootImageGenerator.callerJit = testCallerJit.getValue();
@@ -232,15 +230,12 @@ public final class BootImageGenerator {
             final File outputDirectory = outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
 
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
+            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
 
-            if (prototypeJit.getValue()) {
-                VMConfiguration.target().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
-            }
 
             VMOptions.beforeExit();
 
