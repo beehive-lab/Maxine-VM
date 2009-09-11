@@ -74,8 +74,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected int frameReferenceMapSize;
 
-    public CPSTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
-        super(classMethodActor, compilerScheme, abi);
+    public CPSTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
+        super(classMethodActor, compilerScheme, null);
     }
 
     public boolean contains(Builtin builtin, boolean defaultResult) {
@@ -195,13 +195,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
                     int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
-                    int frameReferenceMapSize) {
+                    int frameReferenceMapSize, TargetABI abi) {
         this.catchRangePositions = catchRangePositions;
         this.catchBlockPositions = catchBlockPositions;
         this.compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
         this.encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         this.referenceMaps = referenceMaps;
         this.frameReferenceMapSize = frameReferenceMapSize;
+        super.setABI(abi);
         super.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
         super.setFrameSize(frameSize);
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
@@ -226,7 +227,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             code(),
             encodedInlineDataDescriptors,
             frameSize(),
-            frameReferenceMapSize()
+            frameReferenceMapSize(), super.abi()
         );
         return duplicate;
     }

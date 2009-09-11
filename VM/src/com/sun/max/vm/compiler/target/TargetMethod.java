@@ -472,4 +472,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
 
     }
+
+    protected final void setABI(TargetABI abi) {
+        this.abi = abi;
+    }
 }
