@@ -648,7 +648,7 @@ public class CompiledPrototype extends Prototype {
             } else {
                 // Link at least direct calls in method prologue
                 if (!targetMethod.linkDirectCallsInPrologue()) {
-                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                    ProgramError.unexpected("did not link all direct calls in prologue - method: " + targetMethod);
                 }
             }
         }
