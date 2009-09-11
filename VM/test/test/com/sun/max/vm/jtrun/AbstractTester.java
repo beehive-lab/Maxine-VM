@@ -203,8 +203,9 @@ public abstract class AbstractTester extends JavaRunScheme {
     @PROTOTYPE_ONLY
     private void registerClasses() {
         if (BootImageGenerator.callerJit) {
-            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.all.JavaTesterTests.class);
             CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.some.JavaTesterTests.class);
+            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.all.JavaTesterTests.class);
+            CompiledPrototype.registerJitClass(test.com.sun.max.vm.jtrun.AbstractTester.class);
         }
         for (Class<?> testClass : getClassList()) {
             addClassToImage(testClass);
