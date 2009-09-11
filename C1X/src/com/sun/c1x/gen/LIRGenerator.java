@@ -262,7 +262,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIROperand result = newRegister(CiKind.Object);
         LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
-        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), CiKind.Object), result);
+        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
     }
 
@@ -1233,7 +1233,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void visitCurrentThread(Intrinsic x) {
         assert x.numberOfArguments() == 0 : "wrong type";
         LIROperand reg = rlockResult(x);
-        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjOffset(), CiKind.Object), reg);
+        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjectOffset(), CiKind.Object), reg);
     }
 
     private void visitFPIntrinsics(Intrinsic x) {
@@ -1257,8 +1257,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore().copyLocks());
         }
-        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffsetInBytes(), CiKind.Object), result, info);
-        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
+        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffset(), CiKind.Object), result, info);
+        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.javaClassObjectOffset() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
     }
 
     private void visitNIOCheckIndex(Intrinsic x) {

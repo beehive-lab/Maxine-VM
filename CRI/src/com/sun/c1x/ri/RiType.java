@@ -20,7 +20,8 @@
  */
 package com.sun.c1x.ri;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.CiKind;
 
 
 /**
@@ -204,8 +205,6 @@ public interface RiType {
      * @return the basic type
      */
     CiKind basicType();
-
-    int superCheckOffset();
 
     /**
      * Gets the encoding of (i.e. a constant representing the value of) the specified part of this type.

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ri;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * The <code>RiMethod</code> interface represents resolved and unresolved methods.
@@ -201,11 +201,18 @@ public interface RiMethod {
     int javaCodeAtBci(int bci); // TODO: remove
 
     /**
-     * Gets the interface method ID for this method, if this method is an interface method.
-     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * Gets the interface method ID for this method, if this method is an interface method. NOTE THAT THIS OPERATION IS
+     * ONLY AVAILABLE ON RESOLVED INTERFACE METHODS. On all other methods the result is -1.
+     * 
      * @return the interface method id
      */
     int interfaceID();
 
-    int iIndexInInterface();
+    /**
+     * Gets index of the method within its interface. NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED INTERFACE
+     * METHODS. On all other methods the result is -1.
+     * 
+     * @return the index of the method within the interface
+     */
+    int indexInInterface();
 }

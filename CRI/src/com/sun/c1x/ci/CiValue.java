@@ -22,9 +22,12 @@ package com.sun.c1x.ci;
 
 /**
  * 
+ * The purpose of this class is to enable arrays whose entries are either of type {@link CiConstant} or
+ * {@link CiLocation}.
+ * 
  * @author Thomas Wuerthinger
  * 
  */
-public class CiValue {
+public abstract class CiValue {
 
 }

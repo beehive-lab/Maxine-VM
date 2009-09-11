@@ -58,5 +58,10 @@ public interface RiExceptionHandler {
      */
     boolean isCatchAll();
 
+    /**
+     * The type of exceptions that are caught by this exception handler.
+     * 
+     * @return the exception type
+     */
     RiType catchKlass();
 }

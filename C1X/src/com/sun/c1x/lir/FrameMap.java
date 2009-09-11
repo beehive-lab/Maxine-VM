@@ -101,7 +101,7 @@ public class FrameMap {
 
     int spOffsetForMonitorBase(int index) {
         int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SpillSlotSize;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.basicObjectLockSize();
+        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
         return offset;
     }
 

@@ -131,7 +131,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress emitArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.firstArrayElementOffsetInBytes(type);
+        int offsetInBytes = compilation.runtime.firstArrayElementOffset(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
             LIRConstant constantIndexOpr = (LIRConstant) indexOpr;
