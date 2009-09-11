@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.asm.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
@@ -59,11 +58,6 @@ public class IrTargetMethod extends CPSTargetMethod {
 
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
         throw ProgramError.unexpected();
     }
 

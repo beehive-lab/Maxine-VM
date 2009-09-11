@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package com.sun.max.tele.object;
 
-#include "mutex.h"
+import com.sun.max.tele.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.reference.*;
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
-#endif
+/**
+ * @author Thomas Wuerthinger
+ */
+public class TeleC1XTargetMethod extends TeleTargetMethod {
 
-typedef condition_Struct *Condition;
+    TeleC1XTargetMethod(TeleVM teleVM, Reference ref) {
+        super(teleVM, ref);
+    }
 
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern boolean condition_wait(Condition condition, Mutex mutex);
-extern boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern boolean condition_notify(Condition condition);
-extern boolean condition_notifyAll(Condition condition);
+    @Override
+    public BytecodeInfo[] bytecodeInfos() {
+        return null;
+    }
 
-#endif /*__condition_h__*/
+    @Override
+    public int[] bytecodeToTargetCodePositionMap() {
+        return null;
+    }
+
+
+    @Override
+    public int[] getCatchRangePositions() {
+        return null;
+    }
+
+    @Override
+    public int[] getCatchBlockPositions() {
+        return null;
+    }
+}

@@ -18,31 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package test.com.sun.max.vm.compiler;
 
-#include "mutex.h"
+import java.lang.annotation.*;
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
-#endif
+/**
+ * Refines testing of the reflection invocation stub generated for the annotated method.
+ *
+ * @author Doug Simon
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface STUB_TEST_PROPERTIES {
 
-typedef condition_Struct *Condition;
+    /**
+     * Specifies if the stub should be executed. Methods that have side effects on the test result should not have their stub executed.
+     */
+    boolean execute() default true;
 
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern boolean condition_wait(Condition condition, Mutex mutex);
-extern boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern boolean condition_notify(Condition condition);
-extern boolean condition_notifyAll(Condition condition);
-
-#endif /*__condition_h__*/
+    /**
+     * Specifies if the result of executing the stub should be compared against the result of executed the method.
+     */
+    boolean compareResult() default true;
+}

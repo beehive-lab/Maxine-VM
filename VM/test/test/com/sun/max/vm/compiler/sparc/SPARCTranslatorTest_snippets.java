@@ -46,7 +46,7 @@ public class SPARCTranslatorTest_snippets extends CompilerTestCase {
     public void test() {
         for (Snippet snippet : Snippet.snippets()) {
             Trace.line(1, "snippet " + snippet.name() + ":");
-            final TargetMethod targetMethod = (TargetMethod) compilerTestSetup().translate(snippet.classMethodActor());
+            final CPSTargetMethod targetMethod = (CPSTargetMethod) compilerTestSetup().translate(snippet.classMethodActor());
             targetMethod.traceBundle(IndentWriter.traceStreamWriter());
         }
     }

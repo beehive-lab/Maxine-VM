@@ -18,26 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-
-import java.lang.annotation.*;
-
-/**
- * Refines testing of the reflection invocation stub generated for the annotated method.
- * 
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: (1L, 2L) = 0L;
+ * @Runs: (11L, 0L) = -11L;
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface STUB_TEST_PROPERTIES {
 
-    /**
-     * Specifies if the stub should be executed. Methods that have side effects on the test result should not have their stub executed.
-     */
-    boolean execute() default true;
+package jtt.except;
 
-    /**
-     * Specifies if the result of executing the stub should be compared against the result of executed the method.
-     */
-    boolean compareResult() default true;
+public class BC_ldiv2 {
+    public static long test(long a, long b) {
+        try {
+            return a / b;
+        } catch (Exception e) {
+            return -11;
+        }
+    }
 }

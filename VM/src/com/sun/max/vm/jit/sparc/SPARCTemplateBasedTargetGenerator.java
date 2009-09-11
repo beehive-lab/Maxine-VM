@@ -51,6 +51,11 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         return targetMethod;
     }
 
+    private SPARCEirABI getABI(ClassMethodActor classMethodActor) {
+        final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
+        return (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
+    }
+
     @Override
     protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor) {
         // allocate a buffer that is likely to be large enough, based on a linear expansion
@@ -58,8 +63,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
         SPARCEirABI optimizingCompilerAbi = null;
         if (needsAdapterFrame) {
-            final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
-            optimizingCompilerAbi = (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
+            optimizingCompilerAbi = getABI(classMethodActor);
         }
         return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
     }
