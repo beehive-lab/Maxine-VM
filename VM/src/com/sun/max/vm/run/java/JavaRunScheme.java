@@ -78,7 +78,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     /**
      * At prototyping time, searches the class registry for non-Maxine classes that have methods called
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
-     * identifiers for native code, and need to be reexecuted upon startup.
+     * identifiers for native code, and need to be re-executed upon startup.
      */
     @PROTOTYPE_ONLY
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
