@@ -46,11 +46,6 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     }
 
     @Override
-    public InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
-    }
-
-    @Override
     public int bytecodePositionForCallSite(Pointer instructionPointer) {
         // The instruction pointer is now just beyond the call machine instruction.
         // In case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.

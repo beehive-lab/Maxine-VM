@@ -72,7 +72,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Canonicalized Target ABI.
      */
-    private static final TargetABI<GPR, FPR> TARGET_ABI;
+    static final TargetABI<GPR, FPR> TARGET_ABI;
 
     private static final GPR CPU_FRAME_POINTER;
 

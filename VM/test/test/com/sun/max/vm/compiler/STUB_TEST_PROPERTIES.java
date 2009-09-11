@@ -18,35 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc;
+package test.com.sun.max.vm.compiler;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.runtime.sparc.*;
+import java.lang.annotation.*;
 
 /**
- * @author Bernd Mathiske
+ * Refines testing of the reflection invocation stub generated for the annotated method.
+ *
+ * @author Doug Simon
  */
-public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements SPARCTargetMethod {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface STUB_TEST_PROPERTIES {
 
-    public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
-    }
+    /**
+     * Specifies if the stub should be executed. Methods that have side effects on the test result should not have their stub executed.
+     */
+    boolean execute() default true;
 
-    @Override
-    public final int registerReferenceMapSize() {
-        return SPARCTrapStateAccess.registerReferenceMapSize();
-    }
-
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        SPARCTargetMethod.Static.patchCallSite(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
-    }
+    /**
+     * Specifies if the result of executing the stub should be compared against the result of executed the method.
+     */
+    boolean compareResult() default true;
 }

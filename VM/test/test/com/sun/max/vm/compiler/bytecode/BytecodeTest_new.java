@@ -22,7 +22,6 @@ package test.com.sun.max.vm.compiler.bytecode;
 
 import test.com.sun.max.vm.compiler.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;

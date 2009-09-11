@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler;
 
-import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -45,19 +43,6 @@ public interface RuntimeCompilerScheme extends VMScheme {
      * @return a reference to the IR method created by this compiler for the specified method
      */
     TargetMethod compile(ClassMethodActor classMethodActor);
-
-    /**
-     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
-     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
-     * supplied.
-     *
-     * @param targetMethod the target method to analyze
-     * @param directCalls a sequence of the direct calls to which this method should append
-     * @param virtualCalls a sequence of virtual calls to which this method should append
-     * @param interfaceCalls a sequence of interface calls to which this method should append
-     */
-    @PROTOTYPE_ONLY
-    void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
 
     /**
      * Walks a frame for a target method that was produced by this compiler.

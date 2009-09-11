@@ -281,9 +281,9 @@ public abstract class StackFrameWalker {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
             if (classMethodActor.isCFunction() && !classMethodActor.isTrapStub()) {
                 Log.print("Caller of VM entry point (@C_FUNCTION method) \"");
-                Log.print(lastJavaCallee.name());
+                Log.print(lastJavaCallee.description());
                 Log.print("\" is not native code: ");
-                Log.print(targetMethod.name());
+                Log.print(targetMethod.description());
                 Log.print(targetMethod.classMethodActor().descriptor().string);
                 Log.print(" in ");
                 Log.println(targetMethod.classMethodActor().holder().name.string);
@@ -380,7 +380,7 @@ public abstract class StackFrameWalker {
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer instructionPointer, boolean fatalIfNotFound) {
-        final TargetMethod nativeStubTargetMethod = targetMethodFor(instructionPointer);
+        final CPSTargetMethod nativeStubTargetMethod = (CPSTargetMethod) targetMethodFor(instructionPointer);
         if (nativeStubTargetMethod != null) {
             final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(instructionPointer);
             final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);

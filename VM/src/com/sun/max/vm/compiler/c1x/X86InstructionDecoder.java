@@ -497,6 +497,7 @@ public final class X86InstructionDecoder {
 
     private static void patchDisp32(byte[] code, int pos, int b) {
         assert pos + 4 < code.length;
+
         assert code[pos] == 0;
         assert code[pos + 1] == 0;
         assert code[pos + 2] == 0;

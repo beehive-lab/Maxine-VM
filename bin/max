@@ -966,7 +966,14 @@ function run_inspect() {
         shift
     done    
 
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+    if [ "$MAXINE_OS" = "darwin" ]; then
+        run sudo -p \
+"Debugging is a privileged operation on Mac OS X.
+Please enter your 'sudo' password:" \
+        ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+    else
+        run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+    fi
 }
 
 #=======================================

@@ -50,11 +50,6 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     }
 
     @Override
-    public InstructionSet instructionSet() {
-        return SPARCTargetMethod.Static.instructionSet();
-    }
-
-    @Override
     public int bytecodePositionForCallSite(Pointer instructionPointer) {
         // The instruction pointer is the call machine instruction.
         return bytecodePositionFor(instructionPointer);

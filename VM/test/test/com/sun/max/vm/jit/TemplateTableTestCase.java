@@ -228,7 +228,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMe
                 final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {
-                    final String suffix = template.targetMethod.name().substring(bytecode.name().length());
+                    final String suffix = template.targetMethod.description().substring(bytecode.name().length());
                     if (suffix.length() > 0) {
                         numOperands = "[:" + suffix + "] ";
                     }
