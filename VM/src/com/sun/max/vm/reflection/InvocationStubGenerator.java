@@ -514,35 +514,35 @@ public class InvocationStubGenerator<T> {
                         LocalVariableTable.EMPTY,
                         null);
 
-        VirtualMethodActor dynamicMethodActor;
+        VirtualMethodActor virtualMethodActor;
         if (isConstructor) {
             final TypeDescriptor[] checkedExceptions = {
                 JavaTypeDescriptor.INSTANTIATION_EXCEPTION,
                 JavaTypeDescriptor.ILLEGAL_ARGUMENT_EXCEPTION,
                 JavaTypeDescriptor.INVOCATION_TARGET_EXCEPTION
             };
-            dynamicMethodActor = new VirtualMethodActor(newInstance,
+            virtualMethodActor = new VirtualMethodActor(newInstance,
                 boxing.newInstanceSignature(),
                 Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
                 codeAttribute);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
-            classRegistry.set(CHECKED_EXCEPTIONS, dynamicMethodActor, checkedExceptions);
+            classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         } else {
             final TypeDescriptor[] checkedExceptions = {
                 JavaTypeDescriptor.ILLEGAL_ARGUMENT_EXCEPTION,
                 JavaTypeDescriptor.INVOCATION_TARGET_EXCEPTION
             };
-            dynamicMethodActor = new VirtualMethodActor(invoke,
+            virtualMethodActor = new VirtualMethodActor(invoke,
                             boxing.invokeSignature(),
                             Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
                             codeAttribute);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
-            classRegistry.set(CHECKED_EXCEPTIONS, dynamicMethodActor, checkedExceptions);
+            classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         }
         if (isUnsafe) {
-            dynamicMethodActor.beUnsafe();
+            virtualMethodActor.beUnsafe();
         }
-        return dynamicMethodActor;
+        return virtualMethodActor;
     }
 
     private void traceStubAsJavaSource(Class superClass,

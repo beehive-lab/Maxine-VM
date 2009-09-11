@@ -46,8 +46,8 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Address resolveAndSelectVirtualMethod(Object receiver, ResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(resolveVirtualMethod(guard));
-        return MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final VirtualMethodActor virtualMethodActor = UnsafeLoophole.cast(resolveVirtualMethod(guard));
+        return MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
     }
 
     @NEVER_INLINE

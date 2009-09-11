@@ -92,9 +92,13 @@ public @interface METHOD_SUBSTITUTIONS {
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: losen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
-                    ProgramError.check(substituteMethod.getAnnotation(INLINE.class) != null || Modifier.isStatic(substituteMethod.getModifiers()),
-                                    "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
-                                    " must be static or have @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                    if (substituteMethod.getAnnotation(INLINE.class) == null &&
+                                    substituteMethod.getAnnotation(UNSAFE_CAST.class) == null &&
+                                    !Modifier.isStatic(substituteMethod.getModifiers())) {
+                        ProgramError.unexpected(
+                            "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
+                            " must be static, have @" + UNSAFE_CAST.class.getSimpleName() + " or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                    }
                 }
             }
             ProgramError.check(substitutionFound, "no method with " + SUBSTITUTE.class.getSimpleName() + " annotation found in " + substitutor);

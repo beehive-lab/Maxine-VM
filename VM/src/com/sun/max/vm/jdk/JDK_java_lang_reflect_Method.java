@@ -27,12 +27,10 @@ import java.util.*;
 import sun.reflect.annotation.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * Method substitutions for the {@link java.lang.reflect.Method java.lang.reflect.Method}
- * class.
+ * Method substitutions for {@link Method}.
  *
  */
 @METHOD_SUBSTITUTIONS(Method.class)
@@ -42,13 +40,10 @@ public final class JDK_java_lang_reflect_Method {
     }
 
     /**
-     * Casts this object to its corresponding {@code java.lang.reflect.Method} type.
-     * @return this object casted to a {@code java.lang.reflect.Method} object
+     * Casts this to {@link Method}.
      */
-    @INLINE
-    private Method thisMethod() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native Method thisMethod();
 
     /**
      * Gets the method actor associated with this method.

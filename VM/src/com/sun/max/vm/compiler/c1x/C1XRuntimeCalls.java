@@ -446,8 +446,8 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {
-        final VirtualMethodActor dynamicMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-        return dynamicMethodActor.vTableIndex();
+        final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+        return virtualMethodActor.vTableIndex();
     }
 
 

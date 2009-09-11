@@ -30,10 +30,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
@@ -57,10 +57,8 @@ public final class JDK_java_lang_Throwable {
      * Casts this object to its corresponding {@code java.lang.Throwable} instance.
      * @return this object cast to the {@code java.lang.Throwable} type
      */
-    @INLINE
-    private Throwable thisThrowable() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native Throwable thisThrowable();
 
     /**
      * Fills in the stack trace for this exception. This implementation eagerly creates a

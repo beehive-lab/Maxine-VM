@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.prototype;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -37,7 +36,7 @@ public class PrototypeCompilerScheme extends CPSAbstractCompiler {
 
     @Override
     public IrGenerator irGenerator() {
-        throw ProgramError.unexpected();
+        return null;
     }
 
     @Override

@@ -71,7 +71,15 @@ public abstract class ClassMethodActor extends MethodActor {
 
     private CodeAttribute originalCodeAttribute;
 
-    private ClassMethodActor compilee;
+    /**
+     * This is the method whose code is actually compiled/executed. In most cases, it will be
+     * equal to this object, unless this method has a {@linkplain SUBSTITUTE substitute}.
+     *
+     * This field is declared volatile so that the double-checking locking idiom used in
+     * {@link #compilee()} works as expected. This correctness is guaranteed as long as the
+     * compiler follows all the rules of the Java Memory Model as of JDK5 (JSR-133).
+     */
+    private volatile ClassMethodActor compilee;
 
     /**
      * The object representing the linkage of this native method actor to a native machine code address.
@@ -82,7 +90,6 @@ public abstract class ClassMethodActor extends MethodActor {
     public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
         super(name, descriptor, flags);
         this.originalCodeAttribute = codeAttribute;
-        this.codeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
     }
 
@@ -143,8 +150,9 @@ public abstract class ClassMethodActor extends MethodActor {
      * Gets the bytecode that is to be compiled and/or executed for this actor.
      * @return the code attribute
      */
-    public final synchronized CodeAttribute codeAttribute() {
-        // Ensure that any prerequisite substitution of the code to be compiled/executed is performed first
+    public final CodeAttribute codeAttribute() {
+        // Ensure that any prerequisite substitution and/or preprocessing of the code to be
+        // compiled/executed is performed first
         compilee();
 
         return codeAttribute;
@@ -153,53 +161,62 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */
-    public synchronized ClassMethodActor compilee() {
-        if (compilee == null) {
-            compilee = this;
-            if (!isHiddenToReflection()) {
-                final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
-                if (substitute != null) {
-                    compilee = substitute;
-                    codeAttribute = substitute.codeAttribute;
+    public final ClassMethodActor compilee() {
+        if (this.compilee == null) {
+            synchronized (this) {
+                if (compilee != null) {
+                    return compilee;
                 }
+                ClassMethodActor compilee = this;
+                CodeAttribute codeAttribute = this.originalCodeAttribute;
+
+                if (!isHiddenToReflection()) {
+                    final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
+                    if (substitute != null) {
+                        compilee = substitute;
+                        codeAttribute = substitute.originalCodeAttribute;
+                    }
+                    if (MaxineVM.isPrototyping()) {
+                        validateInlineAnnotation(compilee);
+                    }
+                }
+
+                ClassVerifier verifier = null;
+
+                final CodeAttribute processedCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
+                final boolean modified = processedCodeAttribute != codeAttribute;
+                codeAttribute = processedCodeAttribute;
+
+                final ClassActor holder = compilee.holder();
                 if (MaxineVM.isPrototyping()) {
-                    validateInlineAnnotation();
-                }
-            }
-
-            ClassVerifier verifier = null;
-
-            final CodeAttribute processCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
-            final boolean modified = processCodeAttribute != codeAttribute;
-            codeAttribute = processCodeAttribute;
-
-            final ClassActor holder = compilee.holder();
-            if (MaxineVM.isPrototyping()) {
-                if (holder.kind != Kind.WORD) {
-                    // We simply verify all methods during boot image build time as the overhead should be acceptable.
-                    verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
-                }
-            } else {
-                if (holder().majorVersion < 50) {
-                    // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
-                    // can legally appear in class files whose version number is less than 50.0. So, we inline them
-                    // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
-                    if (containsSubroutines(codeAttribute.code())) {
-                        verifier = new TypeInferencingVerifier(holder);
+                    if (holder.kind != Kind.WORD) {
+                        // We simply verify all methods during boot image build time as the overhead should be acceptable.
+                        verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
                     }
                 } else {
-                    if (modified) {
-                        // The methods in class files whose version is greater than or equal to 50.0 are required to
-                        // have stack maps. If the bytecode of such a method has been preprocessed, then its
-                        // pre-existing stack maps will have been invalidated and must be regenerated with the
-                        // type inferencing verifier
-                        verifier = new TypeInferencingVerifier(holder);
+                    if (holder().majorVersion < 50) {
+                        // The compiler/JIT/interpreter cannot handle JSR or RET instructions. However, these instructions
+                        // can legally appear in class files whose version number is less than 50.0. So, we inline them
+                        // with the type inferencing verifier if they appear in the bytecode of a pre-version-50.0 class file.
+                        if (codeAttribute != null && containsSubroutines(codeAttribute.code())) {
+                            verifier = new TypeInferencingVerifier(holder);
+                        }
+                    } else {
+                        if (modified) {
+                            // The methods in class files whose version is greater than or equal to 50.0 are required to
+                            // have stack maps. If the bytecode of such a method has been preprocessed, then its
+                            // pre-existing stack maps will have been invalidated and must be regenerated with the
+                            // type inferencing verifier
+                            verifier = new TypeInferencingVerifier(holder);
+                        }
                     }
                 }
-            }
 
-            if (verifier != null && codeAttribute != null) {
-                codeAttribute = verifier.verify(compilee, codeAttribute);
+                if (verifier != null && codeAttribute != null) {
+                    codeAttribute = verifier.verify(compilee, codeAttribute);
+                }
+                this.codeAttribute = codeAttribute;
+                this.compilee = compilee;
             }
         }
         return compilee;
@@ -251,7 +268,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * @see InliningAnnotationsValidator#apply(ClassMethodActor)
      */
     @PROTOTYPE_ONLY
-    private void validateInlineAnnotation() {
+    private void validateInlineAnnotation(ClassMethodActor compilee) {
         if (!compilee.holder().isGenerated()) {
             try {
                 InliningAnnotationsValidator.apply(compilee);
@@ -270,7 +287,7 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     public synchronized void verify(ClassVerifier classVerifier) {
-        if (codeAttribute != null) {
+        if (codeAttribute() != null) {
             codeAttribute = classVerifier.verify(this, codeAttribute);
         }
     }
