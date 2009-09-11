@@ -34,7 +34,7 @@
  *             'com.sun.max.vm.prototype.BootImage.Header'.
  */
 typedef struct image_Header {
-    jint isBigEndian;        /* 0: LITTLE, anything else: BIG */
+    jint isBigEndian;        /* 0: LITTLE, anything else: BIG. Must be first. */
 
     jint identification;     /* Magic number that must be present and have the same value in every Maxine boot image file */
     jint version;            /* Version of boot image file format */
@@ -42,7 +42,6 @@ typedef struct image_Header {
 
     jint wordSize;           /* 4 or 8 */
     jint cacheAlignment;
-    jint relocationScheme;
 
     jint pageSize;           /* multiple of 1024 */
 
@@ -55,8 +54,8 @@ typedef struct image_Header {
     jint stringDataSize;
     jint relocationDataSize;
 
-    jint bootHeapSize;     /* multiple of 'pageSize' */
-    jint bootCodeSize;     /* multiple of 'pageSize' */
+    jint heapSize;     /* multiple of 'pageSize' */
+    jint codeSize;     /* multiple of 'pageSize' */
     jint codeCacheSize;    /* multiple of 'pageSize' */
 
     jint heapRegionsPointerOffset;

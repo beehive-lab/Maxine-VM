@@ -60,7 +60,7 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
 
     public EirConstant offsetToConversionArea() {
         if (offsetToConversionArea == null) {
-            offsetToConversionArea = createEirConstant(IntValue.from(SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer()));
+            offsetToConversionArea = createEirConstant(IntValue.from(SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT));
         }
         return offsetToConversionArea;
     }

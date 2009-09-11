@@ -22,13 +22,14 @@ package test.com.sun.max.vm.compiler.c1x;
 
 import java.lang.reflect.*;
 
+import test.com.sun.max.vm.compiler.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ri.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.test.JavaExecHarness.*;
 import com.sun.max.vm.actor.holder.*;
@@ -39,45 +40,17 @@ import com.sun.max.vm.prototype.*;
 
 
 public class HIRTestExecutor implements Executor {
-
-    private static final OptionSet options = new OptionSet(false);
-    private static final Option<Boolean> targetOption = options.newBooleanOption("target", false,
-                                                                                 "Compile the method(s) all the way to target code.");
-
-    private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
-        "Set the tracing level of the Maxine VM and runtime.");
-    private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
-        "Set the verbosity level of the testing framework.");
-    private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
-        "Print bailout exceptions.");
-    private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
-        "Compile class initializer (<clinit>) methods");
-    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
-        "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
-        "Print settings of C1XOptions.");
-    private static final Option<Boolean> averageOption = options.newBooleanOption("average", true,
-        "Report only the average compilation speed.");
-    private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
-        "Show help message and exit.");
-
-    static {
-        // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX");
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(new Option<Integer>("c1x-optlevel", 1, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
-            @Override
-            public void setValue(Integer value) {
-                C1XOptions.setOptimizationLevel(value);
-            }
-        }, Syntax.REQUIRES_EQUALS);
-    }
-
     private static HIRGenerator generator;
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
     public static final MaxRiRuntime runtime = new MaxRiRuntime();
 
     private static void initialize(boolean loadingPackages) {
+        Iterable<Option<?>> opt = JavaTester.options.getOptions();
+        for (Option x : opt) {
+            if (x.getName().equals("c1x-optlevel")) {
+                C1XOptions.setOptimizationLevel((Integer) x.getDefaultValue());
+            }
+        }
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
         final CiTarget target = createTarget();
@@ -97,7 +70,6 @@ public class HIRTestExecutor implements Executor {
         if (generator == null) {
             initialize(loadingPackages);
         }
-
         final ClassActor classActor = ClassActor.fromJava(c.clazz);
         c.slot1 = classActor;
         c.slot2 = classActor.findLocalStaticMethodActor(testMethod);
@@ -110,7 +82,7 @@ public class HIRTestExecutor implements Executor {
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
-        final IRInterpreter interpreter = new IRInterpreter(runtime);
+        final IRInterpreter interpreter = new IRInterpreter(runtime, generator.compiler);
         final CiConstant result = interpreter.execute(method, args);
         return result.boxedValue();
     }

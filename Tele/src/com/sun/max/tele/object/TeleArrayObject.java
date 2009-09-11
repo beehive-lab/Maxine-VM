@@ -45,12 +45,13 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     private static final Logger LOGGER = Logger.getLogger(TeleArrayObject.class.getName());
 
-    private static final EnumSet<Layout.HeaderField> headerFields = EnumSet.of(HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH);
-
     private int length = -1;
 
-    protected TeleArrayObject(TeleVM teleVM, Reference reference) {
-        super(teleVM, reference);
+    private final Kind componentKind;
+
+    protected TeleArrayObject(TeleVM teleVM, Reference reference, Kind componentKind, SpecificLayout layout) {
+        super(teleVM, reference, layout);
+        this.componentKind = componentKind;
     }
 
     @Override
@@ -59,8 +60,8 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public EnumSet<Layout.HeaderField> getHeaderFields() {
-        return headerFields;
+    public HeaderField[] getHeaderFields() {
+        return Layout.arrayHeaderLayout().headerFields();
     }
 
     /**
@@ -78,7 +79,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     public Kind componentKind() {
-        return classActorForType().componentClassActor().kind;
+        return componentKind;
     }
 
     @Override
@@ -133,7 +134,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         final Kind componentKind = componentKind();
         final int length = getLength();
         final Class<?> componentJavaClass = classActorForType().componentClassActor().toJava();

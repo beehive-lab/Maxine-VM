@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Immortal Heap management.
@@ -57,8 +58,7 @@ public final class ImmortalHeap {
      * VM option to set the size of the immortal heap (MaxPermSize called in Hotspot).
      */
     public static final VMSizeOption maxPermSize =
-        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(1),
-            "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
+        register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(1), "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
 
     /**
      * Is immortal heap tracing turned on?
@@ -98,7 +98,26 @@ public final class ImmortalHeap {
             }
         } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
 
+        if (traceAllocation()) {
+            traceAllocation(size, cell);
+        }
+
         return cell;
+    }
+
+    private static void traceAllocation(Size size, Pointer cell) {
+        if (!cell.isZero()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": Allocated chunk in immortal memory at ");
+            Log.print(cell);
+            Log.print(" [size ");
+            Log.print(size.wordAligned().toInt());
+            Log.print(", end=");
+            Log.print(cell.plus(size.wordAligned()));
+            Log.println(']');
+            Log.unlock(lockDisabledSafepoints);
+        }
     }
 
     /**

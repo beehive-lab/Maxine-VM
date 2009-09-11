@@ -51,11 +51,6 @@ public class ImplicitNullCheckStub extends CodeStub {
     }
 
     @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
-
-    @Override
     public void accept(CodeStubVisitor visitor) {
         visitor.visitImplicitNullCheckStub(this);
     }

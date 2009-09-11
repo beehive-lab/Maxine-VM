@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -60,6 +61,11 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     @INLINE
     public int headerSize() {
         return headerSize;
+    }
+
+    @Override
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
     }
 
     @INLINE

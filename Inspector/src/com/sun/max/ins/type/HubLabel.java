@@ -48,7 +48,7 @@ public final class HubLabel extends InspectorLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
+                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
                         actions().inspectObjectMemoryWords(teleHub, null).perform();
                     } else {

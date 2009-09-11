@@ -52,21 +52,25 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
         return headerSize;
     }
 
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.LENGTH, HeaderField.HUB, HeaderField.MISC};
+    }
+
     @INLINE
     public final Size getArraySize(Kind kind, int length) {
-        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize);
+        return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).wordAligned();
     }
 
     @Override
     @INLINE
     public final Pointer cellToOrigin(Pointer cell) {
-        return cell.plus(-arrayLengthOffset);
+        return cell.plus(headerSize);
     }
 
     @Override
     @INLINE
     public final Pointer originToCell(Pointer origin) {
-        return origin.plus(arrayLengthOffset);
+        return origin.minus(headerSize);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
     @Override
     public Offset getOffsetFromOrigin(HeaderField headerField) {
         if (headerField == HeaderField.LENGTH) {
-            return Offset.fromInt(0);
+            return Offset.fromInt(arrayLengthOffset);
         }
         return super.getOffsetFromOrigin(headerField);
     }

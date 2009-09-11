@@ -26,6 +26,7 @@ import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.sparc.*;
+import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -2299,13 +2300,13 @@ public interface SPARCEirInstruction {
                 int i = 0;
                 int match = matches()[i].value().asInt();
                 if (SPARCEirOperation.isSimm13(match)) {
-                    emitter.assembler().sethi(emitter.assembler().hi(match), matchRegister);
+                    emitter.assembler().sethi(SPARCAssembler.hi(match), matchRegister);
                 }
                 do {
                     if (SPARCEirOperation.isSimm13(match)) {
                         emitter.assembler().cmp(tagRegister, match);
                     } else {
-                        final int lo = emitter.assembler().lo(match);
+                        final int lo = SPARCAssembler.lo(match);
                         if (lo != 0) { // has low 13-bits ?
                             emitter.assembler().or(matchRegister, lo, matchRegister);
                         }
@@ -2326,7 +2327,7 @@ public interface SPARCEirInstruction {
                     } else {
                         // We may be wasting this one if we have a match, but it's just 1 cycle in the delay slot.
                         // Doesn't matter what ends up in the matchRegister if we're branching.
-                        emitter.assembler().sethi(emitter.assembler().hi(match), matchRegister);
+                        emitter.assembler().sethi(SPARCAssembler.hi(match), matchRegister);
                     }
                 } while (true);
             }

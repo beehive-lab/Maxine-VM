@@ -372,6 +372,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     @INLINE
     protected final Pointer tlabAllocate(Size size) {
+        if (MaxineVM.isDebug() && !size.isWordAligned()) {
+            FatalError.unexpected("size is not word aligned in heap allocation request");
+        }
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         final Pointer oldAllocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
         final Pointer tlabEnd = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();

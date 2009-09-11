@@ -52,9 +52,4 @@ public class DivByZeroStub extends CodeStub {
     public boolean isExceptionThrowStub() {
         return true;
     }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
-        visitor.doSlowCase(info);
-    }
 }

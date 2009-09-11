@@ -21,9 +21,9 @@
 #ifndef __relocation_h__
 #define __relocation_h__    1
 
-#define relocation_DEFAULT_SCHEME   0
+#include "word.h"
 
-extern void relocation_apply(void *heap, int relocationScheme, void *relocationData, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize);
+extern void relocation_apply(void *heap, Address base, void *relocationData, int relocationDataSize, int isBigEndian, int wordSize);
 
 #endif /*__relocation_h__*/
 

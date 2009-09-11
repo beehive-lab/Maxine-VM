@@ -26,6 +26,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -52,6 +53,11 @@ public class PrototypeTupleLayout extends PrototypeGeneralLayout implements Tupl
     }
 
     public int headerSize() {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public HeaderField[] headerFields() {
         throw ProgramError.unexpected();
     }
 

@@ -51,7 +51,7 @@ public final class TeleUtf8Constant extends TelePoolConstant {
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return SymbolTable.makeSymbol(getString());
     }

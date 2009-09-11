@@ -273,7 +273,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             // using only lower level mechanisms to avoid an initialization loop with {@link TeleClassRegistry}.
             // In particular, avoid any call to {@link TeleObject#make()}, which depends on {@link TeleClassRegistry}.
             final Pointer bootHeapStart = teleVM().bootImageStart();
-            final Address bootHeapEnd = bootHeapStart.plus(teleVM().bootImage().header().bootHeapSize);
+            final Address bootHeapEnd = bootHeapStart.plus(teleVM().bootImage().header.heapSize);
             return bootHeapStart.lessEqual(address) && address.lessThan(bootHeapEnd);
         }
         if (updatingHeapMemoryRegions) {

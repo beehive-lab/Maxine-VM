@@ -957,7 +957,7 @@ public class LinearScanWalker extends IntervalWalker {
     }
 
     boolean isMove(LIRInstruction op, Interval from, Interval to) {
-        if (op.code() != LIROpcode.Move) {
+        if (op.code != LIROpcode.Move) {
             return false;
         }
         assert op instanceof LIROp1 : "move must be LIROp1";
@@ -1000,8 +1000,8 @@ public class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        Interval beginHint = registerHint.splitChildAtOpId(beginPos, LIRVisitState.OperandMode.InputMode, allocator);
-        Interval endHint = registerHint.splitChildAtOpId(endPos, LIRVisitState.OperandMode.OutputMode, allocator);
+        Interval beginHint = registerHint.splitChildAtOpId(beginPos, LIRInstruction.OperandMode.InputMode, allocator);
+        Interval endHint = registerHint.splitChildAtOpId(endPos, LIRInstruction.OperandMode.OutputMode, allocator);
         if (beginHint == endHint || beginHint.to() != beginPos || endHint.from() != endPos) {
             // registerHint must be split : otherwise the re-writing of use positions does not work
             return;

@@ -99,7 +99,9 @@ public final class DataPrototype extends Prototype {
      * @return a pointer to the origin of the object in this data prototype
      */
     public Pointer objectToOrigin(Object object) {
-        return layoutScheme.generalLayout.cellToOrigin(objectToCell(object).asPointer());
+        final Hub hub = HostObjectAccess.readHub(object);
+        final SpecificLayout specificLayout = hub.specificLayout;
+        return specificLayout.cellToOrigin(objectToCell(object).asPointer());
     }
 
     /**
@@ -177,6 +179,9 @@ public final class DataPrototype extends Prototype {
 
     private Address nonZeroBootHeapStart;
 
+    private Hub objectHub;
+    private Hub hubHub;
+
     /**
      * Allocate one object that is not referenced and sits at the bottom of the boot image heap. Thus we avoid having
      * reference pointers with offset zero relative to the heap. These would be confused with the value 'null' by the
@@ -186,6 +191,10 @@ public final class DataPrototype extends Prototype {
         final Object object = new Object();
         final Address cell = Heap.bootHeapRegion.allocate(HostObjectAccess.getSize(object), true);
         assignHeapCell(object, cell);
+        objectHub = HostObjectAccess.readHub(object);
+        hubHub = HostObjectAccess.readHub(objectHub);
+        assert hubHub == HostObjectAccess.readHub(hubHub);
+
         nonZeroBootHeapStart = Heap.bootHeapRegion.getAllocationMark();
     }
 
@@ -447,12 +456,12 @@ public final class DataPrototype extends Prototype {
         }
 
         /**
-         * Attempts to find a cell for the specified object.
+         * Gets the origin for the specified object.
          *
-         * @param object the object for which to find the cell
-         * @return a cell for the specified object, if one exists; an unexpected program error if one does not
+         * @param object the object for which to find the origin
+         * @return the origin for {@code object}
          */
-        Address cellFor(Object object) {
+        Address originFor(Object object) {
             final Address cell = objectToCell(object);
             // This will occur if some code is executed after the GraphPrototype has been created where that
             // code mutates the object graph.
@@ -461,8 +470,7 @@ public final class DataPrototype extends Prototype {
             if (cell == null) {
                 throw new MissingCellException(object);
             }
-
-            return cell;
+            return objectToOrigin(object);
         }
 
         /**
@@ -560,7 +568,7 @@ public final class DataPrototype extends Prototype {
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
             if (value.kind() == Kind.REFERENCE) {
-                valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(cellFor(value.asObject()));
+                valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(originFor(value.asObject()));
             } else {
                 valueBytes = value.toBytes(dataModel);
             }
@@ -970,6 +978,7 @@ public final class DataPrototype extends Prototype {
     private synchronized int setRelocationFlags(Object object, Address cell) {
         final Hub hub = HostObjectAccess.readHub(object);
         final SpecificLayout specificLayout = hub.specificLayout;
+
         setRelocationFlag(cell.plus(specificLayout.getHubReferenceOffsetInCell()));
         if (specificLayout.isArrayLayout()) {
             if (specificLayout.isReferenceArrayLayout()) {

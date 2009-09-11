@@ -22,6 +22,7 @@ package com.sun.max.ins;
 
 import static com.sun.max.tele.debug.ProcessState.*;
 
+import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -33,6 +34,7 @@ import com.sun.max.ins.InspectionPreferences.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -50,6 +52,41 @@ import com.sun.max.vm.classfile.*;
 public final class Inspection {
 
     private static final int TRACE_VALUE = 1;
+
+    public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
+        if (OperatingSystem.current() == OperatingSystem.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
+            if (mouseEvent.isControlDown()) {
+                if (!mouseEvent.isAltDown()) {
+                    return MouseEvent.BUTTON3;
+                }
+            } else if (mouseEvent.isAltDown()) {
+                return MouseEvent.BUTTON2;
+            }
+        }
+        return mouseEvent.getButton();
+    }
+
+    /**
+     * Initializes the UI system to meet current requirements such as the requirement that the L&F for {@link InspectorFrame}s
+     * renders a "frame icon" at the top left of a frame's title bar. Using the Metal L&F is the mechanism currently employed
+     * for meeting this requirement.
+     */
+    public static void initializeSwing() {
+        try {
+            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
+//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+//            System.out.println("L&F=" + UIManager.getLookAndFeel());
+//            System.out.println("Theme=" + MetalLookAndFeel.getCurrentTheme());
+        } catch (Exception e) {
+            ProgramError.unexpected("Could not set L&F to MetalLookAndFeel");
+        }
+
+        //System.setProperty("apple.laf.useScreenMenuBar", "true");
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+    }
 
     /**
      * @return a string suitable for tagging all trace lines; mention the thread if it isn't the AWT event handler.
@@ -644,7 +681,6 @@ public final class Inspection {
         }
         return true;
     }
-
 
     /**
      * An object that delays evaluation of a trace message for controller actions.

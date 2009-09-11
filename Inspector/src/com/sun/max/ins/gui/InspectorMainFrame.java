@@ -147,7 +147,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopPane.addMouseListener(new InspectorMouseClickAdapter(inspection) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                if (Inspection.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
                     desktopMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                 }
             }
@@ -380,6 +380,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     }
                     break;
                 case RUNNING:
+                case NO_PROCESS:
                     menuBar.setStateColor(inspection.style().vmRunningBackgroundColor());
                     break;
                 case TERMINATED:

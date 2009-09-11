@@ -34,7 +34,19 @@ import com.sun.max.tele.debug.*;
  */
 public final class TeleVMState implements MaxVMState {
 
-    private static final Sequence<MaxThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(MaxThread.class);
+    private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
+    private static final Collection<TeleNativeThread> EMPTY_THREAD_COLLECTION = Collections.emptyList();
+
+    public static final TeleVMState NONE = new TeleVMState(ProcessState.NO_PROCESS,
+        -1L,
+        EMPTY_THREAD_COLLECTION,
+        (TeleNativeThread) null,
+        EMPTY_THREAD_SEQUENCE,
+        EMPTY_THREAD_SEQUENCE,
+        EMPTY_THREAD_SEQUENCE,
+        (TeleWatchpointEvent) null,
+        false,
+        (TeleVMState) null);
 
     private final ProcessState processState;
     private final long serialID;
@@ -68,13 +80,14 @@ public final class TeleVMState implements MaxVMState {
                     Sequence<TeleNativeThread> threadsDied,
                     Sequence<TeleNativeThread> breakpointThreads,
                     TeleWatchpointEvent teleWatchpointEvent, boolean isInGC, TeleVMState previous) {
+        final Sequence<MaxThread> emptyMaxThreadSequence = Sequence.Static.empty(MaxThread.class);
         this.processState = processState;
         this.serialID = previous == null ? 0 : previous.serialID() + 1;
         this.epoch = epoch;
         this.singleStepThread = singleStepThread;
-        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
-        this.threadsDied = threadsDied.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
-        this.breakpointThreads = breakpointThreads.length() == 0 ? EMPTY_THREAD_SEQUENCE : new VectorSequence<MaxThread>(breakpointThreads);
+        this.threadsStarted = threadsStarted.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(threadsStarted);
+        this.threadsDied = threadsDied.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(threadsDied);
+        this.breakpointThreads = breakpointThreads.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(breakpointThreads);
         this.maxWatchpointEvent = teleWatchpointEvent;
         this.isInGC = isInGC;
         this.previous = previous;

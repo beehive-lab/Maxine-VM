@@ -253,4 +253,5 @@ public interface RiRuntime {
     int getJITStackSlotSize();
 
     int overflowArgumentsSize(CiKind basicType);
+    public RiType getRiType(Class<?> javaClass);
 }

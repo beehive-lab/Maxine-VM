@@ -383,7 +383,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
-        this.requestHandlingThread.start();
+        if (initialState != ProcessState.NO_PROCESS) {
+            this.requestHandlingThread.start();
+        }
     }
 
     /**
@@ -416,12 +418,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     public void initializeState() {
         teleVM().refresh(epoch);
-//        refreshThreads();
-//        assert _handleToThreadMap.size() == 1;
-//        final TeleNativeThread teleNativeThread = _handleToThreadMap.get(_handleToThreadMap.firstKey());
-//        assert teleNativeThread.breakpoint() != null;
-//        final Sequence<TeleNativeThread> breakpointThreads = new ArrayListSequence<TeleNativeThread>(teleNativeThread);
-//        updateState(_processState, breakpointThreads);
         updateState(processState);
     }
 

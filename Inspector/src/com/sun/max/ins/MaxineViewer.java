@@ -29,18 +29,17 @@ import com.sun.max.tele.TeleVM.*;
 import com.sun.max.vm.prototype.*;
 
 /**
- * Interactive, visual tool for debugging a running instance of the Maxine VM.
+ * Interactive, visual tool for browsing the object and memory contents of a Maxine VM boot image.
  *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
+ * @author Doudg Simon
  */
-public final class MaxineInspector {
+public final class MaxineViewer {
 
     private static final int TRACE_VALUE = 1;
 
-    private static final String tracePrefix = "[MaxineInspector] ";
+    private static final String tracePrefix = "[MaxineViewer] ";
 
-    private MaxineInspector() {
+    private MaxineViewer() {
     }
 
     public static void main(final String[] args) {
@@ -48,7 +47,7 @@ public final class MaxineInspector {
         final long startTimeMillis = System.currentTimeMillis();
 
         Inspection.initializeSwing();
-        final Options options = new Options(false);
+        final Options options = new Options(true);
         Trace.addTo(options);
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
         options.parseArguments(args);
@@ -62,7 +61,9 @@ public final class MaxineInspector {
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
-                    new Inspection(maxVM);
+                    Inspection inspection = new Inspection(maxVM);
+                    // Bring up the boot image info inspector as a starting point for browsing
+                    BootImageInspector.make(inspection).highlight();
                 }
             });
         } catch (BootImageException bootImageException) {
@@ -72,5 +73,4 @@ public final class MaxineInspector {
         }
         Trace.end(TRACE_VALUE, tracePrefix + "Initializing", startTimeMillis);
     }
-
 }

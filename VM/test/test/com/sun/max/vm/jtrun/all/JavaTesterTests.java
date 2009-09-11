@@ -15124,6 +15124,46 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_optimize_BlockSkip01() {
+        JavaTesterRunScheme.begin("jtt.optimize.BlockSkip01");
+        String runString = null;
+        try {
+        // (0) == true
+            runString = "(0)";
+            if (true != jtt.optimize.BlockSkip01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == true
+            runString = "(1)";
+            if (true != jtt.optimize.BlockSkip01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == true
+            runString = "(2)";
+            if (true != jtt.optimize.BlockSkip01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == false
+            runString = "(3)";
+            if (false != jtt.optimize.BlockSkip01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (4) == false
+            runString = "(4)";
+            if (false != jtt.optimize.BlockSkip01.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_optimize_DeadCode01() {
         JavaTesterRunScheme.begin("jtt.optimize.DeadCode01");
         String runString = null;
