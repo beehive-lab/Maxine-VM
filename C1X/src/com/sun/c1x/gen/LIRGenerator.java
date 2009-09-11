@@ -165,7 +165,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 info = stateFor(nc);
             }
         }
-        lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info, LIRPatchCode.PatchNone);
+        lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info);
 
     }
 
@@ -516,8 +516,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (isVolatile) {
             volatileFieldLoad(address, reg, info);
         } else {
-            LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
-            lir.load(address, reg, info, patchCode);
+            lir.load(address, reg, info);
         }
 
         if (isVolatile && compilation.runtime.isMP()) {
@@ -811,8 +810,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (isVolatile) {
                 volatileFieldStore(value.result(), address, info);
             } else {
-                LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
-                lir.store(value.result(), address, info, patchCode);
+                lir.store(value.result(), address, info);
             }
 
             if (isOop) {

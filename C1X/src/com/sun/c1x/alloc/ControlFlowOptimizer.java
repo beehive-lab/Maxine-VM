@@ -33,18 +33,12 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public final class ControlFlowOptimizer {
+final class ControlFlowOptimizer {
 
-    final IR ir;
-    List<BlockBegin> originalPreds;
-
-    private static final int ShortLoopSize = 5;
-
-    private ControlFlowOptimizer(IR ir) {
-        this.ir = ir;
-        originalPreds = new ArrayList<BlockBegin>(4);
-    }
-
+    /**
+     * Performs control flow optimizations on the given IR graph.
+     * @param ir the IR graph that should be optimized
+     */
     public static void optimize(IR ir) {
         ControlFlowOptimizer optimizer = new ControlFlowOptimizer(ir);
         List<BlockBegin> code = ir.linearScanOrder();
@@ -64,7 +58,15 @@ public final class ControlFlowOptimizer {
         optimizer.deleteJumpsToReturn(code);
     }
 
-    void reorderShortLoop(List<BlockBegin> code, BlockBegin headerBlock, int headerIdx) {
+    private final IR ir;
+
+    private static final int ShortLoopSize = 5;
+
+    private ControlFlowOptimizer(IR ir) {
+        this.ir = ir;
+    }
+
+    private void reorderShortLoop(List<BlockBegin> code, BlockBegin headerBlock, int headerIdx) {
         int i = headerIdx + 1;
         int maxEnd = Math.min(headerIdx + ShortLoopSize, code.size());
         while (i < maxEnd && code.get(i).loopDepth() >= headerBlock.loopDepth()) {
@@ -93,7 +95,7 @@ public final class ControlFlowOptimizer {
         }
     }
 
-    void reorderShortLoops(List<BlockBegin> code) {
+    private void reorderShortLoops(List<BlockBegin> code) {
         for (int i = code.size() - 1; i >= 0; i--) {
             BlockBegin block = code.get(i);
 
@@ -107,7 +109,7 @@ public final class ControlFlowOptimizer {
 
     // only blocks with exactly one successor can be deleted. Such blocks
     // must always end with an unconditional branch to this successor
-    boolean canDeleteBlock(BlockBegin block) {
+    private boolean canDeleteBlock(BlockBegin block) {
         if (block.numberOfSux() != 1 || block.numberOfExceptionHandlers() != 0 || block == ir.startBlock || block.isExceptionEntry()) {
             return false;
         }
@@ -125,31 +127,7 @@ public final class ControlFlowOptimizer {
         return instructions.size() == 2 && instructions.get(instructions.size() - 1).info == null;
     }
 
-    // substitute branch targets in all branch-instructions of this blocks
-    void substituteBranchTarget(BlockBegin block, BlockBegin targetFrom, BlockBegin targetTo) {
-        // Util.traceLinearScan(3, "Deleting empty block: substituting from B%d to B%d inside B%d", targetFrom.blockID, targetTo.blockID, block.blockID);
-
-        List<LIRInstruction> instructions = block.lir().instructionsList();
-
-        assert instructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
-        for (int i = instructions.size() - 1; i >= 1; i--) {
-            LIRInstruction op = instructions.get(i);
-
-            if (op.code == LIROpcode.Branch || op.code == LIROpcode.CondFloatBranch) {
-                assert op instanceof LIRBranch : "branch must be of type LIRBranch";
-                LIRBranch branch = (LIRBranch) op;
-
-                if (branch.block() == targetFrom) {
-                    branch.changeBlock(targetTo);
-                }
-                if (branch.ublock() == targetFrom) {
-                    branch.changeUblock(targetTo);
-                }
-            }
-        }
-    }
-
-    void deleteEmptyBlocks(List<BlockBegin> code) {
+    private void deleteEmptyBlocks(List<BlockBegin> code) {
         int oldPos = 0;
         int newPos = 0;
         int numBlocks = code.size();
@@ -192,7 +170,7 @@ public final class ControlFlowOptimizer {
         assert verify(code);
     }
 
-    void deleteUnnecessaryJumps(List<BlockBegin> code) {
+    private void deleteUnnecessaryJumps(List<BlockBegin> code) {
         // skip the last block because there a branch is always necessary
         for (int i = code.size() - 2; i >= 0; i--) {
             BlockBegin block = code.get(i);
@@ -238,7 +216,7 @@ public final class ControlFlowOptimizer {
         assert verify(code);
     }
 
-    void deleteJumpsToReturn(List<BlockBegin> code) {
+    private void deleteJumpsToReturn(List<BlockBegin> code) {
         for (int i = code.size() - 1; i >= 0; i--) {
             BlockBegin block = code.get(i);
             List<LIRInstruction> curInstructions = block.lir().instructionsList();
@@ -279,7 +257,7 @@ public final class ControlFlowOptimizer {
         }
     }
 
-    boolean verify(List<BlockBegin> code) {
+    private boolean verify(List<BlockBegin> code) {
         for (BlockBegin block : code) {
             List<LIRInstruction> instructions = block.lir().instructionsList();
 

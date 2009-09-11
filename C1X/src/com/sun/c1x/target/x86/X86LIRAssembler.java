@@ -356,20 +356,18 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void const2reg(LIROperand src, LIROperand dest, LIRPatchCode patchCode, CodeEmitInfo info) {
+    protected void const2reg(LIROperand src, LIROperand dest, CodeEmitInfo info) {
         assert src.isConstant() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
         LIRConstant c = (LIRConstant) src;
 
         switch (c.kind) {
             case Int: {
-                assert patchCode == LIRPatchCode.PatchNone : "no patching handled here";
                 masm().movl(dest.asRegister(), c.asInt());
                 break;
             }
 
             case Long: {
-                assert patchCode == LIRPatchCode.PatchNone : "no patching handled here";
                 if (compilation.target.arch.is64bit()) {
                     masm().movptr(dest.asRegisterLo(), c.asLong());
                 } else {
@@ -381,11 +379,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
 
             case Object: {
-                if (patchCode != LIRPatchCode.PatchNone) {
-                    assert false : "should never need patching!";
-                } else {
-                    masm().movoop(dest.asRegister(), CiConstant.forObject(c.asObject()));
-                }
+                masm().movoop(dest.asRegister(), CiConstant.forObject(c.asObject()));
                 break;
             }
 
@@ -634,17 +628,11 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned) {
         LIRAddress toAddr = (LIRAddress) dest;
-        PatchingStub patch = null;
 
         if (type == CiKind.Object) {
             masm().verifyOop(src.asRegister());
-        }
-        if (patchCode != LIRPatchCode.PatchNone) {
-            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-            Address toa = asAddress(toAddr);
-            assert toa.disp != 0 : "must have";
         }
         if (info != null) {
             addDebugInfoForNullCheckHere(info);
@@ -697,20 +685,10 @@ public class X86LIRAssembler extends LIRAssembler {
                         assert base != fromHi : "can't be";
                         assert index == CiRegister.None || (index != base && index != fromHi) : "can't handle this";
                         masm().movl(asAddressHi(toAddr), fromHi);
-                        if (patch != null) {
-                            patchingEpilog(patch, LIRPatchCode.PatchHigh, base, info);
-                            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-                            patchCode = LIRPatchCode.PatchLow;
-                        }
                         masm().movl(asAddressLo(toAddr), fromLo);
                     } else {
                         assert index == CiRegister.None || (index != base && index != fromLo) : "can't handle this";
                         masm().movl(asAddressLo(toAddr), fromLo);
-                        if (patch != null) {
-                            patchingEpilog(patch, LIRPatchCode.PatchLow, base, info);
-                            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-                            patchCode = LIRPatchCode.PatchHigh;
-                        }
                         masm().movl(asAddressHi(toAddr), fromHi);
                     }
                 }
@@ -733,10 +711,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
             default:
                 throw Util.shouldNotReachHere();
-        }
-
-        if (patchCode != LIRPatchCode.PatchNone) {
-            patchingEpilog(patch, patchCode, toAddr.base().asRegister(), info);
         }
     }
 
@@ -866,7 +840,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRPatchCode patchCode, CodeEmitInfo info, boolean unaligned) {
+    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned) {
         assert src.isAddress() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
 
@@ -888,11 +862,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
         }
 
-        PatchingStub patch = null;
-        if (patchCode != LIRPatchCode.PatchNone) {
-            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-            assert fromAddr.disp != 0 : "must have";
-        }
         if (info != null) {
             addDebugInfoForNullCheckHere(info);
         }
@@ -946,7 +915,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         // addresses with 2 registers are only formed as a result of
                         // array access so this code will never have to deal with
                         // patches or null checks.
-                        assert info == null && patch == null : "must be";
+                        assert info == null : "must be";
                         masm().lea(toHi, asAddress(addr));
                         masm().movl(toLo, new Address(toHi, 0));
                         masm().movl(toHi, new Address(toHi, wordSize));
@@ -954,20 +923,10 @@ public class X86LIRAssembler extends LIRAssembler {
                         assert base != toHi : "can't be";
                         assert index == CiRegister.None || (index != base && index != toHi) : "can't handle this";
                         masm().movl(toHi, asAddressHi(addr));
-                        if (patch != null) {
-                            patchingEpilog(patch, LIRPatchCode.PatchHigh, base, info);
-                            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-                            patchCode = LIRPatchCode.PatchLow;
-                        }
                         masm().movl(toLo, asAddressLo(addr));
                     } else {
                         assert index == CiRegister.None || (index != base && index != toLo) : "can't handle this";
                         masm().movl(toLo, asAddressLo(addr));
-                        if (patch != null) {
-                            patchingEpilog(patch, LIRPatchCode.PatchLow, base, info);
-                            patch = new PatchingStub(masm, PatchingStub.PatchID.AccessFieldId);
-                            patchCode = LIRPatchCode.PatchHigh;
-                        }
                         masm().movl(toHi, asAddressHi(addr));
                     }
                 }
@@ -1018,10 +977,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
             default:
                 throw Util.shouldNotReachHere();
-        }
-
-        if (patch != null) {
-            patchingEpilog(patch, patchCode, addr.base().asRegister(), info);
         }
 
         if (type == CiKind.Object) {
@@ -1693,7 +1648,7 @@ public class X86LIRAssembler extends LIRAssembler {
         } else if (opr1.isStack()) {
             stack2reg(opr1, result, result.kind);
         } else if (opr1.isConstant()) {
-            const2reg(opr1, result, LIRPatchCode.PatchNone, null);
+            const2reg(opr1, result, null);
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -1729,7 +1684,7 @@ public class X86LIRAssembler extends LIRAssembler {
             } else if (opr2.isStack()) {
                 stack2reg(opr2, result, result.kind);
             } else if (opr2.isConstant()) {
-                const2reg(opr2, result, LIRPatchCode.PatchNone, null);
+                const2reg(opr2, result, null);
             } else {
                 throw Util.shouldNotReachHere();
             }
@@ -3352,14 +3307,14 @@ public class X86LIRAssembler extends LIRAssembler {
                 case PointerLoad: {
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.a.index];
-                    moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, null, false);
                     break;
                 }
 
                 case PointerStore: {
                     LIROperand value = ops[inst.b.index];
                     LIROperand pointer = ops[inst.a.index];
-                    moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, LIRPatchCode.PatchNone, null, false);
+                    moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, null, false);
                     break;
                 }
 
@@ -3378,7 +3333,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         src = new LIRAddress((LIRLocation) pointer, (LIRLocation) displacement, inst.kind);
                     }
 
-                    moveOp(src, result, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    moveOp(src, result, inst.kind, null, false);
                     break;
                 }
 
@@ -3397,7 +3352,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         dst = new LIRAddress((LIRLocation) pointer, (LIRLocation) displacement, inst.kind);
                     }
 
-                    moveOp(value, dst, inst.kind, LIRPatchCode.PatchNone, null, false);
+                    moveOp(value, dst, inst.kind, null, false);
                     break;
                 }
 
