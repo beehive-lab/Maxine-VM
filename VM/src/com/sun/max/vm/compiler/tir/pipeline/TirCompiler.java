@@ -75,7 +75,7 @@ public class TirCompiler {
             Visualizer.print(dirTranslator.method());
             Trace.stream().println(eirMethod.traceToString());
             Disassemble.disassemble(System.out, targetMethod);
-            final IndexedSequence<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(targetMethod.compressedJavaFrameDescriptors());
+            final IndexedSequence<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(((CPSTargetMethod) targetMethod).compressedJavaFrameDescriptors());
             for (TargetJavaFrameDescriptor descriptor : descriptors) {
                 if (descriptor != null) {
                     Console.println(descriptor.toMultiLineString());

@@ -335,7 +335,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         value.setDestroysRegister();
         value.loadItem();
-        LIROperand reg = rlock(x);
+        LIROperand reg = newRegister(x.type());
         lir().negate(value.result(), reg);
         setResult(x, reg);
     }
@@ -370,7 +370,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else if (x.opcode() == Bytecodes.DREM) {
             reg = callRuntime(new CiKind[]{CiKind.Double, CiKind.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, CiKind.Double, null);
         } else {
-            reg = rlock(x);
+            reg = newRegister(x.type());
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalLocation);
         }
 
@@ -505,9 +505,9 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             if (!C1XOptions.UseImplicitDiv0Checks && !x.checkFlag(Flag.NoZeroCheck)) {
                 lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
-
-                // Create copy of code emit info as they must not be shared!
-                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(stateFor(x)));
+                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
+                 // don't need code emit info when using explicit checks
+                info = null;
             }
             LIROperand tmp = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx); // idiv and irem use rdx in their implementation
             if (x.opcode() == Bytecodes.IREM) {
@@ -862,7 +862,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.value(), this);
         value.loadItem();
         LIROperand input = value.result();
-        LIROperand result = rlock(x);
+        LIROperand result = newRegister(x.type());
 
         // arguments of lirConvert
         LIROperand convInput = input;

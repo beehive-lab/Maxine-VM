@@ -314,6 +314,10 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
+
+                assert targetMethod instanceof CPSTargetMethod;
+                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
+
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
                 if (!trapStateInPreviousFrame.isZero()) {
                     FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
@@ -346,19 +350,31 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                                 // TODO: Get address of safepoint instruction at exception dispatcher site and scan
                                 // the register references based on its Java frame descriptor.
                                 FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                                preparer.prepareRegisterReferenceMap(trapState, catchAddress.asPointer());
+                                Pointer callerCatchAddress = catchAddress.asPointer();
+                                final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
+                                if (callerTargetMethod != null) {
+                                    cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerCatchAddress, preparer);
+                                }
                             }
                         } else {
                             // Only scan with references in registers for a caller that did not trap due to an implicit exception.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = trapStateAccess.getInstructionPointer(trapState);
-                            preparer.prepareRegisterReferenceMap(trapState, callerInstructionPointer);
+                            final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
+                            if (callerTargetMethod != null) {
+                                cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerInstructionPointer, preparer);
+                            }
                         }
                     }
                 }
 
                 final Pointer ignoredOperandStackPointer = Pointer.zero();
-                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
+
+                if (preparer.checkIgnoreCurrentFrame()) {
+                    break;
+                }
+
+                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
                                                            ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE)) {
                     return false;
                 }

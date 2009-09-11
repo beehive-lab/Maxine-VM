@@ -119,6 +119,9 @@ public final class BootImageGenerator {
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
+    public final Option<Boolean> prototypeJit = options.newBooleanOption("prototype-jit", false,
+        "Selects JIT as the default for building the boot image.");
+
     private final Option<String> vmArguments = options.newStringOption("vmargs", null,
             "A set of one or VM arguments. This is useful for exercising VM functionality or " +
             "enabling VM tracing while prototyping.");
@@ -202,7 +205,6 @@ public final class BootImageGenerator {
         final long start = System.currentTimeMillis();
         BootstrapCompilerScheme compilerScheme = null;
         try {
-            TargetMethod.COLLECT_TARGET_METHOD_STATS = statsOption.getValue();
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
@@ -228,11 +230,12 @@ public final class BootImageGenerator {
             final File outputDirectory = outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
 
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
+            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
+
 
             VMOptions.beforeExit();
 
@@ -476,9 +479,9 @@ public final class BootImageGenerator {
             zeroLiterals += savingsFrom(headerSize, referenceLiterals);
             zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
             zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
-            zeroStopPositions += savingsFrom(headerSize, targetMethod.stopPositions());
+            zeroStopPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
             zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
-            zeroReferenceMaps += savingsFrom(headerSize, targetMethod.referenceMaps());
+            zeroReferenceMaps += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
             zeroScalarLiterals += savingsFrom(headerSize, targetMethod.scalarLiterals());
         }
         int redundantReferenceLiterals = 0;

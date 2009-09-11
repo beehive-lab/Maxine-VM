@@ -355,7 +355,7 @@ public class LinearScan {
 
     // size of liveIn and liveOut sets of BasicBlocks (BitMap needs rounded size for iteration)
     int liveSetSize() {
-        return Util.roundTo(numVirtualRegs, compilation.target.arch.bitsPerWord);
+        return Util.roundTo(numVirtualRegs, compilation.target.arch.wordSize * Byte.SIZE);
     }
 
     int numLoops() {
@@ -938,7 +938,7 @@ public class LinearScan {
             // (live set must be empty at fixed intervals)
             for (int i = 0; i < numBlocks; i++) {
                 BlockBegin block = blockAt(i);
-                for (int j = 0; j < CiRegister.vregBase; j++) {
+                for (int j = 0; j < CiRegister.FirstVirtualRegisterNumber; j++) {
                     assert !block.liveIn().get(j) : "liveIn  set of fixed register must be empty";
                     assert !block.liveOut().get(j) : "liveOut set of fixed register must be empty";
                     assert !block.liveGen().get(j) : "liveGen set of fixed register must be empty";
@@ -1075,7 +1075,7 @@ public class LinearScan {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > CiRegister.vregBase || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
+        return reg > CiRegister.FirstVirtualRegisterNumber || reg >= registerMapping.length || (reg >= 0 && reg < registerMapping.length && registerMapping[reg] != null && allocatableRegister[reg]);
     }
 
     void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind type) {
@@ -1418,7 +1418,7 @@ public class LinearScan {
             int size = live.size();
             for (int number = live.getNextOneOffset(0, size); number < size; number = live.getNextOneOffset(number + 1, size)) {
                 assert live.get(number) : "should not stop here otherwise";
-                assert number >= CiRegister.vregBase : "fixed intervals must not be live on block bounds";
+                assert number >= CiRegister.FirstVirtualRegisterNumber : "fixed intervals must not be live on block bounds";
                 // Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
 
                 addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, CiKind.Illegal);
@@ -1788,7 +1788,7 @@ public class LinearScan {
         }
 
         assert false : "must find an interval :  but do a clean bailout in product mode";
-        result = new Interval(CiRegister.vregBase);
+        result = new Interval(CiRegister.FirstVirtualRegisterNumber);
         result.assignReg(0);
         result.setType(CiKind.Int);
         throw new CiBailout("LinearScan: interval is null");
@@ -2112,18 +2112,13 @@ public class LinearScan {
                     //visitor.visit(op);
                     assert op.infoCount() > 0 : "should not visit otherwise";
 
-                    List<ExceptionHandler> xhandlers = op.allXhandler();
-                    int n = xhandlers.size();
-                    for (int k = 0; k < n; k++) {
-                        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
-                            TTY.println("resolving exception edge for handler " + xhandlers.get(k) + ", opId=" + opId);
-                        }
-                        resolveExceptionEdge(xhandlers.get(k), opId, moveResolver);
+                    for (ExceptionHandler h : op.exceptionEdges()) {
+                        resolveExceptionEdge(h, opId, moveResolver);
                     }
 
                 } else if (C1XOptions.DetailedAsserts) {
                     //visitor.visit(op);
-                    assert op.allXhandler().size() == 0 : "missed exception handler";
+                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
             }
         }
@@ -2176,10 +2171,13 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(CiKind.Object, toRegister(assignedReg));
                 }
 
+                case Byte:
+                case Char:
+                case Short:
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(CiKind.Int, toRegister(assignedReg));
+                    return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
                 case Long: {
@@ -2428,7 +2426,7 @@ public class LinearScan {
 
             assert interval.currentFrom() <= op.id() && op.id() <= interval.currentTo() : "interval should not be active otherwise";
             assert interval.assignedRegHi() == getAnyreg() : "oop must be single word";
-            assert interval.regNum() >= CiRegister.vregBase : "fixed interval found";
+            assert interval.regNum() >= CiRegister.FirstVirtualRegisterNumber : "fixed interval found";
 
             // Check if this range covers the instruction. Intervals that
             // start or end at the current operation are not included in the
@@ -2529,7 +2527,7 @@ public class LinearScan {
 
             case Long: // fall through
             case Double: {
-                if (compilation.target.arch.hiWordOffsetInBytes > compilation.target.arch.loWordOffsetInBytes) {
+                if (compilation.target.arch.highWordOffset > compilation.target.arch.lowWordOffset) {
                     scopeValues.add(CiConstant.forInt(c.asIntHiBits()));
                     scopeValues.add(CiConstant.forInt(c.asIntLoBits()));
                 } else {
@@ -2808,7 +2806,7 @@ public class LinearScan {
             if (op.infoCount() > 0) {
                 // exception handling
                 if (compilation().hasExceptionHandlers()) {
-                    List<ExceptionHandler> xhandlers = op.allXhandler();
+                    List<ExceptionHandler> xhandlers = op.exceptionEdges();
                     int n = xhandlers.size();
                     for (int k = 0; k < n; k++) {
                         ExceptionHandler handler = xhandlers.get(k);
@@ -2817,7 +2815,7 @@ public class LinearScan {
                         }
                     }
                 } else {
-                    assert op.allXhandler().size() == 0 : "missed exception handler";
+                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
 
                 // compute oop map
@@ -3005,7 +3003,7 @@ public class LinearScan {
                 assert false;
             }
 
-            if (i1.regNum() >= CiRegister.vregBase && i1.type() == CiKind.Illegal) {
+            if (i1.regNum() >= CiRegister.FirstVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.regNum());
                 i1.print(TTY.out, this);
                 TTY.cr();

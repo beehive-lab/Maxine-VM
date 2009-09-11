@@ -234,7 +234,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     }
 
     public void visitPatchingStub(PatchingStub stub) {
-        assert compilation.target.arch.nativeMoveConstInstructionSize <= stub.bytesToCopy && stub.bytesToCopy <= 0xFF : "not enough room for call";
+        assert compilation.target.arch.machineCodeMoveConstInstructionSize <= stub.bytesToCopy && stub.bytesToCopy <= 0xFF : "not enough room for call";
 
         // TODO: Implement this properly!
 //

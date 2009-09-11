@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.target;
 
 import com.sun.max.lang.Arrays;
 import com.sun.max.program.ProgramError;
-import com.sun.max.util.*;
 
 /**
  * This class implements utility functions for transitioning a {@link com.sun.max.vm.actor.member.ClassMethodActor}
@@ -64,7 +63,7 @@ public class TargetState {
             // currently being compiled, return any previous target method
             return currentTargetMethod(((Compilation) targetState).previousTargetState);
         } else if (targetState instanceof Throwable) {
-            throw Exceptions.cast(Error.class, (Throwable) targetState);
+            return null;
         }
         return null;
     }
@@ -83,13 +82,13 @@ public class TargetState {
             // currently being compiled
             return targetMethodHistory(((Compilation) targetState).previousTargetState);
         } else if (targetState instanceof Throwable) {
-            throw Exceptions.cast(Error.class, (Throwable) targetState);
+            return NOT_COMPILED;
         }
         return NOT_COMPILED;
     }
 
     public static Object addTargetMethod(TargetMethod targetMethod, Object targetState) {
-        if (targetState == null) {
+        if (targetState == null || targetState instanceof Throwable) {
             // not compiled yet
             return targetMethod;
         } else if (targetState instanceof TargetMethod) {

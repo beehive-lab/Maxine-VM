@@ -84,7 +84,7 @@ public abstract class LIRAssembler {
 
     protected void patchingEpilog(PatchingStub patch, LIRPatchCode patchCode, CiRegister obj, CodeEmitInfo info) {
         // we must have enough patching space so that call can be inserted
-        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.nativeMoveConstInstructionSize) {
+        while (asm.codeBuffer.position() - patch.pcStart() < compilation.target.arch.machineCodeMoveConstInstructionSize) {
             asm.nop();
         }
         patch.install(asm, patchCode, obj, info);
@@ -477,10 +477,10 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case StaticCall:
-                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info, new boolean[frameMap.stackRefMapSize()], op.cpi, op.constantPool);
+                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case IcVirtualCall:
                 icCall(op.method(), op.addr, op.info);
@@ -496,7 +496,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, boolean[] stackRefMap, char cpi, RiConstantPool constantPool);
+    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void emitStaticCallStub();
 

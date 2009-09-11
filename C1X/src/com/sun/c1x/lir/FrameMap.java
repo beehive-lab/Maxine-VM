@@ -171,11 +171,8 @@ public class FrameMap {
         return Util.nonFatalUnimplemented(null);
     }
 
-    public int stackRefMapSize() {
-        return ((frameSize + 7) >> 3) << 3; // round up to next byte size
-    }
-
     public CiLocation locationForMonitor(int monitorIndex) {
         return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SpillSlotSize, false);
     }
+
 }

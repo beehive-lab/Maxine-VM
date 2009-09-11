@@ -18,35 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc;
+package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.runtime.sparc.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements SPARCTargetMethod {
 
-    public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
-    }
+public interface ReferenceMapCallback {
 
-    @Override
-    public final int registerReferenceMapSize() {
-        return SPARCTrapStateAccess.registerReferenceMapSize();
-    }
-
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        SPARCTargetMethod.Static.patchCallSite(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
-    }
+    void setReferenceMapBit(Pointer p);
 }
