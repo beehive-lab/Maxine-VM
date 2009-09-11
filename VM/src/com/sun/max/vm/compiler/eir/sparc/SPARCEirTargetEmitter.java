@@ -62,7 +62,7 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
     public StackAddress stackAddress(EirStackSlot slot) {
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             // Parameters are on the caller's stack, at positive offset from the callee's FP.
-            final int offset = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.SAVED_AREA + SPARCStackFrameLayout.ARGUMENT_SLOTS + slot.offset;
+            final int offset = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.SAVE_AREA_SIZE + SPARCStackFrameLayout.ARGUMENT_SLOTS_SIZE + slot.offset;
             return new StackAddress(offset, framePointer());
         }
         // Locals are addressed from the frame pointer too. But they are located below FP. Due to the bias, their offset may be positive as well.

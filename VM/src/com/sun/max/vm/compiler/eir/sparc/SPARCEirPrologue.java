@@ -98,13 +98,13 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         if (Trap.STACK_BANGING) {
             count = 2;  // The stack banging load instruction and the save instruction
             if (!SPARCAssembler.isSimm13(stackBangOffset)) {
-                count += ASM.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
+                count += SPARCAssembler.setswNumberOfInstructions(stackBangOffset & ~0x3FF);
             }
         } else {
             count = 1;  // The save instruction
         }
         if (!SPARCAssembler.isSimm13(-frameSize)) {
-            count += ASM.setswNumberOfInstructions(-frameSize);
+            count += SPARCAssembler.setswNumberOfInstructions(-frameSize);
         }
         return count * InstructionSet.SPARC.instructionWidth;
     }
@@ -154,7 +154,8 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         assert SPARCAssembler.isSimm13(frameSize);
         eirMethod().setFrameSize(frameSize);
 
-        emitFrameBuilder(asm, frameSize, stackPointer, scratchRegister0 /* will not be used */);
+        asm.save(stackPointer, -frameSize, stackPointer);
+
         // Only need to save the %i and %g of the trap stub frame, plus the %f.
         // Can use all %l and %o of the trap stub frame as temporary registers, since these don't contain any state of the
         // trapped frame.
@@ -163,7 +164,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // this is likely a nop as we're entering here from returning from a signal handler.
         asm.flushw();
         final int wordSize = Word.size();
-        final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+        final int trapStateOffset =  SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
         int offset = trapStateOffset;
 
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.

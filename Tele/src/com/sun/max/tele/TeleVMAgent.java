@@ -67,6 +67,16 @@ public class TeleVMAgent {
         }.start();
     }
 
+    public void close() {
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                Trace.line(1, "Closing agent socket on port " + serverSocket.getLocalPort());
+                serverSocket.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
 
     /**
      * Gets the port on which the agent is listening for a connection from the VM.

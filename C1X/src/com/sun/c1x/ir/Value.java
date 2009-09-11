@@ -121,9 +121,9 @@ public abstract class Value {
      * for this instruction, <code>this</code> will be returned.
      * @return the substitution for this instruction
      */
-    public final Instruction subst() {
+    public final Value subst() {
         if (subst == null) {
-            return (Instruction) this;
+            return this;
         }
         return subst.subst();
     }

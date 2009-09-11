@@ -138,7 +138,7 @@ public class SPARCJitCompiler extends JitCompiler {
         final Pointer stackPointer;
         final int adapterTopFrameSize =  SPARCAdapterFrameGenerator.optToJitAdapterFrameSize(stackFrameWalker, optimizedEntryPoint);
 
-        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.minStackFrameSize();
+        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;
 
         final boolean inCallerRegisterWindow = BcdeTargetSPARCCompiler.inCallerRegisterWindow(instructionPointer, optimizedEntryPoint, adapterTopFrameSize);
 
@@ -257,6 +257,12 @@ public class SPARCJitCompiler extends JitCompiler {
                 final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                        Log.print("StackFrameWalk: Handler position for exception at position ");
+                        Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                        Log.print(" is ");
+                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+                    }
                     // The Java operand stack of the method that handles the exception is always cleared.
                     // A null object is then pushed to ensure the depth of the stack is as expected upon
                     // entry to an exception handler. However, the handler must have a prologue that loads
@@ -271,7 +277,7 @@ public class SPARCJitCompiler extends JitCompiler {
 
                     // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                     // mandatory output register. We also need to bias it.
-                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.minStackFrameSize()));
+                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
                     final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
                     // found an exception handler, and thus we are done with the stack walker
@@ -328,7 +334,8 @@ public class SPARCJitCompiler extends JitCompiler {
         }
         final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, (SPARCJitTargetMethod) targetMethod);
         final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer());
-        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase, operandStackPointer);
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase,
+                                                     operandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE);
     }
 
 
@@ -349,13 +356,13 @@ public class SPARCJitCompiler extends JitCompiler {
         if (instructionPointer.greaterEqual(endOfFrameBuilder)) {
             final int currentInstruction = stackFrameWalker.readInt(instructionPointer, 0);
             final int prevInstruction = stackFrameWalker.readInt(instructionPointer, -InstructionSet.SPARC.instructionWidth);
-            if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction ==  BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
+            if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
                 return FRAME_STATE.EXITING_CALLEE;
             }
             return FRAME_STATE.NORMAL;
         }
         // We're in the frame builder
-        // If the target method's frame size is large, the ABI frame pointer is change by the second instruction only.
+        // If the target method's frame size is large, the ABI frame pointer is changed by the second instruction only.
         // So we're still in IN_CALLER_FRAME state if we haven't passed the first two instructions of the frame builder.
         if (!SPARCAssembler.isSimm13(targetMethod.frameSize())) {
             if (instructionPointer.equals(startOfFrameBuilder) ||
@@ -425,7 +432,7 @@ public class SPARCJitCompiler extends JitCompiler {
             @Override
             Pointer localVariablesBase(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
                 final int offsetToCalleeFramePointer = targetMethod.stackFrameLayout().sizeOfNonParameterLocals()  +
-                    SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+                    SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
                 return stackFrameWalker.stackPointer().plus(offsetToCalleeFramePointer);
             }
        },

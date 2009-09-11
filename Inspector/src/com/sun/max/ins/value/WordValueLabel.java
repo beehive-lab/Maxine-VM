@@ -179,7 +179,7 @@ public class WordValueLabel extends ValueLabel {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 //System.out.println("WVL (" + _valueMode.toString() + ", " + _valueKind.toString() + ")");
-                switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         final InspectorAction inspectAction = getInspectValueAction(value());
                         if (inspectAction != null) {

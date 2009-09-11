@@ -54,7 +54,7 @@ import com.sun.max.program.option.Option;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.tele.TeleVM;
 import com.sun.max.tele.TeleVM.Options;
-import com.sun.max.vm.prototype.BinaryImageGenerator;
+import com.sun.max.vm.prototype.BootImageGenerator;
 import com.sun.max.vm.prototype.BootImageException;
 import com.sun.max.vm.prototype.Prototype;
 import com.sun.max.vm.prototype.PrototypeClassLoader;
@@ -91,7 +91,7 @@ public class Main {
             final Classpath extraClasspath = new Classpath(classpathList.toArray(new String[classpathList.size()]));
             classpathPrefix = classpathPrefix.prepend(extraClasspath);
         }
-        classpathPrefix = classpathPrefix.prepend(BinaryImageGenerator.getDefaultBootImageJarFilePath().getAbsolutePath());
+        classpathPrefix = classpathPrefix.prepend(BootImageGenerator.getDefaultBootImageJarFilePath().getAbsolutePath());
         checkClasspath(classpathPrefix);
 
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
@@ -102,11 +102,10 @@ public class Main {
         final Classpath sourcepath = JavaProject.getSourcePath(true);
         checkClasspath(sourcepath);
 
-        final File bootImageFile = BinaryImageGenerator.getDefaultBootImageFilePath();
+        final File bootImageFile = BootImageGenerator.getDefaultBootImageFilePath();
         TeleVM t = null;
         try {
-            final Options options = new Options();
-            options.debugOption.setValue(Boolean.TRUE);
+            final Options options = new Options(false);
             options.sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
             options.vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
             options.bootImageFileOption.setValue(bootImageFile);

@@ -57,7 +57,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
+    protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         return methodActor();
     }

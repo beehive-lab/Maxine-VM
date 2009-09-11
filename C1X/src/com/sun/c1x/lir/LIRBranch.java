@@ -39,7 +39,6 @@ public class LIRBranch extends LIRInstruction {
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
     private BlockBegin ublock; // if this is a float-branch, this is the unordered block
-    CodeStub stub;     // if this is a branch to a stub, this is the stub
 
     /**
      * Creates a new LIRBranch instruction.
@@ -49,7 +48,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, Label label) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.label = label;
     }
@@ -63,11 +62,10 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, CiKind type, CodeStub stub) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, stub, 0, 0);
         this.cond = cond;
         this.label = stub.entry;
         this.type = type;
-        this.stub = stub;
     }
 
     /**
@@ -79,7 +77,7 @@ public class LIRBranch extends LIRInstruction {
      *
      */
     public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block) {
-        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.Branch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
         this.label = block.label();
@@ -88,7 +86,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
-        super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null);
+        super(LIROpcode.CondFloatBranch, LIROperandFactory.IllegalOperand, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
         this.label = block.label();
@@ -120,10 +118,6 @@ public class LIRBranch extends LIRInstruction {
 
     public BlockBegin ublock() {
         return ublock;
-    }
-
-    public CodeStub stub() {
-        return stub;
     }
 
     public void changeBlock(BlockBegin b) {

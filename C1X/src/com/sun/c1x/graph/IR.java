@@ -115,7 +115,7 @@ public class IR {
     }
 
     private void computeLinearScanOrder() {
-        if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
+        if (C1XOptions.GenerateLIR) {
             makeLinearScanOrder();
             verifyAndPrint("After linear scan order");
         }

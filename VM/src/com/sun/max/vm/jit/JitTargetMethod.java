@@ -51,12 +51,13 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
     private int frameReferenceMapOffset;
+    @INSPECTED
     private final AtomicReference referenceMapEditor = new AtomicReference();
 
     /**
-     * The preserves the stack frame layout object from {@link #referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
      * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
      */
+    @INSPECTED
     private JitStackFrameLayout stackFrameLayout;
 
     /**
@@ -157,11 +158,9 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
      */
     @Override
     public final JitStackFrameLayout stackFrameLayout() {
-        final JitReferenceMapEditor refMapEditor = (JitReferenceMapEditor) referenceMapEditor.get();
-        if (refMapEditor != null) {
-            return refMapEditor.stackFrameLayout();
+        if (stackFrameLayout == null) {
+            FatalError.unexpected("Cannot get JIT stack frame layout for incomplete JIT method");
         }
-        FatalError.check(stackFrameLayout != null, "Cannot get JIT stack frame layout for incomplete JIT method");
         return stackFrameLayout;
     }
 
@@ -246,6 +245,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
         this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         this.adapterReturnPosition = adapterReturnPosition;
+        this.stackFrameLayout = jitStackFrameLayout;
         if (stopPositions != null) {
             final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
             this.referenceMapEditor.set(referenceMapEditor);
@@ -281,16 +281,15 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
                 }
             } else if (result != null) {
                 referenceMapEditor.fillInMaps(bytecodeToTargetCodePositionMap);
-                stackFrameLayout = referenceMapEditor.stackFrameLayout();
                 this.referenceMapEditor.set(null);
             }
         }
     }
 
     @Override
-    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer) {
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
         finalizeReferenceMaps();
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer);
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter);
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

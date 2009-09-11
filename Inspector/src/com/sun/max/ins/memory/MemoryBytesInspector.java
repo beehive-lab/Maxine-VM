@@ -248,7 +248,7 @@ public final class MemoryBytesInspector extends Inspector {
 
     private String byteGroupToString(byte[] bytes) {
         String s = "";
-        switch (maxVM().bootImage().header().endianness()) {
+        switch (maxVM().bootImage().header.endianness()) {
             case LITTLE:
                 for (int i = bytes.length - 1; i >= 0; i--) {
                     s += String.format("%02X", bytes[i]);

@@ -48,7 +48,7 @@ public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
             // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
             // to the amount allocated within the region.  Other regions don't have this happen.
             // Return the size allocated for the whole region, as recorded in the boot image.
-            return Size.fromInt(teleVM().bootImage().header().bootCodeSize);
+            return Size.fromInt(teleVM().bootImage().header.codeSize);
         }
         return super.size();
     }

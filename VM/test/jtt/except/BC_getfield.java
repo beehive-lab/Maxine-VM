@@ -31,7 +31,7 @@ public class BC_getfield {
     private int field = 13;
 
     public static int test(int arg) {
-        final BC_getfield obj = arg == 3 ? null : object;
+        final BC_getfield obj = (arg == 3) ? null : object;
         return obj.field;
     }
 }

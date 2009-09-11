@@ -110,14 +110,14 @@ public final class ControlFlowOptimizer {
         List<LIRInstruction> instructions = block.lir().instructionsList();
 
         assert instructions.size() >= 2 : "block must have label and branch";
-        assert instructions.get(0).code() == LIROpcode.Label : "first instruction must always be a label";
+        assert instructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
         assert instructions.get(instructions.size() - 1) instanceof LIRBranch : "last instrcution must always be a branch";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "branch must be unconditional";
         assert ((LIRBranch) instructions.get(instructions.size() - 1)).block() == block.suxAt(0) : "branch target must be the successor";
 
         // block must have exactly one successor
 
-        return instructions.size() == 2 && instructions.get(instructions.size() - 1).info() == null;
+        return instructions.size() == 2 && instructions.get(instructions.size() - 1).info == null;
     }
 
     // substitute branch targets in all branch-instructions of this blocks
@@ -126,11 +126,11 @@ public final class ControlFlowOptimizer {
 
         List<LIRInstruction> instructions = block.lir().instructionsList();
 
-        assert instructions.get(0).code() == LIROpcode.Label : "first instruction must always be a label";
+        assert instructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
         for (int i = instructions.size() - 1; i >= 1; i--) {
             LIRInstruction op = instructions.get(i);
 
-            if (op.code() == LIROpcode.Branch || op.code() == LIROpcode.CondFloatBranch) {
+            if (op.code == LIROpcode.Branch || op.code == LIROpcode.CondFloatBranch) {
                 assert op instanceof LIRBranch : "branch must be of type LIRBranch";
                 LIRBranch branch = (LIRBranch) op;
 
@@ -199,14 +199,14 @@ public final class ControlFlowOptimizer {
             List<LIRInstruction> instructions = block.lir().instructionsList();
 
             LIRInstruction lastOp = instructions.get(instructions.size() - 1);
-            if (lastOp.code() == LIROpcode.Branch) {
+            if (lastOp.code == LIROpcode.Branch) {
                 assert lastOp instanceof LIRBranch : "branch must be of type LIRBranch";
                 LIRBranch lastBranch = (LIRBranch) lastOp;
 
                 assert lastBranch.block() != null : "last branch must always have a block as target";
                 assert lastBranch.label() == lastBranch.block().label() : "must be equal";
 
-                if (lastBranch.info() == null) {
+                if (lastBranch.info == null) {
                     if (lastBranch.block() == code.get(i + 1)) {
 
                         Util.traceLinearScan(3, "Deleting unconditional branch at end of block B%d", block.blockID);
@@ -216,11 +216,11 @@ public final class ControlFlowOptimizer {
 
                     } else {
                         LIRInstruction prevOp = instructions.get(instructions.size() - 2);
-                        if (prevOp.code() == LIROpcode.Branch || prevOp.code() == LIROpcode.CondFloatBranch) {
+                        if (prevOp.code == LIROpcode.Branch || prevOp.code == LIROpcode.CondFloatBranch) {
                             assert prevOp instanceof LIRBranch : "branch must be of type LIRBranch";
                             LIRBranch prevBranch = (LIRBranch) prevOp;
 
-                            if (prevBranch.block() == code.get(i + 1) && prevBranch.info() == null) {
+                            if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
 
                                 Util.traceLinearScan(3, "Negating conditional branch and deleting unconditional branch at end of block B%d", block.blockID);
 
@@ -244,8 +244,8 @@ public final class ControlFlowOptimizer {
             List<LIRInstruction> curInstructions = block.lir().instructionsList();
             LIRInstruction curLastOp = curInstructions.get(curInstructions.size() - 1);
 
-            assert curInstructions.get(0).code() == LIROpcode.Label : "first instruction must always be a label";
-            if (curInstructions.size() == 2 && curLastOp.code() == LIROpcode.Return) {
+            assert curInstructions.get(0).code == LIROpcode.Label : "first instruction must always be a label";
+            if (curInstructions.size() == 2 && curLastOp.code == LIROpcode.Return) {
                 // the block contains only a label and a return
                 // if a predecessor ends with an unconditional jump to this block, then the jump
                 // can be replaced with a return instruction
@@ -254,7 +254,7 @@ public final class ControlFlowOptimizer {
                 // because the predecessors might have other (conditional) jumps to this block.
                 // this may lead to unnecesary return instructions in the final code
 
-                assert curLastOp.info() == null : "return instructions do not have debug information";
+                assert curLastOp.info == null : "return instructions do not have debug information";
 
                 assert curLastOp instanceof LIROp1 : "return must be LIROp1";
                 LIROperand returnOpr = ((LIROp1) curLastOp).inOpr();
@@ -264,11 +264,11 @@ public final class ControlFlowOptimizer {
                     List<LIRInstruction> predInstructions = pred.lir().instructionsList();
                     LIRInstruction predLastOp = predInstructions.get(predInstructions.size() - 1);
 
-                    if (predLastOp.code() == LIROpcode.Branch) {
+                    if (predLastOp.code == LIROpcode.Branch) {
                         assert predLastOp instanceof LIRBranch : "branch must be LIRBranch";
                         LIRBranch predLastBranch = (LIRBranch) predLastOp;
 
-                        if (predLastBranch.block() == block && predLastBranch.cond() == LIRCondition.Always && predLastBranch.info() == null) {
+                        if (predLastBranch.block() == block && predLastBranch.cond() == LIRCondition.Always && predLastBranch.info == null) {
                             // replace the jump to a return with a direct return
                             // Note: currently the edge between the blocks is not deleted
                             predInstructions.set(predInstructions.size() - 1, new LIROp1(LIROpcode.Return, returnOpr));

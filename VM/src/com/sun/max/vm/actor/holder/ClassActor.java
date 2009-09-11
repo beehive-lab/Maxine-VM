@@ -1450,6 +1450,9 @@ public abstract class ClassActor extends Actor {
                     case VERIFIED: {
                         initializingThread = Thread.currentThread();
                         initializationState = InitializationState.INITIALIZING;
+                        if (VMOptions.verboseOption.verboseClass) {
+                            Log.println("[Initializing " + name + "]");
+                        }
                         return true;
                     }
                     case INITIALIZING: {

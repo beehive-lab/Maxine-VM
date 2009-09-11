@@ -40,7 +40,7 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
                 if (location.category() == EirLocationCategory.STACK_SLOT) {
                     final EirStackSlot stackSlot = (EirStackSlot) location;
                     if (stackSlot.purpose != EirStackSlot.Purpose.PARAMETER) {
-                        final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.minStackFrameSize()) / stackSlotWidth.numberOfBytes;
+                        final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE) / stackSlotWidth.numberOfBytes;
                         map.set(stackSlotBitIndex);
                     }
                 } else if (location instanceof SPARCEirRegister.GeneralPurpose) {
@@ -58,10 +58,13 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
         addFrameReferenceMap(liveVariables, stackSlotWidth, map);
         if (arguments != null) {
             for (EirOperand argument : arguments) {
-                if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
-                    final EirStackSlot stackSlot = (EirStackSlot) argument.location();
-                    final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.minStackFrameSize()) / stackSlotWidth.numberOfBytes;
-                    map.set(stackSlotBitIndex);
+                if (argument.kind() == Kind.REFERENCE) {
+                    final EirLocation location = argument.location();
+                    if (location instanceof EirStackSlot) {
+                        final EirStackSlot stackSlot = (EirStackSlot) location;
+                        final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE) / stackSlotWidth.numberOfBytes;
+                        map.set(stackSlotBitIndex);
+                    }
                 }
             }
         }

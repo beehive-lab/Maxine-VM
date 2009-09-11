@@ -94,7 +94,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
-        final int origin = -arrayLengthOffset;
+        final int origin = headerSize;
         visitor.visitHeaderField(origin + arrayLengthOffset, "length", JavaTypeDescriptor.WORD, new WordValue(lengthToWord(HostObjectAccess.getArrayLength(array))));
     }
 
@@ -124,7 +124,8 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     }
 
     public int getHubReferenceOffsetInCell() {
-        return headerSize + hubOffset;
+        final int origin = headerSize;
+        return origin + hubOffset;
     }
 
     @PROTOTYPE_ONLY

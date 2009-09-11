@@ -52,7 +52,7 @@ public final class WithoutAccessCheck {
     }
 
     private static void accessError(Field field) {
-        ProgramError.unexpected("could not access field " + field);
+        throw new IllegalAccessError("could not access field " + field);
     }
 
     public static Object getInstanceField(Object tuple, String fieldName) {

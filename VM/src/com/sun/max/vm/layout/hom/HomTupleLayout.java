@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
@@ -41,13 +42,13 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
     @Override
     @INLINE
     public Pointer cellToOrigin(Pointer cell) {
-        return cell.plus(-miscOffset);
+        return cell.plus(headerSize);
     }
 
     @Override
     @INLINE
     public Pointer originToCell(Pointer origin) {
-        return origin.plus(miscOffset);
+        return origin.minus(headerSize);
     }
 
     public Layout.Category category() {
@@ -71,6 +72,9 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         super(gripScheme);
     }
 
+    public HeaderField[] headerFields() {
+        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
+    }
 
     @INLINE
     public int headerSize() {

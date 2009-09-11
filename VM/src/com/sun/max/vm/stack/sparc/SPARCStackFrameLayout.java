@@ -29,8 +29,9 @@ import com.sun.max.vm.stack.*;
   * Utility class that provides functionality common to all SPARC stack frame layout.
  *
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
-public class SPARCStackFrameLayout {
+public final class SPARCStackFrameLayout {
 
     /**
      * Stack frame alignment requirement. 16 bytes on Solaris SPARC 64-bit.
@@ -46,18 +47,28 @@ public class SPARCStackFrameLayout {
     public static final int STACK_BIAS = 2047;
 
     /**
-     * Every stack frame must have a 16-extended word save area for the in and local register, in
-     * case of window overflow or underflow.
+     * Every stack frame must have a 16-extended word save area for the in and local registers (in
+     * case of window overflow or window flushing).
      * This save area always must exist at %sp plus a BIAS of 2047 (0x7ff).
      * @see StackBias
      */
-    public static final int SAVED_AREA = 16 * Word.size();
+    public static final int SAVE_AREA_SIZE = 16 * Word.size();
 
-    public static final int ARGUMENT_SLOTS = 6 * Word.size();
+    /**
+     * Local registers are spilled to the first half of the save area.
+     */
+    public static final int LOCAL_REGISTERS_SAVE_AREA_SIZE = 8 * Word.size();
 
-    public static int minStackFrameSize() {
-        return SAVED_AREA + ARGUMENT_SLOTS;
-    }
+    public static final int ARGUMENT_SLOTS_SIZE = 6 * Word.size();
+
+    public static final int MIN_STACK_FRAME_SIZE = SAVE_AREA_SIZE + ARGUMENT_SLOTS_SIZE;
+
+    /**
+     * The offset relative to the stack pointer register of the first slot.
+     * I.e., the first slot following the frame's save area and 6-argument slot area.
+     */
+    public static final int OFFSET_FROM_SP_TO_FIRST_SLOT = STACK_BIAS + MIN_STACK_FRAME_SIZE;
+
 
     public static Pointer unbias(Pointer biasedPointer) {
         return biasedPointer.plus(STACK_BIAS);
@@ -68,16 +79,8 @@ public class SPARCStackFrameLayout {
     }
 
     /**
-     * Returns the offset relative to the stack pointer of the top-most free slot (i.e., the first slot following the frame's save and argument slot area).
-     */
-    public static int offsetToFirstFreeSlotFromStackPointer() {
-        return STACK_BIAS + minStackFrameSize();
-    }
-
-    /**
      * Computes the offset of a stack slot relative to the frame pointer register.
      * Slots are numbered from 0 to n, where slot 0 is at the top of the stack.
-     * The given offset is oblivious to the presence of a stack bias.
      *
      * @param frameSize size of the stack frame where the slot resides.
      * @param slotOffset offset of the stack slot.
@@ -99,7 +102,7 @@ public class SPARCStackFrameLayout {
      * @return an offset in bytes relative to the frame pointer register
      */
     public static int localSlotOffsetFromFrame(int frameSize,  int slotOffset) {
-        return offsetToFirstFreeSlotFromStackPointer() - frameSize + slotOffset;
+        return OFFSET_FROM_SP_TO_FIRST_SLOT - frameSize + slotOffset;
     }
 
     /**
@@ -156,5 +159,8 @@ public class SPARCStackFrameLayout {
 
     public static void setCallerFramePointer(Pointer framePointer, Pointer callerFramePointer) {
         unbias(framePointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
+    }
+
+    private SPARCStackFrameLayout() {
     }
 }

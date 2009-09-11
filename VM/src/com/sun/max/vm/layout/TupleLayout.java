@@ -23,6 +23,7 @@ package com.sun.max.vm.layout;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.layout.Layout.*;
 
 /**
  * @author Bernd Mathiske
@@ -34,10 +35,17 @@ public interface TupleLayout extends SpecificLayout {
     /**
      * Determine offsets for the given field actors.
      * Update each field actor with its offset.
-     * 
+     *
      * @param superClassActor super class that we inherit already laid out fields from
      * @param fieldActors field actors that will have their offsets assigned
      * @return the resulting object size (including header and fields)
      */
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors);
+
+    /**
+     * Gets the header fields of this tuple object layout.
+     *
+     * @return an array of header field descriptors sorted by ascending order of the field addresses in memory
+     */
+    HeaderField[] headerFields();
 }

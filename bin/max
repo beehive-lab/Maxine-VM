@@ -688,7 +688,7 @@ image_configs=( \
 image_usage="[options]"
 image_help="build a boot image
 
-    Run the BinaryImageGenerator to build a Maxine boot image.
+    Run the BootImageGenerator to build a Maxine boot image.
     
     An option starting with '@' denotes a preconfigured set of
     options. The available preconfigured option sets are:  
@@ -748,9 +748,9 @@ function run_image() {
     done    
 
     if [ -z "$vm_args" ]; then
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $image_args
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args
     else
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageGenerator -trace=1 -run=java $image_args -vmargs="$vm_args"
     fi
 }
 
@@ -894,7 +894,7 @@ function run_dis() {
 inspect_usage="[options] [class | -jar jarfile]  [args...]"
 inspect_help="launch a given program under the Inspector
 
-    Run the Maxine VM under the Inspector. The arguments accepted by this command
+    Run Maxine under the Inspector. The arguments accepted by this command
     are those accepted by the 'max vm' command plus the Inspector specific
     options. To debug a program in the Inspector, simply replace 'vm' on the
     command line that launches the program with 'inspect'.
@@ -940,7 +940,22 @@ function run_inspect() {
         shift
     done    
 
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a="$vm_args"
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineInspector -trace=1 ${inspector_args} -a="$vm_args"
+}
+
+#=======================================
+# 'view' command
+#=======================================
+
+view_usage="[options]"
+view_help="browse the boot image under the Inspector
+
+    Browse a Maxine boot image under the Inspector.
+    
+    Use \"max view -help\" to see what the Inspector options are."
+
+function run_view() {
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineViewer -trace=1 $@
 }
 
 #=======================================
@@ -991,6 +1006,24 @@ function run_helloworld() {
 }
 
 #=======================================
+# 'nm' command
+#=======================================
+
+nm_usage="[options] [boot image file]"
+nm_help="print the contents of a boot image
+
+    Print the contents of a boot image in a textual form.
+    If not specified, the following path will be used for the boot image file:
+    
+        ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+
+    Use \"max nm -help\" to see what other options this command accepts."
+    
+function run_nm() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImagePrinter "$@" ${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.vm
+}
+
+#=======================================
 # 'objecttree' command
 #=======================================
 
@@ -1004,7 +1037,7 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     Use \"max objecttree -help\" to see what other options this command accepts."
     
 function run_objecttree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -1021,7 +1054,7 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BootImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================

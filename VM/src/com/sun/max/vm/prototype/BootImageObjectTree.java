@@ -34,13 +34,13 @@ import com.sun.max.vm.prototype.GraphPrototype.*;
 
 /**
  * A mechanism for saving, loading and printing the
- * causality spanning-tree of the object graph in an {@linkplain BinaryImageGenerator image}.
+ * causality spanning-tree of the object graph in an {@linkplain BootImageGenerator image}.
  *
  * @author Doug Simon
  */
-public final class BinaryImageObjectTree {
+public final class BootImageObjectTree {
 
-    private BinaryImageObjectTree() {
+    private BootImageObjectTree() {
     }
 
     /**
@@ -399,7 +399,7 @@ public final class BinaryImageObjectTree {
 
     private static final Option<Integer> TRACE = options.newIntegerOption("trace", 1,
             "selects the trace level of the tool");
-    private static final Option<File> INPUT_FILE = options.newFileOption("in", BinaryImageGenerator.getDefaultBootImageObjectTreeFilePath(),
+    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getDefaultBootImageObjectTreeFilePath(),
             "the file from which to load the graph");
     private static final Option<File> OUTPUT_FILE = options.newFileOption("out", getDefaultOutputFile(),
             "the file to which the graph is printed");
@@ -419,7 +419,7 @@ public final class BinaryImageObjectTree {
      * @return a file representing the default location for outputting the tree
      */
     private static File getDefaultOutputFile() {
-        return new File(BinaryImageGenerator.getDefaultBootImageObjectTreeFilePath().getAbsolutePath() + ".txt");
+        return new File(BootImageGenerator.getDefaultBootImageObjectTreeFilePath().getAbsolutePath() + ".txt");
     }
 
     /**

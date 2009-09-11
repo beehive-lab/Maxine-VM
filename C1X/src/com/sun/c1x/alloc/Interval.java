@@ -433,7 +433,7 @@ public class Interval {
         return null;
     }
 
-    Interval splitChildAtOpId(int opId, LIRVisitState.OperandMode mode, LinearScan allocator) {
+    Interval splitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
 
@@ -445,7 +445,7 @@ public class Interval {
             int len = splitChildren.size();
 
             // in outputMode, the end of the interval (opId == cur.to()) is not valid
-            int toOffset = (mode == LIRVisitState.OperandMode.OutputMode ? 0 : 1);
+            int toOffset = (mode == LIRInstruction.OperandMode.OutputMode ? 0 : 1);
 
             int i;
             for (i = 0; i < len; i++) {
@@ -502,7 +502,7 @@ public class Interval {
     }
 
     // checks if opId is covered by any split child
-    boolean splitChildCovers(int opId, LIRVisitState.OperandMode mode) {
+    boolean splitChildCovers(int opId, LIRInstruction.OperandMode mode) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
 
@@ -573,7 +573,7 @@ public class Interval {
     }
 
     void addUsePos(int pos, IntervalUseKind useKind) {
-        assert covers(pos, LIRVisitState.OperandMode.InputMode) : "use position not covered by live range";
+        assert covers(pos, LIRInstruction.OperandMode.InputMode) : "use position not covered by live range";
 
         // do not add use positions for precolored intervals because
         // they are never used
@@ -741,7 +741,7 @@ public class Interval {
     }
 
     // returns true if the opId is inside the interval
-    boolean covers(int opId, LIRVisitState.OperandMode mode) {
+    boolean covers(int opId, LIRInstruction.OperandMode mode) {
         Range cur = first;
 
         while (cur != Range.end() && cur.to() < opId) {
@@ -750,7 +750,7 @@ public class Interval {
         if (cur != Range.end()) {
             assert cur.to() != cur.next().from() : "ranges not separated";
 
-            if (mode == LIRVisitState.OperandMode.OutputMode) {
+            if (mode == LIRInstruction.OperandMode.OutputMode) {
                 return cur.from() <= opId && opId < cur.to();
             } else {
                 return cur.from() <= opId && opId <= cur.to();

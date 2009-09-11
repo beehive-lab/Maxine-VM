@@ -113,9 +113,6 @@ public enum LIROpcode {
         , Lock
         , Unlock
     , EndOpLock
-    , BeginDelaySlot
-        , DelaySlot
-    , EndEelayslot
     , BeginOpTypeCheck
         , InstanceOf
         , CheckCast

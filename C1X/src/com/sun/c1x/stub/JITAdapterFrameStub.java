@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-
 
 /**
  *
@@ -38,10 +36,6 @@ public class JITAdapterFrameStub extends CodeStub {
      */
     public JITAdapterFrameStub() {
         super(null);
-    }
-
-    @Override
-    public void visit(LIRVisitState visitor) {
     }
 
     @Override

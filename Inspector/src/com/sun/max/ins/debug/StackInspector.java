@@ -334,7 +334,7 @@ public class StackInspector extends Inspector {
 
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                    switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3:
                             int index = stackFrameList.locationToIndex(mouseEvent.getPoint());
                             if (index >= 0 && index < stackFrameList.getModel().getSize()) {
