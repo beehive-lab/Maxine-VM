@@ -164,10 +164,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, dst, src.kind, LIRPatchCode.PatchNone, null, LIROp1.LIRMoveKind.Unaligned));
     }
 
-    public void unalignedMove(LIROperand src, LIROperand dst) {
-        append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, LIRPatchCode.PatchNone, null, LIROp1.LIRMoveKind.Unaligned));
-    }
-
     public void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
         append(new LIROp1(LIROpcode.Move, src, dst, src.kind, LIRPatchCode.PatchNone, info));
     }

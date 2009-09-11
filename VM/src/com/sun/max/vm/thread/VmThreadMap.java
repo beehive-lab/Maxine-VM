@@ -214,7 +214,7 @@ public final class VmThreadMap {
     }
 
     /**
-     * Waits for all non-daemon threads in the thread map to finish.
+     * Waits for all non-daemon threads in the thread map to finish, except current.
      */
     public void joinAllNonDaemons() {
         while (true) {
@@ -226,11 +226,15 @@ public final class VmThreadMap {
         }
     }
 
+    /**
+     * Finds a non-daemon thread except current.
+     * @return
+     */
     private VmThread findNonDaemon() {
         Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
             final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-            if (!vmThread.javaThread().isDaemon()) {
+            if (vmThread != VmThread.current() && !vmThread.javaThread().isDaemon()) {
                 return vmThread;
             }
             vmThreadLocals = VmThreadLocal.FORWARD_LINK.getConstantWord(vmThreadLocals).asPointer();

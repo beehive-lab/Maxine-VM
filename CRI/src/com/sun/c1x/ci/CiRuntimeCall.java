@@ -62,8 +62,7 @@ public enum CiRuntimeCall {
     ResolveOptVirtualCall(Word, Int, Object),
     ResolveStaticCall(Word, Int, Object),
     Debug(Void),
- ResolveInterfaceIndex(
-            Int, Object, Int, Object),
+    ResolveInterfaceIndex(Int, Object, Int, Object),
     RetrieveInterfaceIndex(Int, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),

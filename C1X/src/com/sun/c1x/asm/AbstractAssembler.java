@@ -36,25 +36,14 @@ import com.sun.c1x.util.*;
 public abstract class AbstractAssembler {
 
     public final Buffer codeBuffer;
-    public final Buffer dataBuffer;
     public final CiTarget target;
-    private final CiTargetMethod targetMethod = new CiTargetMethod();
+    protected final CiTargetMethod targetMethod;
 
-    private final int doubleAlignment;
-    private final int floatAlignment;
-    private final int longAlignment;
-    private final int longLongAlignment;
-    private final int intAlignment;
-
-    public AbstractAssembler(CiTarget target) {
+    public AbstractAssembler(CiTarget target, int frameSize) {
         this.target = target;
+        this.targetMethod = new CiTargetMethod(target.arch.wordSize, target.registerReferenceMapTemplate.length);
         this.codeBuffer = new Buffer(target.arch.bitOrdering);
-        this.dataBuffer = new Buffer(target.arch.bitOrdering);
-        doubleAlignment = target.arch.wordSize;
-        floatAlignment = target.arch.wordSize;
-        longAlignment = target.arch.wordSize;
-        longLongAlignment = Long.SIZE / 8 * 2;
-        intAlignment = target.arch.wordSize;
+        targetMethod.setFrameSize(frameSize);
     }
 
     public void bind(Label l) {
@@ -67,11 +56,17 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
+    public void setFrameSize(int frameSize) {
+        assert targetMethod.frameSize() == -1 : "frame size already set!";
+        targetMethod.setFrameSize(frameSize);
+    }
+
     public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
+
+        C1XMetrics.TargetMethods++;
 
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
-        targetMethod.setData(dataBuffer.finished(), dataBuffer.position());
         targetMethod.setFrameSize(framesize);
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
@@ -87,28 +82,43 @@ public abstract class AbstractAssembler {
             }
         }
 
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize;
+            C1XMetrics.SafepointsEmitted += targetMethod.safepointRefMaps.size();
+            C1XMetrics.DirectCallSitesEmitted += targetMethod.directCallSites.size();
+            C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCallSites.size();
+            C1XMetrics.DataPatches += targetMethod.dataPatchSites.size();
+            C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
+        }
+
         if (C1XOptions.PrintAssembly) {
 
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Frame size: %d", framesize);
-            TTY.println("Register size: %d", targetMethod.registerSize);
+            TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
             Util.printBytes("Code", targetMethod.targetCode, targetMethod.targetCodeSize, C1XOptions.PrintAssemblyBytesPerLine);
 
+
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
             TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode, targetMethod.targetCodeSize)));
 
-            Util.printSection("Data", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Data", targetMethod.data, targetMethod.dataSize, C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.SafepointRefMap x : targetMethod.safepointRefMaps) {
                 TTY.println(x.toString());
             }
 
-            Util.printSection("Call Sites", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.CallSite x : targetMethod.callSites) {
+
+            Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.CallSite x : targetMethod.directCallSites) {
+                TTY.println(x.toString());
+            }
+
+
+            Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
+            for (CiTargetMethod.CallSite x : targetMethod.indirectCallSites) {
                 TTY.println(x.toString());
             }
 
@@ -117,15 +127,11 @@ public abstract class AbstractAssembler {
                 TTY.println(x.toString());
             }
 
-            Util.printSection("Reference Patches", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.RefPatchSite x : targetMethod.refPatchSites) {
-                TTY.println(x.toString());
-            }
-
             Util.printSection("Exception Handlers", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.ExceptionHandler x : targetMethod.exceptionHandlers) {
                 TTY.println(x.toString());
             }
+
         }
 
         return targetMethod;
@@ -179,6 +185,18 @@ public abstract class AbstractAssembler {
         targetMethod.recordDirectCall(pos, call, stackMap);
     }
 
+    protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
+
+        assert pos >= 0 && call != null && stackMap != null;
+
+        if (C1XOptions.TraceRelocation) {
+            TTY.println("Indirect call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
+        }
+
+        verifyReferenceMap();
+        targetMethod.recordIndirectCall(pos, call, stackMap);
+    }
+
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
 
         assert pos >= 0 && call != null && stackMap != null;
@@ -202,25 +220,17 @@ public abstract class AbstractAssembler {
         targetMethod.recordSafepoint(pos, registerMap, stackMap);
     }
 
-    protected void recordDataReferenceInCode(int pos, int dataOffset) {
+    public Address recordDataReferenceInCode(CiConstant data) {
 
-        assert pos >= 0 && dataOffset >= 0;
+        assert data != null;
 
-        if (C1XOptions.TraceRelocation) {
-            TTY.print("Object reference in code: pos = %d, dataOffset = %d", pos, dataOffset);
-        }
-
-        targetMethod.recordDataReferenceInCode(pos, dataOffset);
-    }
-
-    protected Address recordObjectReferenceInCode(Object obj) {
-        assert obj != null : "null must not be recorded";
+        int pos = codeBuffer.position();
 
         if (C1XOptions.TraceRelocation) {
-            TTY.print("Object reference in code: pos = %d, object= %s", codeBuffer.position(), obj);
+            TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
         }
 
-        targetMethod.recordObjectReferenceInCode(codeBuffer.position(), obj);
+        targetMethod.recordDataReferenceInCode(pos, data);
         return Address.InternalRelocation;
     }
 
@@ -241,41 +251,6 @@ public abstract class AbstractAssembler {
             // for shorter branches. It will get checked when bound.
             return branchPc;
         }
-    }
-
-    private Address makeInternalAddress(int disp) {
-        recordDataReferenceInCode(codeBuffer.position(), disp);
-        return Address.InternalRelocation;
-    }
-
-    public Address doubleConstant(double d) {
-        dataBuffer.align(doubleAlignment);
-        int pos = dataBuffer.emitDouble(d);
-        return makeInternalAddress(pos);
-    }
-
-    public Address floatConstant(float f) {
-        dataBuffer.align(floatAlignment);
-        int pos = dataBuffer.emitFloat(f);
-        return makeInternalAddress(pos);
-    }
-
-    public Address longConstant(long l) {
-        dataBuffer.align(longAlignment);
-        int pos = dataBuffer.emitLong(l);
-        return makeInternalAddress(pos);
-    }
-
-    public Address longLongConstant(long lHigh, long lLow) {
-        dataBuffer.align(longLongAlignment);
-        int pos = dataBuffer.emitLongLong(lHigh, lLow);
-        return makeInternalAddress(pos);
-    }
-
-    public Address intConstant(int l) {
-        dataBuffer.align(intAlignment);
-        int pos = dataBuffer.emitInt(l);
-        return makeInternalAddress(pos);
     }
 
     public abstract void nop();

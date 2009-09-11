@@ -29,30 +29,38 @@ package com.sun.c1x.ci;
  */
 public final class CiRegister {
 
-    // Invalid register
+    /**
+     * Invalid register.
+     */
     public static final CiRegister None = new CiRegister(-1, -1, "noreg");
 
-    // Stack register
+    /**
+     * Stack register of the current method.
+     */
     public static final CiRegister Stack = new CiRegister(-2, -2, "stackreg", RegisterFlag.CPU);
 
-    // Stack register (caller stack)
+    /**
+     * Stack register relative to the caller stack. When this register is used in relative addressing, it means that the
+     * offset is based to stack register of the caller and not to the stack register of the current method.
+     */
     public static final CiRegister CallerStack = new CiRegister(-3, -3, "caller-stackreg", RegisterFlag.CPU);
 
-    public static final int vregBase = 40;
+    public static final int FirstVirtualRegisterNumber = 40;
 
     public final int number;
     public final String name;
     public final int encoding;
+
     private final int flags;
 
     public enum RegisterFlag {
         CPU, Byte, XMM, MMX;
 
         public final int mask = 1 << (ordinal() + 1);
-
     }
 
     public CiRegister(int number, int encoding, String name, RegisterFlag... flags) {
+        assert number < FirstVirtualRegisterNumber : "cannot have a register number greater or equal " + FirstVirtualRegisterNumber;
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);
@@ -96,13 +104,20 @@ public final class CiRegister {
         return name;
     }
 
-    public static boolean assertDifferentRegisters(CiRegister... reg) {
+    /**
+     * Utility function for asserting that the given registers are all different.
+     * 
+     * @param registers
+     *            an array of registers that should be checked for equal entries
+     * @return false if an equal entry is found, true otherwise
+     */
+    public static boolean assertDifferentRegisters(CiRegister... registers) {
 
-        for (int i = 0; i < reg.length; i++) {
-            for (int j = 0; j < reg.length; j++) {
+        for (int i = 0; i < registers.length; i++) {
+            for (int j = 0; j < registers.length; j++) {
                 if (i != j) {
-                    if (reg[i] == reg[j]) {
-                        assert false : "Registers " + i + " and " + j + " are both " + reg[i];
+                    if (registers[i] == registers[j]) {
+                        assert false : "Registers " + i + " and " + j + " are both " + registers[i];
                         return false;
                     }
                 }

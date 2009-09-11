@@ -51,7 +51,12 @@ public interface CompilationScheme extends VMScheme {
         /**
          * Use both compilers according to dynamic feedback.
          */
-        MIXED
+        MIXED,
+
+        /**
+         * Use the JIT compiler if possible when creating the boot image.
+         */
+        PROTOTYPE_JIT
     }
 
     /**

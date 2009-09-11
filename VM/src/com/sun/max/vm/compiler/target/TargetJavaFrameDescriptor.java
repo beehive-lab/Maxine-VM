@@ -275,16 +275,16 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         return size;
     }
 
-    private static final Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> inflate = new Memoizer.Function<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>>() {
+    private static final Memoizer.Function<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> inflate = new Memoizer.Function<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>>() {
 
-        public Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>> create(TargetMethod targetMethod) {
+        public Memoizer.Function.Result<IndexedSequence<TargetJavaFrameDescriptor>> create(CPSTargetMethod targetMethod) {
             return inflateForMemoizer(targetMethod.compressedJavaFrameDescriptors());
         }
     };
 
-    private static final Mapping<TargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
+    private static final Mapping<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
 
-    static final TargetJavaFrameDescriptor get(TargetMethod targetMethod, int index) {
+    static final TargetJavaFrameDescriptor get(CPSTargetMethod targetMethod, int index) {
         final IndexedSequence<TargetJavaFrameDescriptor> indexedSequence = methodToJavaFrameDescriptors.get(targetMethod);
         if (indexedSequence != null) {
             return indexedSequence.get(index);

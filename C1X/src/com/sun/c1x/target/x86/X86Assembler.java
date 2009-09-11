@@ -55,8 +55,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    private final int frameSize;
-
     /**
      * Constants for X86 prefix bytes.
      */
@@ -80,8 +78,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public X86Assembler(CiTarget target, int frameSize) {
-        super(target);
-        this.frameSize = frameSize;
+        super(target, frameSize);
     }
 
     private static int encode(CiRegister r) {
@@ -156,9 +153,9 @@ public abstract class X86Assembler extends AbstractAssembler {
         if (base == CiRegister.Stack) {
             base = this.target.stackRegister;
         } else if (base == CiRegister.CallerStack) {
-            assert frameSize != -1 : "for caller relative addressing, the frame size must be known in advance and given to the assembler constructor";
+            assert targetMethod.frameSize() != -1 : "for caller relative addressing, the frame size must be known in advance and given to the assembler constructor";
             base = this.target.stackRegister;
-            disp += frameSize + target.arch.wordSize;
+            disp += targetMethod.frameSize() + target.arch.wordSize;
         }
 
 
@@ -474,7 +471,9 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void call(CiRegister dst) {
+    public final void call(CiRegister dst, RiMethod method, boolean[] stackReferenceMap) {
+
+        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         // this may be true but dbx disassembles it as if it
         // were 32bits...
         // int encode = prefixAndEncode(dst.encoding());
@@ -485,14 +484,15 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xD0 | encode);
     }
 
-    public final void call(RiMethod method) {
-        recordDirectCall(codeBuffer.position(), method, new boolean[0]);
+    public final void call(RiMethod method, boolean[] stackReferenceMap) {
+        recordDirectCall(codeBuffer.position(), method, stackReferenceMap);
         emitByte(0xE8);
         emitInt(0);
 
     }
-    public final void call(Address adr) {
+    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
 
+        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         prefix(adr);
         emitByte(0xFF);
         emitOperand(X86.rdx, adr);
@@ -525,7 +525,8 @@ public abstract class X86Assembler extends AbstractAssembler {
      *            the destination of the call
      */
     public void callRuntime(CiRuntimeCall runtimeCall, RiMethod method) {
-        recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[0]);
+        // TODO: Fill in reference map correctly!
+        recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[targetMethod.frameSize() / target.arch.wordSize]);
         emitByte(0xE8);
         emitInt(0);
     }
@@ -3428,8 +3429,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     @Override
     public final void patchJumpTarget(int branch, int branchTarget) {
-        assert target.arch.isX86();
-
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
                         ||

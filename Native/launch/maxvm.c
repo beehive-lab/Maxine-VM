@@ -27,18 +27,11 @@
 #include "os.h"
 #include "maxine.h"
 
-#if os_DARWIN
-#   define LIBRARY_NAME "libjvm.dylib"
-#else
-#   define LIBRARY_NAME "libjvm.so"
-#endif
-
 typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 
-/**
- * A simple launcher.
- */
 #if os_DARWIN
+#define LIBRARY_NAME "libjvm.dylib"
+
 /*
  * On Darwin, there is a fourth argument passed to main whose first element contains the path where the executing
  * binary was found on disk.
@@ -47,10 +40,31 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
  * http://unixjunkie.blogspot.com/2006/02/char-apple-argument-vector.html
  * http://www.opensource.apple.com/darwinsource/10.5.4/dyld-96.2/src/dyldInitialization.cpp
  */
-int main(int argc, char *argv[], char *envp[], char *apple[]) {
+#define MAIN_EXTRA_ARGS , char *envp[], char *apple[]
+
+/*
+ * CoreFoundation will be (indirectly) loaded when libjava.jnilib is dynamically linked
+ * during VM startup. This occur's on the VM's "main" thread which is _not_ the thread returned
+ * by a call to 'pthread_main_np()'. As of the Snow Leopard, the '__CFInitialize' function
+ * called when CoreFoundation expects to be executing on pthread_main_np().
+ * As such, a constant of a CoreFoundation data type is declared here to ensure that it
+ * is loaded on the correct thread. This 'solution' was devised after reading the source code at:
+ *
+ *     http://www.opensource.apple.com/source/CF/CF-550/CFRuntime.c
+ */
+#include <CoreFoundation/CoreFoundation.h>
+const CFNullRef initializeCoreFoundationOnMainThread;
+
 #else
-int main(int argc, char *argv[]) {
+#define LIBRARY_NAME "libjvm.so"
+#define MAIN_EXTRA_ARGS
 #endif
+
+
+/**
+ * A simple launcher.
+ */
+int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
     char *programPath = argv[0];
 	char *p = programPath;
     int prefixLength = 0;
