@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import java.io.*;
+import java.util.*;
+
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiTargetMethod.*;
 import com.sun.c1x.ri.*;
@@ -34,6 +37,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -70,39 +74,10 @@ public class C1XTargetMethod extends TargetMethod {
             this.prototypingCiTargetMethod = ciTargetMethod;
         }
 
-        TargetBundleLayout bundleLayout = initCodeBuffer(ciTargetMethod);
-
+        initCodeBuffer(ciTargetMethod);
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
-
-        processRefPatches(ciTargetMethod, bundleLayout);
-        processDataPatches(ciTargetMethod, bundleLayout);
-    }
-
-    private void processRefPatches(CiTargetMethod ciTargetMethod, TargetBundleLayout bundleLayout) {
-        if (!ciTargetMethod.refPatchSites.isEmpty()) {
-            Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
-            Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
-            Offset diff = dataStart.minus(codeStart).asOffset();
-            int refPatchPos = 0;
-            for (CiTargetMethod.RefPatchSite refPatch : ciTargetMethod.refPatchSites) {
-                int refSize = Word.size(); // TODO: Use C1X target object
-                X86InstructionDecoder.patchRelativeInstruction(code(), refPatch.codePos, diff.plus(refPatchPos * refSize - refPatch.codePos).toInt());
-                refPatchPos++;
-            }
-        }
-    }
-
-    private void processDataPatches(CiTargetMethod ciTargetMethod, TargetBundleLayout bundleLayout) {
-        if (!ciTargetMethod.dataPatchSites.isEmpty()) {
-            Offset dataStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
-            Offset codeStart = bundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
-            Offset diff = dataStart.minus(codeStart).asOffset();
-            for (CiTargetMethod.DataPatchSite dataPatch : ciTargetMethod.dataPatchSites) {
-                X86InstructionDecoder.patchRelativeInstruction(code(), dataPatch.codePos, diff.plus(dataPatch.dataPos - dataPatch.codePos).toInt());
-            }
-        }
     }
 
     private int neededBytes(int value) {
@@ -150,17 +125,129 @@ public class C1XTargetMethod extends TargetMethod {
         return ByteArrayBitMap.isSet(referenceMap, byteIndex, frameReferenceMapBytes(), slotIndex);
     }
 
-    private TargetBundleLayout initCodeBuffer(CiTargetMethod ciTargetMethod) {
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(ciTargetMethod.dataSize, ciTargetMethod.refPatchSites.size(), ciTargetMethod.targetCodeSize);
-        Code.allocate(targetBundleLayout, this);
+    private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
 
-        Object[] referenceLiterals = new Object[ciTargetMethod.refPatchSites.size()];
-        for (int i = 0; i < referenceLiterals.length; i++) {
-            referenceLiterals[i] = ciTargetMethod.refPatchSites.get(i).referrent;
+        // Create the arrays for the scalar and the object reference literals
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        List<Object> objectReferences = new ArrayList<Object>();
+        int[] relativeDataPos = serializeLiterals(ciTargetMethod, output, objectReferences);
+        byte[] scalarLiterals = output.toByteArray();
+        Object[] referenceLiterals = objectReferences.toArray();
+
+        // Allocate and set the code and data buffer
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize);
+        Code.allocate(targetBundleLayout, this);
+        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode);
+
+        // Patch relative instructions in the code buffer
+        patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
+    }
+
+    private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
+        Endianness endianness = Platform.hostOrTarget().endianess();
+        int[] relativeDataPos = new int[ciTargetMethod.dataPatchSites.size()];
+        int z = 0;
+        int currentPos = 0;
+        for (DataPatchSite site : ciTargetMethod.dataPatchSites) {
+
+            final CiConstant data = site.data;
+            relativeDataPos[z] = currentPos;
+
+            try {
+
+                switch (data.basicType) {
+
+                    case Double:
+                        endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
+                        currentPos += Long.SIZE / Byte.SIZE;
+                        break;
+
+                    case Float:
+                        endianness.writeInt(output, Float.floatToIntBits(data.asFloat()));
+                        currentPos += Integer.SIZE / Byte.SIZE;
+                        break;
+
+                    case Int:
+                        endianness.writeInt(output, data.asInt());
+                        currentPos += Integer.SIZE / Byte.SIZE;
+                        break;
+
+                    case Long:
+                        endianness.writeLong(output, data.asLong());
+                        currentPos += Long.SIZE / Byte.SIZE;
+                        break;
+
+                    case Object:
+                        objectReferences.add(data.asObject());
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unknown constant type!");
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Align on word boundary
+            while (currentPos % Platform.hostOrTarget().wordWidth().numberOfBytes != 0) {
+                output.write(0);
+                currentPos++;
+            }
+
+            z++;
         }
 
-        this.setData(ciTargetMethod.data, referenceLiterals, ciTargetMethod.targetCode);
-        return targetBundleLayout;
+        return relativeDataPos;
+    }
+
+    private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
+
+        Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
+
+        Offset dataDiff = Offset.zero();
+        if (this.scalarLiterals != null) {
+            Offset dataStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.scalarLiterals);
+            dataDiff = dataStart.minus(codeStart).asOffset();
+        }
+
+        Offset referenceDiff = Offset.zero();
+        if (this.referenceLiterals() != null) {
+            Offset referenceStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.referenceLiterals);
+            referenceDiff = referenceStart.minus(codeStart).asOffset();
+        }
+
+
+        int objectReferenceIndex = 0;
+        int refSize = Platform.hostOrTarget().wordWidth().numberOfBytes;
+
+        int z = 0;
+        for (DataPatchSite site : ciTargetMethod.dataPatchSites) {
+
+            switch (site.data.basicType) {
+
+                case Double: // fall through
+                case Float: // fall through
+                case Int: // fall through
+                case Long:
+                    patchRelativeInstruction(site.codePos, dataDiff.plus(relativeDataPositions[z] - site.codePos).toInt());
+                    break;
+
+                case Object:
+                    patchRelativeInstruction(site.codePos, referenceDiff.plus(objectReferenceIndex * refSize - site.codePos).toInt());
+                    objectReferenceIndex++;
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown constant type!");
+            }
+
+            z++;
+        }
+    }
+
+    private void patchRelativeInstruction(int codePos, int displacement) {
+        X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
     }
 
     private void initFrameLayout(CiTargetMethod ciTargetMethod) {

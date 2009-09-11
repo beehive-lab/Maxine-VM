@@ -163,16 +163,4 @@ public class CiTarget {
     public boolean supportsCx8() {
         return true;
     }
-
-    public boolean isWin64() {
-        return false;
-    }
-
-    public boolean isWindows() {
-        return false;
-    }
-
-    public boolean isSolaris() {
-        return true;
-    }
 }

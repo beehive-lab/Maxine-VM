@@ -356,13 +356,6 @@ public class X86LIRAssembler extends LIRAssembler {
         masm().xchgptr(a, b);
     }
 
-    private void jobject2regWithPatching(CiRegister reg, CodeEmitInfo info) {
-        Object o = null;
-        PatchingStub patch = new PatchingStub(masm, PatchingStub.PatchID.LoadKlassId);
-        masm().movoop(reg, o);
-        patchingEpilog(patch, LIRPatchCode.PatchNormal, reg, info);
-    }
-
     @Override
     protected void const2reg(LIROperand src, LIROperand dest, LIRPatchCode patchCode, CodeEmitInfo info) {
         assert src.isConstant() : "should not call otherwise";
@@ -390,9 +383,9 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Object: {
                 if (patchCode != LIRPatchCode.PatchNone) {
-                    jobject2regWithPatching(dest.asRegister(), info);
+                    assert false : "should never need patching!";
                 } else {
-                    masm().movoop(dest.asRegister(), c.asObject());
+                    masm().movoop(dest.asRegister(), CiConstant.forObject(c.asObject()));
                 }
                 break;
             }
@@ -402,7 +395,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (c.asFloat() == 0.0f) {
                         masm().xorps(asXmmFloatReg(dest), asXmmFloatReg(dest));
                     } else {
-                        masm().movflt(asXmmFloatReg(dest), masm().floatConstant(c.asFloat()));
+                        masm().movflt(asXmmFloatReg(dest), masm().recordDataReferenceInCode(CiConstant.forFloat(c.asFloat())));
                     }
                 } else {
                     assert false : "no fpu stack";
@@ -415,7 +408,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (c.asDouble() == 0.0d) {
                         masm().xorpd(asXmmDoubleReg(dest), asXmmDoubleReg(dest));
                     } else {
-                        masm().movdbl(asXmmDoubleReg(dest), masm().doubleConstant(c.asDouble()));
+                        masm().movdbl(asXmmDoubleReg(dest), masm().recordDataReferenceInCode(CiConstant.forDouble(c.asDouble())));
                     }
                 } else {
                     assert false : "no fpu stack";
@@ -441,7 +434,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 break;
 
             case Object:
-                masm().movoop(frameMap().addressForSlot(dest.singleStackIx()), c.asObject());
+                masm().movoop(frameMap().addressForSlot(dest.singleStackIx()), CiConstant.forObject(c.asObject()));
                 break;
 
             case Long: // fall through
@@ -479,10 +472,10 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm().movptr(asAddress(addr), NULLWORD);
                 } else {
                     if (isLiteralAddress(addr)) {
-                        masm().movoop(asAddress(addr), c.asObject());
+                        masm().movoop(asAddress(addr), CiConstant.forObject(c.asObject()));
                         throw Util.shouldNotReachHere();
                     } else {
-                        masm().movoop(asAddress(addr), c.asObject());
+                        masm().movoop(asAddress(addr), CiConstant.forObject(c.asObject()));
                     }
                 }
                 break;
@@ -1451,7 +1444,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // assert data != null : "need data for checkcast";
                 // assert data.isBitData() : "need BitData for checkcast";
                 CiRegister mdo = klassRInfo;
-                masm().movoop(mdo, md);
+                masm().movoop(mdo, md.encoding());
                 Address dataAddr = new Address(mdo, md.headerOffset(bci));
                 int headerBits = compilation.runtime.methodDataNullSeenByteConstant(); // TODO: Check what this really
                 // means!
@@ -1901,7 +1894,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (right.isSingleStack()) {
                     raddr = frameMap().addressForSlot(right.singleStackIx());
                 } else if (right.isConstant()) {
-                    raddr = masm().floatConstant(((LIRConstant) right).asFloat());
+                    raddr = masm().recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) right).asFloat()));
                 } else {
                     throw Util.shouldNotReachHere();
                 }
@@ -1953,7 +1946,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     raddr = frameMap().addressForSlot(right.doubleStackIx());
                 } else if (right.isConstant()) {
                     // hack for now
-                    raddr = masm().doubleConstant(((LIRConstant) right).asDouble());
+                    raddr = masm().recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) right).asDouble()));
                 } else {
                     throw Util.shouldNotReachHere();
                 }
@@ -2031,7 +2024,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                         masm().movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                     }
-                    masm().andpd(asXmmDoubleReg(dest), masm().longConstant(DoubleSignMask));
+                    masm().andpd(asXmmDoubleReg(dest), masm().recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask)));
                     break;
 
                 case Sqrt:
@@ -2282,7 +2275,7 @@ public class X86LIRAssembler extends LIRAssembler {
                         masm().cmpptr(reg1, (int) NULLWORD);
                     } else {
                         if (compilation.target.arch.is64bit()) {
-                            masm().movoop(rscratch1, o);
+                            masm().movoop(rscratch1, CiConstant.forObject(o));
                             masm().cmpptr(reg1, rscratch1);
                         } else {
                             masm().cmpoop(reg1, c.asObject());
@@ -2342,7 +2335,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomiss(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
             } else if (opr2.isConstant()) {
                 // xmm register - constant
-                masm().ucomiss(reg1, masm().floatConstant(((LIRConstant) opr2).asFloat()));
+                masm().ucomiss(reg1, masm().recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) opr2).asFloat())));
             } else if (opr2.isAddress()) {
                 // xmm register - address
                 if (op != null && op.info != null) {
@@ -2364,7 +2357,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().ucomisd(reg1, frameMap().addressForSlot(opr2.doubleStackIx()));
             } else if (opr2.isConstant()) {
                 // xmm register - constant
-                masm().ucomisd(reg1, masm().doubleConstant(((LIRConstant) opr2).asDouble()));
+                masm().ucomisd(reg1, masm().recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) opr2).asDouble())));
             } else if (opr2.isAddress()) {
                 // xmm register - address
                 if (op != null && op.info != null) {
@@ -2380,7 +2373,7 @@ public class X86LIRAssembler extends LIRAssembler {
             if (compilation.target.arch.is64bit()) {
                 if (c.kind == CiKind.Object) {
                     assert condition == LIRCondition.Equal || condition == LIRCondition.NotEqual : "need to reverse";
-                    masm().movoop(rscratch1, c.asObject());
+                    masm().movoop(rscratch1, CiConstant.forObject(c.asObject()));
                 }
             }
             if (op != null && op.info != null) {
@@ -2842,7 +2835,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 // but not necessarily exactly of type defaultType.
                 Label knownOk = new Label();
                 Label halt = new Label();
-                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub).asObject());
+                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub));
                 if (basicType != CiKind.Object) {
                     masm().cmpptr(tmp, dstKlassAddr);
                     masm().jcc(X86Assembler.Condition.notEqual, halt);
@@ -2927,7 +2920,7 @@ public class X86LIRAssembler extends LIRAssembler {
         }
         assert op.mdo().isSingleCpu() : "mdo must be allocated";
         CiRegister mdo = op.mdo().asRegister();
-        masm().movoop(mdo, md.encoding().asObject());
+        masm().movoop(mdo, md.encoding());
         Address counterAddr = new Address(mdo, md.countOffset(bci));
         masm().addl(counterAddr, 1);
         // TODO: use the bytecode from the invoke instruction
@@ -2964,7 +2957,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     RiType receiver = md.receiver(bci, i);
                     if (receiver == null) {
                         Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub).asObject());
+                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub));
                         Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
                         masm().addl(dataAddr, 1);
                         return;

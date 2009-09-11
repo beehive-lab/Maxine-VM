@@ -265,13 +265,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
-        // copy the arrays into the target bundle
-        if (scalarLiterals != null) {
+        // Copy scalar literals
+        if (scalarLiterals != null && scalarLiterals.length > 0) {
             assert scalarLiterals.length != 0;
             System.arraycopy(scalarLiterals, 0, this.scalarLiterals, 0, this.scalarLiterals.length);
-        } else {
-            assert this.scalarLiterals == null;
         }
+
+        // Copy reference literals
         if (referenceLiterals != null && referenceLiterals.length > 0) {
             System.arraycopy(referenceLiterals, 0, this.referenceLiterals, 0, this.referenceLiterals.length);
         }

@@ -182,14 +182,6 @@ public final class Buffer {
         return position;
     }
 
-    public int emitFloat(float f) {
-        return emitInt(Float.floatToIntBits(f));
-    }
-
-    public int emitDouble(double d) {
-        return emitLong(Double.doubleToLongBits(d));
-    }
-
     public int getByte(int i) {
         return Bytes.beU1(data, i);
     }
