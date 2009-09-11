@@ -47,7 +47,7 @@ void report_mach_error(const char *file, int line, kern_return_t krn, const char
 
 #define wrapped_mach_call(name, argsFormat, arg1, ...) { \
 	static void* lastCall = 0; \
-    Boolean trace = log_TELE && (name != (void *) mach_vm_read_overwrite || lastCall != (void *) mach_vm_read_overwrite); \
+    boolean trace = log_TELE && (name != (void *) mach_vm_read_overwrite || lastCall != (void *) mach_vm_read_overwrite); \
     if (trace) { \
         log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), arg1, ##__VA_ARGS__); \
     } \

@@ -123,7 +123,7 @@ long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data) {
     long result;
     static int lastRequest = 0;
 
-    Boolean trace = log_TELE && (request != PT_READ_D || lastRequest != PT_READ_D);
+    boolean trace = log_TELE && (request != PT_READ_D || lastRequest != PT_READ_D);
 
     const char *requestName = NULL;
     char unknownRequestNameBuf[100];

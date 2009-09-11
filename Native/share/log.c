@@ -35,7 +35,7 @@
 static FILE *fileStream = NULL;
 #endif
 
-void log_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
+void log_assert(boolean condition, char *conditionString, char *fileName, int lineNumber) {
     if (!condition) {
         log_println("log_assert %s[%d]: %s", fileName, lineNumber, conditionString);
         exit(1);
