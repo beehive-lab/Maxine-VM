@@ -140,7 +140,7 @@ ifeq ($(OS),darwin)
         CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
     endif
     C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
-    LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
+    LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
     # The version linker flag below ensure are required by the modified version of
     # libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
     # by running $(PROJECT)/../bin/mod-macosx-javalib.sh. This library expects the jvm shared

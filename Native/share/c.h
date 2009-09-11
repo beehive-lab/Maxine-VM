@@ -55,9 +55,9 @@ typedef float               Float4;
 typedef double              Float8;
 
 #if !defined(false) && !defined(true)
-    typedef enum {false, true}  Boolean;
+    typedef enum {false, true}  boolean;
 #else
-    typedef int                 Boolean;
+    typedef int                 boolean;
 #endif
 
 #define MAX_PATH_LENGTH     2048
@@ -71,7 +71,7 @@ extern int _c_unimplemented(const char* function, const char* file, int line);
 #define c_ASSERT(condition) \
     do { _c_assert((condition), STRINGIZE(condition), __FILE__, __LINE__); } while (0)
 
-extern void _c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber);
+extern void _c_assert(boolean condition, char *conditionString, char *fileName, int lineNumber);
 
 #define c_FATAL() c_ASSERT(false)
 
