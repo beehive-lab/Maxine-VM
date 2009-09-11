@@ -197,15 +197,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         for (int i = 0; i < args.length(); i++) {
             LIROperand src = args.at(i);
             assert !src.isIllegal() : "check";
-            CiKind t = src.kind.stackType();
 
-            LIROperand dest = newRegister(t);
+            LIROperand dest = newRegister(src.kind);
             lir.move(src, dest);
 
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
             assert instr instanceof Local;
             Local local = ((Local) instr);
+            CiKind t = src.kind.stackType();
             assert t == local.type().basicType.stackType() : "check";
             if (local.isLive()) {
                 local.setOperand(dest);
@@ -579,7 +579,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitLocal(Local x) {
         if (x.operand().isIllegal()) {
             // allocate a virtual register for this local
-            x.setOperand(rlock(x));
+            x.setOperand(rlock(x.type()));
             instructionForOperand.put(x.operand().vregNumber(), x);
         }
     }
@@ -963,7 +963,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiKind dstType = x.basicType();
         LIROperand indexOp = idx.result();
 
-        LIROperand addr = null;
+        LIRAddress addr = null;
         if (indexOp.isConstant()) {
             assert log2scale == 0 : "must not have a scale";
             LIRConstant constantIndexOp = (LIRConstant) indexOp;
@@ -1196,19 +1196,15 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
 
-    protected LIRLocation rlock(Value instr) {
-        // Try to lock using register in hint
-        return newRegister(instr.type().basicType);
-    }
 
     protected LIROperand rlockResult(Instruction x) {
         // does an rlock and sets result
-        LIROperand reg = rlock(x);
+        LIROperand reg = newRegister(x.type());
         setResult(x, reg);
         return reg;
     }
 
-    private LIRLocation rlockResult(Instruction x, CiKind type) {
+    private LIRLocation rlock(CiKind type) {
         // does an rlock and sets result
         LIRLocation reg;
         switch (type) {
@@ -1220,10 +1216,16 @@ public abstract class LIRGenerator extends ValueVisitor {
                 reg = rlockByte(type);
                 break;
             default:
-                reg = rlock(x);
+                reg = newRegister(type);
                 break;
         }
 
+        return reg;
+
+    }
+
+    private LIRLocation rlockResult(Instruction x, CiKind type) {
+        LIRLocation reg = rlock(type);
         setResult(x, reg);
         return reg;
     }
@@ -1698,7 +1700,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     lir.move(arg, loc);
                 } else {
                     assert loc.isAddress();
-                    LIROperand addr = loc;
+                    LIRAddress addr = (LIRAddress) loc;
                     if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
                         lir.unalignedMove(arg, addr);
                     } else {
@@ -1841,7 +1843,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 param.loadItemForce(loc);
             } else {
                 assert loc.isAddress();
-                LIROperand addr = loc;
+                LIRAddress addr = (LIRAddress) loc;
                 param.loadForStore(addr.kind);
                 if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
                     lir.unalignedMove(param.result(), addr);
@@ -1992,7 +1994,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
-                x.setOperand(rlock(x));
+                x.setOperand(rlock(x.type()));
                 instructionForOperand.put(operand.vregNumber(), x);
             }
         }
@@ -2002,7 +2004,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private LIROperand operandForPhi(Phi phi) {
         if (phi.operand() == null || phi.operand().isIllegal()) {
             // allocate a virtual register for this phi
-            phi.setOperand(rlock(phi));
+            phi.setOperand(rlock(phi.type()));
             instructionForOperand.put(phi.operand().vregNumber(), phi);
         }
         return phi.operand();
