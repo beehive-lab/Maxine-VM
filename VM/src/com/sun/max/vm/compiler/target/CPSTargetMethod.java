@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
@@ -734,6 +735,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         if (compilerScheme instanceof BcCompiler) {
             ((BcCompiler) compilerScheme).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
+        } else if (compilerScheme instanceof JitCompiler) {
+            ((JitCompiler) compilerScheme).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
         }
     }
 

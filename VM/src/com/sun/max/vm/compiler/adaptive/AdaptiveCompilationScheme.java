@@ -303,7 +303,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
 
             // TODO (tw): Enable the JIT for these methods?
-            return prototypeCompiler;
+            return jitCompiler;
         }
 
         // templates should only be compiled at prototyping time
