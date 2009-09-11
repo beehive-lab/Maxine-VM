@@ -25,13 +25,12 @@ import java.security.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.object.TupleAccess;
 
 /*
  * Provides substitutions for native methods in {@link java.lang.Class java.lang.Class}.
@@ -54,10 +53,8 @@ final class JDK_java_lang_Class {
     private static void registerNatives() {
     }
 
-    @INLINE
-    private Class thisClass() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native Class thisClass();
 
     @INLINE
     private ClassActor thisClassActor() {

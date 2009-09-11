@@ -377,11 +377,11 @@ public abstract class ResolutionSnippet extends Snippet {
         private static void resolve(ResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool;
             final int index = guard.constantPoolIndex;
-            final VirtualMethodActor dynamicMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-            if (dynamicMethodActor.isInitializer()) {
+            final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+            if (virtualMethodActor.isInitializer()) {
                 throw new VerifyError("<init> must be invoked with invokespecial");
             }
-            guard.value = dynamicMethodActor;
+            guard.value = virtualMethodActor;
         }
 
         @SNIPPET

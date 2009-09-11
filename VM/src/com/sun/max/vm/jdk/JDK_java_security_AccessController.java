@@ -191,7 +191,8 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeLoophole.cast(TupleAccess.readObject(Thread.currentThread(), FieldActor.findInstance(Thread.class, "inheritedAccessControlContext").offset()));
+        return UnsafeLoophole.cast(TupleAccess.readObject(Thread.currentThread(), inheritedAccessControlContextOffset));
     }
 
+    private static final int inheritedAccessControlContextOffset = FieldActor.findInstance(Thread.class, "inheritedAccessControlContext").offset();
 }

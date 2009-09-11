@@ -22,11 +22,15 @@ package com.sun.max.vm.actor.holder;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -59,8 +63,8 @@ public final class DynamicHub extends Hub {
             iTableIndex++;
             if (classActor.isReferenceClassActor()) {
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
-                    final VirtualMethodActor dynamicMethodActor = methodLookup.get(interfaceMethodActor);
-                    iToV[iTableIndex - iTableStartIndex] = dynamicMethodActor.vTableIndex();
+                    final VirtualMethodActor virtualMethodActor = methodLookup.get(interfaceMethodActor);
+                    iToV[iTableIndex - iTableStartIndex] = virtualMethodActor.vTableIndex();
                     iTableIndex++;
                 }
             }
@@ -84,27 +88,54 @@ public final class DynamicHub extends Hub {
     }
 
     void initializeVTable(VirtualMethodActor[] allVirtualMethodActors) {
+        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
         for (int i = 0; i < allVirtualMethodActors.length; i++) {
-            final VirtualMethodActor dynamicMethodActor = allVirtualMethodActors[i];
+            final VirtualMethodActor virtualMethodActor = allVirtualMethodActors[i];
             final int vTableIndex = firstWordIndex() + i;
-            assert dynamicMethodActor.vTableIndex() == vTableIndex;
+            assert virtualMethodActor.vTableIndex() == vTableIndex;
             assert getWord(vTableIndex).isZero();
-            setWord(vTableIndex, VMConfiguration.hostOrTarget().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex));
+            Address vTableEntry;
+            if (compilerCreatesTargetMethods) {
+                vTableEntry = VMConfiguration.target().trampolineScheme().makeVirtualCallEntryPoint(vTableIndex);
+            } else {
+                vTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
+            }
+            setWord(vTableIndex, vTableEntry);
         }
     }
 
     void initializeITable(Iterable<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> methodLookup) {
+        boolean compilerCreatesTargetMethods = compilerCreatesTargetMethods();
         if (classActor.isReferenceClassActor()) {
             for (InterfaceActor interfaceActor : allInterfaceActors) {
                 final int interfaceIndex = getITableIndex(interfaceActor.id);
                 for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
+                    final VirtualMethodActor virtualMethodActor = methodLookup.get(interfaceMethodActor);
                     final int iTableIndex = interfaceIndex + interfaceMethodActor.iIndexInInterface();
                     final int iIndex = iTableIndex - iTableStartIndex;
                     assert getWord(iTableIndex).isZero();
-                    setWord(iTableIndex, VMConfiguration.hostOrTarget().trampolineScheme().makeInterfaceCallEntryPoint(iIndex));
+                    Address iTableEntry;
+                    if (compilerCreatesTargetMethods) {
+                        iTableEntry = VMConfiguration.target().trampolineScheme().makeInterfaceCallEntryPoint(iIndex);
+                    } else {
+                        iTableEntry = MethodID.fromMethodActor(virtualMethodActor).asAddress();
+                    }
+                    setWord(iTableIndex, iTableEntry);
                 }
             }
         }
+    }
+
+    /**
+     * Determines whether or not the currently configured compiler compiles all the way down to target methods.
+     *
+     * TODO: Remove this once the notion of a compiler not being able to compile to target methods is removed from
+     * {@link BootstrapCompilerScheme}. That is, once the {@link BootstrapCompilerScheme#compileIR(ClassMethodActor)}
+     * method no longer exists.
+     */
+    @FOLD
+    private static boolean compilerCreatesTargetMethods() {
+        return !MaxineVM.isPrototyping() || TargetMethod.class.isAssignableFrom(VMConfiguration.target().compilerScheme().irGenerator().irMethodType);
     }
 
     @Override

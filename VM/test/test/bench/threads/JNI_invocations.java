@@ -92,7 +92,7 @@ public class JNI_invocations {
         }
 
         if (gc == 1) {
-            new Thread(new GCInvokeThread(nrThreads, i)).start();
+            new Thread(new GCInvokeThread(nrThreads, i), "GCInvokeThread").start();
         }
 
         long start = 0;

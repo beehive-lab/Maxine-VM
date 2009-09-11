@@ -249,6 +249,7 @@ public final class VMConfiguration {
         targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
         compilerScheme = loadAndInstantiateScheme(compilerPackage, BootstrapCompilerScheme.class, this);
         trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
+
         if (jitPackage != null) {
             jitScheme = loadAndInstantiateScheme(jitPackage, RuntimeCompilerScheme.class, this);
         } else {

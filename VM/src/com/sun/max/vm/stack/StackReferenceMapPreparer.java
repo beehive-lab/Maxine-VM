@@ -24,6 +24,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -658,7 +659,7 @@ public final class StackReferenceMapPreparer {
      * references.
      *
      * @param caller the JIT compiled method that that made the call into the trampoline frame
-     * @param instructionPointer the address of the instruction in {@code caller} of the call into the trampoline frame
+     * @param instructionPointer the execution address in {@code caller}. This will be at the site of the call to the trampoline.
      * @param refmapFramePointer the address in the frame of {@code caller} to which the reference map for {@code caller} is relative
      * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
      */

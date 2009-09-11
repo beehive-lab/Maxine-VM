@@ -61,7 +61,6 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
     @PROTOTYPE_ONLY
     void compileSnippets();
 
-
     IrMethod compileIR(ClassMethodActor classMethodActor);
 
     /**
