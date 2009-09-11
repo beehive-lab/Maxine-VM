@@ -214,7 +214,7 @@ public final class VmThreadMap {
     }
 
     /**
-     * Waits for all non-daemon threads in the thread map to finish, except exclude
+     * Waits for all non-daemon threads in the thread map to finish, except current.
      */
     public void joinAllNonDaemons() {
         while (true) {
@@ -227,7 +227,7 @@ public final class VmThreadMap {
     }
 
     /**
-     * Finds a non-daemon thread except current
+     * Finds a non-daemon thread except current.
      * @return
      */
     private VmThread findNonDaemon() {
