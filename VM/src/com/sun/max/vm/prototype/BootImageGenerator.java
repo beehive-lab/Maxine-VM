@@ -42,6 +42,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
@@ -118,6 +119,9 @@ public final class BootImageGenerator {
 
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
+
+    public final Option<Boolean> prototypeJit = options.newBooleanOption("prototype-jit", false,
+        "Selects JIT as the default for building the boot image.");
 
     private final Option<String> vmArguments = options.newStringOption("vmargs", null,
             "A set of one or VM arguments. This is useful for exercising VM functionality or " +
@@ -218,6 +222,7 @@ public final class BootImageGenerator {
                 VMOption.setVMArguments(vmArguments.getValue().split("\\s+"));
             }
 
+
             BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
             BootImageGenerator.calleeJit = testCalleeJit.getValue();
             BootImageGenerator.callerJit = testCallerJit.getValue();
@@ -232,6 +237,10 @@ public final class BootImageGenerator {
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
+
+            if (prototypeJit.getValue()) {
+                VMConfiguration.target().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
+            }
 
             VMOptions.beforeExit();
 
