@@ -58,8 +58,7 @@ public class OopMap {
             int offset = location.stackOffset;
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;
-            assert !stackMap.get(stackMapIndex) : "bit already set";
-            stackMap.set(offset / target.arch.wordSize);
+            stackMap.set(stackMapIndex);
         } else {
             assert location.isSingleRegister() : "objects can only be in a single register";
             for (int i = 0; i < target.registerReferenceMapTemplate.length; i++) {

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jit.amd64;
 
-import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -42,11 +41,6 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     @Override
     public int topFrameInstructionAdjustment() {
         return -1;
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
     }
 
     @Override

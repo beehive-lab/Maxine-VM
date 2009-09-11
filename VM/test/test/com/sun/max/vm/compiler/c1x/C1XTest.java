@@ -60,6 +60,8 @@ public class C1XTest {
         "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
         "Print bailout exceptions.");
+    private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
+        "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
@@ -235,7 +237,9 @@ public class C1XTest {
         }
         if (printBailout && result.bailout() != null) {
             out.println("");
-            // out.println(method + " = " + result.statistics().byteCount + " bytes");
+            if (printBailoutSizeOption.getValue()) {
+                out.println(method + " = " + result.statistics().byteCount + " bytes");
+            }
             result.bailout().printStackTrace();
         }
 

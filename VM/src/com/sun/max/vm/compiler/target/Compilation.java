@@ -20,10 +20,9 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.util.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 import static com.sun.max.vm.VMOptions.verboseOption;
@@ -97,7 +96,7 @@ public class Compilation implements Future<TargetMethod> {
         if (!done) {
             synchronized (classMethodActor) {
                 if (compilingThread == Thread.currentThread()) {
-                    throw FatalError.unexpected("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive");
+                    throw new RuntimeException("Compilation of " + classMethodActor.format("%H.%n(%p)") + " is recursive, current compilation scheme: " + this.compilationScheme);
                 }
 
                 // the class method actor is used here as the condition variable
@@ -139,15 +138,17 @@ public class Compilation implements Future<TargetMethod> {
         observeBeforeCompilation(observers, compiler);
 
         Throwable error = null;
+        String methodString = "";
         try {
             // attempt the compilation
-            String methodString = logBeforeCompilation(compiler);
+            methodString = logBeforeCompilation(compiler);
             targetMethod = compiler.compile(classMethodActor);
+
             if (targetMethod == null) {
-                error = new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
-            } else {
-                logAfterCompilation(compiler, targetMethod, methodString);
+                throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
+
+            logAfterCompilation(compiler, targetMethod, methodString);
         } catch (Throwable t) {
             error = t;
         } finally {
@@ -172,12 +173,26 @@ public class Compilation implements Future<TargetMethod> {
 
             // notify any compilation observers
             observeAfterCompilation(observers, compiler, targetMethod);
-
-            if (error != null) {
-                throw Exceptions.cast(Error.class, error);
-            }
         }
+
+        if (error != null) {
+
+            logCompilationError(error, compiler, targetMethod, methodString);
+
+            throw new RuntimeException(error);
+        }
+
         return targetMethod;
+    }
+
+    private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+        if (verboseOption.verboseCompilation) {
+            Log.printVmThread(VmThread.current(), false);
+            Log.print(": " + compiler.name() + ": Compilation failed  " + methodString + " @ ");
+            Log.print(error.toString());
+            error.printStackTrace(Log.out);
+            Log.println();
+        }
     }
 
     private String logBeforeCompilation(RuntimeCompilerScheme compiler) {

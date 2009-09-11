@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jit.sparc;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -46,11 +45,6 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
-    public InstructionSet instructionSet() {
-        return SPARCTargetMethod.Static.instructionSet();
     }
 
     @Override

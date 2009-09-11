@@ -535,7 +535,7 @@ public abstract class LIRInstruction {
         return result;
     }
 
-    public List<ExceptionHandler> allXhandler() {
+    public List<ExceptionHandler> exceptionEdges() {
 
         List<ExceptionHandler> result = null;
 

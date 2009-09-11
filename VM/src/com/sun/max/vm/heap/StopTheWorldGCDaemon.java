@@ -303,7 +303,8 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     public static void checkInvariants() {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
-        if (targetMethod != null) {
+        if (targetMethod != null && targetMethod instanceof CPSTargetMethod) {
+            final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
             final Object[] directCallees = targetMethod.directCallees();
             for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
 
@@ -312,13 +313,13 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     final MethodActor currentCallee = (MethodActor) current;
                     if (currentCallee.name.string.equals("prepareCurrentStackReferenceMap")) {
                         final int stopPosition = targetMethod.stopPosition(stopIndex);
-                        final int nextCallPosition = targetMethod.findNextCall(stopPosition, false);
+                        final int nextCallPosition = cpsTargetMethod.findNextCall(stopPosition, false);
                         if (nextCallPosition >= 0) {
                             final int[] stopPositions = targetMethod.stopPositions();
                             for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
                                 if (stopPositions[nextCallStopIndex] == nextCallPosition) {
-                                    final ByteArrayBitMap nextCallRefmap = targetMethod.frameReferenceMapFor(nextCallStopIndex);
-                                    final ByteArrayBitMap firstCallRefmap = targetMethod.frameReferenceMapFor(stopIndex);
+                                    final ByteArrayBitMap nextCallRefmap = cpsTargetMethod.frameReferenceMapFor(nextCallStopIndex);
+                                    final ByteArrayBitMap firstCallRefmap = cpsTargetMethod.frameReferenceMapFor(stopIndex);
                                     if (nextCallRefmap.equals(firstCallRefmap)) {
                                         // OK
                                         return;
@@ -332,7 +333,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             }
             throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to VmThreadLocal.prepareCurrentStackReferenceMap()");
         }
-        ProgramWarning.message("Could not find target method for " + classMethodActor);
+        ProgramWarning.message("Could not find CPS target method for " + classMethodActor);
     }
 
     private final GCRequest gcRequest = new GCRequest();

@@ -47,7 +47,7 @@ public class LIROperandFactory {
     }
 
     public static LIRLocation virtualRegister(int index, CiKind type) {
-        assert index >= LIRLocation.virtualRegisterBase() : "must start at vregBase";
+        assert index >= CiRegister.FirstVirtualRegisterNumber : "must start at vregBase";
         return new LIRLocation(type, index);
     }
 

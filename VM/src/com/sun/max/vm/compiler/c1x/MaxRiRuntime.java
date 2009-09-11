@@ -474,7 +474,7 @@ public class MaxRiRuntime implements RiRuntime {
     int memberIndex;
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
-        return new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod).finish();
+        return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);
     }
 
     public RiType primitiveArrayType(CiKind elemType) {
