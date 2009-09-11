@@ -81,7 +81,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
 }
 
-static Boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
+static boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
     READ_PROCESS_MEMORY(tl, tlCopy, threadLocalsSize());

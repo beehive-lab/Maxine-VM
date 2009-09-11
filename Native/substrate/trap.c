@@ -28,7 +28,7 @@
 #   include <signal.h>
 #   include <stdlib.h>
 #   include <string.h>
-#   include <ucontext.h>
+#   include <sys/ucontext.h>
 #   include <unistd.h>
 #endif
 
@@ -80,7 +80,7 @@ int getTrapNumber(int signal) {
 }
 
 static Address _javaTrapStub;
-static Boolean traceTraps = false;
+static boolean traceTraps = false;
 
 #if os_GUESTVMXEN
 #define SignalHandlerFunction fault_handler_t
