@@ -21,6 +21,7 @@
 package test.com.sun.max.vm;
 
 import com.sun.max.io.Files;
+import com.sun.max.lang.*;
 
 import java.io.*;
 
@@ -35,13 +36,15 @@ public class ExternalCommand {
     public final File stdinFile;
     public final File stdoutFile;
     public final File stderrFile;
+    public final File commandFile;
     public final String[] command;
     public final String[] env;
 
-    public ExternalCommand(File workingDir, File stdin, File stdout, File stderr, String[] command, String[] env) {
+    public ExternalCommand(File workingDir, File stdin, File stdout, File stderr, File commandFile, String[] command, String[] env) {
         this.stdinFile = stdin;
         this.stdoutFile = stdout;
         this.stderrFile = stderr;
+        this.commandFile = commandFile;
         this.workingDir = workingDir;
         this.command = command;
         this.env = env;
@@ -66,6 +69,16 @@ public class ExternalCommand {
             }
 
             final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
+
+            if (commandFile != null) {
+                final PrintStream ps = new PrintStream(new FileOutputStream(commandFile));
+                ps.println(Arrays.toString(cmdarray, " "));
+                for (int i = 0; i < cmdarray.length; ++i) {
+                    ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
+                }
+                ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
+                ps.close();
+            }
 
             start = System.currentTimeMillis();
             final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
