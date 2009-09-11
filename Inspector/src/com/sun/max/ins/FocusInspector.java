@@ -51,13 +51,17 @@ public final class FocusInspector extends Inspector {
         return focusInspector;
     }
 
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final FocusTable.FocusViewPreferences viewPreferences;
+
     private FocusTable table;
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "focusInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "focusInspectorGeometry");
 
     private FocusInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
+        viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
         createFrame(null);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -79,7 +83,7 @@ public final class FocusInspector extends Inspector {
 
     @Override
     protected void createView() {
-        table = new FocusTable(inspection());
+        table = new FocusTable(inspection(), viewPreferences);
         refreshView(true);
         JTableColumnResizer.adjustColumnPreferredWidths(table);
         final JPanel panel = new JPanel(new BorderLayout());

@@ -137,7 +137,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -165,7 +164,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -197,7 +195,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -239,7 +236,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -288,7 +284,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -331,7 +326,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -373,9 +367,8 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().defaultTextFont());
+            setFont(style().defaultFont());
             setForeground(style().defaultTextColor());
-            setBackground(style().defaultTextBackgroundColor());
             updateText();
         }
 

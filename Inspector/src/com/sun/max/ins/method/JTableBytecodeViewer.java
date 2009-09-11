@@ -33,6 +33,7 @@ import javax.swing.table.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
@@ -55,19 +56,30 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final Inspection inspection;
     private final BytecodeTable table;
-    private final BytecodeTableModel model;
-    private final BytecodeTableColumnModel columnModel;
-    private final TableColumn[] columns;
-    private PoolConstantLabel.Mode operandDisplayMode;
+    private final BytecodeTableModel tableModel;
+    private final BytecodeTableColumnModel tableColumnModel;
+    private final BytecodeViewPreferences instanceViewPreferences;
 
     public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
         super(inspection, parent, teleClassMethodActor, teleTargetMethod);
         this.inspection = inspection;
-        model = new BytecodeTableModel(bytecodeInstructions());
-        columns = new TableColumn[BytecodeColumnKind.VALUES.length()];
-        columnModel = new BytecodeTableColumnModel();
-        table = new BytecodeTable(inspection, model, columnModel);
-        operandDisplayMode = BytecodeViewerPreferences.globalPreferences(inspection()).operandDisplayMode();
+        tableModel = new BytecodeTableModel(bytecodeInstructions());
+        instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
+            @Override
+            public void setIsVisible(BytecodeColumnKind columnKind, boolean visible) {
+                super.setIsVisible(columnKind, visible);
+                tableColumnModel.setColumnVisible(columnKind.ordinal(), visible);
+                JTableColumnResizer.adjustColumnPreferredWidths(table);
+                refresh(true);
+            }
+            @Override
+            public void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
+                super.setOperandDisplayMode(mode);
+                tableModel.fireTableDataChanged();
+            }
+        };
+        tableColumnModel = new BytecodeTableColumnModel(instanceViewPreferences);
+        table = new BytecodeTable(inspection, tableModel, tableColumnModel);
         createView();
     }
 
@@ -137,8 +149,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
-                final BytecodeViewerPreferences globalPreferences = BytecodeViewerPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", columnModel.preferences(), globalPreferences);
+                final BytecodeViewPreferences globalPreferences = BytecodeViewPreferences.globalPreferences(inspection());
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", instanceViewPreferences, globalPreferences);
             }
         });
         viewOptionsButton.setToolTipText("Bytecode view options");
@@ -168,7 +180,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        final int position = model.rowToInstruction(row).position();
+        final int position = tableModel.rowToInstruction(row).position();
         inspection.focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
     }
 
@@ -185,7 +197,107 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         return table.updateCodeFocus(teleCodeLocation);
     }
 
-    private final class BytecodeTableModel extends AbstractTableModel {
+    @Override
+    public void refresh(boolean force) {
+        super.refresh(force);
+        table.refresh(force);
+//      updateSize();
+    }
+
+    @Override
+    public void redisplay() {
+        super.redisplay();
+        table.redisplay();
+        // TODO (mlvdv)  code view hack for style changes
+        table.setRowHeight(style().codeTableRowHeight());
+        invalidate();
+        repaint();
+    }
+
+    // TODO (mlvdv) Extract the table class
+    private final class BytecodeTable extends InspectorTable {
+
+        BytecodeTable(Inspection inspection, InspectorTableModel tableModel, InspectorTableColumnModel tableColumnModel) {
+            super(inspection, tableModel, tableColumnModel);
+            setFillsViewportHeight(true);
+            setShowHorizontalLines(style().codeTableShowHorizontalLines());
+            setShowVerticalLines(style().codeTableShowVerticalLines());
+            setIntercellSpacing(style().codeTableIntercellSpacing());
+            setRowHeight(style().codeTableRowHeight());
+            setRowSelectionAllowed(true);
+            setColumnSelectionAllowed(true);
+            setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        }
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            // The selection in the table has changed; might have happened via user action (click, arrow) or
+            // as a side effect of a focus change.
+            super.valueChanged(e);
+            if (!e.getValueIsAdjusting()) {
+                final int selectedRow = getSelectedRow();
+                final BytecodeTableModel bytecodeTableModel = (BytecodeTableModel) getModel();
+                if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
+                    final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
+                    final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
+                    final int position = bytecodeInstruction.position();
+                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
+                }
+            }
+        }
+
+        public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
+            final int oldSelectedRow = getSelectedRow();
+            final BytecodeTableModel model = (BytecodeTableModel) getModel();
+            if (teleCodeLocation.hasBytecodeLocation()) {
+                final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
+                if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
+                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition());
+                    if (row >= 0) {
+                        if (row != oldSelectedRow) {
+                            changeSelection(row, row, false, false);
+                        }
+                        scrollToRows(row, row);
+                        return true;
+                    }
+                }
+            } else if (teleCodeLocation.hasTargetCodeLocation()) {
+                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddress())) {
+                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddress());
+                    if (row >= 0) {
+                        if (row != oldSelectedRow) {
+                            changeSelection(row, row, false, false);
+                        }
+                        scrollToRows(row, row);
+                        return true;
+                    }
+                }
+            }
+            // View doesn't contain the focus; clear any old selection
+            if (oldSelectedRow >= 0) {
+                clearSelection();
+            }
+            return false;
+        }
+    }
+
+
+    private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
+
+        BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
+            super(BytecodeColumnKind.VALUES.length(), instanceViewPreferences);
+            addColumn(BytecodeColumnKind.TAG, new TagRenderer(), null);
+            addColumn(BytecodeColumnKind.NUMBER, new NumberRenderer(), null);
+            addColumn(BytecodeColumnKind.POSITION, new PositionRenderer(), null);
+            addColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer(), null);
+            addColumn(BytecodeColumnKind.OPERAND1, new OperandRenderer(), null);
+            addColumn(BytecodeColumnKind.OPERAND2, new OperandRenderer(), null);
+            addColumn(BytecodeColumnKind.SOURCE_LINE, new SourceLineRenderer(), null);
+            addColumn(BytecodeColumnKind.BYTES, new BytesRenderer(), null);
+        }
+    }
+
+    private final class BytecodeTableModel extends InspectorTableModel {
 
         private AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions;
 
@@ -284,154 +396,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     }
 
-    private final class BytecodeTable extends InspectorTable {
-
-        BytecodeTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
-            super(inspection, model, tableColumnModel);
-            setFillsViewportHeight(true);
-            setShowHorizontalLines(style().codeTableShowHorizontalLines());
-            setShowVerticalLines(style().codeTableShowVerticalLines());
-            setIntercellSpacing(style().codeTableIntercellSpacing());
-            setRowHeight(style().codeTableRowHeight());
-            setRowSelectionAllowed(true);
-            setColumnSelectionAllowed(true);
-            setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        }
-
-        @Override
-        public void paintChildren(Graphics g) {
-            // Draw a box around the selected row in the table
-            super.paintChildren(g);
-            final int row = getSelectedRow();
-            if (row >= 0) {
-                g.setColor(style().debugSelectedCodeBorderColor());
-                g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
-            }
-        }
-
-        @Override
-        protected JTableHeader createDefaultTableHeader() {
-            return new JTableHeader(getColumnModel()) {
-                @Override
-                public String getToolTipText(MouseEvent mouseEvent) {
-                    final Point p = mouseEvent.getPoint();
-                    final int index = getColumnModel().getColumnIndexAtX(p.x);
-                    final int modelIndex = getColumnModel().getColumn(index).getModelIndex();
-                    return BytecodeColumnKind.VALUES.get(modelIndex).toolTipText();
-                }
-            };
-        }
-
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-            // The selection in the table has changed; might have happened via user action (click, arrow) or
-            // as a side effect of a focus change.
-            super.valueChanged(e);
-            if (!e.getValueIsAdjusting()) {
-                final int selectedRow = getSelectedRow();
-                final BytecodeTableModel bytecodeTableModel = (BytecodeTableModel) getModel();
-                if (selectedRow >= 0 && selectedRow < bytecodeTableModel.getRowCount()) {
-                    final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
-                    final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
-                    final int position = bytecodeInstruction.position();
-                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
-                }
-            }
-        }
-
-        public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-            final int oldSelectedRow = getSelectedRow();
-            final BytecodeTableModel model = (BytecodeTableModel) getModel();
-            if (teleCodeLocation.hasBytecodeLocation()) {
-                final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
-                if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition());
-                    if (row >= 0) {
-                        if (row != oldSelectedRow) {
-                            changeSelection(row, row, false, false);
-                        }
-                        scrollToRows(row, row);
-                        return true;
-                    }
-                }
-            } else if (teleCodeLocation.hasTargetCodeLocation()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddress())) {
-                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddress());
-                    if (row >= 0) {
-                        if (row != oldSelectedRow) {
-                            changeSelection(row, row, false, false);
-                        }
-                        scrollToRows(row, row);
-                        return true;
-                    }
-                }
-            }
-            // View doesn't contain the focus; clear any old selection
-            if (oldSelectedRow >= 0) {
-                clearSelection();
-            }
-            return false;
-        }
-
-        public void redisplay() {
-            // not used pending further refactoring
-        }
-
-        public void refresh(boolean force) {
-            // not used pending further refactoring
-        }
-    }
-
-    private final class BytecodeTableColumnModel extends DefaultTableColumnModel {
-
-        private final BytecodeViewerPreferences preferences;
-
-        BytecodeTableColumnModel() {
-            preferences = new BytecodeViewerPreferences(BytecodeViewerPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(BytecodeColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(columns[col]);
-                    } else {
-                        removeColumn(columns[col]);
-                    }
-                    JTableColumnResizer.adjustColumnPreferredWidths(table);
-                    refresh(true);
-                }
-                @Override
-                public void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
-                    super.setOperandDisplayMode(mode);
-                    operandDisplayMode = mode;
-                    model.fireTableDataChanged();
-                }
-            };
-            createColumn(BytecodeColumnKind.TAG, new TagRenderer());
-            createColumn(BytecodeColumnKind.NUMBER, new NumberRenderer());
-            createColumn(BytecodeColumnKind.POSITION, new PositionRenderer());
-            createColumn(BytecodeColumnKind.INSTRUCTION, new InstructionRenderer());
-            createColumn(BytecodeColumnKind.OPERAND1, new OperandRenderer());
-            createColumn(BytecodeColumnKind.OPERAND2, new OperandRenderer());
-            createColumn(BytecodeColumnKind.SOURCE_LINE, new SourceLineRenderer());
-            createColumn(BytecodeColumnKind.BYTES, new BytesRenderer());
-        }
-
-        private void createColumn(BytecodeColumnKind columnKind, TableCellRenderer renderer) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (preferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
-            columns[col].setIdentifier(columnKind);
-        }
-
-        public BytecodeViewerPreferences preferences() {
-            return preferences;
-        }
-    }
 
     /**
      * @return a special color use for all text labels on the row, when either at an IP or Call Return; null otherwise.
@@ -463,13 +427,25 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 }
             }
         }
-        return style().bytecodeBackgroundColor();
+        return table.getBackground();
+    }
+
+    /**
+     * Sets the background of a cell rendering component, depending on the row context.
+     * <br>
+     * Makes the renderer transparent if there is no special background needed.
+     */
+    private void setBackgroundForRow(JComponent component, int row) {
+        if (isSearchMatchRow(row)) {
+            component.setOpaque(true);
+            component.setBackground(style().searchMatchedBackground());
+        } else {
+            component.setOpaque(false);
+        }
     }
 
     private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            setOpaque(true);
-            setBackground(getRowBackgroundColor(row));
             final StringBuilder toolTipText = new StringBuilder(100);
             final StackFrameInfo stackFrameInfo = stackFrameInfo(row);
             if (stackFrameInfo != null) {
@@ -518,6 +494,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 setBorder(style().debugDefaultTagBorder());
             }
             setToolTipText(toolTipText.toString());
+            setBackgroundForRow(this, row);
             return this;
         }
 
@@ -541,7 +518,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(row);
             setToolTipText("Instruction no. " + row + "in method");
-            setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -563,7 +540,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 // TODO (mlvdv)  does this help make things more compact?
                 setColumns(getText().length() + 1);
             }
-            setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -578,7 +555,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Bytecode opcode = (Bytecode) value;
             setValue(opcode);
-            setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             return this;
         }
@@ -590,19 +567,19 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object tableValue, boolean isSelected, boolean hasFocus, int row, int col) {
-            Component renderer = null;
-            if (tableValue instanceof Component) {
+            JComponent renderer = null;
+            if (tableValue instanceof JComponent) {
                 // BytecodePrinter returns a label component for simple values
-                renderer = (Component) tableValue;
+                renderer = (JComponent) tableValue;
             } else if (tableValue instanceof Integer) {
                 // BytecodePrinter returns index of a constant pool entry, when that's the operand
                 final int index = ((Integer) tableValue).intValue();
-                renderer =  PoolConstantLabel.make(inspection(), index, localConstantPool(), teleConstantPool(), operandDisplayMode);
+                renderer =  PoolConstantLabel.make(inspection(), index, localConstantPool(), teleConstantPool(), instanceViewPreferences.operandDisplayMode());
                 setFont(style().bytecodeOperandFont());
             } else {
                 ProgramError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }
-            renderer.setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(renderer, row);
             final Color specialForegroundColor = getSpecialRowTextColor(row);
             if (specialForegroundColor != null) {
                 renderer.setForeground(specialForegroundColor);
@@ -643,7 +620,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 setText("");
                 setToolTipText("Source line not available");
             }
-            setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(this, row);
             lastBytecodeLocation = bytecodeLocation;
             return this;
         }
@@ -655,31 +632,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setBackground(getRowBackgroundColor(row));
+            setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             setValue((byte[]) value);
             return this;
         }
-    }
-
-    @Override
-    protected void updateView(boolean force) {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.refresh(force);
-        }
-    }
-
-    @Override
-    public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        // TODO (mlvdv)  code view hack for style changes
-        table.setRowHeight(style().codeTableRowHeight());
-        invalidate();
-        repaint();
     }
 
     @Override

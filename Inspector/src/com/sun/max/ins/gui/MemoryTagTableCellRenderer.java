@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
-
 import javax.swing.*;
 import javax.swing.table.*;
 
@@ -45,6 +43,7 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
 
     public MemoryTagTableCellRenderer(Inspection inspection) {
         this.inspection = inspection;
+        setOpaque(true);
     }
 
     /**
@@ -59,11 +58,11 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
      * @param watchpoints the watchpoints at this location, null if none.
      * @return a component for displaying the cell
      */
-    public Component getRenderer(MemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
+    public JLabel getRenderer(MemoryRegion memoryRegion, MaxThread thread, Sequence<MaxWatchpoint> watchpoints) {
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";
-        setFont(inspection.style().defaultTextFont());
+        setFont(inspection.style().defaultFont());
         // See if any registers point here
         if (thread != null) {
             final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();

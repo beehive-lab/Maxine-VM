@@ -59,6 +59,13 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     }
 
     @Override
+    public JMenu add(JMenu menu) {
+        menu.setOpaque(false);
+        super.add(menu);
+        return menu;
+    }
+
+    @Override
     public void redisplay() {
     }
 

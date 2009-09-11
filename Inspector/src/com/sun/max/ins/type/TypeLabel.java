@@ -114,7 +114,6 @@ public class TypeLabel extends InspectorLabel {
 
     public void redisplay() {
         setFont(style().javaClassNameFont());
-        setBackground(style().javaNameBackgroundColor());
         updateText();
     }
 

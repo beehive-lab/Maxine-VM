@@ -21,7 +21,6 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -44,79 +43,24 @@ public final class RegistersTable extends InspectorTable {
 
     private static final Color[] ageColors = {Color.RED, Color.MAGENTA, Color.BLUE};
 
-    private final RegistersTableModel model;
+    private final RegistersTableModel tableModel;
     private RegistersColumnModel columnModel;
-    private final TableColumn[] columns;
-
-    private MaxVMState lastRefreshedState = null;
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        model = new RegistersTableModel(thread);
-        columns = new TableColumn[RegistersColumnKind.VALUES.length()];
+        tableModel = new RegistersTableModel(thread);
         columnModel = new RegistersColumnModel(viewPreferences);
-        configureMemoryTable(model, columnModel);
+        configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }
 
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            // Read from VM, increment history generation count.
-            model.refresh();
-            // Refresh the display, might be caused by explicit user request
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return RegistersColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-    }
-
-    private final class RegistersColumnModel extends DefaultTableColumnModel {
-
-        private final RegistersViewPreferences viewPreferences;
+    private final class RegistersColumnModel extends InspectorTableColumnModel<RegistersColumnKind> {
 
         private RegistersColumnModel(RegistersViewPreferences viewPreferences) {
-            this.viewPreferences = viewPreferences;
-            createColumn(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
-            createColumn(RegistersColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
-            createColumn(RegistersColumnKind.REGION, new RegionCellRenderer(), null);
-        }
-
-        private void createColumn(RegistersColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, editor);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (viewPreferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
-            columns[col].setIdentifier(columnKind);
+            super(RegistersColumnKind.VALUES.length(), viewPreferences);
+            addColumn(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumn(RegistersColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
+            addColumn(RegistersColumnKind.REGION, new RegionCellRenderer(), null);
         }
     }
 
@@ -127,7 +71,7 @@ public final class RegistersTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class RegistersTableModel extends AbstractTableModel {
+    private final class RegistersTableModel extends InspectorTableModel {
 
         private final MaxThread thread;
 
@@ -165,16 +109,6 @@ public final class RegistersTable extends InspectorTable {
             }
         }
 
-        /**
-         * Reads from VM and increments the history generation.
-         */
-        void refresh() {
-            for (RegisterInfo registerInfo : registerInfos) {
-                registerInfo.refresh();
-            }
-            fireTableDataChanged();
-        }
-
         public int getColumnCount() {
             return RegistersColumnKind.VALUES.length();
         }
@@ -190,6 +124,15 @@ public final class RegistersTable extends InspectorTable {
         @Override
         public Class< ? > getColumnClass(int col) {
             return RegisterInfo.class;
+        }
+
+        @Override
+        public void refresh() {
+            // Reads from VM and increments the history generation.
+            for (RegisterInfo registerInfo : registerInfos) {
+                registerInfo.refresh();
+            }
+            super.refresh();
         }
 
         /**
@@ -217,6 +160,7 @@ public final class RegistersTable extends InspectorTable {
             } else {
                 setForeground(ageColors[age]);
             }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -226,10 +170,10 @@ public final class RegistersTable extends InspectorTable {
         private final WordValueLabel[] labels;
 
         ValueCellRenderer(Inspection inspection) {
-            labels = new WordValueLabel[model.getRowCount()];
-            for (int row = 0; row < model.getRowCount(); row++) {
-                final RegisterInfo registerInfo = (RegisterInfo) model.getValueAt(row, 0);
-                labels[row] = new WordValueLabel(inspection, model.getValueMode(row), RegistersTable.this) {
+            labels = new WordValueLabel[tableModel.getRowCount()];
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                final RegisterInfo registerInfo = (RegisterInfo) tableModel.getValueAt(row, 0);
+                labels[row] = new WordValueLabel(inspection, tableModel.getValueMode(row), RegistersTable.this) {
 
                     @Override
                     protected Value fetchValue() {
@@ -240,7 +184,9 @@ public final class RegistersTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return labels[row];
+            final WordValueLabel label = labels[row];
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
         public void redisplay() {
@@ -262,7 +208,7 @@ public final class RegistersTable extends InspectorTable {
 
     private final class RegionCellRenderer implements TableCellRenderer, Prober {
 
-        private MemoryRegionValueLabel[] labels = new MemoryRegionValueLabel[model.getRowCount()];
+        private MemoryRegionValueLabel[] labels = new MemoryRegionValueLabel[tableModel.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -288,6 +234,7 @@ public final class RegistersTable extends InspectorTable {
                 labels[row] = label;
             }
             label.setValue(registerInfo.value());
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
     }

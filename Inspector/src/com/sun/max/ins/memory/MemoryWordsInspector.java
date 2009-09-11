@@ -107,6 +107,10 @@ public final class MemoryWordsInspector extends Inspector {
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String MEMORY_WORDS_COLUMN_PREFERENCE = "memoryWordsViewColumn";
+
+
     public static JPanel globalPreferencesPanel(Inspection inspection) {
         return globalPreferences(inspection).getPanel();
     }
@@ -119,7 +123,7 @@ public final class MemoryWordsInspector extends Inspector {
          * Creates global preferences for this inspector.
          */
         private MemoryWordsViewPreferences(Inspection inspection) {
-            super(inspection, "memoryWordsViewPrefs", MemoryWordsColumnKind.class, MemoryWordsColumnKind.VALUES);
+            super(inspection, MEMORY_WORDS_COLUMN_PREFERENCE, MemoryWordsColumnKind.VALUES);
             this.memoryWordsInspector = null;
         }
 
@@ -130,22 +134,7 @@ public final class MemoryWordsInspector extends Inspector {
         public MemoryWordsViewPreferences(MemoryWordsViewPreferences globalPreferences, MemoryWordsInspector memoryWordsInspector) {
             super(globalPreferences);
             this.memoryWordsInspector = memoryWordsInspector;
-        }
-
-
-        @Override
-        protected boolean canBeMadeInvisible(MemoryWordsColumnKind columnType) {
-            return columnType.canBeMadeInvisible();
-        }
-
-        @Override
-        protected boolean defaultVisibility(MemoryWordsColumnKind columnType) {
-            return columnType.defaultVisibility();
-        }
-
-        @Override
-        protected String label(MemoryWordsColumnKind columnType) {
-            return columnType.label();
+            // There are no view preferences beyond the column choices, so no additional machinery needed here.
         }
 
         @Override
@@ -368,36 +357,9 @@ public final class MemoryWordsInspector extends Inspector {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 
         toolBar = new InspectorToolBar(inspection());
+        toolBar.setBorder(style().defaultPaneBorder());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
-
-//        final JLabel inspectLabel = new JLabel("Inspect");
-//        inspectLabel.addMouseListener(new MouseListener() {
-//
-//            public void mouseClicked(MouseEvent e) {
-//            }
-//            public void mouseEntered(MouseEvent e) {
-//            }
-//            public void mouseExited(MouseEvent e) {
-//            }
-//
-//            public void mousePressed(MouseEvent mouseEvent) {
-//                if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-//                    inspectLabel.getComponentPopupMenu().show(inspectLabel, mouseEvent.getX(), mouseEvent.getY());
-//                }
-//            }
-//
-//            public void mouseReleased(MouseEvent e) {
-//            }
-//        });
-//        final JPopupMenu popupMenu = new JPopupMenu("testPopup");
-//        popupMenu.add(actions().about());
-//        final InspectorMenu inspectMenu = new InspectorMenu();
-//        inspectMenu.add(frameMenuItems);
-//        inspectLabel.setComponentPopupMenu(frame().menu().popupMenu());
-//        toolBar.add(inspectLabel);
-//        toolBar.add(new JLabel("  "));
-
         toolBar.add(new JLabel("Origin:"));
         toolBar.add(originField);
         toolBar.add(new JLabel("Words:"));

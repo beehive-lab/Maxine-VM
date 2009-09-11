@@ -54,7 +54,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
 
     private class SearchTextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
-            // This should never be called        _infoPanel.setBackground(style().defaultBackgroundColor());
+            // This should never be called
             ProgramError.unexpected();
         }
 
@@ -78,6 +78,7 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         super(inspection);
         this.owner = parent;
         searcher = rowTextSearcher;
+        setBorder(style().defaultPaneBorder());
         setFloatable(false);
         setRollover(true);
         add(new TextLabel(inspection, "Search: "));

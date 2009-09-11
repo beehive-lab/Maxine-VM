@@ -56,4 +56,9 @@ public class InspectorPopupMenu extends JPopupMenu {
         }
     }
 
+    public void add(InspectorPopupMenuItems menuItems) {
+        for (Object item : menuItems) {
+            this.add(item);
+        }
+    }
 }

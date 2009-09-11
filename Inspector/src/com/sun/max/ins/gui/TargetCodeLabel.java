@@ -33,6 +33,7 @@ public class TargetCodeLabel extends InspectorLabel {
 
     public TargetCodeLabel(Inspection inspection, String text) {
         super(inspection, text);
+        setOpaque(true);
         redisplay();
     }
 
@@ -46,9 +47,7 @@ public class TargetCodeLabel extends InspectorLabel {
     }
 
     public final void redisplay() {
-        setFont(style().defaultTextFont());
-        setForeground(style().targetCodeColor());
-        setBackground(style().targetCodeBackgroundColor());
+        setFont(style().defaultFont());
     }
 
 }

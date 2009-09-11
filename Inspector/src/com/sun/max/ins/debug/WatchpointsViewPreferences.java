@@ -36,7 +36,7 @@ import com.sun.max.program.option.*;
  *
  * @author Michael Van De Vanter
   */
-public final class WatchpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<WatchpointsColumnKind> {
+public final class WatchpointsViewPreferences extends TableColumnVisibilityPreferences<WatchpointsColumnKind> {
 
     private static WatchpointsViewPreferences globalPreferences;
 
@@ -50,7 +50,13 @@ public final class WatchpointsViewPreferences extends com.sun.max.ins.gui.TableC
         return globalPreferences;
     }
 
-    private static final String WATCHPOINT_SETTINGS_PREFERENCE = "watchpointSettings";
+    // Prefix for all persistent column preferences in view
+    private static final String WATCHPOINT_COLUMN_PREFERENCE = "watchpointsViewColumn";
+
+    // Prefix for all other preferences in view
+    private static final String WATCHPOINT_INSPECTOR_PREFERENCE = "watchpointInspectorPrefs";
+
+    // Names of other preferences in view
     private static final String WATCHPOINT_READ_PREFERENCE = "read";
     private static final String WATCHPOINT_WRITE_PREFERENCE = "write";
     private static final String WATCHPOINT_EXEC_PREFERENCE = "exec";
@@ -73,9 +79,9 @@ public final class WatchpointsViewPreferences extends com.sun.max.ins.gui.TableC
     * persistent global choices are identical.
     */
     private WatchpointsViewPreferences(Inspection inspection) {
-        super(inspection, "watchpointsViewPrefs", WatchpointsColumnKind.class, WatchpointsColumnKind.VALUES);
+        super(inspection, WATCHPOINT_COLUMN_PREFERENCE, WatchpointsColumnKind.VALUES);
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_SETTINGS_PREFERENCE) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_INSPECTOR_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(WATCHPOINT_READ_PREFERENCE, read);
                 saveSettingsEvent.save(WATCHPOINT_WRITE_PREFERENCE, write);
@@ -120,27 +126,11 @@ public final class WatchpointsViewPreferences extends com.sun.max.ins.gui.TableC
         return enableDuringGC;
     }
 
-    @Override
-    protected boolean canBeMadeInvisible(WatchpointsColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(WatchpointsColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(WatchpointsColumnKind columnType) {
-        return columnType.label();
-    }
-
     private static class WatchpointsPreferencesPanel extends InspectorPanel {
 
         public WatchpointsPreferencesPanel(Inspection inspection) {
             super(inspection);
         }
-
     }
 
     @Override
