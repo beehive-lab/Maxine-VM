@@ -33,12 +33,12 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
+import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -817,17 +817,13 @@ public class MaxineTester {
     }
 
     private static File stderrFile(File outputFile) {
+        if (outputFile == null) {
+            return null;
+        }
         if (outputFile.getName().endsWith("stdout")) {
             return new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "stderr");
         }
         return new File(outputFile.getAbsolutePath() + ".stderr");
-    }
-
-    private static File commandFile(File outputFile) {
-        if (outputFile.getName().endsWith("stdout")) {
-            return new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "command");
-        }
-        return new File(outputFile.getAbsolutePath() + ".command");
     }
 
     private static String[] defaultJVMOptions() {
@@ -878,57 +874,37 @@ public class MaxineTester {
      */
     private static int exec(File workingDir, String[] command, String[] env, File inputFile, File outputFile, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
+
+        File stdoutFile = null;
+        File stderrFile = null;
+        File commandFile = null;
+        if (outputFile != null) {
+            stdoutFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stdout");
+            stderrFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stderr");
+            commandFile = new File(outputFile.getParentFile(), outputFile.getName() + ".command");
+        }
+
         final long start = System.currentTimeMillis();
-        try {
-            final StringBuilder sb = new StringBuilder("exec ");
-            for (String s : command) {
-                sb.append(escapeShellCharacters(s)).append(' ');
-            }
-            if (inputFile != null) {
-                sb.append(" < " + inputFile.getAbsolutePath());
-            }
-            if (outputFile != null) {
-                sb.append((append ? " >>" : " > ") + outputFile.getAbsolutePath());
-                sb.append((append ? " 2>> " : " 2> ") + stderrFile(outputFile));
-            } else {
-                sb.append(">/dev/null");
-                sb.append(" 2>&1");
-            }
+        Result result = new ExternalCommand(workingDir, null, stdoutFile, stderrFile, commandFile, command, env).exec(append, timeout);
 
-            final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
-
-            if (outputFile != null) {
-                final File commandFile = commandFile(outputFile);
-                final PrintStream ps = new PrintStream(new FileOutputStream(commandFile));
-                ps.println(Arrays.toString(cmdarray, " "));
-                for (int i = 0; i < cmdarray.length; ++i) {
-                    ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
+        if (name != null) {
+            synchronized (execTimes) {
+                String key = name;
+                if (execTimes.containsKey(key)) {
+                    int unique = 1;
+                    do {
+                        key = name + " (" + unique + ")";
+                        unique++;
+                    } while (execTimes.containsKey(key));
                 }
-                ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
-                ps.close();
-            }
-
-            final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
-            final ExternalCommand.ProcessTimeoutThread processThread = new ExternalCommand.ProcessTimeoutThread(process, name != null ? name : command[0], timeout);
-            final int exitValue = processThread.exitValue();
-            return exitValue;
-        } catch (IOException e) {
-            throw ProgramError.unexpected(e);
-        } finally {
-            if (name != null) {
-                synchronized (execTimes) {
-                    String key = name;
-                    if (execTimes.containsKey(key)) {
-                        int unique = 1;
-                        do {
-                            key = name + " (" + unique + ")";
-                            unique++;
-                        } while (execTimes.containsKey(key));
-                    }
-                    execTimes.put(key, System.currentTimeMillis() - start);
-                }
+                execTimes.put(key, System.currentTimeMillis() - start);
             }
         }
+
+        if (result.thrown != null) {
+            throw ProgramError.unexpected(result.thrown);
+        }
+        return result.exitValue;
     }
 
     private static void traceExec(File workingDir, String[] command) {
@@ -1145,11 +1121,13 @@ public class MaxineTester {
     private static ExternalCommand createRefvmCommand(JavaCommand command, File workingDir, File inputFile, File outputFile) {
         File stdoutFile = null;
         File stderrFile = null;
+        File commandFile = null;
         if (outputFile != null) {
             stdoutFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stdout");
             stderrFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stderr");
+            commandFile = new File(outputFile.getParentFile(), outputFile.getName() + ".command");
         }
-        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, command.getExecArgs("java"), null);
+        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, commandFile, command.getExecArgs("java"), null);
     }
 
     private static ExternalCommand createMaxvmCommand(String config, File imageDir, JavaCommand command, File workingDir, File inputFile, File outputFile) {
@@ -1157,9 +1135,11 @@ public class MaxineTester {
         maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
         File stdoutFile = null;
         File stderrFile = null;
+        File commandFile = null;
         if (outputFile != null) {
             stdoutFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stdout");
             stderrFile = new File(outputFile.getParentFile(), outputFile.getName() + ".stderr");
+            commandFile = new File(outputFile.getParentFile(), outputFile.getName() + ".command");
         }
         String[] envp = null;
         if (OperatingSystem.current() == OperatingSystem.LINUX) {
@@ -1179,7 +1159,7 @@ public class MaxineTester {
             envp = string.substring(1, string.length() - 2).split(", ");
         }
 
-        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, maxvmCommand.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp);
+        return new ExternalCommand(workingDir, inputFile, stdoutFile, stderrFile, commandFile, maxvmCommand.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp);
     }
 
     /**
