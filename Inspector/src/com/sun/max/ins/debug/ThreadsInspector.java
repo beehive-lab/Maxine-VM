@@ -52,7 +52,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return threadsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadsInspectorGeometry");
 
     private ThreadsTable table;
 

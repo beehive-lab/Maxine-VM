@@ -29,7 +29,7 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public enum WatchpointsColumnKind implements ColumnKind{
+public enum WatchpointsColumnKind implements ColumnKind {
 
     TAG("Tag", "Additional information", true, -1),
     START("Start", "Starting address", true, 20),
@@ -59,23 +59,14 @@ public enum WatchpointsColumnKind implements ColumnKind{
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -85,16 +76,10 @@ public enum WatchpointsColumnKind implements ColumnKind{
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

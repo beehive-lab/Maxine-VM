@@ -21,6 +21,7 @@
 package com.sun.max.ins.method;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 
 /**
  * Defines the columns supported by the target code inspector; the view includes one of each
@@ -28,7 +29,8 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum TargetCodeColumnKind {
+public enum TargetCodeColumnKind implements ColumnKind {
+
     TAG("Tag", "Tags:  IP, stack return, breakpoints", true, 20) {
         @Override
         public boolean canBeMadeInvisible() {
@@ -57,37 +59,22 @@ public enum TargetCodeColumnKind {
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return whether this column kind should be allowed to be made invisible.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * @return whether this column should be visible by default.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }

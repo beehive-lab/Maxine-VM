@@ -241,7 +241,6 @@ public class JavaMethodInspector extends MethodInspector {
                     }
                     splitPane.setOneTouchExpandable(true);
                     splitPane.setResizeWeight(0.5);
-                    splitPane.setBackground(style().defaultBackgroundColor());
                     frame().getContentPane().add(splitPane);
                     frame().pack();
                     frame().invalidate();

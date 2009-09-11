@@ -73,6 +73,10 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         return length;
     }
 
+    public TypeDescriptor componentType() {
+        return classActorForType().componentClassActor().typeDescriptor;
+    }
+
     public Kind componentKind() {
         return classActorForType().componentClassActor().kind;
     }

@@ -42,6 +42,9 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
 
     /**
      * A label for use in the inspector: can be selected and copied.
+     * <br>
+     * These labels are by default not opaque.
+     *
      * @param text label text
      * @param toolTipText text for ToolTips
      */
@@ -50,6 +53,7 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
         this.inspection = inspection;
         setToolTipText(toolTipText);
         setEditable(false);
+        setOpaque(false);
     }
 
     /**

@@ -3158,6 +3158,46 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
+    /**
+     * Action: removes a set of existing watchpoints in the VM.
+     */
+    final class RemoveWatchpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove watchpoints";
+        private final Sequence<MaxWatchpoint> watchpoints;
+
+        RemoveWatchpointsAction(Sequence<MaxWatchpoint> watchpoints, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            this.watchpoints = watchpoints;
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint focusWatchpoint = focus().watchpoint();
+            for (MaxWatchpoint watchpoint : watchpoints) {
+                if (focusWatchpoint == watchpoint) {
+                    focus().setWatchpoint(null);
+                }
+                if (!watchpoint.dispose()) {
+                    gui().errorMessage("Failed to remove watchpoint" + watchpoint);
+                }
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(watchpoints.length() > 0);
+        }
+    }
+
+    /**
+     * @return an Action that will remove all watchpoints in the VM.
+     */
+    public final InspectorAction removeWatchpoints(Sequence<MaxWatchpoint> watchpoints, String title) {
+        return new RemoveWatchpointsAction(watchpoints, title);
+    }
+
+
      /**
      * Action: removes all existing watchpoints in the VM.
      */

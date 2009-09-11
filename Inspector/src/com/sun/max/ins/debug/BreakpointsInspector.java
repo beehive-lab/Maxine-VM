@@ -56,7 +56,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return breakpointsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BreakpointsViewPreferences viewPreferences;
@@ -81,8 +81,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     @Override
     protected void createView() {
         table = new BreakpointsTable(inspection(), viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
-        frame().setContentPane(scrollPane);
+        frame().setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

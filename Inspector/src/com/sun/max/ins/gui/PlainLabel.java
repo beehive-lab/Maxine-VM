@@ -77,7 +77,6 @@ public class PlainLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().defaultFont());
         setForeground(style().defaultTextColor());
-        setBackground(style().defaultTextBackgroundColor());
     }
 
 }

@@ -20,51 +20,17 @@
  */
 package com.sun.max.ins.gui;
 
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
+import javax.swing.table.*;
 
 
 /**
- * A tabbed pane specialized for use in the Maxine Inspector.
+ * A table model specialized for Inspector's table-based views.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
+public abstract class InspectorTableModel extends AbstractTableModel {
 
-    private final Inspection inspection;
-
-    /**
-     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
-     */
-    protected InspectorTabbedPane(Inspection inspection) {
-        this.inspection = inspection;
-        //setOpaque(true);
+    public void refresh() {
+        fireTableDataChanged();
     }
-
-    public final Inspection inspection() {
-        return inspection;
-    }
-
-    public final MaxVM maxVM() {
-        return inspection.maxVM();
-    }
-
-    public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
-    }
-
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return inspection.focus();
-    }
-
-    public InspectionActions actions() {
-        return inspection.actions();
-    }
-
 }

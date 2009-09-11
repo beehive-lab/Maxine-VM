@@ -51,7 +51,6 @@ public class TextLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().textLabelFont());
         setForeground(style().textLabelColor());
-        setBackground(style().textLabelBackgroundColor());
     }
 
 }

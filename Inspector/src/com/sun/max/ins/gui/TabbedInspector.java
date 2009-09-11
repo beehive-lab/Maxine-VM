@@ -58,7 +58,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         super(inspection);
         tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
-            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName);
+            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
         } else {
             saveSettingsListener = null;
         }

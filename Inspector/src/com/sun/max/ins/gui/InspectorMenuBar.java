@@ -46,7 +46,6 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;
         setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public void add(InspectorMenu inspectorMenu) {

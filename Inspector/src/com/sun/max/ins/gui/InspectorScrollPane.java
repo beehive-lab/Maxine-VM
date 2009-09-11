@@ -48,8 +48,8 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
     public InspectorScrollPane(Inspection inspection, Component component) {
         super(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.inspection = inspection;
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
+        // Ensure that any background that isn't covered with the component has the same background color
+        getViewport().setBackground(component.getBackground());
     }
 
     public final Inspection inspection() {

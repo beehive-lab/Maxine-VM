@@ -36,64 +36,63 @@ import com.sun.max.program.option.*;
  *
  * @author Michael Van De Vanter
   */
-public class BytecodeViewerPreferences  extends TableColumnVisibilityPreferences<BytecodeColumnKind> {
+public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<BytecodeColumnKind> {
 
 
-    private static BytecodeViewerPreferences globalPreferences;
+    private static BytecodeViewPreferences globalPreferences;
 
-    public static BytecodeViewerPreferences globalPreferences(Inspection inspection) {
+    public static BytecodeViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new BytecodeViewerPreferences(inspection);
+            globalPreferences = new BytecodeViewPreferences(inspection);
         }
         return globalPreferences;
     }
 
-    private static final String OPERAND_DISPLAY_MODE_PREFERENCE = "operandDisplayMode";
+    // Prefix for all persistent column preferences in view
+    private static final String BYTECODE_COLUMN_PREFERENCE = "bytecodeViewColumn";
+
+    // Prefix for all other preferences in view
+    private static final String BYTECODE_VIEWER_PREFERENCE = "bytecodeViewerPrefs";
+
+    // Names of other preferences in view
+    private static final String BYTECODE_OPERAND_DISPLAY_MODE = "operandDisplayMode";
 
     private PoolConstantLabel.Mode operandDisplayMode;
 
-    public BytecodeViewerPreferences(Inspection inspection) {
-        super(inspection, "bytecodeInspectorPrefs", BytecodeColumnKind.class, BytecodeColumnKind.VALUES);
+    /**
+     * Creates the global, persistent set of preferences, initializing from stored values if available.
+     */
+    private BytecodeViewPreferences(Inspection inspection) {
+        super(inspection, BYTECODE_COLUMN_PREFERENCE, BytecodeColumnKind.VALUES);
+        final InspectionSettings settings = inspection.settings();
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(BYTECODE_VIEWER_PREFERENCE) {
+            public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+                saveSettingsEvent.save(BYTECODE_OPERAND_DISPLAY_MODE, operandDisplayMode.name());
+            }
+        };
+        settings.addSaveSettingsListener(saveSettingsListener);
         final OptionTypes.EnumType<PoolConstantLabel.Mode> optionType = new OptionTypes.EnumType<PoolConstantLabel.Mode>(PoolConstantLabel.Mode.class);
-        operandDisplayMode = inspection.settings().get(saveSettingsListener, OPERAND_DISPLAY_MODE_PREFERENCE, optionType, PoolConstantLabel.Mode.JAVAP);
+        operandDisplayMode = inspection.settings().get(saveSettingsListener, BYTECODE_OPERAND_DISPLAY_MODE, optionType, PoolConstantLabel.Mode.JAVAP);
     }
 
-    public BytecodeViewerPreferences(BytecodeViewerPreferences otherPreferences) {
+    /**
+     * Creates a non-persistent set of preferences by cloning another set of preferences (i.e. the globally persistent set).
+     */
+    public BytecodeViewPreferences(BytecodeViewPreferences otherPreferences) {
         super(otherPreferences);
         operandDisplayMode = otherPreferences.operandDisplayMode;
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(BytecodeColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(BytecodeColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(BytecodeColumnKind columnType) {
-        return columnType.label();
     }
 
     public PoolConstantLabel.Mode operandDisplayMode() {
         return operandDisplayMode;
     }
 
-    public void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
+    protected void setOperandDisplayMode(PoolConstantLabel.Mode mode) {
         final boolean needToSave = mode != operandDisplayMode;
         operandDisplayMode = mode;
         if (needToSave) {
             inspection().settings().save();
         }
-    }
-
-    @Override
-    protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-        super.saveSettings(saveSettingsEvent);
-        saveSettingsEvent.save(OPERAND_DISPLAY_MODE_PREFERENCE, operandDisplayMode.name());
     }
 
     @Override

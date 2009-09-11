@@ -150,7 +150,7 @@ public class StackInspector extends Inspector {
         }
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspectorGeometry");
 
     private MaxThread thread = null;
     private InspectorPanel contentPane = null;

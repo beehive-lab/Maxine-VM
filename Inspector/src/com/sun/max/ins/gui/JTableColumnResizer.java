@@ -49,7 +49,9 @@ public class JTableColumnResizer {
                 final TableCellRenderer rend = table.getCellRenderer(row, col);
                 final Object value = table.getValueAt(row, col);
                 final Component comp = rend.getTableCellRendererComponent(table, value,  false,  false,  row, col);
-                maxwidth = Math.max(comp.getPreferredSize().width, maxwidth);
+                if (comp != null) {
+                    maxwidth = Math.max(comp.getPreferredSize().width, maxwidth);
+                }
             } // for row
             // Take the column header into consideration as well.
             final TableColumn column = columnModel.getColumn(col);
