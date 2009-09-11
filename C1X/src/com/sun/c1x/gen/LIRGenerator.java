@@ -85,7 +85,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = LIRLocation.virtualRegisterBase();
+        this.virtualRegisterNumber = CiRegister.FirstVirtualRegisterNumber;
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         this.ir = compilation.hir();
 
