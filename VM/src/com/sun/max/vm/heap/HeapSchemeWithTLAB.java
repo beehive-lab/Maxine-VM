@@ -383,19 +383,24 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (end.greaterThan(tlabEnd)) {
             // Slow path may be taken because of a genuine refill request, or because allocation was disable.
             // Check for the second here.
-            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
-                Log.print("Trying to allocate ");
-                Log.print(size.toLong());
-                Log.print(" bytes on thread ");
-                Log.printVmThread(VmThread.current(), false);
-                Log.println(" while allocation is disabled");
-                FatalError.unexpected("Trying to allocate while allocation is disabled");
-            }
+            checkAllocationEnabled(size);
             // This path will always be taken if TLAB allocation is not enabled.
             return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
         return cell;
+    }
+
+    @NEVER_INLINE
+    private void checkAllocationEnabled(Size size) {
+        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+            Log.print("Trying to allocate ");
+            Log.print(size.toLong());
+            Log.print(" bytes on thread ");
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(" while allocation is disabled");
+            FatalError.unexpected("Trying to allocate while allocation is disabled");
+        }
     }
 
     protected final void setTlabAllocationMark(Pointer enabledVmThreadLocals, Pointer newAllocationMark) {

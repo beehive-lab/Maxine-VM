@@ -38,7 +38,7 @@
  * @param canonicalFloatingPointRegisters the backing storage into which the floating point registers should be copied
  * @return true if the requested copy was successful, false otherwise
  */
-Boolean task_read_registers(pid_t tid,
+boolean task_read_registers(pid_t tid,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters);
