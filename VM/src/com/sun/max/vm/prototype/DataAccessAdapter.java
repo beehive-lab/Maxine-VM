@@ -95,7 +95,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public char readChar(Address address) {
-        return UnsafeLoophole.shortToChar(readShort(address));
+        return UnsafeLoophole.asChar(readShort(address));
     }
 
     public char readChar(Address address, Offset offset) {
@@ -123,7 +123,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public float readFloat(Address address) {
-        return UnsafeLoophole.intToFloat(readInt(address));
+        return UnsafeLoophole.asFloat(readInt(address));
     }
 
     public float readFloat(Address address, Offset offset) {
@@ -151,7 +151,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public double readDouble(Address address) {
-        return UnsafeLoophole.longToDouble(readLong(address));
+        return UnsafeLoophole.asDouble(readLong(address));
     }
 
     public double readDouble(Address address, Offset offset) {
@@ -245,7 +245,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeChar(Address address, char value) {
-        writeShort(address, UnsafeLoophole.charToShort(value));
+        writeShort(address, UnsafeLoophole.asShort(value));
     }
 
     public void writeChar(Address address, Offset offset, char value) {
@@ -273,7 +273,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeFloat(Address address, float value) {
-        writeInt(address, UnsafeLoophole.floatToInt(value));
+        writeInt(address, UnsafeLoophole.asInt(value));
     }
 
     public void writeFloat(Address address, Offset offset, float value) {
@@ -301,7 +301,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeDouble(Address address, double value) {
-        writeLong(address, UnsafeLoophole.doubleToLong(value));
+        writeLong(address, UnsafeLoophole.asLong(value));
     }
 
     public void writeDouble(Address address, Offset offset, double value) {

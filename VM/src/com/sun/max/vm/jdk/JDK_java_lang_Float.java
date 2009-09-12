@@ -33,11 +33,11 @@ import com.sun.max.unsafe.*;
 public class JDK_java_lang_Float {
     @SUBSTITUTE
     public static int floatToIntBits(float f) {
-        return UnsafeLoophole.floatToInt(f);
+        return UnsafeLoophole.asInt(f);
     }
 
     @SUBSTITUTE
     public static float intBitsToFloat(int i) {
-        return UnsafeLoophole.intToFloat(i);
+        return UnsafeLoophole.asFloat(i);
     }
 }

@@ -366,7 +366,7 @@ public abstract class MethodActor extends MemberActor {
             final Object[] arguments = getBoxedJavaValues(Arrays.subArray(argumentValues, 1), parameterTypes);
             return resultKind.asValue(javaMethod.invoke(receiver, arguments));
         }
-        final GeneratedMethodStub stub = UnsafeLoophole.cast(makeInvocationStub());
+        final GeneratedMethodStub stub = UnsafeLoophole.asGeneratedMethodStub(makeInvocationStub());
         return stub.invoke(argumentValues);
     }
 
@@ -383,7 +383,7 @@ public abstract class MethodActor extends MemberActor {
      */
     public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
-        final GeneratedConstructorStub stub = UnsafeLoophole.cast(makeInvocationStub());
+        final GeneratedConstructorStub stub = UnsafeLoophole.asGeneratedConstructorStub(makeInvocationStub());
         if (MaxineVM.isPrototyping()) {
             // When running hosted by HotSpot, the generated stub cannot be executed if the target method is inaccessible.
             // In this situation we simply use normal Java reflection.

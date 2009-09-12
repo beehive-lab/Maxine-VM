@@ -25,6 +25,7 @@ import java.security.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -53,12 +54,9 @@ final class JDK_java_lang_Class {
     private static void registerNatives() {
     }
 
-    @UNSAFE_CAST
-    private native Class thisClass();
-
     @INLINE
     private ClassActor thisClassActor() {
-        return ClassActor.fromJava(thisClass());
+        return ClassActor.fromJava(UnsafeLoophole.asClass(this));
     }
 
     @SUBSTITUTE

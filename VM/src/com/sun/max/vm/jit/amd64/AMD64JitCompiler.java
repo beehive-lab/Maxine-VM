@@ -411,7 +411,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Address throwAddress = stackFrameWalker.instructionPointer();
-        final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+        final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
 
         if (!catchAddress.isZero()) {

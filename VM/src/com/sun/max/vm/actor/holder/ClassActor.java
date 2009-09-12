@@ -80,10 +80,6 @@ public abstract class ClassActor extends Actor {
     public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
     public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
 
-    public static interface IDMapping {
-        int get(ClassLoader classLoader, String name);
-    }
-
     protected ClassActor(Kind kind,
                          final SpecificLayout specificLayout,
                          ClassLoader classLoader,
@@ -1314,7 +1310,7 @@ public abstract class ClassActor extends Actor {
         if (oldValue == null) {
             return newMirror;
         }
-        return UnsafeLoophole.cast(oldValue.toJava());
+        return UnsafeLoophole.asClass(oldValue.toJava());
     }
 
     @PROTOTYPE_ONLY

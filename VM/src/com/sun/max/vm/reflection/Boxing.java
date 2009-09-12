@@ -25,7 +25,6 @@ import static com.sun.max.vm.reflection.InvocationStubGenerator.*;
 
 import java.lang.reflect.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.graft.*;
@@ -170,16 +169,14 @@ public enum Boxing {
             final Kind parameterKind = Kind.fromJava(parameterType);
             asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum), 1, parameterKind.stackSlots());
             if (parameterKind == Kind.REFERENCE) {
-                // cast against Object is unneccessary AND causes problems with values that are StaticTuples
+                // cast against Object is unnecessary AND causes problems with values that are StaticTuples
                 if (parameterType != Object.class) {
                     asm.checkcast(parameterTypePoolConstantIndex);
                 }
             } else if (parameterKind == Kind.WORD) {
-                /*
-                 * The compiler eliminates this:
-                 */
-                asm.invokestatic(Boxing_castWord_Word, 1, 1);
-                asm.checkcast(parameterTypePoolConstantIndex);
+                if (parameterType != Word.class) {
+                    asm.invokevirtual(CAST_WORD.get(parameterType), 1, 1);
+                }
             }
         }
 
@@ -220,11 +217,6 @@ public enum Boxing {
             return unboxedParameter;
         }
     };
-
-    @UNSAFE_CAST
-    public static Word castWord(Word word) {
-        return word;
-    }
 
     public abstract SignatureDescriptor invokeSignature();
     public abstract SignatureDescriptor newInstanceSignature();

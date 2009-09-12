@@ -233,7 +233,7 @@ public final class VmThreadMap {
     private VmThread findNonDaemon() {
         Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
-            final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+            final VmThread vmThread = UnsafeLoophole.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
             if (vmThread != VmThread.current() && !vmThread.javaThread().isDaemon()) {
                 return vmThread;
             }
@@ -269,7 +269,7 @@ public final class VmThreadMap {
     public void forAllVmThreads(Predicate<VmThread> predicate, Procedure<VmThread> procedure) {
         Pointer vmThreadLocals = threadLocalsListHead;
         while (!vmThreadLocals.isZero()) {
-            final VmThread vmThread = UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+            final VmThread vmThread = UnsafeLoophole.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
             if (predicate == null || predicate.evaluate(vmThread)) {
                 procedure.run(vmThread);
             }
@@ -369,7 +369,7 @@ public final class VmThreadMap {
         @INLINE
         VmThread get(int id) {
             // this operation may be performance critical, so avoid the bounds check
-            return UnsafeLoophole.cast(ArrayAccess.getObject(vmThreads, id));
+            return UnsafeLoophole.asVmThread(ArrayAccess.getObject(vmThreads, id));
         }
     }
 }

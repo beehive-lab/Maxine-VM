@@ -141,7 +141,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected float readFloatAtLongOffset(long offset) {
-        return UnsafeLoophole.intToFloat(readIntAtLongOffset(offset));
+        return UnsafeLoophole.asFloat(readIntAtLongOffset(offset));
     }
 
     @Override
@@ -163,7 +163,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected double readDoubleAtLongOffset(long offset) {
-        return UnsafeLoophole.longToDouble(readLongAtLongOffset(offset));
+        return UnsafeLoophole.asDouble(readLongAtLongOffset(offset));
     }
 
     @Override
@@ -234,7 +234,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeFloatAtLongOffset(long offset, float value) {
-        writeIntAtLongOffset(offset, UnsafeLoophole.floatToInt(value));
+        writeIntAtLongOffset(offset, UnsafeLoophole.asInt(value));
     }
 
     @Override
@@ -256,7 +256,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeDoubleAtLongOffset(long offset, double value) {
-        writeLongAtLongOffset(offset, UnsafeLoophole.doubleToLong(value));
+        writeLongAtLongOffset(offset, UnsafeLoophole.asLong(value));
     }
 
     @Override

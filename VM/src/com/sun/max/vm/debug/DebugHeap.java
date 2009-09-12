@@ -200,7 +200,7 @@ public final class DebugHeap {
         FatalError.check(!hubGrip.isZero(), "null hub");
         final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() / Word.size();
         verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
-        final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
+        final Hub hub = UnsafeLoophole.asHub(hubGrip.toJava());
 
         Hub h = hub;
         if (h instanceof StaticHub) {

@@ -158,8 +158,8 @@ public class TirPrintSink extends TirBufferedSink {
             printPrefix(guard);
             Console.print(" #" + treeBegin.tree().getNumber(guard));
             Console.print(", " + useLabelMap.map(guard.operand0()) + " " + guard.valueComparator().symbol() + " " + useLabelMap.map(guard.operand1()));
-            if (guard.thorwable() != null) {
-                Console.print(", " + guard.thorwable().getSimpleName());
+            if (guard.throwable() != null) {
+                Console.print(", " + guard.throwable().getSimpleName());
             }
             Console.print(", state: ");
             guard.state().println(useLabelMap);

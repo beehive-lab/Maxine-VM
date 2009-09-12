@@ -331,7 +331,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             if (argument == 0) {
                 asm.clr(scratchRegister);
             } else {
-                asm.setx(UnsafeLoophole.doubleToLong(argument), scratchRegister2, scratchRegister);
+                asm.setx(UnsafeLoophole.asLong(argument), scratchRegister2, scratchRegister);
             }
             asm.stx(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
             asm.ldd(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
@@ -350,7 +350,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             if (argument == 0) {
                 asm.clr(scratchRegister);
             } else {
-                asm.setsw(UnsafeLoophole.floatToInt(argument), scratchRegister);
+                asm.setsw(UnsafeLoophole.asInt(argument), scratchRegister);
             }
             asm.stw(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
             asm.ld(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);

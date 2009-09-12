@@ -109,7 +109,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asClassActor(guard.value);
         }
 
         public static final ResolveClass SNIPPET = new ResolveClass();
@@ -137,7 +137,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asArrayClassActor(guard.value);
         }
 
         public static final ResolveArrayClass SNIPPET = new ResolveArrayClass();
@@ -168,7 +168,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asClassActor(guard.value);
         }
 
         public static final ResolveClassForNew SNIPPET = new ResolveClassForNew();
@@ -198,7 +198,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asFieldActor(guard.value);
         }
 
         public static final ResolveStaticFieldForReading SNIPPET = new ResolveStaticFieldForReading();
@@ -231,7 +231,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asFieldActor(guard.value);
         }
 
         public static final ResolveStaticFieldForWriting SNIPPET = new ResolveStaticFieldForWriting();
@@ -265,7 +265,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asFieldActor(guard.value);
         }
 
         public static final ResolveInstanceFieldForReading SNIPPET = new ResolveInstanceFieldForReading();
@@ -299,7 +299,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asFieldActor(guard.value);
         }
 
         public static final ResolveInstanceFieldForWriting SNIPPET = new ResolveInstanceFieldForWriting();
@@ -328,7 +328,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asStaticMethodActor(guard.value);
         }
 
         public static final ResolveStaticMethod SNIPPET = new ResolveStaticMethod();
@@ -364,7 +364,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asVirtualMethodActor(guard.value);
         }
 
         public static final ResolveSpecialMethod SNIPPET = new ResolveSpecialMethod();
@@ -390,7 +390,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asVirtualMethodActor(guard.value);
         }
 
         public static final ResolveVirtualMethod SNIPPET = new ResolveVirtualMethod();
@@ -425,7 +425,7 @@ public abstract class ResolutionSnippet extends Snippet {
             if (guard.value == null) {
                 resolve(guard);
             }
-            return UnsafeLoophole.cast(guard.value);
+            return UnsafeLoophole.asInterfaceMethodActor(guard.value);
         }
 
         public static final ResolveInterfaceMethod SNIPPET = new ResolveInterfaceMethod();
