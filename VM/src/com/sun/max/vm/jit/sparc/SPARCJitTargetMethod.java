@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jit.sparc;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
