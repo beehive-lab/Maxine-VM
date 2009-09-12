@@ -94,7 +94,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     protected void assignFloatTemplateArgument(int parameterIndex, float argument) {
         final AMD64GeneralRegister32 scratch = AMD64GeneralRegister32.from(TARGET_ABI.scratchRegister());
         asm.reset();
-        asm.movl(scratch, UnsafeLoophole.floatToInt(argument));
+        asm.movl(scratch, UnsafeLoophole.asInt(argument));
         asm.movdl(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), scratch);
         codeBuffer.emitCodeFrom(asm);
     }
@@ -109,7 +109,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     @Override
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
         asm.reset();
-        asm.mov(TARGET_ABI.scratchRegister(), UnsafeLoophole.doubleToLong(argument));
+        asm.mov(TARGET_ABI.scratchRegister(), UnsafeLoophole.asLong(argument));
         asm.movdq(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
     }

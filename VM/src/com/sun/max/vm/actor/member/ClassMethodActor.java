@@ -212,7 +212,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     }
                 }
 
-                if (verifier != null && codeAttribute != null) {
+                if (verifier != null && codeAttribute != null && !compilee.holder().isGenerated()) {
                     codeAttribute = verifier.verify(compilee, codeAttribute);
                 }
                 this.codeAttribute = codeAttribute;

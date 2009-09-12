@@ -328,7 +328,7 @@ public abstract class Trap {
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread. run the specified procedure
             final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
-            final Safepoint.Procedure runnable = UnsafeLoophole.cast(reference.toJava());
+            final Safepoint.Procedure runnable = (Safepoint.Procedure) reference.toJava();
             trapStateAccess.setTrapNumber(trapState, Number.SAFEPOINT);
             if (runnable != null) {
                 // run the procedure and then set the vm thread local to null

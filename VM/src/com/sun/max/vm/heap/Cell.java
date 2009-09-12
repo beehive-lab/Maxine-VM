@@ -113,7 +113,7 @@ public class Cell {
         Memory.clearBytes(newOrigin, size);
         Memory.copyBytes(oldCell, cell, oldSize);
         Layout.writeArrayLength(newOrigin, length);
-        return UnsafeLoophole.cast(Reference.fromOrigin(newOrigin).toJava());
+        return UnsafeLoophole.asHybrid(Reference.fromOrigin(newOrigin).toJava());
     }
 
     /**

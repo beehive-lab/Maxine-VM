@@ -99,7 +99,7 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     public static void anewarray(ResolutionGuard guard) {
-        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(resolveArrayClass(guard));
+        final ArrayClassActor arrayClassActor = UnsafeLoophole.asArrayClassActor(resolveArrayClass(guard));
         final int length = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
     }
@@ -662,7 +662,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BOOLEAN)
     public static void zgetfield(ResolutionGuard guard) {
         final Object object = JitStackFrameOperation.peekReference(0);
-        JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(resolveAndGetFieldBoolean(guard, object)));
+        JitStackFrameOperation.pokeInt(0, UnsafeLoophole.asByte(resolveAndGetFieldBoolean(guard, object)));
     }
 
     @INLINE
@@ -750,7 +750,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BOOLEAN)
     public static void zputfield(ResolutionGuard guard) {
         final Object object = JitStackFrameOperation.peekReference(1);
-        final boolean value = UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.peekInt(0));
+        final boolean value = UnsafeLoophole.asBoolean((byte) JitStackFrameOperation.peekInt(0));
         resolveAndPutFieldBoolean(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
@@ -806,7 +806,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BOOLEAN)
     public static void zgetstatic(ResolutionGuard guard) {
-        JitStackFrameOperation.pushInt(UnsafeLoophole.booleanToByte(resolveAndGetStaticBoolean(guard)));
+        JitStackFrameOperation.pushInt(UnsafeLoophole.asByte(resolveAndGetStaticBoolean(guard)));
     }
 
     @INLINE
@@ -861,7 +861,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BOOLEAN)
     public static void zputstatic(ResolutionGuard guard) {
-        resolveAndPutStaticBoolean(guard, UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.popInt()));
+        resolveAndPutStaticBoolean(guard, UnsafeLoophole.asBoolean((byte) JitStackFrameOperation.popInt()));
     }
 
     @INLINE
@@ -1027,9 +1027,9 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INSTANCEOF)
     public static void instanceof_(ResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(NoninlineTemplateRuntime.resolveClass(guard));
+        final ClassActor classActor = UnsafeLoophole.asClassActor(NoninlineTemplateRuntime.resolveClass(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
-        JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(Snippet.InstanceOf.instanceOf(classActor, object)));
+        JitStackFrameOperation.pokeInt(0, UnsafeLoophole.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
 
     @INLINE
@@ -1515,7 +1515,7 @@ public final class UnoptimizedBytecodeTemplateSource {
 
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.
-        final int[] lengths = UnsafeLoophole.cast(lengthsShared.clone());
+        final int[] lengths = UnsafeLoophole.asIntArray(lengthsShared.clone());
         final int numberOfDimensions = lengths.length;
 
         for (int i = 1; i <= numberOfDimensions; i++) {

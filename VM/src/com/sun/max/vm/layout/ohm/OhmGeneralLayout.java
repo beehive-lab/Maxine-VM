@@ -103,7 +103,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     private Hub getHub(Accessor accessor) {
-        return UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        return UnsafeLoophole.asHub(readHubReference(accessor).toJava());
     }
 
     @INLINE

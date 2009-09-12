@@ -62,7 +62,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(char value) {
-        final short shortValue = UnsafeLoophole.charToShort(value);
+        final short shortValue = UnsafeLoophole.asShort(value);
         return endianness.toBytes(shortValue);
     }
 
@@ -71,7 +71,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(float value) {
-        final int intValue = UnsafeLoophole.floatToInt(value);
+        final int intValue = UnsafeLoophole.asInt(value);
         return endianness.toBytes(intValue);
     }
 
@@ -80,7 +80,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(double value) {
-        final long longValue = UnsafeLoophole.doubleToLong(value);
+        final long longValue = UnsafeLoophole.asLong(value);
         return endianness.toBytes(longValue);
     }
 

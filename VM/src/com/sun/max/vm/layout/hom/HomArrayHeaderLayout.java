@@ -80,7 +80,7 @@ public class HomArrayHeaderLayout extends HomGeneralLayout implements ArrayHeade
 
     @INLINE
     public final Kind getElementKind(Accessor accessor) {
-        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        final ArrayClassActor arrayClassActor = UnsafeLoophole.asArrayClassActor(readHubReference(accessor).toJava());
         return arrayClassActor.componentClassActor().kind;
     }
 

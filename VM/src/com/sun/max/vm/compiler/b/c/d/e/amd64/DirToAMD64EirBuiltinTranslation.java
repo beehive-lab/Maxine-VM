@@ -73,7 +73,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         };
     }
 
-    private static final FloatValue XMM_FLOAT_SIGN_MASK = FloatValue.from(UnsafeLoophole.intToFloat(0x80000000));
+    private static final FloatValue XMM_FLOAT_SIGN_MASK = FloatValue.from(UnsafeLoophole.asFloat(0x80000000));
 
     @Override
     public void visitFloatNegated(FloatNegated builtin, DirValue dirResult, DirValue[] dirArguments) {
@@ -95,7 +95,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         };
     }
 
-    private static final DoubleValue XMM_DOUBLE_SIGN_MASK = DoubleValue.from(UnsafeLoophole.longToDouble(0x8000000000000000L));
+    private static final DoubleValue XMM_DOUBLE_SIGN_MASK = DoubleValue.from(UnsafeLoophole.asDouble(0x8000000000000000L));
 
     @Override
     public void visitDoubleNegated(DoubleNegated builtin, DirValue dirResult, DirValue[] dirArguments) {
