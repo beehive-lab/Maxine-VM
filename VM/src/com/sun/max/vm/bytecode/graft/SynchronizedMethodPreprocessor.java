@@ -40,7 +40,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         codeStream = new SeekableByteArrayOutputStream();
 
         final SynchronizedMethodTransformer synchronizedMethodTransformer = classMethodActor.isStatic() ?
-            new StaticSynchronizedMethodTransformer(this, constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(classMethodActor.holder().toJava()))) :
+            new StaticSynchronizedMethodTransformer(this, constantPoolEditor.indexOf(PoolConstantFactory.createClassConstant(classMethodActor.holder()))) :
             new VirtualSynchronizedMethodTransformer(this, allocateLocal(Kind.REFERENCE));
         synchronizedMethodTransformer.acquireMonitor();
         trackingStack = false;

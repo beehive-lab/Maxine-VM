@@ -1279,8 +1279,8 @@ public class MaxXirGenerator extends XirGenerator {
             if (l1 < 0 | l2 < 0) {
                 throw new NegativeArraySizeException();
             }
-            Object[] result = UnsafeLoophole.cast(createObjectArray(hub1, l1));
-            DynamicHub hub2 = UnsafeLoophole.cast(hub1.componentHub);
+            Object[] result = UnsafeLoophole.asObjectArray(createObjectArray(hub1, l1));
+            DynamicHub hub2 = UnsafeLoophole.asDynamicHub(hub1.componentHub);
             for (int i1 = 0; i1 < l1; i1++) {
                 ArrayAccess.setObject(result, i1, createArray(hub2, l2));
             }
@@ -1291,9 +1291,9 @@ public class MaxXirGenerator extends XirGenerator {
             if (l1 < 0 | l2 < 0 | l3 < 0) {
                 throw new NegativeArraySizeException();
             }
-            Object[] result = UnsafeLoophole.cast(createObjectArray(hub1, l1));
-            DynamicHub hub2 = UnsafeLoophole.cast(hub1.componentHub);
-            DynamicHub hub3 = UnsafeLoophole.cast(hub2.componentHub);
+            Object[] result = UnsafeLoophole.asObjectArray(createObjectArray(hub1, l1));
+            DynamicHub hub2 = UnsafeLoophole.asDynamicHub(hub1.componentHub);
+            DynamicHub hub3 = UnsafeLoophole.asDynamicHub(hub2.componentHub);
             for (int i1 = 0; i1 < l1; i1++) {
                 Object[] result2 = createObjectArray(hub2, l2);
                 safeArrayStore(result, i1, result2);
@@ -1335,7 +1335,7 @@ public class MaxXirGenerator extends XirGenerator {
             if (MaxineVM.isPrototyping()) {
                 return (Object[]) Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
             }
-            return UnsafeLoophole.cast(Heap.createArray(hub, length));
+            return UnsafeLoophole.asObjectArray(Heap.createArray(hub, length));
         }
 
         @INLINE

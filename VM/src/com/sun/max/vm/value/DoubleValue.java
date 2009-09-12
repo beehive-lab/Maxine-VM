@@ -64,7 +64,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.doubleToLong(value) == -1L;
+        return UnsafeLoophole.asLong(value) == -1L;
     }
 
     @Override

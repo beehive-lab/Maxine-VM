@@ -20,86 +20,83 @@
  */
 package com.sun.max.unsafe;
 
+import java.lang.ref.*;
+import java.security.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A collection of methods used to perform {@link UNSAFE_CAST unchecked type casts}.
  *
+ * The bodies of these methods exist solely so that the methods can be {@linkplain FOLD folded}.
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private UnsafeLoophole() {
     }
 
-    @UNSAFE_CAST
-    public static <Type> Type cast(Object object) {
-        assert !(object instanceof Word);
-        final Class<Type> type = null;
-        return StaticLoophole.cast(type, object);
-    }
+    @UNSAFE_CAST public static VmThread                 asVmThread(Object object) { return (VmThread) object; }
+    @UNSAFE_CAST public static Object[]                 asObjectArray(Object object) { return (Object[]) object; }
+    @UNSAFE_CAST public static Hybrid                   asHybrid(Object object) { return (Hybrid) object; }
+    @UNSAFE_CAST public static StackUnwindingContext    asStackUnwindingContext(Object object) { return (StackUnwindingContext) object; }
+    @UNSAFE_CAST public static Class                    asClass(Object object) { return (Class) object; }
+    @UNSAFE_CAST public static GeneratedMethodStub      asGeneratedMethodStub(Object object) { return (GeneratedMethodStub) object; }
+    @UNSAFE_CAST public static GeneratedConstructorStub asGeneratedConstructorStub(Object object) { return (GeneratedConstructorStub) object; }
+    @UNSAFE_CAST public static Throwable                asThrowable(Object object) { return (Throwable) object; }
+    @UNSAFE_CAST public static int[]                    asIntArray(Object object) { return (int[]) object; }
+    @UNSAFE_CAST public static DynamicHub               asDynamicHub(Object object) { return (DynamicHub) object; }
+    @UNSAFE_CAST public static Grip                     asGrip(Object object) { return (Grip) object; }
+    @UNSAFE_CAST public static Hub                      asHub(Object object) { return (Hub) object; }
+    @UNSAFE_CAST public static ArrayClassActor          asArrayClassActor(Object object) { return (ArrayClassActor) object; }
+    @UNSAFE_CAST public static ClassActor               asClassActor(Object object) { return (ClassActor) object; }
+    @UNSAFE_CAST public static FieldActor               asFieldActor(Object object) { return (FieldActor) object; }
+    @UNSAFE_CAST public static StaticMethodActor        asStaticMethodActor(Object object) { return (StaticMethodActor) object; }
+    @UNSAFE_CAST public static VirtualMethodActor       asVirtualMethodActor(Object object) { return (VirtualMethodActor) object; }
+    @UNSAFE_CAST public static AccessControlContext     asAccessControlContext(Object object) { return (AccessControlContext) object; }
+    @UNSAFE_CAST public static Reference                asJDKReference(Object object) { return (Reference) object; }
+    @UNSAFE_CAST public static InterfaceActor           asInterfaceActor(Object object) { return (InterfaceActor) object; }
+    @UNSAFE_CAST public static InterfaceMethodActor     asInterfaceMethodActor(Object object) { return (InterfaceMethodActor) object; }
 
-    @UNSAFE_CAST
-    public static <Word_Type extends Word> Word_Type intToWord(int value) {
-        final Class<Word_Type> type = null;
-        return StaticLoophole.cast(type, Address.fromInt(value));
-    }
+    @UNSAFE_CAST public static Address                  asAddress(int value) { return Address.fromUnsignedInt(value); }
+    @UNSAFE_CAST public static Address                  asAddress(long value) { return Address.fromLong(value); }
+    @UNSAFE_CAST public static Offset                   asOffset(int value) { return Offset.fromUnsignedInt(value); }
+    @UNSAFE_CAST public static Offset                   asOffset(long value) { return Offset.fromLong(value); }
 
-    @UNSAFE_CAST
-    public static <Word_Type extends Word> Word_Type longToWord(long value) {
-        final Class<Word_Type> type = null;
-        return StaticLoophole.cast(type, Address.fromLong(value));
-    }
-
-    @UNSAFE_CAST
-    public static int wordToInt(Word word) {
-        return word.asAddress().toInt();
-    }
-
-    @UNSAFE_CAST
-    public static long wordToLong(Word word) {
-        return word.asAddress().toLong();
-    }
-
-    @UNSAFE_CAST
-    public static boolean byteToBoolean(byte value) {
-        return value != 0;
-    }
-
-    @UNSAFE_CAST
-    public static byte booleanToByte(boolean value) {
-        return value ? 1 : (byte) 0;
-    }
-
-    @UNSAFE_CAST
-    public static char shortToChar(short value) {
-        return (char) value;
-    }
-
-    @UNSAFE_CAST
-    public static short charToShort(char value) {
-        return (short) value;
-    }
+    @UNSAFE_CAST public static int                      asInt(Word word) { return word.asAddress().toInt(); }
+    @UNSAFE_CAST public static long                     asLong(Word word) { return word.asAddress().toLong(); }
+    @UNSAFE_CAST public static boolean                  asBoolean(byte value) { return value != 0; }
+    @UNSAFE_CAST public static byte                     asByte(boolean value) { return value ? 1 : (byte) 0; }
+    @UNSAFE_CAST public static char                     asChar(short value) { return (char) value; }
+    @UNSAFE_CAST public static short                    asShort(char value) { return (short) value; }
 
     @BUILTIN(builtinClass = SpecialBuiltin.IntToFloat.class)
-    public static float intToFloat(int value) {
+    public static float asFloat(int value) {
         return Float.intBitsToFloat(value);
     }
 
     @BUILTIN(builtinClass = SpecialBuiltin.FloatToInt.class)
-    public static int floatToInt(float value) {
+    public static int asInt(float value) {
         return Float.floatToRawIntBits(value);
     }
 
     @BUILTIN(builtinClass = SpecialBuiltin.LongToDouble.class)
-    public static double longToDouble(long value) {
+    public static double asDouble(long value) {
         return Double.longBitsToDouble(value);
     }
 
     @BUILTIN(builtinClass = SpecialBuiltin.DoubleToLong.class)
-    public static long doubleToLong(double value) {
+    public static long asLong(double value) {
         return Double.doubleToRawLongBits(value);
     }
 }

@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * This class exists solely as a work around when running the IR tests where compilation stops at some IR level
@@ -33,7 +32,7 @@ import com.sun.max.vm.compiler.ir.*;
  * hidden class is just a bridge from {@link TargetMethod#getEntryPoint(CallEntryPoint)} to
  * {@link IrMethod#getEntryPoint(CallEntryPoint)}.
  */
-public class IrTargetMethod extends TargetMethod {
+public class IrTargetMethod extends CPSTargetMethod {
 
     public static TargetMethod asTargetMethod(IrMethod irMethod) {
         if (irMethod == null) {
@@ -48,7 +47,7 @@ public class IrTargetMethod extends TargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor(), null, null);
+        super(irMethod.classMethodActor(), null);
         this.irMethod = irMethod;
     }
 
@@ -68,12 +67,12 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
+    public int registerReferenceMapSize() {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+    public JavaStackFrameLayout stackFrameLayout() {
         throw ProgramError.unexpected();
     }
 }

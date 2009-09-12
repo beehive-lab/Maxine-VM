@@ -514,35 +514,35 @@ public class InvocationStubGenerator<T> {
                         LocalVariableTable.EMPTY,
                         null);
 
-        VirtualMethodActor dynamicMethodActor;
+        VirtualMethodActor virtualMethodActor;
         if (isConstructor) {
             final TypeDescriptor[] checkedExceptions = {
                 JavaTypeDescriptor.INSTANTIATION_EXCEPTION,
                 JavaTypeDescriptor.ILLEGAL_ARGUMENT_EXCEPTION,
                 JavaTypeDescriptor.INVOCATION_TARGET_EXCEPTION
             };
-            dynamicMethodActor = new VirtualMethodActor(newInstance,
+            virtualMethodActor = new VirtualMethodActor(newInstance,
                 boxing.newInstanceSignature(),
                 Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
                 codeAttribute);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
-            classRegistry.set(CHECKED_EXCEPTIONS, dynamicMethodActor, checkedExceptions);
+            classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         } else {
             final TypeDescriptor[] checkedExceptions = {
                 JavaTypeDescriptor.ILLEGAL_ARGUMENT_EXCEPTION,
                 JavaTypeDescriptor.INVOCATION_TARGET_EXCEPTION
             };
-            dynamicMethodActor = new VirtualMethodActor(invoke,
+            virtualMethodActor = new VirtualMethodActor(invoke,
                             boxing.invokeSignature(),
                             Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
                             codeAttribute);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
-            classRegistry.set(CHECKED_EXCEPTIONS, dynamicMethodActor, checkedExceptions);
+            classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         }
         if (isUnsafe) {
-            dynamicMethodActor.beUnsafe();
+            virtualMethodActor.beUnsafe();
         }
-        return dynamicMethodActor;
+        return virtualMethodActor;
     }
 
     private void traceStubAsJavaSource(Class superClass,
@@ -676,7 +676,11 @@ public class InvocationStubGenerator<T> {
     static final int InvocationTargetException_init_Throwable = register(createClassMethodConstant(InvocationTargetException.class, Throwable.class));
 
     static final int Object_toString = register(createClassMethodConstant(Object.class, SymbolTable.makeSymbol("toString")));
-    static final int Boxing_castWord_Word = register(createClassMethodConstant(Boxing.class, SymbolTable.makeSymbol("castWord"), Word.class));
+
+    static final int Word_asOffset = register(createClassMethodConstant(Word.class, SymbolTable.makeSymbol("asOffset")));
+    static final int Word_asAddress = register(createClassMethodConstant(Word.class, SymbolTable.makeSymbol("asAddress")));
+    static final int Word_asPointer = register(createClassMethodConstant(Word.class, SymbolTable.makeSymbol("asPointer")));
+    static final int Word_asSize = register(createClassMethodConstant(Word.class, SymbolTable.makeSymbol("asSize")));
 
     static final int StringBuilder_append_int = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), int.class));
     static final int StringBuilder_append_String = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), String.class));
@@ -690,6 +694,8 @@ public class InvocationStubGenerator<T> {
 
     static final Map<KindEnum, Integer> VALUE_BOX;
     static final Map<KindEnum, Integer> VALUE_UNBOX;
+
+    static final Map<Class<? extends Word>, Integer> CAST_WORD;
 
     static final int VoidValue_VOID;
 
@@ -741,6 +747,13 @@ public class InvocationStubGenerator<T> {
         VALUE_UNBOX = Collections.unmodifiableMap(valueUnbox);
         JAVA_BOX_PRIMITIVE = Collections.unmodifiableMap(javaBoxPrimitive);
         JAVA_UNBOX_PRIMITIVE = Collections.unmodifiableMap(javaUnboxPrimitive);
+
+        Map<Class<? extends Word>, Integer> castWord = new HashMap<Class<? extends Word>, Integer>();
+        castWord.put(Offset.class, Word_asOffset);
+        castWord.put(Size.class, Word_asSize);
+        castWord.put(Address.class, Word_asAddress);
+        castWord.put(Pointer.class, Word_asPointer);
+        CAST_WORD = Collections.unmodifiableMap(castWord);
     }
 
     /**

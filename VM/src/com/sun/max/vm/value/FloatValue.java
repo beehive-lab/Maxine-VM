@@ -65,7 +65,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.floatToInt(value) == -1;
+        return UnsafeLoophole.asInt(value) == -1;
     }
 
     @Override

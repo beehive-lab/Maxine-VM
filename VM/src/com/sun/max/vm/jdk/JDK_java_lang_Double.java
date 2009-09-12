@@ -34,11 +34,11 @@ public class JDK_java_lang_Double {
 
     @SUBSTITUTE
     public static long doubleToRawLongBits(double d) {
-        return UnsafeLoophole.doubleToLong(d);
+        return UnsafeLoophole.asLong(d);
     }
 
     @SUBSTITUTE
     public static double longBitsToDouble(long l) {
-        return UnsafeLoophole.longToDouble(l);
+        return UnsafeLoophole.asDouble(l);
     }
 }

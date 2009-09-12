@@ -104,8 +104,8 @@ public class SpecialReferenceManager {
      */
     public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
         // the first pass over the list finds the references that have referents that are no longer reachable
-        java.lang.ref.Reference ref = UnsafeLoophole.cast(discoveredList.toJava());
-        java.lang.ref.Reference last = UnsafeLoophole.cast(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
+        java.lang.ref.Reference ref = UnsafeLoophole.asJDKReference(discoveredList.toJava());
+        java.lang.ref.Reference last = UnsafeLoophole.asJDKReference(TupleAccess.readObject(pendingField.holder().staticTuple(), pendingField.offset()));
         while (ref != null) {
             final Grip referent = Grip.fromJava(ref).readGrip(referentField.offset());
             if (gripForwarder.isReachable(referent)) {
@@ -134,7 +134,7 @@ public class SpecialReferenceManager {
                 }
                 Log.unlock(lockDisabledSafepoints);
             }
-            ref = UnsafeLoophole.cast(TupleAccess.readObject(ref, discoveredField.offset()));
+            ref = UnsafeLoophole.asJDKReference(TupleAccess.readObject(ref, discoveredField.offset()));
         }
         TupleAccess.writeObject(pendingField.holder().staticTuple(), pendingField.offset(), last);
         discoveredList = Grip.fromOrigin(Pointer.zero());
@@ -179,7 +179,7 @@ public class SpecialReferenceManager {
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("Added ");
-                final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
+                final Hub hub = UnsafeLoophole.asHub(Layout.readHubReference(grip).toJava());
                 Log.print(hub.classActor.name.string);
                 Log.println(" to list of discovered references");
                 Log.unlock(lockDisabledSafepoints);
