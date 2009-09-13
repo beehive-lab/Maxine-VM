@@ -63,7 +63,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(char value) {
-        final short shortValue = UnsafeLoophole.asShort(value);
+        final short shortValue = UnsafeCast.asShort(value);
         return endianness.toBytes(shortValue);
     }
 

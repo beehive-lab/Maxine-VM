@@ -1310,7 +1310,7 @@ public abstract class ClassActor extends Actor {
         if (oldValue == null) {
             return newMirror;
         }
-        return UnsafeLoophole.asClass(oldValue.toJava());
+        return UnsafeCast.asClass(oldValue.toJava());
     }
 
     @PROTOTYPE_ONLY

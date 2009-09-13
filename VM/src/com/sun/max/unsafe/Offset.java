@@ -53,9 +53,9 @@ public abstract class Offset extends Word {
         }
         if (Word.width() == 64) {
             final long n = value;
-            return UnsafeLoophole.asOffset(n);
+            return UnsafeCast.asOffset(n);
         }
-        return UnsafeLoophole.asOffset(value);
+        return UnsafeCast.asOffset(value);
     }
 
     @INLINE
@@ -64,10 +64,10 @@ public abstract class Offset extends Word {
             return BoxedOffset.from(value);
         }
         if (Word.width() == 64) {
-            return UnsafeLoophole.asOffset(value);
+            return UnsafeCast.asOffset(value);
         }
         final int n = (int) value;
-        return UnsafeLoophole.asOffset(n);
+        return UnsafeCast.asOffset(n);
     }
 
     @Override
@@ -82,10 +82,10 @@ public abstract class Offset extends Word {
             return (int) box.nativeWord();
         }
         if (Word.width() == 64) {
-            final long n = UnsafeLoophole.asLong(this);
+            final long n = UnsafeCast.asLong(this);
             return (int) n;
         }
-        return UnsafeLoophole.asInt(this);
+        return UnsafeCast.asInt(this);
     }
 
     @INLINE
@@ -95,9 +95,9 @@ public abstract class Offset extends Word {
             return box.nativeWord();
         }
         if (Word.width() == 64) {
-            return UnsafeLoophole.asLong(this);
+            return UnsafeCast.asLong(this);
         }
-        return UnsafeLoophole.asInt(this);
+        return UnsafeCast.asInt(this);
     }
 
     public final int compareTo(Offset other) {

@@ -172,7 +172,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
             if (Heap.traceAllocation()) {
-                final VmThread vmThread = UnsafeLoophole.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.printVmThread(vmThread, false);
                 Log.print(": Resetting TLAB [TOP=");
@@ -327,7 +327,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
         if (Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeLoophole.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
             Log.print(": Refill TLAB with ");
             Log.print(tlab);

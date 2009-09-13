@@ -35,14 +35,12 @@ import com.sun.max.vm.thread.*;
 /**
  * A collection of methods used to perform {@link UNSAFE_CAST unchecked type casts}.
  *
- * The bodies of these methods exist solely so that the methods can be {@linkplain FOLD folded}.
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class UnsafeLoophole {
+public final class UnsafeCast {
     @PROTOTYPE_ONLY
-    private UnsafeLoophole() {
+    private UnsafeCast() {
     }
 
     @UNSAFE_CAST public static VmThread                 asVmThread(Object object) { return (VmThread) object; }

@@ -87,7 +87,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
             if (MaxineVM.isPrototyping() && !VMConfiguration.target().compilerScheme().areSnippetsCompiled()) {
                 return classActor.findVirtualMethodActor(interfaceMethod);
             }
-            final InterfaceActor interfaceActor = UnsafeLoophole.asInterfaceActor(interfaceMethod.holder());
+            final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
             final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex;
             return classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceMethod.iIndexInInterface());
         }
@@ -98,7 +98,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
         @INLINE(afterSnippetsAreCompiled = true)
         public static Word selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethod) {
             final Hub hub = ObjectAccess.readHub(receiver);
-            final InterfaceActor interfaceActor = UnsafeLoophole.asInterfaceActor(interfaceMethod.holder());
+            final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
             final int interfaceIndex = hub.getITableIndex(interfaceActor.id);
             return hub.getWord(interfaceIndex + interfaceMethod.iIndexInInterface());
         }

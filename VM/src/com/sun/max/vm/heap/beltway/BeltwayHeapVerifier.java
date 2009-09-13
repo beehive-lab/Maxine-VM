@@ -75,7 +75,7 @@ public class BeltwayHeapVerifier implements CellVisitor {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
         cellVerifier.verifyGrip(hubGrip);
-        final Hub hub = UnsafeLoophole.asHub(hubGrip.toJava());
+        final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
         cellVerifier.checkHub(hub);
         final SpecificLayout specificLayout = hub.specificLayout;
         if (specificLayout.isTupleLayout()) {

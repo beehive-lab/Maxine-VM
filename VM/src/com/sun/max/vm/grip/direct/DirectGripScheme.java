@@ -61,7 +61,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
 
     @INLINE(override = true)
     public Grip fromJava(Object object) {
-        return UnsafeLoophole.asGrip(object);
+        return UnsafeCast.asGrip(object);
     }
 
     @INLINE(override = true)
