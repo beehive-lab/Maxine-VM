@@ -173,13 +173,15 @@ public final class RegistersTable extends InspectorTable {
             labels = new WordValueLabel[tableModel.getRowCount()];
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 final RegisterInfo registerInfo = (RegisterInfo) tableModel.getValueAt(row, 0);
-                labels[row] = new WordValueLabel(inspection, tableModel.getValueMode(row), RegistersTable.this) {
+                final WordValueLabel label = new WordValueLabel(inspection, tableModel.getValueMode(row), RegistersTable.this) {
 
                     @Override
                     protected Value fetchValue() {
                         return registerInfo.value();
                     }
                 };
+                label.setOpaque(true);
+                labels[row] = label;
             }
         }
 
@@ -231,6 +233,7 @@ public final class RegistersTable extends InspectorTable {
             MemoryRegionValueLabel label = labels[row];
             if (label == null) {
                 label = new MemoryRegionValueLabel(inspection());
+                label.setOpaque(true);
                 labels[row] = label;
             }
             label.setValue(registerInfo.value());
