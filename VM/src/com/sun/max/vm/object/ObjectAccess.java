@@ -116,7 +116,7 @@ public final class ObjectAccess {
      */
     @INLINE
     public static Hub readHub(Object object) {
-        return UnsafeLoophole.asHub(Reference.fromJava(object).readHubReference().toJava());
+        return UnsafeCast.asHub(Reference.fromJava(object).readHubReference().toJava());
     }
 
     /**
@@ -127,7 +127,7 @@ public final class ObjectAccess {
      */
     @INLINE
     public static ClassActor readClassActor(Object object) {
-        final Hub hub = UnsafeLoophole.asHub(Reference.fromJava(object).readHubReference().toJava());
+        final Hub hub = UnsafeCast.asHub(Reference.fromJava(object).readHubReference().toJava());
         return hub.classActor;
     }
 

@@ -306,17 +306,17 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final boolean readBoolean(Offset offset) {
-        return UnsafeLoophole.asBoolean(readByte(offset));
+        return UnsafeCast.asBoolean(readByte(offset));
     }
 
     @INLINE
     public final boolean readBoolean(int offset) {
-        return UnsafeLoophole.asBoolean(readByte(offset));
+        return UnsafeCast.asBoolean(readByte(offset));
     }
 
     @INLINE
     public final boolean getBoolean(int displacement, int index) {
-        return UnsafeLoophole.asBoolean(getByte(displacement, index));
+        return UnsafeCast.asBoolean(getByte(displacement, index));
     }
 
     @INLINE
@@ -729,17 +729,17 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeBoolean(Offset offset, boolean value) {
-        writeByte(offset, UnsafeLoophole.asByte(value));
+        writeByte(offset, UnsafeCast.asByte(value));
     }
 
     @INLINE
     public final void writeBoolean(int offset, boolean value) {
-        writeByte(offset, UnsafeLoophole.asByte(value));
+        writeByte(offset, UnsafeCast.asByte(value));
     }
 
     @INLINE
     public final void setBoolean(int displacement, int index, boolean value) {
-        setByte(displacement, index, UnsafeLoophole.asByte(value));
+        setByte(displacement, index, UnsafeCast.asByte(value));
     }
 
     @INLINE
@@ -798,17 +798,17 @@ public abstract class Pointer extends Address implements Accessor {
 
     @INLINE
     public final void writeChar(Offset offset, char value) {
-        writeShort(offset, UnsafeLoophole.asShort(value));
+        writeShort(offset, UnsafeCast.asShort(value));
     }
 
     @INLINE
     public final void writeChar(int offset, char value) {
-        writeShort(offset, UnsafeLoophole.asShort(value));
+        writeShort(offset, UnsafeCast.asShort(value));
     }
 
     @INLINE
     public final void setChar(int displacement, int index, char value) {
-        setShort(displacement, index, UnsafeLoophole.asShort(value));
+        setShort(displacement, index, UnsafeCast.asShort(value));
     }
 
     @INLINE

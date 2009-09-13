@@ -109,7 +109,7 @@ public @interface METHOD_SUBSTITUTIONS {
 
             // These two checks make it impossible for method substitutions holders to have instance fields.
             // A substitute non-static method could never access such a field given that the receiver is
-            // cast (via UnsafeLoophole) to be an instance of the substitutee.
+            // cast (via UNSAFE_CAST) to be an instance of the substitutee.
             ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
             ProgramError.check(substitutor.localInstanceFieldActors().length == 0, "method substitution class cannot declare any dynamic fields");
 

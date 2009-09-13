@@ -27,10 +27,15 @@ import java.lang.annotation.*;
  * such methods are recognized by the compiler to simply be an unsafe coercion from one type to another.
  *
  * Any method annotated with this annotation must take exactly one parameter (which will be the receiver if the method
- * is non-static ), have a non-void return type and must not be generic. The type of the parameter is the type being
+ * is non-static ), have a non-void, non-generic return type. The type of the parameter is the type being
  * converted from and the return type is the type being converted to.
  *
  * The compiler must translate calls to these methods to simply replace the use of the result with the single parameter.
+ *
+ * A method annotated with {@link UNSAFE_CAST} may have an implementation (i.e. it is not {@code native} and not
+ * {@code abstract}). This implementation is used to fold (i.e. compile-time evaluate) the method. The implementation
+ * will simply be an explicit cast statement that results in a runtime type check when the method is
+ * evaluated.
  *
  * @author Doug Simon
  */

@@ -40,7 +40,7 @@ public abstract class BuiltinsSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static Object getStaticTuple(FieldActor fieldActor) {
-            return UnsafeLoophole.asClassActor(fieldActor.holder()).staticTuple();
+            return UnsafeCast.asClassActor(fieldActor.holder()).staticTuple();
         }
         public static final GetStaticTuple SNIPPET = new GetStaticTuple();
     }

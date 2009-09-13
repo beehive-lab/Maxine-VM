@@ -56,7 +56,7 @@ final class JDK_java_lang_Class {
 
     @INLINE
     private ClassActor thisClassActor() {
-        return ClassActor.fromJava(UnsafeLoophole.asClass(this));
+        return ClassActor.fromJava(UnsafeCast.asClass(this));
     }
 
     @SUBSTITUTE

@@ -96,7 +96,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public char readChar(Address address) {
-        return UnsafeLoophole.asChar(readShort(address));
+        return UnsafeCast.asChar(readShort(address));
     }
 
     public char readChar(Address address, Offset offset) {
@@ -246,7 +246,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeChar(Address address, char value) {
-        writeShort(address, UnsafeLoophole.asShort(value));
+        writeShort(address, UnsafeCast.asShort(value));
     }
 
     public void writeChar(Address address, Offset offset, char value) {

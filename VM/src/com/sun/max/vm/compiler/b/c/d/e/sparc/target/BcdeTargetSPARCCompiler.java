@@ -192,7 +192,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case EXCEPTION_HANDLING: {
                 assert !isTopFrame;
                 // Record this JIT -> OPT adapter frame.
-                final StackUnwindingContext unwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
+                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 unwindingContext.record(stackPointer, stackFrameWalker.framePointer());
                 break;
             }
@@ -381,7 +381,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
+                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 final Throwable throwable = stackUnwindingContext.throwable;
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
                 if (!catchAddress.isZero()) {
@@ -399,7 +399,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
                     unwind(throwable, catchAddress, stackPointer);
                 }
-                final StackUnwindingContext unwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
+                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 unwindingContext.record(stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
                 break;
             }
