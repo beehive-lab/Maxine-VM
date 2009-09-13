@@ -527,7 +527,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = (Address) value;
             setValue(address.minus(entryAddress).toInt());
-            setColumns(getText().length() + 1);
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             return this;
@@ -586,7 +585,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setForeground(getRowTextColor(row));
             final String string = value.toString();
             setText(string);
-            setColumns(string.length() + 1);
             return this;
         }
     }
