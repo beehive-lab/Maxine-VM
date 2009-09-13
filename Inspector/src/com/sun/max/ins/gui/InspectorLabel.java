@@ -29,21 +29,16 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * A text field specialized for use in the {@link Inspector}.
- * Appears like a {@link JLabel}, except that the
- * text can be selected and copied by a user.
- *
+ * A label specialized for use in the {@link Inspector}.
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class InspectorLabel extends JTextField implements InspectionHolder, TextSearchable, Prober {
+public abstract class InspectorLabel extends JLabel implements InspectionHolder, TextSearchable, Prober {
 
     private final Inspection inspection;
 
     /**
-     * A label for use in the inspector: can be selected and copied.
-     * <br>
-     * These labels are by default not opaque.
+     * A label for use in the inspector, by default not opaque.
      *
      * @param text label text
      * @param toolTipText text for ToolTips
@@ -52,7 +47,6 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
         super(text);
         this.inspection = inspection;
         setToolTipText(toolTipText);
-        setEditable(false);
         setOpaque(false);
     }
 

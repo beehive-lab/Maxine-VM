@@ -537,8 +537,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (this.position != position) {
                 this.position = position;
                 setValue(position);
-                // TODO (mlvdv)  does this help make things more compact?
-                setColumns(getText().length() + 1);
             }
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
