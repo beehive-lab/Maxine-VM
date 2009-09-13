@@ -37,12 +37,10 @@ import com.sun.max.tele.debug.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class MemoryTagTableCellRenderer extends JLabel implements TableCellRenderer, Prober {
-
-    private final Inspection inspection;
+public abstract class MemoryTagTableCellRenderer extends InspectorLabel implements TableCellRenderer, Prober {
 
     public MemoryTagTableCellRenderer(Inspection inspection) {
-        this.inspection = inspection;
+        super(inspection, null);
         setOpaque(true);
     }
 
@@ -62,40 +60,40 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";
-        setFont(inspection.style().defaultFont());
+        setFont(inspection().style().defaultFont());
         // See if any registers point here
         if (thread != null) {
             final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
             if (teleIntegerRegisters == null) {
                 // Return a specialized renderer with its own content.
-                label = inspection.gui().getUnavailableDataTableCellRenderer();
+                label = inspection().gui().getUnavailableDataTableCellRenderer();
             } else {
                 final String registerNameList = teleIntegerRegisters.findAsNameList(memoryRegion);
                 if (registerNameList.isEmpty()) {
-                    label.setForeground(inspection.style().memoryDefaultTagTextColor());
+                    label.setForeground(inspection().style().memoryDefaultTagTextColor());
                 } else {
                     labelText += registerNameList + "-->";
-                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection.nameDisplay().longName(thread) + " point at this location";
-                    setForeground(inspection.style().memoryRegisterTagTextColor());
+                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
+                    setForeground(inspection().style().memoryRegisterTagTextColor());
                 }
             }
         }
         // If a watchpoint is currently triggered here, add a pointer icon.
-        if (inspection.maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection.maxVM().maxVMState().watchpointEvent().address())) {
-            label.setIcon(inspection.style().debugIPTagIcon());
-            label.setForeground(inspection.style().debugIPTagColor());
+        if (inspection().maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection().maxVM().maxVMState().watchpointEvent().address())) {
+            label.setIcon(inspection().style().debugIPTagIcon());
+            label.setForeground(inspection().style().debugIPTagColor());
         } else {
             label.setIcon(null);
-            label.setForeground(inspection.style().defaultTextColor());
+            label.setForeground(inspection().style().defaultTextColor());
         }
         if (!watchpoints.isEmpty()) {
             toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            label.setBorder(inspection.style().debugDisabledTargetBreakpointTagBorder());
+            label.setBorder(inspection().style().debugDisabledTargetBreakpointTagBorder());
             for (MaxWatchpoint watchpoint : watchpoints) {
                 if (watchpoint.isEnabled()) {
-                    label.setBorder(inspection.style().debugEnabledTargetBreakpointTagBorder());
+                    label.setBorder(inspection().style().debugEnabledTargetBreakpointTagBorder());
                     break;
                 }
             }
@@ -112,6 +110,5 @@ public abstract class MemoryTagTableCellRenderer extends JLabel implements Table
 
     public void refresh(boolean force) {
     }
-
 }
 
