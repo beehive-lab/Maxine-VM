@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
