@@ -29,6 +29,7 @@ import java.math.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirInstruction.*;
@@ -397,7 +398,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         final double a = cpu.readDouble(instruction.destinationOperand().location());
         final double b = cpu.readDouble(instruction.sourceOperand().location());
 
-        final double result = doubleCompare(instruction.comparison(), a, b) ? UnsafeLoophole.asDouble(-1L) : UnsafeLoophole.asDouble(0L);
+        final double result = doubleCompare(instruction.comparison(), a, b) ? SpecialBuiltin.longToDouble(-1L) : SpecialBuiltin.longToDouble(0L);
         cpu.writeDouble(instruction.destinationOperand().location(), result);
     }
 
@@ -433,7 +434,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         final float a = cpu.readFloat(instruction.destinationOperand().location());
         final float b = cpu.readFloat(instruction.sourceOperand().location());
 
-        final float result = floatCompare(instruction.comparison(), a, b) ? UnsafeLoophole.asFloat(-1) : UnsafeLoophole.asFloat(0);
+        final float result = floatCompare(instruction.comparison(), a, b) ? SpecialBuiltin.intToFloat(-1) : SpecialBuiltin.intToFloat(0);
         cpu.writeFloat(instruction.destinationOperand().location(), result);
     }
 
@@ -685,22 +686,22 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
 
     public void visit(MOVD_I32_F32 instruction) {
         final float f = cpu.readFloat(instruction.sourceOperand().location());
-        cpu.writeInt(instruction.destinationOperand().location(), UnsafeLoophole.asInt(f));
+        cpu.writeInt(instruction.destinationOperand().location(), SpecialBuiltin.floatToInt(f));
     }
 
     public void visit(MOVD_I64_F64 instruction) {
         final double d = cpu.readDouble(instruction.sourceOperand().location());
-        cpu.writeLong(instruction.destinationOperand().location(), UnsafeLoophole.asLong(d));
+        cpu.writeLong(instruction.destinationOperand().location(), SpecialBuiltin.doubleToLong(d));
     }
 
     public void visit(MOVD_F32_I32 instruction) {
         final int f = cpu.readInt(instruction.sourceOperand().location());
-        cpu.writeFloat(instruction.destinationOperand().location(), UnsafeLoophole.asFloat(f));
+        cpu.writeFloat(instruction.destinationOperand().location(), SpecialBuiltin.intToFloat(f));
     }
 
     public void visit(MOVD_F64_I64 instruction) {
         final long d = cpu.readLong(instruction.sourceOperand().location());
-        cpu.writeDouble(instruction.destinationOperand().location(), UnsafeLoophole.asDouble(d));
+        cpu.writeDouble(instruction.destinationOperand().location(), SpecialBuiltin.longToDouble(d));
     }
 
     public void visit(MOVSX_I8 instruction) {
@@ -949,9 +950,9 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
             cpu.writeDouble(instruction.destinationOperand().location(), 0D);
             return;
         }
-        final long a = UnsafeLoophole.asLong(cpu.readDouble(instruction.destinationOperand().location()));
-        final long b = UnsafeLoophole.asLong(cpu.readDouble(instruction.sourceOperand().location()));
-        cpu.writeDouble(instruction.destinationOperand().location(), UnsafeLoophole.asDouble(a ^ b));
+        final long a = SpecialBuiltin.doubleToLong(cpu.readDouble(instruction.destinationOperand().location()));
+        final long b = SpecialBuiltin.doubleToLong(cpu.readDouble(instruction.sourceOperand().location()));
+        cpu.writeDouble(instruction.destinationOperand().location(), SpecialBuiltin.longToDouble(a ^ b));
     }
 
     public void visit(XORPS instruction) {
@@ -962,9 +963,9 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
             cpu.writeFloat(instruction.destinationOperand().location(), 0F);
             return;
         }
-        final int a = UnsafeLoophole.asInt(cpu.readFloat(instruction.destinationOperand().location()));
-        final int b = UnsafeLoophole.asInt(cpu.readFloat(instruction.sourceOperand().location()));
-        cpu.writeFloat(instruction.destinationOperand().location(), UnsafeLoophole.asFloat(a ^ b));
+        final int a = SpecialBuiltin.floatToInt(cpu.readFloat(instruction.destinationOperand().location()));
+        final int b = SpecialBuiltin.floatToInt(cpu.readFloat(instruction.sourceOperand().location()));
+        cpu.writeFloat(instruction.destinationOperand().location(), SpecialBuiltin.intToFloat(a ^ b));
     }
 
     public void visit(ZERO instruction) {

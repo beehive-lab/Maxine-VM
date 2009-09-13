@@ -22,6 +22,7 @@ package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * The {@code JDK_java_lang_Float} class implements substitutions for the
@@ -33,11 +34,11 @@ import com.sun.max.unsafe.*;
 public class JDK_java_lang_Float {
     @SUBSTITUTE
     public static int floatToIntBits(float f) {
-        return UnsafeLoophole.asInt(f);
+        return SpecialBuiltin.floatToInt(f);
     }
 
     @SUBSTITUTE
     public static float intBitsToFloat(int i) {
-        return UnsafeLoophole.asFloat(i);
+        return SpecialBuiltin.intToFloat(i);
     }
 }
