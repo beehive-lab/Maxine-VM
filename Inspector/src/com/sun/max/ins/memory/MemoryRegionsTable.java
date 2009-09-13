@@ -34,7 +34,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
@@ -220,7 +219,6 @@ public final class MemoryRegionsTable extends InspectorTable {
                 }
                 row++;
             }
-            ProgramError.unexpected("MemoryregionsInspector couldn't find region: " + memoryRegion);
             return -1;
         }
     }
