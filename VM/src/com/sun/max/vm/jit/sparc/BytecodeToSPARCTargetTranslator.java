@@ -39,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.b.c.d.e.sparc.target.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
@@ -335,7 +336,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             if (argument == 0) {
                 asm.clr(scratchRegister);
             } else {
-                asm.setx(UnsafeLoophole.asLong(argument), scratchRegister2, scratchRegister);
+                asm.setx(SpecialBuiltin.doubleToLong(argument), scratchRegister2, scratchRegister);
             }
             asm.stx(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
             asm.ldd(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
@@ -354,7 +355,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             if (argument == 0) {
                 asm.clr(scratchRegister);
             } else {
-                asm.setsw(UnsafeLoophole.asInt(argument), scratchRegister);
+                asm.setsw(SpecialBuiltin.floatToInt(argument), scratchRegister);
             }
             asm.stw(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
             asm.ld(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
