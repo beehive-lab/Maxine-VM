@@ -26,14 +26,9 @@ import com.sun.c1x.debug.*;
  *
  * @author Thomas Wuerthinger
  */
-public class Range {
+final class Range {
 
-    private static final Range end = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null); // sentinel (from == to ==
-                                                                                            // maxJint)
-
-    static Range end() {
-        return end;
-    }
+    static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
 
     private int from; // from (inclusive)
     private int to; // to (exclusive)
@@ -71,7 +66,6 @@ public class Range {
     // * Implementation of Range *
 
     Range(int from, int to, Range next) {
-
         this.from = from;
         this.to = to;
         this.next = next;
@@ -81,13 +75,13 @@ public class Range {
         Range r1 = this;
 
         assert r2 != null : "null ranges not allowed";
-        assert r1 != end && r2 != end : "empty ranges not allowed";
+        assert r1 != EndMarker && r2 != EndMarker : "empty ranges not allowed";
 
         do {
             if (r1.from() < r2.from()) {
                 if (r1.to() <= r2.from()) {
                     r1 = r1.next();
-                    if (r1 == end) {
+                    if (r1 == EndMarker) {
                         return -1;
                     }
                 } else {
@@ -96,7 +90,7 @@ public class Range {
             } else if (r2.from() < r1.from()) {
                 if (r2.to() <= r1.from()) {
                     r2 = r2.next();
-                    if (r2 == end) {
+                    if (r2 == EndMarker) {
                         return -1;
                     }
                 } else {
@@ -105,12 +99,12 @@ public class Range {
             } else { // r1.from() == r2.from()
                 if (r1.from() == r1.to()) {
                     r1 = r1.next();
-                    if (r1 == end) {
+                    if (r1 == EndMarker) {
                         return -1;
                     }
                 } else if (r2.from() == r2.to()) {
                     r2 = r2.next();
-                    if (r2 == end) {
+                    if (r2 == EndMarker) {
                         return -1;
                     }
                 } else {

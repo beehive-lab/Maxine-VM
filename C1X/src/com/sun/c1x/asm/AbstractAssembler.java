@@ -41,7 +41,7 @@ public abstract class AbstractAssembler {
 
     public AbstractAssembler(CiTarget target, int frameSize) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.arch.wordSize, target.registerReferenceMapTemplate.length);
+        this.targetMethod = new CiTargetMethod(target.registerReferenceMapTemplate.length);
         this.codeBuffer = new Buffer(target.arch.bitOrdering);
         targetMethod.setFrameSize(frameSize);
     }
@@ -57,7 +57,6 @@ public abstract class AbstractAssembler {
     }
 
     public void setFrameSize(int frameSize) {
-        assert targetMethod.frameSize() == -1 : "frame size already set!";
         targetMethod.setFrameSize(frameSize);
     }
 
@@ -66,8 +65,7 @@ public abstract class AbstractAssembler {
         C1XMetrics.TargetMethods++;
 
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
-        targetMethod.setFrameSize(framesize);
+        targetMethod.setTargetCode(codeBuffer.finished());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if existant
@@ -83,11 +81,11 @@ public abstract class AbstractAssembler {
         }
 
         if (C1XOptions.PrintMetrics) {
-            C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize;
-            C1XMetrics.SafepointsEmitted += targetMethod.safepointRefMaps.size();
-            C1XMetrics.DirectCallSitesEmitted += targetMethod.directCallSites.size();
-            C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCallSites.size();
-            C1XMetrics.DataPatches += targetMethod.dataPatchSites.size();
+            C1XMetrics.CodeBytesEmitted += targetMethod.targetCode().length;
+            C1XMetrics.SafepointsEmitted += targetMethod.safepoints.size();
+            C1XMetrics.DirectCallSitesEmitted += targetMethod.directCalls.size();
+            C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCalls.size();
+            C1XMetrics.DataPatches += targetMethod.dataReferences.size();
             C1XMetrics.ExceptionHandlersEmitted += targetMethod.exceptionHandlers.size();
         }
 
@@ -98,32 +96,28 @@ public abstract class AbstractAssembler {
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode, targetMethod.targetCodeSize, C1XOptions.PrintAssemblyBytesPerLine);
-
+            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCode().length, C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode, targetMethod.targetCodeSize)));
-
+            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.SafepointRefMap x : targetMethod.safepointRefMaps) {
+            for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
                 TTY.println(x.toString());
             }
-
 
             Util.printSection("Direct Call Sites", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.CallSite x : targetMethod.directCallSites) {
+            for (CiTargetMethod.Call x : targetMethod.directCalls) {
                 TTY.println(x.toString());
             }
 
-
             Util.printSection("Indirect Call Sites", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.CallSite x : targetMethod.indirectCallSites) {
+            for (CiTargetMethod.Call x : targetMethod.indirectCalls) {
                 TTY.println(x.toString());
             }
 
             Util.printSection("Data Patches", Util.SUB_SECTION_CHARACTER);
-            for (CiTargetMethod.DataPatchSite x : targetMethod.dataPatchSites) {
+            for (CiTargetMethod.DataPatch x : targetMethod.dataReferences) {
                 TTY.println(x.toString());
             }
 
@@ -182,7 +176,7 @@ public abstract class AbstractAssembler {
         }
 
         verifyReferenceMap();
-        targetMethod.recordDirectCall(pos, call, stackMap);
+        targetMethod.recordCall(pos, call, stackMap, true);
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
@@ -194,7 +188,7 @@ public abstract class AbstractAssembler {
         }
 
         verifyReferenceMap();
-        targetMethod.recordIndirectCall(pos, call, stackMap);
+        targetMethod.recordCall(pos, call, stackMap, false);
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
@@ -230,7 +224,7 @@ public abstract class AbstractAssembler {
             TTY.print("Data reference in code: pos = %d, data = %s", pos, data.toString());
         }
 
-        targetMethod.recordDataReferenceInCode(pos, data);
+        targetMethod.recordDataReference(pos, data);
         return Address.InternalRelocation;
     }
 

@@ -32,13 +32,10 @@ package com.sun.c1x.lir;
 public enum LIROpcode {
     None
     , BeginOp0
-        , WordAlign
         , Label
-        , Nop
         , BackwardBranchTarget
         , StdEntry
         , OsrEntry
-        , BuildFrame
         , RtCall
         , Membar
         , MembarAcquire

@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.ri;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiConstant;
 
 /**
  * The <code>RiConstantPool</code> class provides the interface to the constant pool that is
@@ -209,5 +209,10 @@ public interface RiConstantPool {
      */
     RiExceptionHandler newExceptionHandler(int startBCI, int endBCI, int catchBCI, int classCPI);
 
+    /**
+     * Constant object that can be used to identify this constant pool when it is referenced from the code.
+     * 
+     * @return a constant object representing this constant pool
+     */
     CiConstant encoding();
 }
