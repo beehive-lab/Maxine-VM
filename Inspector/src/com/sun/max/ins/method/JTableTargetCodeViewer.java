@@ -27,7 +27,6 @@ import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
@@ -64,7 +63,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel tableModel;
-    private final TargetCodeTableColumnModel tableColumnModel;
     private final TargetCodeViewPreferences instanceViewPreferences;
     private final TableColumn[] columns;
     private final OperandsRenderer operandsRenderer;
@@ -84,12 +82,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             @Override
             public void setIsVisible(TargetCodeColumnKind columnKind, boolean visible) {
                 super.setIsVisible(columnKind, visible);
-                tableColumnModel.setColumnVisible(columnKind.ordinal(), visible);
+                table.getInspectorTableColumnModel().setColumnVisible(columnKind.ordinal(), visible);
                 JTableColumnResizer.adjustColumnPreferredWidths(table);
                 refresh(true);
             }
         };
-        this.tableColumnModel = new TargetCodeTableColumnModel(instanceViewPreferences);
+        final TargetCodeTableColumnModel tableColumnModel = new TargetCodeTableColumnModel(instanceViewPreferences);
         this.table = new TargetCodeTable(inspection, tableModel, tableColumnModel);
         defaultBackgroundColor = this.table.getBackground();
         alternateBackgroundColor = style().darken1(defaultBackgroundColor);
@@ -279,6 +277,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             }
         }
+
 
         /**
          * Global code selection has been set; return true iff the view contains selection.
@@ -556,8 +555,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class LabelRenderer extends LocationLabel.AsTextLabel implements TableCellRenderer {
 
-        private final Border boundaryBorder = new MatteBorder(4, 0, 0, 0, Color.BLACK);
-
         public LabelRenderer(Address entryAddress) {
             super(inspection, entryAddress);
             setOpaque(true);
@@ -568,7 +565,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setLocation(value.toString(), position);
             setFont(style().defaultFont());
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            //setForeground(getRowTextColor(row));
+
+            if (isInstructionPointer(row)) {
+                setForeground(style().debugIPTextColor());
+            } else if (isCallReturn(row)) {
+                setForeground(style().debugCallReturnTextColor());
+            } else {
+                setForeground(null);
+            }
             return this;
         }
     }
