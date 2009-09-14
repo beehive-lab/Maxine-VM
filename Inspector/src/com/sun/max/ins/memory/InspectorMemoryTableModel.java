@@ -20,10 +20,9 @@
  */
 package com.sun.max.ins.memory;
 
-import javax.swing.table.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
@@ -34,7 +33,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorMemoryTableModel extends AbstractTableModel {
+public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 
     private final Inspection inspection;
     private final Size wordSize;
@@ -56,13 +55,6 @@ public abstract class InspectorMemoryTableModel extends AbstractTableModel {
      */
     public Address getAddress(int row) {
         return getMemoryRegion(row).start();
-    }
-
-    /**
-     * Updates table display in response to some change in the data contained in the model.
-     */
-    public void refresh() {
-        fireTableDataChanged();
     }
 
     /**

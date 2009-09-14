@@ -111,7 +111,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         if (method instanceof TargetMethod) {
             return (TargetMethod) method;
         }
-
         return null;
     }
 

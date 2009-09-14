@@ -99,7 +99,7 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
         if (newHubGrip != oldHubGrip) {
             Layout.writeHubGrip(origin, newHubGrip);
         }
-        final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
+        final Hub hub = UnsafeCast.asHub(newHubGrip.toJava());
         final SpecificLayout specificLayout = hub.specificLayout;
 
         if (specificLayout.isTupleLayout()) {

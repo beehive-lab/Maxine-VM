@@ -59,7 +59,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        elementsPane = ObjectScrollPane.createArrayElementsPane(this, teleArrayObject);
+        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
         tabbedPane.add(componentTypeName + "[" + teleArrayObject.getLength() + "]", elementsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

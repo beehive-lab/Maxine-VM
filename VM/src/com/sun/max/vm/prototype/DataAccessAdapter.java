@@ -25,6 +25,7 @@ import java.nio.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * An adapter for reading/writing bytes and other primitive data kinds from/to a source/destination
@@ -95,7 +96,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public char readChar(Address address) {
-        return UnsafeLoophole.shortToChar(readShort(address));
+        return UnsafeCast.asChar(readShort(address));
     }
 
     public char readChar(Address address, Offset offset) {
@@ -123,7 +124,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public float readFloat(Address address) {
-        return UnsafeLoophole.intToFloat(readInt(address));
+        return SpecialBuiltin.intToFloat(readInt(address));
     }
 
     public float readFloat(Address address, Offset offset) {
@@ -151,7 +152,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public double readDouble(Address address) {
-        return UnsafeLoophole.longToDouble(readLong(address));
+        return SpecialBuiltin.longToDouble(readLong(address));
     }
 
     public double readDouble(Address address, Offset offset) {
@@ -245,7 +246,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeChar(Address address, char value) {
-        writeShort(address, UnsafeLoophole.charToShort(value));
+        writeShort(address, UnsafeCast.asShort(value));
     }
 
     public void writeChar(Address address, Offset offset, char value) {
@@ -273,7 +274,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeFloat(Address address, float value) {
-        writeInt(address, UnsafeLoophole.floatToInt(value));
+        writeInt(address, SpecialBuiltin.floatToInt(value));
     }
 
     public void writeFloat(Address address, Offset offset, float value) {
@@ -301,7 +302,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeDouble(Address address, double value) {
-        writeLong(address, UnsafeLoophole.doubleToLong(value));
+        writeLong(address, SpecialBuiltin.doubleToLong(value));
     }
 
     public void writeDouble(Address address, Offset offset, double value) {

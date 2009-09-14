@@ -28,7 +28,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -127,7 +127,7 @@ public final class InstrumentedInvokeTemplateSource {
     @INLINE
     private static Address selectInterfaceMethod(final Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitInstrumentation.recordType(mpo, hub, mpoIndex, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }

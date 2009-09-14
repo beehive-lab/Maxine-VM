@@ -377,6 +377,7 @@ public class CompiledPrototype extends Prototype {
             // this method is already processed or on the queue.
             return false;
         }
+
         if (methodActor.isAnnotationPresent(BOOT_IMAGE_DIRECTIVE.class)) {
             final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
@@ -668,9 +669,9 @@ public class CompiledPrototype extends Prototype {
     private void linkVTable(ClassActor classActor) {
         final DynamicHub dynamicHub = classActor.dynamicHub();
         for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + dynamicHub.vTableLength(); vTableIndex++) {
-            final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
-            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-            if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
+            final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
+            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+            if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
                 dynamicHub.setWord(vTableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
             }
         }
@@ -706,9 +707,9 @@ public class CompiledPrototype extends Prototype {
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         final int iIndex = methodITableIndex - hub.iTableStartIndex;
-                        final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-                        if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
+                        final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
+                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                        if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
                             hub.setWord(methodITableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
                         }
                     }

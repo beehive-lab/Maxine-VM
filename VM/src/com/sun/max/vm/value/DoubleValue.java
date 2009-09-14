@@ -24,6 +24,7 @@ import java.io.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -64,7 +65,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.doubleToLong(value) == -1L;
+        return SpecialBuiltin.doubleToLong(value) == -1L;
     }
 
     @Override

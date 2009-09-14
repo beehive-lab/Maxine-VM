@@ -23,13 +23,42 @@ package com.sun.max.ins.gui;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.program.*;
 
-public class TitleLabel extends JLabel {
 
-    public TitleLabel(Inspection inspection, String text) {
-        super(text);
-        setForeground(inspection.style().textTitleColor());
-        setFont(inspection.style().textTitleFont());
+/**
+ * A specialization of popup menus for use in the Inspector.
+ *
+ * @author Michael Van De Vanter
+ */
+public class InspectorPopupMenu extends JPopupMenu {
+
+    public InspectorPopupMenu(String name) {
+        super(name);
     }
 
+    public InspectorPopupMenu() {
+    }
+
+    /**
+     * Adds to the menu an untyped object that can be either an {@link InspectorAction}
+     * or a {@link JMenu}.
+     */
+    public void add(Object object) {
+        if (object instanceof InspectorAction) {
+            final InspectorAction action = (InspectorAction) object;
+            this.add(action);
+        } else if (object instanceof JMenu) {
+            final JMenu menu = (JMenu) object;
+            this.add(menu);
+        } else {
+            ProgramError.unexpected("Inappropriate argument");
+        }
+    }
+
+    public void add(InspectorPopupMenuItems menuItems) {
+        for (Object item : menuItems) {
+            this.add(item);
+        }
+    }
 }

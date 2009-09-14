@@ -45,6 +45,9 @@ public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPref
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String THREAD_LOCALS_COLUMN_PREFERENCE = "threadLocalsViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -56,21 +59,7 @@ public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPref
      * Creates a persistent, global set of preferences for view preferences.
      */
     private ThreadLocalsViewPreferences(Inspection inspection) {
-        super(inspection, "threadLocalsViewPrefs", ThreadLocalsColumnKind.class, ThreadLocalsColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(ThreadLocalsColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(ThreadLocalsColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(ThreadLocalsColumnKind columnType) {
-        return columnType.label();
+        super(inspection, THREAD_LOCALS_COLUMN_PREFERENCE, ThreadLocalsColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

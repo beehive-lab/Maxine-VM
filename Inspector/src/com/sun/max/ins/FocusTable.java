@@ -21,12 +21,12 @@
 package com.sun.max.ins;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
@@ -51,7 +51,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     /**
      * Columns to display when viewing focus data.
      */
-    public enum FocusColumnKind {
+    public enum FocusColumnKind implements ColumnKind {
 
         NAME("Name", "Inspector user focus kind", -1),
         VALUE("Value", "Value/status of Inspector user focus", 25);
@@ -66,23 +66,22 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             this.minWidth = minWidth;
         }
 
-        /**
-         * @return text to appear in the column header
-         */
         public String label() {
             return label;
         }
 
-        /**
-         * @return text to appear in the column header's toolTip, null if none specified.
-         */
         public String toolTipText() {
             return toolTipText;
         }
 
-        /**
-         * @return minimum width allowed for this column when resized by user; -1 if none specified.
-         */
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+
+        public boolean defaultVisibility() {
+            return true;
+        }
+
         public int minWidth() {
             return minWidth;
         }
@@ -95,6 +94,33 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         public static final IndexedSequence<FocusColumnKind> VALUES = new ArraySequence<FocusColumnKind>(values());
     }
 
+    /**
+     * View preferences for the Focus view.
+     * <br>
+     * There aren't any choices at this time, so this is a dummy.
+     */
+    public static final class FocusViewPreferences extends TableColumnVisibilityPreferences<FocusColumnKind> {
+
+        private static FocusViewPreferences globalPreferences;
+
+        /**
+         * @return the global, persistent set of user preferences for viewing a table of watchpoints.
+         */
+        public static FocusViewPreferences globalPreferences(Inspection inspection) {
+            if (globalPreferences == null) {
+                globalPreferences = new FocusViewPreferences(inspection);
+            }
+            return globalPreferences;
+        }
+
+        // Prefix for all persistent column preferences in view
+        private static final String FOCUS_COLUMN_PREFERENCE = "focusViewColumn";
+
+        private FocusViewPreferences(Inspection inspection) {
+            super(inspection, FOCUS_COLUMN_PREFERENCE, FocusColumnKind.VALUES);
+            // There are no view preferences beyond the column choices, so no additional machinery needed here.
+        }
+    }
 
     /**
      * Rows to display when viewing focus data: one for each aspect of the focus.
@@ -140,71 +166,27 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         public static final IndexedSequence<FocusRowKind> VALUES = new ArraySequence<FocusRowKind>(values());
     }
 
-    private final FocusTableModel model;
+    private final FocusTableModel tableModel;
     private final FocusColumnModel columnModel;
-    private final TableColumn[] columns;
 
-    FocusTable(Inspection inspection) {
+    FocusTable(Inspection inspection, FocusViewPreferences viewPreferences) {
         super(inspection);
-        model = new FocusTableModel();
-        columns = new TableColumn[FocusColumnKind.VALUES.length()];
-        columnModel = new FocusColumnModel();
-        configureDefaultTable(model, columnModel);
+        tableModel = new FocusTableModel();
+        columnModel = new FocusColumnModel(viewPreferences);
+        configureDefaultTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
-        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
     }
 
-    public void refresh(boolean force) {
-        if (force) {
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-            model.refresh();
+    private final class FocusColumnModel extends InspectorTableColumnModel<FocusColumnKind> {
+
+        private FocusColumnModel(FocusViewPreferences viewPreferences) {
+            super(FocusColumnKind.VALUES.length(), viewPreferences);
+            addColumn(FocusColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumn(FocusColumnKind.VALUE, new ValueCellRenderer(inspection()), null);
         }
     }
 
-    public void redisplay() {
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return FocusColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-    }
-
-    private final class FocusColumnModel extends DefaultTableColumnModel {
-
-        private FocusColumnModel() {
-            createColumn(FocusColumnKind.NAME, new NameCellRenderer(inspection()));
-            createColumn(FocusColumnKind.VALUE, new ValueCellRenderer(inspection()));
-        }
-
-        private void createColumn(FocusColumnKind columnKind, TableCellRenderer renderer) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            addColumn(columns[col]);
-            columns[col].setIdentifier(columnKind);
-        }
-    }
-
-    private final class FocusTableModel extends AbstractTableModel {
-
-        public FocusTableModel() {
-        }
-
-        void refresh() {
-            fireTableDataChanged();
-        }
+    private final class FocusTableModel extends InspectorTableModel {
 
         public int getColumnCount() {
             return FocusColumnKind.VALUES.length();
@@ -218,7 +200,6 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             // Don't use cell values; all interaction is driven by row number.
             return null;
         }
-
     }
 
     /**
@@ -253,7 +234,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                 public void refresh(boolean force) {
                     final MaxThread thread = inspection().focus().thread();
                     if (thread == null) {
-                        setValue("null", "No thread focus");
+                        setValue(null, "No thread focus");
                     } else {
                         final String longName = inspection().nameDisplay().longNameWithState(thread);
                         setValue(longName, "Thread focus = " + longName);
@@ -302,7 +283,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                 public void refresh(boolean force) {
                     final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
                     if (watchpoint == null) {
-                        setValue("null", "No watchpoint focus");
+                        setValue(null, "No watchpoint focus");
                     } else {
                         final String longName = watchpoint.toString();
                         setValue(longName, "Watchpoint focus = " + longName);

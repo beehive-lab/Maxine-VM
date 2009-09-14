@@ -49,7 +49,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     private MethodInspectorContainer(Inspection inspection) {
         super(inspection, "methodsInspector");
-        frame().add(new MethodsMenuItems());
+        getMenu(DEFAULT_INSPECTOR_MENU).add(new MethodsMenuItems());
     }
 
     @Override

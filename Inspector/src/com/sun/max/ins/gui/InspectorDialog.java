@@ -44,7 +44,6 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
     protected InspectorDialog(Inspection inspection, String frameTitle, boolean modal) {
         super(inspection.gui().frame(), frameTitle, modal);
         this.inspection = inspection;
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {

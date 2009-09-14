@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum RegistersColumnKind {
+public enum RegistersColumnKind implements ColumnKind {
     NAME("Name", "Register name", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
@@ -51,23 +51,14 @@ public enum RegistersColumnKind {
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -77,16 +68,10 @@ public enum RegistersColumnKind {
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

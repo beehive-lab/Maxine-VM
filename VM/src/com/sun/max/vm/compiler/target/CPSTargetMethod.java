@@ -47,8 +47,8 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 
 /**
- *
- * Target method that saves for each catch block the ranges in the code that can refer to them. Does not include the type of the catched exception.
+ * Target method that saves for each catch block the ranges in the code that can
+ * refer to them. Does not include the type of the caught exception.
  *
  * @author Doug Simon
  * @author Thomas Wuerthinger

@@ -61,7 +61,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
 
     @INLINE
     public Size specificSize(Accessor accessor) {
-        final Hub hub = UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        final Hub hub = UnsafeCast.asHub(readHubReference(accessor).toJava());
         return hub.tupleSize;
     }
 

@@ -54,6 +54,4 @@ public class VirtualMethodActor extends ClassMethodActor {
         assert this.vTableIndex == 0;
         this.vTableIndex = vTableIndex;
     }
-
-
 }

@@ -80,10 +80,6 @@ public abstract class ClassActor extends Actor {
     public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
     public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
 
-    public static interface IDMapping {
-        int get(ClassLoader classLoader, String name);
-    }
-
     protected ClassActor(Kind kind,
                          final SpecificLayout specificLayout,
                          ClassLoader classLoader,
@@ -760,18 +756,18 @@ public abstract class ClassActor extends Actor {
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name) {
-        for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
-            if (dynamicMethodActor.name.equals(name)) {
-                return dynamicMethodActor;
+        for (VirtualMethodActor virtualMethodActor : localVirtualMethodActors) {
+            if (virtualMethodActor.name.equals(name)) {
+                return virtualMethodActor;
             }
         }
         return null;
     }
 
     public final VirtualMethodActor findLocalVirtualMethodActor(String name) {
-        for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors) {
-            if (dynamicMethodActor.name.toString().equals(name)) {
-                return dynamicMethodActor;
+        for (VirtualMethodActor virtualMethodActor : localVirtualMethodActors) {
+            if (virtualMethodActor.name.toString().equals(name)) {
+                return virtualMethodActor;
             }
         }
         return null;
@@ -785,8 +781,8 @@ public abstract class ClassActor extends Actor {
     }
 
     public final boolean forAllVirtualMethodActors(Predicate<VirtualMethodActor> predicate) {
-        for (VirtualMethodActor dynamicMethodActor : allVirtualMethodActors) {
-            if (!predicate.evaluate(dynamicMethodActor)) {
+        for (VirtualMethodActor virtualMethodActor : allVirtualMethodActors) {
+            if (!predicate.evaluate(virtualMethodActor)) {
                 return false;
             }
         }
@@ -794,8 +790,8 @@ public abstract class ClassActor extends Actor {
     }
 
     public final void forAllVirtualMethodActors(Procedure<VirtualMethodActor> procedure) {
-        for (VirtualMethodActor dynamicMethodActor : allVirtualMethodActors) {
-            procedure.run(dynamicMethodActor);
+        for (VirtualMethodActor virtualMethodActor : allVirtualMethodActors) {
+            procedure.run(virtualMethodActor);
         }
     }
 
@@ -997,10 +993,10 @@ public abstract class ClassActor extends Actor {
 
         // Copy the super class' dynamic methods:
         if (superClassActor != null) {
-            for (VirtualMethodActor dynamicMethodActor : superClassActor.allVirtualMethodActors()) {
-                result.append(dynamicMethodActor);
-                if (!dynamicMethodActor.isInstanceInitializer() && !dynamicMethodActor.isPrivate()) {
-                    lookup.put(dynamicMethodActor, dynamicMethodActor);
+            for (VirtualMethodActor virtualMethodActor : superClassActor.allVirtualMethodActors()) {
+                result.append(virtualMethodActor);
+                if (!virtualMethodActor.isInstanceInitializer() && !virtualMethodActor.isPrivate()) {
+                    lookup.put(virtualMethodActor, virtualMethodActor);
                 } else {
                     ++vTableIndex;
                 }
@@ -1009,20 +1005,20 @@ public abstract class ClassActor extends Actor {
         }
 
         // Enter this class' local dynamic methods, "overriding" existing entries in the lookup table:
-        for (VirtualMethodActor dynamicMethodActor : localVirtualMethodActors()) {
-            if (!dynamicMethodActor.isInstanceInitializer() && !dynamicMethodActor.isPrivate()) {
+        for (VirtualMethodActor virtualMethodActor : localVirtualMethodActors()) {
+            if (!virtualMethodActor.isInstanceInitializer() && !virtualMethodActor.isPrivate()) {
                 final VirtualMethodActor superMethod;
-                superMethod = lookup.put(dynamicMethodActor, dynamicMethodActor);
+                superMethod = lookup.put(virtualMethodActor, virtualMethodActor);
                 if (superMethod == null) {
-                    result.append(dynamicMethodActor);
-                    dynamicMethodActor.setVTableIndex(vTableIndex);
+                    result.append(virtualMethodActor);
+                    virtualMethodActor.setVTableIndex(vTableIndex);
                     vTableIndex++;
                 } else {
                     if (superMethod.isFinal() && superMethod.isAccessibleBy(this)) {
                         throw verifyError("Class " + name + " overrides final method: " + superMethod.format("%r %H.%n(%p)"));
                     }
-                    result.set(superMethod.vTableIndex() - Hub.vTableStartIndex(), dynamicMethodActor);
-                    dynamicMethodActor.setVTableIndex(superMethod.vTableIndex());
+                    result.set(superMethod.vTableIndex() - Hub.vTableStartIndex(), virtualMethodActor);
+                    virtualMethodActor.setVTableIndex(superMethod.vTableIndex());
                 }
             }
         }
@@ -1314,7 +1310,7 @@ public abstract class ClassActor extends Actor {
         if (oldValue == null) {
             return newMirror;
         }
-        return UnsafeLoophole.cast(oldValue.toJava());
+        return UnsafeCast.asClass(oldValue.toJava());
     }
 
     @PROTOTYPE_ONLY

@@ -278,7 +278,7 @@ public final class JniHandles {
             if (jniHandle.isZero()) {
                 return null;
             }
-            return UnsafeLoophole.cast(jniHandle.asPointer().getReference().toJava());
+            return jniHandle.asPointer().getReference().toJava();
         }
         if (tag == Tag.LOCAL) {
             return VmThread.current().jniHandles().get(jniHandleToIndex(jniHandle));

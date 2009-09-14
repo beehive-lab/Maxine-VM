@@ -24,7 +24,6 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.program.*;
 
@@ -117,24 +116,6 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
 
     public void actionPerformed(ActionEvent event) {
         perform();
-    }
-
-    private AppendableSequence<JMenuItem> menuItems = new LinkSequence<JMenuItem>();
-
-    public Sequence<JMenuItem> menuItems() {
-        return menuItems;
-    }
-
-    public void prepend(JMenu menu) {
-        menuItems.append(menu.insert(this, 0));
-    }
-
-    public void append(JMenu menu) {
-        menuItems.append(menu.add(this));
-    }
-
-    public void append(JPopupMenu menu) {
-        menuItems.append(menu.add(this));
     }
 
 }
