@@ -21,6 +21,7 @@
 package com.sun.max.unsafe.box;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -141,7 +142,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected float readFloatAtLongOffset(long offset) {
-        return UnsafeLoophole.intToFloat(readIntAtLongOffset(offset));
+        return SpecialBuiltin.intToFloat(readIntAtLongOffset(offset));
     }
 
     @Override
@@ -163,7 +164,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected double readDoubleAtLongOffset(long offset) {
-        return UnsafeLoophole.longToDouble(readLongAtLongOffset(offset));
+        return SpecialBuiltin.longToDouble(readLongAtLongOffset(offset));
     }
 
     @Override
@@ -234,7 +235,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeFloatAtLongOffset(long offset, float value) {
-        writeIntAtLongOffset(offset, UnsafeLoophole.floatToInt(value));
+        writeIntAtLongOffset(offset, SpecialBuiltin.floatToInt(value));
     }
 
     @Override
@@ -256,7 +257,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected void writeDoubleAtLongOffset(long offset, double value) {
-        writeLongAtLongOffset(offset, UnsafeLoophole.doubleToLong(value));
+        writeLongAtLongOffset(offset, SpecialBuiltin.doubleToLong(value));
     }
 
     @Override

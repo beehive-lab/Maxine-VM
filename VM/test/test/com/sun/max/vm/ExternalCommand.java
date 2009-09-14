@@ -20,9 +20,14 @@
  */
 package test.com.sun.max.vm;
 
-import com.sun.max.io.Files;
+import static test.com.sun.max.vm.MaxineTester.Logs.*;
 
 import java.io.*;
+
+import test.com.sun.max.vm.MaxineTester.*;
+
+import com.sun.max.io.*;
+import com.sun.max.lang.*;
 
 /**
  * The <code>ExternalCommand</code> class represents an external command with input and output files.
@@ -33,15 +38,13 @@ public class ExternalCommand {
 
     public final File workingDir;
     public final File stdinFile;
-    public final File stdoutFile;
-    public final File stderrFile;
+    public final Logs logs;
     public final String[] command;
     public final String[] env;
 
-    public ExternalCommand(File workingDir, File stdin, File stdout, File stderr, String[] command, String[] env) {
+    public ExternalCommand(File workingDir, File stdin, Logs logs, String[] command, String[] env) {
         this.stdinFile = stdin;
-        this.stdoutFile = stdout;
-        this.stderrFile = stderr;
+        this.logs = logs;
         this.workingDir = workingDir;
         this.command = command;
         this.env = env;
@@ -57,15 +60,25 @@ public class ExternalCommand {
             if (stdinFile != null) {
                 sb.append(" < ").append(stdinFile.getAbsolutePath());
             }
-            if (stdoutFile != null) {
-                sb.append(append ? " >>" : " > ").append(stdoutFile.getAbsolutePath());
-                sb.append(append ? " 2>> " : " 2> ").append(stderrFile.getAbsolutePath());
+            if (logs.base != null) {
+                sb.append(append ? " >>" : " > ").append(logs.get(STDOUT).getAbsolutePath());
+                sb.append(append ? " 2>> " : " 2> ").append(logs.get(STDERR).getAbsolutePath());
             } else {
                 sb.append(" > /dev/null");
                 sb.append(" 2>&1");
             }
 
             final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
+
+            if (logs.base != null) {
+                final PrintStream ps = new PrintStream(new FileOutputStream(logs.get(COMMAND)));
+                ps.println(Arrays.toString(cmdarray, " "));
+                for (int i = 0; i < cmdarray.length; ++i) {
+                    ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
+                }
+                ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
+                ps.close();
+            }
 
             start = System.currentTimeMillis();
             final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
@@ -119,11 +132,11 @@ public class ExternalCommand {
             if (exitValue != other.exitValue) {
                 return "exit value = " + exitValue + ", expected " + other.exitValue;
             }
-            if (compareStdout && !Files.compareFiles(stdoutFile, other.command().stdoutFile, stdoutIgnore)) {
-                return "Standard out " + stdoutFile + " and " + other.command().stdoutFile + " do not match";
+            if (compareStdout && !Files.compareFiles(logs.get(STDOUT), other.command().logs.get(STDOUT), stdoutIgnore)) {
+                return "Standard out " + logs.get(STDOUT) + " and " + other.command().logs.get(STDOUT) + " do not match";
             }
-            if (compareStderr && !Files.compareFiles(stderrFile, other.command().stderrFile, stderrIgnore)) {
-                return "Standard error " + stderrFile + " and " + other.command().stderrFile + " do not match";
+            if (compareStderr && !Files.compareFiles(logs.get(STDERR), other.command().logs.get(STDERR), stderrIgnore)) {
+                return "Standard error " + logs.get(STDERR) + " and " + other.command().logs.get(STDERR) + " do not match";
             }
             return null;
         }

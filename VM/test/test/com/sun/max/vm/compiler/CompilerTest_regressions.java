@@ -41,7 +41,6 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 import com.sun.max.vm.verifier.*;
@@ -143,25 +142,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
             final Value result = execute(method, IntValue.from(0));
             assertTrue(result.asDouble() == answer);
         }
-    }
-
-    @INLINE
-    private static Object pop() {
-        final Object value = VMRegister.getAbiStackPointer().getReference().toJava();
-        VMRegister.addWordsToAbiStackPointer(1);
-        return value;
-    }
-
-    public void athrow() {
-        final RuntimeException e = UnsafeLoophole.cast(pop());
-        throw e;
-    }
-
-    /**
-     * Exercises CirDirTranslation to use cc as ce.
-     */
-    public void test_athrow() {
-        compileMethod(CompilerTest_regressions.class, "athrow");
     }
 
     public void test_InetAddress_getAddressFromNameService() {

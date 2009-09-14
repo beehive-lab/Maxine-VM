@@ -105,7 +105,7 @@ public class ResolvedFieldAccessTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BOOLEAN)
     public static void zgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
-        JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(TupleAccess.readBoolean(object, offset)));
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(TupleAccess.readBoolean(object, offset)));
     }
 
 
@@ -193,7 +193,7 @@ public class ResolvedFieldAccessTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BOOLEAN)
     public static void zputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(1);
-        final boolean value = UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.peekInt(0));
+        final boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeBoolean(object, offset, value);
     }

@@ -92,9 +92,13 @@ public @interface METHOD_SUBSTITUTIONS {
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: losen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
-                    ProgramError.check(substituteMethod.getAnnotation(INLINE.class) != null || Modifier.isStatic(substituteMethod.getModifiers()),
-                                    "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
-                                    " must be static or have @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                    if (substituteMethod.getAnnotation(INLINE.class) == null &&
+                                    substituteMethod.getAnnotation(UNSAFE_CAST.class) == null &&
+                                    !Modifier.isStatic(substituteMethod.getModifiers())) {
+                        ProgramError.unexpected(
+                            "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
+                            " must be static, have @" + UNSAFE_CAST.class.getSimpleName() + " or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                    }
                 }
             }
             ProgramError.check(substitutionFound, "no method with " + SUBSTITUTE.class.getSimpleName() + " annotation found in " + substitutor);
@@ -105,7 +109,7 @@ public @interface METHOD_SUBSTITUTIONS {
 
             // These two checks make it impossible for method substitutions holders to have instance fields.
             // A substitute non-static method could never access such a field given that the receiver is
-            // cast (via UnsafeLoophole) to be an instance of the substitutee.
+            // cast (via UNSAFE_CAST) to be an instance of the substitutee.
             ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
             ProgramError.check(substitutor.localInstanceFieldActors().length == 0, "method substitution class cannot declare any dynamic fields");
 

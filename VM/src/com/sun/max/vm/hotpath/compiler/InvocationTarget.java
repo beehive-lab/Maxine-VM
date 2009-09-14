@@ -38,16 +38,16 @@ public class InvocationTarget {
     }
 
     public static VirtualMethodActor findInvokeSpecialTarget(ClassActor classActor, MethodActor method) {
-        VirtualMethodActor dynamicMethodActor = (VirtualMethodActor) method;
-        if (ResolutionSnippet.isSpecial(dynamicMethodActor, classActor)) {
-            dynamicMethodActor = classActor.superClassActor.findVirtualMethodActor(dynamicMethodActor);
-            if (dynamicMethodActor == null) {
+        VirtualMethodActor virtualMethodActor = (VirtualMethodActor) method;
+        if (ResolutionSnippet.isSpecial(virtualMethodActor, classActor)) {
+            virtualMethodActor = classActor.superClassActor.findVirtualMethodActor(virtualMethodActor);
+            if (virtualMethodActor == null) {
                 throw new AbstractMethodError();
             }
         }
-        if (dynamicMethodActor.isAbstract()) {
+        if (virtualMethodActor.isAbstract()) {
             throw new AbstractMethodError();
         }
-        return dynamicMethodActor;
+        return virtualMethodActor;
     }
 }

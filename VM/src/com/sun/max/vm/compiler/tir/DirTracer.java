@@ -24,7 +24,6 @@ package com.sun.max.vm.compiler.tir;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.b.c.d.*;
@@ -164,7 +163,7 @@ public class DirTracer {
                     }
 
                     // ... and that branches to exit blocks.
-                    final Class<? extends Throwable> thrownException = throwsException(dirSwitch.defaultTargetBlock());
+                    final Class thrownException = throwsException(dirSwitch.defaultTargetBlock());
                     if (dirSwitch.targetBlocks().length == 1 && thrownException != null) {
                         final TirInstruction operand0 = map(dirSwitch.tag());
                         final TirInstruction operand1 = map(dirSwitch.matches()[0]);
@@ -185,15 +184,15 @@ public class DirTracer {
     /**
      * Checks if the specified block terminates control flow by throwing an exception.
      */
-    private static Class<? extends Throwable> throwsException(DirBlock block) {
-        Class<? extends Throwable> thrownException = null;
+    private static Class throwsException(DirBlock block) {
+        Class thrownException = null;
         for (DirInstruction instruction : block.instructions()) {
             if (instruction instanceof DirMethodCall) {
                 final DirMethodCall call = (DirMethodCall) instruction;
                 final DirMethodValue method = (DirMethodValue) call.method();
                 if (method.classMethodActor().isInitializer()) {
                     ProgramError.check(thrownException == null);
-                    thrownException = UnsafeLoophole.cast(method.classMethodActor().holder().toJava());
+                    thrownException = method.classMethodActor().holder().toJava();
                 }
                 continue;
             }

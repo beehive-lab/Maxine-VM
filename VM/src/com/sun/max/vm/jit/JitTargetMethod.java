@@ -134,10 +134,9 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     /**
      * Gets the bytecode position for a machine code instruction address.
      *
-     * @param instructionPointer
-     *                an instruction pointer that may denote an instruction in this target method
+     * @param instructionPointer an instruction pointer that may denote an instruction in this target method
      * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
-     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode.  This will be
      *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
      *         code, prologue or epilogue.
      */
@@ -147,6 +146,19 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         return bytecodePositionFor(targetCodePosition);
     }
+
+    /**
+     * Gets the bytecode position for a machine code call site address.
+     *
+     * @param instructionPointer an instruction pointer that may denote a call site in this target method.   The pointer
+     *        is passed as was written to the platform-specific link register.  E.g. on SPARC, the instructionPointer is
+     *        the PC of the call itself.  On AMD64, the instructionPointer is the PC of the instruction following the call.
+     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
+     *         code, prologue or epilogue.
+     */
+    public abstract int bytecodePositionForCallSite(Pointer instructionPointer);
 
     /**
      * This method is guaranteed not to perform allocation.

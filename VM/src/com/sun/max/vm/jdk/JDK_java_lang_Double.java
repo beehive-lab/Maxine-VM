@@ -21,7 +21,7 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * The {@code JDK_java_lang_Double} class implements substitutions
@@ -34,11 +34,11 @@ public class JDK_java_lang_Double {
 
     @SUBSTITUTE
     public static long doubleToRawLongBits(double d) {
-        return UnsafeLoophole.doubleToLong(d);
+        return SpecialBuiltin.doubleToLong(d);
     }
 
     @SUBSTITUTE
     public static double longBitsToDouble(long l) {
-        return UnsafeLoophole.longToDouble(l);
+        return SpecialBuiltin.longToDouble(l);
     }
 }

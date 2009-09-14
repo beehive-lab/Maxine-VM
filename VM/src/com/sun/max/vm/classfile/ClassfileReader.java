@@ -843,6 +843,7 @@ public final class ClassfileReader {
                                     }
                                 }
                             } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
+                                ProgramError.check(genericSignature == null, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a generic method: " + memberString(name, descriptor));
                                 ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method: " + memberString(name, descriptor));
                                 ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
                                     " to a method with exactly one parameter: " + memberString(name, descriptor));
