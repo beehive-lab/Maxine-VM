@@ -27,7 +27,6 @@ import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
@@ -556,8 +555,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class LabelRenderer extends LocationLabel.AsTextLabel implements TableCellRenderer {
 
-        private final Border boundaryBorder = new MatteBorder(4, 0, 0, 0, Color.BLACK);
-
         public LabelRenderer(Address entryAddress) {
             super(inspection, entryAddress);
             setOpaque(true);
@@ -568,7 +565,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setLocation(value.toString(), position);
             setFont(style().defaultFont());
             setBackgroundForRow(this, row);
-            setForeground(getRowTextColor(row));
+            //setForeground(getRowTextColor(row));
+
+            if (isInstructionPointer(row)) {
+                setForeground(style().debugIPTextColor());
+            } else if (isCallReturn(row)) {
+                setForeground(style().debugCallReturnTextColor());
+            } else {
+                setForeground(null);
+            }
             return this;
         }
     }
