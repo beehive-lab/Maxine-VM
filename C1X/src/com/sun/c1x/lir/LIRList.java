@@ -454,24 +454,12 @@ public class LIRList {
         append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue, t1, t2));
     }
 
-    public void setFileAndLine(String file, int line) {
-        // TODO: implement
+    public void store(LIROperand src, LIRAddress addr, CodeEmitInfo info) {
+        append(new LIROp1(LIROpcode.Move, src, addr, addr.kind, info));
     }
 
-    public void load(LIRAddress counter, LIROperand result) {
-        load(counter, result, null);
-    }
-
-    public void sub(LIROperand leftOp, LIROperand rightOp, LIROperand resultOp) {
-        sub(leftOp, rightOp, resultOp, null);
-    }
-
-    public void store(LIROperand value, LIRAddress address, CodeEmitInfo info) {
-        store(value, address, info);
-    }
-
-    public void load(LIRAddress address, LIROperand result, CodeEmitInfo info) {
-        load(address, result, info);
+    public void load(LIRAddress addr, LIROperand src, CodeEmitInfo info) {
+        append(new LIROp1(LIROpcode.Move, addr, src, addr.kind, info));
     }
 
     public static void printBlock(BlockBegin x) {

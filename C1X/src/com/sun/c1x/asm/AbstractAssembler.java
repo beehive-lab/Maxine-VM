@@ -57,7 +57,6 @@ public abstract class AbstractAssembler {
     }
 
     public void setFrameSize(int frameSize) {
-        assert targetMethod.frameSize() == -1 : "frame size already set!";
         targetMethod.setFrameSize(frameSize);
     }
 
@@ -177,7 +176,7 @@ public abstract class AbstractAssembler {
         }
 
         verifyReferenceMap();
-        targetMethod.recordCall(pos, call, stackMap, false);
+        targetMethod.recordCall(pos, call, stackMap, true);
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {

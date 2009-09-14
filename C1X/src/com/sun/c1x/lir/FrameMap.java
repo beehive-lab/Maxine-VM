@@ -159,16 +159,8 @@ public class FrameMap {
         return Util.nonFatalUnimplemented(false);
     }
 
-    public int oopMapArgCount() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
     public CiLocation objectSlotRegname(int i) {
         return new CiLocation(CiKind.Object, this.spOffsetForSpill(i), SpillSlotSize, false);
-    }
-
-    public CiLocation monitorObjectRegname(int i) {
-        return Util.nonFatalUnimplemented(null);
     }
 
     public CiLocation locationForMonitor(int monitorIndex) {

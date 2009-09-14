@@ -189,8 +189,8 @@ public class C1XTargetMethod extends TargetMethod {
                 throw new RuntimeException(e);
             }
 
-            // Align on word boundary
-            while (currentPos % Platform.hostOrTarget().wordWidth().numberOfBytes != 0) {
+            // Align on double word boundary
+            while (currentPos % (Platform.hostOrTarget().wordWidth().numberOfBytes * 2) != 0) {
                 output.write(0);
                 currentPos++;
             }
