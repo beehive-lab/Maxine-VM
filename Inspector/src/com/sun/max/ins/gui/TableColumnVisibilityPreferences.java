@@ -31,6 +31,7 @@ import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 
@@ -39,15 +40,23 @@ import com.sun.max.tele.*;
  * There are three modes of use:
  * <ul>
  *  <li>1.  Global, persistent preferences.</li>
- *  <li>2.  Instance-based preferences, which default to a global preference, but which can be overridden
+ *  <li>2.  Singleton instance-based preferences, where the set of persistent choices is the only set.</li>
+ *  <li>3.  Instance-based preferences, which default to a global preference, but which can be overridden
  *       with preferences that do not persist.</li>
- *  <li>3.  Singleton instance-based preferences, where overrides are treated as persistent global choices.</li>
  *  </ul>
+ *  <br>
+ *  There are two ways to be notified of a change, which can be applied to either a global or per-instance set:
+ *  <ol>
+ *  <li>Register a {@link TableColumnViewPreferenceListener}, which reports that there has been some change.</li>
+ *  <li>Override {@link #setIsVisible(ColumnKind, boolean)} and take measures, either before or after the super method has
+ *  updated the internal state of the preferences.</li>
+ *  </ol>
+ *
  *
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<Column_Type>> implements InspectionHolder {
+public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends ColumnKind> implements InspectionHolder {
 
     public interface TableColumnViewPreferenceListener {
         void tableColumnViewPreferencesChanged();
@@ -56,7 +65,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     /**
      * A predicate specifying which columns are to be displayed in the table-based viewer.
      */
-    private final Map<Column_Type, Boolean> visibleColumns;
+    private final Map<ColumnKind_Type, Boolean> visibleColumns;
 
     /**
      * If non-null, this preferences object should persist any changes via the inspection's {@linkplain InspectionSettings settings}.
@@ -68,11 +77,11 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
     private final Inspection inspection;
 
-    private final IndexedSequence<Column_Type> columnTypeValues;
-    private final Class<Column_Type> columnTypeClass;
+    private final IndexedSequence<ColumnKind_Type> columnTypeValues;
 
     /**
      * Mode 1:  Global, persistent preferences.
+     * Mode 2:  Singleton: Global and instance-preferences are identical.
      *
      * Creates an object for storing the preferences about which columns should be visible in a table-based viewer.
      * The returned object persists itself via the inspection's {@linkplain InspectionSettings settings}. That is, this
@@ -81,17 +90,14 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
      *
      * @param inspection the inspection context
      * @param name the name under which these preferences should be persisted in the inspection's settings
-     * @param columnTypeClass the {@link Enum} class defining the constants describing the columns in the table-based view
      * @param columnTypeValues the constants defined by {@code columnTypeClass}
      */
     protected TableColumnVisibilityPreferences(Inspection inspection,
                     String name,
-                    Class<Column_Type> columnTypeClass,
-                    IndexedSequence<Column_Type> columnTypeValues) {
+                    IndexedSequence<ColumnKind_Type> columnTypeValues) {
         this.inspection = inspection;
-        this.visibleColumns = new EnumMap<Column_Type, Boolean>(columnTypeClass);
+        this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>();
         this.columnTypeValues = columnTypeValues;
-        this.columnTypeClass = columnTypeClass;
         final InspectionSettings settings = inspection.settings();
         saveSettingsListener = new AbstractSaveSettingsListener(name) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
@@ -100,35 +106,34 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        for (Column_Type columnType : columnTypeValues) {
+        for (ColumnKind_Type columnType : columnTypeValues) {
             final boolean defaultVisibility = defaultVisibility(columnType);
-            final Boolean visible = settings.get(saveSettingsListener, columnType.name().toLowerCase(), OptionTypes.BOOLEAN_TYPE, defaultVisibility);
+            final Boolean visible = settings.get(saveSettingsListener, getPreferenceName(columnType), OptionTypes.BOOLEAN_TYPE, defaultVisibility);
             visibleColumns.put(columnType, visible);
         }
     }
 
     /**
+     * @return the textual name under which the visibility of the column type will be made persistent.
+     */
+    private String getPreferenceName(ColumnKind_Type columnType) {
+        return columnType.name().toLowerCase();
+    }
+
+    /**
+     * Mode 3: Instance-based preferences
+     *
      * Creates an object for storing the preferences about which columns should be visible in a table-based viewer.
      * The returned object does not persist itself via the inspection's {@linkplain InspectionSettings settings}. That is, this
      * constructor should be used to create a set of preferences specific to an individual instance of a viewer.
      *
      * @param defaultPreferences the preferences from which the returned object should get its default values
-     * @param singletonInstance when true, the instance preferences are shared with the global, so there are no per-instance variations.
      */
-    public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<Column_Type> defaultPreferences, boolean singletonInstance) {
+    public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<ColumnKind_Type> defaultPreferences) {
         inspection = defaultPreferences.inspection;
         saveSettingsListener = null;
-        columnTypeClass = defaultPreferences.columnTypeClass;
         columnTypeValues = defaultPreferences.columnTypeValues;
-        if (singletonInstance) {
-            visibleColumns = defaultPreferences.visibleColumns;
-        } else {
-            visibleColumns = new EnumMap<Column_Type, Boolean>(defaultPreferences.visibleColumns);
-        }
-    }
-
-    public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<Column_Type> defaultPreferences) {
-        this (defaultPreferences, false);
+        visibleColumns = new HashMap<ColumnKind_Type, Boolean>(defaultPreferences.visibleColumns);
     }
 
     public final Inspection inspection() {
@@ -174,8 +179,8 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     }
 
     protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-        for (Map.Entry<Column_Type, Boolean> entry : visibleColumns.entrySet()) {
-            saveSettingsEvent.save(entry.getKey().name().toLowerCase(), entry.getValue());
+        for (Map.Entry<ColumnKind_Type, Boolean> entry : visibleColumns.entrySet()) {
+            saveSettingsEvent.save(getPreferenceName(entry.getKey()), entry.getValue());
         }
     }
 
@@ -185,31 +190,44 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
      *
      * @param columnType denotes a column in a table-base viewer
      */
-    protected abstract boolean defaultVisibility(Column_Type columnType);
+    protected boolean defaultVisibility(ColumnKind_Type columnType) {
+        return columnType.defaultVisibility();
+    }
 
     /**
      * Determines if a given column type is allowed to be invisible.
      *
      * @param columnType denotes a column in a table-base viewer
      */
-    protected abstract boolean canBeMadeInvisible(Column_Type columnType);
+    protected boolean canBeMadeInvisible(ColumnKind_Type columnType) {
+        return columnType.canBeMadeInvisible();
+    }
 
     /**
      * Gets the label to be used for a given column type.
      *
      * @param columnType denotes a column in a table-base viewer
      */
-    protected abstract String label(Column_Type columnType);
+    protected String label(ColumnKind_Type columnType) {
+        return columnType.label();
+    }
 
     /**
      * Updates this preferences object to indicate whether a given column type should be made visible;
      * notifies any change listeners.
      */
-    protected void setIsVisible(Column_Type columnType, boolean flag) {
+    protected void setIsVisible(ColumnKind_Type columnType, boolean flag) {
         visibleColumns.put(columnType, flag);
         if (saveSettingsListener != null) {
             inspection.settings().save();
         }
+        notifyChangeListeners();
+    }
+
+    /**
+     * Announces to all registered listeners that column view preferences, or perhaps preferences managed by subclasses have changed.
+     */
+    private void notifyChangeListeners() {
         for (TableColumnViewPreferenceListener listener : tableColumnViewPreferenceListeners) {
             listener.tableColumnViewPreferencesChanged();
         }
@@ -218,7 +236,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     /**
      * Determines if this preferences object indicates that a given column type should be made visible.
      */
-    public boolean isVisible(Column_Type columnType) {
+    public boolean isVisible(ColumnKind_Type columnType) {
         return visibleColumns.get(columnType);
     }
 
@@ -231,7 +249,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
-                for (Column_Type columnType : columnTypeValues) {
+                for (ColumnKind_Type columnType : columnTypeValues) {
                     final JCheckBox checkBox = checkBoxes[columnType.ordinal()];
                     if (source == checkBox) {
                         if (checkBox.isSelected() != isVisible(columnType)) {
@@ -244,7 +262,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         };
         final JPanel content = new InspectorPanel(inspection);
         content.add(new TextLabel(inspection, "View Columns:  "));
-        for (Column_Type columnType : columnTypeValues) {
+        for (ColumnKind_Type columnType : columnTypeValues) {
             if (canBeMadeInvisible(columnType)) {
                 final JCheckBox checkBox =
                     new InspectorCheckBox(inspection, label(columnType), saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?", isVisible(columnType));
@@ -261,7 +279,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     /**
      * A dialog that allows the user to specify preferences about column visibility.
      */
-    public static final class ColumnPreferencesDialog<Column_Type extends Enum<Column_Type>> extends InspectorDialog {
+    public static final class ColumnPreferencesDialog<ColumnKind_Type extends ColumnKind> extends InspectorDialog {
 
         /**
          * Create a dialog that allows the user to specify both global preferences as well as preferences for an individual viewer.
@@ -272,8 +290,8 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
          */
         public ColumnPreferencesDialog(Inspection inspection,
                         String title,
-                        TableColumnVisibilityPreferences<Column_Type> instancePreferences,
-                        TableColumnVisibilityPreferences<Column_Type> globalPreferences) {
+                        TableColumnVisibilityPreferences<ColumnKind_Type> instancePreferences,
+                        TableColumnVisibilityPreferences<ColumnKind_Type> globalPreferences) {
             super(inspection, title, true);
 
             final JPanel contentPanel = new InspectorPanel(inspection, new BorderLayout());
@@ -327,7 +345,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
          */
         public ColumnPreferencesDialog(Inspection inspection,
                         String title,
-                        TableColumnVisibilityPreferences<Column_Type> instancePreferences) {
+                        TableColumnVisibilityPreferences<ColumnKind_Type> instancePreferences) {
             super(inspection, title, true);
 
             final JPanel contentPanel = new InspectorPanel(inspection, new BorderLayout());

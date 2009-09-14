@@ -113,6 +113,7 @@ public final class VMOptions {
     private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
+            super.parseValue(optionValue);
             Trace.on(getValue());
             return true;
         }

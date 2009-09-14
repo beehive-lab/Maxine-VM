@@ -97,7 +97,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         assert arguments.length == 3;
         final CirValue result = arguments[0];
         final CirValue normalContinuation = arguments[1];
-        CirCheckcastPruning.apply(normalContinuation);
         return new CirCall(normalContinuation, result);
     }
 

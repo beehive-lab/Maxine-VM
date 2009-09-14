@@ -35,9 +35,9 @@ public class TirGuard extends TirInstruction {
     private final TirInstruction operand0;
     private final TirInstruction operand1;
     private final ValueComparator valueComparator;
-    private final Class<? extends Throwable> throwable;
+    private final Class throwable;
 
-    public TirGuard(TirInstruction operand0, TirInstruction opearnd1, ValueComparator valueComparator, TirState state, TirTrace trace, Class<? extends Throwable> throwable) {
+    public TirGuard(TirInstruction operand0, TirInstruction opearnd1, ValueComparator valueComparator, TirState state, TirTrace trace, Class throwable) {
         this.operand0 = operand0;
         this.operand1 = opearnd1;
         this.valueComparator = valueComparator;
@@ -84,7 +84,7 @@ public class TirGuard extends TirInstruction {
         return operand1;
     }
 
-    public Class<? extends Throwable> thorwable() {
+    public Class throwable() {
         return throwable;
     }
 

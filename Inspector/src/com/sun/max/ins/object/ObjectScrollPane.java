@@ -44,98 +44,110 @@ public final class ObjectScrollPane extends InspectorScrollPane {
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleArrayObject}; never null;
      */
-    public static ObjectScrollPane createArrayElementsPane(ObjectInspector objectInspector, TeleArrayObject teleArrayObject) {
+    public static ObjectScrollPane createArrayElementsPane(Inspection inspection, TeleArrayObject teleArrayObject, ObjectViewPreferences instanceViewPreferences) {
         final int length = teleArrayObject.getLength();
         final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
         final Kind kind = arrayClassActor.componentClassActor().kind;
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final Offset arrayOffsetFromOrigin = arrayClassActor.kind.arrayLayout(Layout.layoutScheme()).getElementOffsetFromOrigin(0);
-        final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(objectInspector, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
-        return new ObjectScrollPane(objectInspector.inspection(), arrayElementsTable);
+        final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(inspection, teleArrayObject, kind, teleArrayObject.componentType(), arrayOffsetFromOrigin, 0, length, "", valueMode, instanceViewPreferences);
+        return new ObjectScrollPane(inspection, arrayElementsTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
-    public static ObjectScrollPane createFieldsPane(ObjectInspector objectInspector, TeleTupleObject teleTupleObject) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleTupleObject.getFieldActors());
-        return new ObjectScrollPane(objectInspector.inspection(), inspectorTable);
+    public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleTupleObject teleTupleObject, ObjectViewPreferences instanceViewPreferences) {
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, teleTupleObject, teleTupleObject.getFieldActors(), instanceViewPreferences);
+        return new ObjectScrollPane(inspection, inspectorTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
-    public static ObjectScrollPane createFieldsPane(ObjectInspector objectInspector, TeleHub teleHub) {
-        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleHub.getFieldActors());
-        return new ObjectScrollPane(objectInspector.inspection(), inspectorTable);
+    public static ObjectScrollPane createFieldsPane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(inspection, teleHub, teleHub.getFieldActors(), instanceViewPreferences);
+        return new ObjectScrollPane(inspection, inspectorTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "vTable" of a {@link TeleHub}object; null if the table is empty.
      */
-    public static ObjectScrollPane createVTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createVTablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
         if (teleHub.vTableLength() == 0) {
             return null;
         }
-        final InspectorTable table = new ArrayElementsTable(objectInspector,
+        final InspectorTable table = new ArrayElementsTable(inspection,
+                        teleHub,
                         teleHub.vTableKind(),
+                        teleHub.vTableType(),
                         teleHub.vTableOffset(),
                         teleHub.vTableStartIndex(),
                         teleHub.vTableLength(),
                         "V",
-                        WordValueLabel.ValueMode.CALL_ENTRY_POINT);
-        return new ObjectScrollPane(objectInspector.inspection(), table);
+                        WordValueLabel.ValueMode.CALL_ENTRY_POINT,
+                        instanceViewPreferences);
+        return new ObjectScrollPane(inspection, table);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "iTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectScrollPane createITablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createITablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
         if (teleHub.iTableLength() == 0) {
             return null;
         }
-        final InspectorTable table = new ArrayElementsTable(objectInspector,
+        final InspectorTable table = new ArrayElementsTable(inspection,
+                        teleHub,
                         teleHub.iTableKind(),
+                        teleHub.iTableType(),
                         teleHub.iTableOffset(),
                         teleHub.iTableStartIndex(),
                         teleHub.iTableLength(),
                         "I",
-                        WordValueLabel.ValueMode.ITABLE_ENTRY);
-        return new ObjectScrollPane(objectInspector.inspection(), table);
+                        WordValueLabel.ValueMode.ITABLE_ENTRY,
+                        instanceViewPreferences);
+        return new ObjectScrollPane(inspection, table);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the "mTable" of a {@link TeleHub} object; null if the table is empty.
      */
-    public static ObjectScrollPane createMTablePane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createMTablePane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
         if (teleHub.mTableLength() == 0) {
             return null;
         }
-        final InspectorTable table = new ArrayElementsTable(objectInspector,
+        final InspectorTable table = new ArrayElementsTable(inspection,
+                        teleHub,
                         teleHub.mTableKind(),
+                        teleHub.mTableType(),
                         teleHub.mTableOffset(),
                         teleHub.mTableStartIndex(),
                         teleHub.mTableLength(),
                         "M",
-                        WordValueLabel.ValueMode.WORD);
-        return new ObjectScrollPane(objectInspector.inspection(), table);
+                        WordValueLabel.ValueMode.WORD,
+                        instanceViewPreferences);
+        return new ObjectScrollPane(inspection, table);
     }
 
     /**
      * @return a new {@link JScrollPane}  displaying the reference map of the {@link TeleHub}; null if the map is empty.
      */
-    public static ObjectScrollPane createRefMapPane(ObjectInspector objectInspector, TeleHub teleHub) {
+    public static ObjectScrollPane createRefMapPane(Inspection inspection, TeleHub teleHub, ObjectViewPreferences instanceViewPreferences) {
         if (teleHub.hub().referenceMapLength == 0) {
             return null;
         }
-        final InspectorTable table = new ArrayElementsTable(objectInspector,
+        final InspectorTable table = new ArrayElementsTable(inspection,
+                        teleHub,
                         teleHub.referenceMapKind(),
+                        teleHub.referenceMapType(),
                         teleHub.referenceMapOffset(),
                         teleHub.referenceMapStartIndex(),
                         teleHub.referenceMapLength(),
                         "R",
-                        WordValueLabel.ValueMode.WORD);
-        return new ObjectScrollPane(objectInspector.inspection(), table);
+                        WordValueLabel.ValueMode.WORD,
+                        instanceViewPreferences);
+        return new ObjectScrollPane(inspection, table);
     }
 
     private final InspectorTable inspectorTable;

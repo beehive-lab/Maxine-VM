@@ -69,7 +69,7 @@ public class PreferenceDialog extends SimpleDialog {
         targetCodeLabelPanel.add(new TextLabel(inspection, "Target Code"), BorderLayout.WEST);
         prefPanel.add(targetCodeLabelPanel);
 
-        final JPanel targetCodeInspectorPanel = TargetCodeViewerPreferences.globalPreferences(inspection).getPanel();
+        final JPanel targetCodeInspectorPanel = TargetCodeViewPreferences.globalPreferences(inspection).getPanel();
         targetCodeInspectorPanel.setBorder(border);
         prefPanel.add(targetCodeInspectorPanel);
 
@@ -78,7 +78,7 @@ public class PreferenceDialog extends SimpleDialog {
         bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecode"), BorderLayout.WEST);
         prefPanel.add(bytecodeLabelPanel);
 
-        final JPanel bytecodeInspectorPanel = BytecodeViewerPreferences.globalPreferences(inspection).getPanel();
+        final JPanel bytecodeInspectorPanel = BytecodeViewPreferences.globalPreferences(inspection).getPanel();
         bytecodeInspectorPanel.setBorder(border);
         prefPanel.add(bytecodeInspectorPanel);
 
@@ -87,7 +87,7 @@ public class PreferenceDialog extends SimpleDialog {
         objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
         prefPanel.add(objectLabelPanel);
 
-        final JPanel objectInspectorPanel = ObjectInspectorPreferences.globalPreferencesPanel(inspection);
+        final JPanel objectInspectorPanel = ObjectViewPreferences.globalPreferencesPanel(inspection);
         objectInspectorPanel.setBorder(border);
         prefPanel.add(objectInspectorPanel);
 

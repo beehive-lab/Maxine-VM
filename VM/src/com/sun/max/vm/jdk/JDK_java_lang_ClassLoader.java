@@ -23,7 +23,6 @@ package com.sun.max.vm.jdk;
 import java.security.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
@@ -32,7 +31,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Implements substitutions necessary for {@link java.lang.ClassLoader java.lang.ClassLoader}.
+ * Implements substitutions necessary for {@link ClassLoader}.
  *
  */
 @METHOD_SUBSTITUTIONS(ClassLoader.class)
@@ -42,14 +41,11 @@ final class JDK_java_lang_ClassLoader {
     }
 
     /**
-     * Cast this {@code JDK_java_lang_ClassLoader} instance to a {@code java.lang.ClassLoader}
-     * instance.
+     * Cast this {@code JDK_java_lang_ClassLoader} instance to a {@code ClassLoader} instance.
      * @return a view of this object as a class loader
      */
-    @INLINE
-    private ClassLoader thisClassLoader() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native ClassLoader thisClassLoader();
 
     /**
      * Registers native methods associated with this class using the JNI mechanisms. This implementation

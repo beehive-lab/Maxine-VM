@@ -87,22 +87,21 @@ public abstract class MethodSelectionSnippet extends Snippet {
             if (MaxineVM.isPrototyping() && !VMConfiguration.target().compilerScheme().areSnippetsCompiled()) {
                 return classActor.findVirtualMethodActor(interfaceMethod);
             }
-            final InterfaceActor interfaceActor = UnsafeLoophole.cast(interfaceMethod.holder());
+            final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
             final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.id) - classActor.dynamicHub().iTableStartIndex;
             return classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceMethod.iIndexInInterface());
         }
+
+        public static final SelectInterfaceMethod SNIPPET = new SelectInterfaceMethod();
 
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
         public static Word selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethod) {
             final Hub hub = ObjectAccess.readHub(receiver);
-
-            final InterfaceActor interfaceActor = UnsafeLoophole.cast(interfaceMethod.holder());
+            final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
             final int interfaceIndex = hub.getITableIndex(interfaceActor.id);
             return hub.getWord(interfaceIndex + interfaceMethod.iIndexInInterface());
         }
-
-        public static final SelectInterfaceMethod SNIPPET = new SelectInterfaceMethod();
     }
 
     public static final class ReadHub extends MethodSelectionSnippet {
@@ -110,7 +109,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
         public static Reference readHub(Object object) {
-            return UnsafeLoophole.cast(ObjectAccess.readHub(object));
+            return Reference.fromJava(ObjectAccess.readHub(object));
         }
         public static final ReadHub SNIPPET = new ReadHub();
     }

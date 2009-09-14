@@ -20,51 +20,35 @@
  */
 package com.sun.max.ins.gui;
 
+import java.util.*;
+
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 
 /**
- * A tabbed pane specialized for use in the Maxine Inspector.
+ * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
+ * <br>
+ * Contains only instances of {@link InspectorAction} and {@link JMenu}.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
+public class InspectorPopupMenuItems implements Iterable<Object>{
 
-    private final Inspection inspection;
+    private final LinkSequence<Object> items = new LinkSequence<Object>();
 
-    /**
-     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
-     */
-    protected InspectorTabbedPane(Inspection inspection) {
-        this.inspection = inspection;
-        //setOpaque(true);
+    @Override
+    public Iterator<Object> iterator() {
+        return items.iterator();
     }
 
-    public final Inspection inspection() {
-        return inspection;
+    public void add(JMenu menu) {
+        items.append(menu);
     }
 
-    public final MaxVM maxVM() {
-        return inspection.maxVM();
+    public void add(InspectorAction action) {
+        items.append(action);
     }
-
-    public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
-    }
-
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return inspection.focus();
-    }
-
-    public InspectionActions actions() {
-        return inspection.actions();
-    }
-
 }

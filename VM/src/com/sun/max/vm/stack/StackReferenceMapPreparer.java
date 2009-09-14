@@ -609,16 +609,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * references.
      *
      * @param caller the JIT compiled method that that made the call into the trampoline frame
-     * @param instructionPointer the address of the instruction in {@code caller} of the call into the trampoline frame
+     * @param instructionPointer the execution address in {@code caller}. This will be at the site of the call to the trampoline.
      * @param refmapFramePointer the address in the frame of {@code caller} to which the reference map for {@code caller} is relative
      * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
      */
     private void prepareTrampolineFrameForJITCaller(JitTargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
-        // The instruction pointer is now just beyond the call machine instruction.
-        // Just in case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
-        // Thus we always look up what bytecode we were in during the call,
-        final int bytecodePosition = caller.bytecodePositionFor(instructionPointer.minus(1));
-
+        final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
         final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool();
         final byte[] code = codeAttribute.code();

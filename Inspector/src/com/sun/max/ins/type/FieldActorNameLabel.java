@@ -56,7 +56,6 @@ public class FieldActorNameLabel extends InspectorLabel {
     public void redisplay() {
         setFont(style().javaNameFont());
         setForeground(style().javaNameColor());
-        setBackground(style().javaNameBackgroundColor());
         updateText();
 
     }

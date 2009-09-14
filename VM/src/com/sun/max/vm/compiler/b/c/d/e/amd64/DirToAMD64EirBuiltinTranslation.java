@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
@@ -73,7 +72,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         };
     }
 
-    private static final FloatValue XMM_FLOAT_SIGN_MASK = FloatValue.from(UnsafeLoophole.intToFloat(0x80000000));
+    private static final FloatValue XMM_FLOAT_SIGN_MASK = FloatValue.from(SpecialBuiltin.intToFloat(0x80000000));
 
     @Override
     public void visitFloatNegated(FloatNegated builtin, DirValue dirResult, DirValue[] dirArguments) {
@@ -95,7 +94,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         };
     }
 
-    private static final DoubleValue XMM_DOUBLE_SIGN_MASK = DoubleValue.from(UnsafeLoophole.longToDouble(0x8000000000000000L));
+    private static final DoubleValue XMM_DOUBLE_SIGN_MASK = DoubleValue.from(SpecialBuiltin.longToDouble(0x8000000000000000L));
 
     @Override
     public void visitDoubleNegated(DoubleNegated builtin, DirValue dirResult, DirValue[] dirArguments) {

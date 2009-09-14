@@ -415,7 +415,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return mainVMThread;
         }
-        return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
     }
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
@@ -687,7 +687,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return mainVMThread;
         }
-        return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
     public JniHandle createLocalHandle(Object object) {

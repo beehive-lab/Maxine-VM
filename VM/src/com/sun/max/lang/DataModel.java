@@ -24,6 +24,7 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.value.*;
 
 public class DataModel {
@@ -62,7 +63,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(char value) {
-        final short shortValue = UnsafeLoophole.charToShort(value);
+        final short shortValue = UnsafeCast.asShort(value);
         return endianness.toBytes(shortValue);
     }
 
@@ -71,7 +72,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(float value) {
-        final int intValue = UnsafeLoophole.floatToInt(value);
+        final int intValue = SpecialBuiltin.floatToInt(value);
         return endianness.toBytes(intValue);
     }
 
@@ -80,7 +81,7 @@ public class DataModel {
     }
 
     public byte[] toBytes(double value) {
-        final long longValue = UnsafeLoophole.doubleToLong(value);
+        final long longValue = SpecialBuiltin.doubleToLong(value);
         return endianness.toBytes(longValue);
     }
 

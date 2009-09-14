@@ -37,6 +37,7 @@ import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
@@ -94,7 +95,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     protected void assignFloatTemplateArgument(int parameterIndex, float argument) {
         final AMD64GeneralRegister32 scratch = AMD64GeneralRegister32.from(TARGET_ABI.scratchRegister());
         asm.reset();
-        asm.movl(scratch, UnsafeLoophole.floatToInt(argument));
+        asm.movl(scratch, SpecialBuiltin.floatToInt(argument));
         asm.movdl(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), scratch);
         codeBuffer.emitCodeFrom(asm);
     }
@@ -109,7 +110,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     @Override
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
         asm.reset();
-        asm.mov(TARGET_ABI.scratchRegister(), UnsafeLoophole.doubleToLong(argument));
+        asm.mov(TARGET_ABI.scratchRegister(), SpecialBuiltin.doubleToLong(argument));
         asm.movdq(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
     }

@@ -165,10 +165,10 @@ public @interface UNSAFE {
                     if (hasReceiver && isUnsafeType(methodRefConstant.holder(pool), classActor, classLoader)) {
                         isUnsafe.setValue(true);
                     }
-                    if (methodRefConstant.holder(pool).toJavaString().startsWith(vmPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
+                    if (methodRefConstant.holder(pool).toJavaString().startsWith(maxPackageName) && methodRefConstant.isResolvableWithoutClassLoading(pool)) {
                         try {
                             final MethodActor methodActor = methodRefConstant.resolve(pool, index);
-                            if (methodActor.isUnsafe() || methodActor.isBuiltin() || methodActor.isUnsafeCast()) {
+                            if (methodActor.isUnsafe()) {
                                 isUnsafe.setValue(true);
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
@@ -215,8 +215,7 @@ public @interface UNSAFE {
             }
         }
 
-        private static final String unsafePackageName = new com.sun.max.unsafe.Package().name();
-        private static final String vmPackageName = new com.sun.max.Package().name();
+        private static final String maxPackageName = new com.sun.max.Package().name();
         private static final String asmPackageName = new com.sun.max.vm.asm.Package().name();
 
         /**
@@ -227,8 +226,7 @@ public @interface UNSAFE {
             Trace.begin(1, "determining unsafe methods");
             for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
 
-                if (classActor.packageName().startsWith(unsafePackageName) ||
-                    (classActor.packageName().startsWith(vmPackageName) && !classActor.packageName().startsWith(asmPackageName))) {
+                if (classActor.packageName().startsWith(maxPackageName) && !classActor.packageName().startsWith(asmPackageName)) {
                     for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                         determine(classMethodActor);
                     }
@@ -239,10 +237,9 @@ public @interface UNSAFE {
             }
             // Only now set the flag, because it is NOT transitive that a method that calls another unsafe one is also unsafe:
             for (ClassMethodActor classMethodActor : list) {
-                Trace.line(2, "unsafe method: " + classMethodActor.toString());
                 classMethodActor.beUnsafe();
             }
-            Trace.end(1, "determining unsafe methods");
+            Trace.end(1, "determining unsafe methods [" + list.length() + " methods]");
         }
     }
 }

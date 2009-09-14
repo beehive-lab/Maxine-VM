@@ -22,12 +22,15 @@ package com.sun.max.ins.gui;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 
 /**
  * A menu bar specialized for use in the Maxine Inspector.
+ * <br>
+ * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
  *
  * @author Michael Van De Vanter
  */
@@ -35,13 +38,29 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
 
     private final Inspection inspection;
 
+    private final AppendableSequence<InspectorMenu> menus = new ArrayListSequence<InspectorMenu>(10);
+
     /**
      * Creates a new {@JMenuBar}, specialized for use in the Maxine Inspector.
      */
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;
         setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
+    }
+
+    public void add(InspectorMenu inspectorMenu) {
+        assert inspectorMenu.getMenuName() != null;
+        super.add(inspectorMenu);
+        menus.append(inspectorMenu);
+    }
+
+    public InspectorMenu findMenu(String name) {
+        for (InspectorMenu inspectorMenu : menus) {
+            if (inspectorMenu.getMenuName().equals(name)) {
+                return inspectorMenu;
+            }
+        }
+        return null;
     }
 
     public final Inspection inspection() {
@@ -76,6 +95,9 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     }
 
     public void refresh(boolean force) {
+        for (InspectorMenu menu : menus) {
+            menu.refresh(force);
+        }
     }
 
 

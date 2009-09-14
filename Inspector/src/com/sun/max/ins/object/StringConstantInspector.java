@@ -61,7 +61,7 @@ public class StringConstantInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleStringConstant);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleStringConstant, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

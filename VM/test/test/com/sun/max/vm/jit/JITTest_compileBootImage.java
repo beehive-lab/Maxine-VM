@@ -39,24 +39,24 @@ import com.sun.max.vm.compiler.target.*;
 public class JITTest_compileBootImage extends JitCompilerTestCase {
 
     public void test_compileAll() {
-        final LinkedList<CPSTargetMethod> toDo = new LinkedList<CPSTargetMethod>();
+        final LinkedList<TargetMethod> toDo = new LinkedList<TargetMethod>();
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
                 final RuntimeCompilerScheme jit = MaxineVM.target().configuration.jitScheme();
 
                 final ClassActor classActor = ClassActor.fromJava(com.sun.max.vm.run.jitTest.JitTest.class);
 
-                for (VirtualMethodActor dynamicMethodActor : classActor.localVirtualMethodActors()) {
-                    toDo.add((CPSTargetMethod) jit.compile(dynamicMethodActor));
+                for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
+                    toDo.add(jit.compile(virtualMethodActor));
                 }
                 for (StaticMethodActor staticMethodActor : classActor.localStaticMethodActors()) {
-                    toDo.add((CPSTargetMethod) jit.compile(staticMethodActor));
+                    toDo.add(jit.compile(staticMethodActor));
                 }
             }
         });
-        for (CPSTargetMethod targetMethod : toDo) {
+        for (TargetMethod targetMethod : toDo) {
             Trace.line(1,  targetMethod.description());
-            traceBundleAndDisassemble(targetMethod);
+            traceBundleAndDisassemble((CPSTargetMethod) targetMethod);
         }
     }
 
