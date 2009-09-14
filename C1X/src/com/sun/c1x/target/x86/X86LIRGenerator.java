@@ -189,7 +189,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             if (Util.isPowerOf2(c + 1)) {
                 lir().move(left, tmp);
                 lir().shiftLeft(left, Util.log2(c + 1), left);
-                lir().sub(left, tmp, result);
+                lir().sub(left, tmp, result, null);
                 return true;
             } else if (Util.isPowerOf2(c - 1)) {
                 lir().move(left, tmp);
@@ -1197,14 +1197,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (isVolatile && type == CiKind.Long) {
             LIRAddress addr = new LIRAddress(src, offset, CiKind.Double);
             LIROperand tmp = newRegister(CiKind.Double);
-            lir().load(addr, tmp);
+            lir().load(addr, tmp, null);
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(tmp, spill);
             lir().move(spill, dst);
         } else {
             LIRAddress addr = new LIRAddress(src, offset, type);
-            lir().load(addr, dst);
+            lir().load(addr, dst, null);
         }
     }
 

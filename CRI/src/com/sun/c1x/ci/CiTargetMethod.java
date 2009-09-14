@@ -317,6 +317,7 @@ public class CiTargetMethod {
      * @return the frame size
      */
     public int frameSize() {
+        assert frameSize != -1 : "frame size not yet initialized!";
         return frameSize;
     }
 

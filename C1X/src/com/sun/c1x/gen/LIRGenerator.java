@@ -1231,7 +1231,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void visitCurrentThread(Intrinsic x) {
         assert x.numberOfArguments() == 0 : "wrong type";
         LIROperand reg = rlockResult(x);
-        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjectOffset(), CiKind.Object), reg);
+        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjectOffset(), CiKind.Object), reg, null);
     }
 
     private void visitFPIntrinsics(Intrinsic x) {
@@ -1399,7 +1399,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1466,7 +1466,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1534,7 +1534,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1811,7 +1811,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     LIROperand incrementAndReturnCounter(LIRLocation base, int offset, int increment) {
         LIRAddress counter = new LIRAddress(base, offset, CiKind.Int);
         LIROperand result = newRegister(CiKind.Int);
-        lir.load(counter, result);
+        lir.load(counter, result, null);
         lir.add(result, LIROperandFactory.intConst(increment), result);
         lir.store(result, counter, null);
         return result;
