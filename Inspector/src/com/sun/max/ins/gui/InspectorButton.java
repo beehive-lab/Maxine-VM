@@ -36,7 +36,6 @@ public class InspectorButton extends JButton {
         super(text);
         setOpaque(true);
         setFont(inspection.style().textLabelFont());
-        setBackground(inspection.style().defaultBackgroundColor());
         setToolTipText(toolTipText);
     }
 
@@ -44,7 +43,6 @@ public class InspectorButton extends JButton {
         super(action);
         setOpaque(true);
         setFont(inspection.style().textLabelFont());
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
 }

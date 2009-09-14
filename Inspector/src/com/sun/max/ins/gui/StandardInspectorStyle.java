@@ -104,10 +104,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color defaultTextColor() {
         return defaultTextColor;
     }
-    @Override
-    public Color defaultTextBackgroundColor() {
-        return defaultBackgroundColor();
-    }
 
     // Plain text labels
     @Override
@@ -115,34 +111,10 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return defaultBoldFont();
     }
 
-    // Defaults for textual titles
-    @Override
-    public Font textTitleFont() {
-        if (defaultTitleFont == null) {
-            defaultTitleFont = new Font("Serif", Font.BOLD, textTitleFontSize());
-        }
-        return defaultTitleFont;
-    }
-    @Override
-    public int textTitleFontSize() {
-        if (defaultTitleFontSize == 0) {
-            defaultTitleFontSize =  defaultTextFontSize() + 2;
-        }
-        return defaultTitleFontSize;
-    }
-    @Override
-    public Color textTitleColor() {
-        return defaultTextColor();
-    }
-
     // Defaults for integers displayed in decimal
     @Override
     public Font decimalDataFont() {
         return defaultFont();
-    }
-    @Override
-    public int decimalDataFontSize() {
-        return defaultTextFontSize();
     }
     @Override
     public Color decimalDataColor() {
@@ -153,10 +125,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     @Override
     public Font hexDataFont() {
         return defaultMonospacedFont();
-    }
-    @Override
-    public int hexDataFontSize() {
-        return defaultTextFontSize();
     }
     @Override
     public Color hexDataColor() {
@@ -179,12 +147,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Font wordDataFont() {
         return hexDataFont();
     }
-
-    @Override
-    public int wordDataFontSize() {
-        return hexDataFontSize();
-    }
-
     @Override
     public Color wordDataColor() {
         return hexDataColor();
@@ -247,27 +209,10 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Font primitiveDataFont() {
         return defaultFont();
     }
-    @Override
-    public int primitiveDataFontSize() {
-        return defaultTextFontSize();
-    }
 
     // Display of char values
 
     // Display of string values
-    @Override
-    public Font stringDataFont() {
-        return defaultFont();
-    }
-    @Override
-    public int stringDataFontSize() {
-        return defaultTextFontSize();
-    }
-    @Override
-    public Color stringDataColor() {
-        return defaultTextColor();
-    }
-
 
     // Names for Java entities
     @Override
@@ -292,31 +237,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return defaultFont();
     }
     @Override
-    public int defaultCodeFontSize() {
-        return defaultTextFontSize();
-    }
-    @Override
-    public Color defaultCodeBackgroundColor() {
-        return defaultBackgroundColor();
-    }
-    @Override
     public Color defaultCodeAlternateBackgroundColor() {
         return codeAlternateBackgroundColor;
     }
-    @Override
-    public Color defaultCodeStopBackgroundColor() {
-        return codeStopBackgroundColor;
-    }
 
     // Display of machine code
-    @Override
-    public Font defaultTextFont() {
-        return defaultBoldFont();
-    }
-    @Override
-    public int targetCodeFontSize() {
-        return defaultTextFontSize();
-    }
 
     // Display of bytecodes
     private Font bytecodeMnemonicFont;
@@ -336,11 +261,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         }
         return bytecodeOperandFont;
     }
-    @Override
-    public int bytecodeFontSize() {
-        return defaultTextFontSize() + 1;
-    }
-
     @Override
     public Color bytecodeMethodEntryColor() {
         return wordCallEntryPointColor();

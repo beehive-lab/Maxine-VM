@@ -23,6 +23,8 @@ package com.sun.max.ins.method;
 import java.io.*;
 import java.math.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
@@ -179,7 +181,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
     private final InvokeMethodAction invokeMethodAction;
 
-    private InspectorMenu inspectCompilationsMenu = new InspectorMenu(null, "Method Compilations");
+    private JMenu inspectCompilationsMenu = new JMenu("Method Compilations");
 
 
     public ClassMethodMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
@@ -195,6 +197,21 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
     }
 
     public void addTo(InspectorMenu menu) {
+
+        menu.add(viewJavaSourceAction);
+        menu.add(viewBytecodeAction);
+
+        menu.addSeparator();
+        menu.add(bytecodeBreakOnEntryAction);
+        menu.add(invokeMethodAction);
+
+        menu.addSeparator();
+        menu.add(inspectClassMethodActorAction);
+        menu.add(inspectSubstitutionSourceClassActorAction);
+        menu.add(inspectCompilationsMenu);
+    }
+
+    public void addTo(InspectorPopupMenu menu) {
 
         menu.add(viewJavaSourceAction);
         menu.add(viewBytecodeAction);
@@ -226,8 +243,8 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         viewBytecodeAction.setEnabled(hasCodeAttribute);
         bytecodeBreakOnEntryAction.setEnabled(hasCodeAttribute);
         inspectSubstitutionSourceClassActorAction.setEnabled(teleClassMethodActor.isSubstituted());
-        if (inspectCompilationsMenu.length() < teleClassMethodActor.numberOfCompilations()) {
-            for (int index = inspectCompilationsMenu.length(); index < teleClassMethodActor.numberOfCompilations(); index++) {
+        if (inspectCompilationsMenu.getMenuComponentCount() < teleClassMethodActor.numberOfCompilations()) {
+            for (int index = inspectCompilationsMenu.getMenuComponentCount(); index < teleClassMethodActor.numberOfCompilations(); index++) {
                 final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
                 final StringBuilder name = new StringBuilder();
                 name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));

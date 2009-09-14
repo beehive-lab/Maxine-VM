@@ -59,7 +59,7 @@ public class EnumInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleEnum);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleEnum, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

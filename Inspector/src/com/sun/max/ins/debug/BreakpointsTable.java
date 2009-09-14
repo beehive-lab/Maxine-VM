@@ -48,22 +48,18 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final BreakpointsTableModel tableModel;
     private BreakpointsColumnModel columnModel;
-    private final TableColumn[] columns;
-
-    private MaxVMState lastRefreshedState = null;
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
         tableModel = new BreakpointsTableModel();
-        columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
         columnModel = new BreakpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         final BreakpointData breakpointData = tableModel.get(row);
-        final InspectorMenu menu = new InspectorMenu();
+        final InspectorPopupMenu menu = new InspectorPopupMenu("Breakpoints");
         final String shortName = breakpointData.shortName();
         menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
         if (breakpointData.enabled()) {
@@ -86,37 +82,12 @@ public final class BreakpointsTable extends InspectorTable {
         return menu;
     }
 
-    /**
-     * Sets table selection to breakpoint, if any, that is the current user focus.
-     */
     @Override
     public void updateFocusSelection() {
+        // Sets table selection to breakpoint, if any, that is the current user focus.
         final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
         final int row = tableModel.findRow(teleBreakpoint);
-        updateFocusSelection(row);
-    }
-
-    public void refresh(boolean force) {
-        lastRefreshedState = refresh(force, lastRefreshedState, tableModel, columns);
-        tableModel.refresh();
-    }
-
-    public void redisplay() {
-        redisplay(columns);
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
+        updateSelection(row);
     }
 
     @Override
@@ -137,26 +108,16 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
-    private final class BreakpointsColumnModel extends InspectorTableColumnModel  {
-
-        private final BreakpointsViewPreferences viewPreferences;
+    private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
-            this.viewPreferences = viewPreferences;
-            createColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
-            createColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
-            createColumn(BreakpointsColumnKind.LOCATION, new LocationCellRenderer(inspection()), null);
-            createColumn(BreakpointsColumnKind.CONDITION, new ConditionCellRenderer(), new DefaultCellEditor(new JTextField()));
-            createColumn(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
-        }
-
-        private void createColumn(BreakpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-            final int col = columnKind.ordinal();
-            columns[col] = createColumnInstance(columnKind, renderer, editor);
-            if (viewPreferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
+            super(BreakpointsColumnKind.VALUES.length(), viewPreferences);
+            addColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
+            addColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(BreakpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
+            addColumn(BreakpointsColumnKind.LOCATION, new LocationCellRenderer(inspection()), null);
+            addColumn(BreakpointsColumnKind.CONDITION, new ConditionCellRenderer(), new DefaultCellEditor(new JTextField()));
+            addColumn(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
         }
     }
 
@@ -165,12 +126,99 @@ public final class BreakpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class BreakpointsTableModel extends AbstractTableModel {
+    private final class BreakpointsTableModel extends InspectorTableModel {
 
         // Cache of information objects for each known breakpoint
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
 
-        void refresh() {
+        public int getColumnCount() {
+            return BreakpointsColumnKind.VALUES.length();
+        }
+
+        public int getRowCount() {
+            // This gets called during superclass initialization, before the local
+            // data has been initialized, even  if you try to set row size to 0
+            // in the constructor.
+            return breakpoints == null ? 0 : breakpoints.size();
+        }
+
+        public Object getValueAt(int row, int col) {
+            final BreakpointData breakpointData = get(row);
+            switch (BreakpointsColumnKind.VALUES.get(col)) {
+                case TAG:
+                    return breakpointData.kindTag();
+                case ENABLED:
+                    return breakpointData.enabled();
+                case DESCRIPTION:
+                    return breakpointData.shortName();
+                case LOCATION:
+                    return breakpointData.location();
+                case CONDITION:
+                    return breakpointData.condition();
+                case TRIGGER_THREAD:
+                    return  breakpointData.triggerThreadName();
+                default:
+                    throw FatalError.unexpected("Unexpected Breakpoint Data column");
+            }
+        }
+
+        @Override
+        public void setValueAt(Object value, int row, int column) {
+            final BreakpointData breakpointData = get(row);
+
+            switch (BreakpointsColumnKind.VALUES.get(column)) {
+                case ENABLED:
+                    final Boolean newState = (Boolean) value;
+                    if (breakpointData.setEnabled(newState)) {
+                        inspection().settings().save();
+                    }
+                    break;
+
+                case CONDITION:
+                    final String conditionText = (String) value;
+                    breakpointData.setCondition(conditionText);
+                    inspection().settings().save();
+                    break;
+
+                default:
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int row, int col) {
+            switch (BreakpointsColumnKind.VALUES.get(col)) {
+                case ENABLED:
+                    return true;
+                case CONDITION:
+                    return get(row) instanceof TargetBreakpointData;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        @Override
+        public Class< ? > getColumnClass(int c) {
+            switch (BreakpointsColumnKind.VALUES.get(c)) {
+                case TAG:
+                    return String.class;
+                case ENABLED:
+                    return Boolean.class;
+                case DESCRIPTION:
+                    return String.class;
+                case LOCATION:
+                    return Number.class;
+                case CONDITION:
+                    return String.class;
+                case TRIGGER_THREAD:
+                    return String.class;
+                default:
+                    throw FatalError.unexpected("Unexected Breakpoint Data column");
+            }
+        }
+
+        @Override
+        public void refresh() {
             // Check for current and added breakpoints
             // Initially assume all deleted
             for (BreakpointData breakpointData : breakpoints) {
@@ -207,96 +255,7 @@ public final class BreakpointsTable extends InspectorTable {
                     iter.remove();
                 }
             }
-            //updateSelection();
-            fireTableDataChanged();
-        }
-
-        public int getColumnCount() {
-            return BreakpointsColumnKind.VALUES.length();
-        }
-
-        public int getRowCount() {
-            // This gets called during superclass initialization, before the local
-            // data has been initialized, even  if you try to set row size to 0
-            // in the constructor.
-            return breakpoints == null ? 0 : breakpoints.size();
-        }
-
-        @Override
-        public boolean isCellEditable(int row, int col) {
-            switch (BreakpointsColumnKind.VALUES.get(col)) {
-                case ENABLED:
-                    return true;
-
-                case CONDITION:
-                    return get(row) instanceof TargetBreakpointData;
-
-                default:
-                    break;
-            }
-            return false;
-        }
-
-        public Object getValueAt(int row, int col) {
-            final BreakpointData breakpointData = get(row);
-            switch (BreakpointsColumnKind.VALUES.get(col)) {
-                case TAG:
-                    return breakpointData.kindTag();
-                case ENABLED:
-                    return breakpointData.enabled();
-                case DESCRIPTION:
-                    return breakpointData.shortName();
-                case LOCATION:
-                    return breakpointData.location();
-                case CONDITION:
-                    return breakpointData.condition();
-                case TRIGGER_THREAD:
-                    return  breakpointData.triggerThreadName();
-                default:
-                    throw FatalError.unexpected("Unexpected Breakpoint Data column");
-            }
-        }
-
-        @Override
-        public Class< ? > getColumnClass(int c) {
-            switch (BreakpointsColumnKind.VALUES.get(c)) {
-                case TAG:
-                    return String.class;
-                case ENABLED:
-                    return Boolean.class;
-                case DESCRIPTION:
-                    return String.class;
-                case LOCATION:
-                    return Number.class;
-                case CONDITION:
-                    return String.class;
-                case TRIGGER_THREAD:
-                    return String.class;
-                default:
-                    throw FatalError.unexpected("Unexected Breakpoint Data column");
-            }
-        }
-
-        @Override
-        public void setValueAt(Object value, int row, int column) {
-            final BreakpointData breakpointData = get(row);
-
-            switch (BreakpointsColumnKind.VALUES.get(column)) {
-                case ENABLED:
-                    final Boolean newState = (Boolean) value;
-                    if (breakpointData.setEnabled(newState)) {
-                        inspection().settings().save();
-                    }
-                    break;
-
-                case CONDITION:
-                    final String conditionText = (String) value;
-                    breakpointData.setCondition(conditionText);
-                    inspection().settings().save();
-                    break;
-
-                default:
-            }
+            super.refresh();
         }
 
         private BreakpointData get(int row) {
@@ -360,17 +319,14 @@ public final class BreakpointsTable extends InspectorTable {
 
         TagCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -379,16 +335,13 @@ public final class BreakpointsTable extends InspectorTable {
 
         public DescriptionCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().javaNameBackgroundColor());
-            }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -397,17 +350,14 @@ public final class BreakpointsTable extends InspectorTable {
 
         public LocationCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -416,17 +366,14 @@ public final class BreakpointsTable extends InspectorTable {
 
         ConditionCellRenderer() {
             setFont(inspection().style().defaultFont());
+            setOpaque(true);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setToolTipText(tableModel.get(row).conditionStatus());
-            final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                component.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                component.setBackground(style().defaultTextBackgroundColor());
-            }
+            final JComponent component = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(cellBackgroundColor(isSelected));
             return component;
         }
 
@@ -442,6 +389,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         TriggerThreadCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -453,11 +401,7 @@ public final class BreakpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this breakpoint");
             }
-            if (row == getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }

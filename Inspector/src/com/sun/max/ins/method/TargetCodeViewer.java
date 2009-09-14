@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import java.awt.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
@@ -96,12 +95,21 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final byte[] bytecodes;
 
     /**
-     * Color to use for background of a row during normal display; modulated by safepoints, etc.
-     * May be overridden by other states.
+     * Is this row the start of a new group of instructions.
      */
-    private final Color[] rowToBackGroundColor;
+    protected boolean[] isBoundaryRow;
 
-    private final String[] rowToTagText;
+    /**
+     * Is this row part of a group with alternating visuals.
+     */
+    protected boolean [] isAlternateRow;
+
+    /**
+     * Is this row a stop point in the target code.
+     */
+    protected boolean[] isStopRow;
+
+    private final String[] tagTextForRow;
 
     /**
      * Map:  index into the sequence of target code instructions -> bytecode that compiled into code starting at this instruction, if known; else null.
@@ -131,14 +139,17 @@ public abstract class TargetCodeViewer extends CodeViewer {
         }
         final int targetInstructionCount = instructions.length();
         rowToStackFrameInfo = new StackFrameInfo[targetInstructionCount];
-        rowToBackGroundColor = new Color[targetInstructionCount];
-        rowToTagText = new String[targetInstructionCount];
+        tagTextForRow = new String[targetInstructionCount];
         rowToBytecodeLocation = new BytecodeLocation[targetInstructionCount];
         rowToCalleeIndex = new int[targetInstructionCount];
         Arrays.fill(rowToCalleeIndex, -1);
-        final Color backgroundColor = style().targetCodeBackgroundColor();
-        final Color alternateBackgroundColor = style().targetCodeAlternateBackgroundColor();
-        final Color stopBackgroundColor = style().targetCodeStopBackgroundColor();
+        isBoundaryRow = new boolean[targetInstructionCount];
+        Arrays.fill(isBoundaryRow, false);
+        isStopRow = new boolean[targetInstructionCount];
+        Arrays.fill(isStopRow, false);
+        isAlternateRow = new boolean[targetInstructionCount];
+        Arrays.fill(isAlternateRow, false);
+
         final BytecodeInfo[] bytecodeInfos = teleTargetRoutine.bytecodeInfos();
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
@@ -160,12 +171,13 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 // for the start of bytecode template.
                 final int instructionPosition = instructions.get(row).position;
                 if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
+                    isBoundaryRow[row] = true;
                     alternate = !alternate;
                     final BytecodeInfo bytecodeInfo = bytecodeInfos[bytecodePosition];
                     if (bytecodeInfo == null) {
-                        rowToTagText[row] = ""; // presumably in the prolog
+                        tagTextForRow[row] = ""; // presumably in the prolog
                     } else {
-                        rowToTagText[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
+                        tagTextForRow[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
                         final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
                         rowToBytecodeLocation[row] = bytecodeLocation;
                     }
@@ -173,14 +185,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         ++bytecodeIndex;
                     } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
                 }
-                if (alternate) {
-                    rowToBackGroundColor[row] = alternateBackgroundColor;
-                } else {
-                    rowToBackGroundColor[row] = backgroundColor;
-                }
+                isAlternateRow[row] = alternate;
                 if (positionToStopIndex[instructionPosition] >= 0) {
-                    // the row is at a stop point
-                    rowToBackGroundColor[row] = rowToBackGroundColor[row].darker();
+                    isStopRow[row] = true;
                 }
             }
         } else {
@@ -195,7 +202,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 }
                 if (stopIndex >= 0) {
                     // the row is at a stop point
-                    rowToBackGroundColor[row] = stopBackgroundColor;
+                    isStopRow[row] = true;
                     if (teleTargetRoutine instanceof TeleTargetMethod) {
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
                         final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
@@ -208,8 +215,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
                             }
                         }
                     }
-                } else {
-                    rowToBackGroundColor[row] = backgroundColor;
                 }
             }
         }
@@ -315,21 +320,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return maxVM().getTargetBreakpoint(instructions.get(row).address);
     }
 
-    protected final Color rowToBackgroundColor(int row) {
-        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
-        if (searchMatchingRows != null) {
-            for (int matchingRow : searchMatchingRows) {
-                if (row == matchingRow) {
-                    return style().searchMatchedBackground();
-                }
-            }
-        }
-        return rowToBackGroundColor[row];
-    }
-
     protected final String rowToTagText(int row) {
-        if (rowToTagText[row] != null) {
-            return rowToTagText[row];
+        if (tagTextForRow[row] != null) {
+            return tagTextForRow[row];
         }
         return "";
     }

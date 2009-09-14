@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
 
-
 /**
  * A model for one or more menu items in a menu.
  *

@@ -44,6 +44,9 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String REGISTERS_COLUMN_PREFERENCE = "registersViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -56,21 +59,7 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
      * persistent global choices are identical.
      */
     private RegistersViewPreferences(Inspection inspection) {
-        super(inspection, "registersViewPrefs", RegistersColumnKind.class, RegistersColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(RegistersColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(RegistersColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(RegistersColumnKind columnType) {
-        return columnType.label();
+        super(inspection, REGISTERS_COLUMN_PREFERENCE, RegistersColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }
