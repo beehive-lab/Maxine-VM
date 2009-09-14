@@ -156,9 +156,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             }
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getEdenSpace();
-
             final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
 
             edenGC = (Runnable) collectors[0];
@@ -170,6 +167,11 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getEdenSpace();
     }
 
     @INLINE
