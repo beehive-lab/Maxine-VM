@@ -347,8 +347,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
         if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
-        } else {
-            left.dontLoadItem();
         }
 
         assert C1XOptions.SSEVersion >= 2;
@@ -359,8 +357,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.loadItem();
         } else if (right.isRegister()) {
             right.loadItem();
-        } else {
-            right.dontLoadItem();
         }
 
         LIROperand reg;
@@ -549,9 +545,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                         }
                     }
                 }
-                if (useConstant) {
-                    rightArg.dontLoadItem();
-                } else {
+                if (!useConstant) {
                     rightArg.loadItem();
                 }
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
@@ -562,7 +556,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
-                rightArg.dontLoadItem();
                 rlockResult(x);
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
@@ -600,9 +593,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (mustLoadCount) {
             // count for long must be in register
             count.loadItemForce(shiftCountOpr());
-        } else {
-            count.dontLoadItem();
         }
+
         value.loadItem();
         LIROperand reg = rlockResult(x);
 
@@ -1105,13 +1097,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         xin.loadItem();
         if (tag.isLong() && yin.isConstant() && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
-            // inline long zero
-            yin.dontLoadItem();
+            // dont load item
         } else if (tag.isLong() || tag.isFloat() || tag.isDouble()) {
             // longs cannot handle constants at right side
             yin.loadItem();
-        } else {
-            yin.dontLoadItem();
         }
 
         // add safepoint before generating condition code so it can be recomputed

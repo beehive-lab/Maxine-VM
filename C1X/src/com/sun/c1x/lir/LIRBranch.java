@@ -183,7 +183,7 @@ public class LIRBranch extends LIRInstruction {
                 out.printf(" [bci:%d]", stub().info.bci());
             }
         } else {
-            out.printf("[label:0x%x] ", label().loc());
+            out.printf("[label:0x%x] ", label().position());
         }
         if (ublock() != null) {
             out.printf("unordered: [B%d] ", ublock().blockID);

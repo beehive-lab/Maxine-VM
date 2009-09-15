@@ -22,8 +22,6 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-import com.sun.c1x.debug.*;
-
 
 /**
  * The <code>Label</code> class definition.
@@ -32,28 +30,18 @@ import com.sun.c1x.debug.*;
  */
 public class Label {
 
-    private static int PATCHCACHESIZE = 4;
 
     // locator encodes both the binding state (via its sign)
     // and the binding locator (via its value) of a label.
     // locator >= 0   bound label, locator() encodes the target (jump) position
     // locator == -1  unbound label
     // The locator encodes both offset and section
-    private int loc;
+    private int position = -1;
 
     // References to instructions that jump to this unresolved label.
     // These instructions need to be patched when the label is bound
     // using the platform-specific patchInstruction() method.
-    private List<Integer> patchOverflow;
-
-    /**
-     * Creates a new Label.
-     */
-    public Label() {
-        super();
-        patchOverflow = new ArrayList<Integer>(PATCHCACHESIZE);
-        this.loc = -1;
-    }
+    private List<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
      * Returns the position of the the Label in the code buffer.
@@ -61,39 +49,32 @@ public class Label {
      *
      * @return locator
      */
-    public int loc() {
-        assert loc >= 0 : "Unbounded label is being referenced";
-        return loc;
+    public int position() {
+        assert position >= 0 : "Unbounded label is being referenced";
+        return position;
     }
 
     public boolean isBound() {
-        return loc >= 0;
+        return position >= 0;
     }
 
     public boolean isUnbound() {
-        return loc == -1 && patchOverflow.size() > 0;
+        return position == -1 && patchPositions.size() > 0;
     }
 
     public boolean isUnused() {
-        return loc == -1 && patchOverflow.size() == 0;
+        return position == -1 && patchPositions.size() == 0;
     }
 
     public void addPatchAt(int branchLocator) {
-        assert loc == -1 : "Label is unbounded";
-        patchOverflow.add(branchLocator);
-      }
-
-    public void printInstruction(LogStream out) {
+        assert position == -1 : "Label is unbounded";
+        patchPositions.add(branchLocator);
     }
 
-    public void printInstructions(AbstractAssembler abstractAssembler) {
-    }
-
-    public void patchInstructions(AbstractAssembler masm) {
+    void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
-
-        int target = loc;
-        for (int branchLoc : patchOverflow) {
+        int target = position;
+        for (int branchLoc : patchPositions) {
             masm.patchJumpTarget(branchLoc, target);
         }
     }
@@ -103,7 +84,7 @@ public class Label {
         return "label";
     }
 
-    public void bindLoc(int codeOffset) {
-        this.loc = codeOffset;
+    void bindPosition(int codeOffset) {
+        this.position = codeOffset;
     }
 }

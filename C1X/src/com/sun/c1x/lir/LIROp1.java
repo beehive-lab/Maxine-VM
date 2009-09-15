@@ -203,12 +203,4 @@ public class LIROp1 extends LIRInstruction {
         }
         return true;
     }
-
-    public LIROperand inOpr() {
-        return operand();
-    }
-
-    public LIROperand resultOpr() {
-        return result();
-    }
 }

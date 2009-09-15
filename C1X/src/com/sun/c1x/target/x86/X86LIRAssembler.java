@@ -1131,8 +1131,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConvert(LIRConvert op) {
-        LIROperand src = op.inOpr();
-        LIROperand dest = op.resultOpr();
+        LIROperand src = op.operand();
+        LIROperand dest = op.result();
         Label endLabel = new Label();
         CiRegister srcRegister = src.asRegister();
         CiRegister rscratch1 = compilation.target.scratchRegister;
@@ -3014,10 +3014,9 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void leal(LIROperand addr, LIROperand dest) {
-        assert addr.isAddress() && dest.isRegister() : "check";
+    protected void leal(LIRAddress addr, LIRLocation dest) {
         CiRegister reg = dest.asPointerRegister(compilation.target.arch);
-        masm().lea(reg, asAddress((LIRAddress) addr));
+        masm().lea(reg, asAddress(addr));
     }
 
     @Override

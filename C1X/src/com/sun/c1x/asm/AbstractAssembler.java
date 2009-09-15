@@ -49,10 +49,10 @@ public abstract class AbstractAssembler {
     public void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
-            Util.guarantee(l.loc() == codeBuffer.position(), "attempt to redefine label");
+            Util.guarantee(l.position() == codeBuffer.position(), "attempt to redefine label");
             return;
         }
-        l.bindLoc(codeBuffer.position());
+        l.bindPosition(codeBuffer.position());
         l.patchInstructions(this);
     }
 
@@ -235,7 +235,7 @@ public abstract class AbstractAssembler {
     protected int target(Label l) {
         int branchPc = codeBuffer.position();
         if (l.isBound()) {
-            return l.loc();
+            return l.position();
         } else {
             l.addPatchAt(branchPc);
             // Need to return a pc, doesn't matter what it is since it will be
