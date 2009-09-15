@@ -51,11 +51,20 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         }
     }
 
+    public boolean isObjectInspectorObservingObject(long oid) {
+        for (TeleObject teleObject : teleObjectToInspector.keys()) {
+            if (teleObject.reference().grip().makeOID() == oid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
      * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
      */
-    private  final VariableMapping<TeleObject, ObjectInspector> teleObjectToInspector = HashMapping.createVariableIdentityMapping();
+    private final VariableMapping<TeleObject, ObjectInspector> teleObjectToInspector = HashMapping.createVariableIdentityMapping();
 
     /**
      * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
@@ -176,7 +185,10 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         return null;
     }
 
-
+    public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectInspector objectInspector) {
+        teleObjectToInspector.remove(oldTeleObject);
+        teleObjectToInspector.put(newTeleObject, objectInspector);
+    }
 
     void objectInspectorClosing(ObjectInspector objectInspector) {
         teleObjectToInspector.remove(objectInspector.teleObject());

@@ -28,9 +28,12 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleReference extends Reference {
 
-    private final TeleGrip grip;
+    private TeleGrip grip;
 
     public TeleGrip grip() {
+//        if (grip.getForwardedTeleGrip() != null) {
+//            grip = grip.getForwardedTeleGrip();
+//        }
         return grip;
     }
 
@@ -40,25 +43,25 @@ public abstract class TeleReference extends Reference {
 
     @Override
     public int hashCode() {
-        return grip.hashCode();
+        return grip().hashCode();
     }
 
     /**
      * @return a non-zero integer uniquely identifying the referred-to object in the tele VM
      */
     public long makeOID() {
-        return grip.makeOID();
+        return grip().makeOID();
     }
 
     public boolean isLocal() {
-        return grip.isLocal();
+        return grip().isLocal();
     }
 
     public static final TeleReference ZERO = new TeleReference(TeleGrip.ZERO) {};
 
     @Override
     public String toString() {
-        return grip.toString();
+        return grip().toString();
     }
 
 }
