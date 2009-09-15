@@ -190,16 +190,8 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return Color.black;
     }
 
-    private static final Border debugDefaultTagBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-    public Border debugDefaultTagBorder() {
-        return debugDefaultTagBorder;
-    }
     public Color debugDefaultTagColor() {
         return InspectorStyle.Black;
-    }
-    private static final Icon debugDefaultTagIcon = IconFactory.createBlank(debugTagIconSize);
-    public Icon debugDefaultTagIcon() {
-        return debugDefaultTagIcon;
     }
 
     private static final Border debugEnabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 2);
@@ -228,7 +220,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return null;
     }
     public  Color debugIPTagColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     private static final Icon debugIPTagIcon = IconFactory.createRightArrow(debugTagIconSize);
     public Icon debugIPTagIcon() {
@@ -239,7 +231,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return null;
     }
     public Color debugCallReturnTagColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     private static final Icon debugCallReturnTagIcon = IconFactory.createLeftArrow(debugTagIconSize);
     public Icon debugCallReturnTagIcon() {
@@ -378,7 +370,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugSelectedCodeBorderColor();
     }
     public Color memoryDefaultTagTextColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     public Color memoryRegisterTagTextColor() {
         //return debugCallReturnTextColor();
