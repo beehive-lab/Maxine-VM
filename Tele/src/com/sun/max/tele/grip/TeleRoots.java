@@ -39,6 +39,7 @@ import com.sun.max.vm.tele.*;
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  *
  * @see InspectableHeapInfo
  * @see TeleHeapManager
@@ -64,7 +65,6 @@ public final class TeleRoots extends AbstractTeleVMHolder{
     private RemoteTeleGrip teleRootsGrip() {
         return teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(teleVM().teleRootsPointer()).asAddress());
     }
-
 
     /**
      * Register a VM location in the VM's Inspector root table.

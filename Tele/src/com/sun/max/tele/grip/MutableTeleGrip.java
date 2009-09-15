@@ -26,12 +26,19 @@ import com.sun.max.unsafe.*;
  * Raw bits may change due to tele GC.
  *
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 public final class MutableTeleGrip extends RemoteTeleGrip {
 
     private final int index;
 
     int index() {
+        if (forwardedTeleGrip != null) {
+            if (forwardedTeleGrip instanceof MutableTeleGrip) {
+                final MutableTeleGrip mutableTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
+                return mutableTeleGrip.index();
+            }
+        }
         return index;
     }
 
@@ -61,7 +68,9 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public void finalize() throws Throwable {
-        teleGripScheme().finalizeMutableTeleGrip(index);
+        if (getState() == State.LIVE) {
+            teleGripScheme().finalizeMutableTeleGrip(index);
+        }
         super.finalize();
     }
 

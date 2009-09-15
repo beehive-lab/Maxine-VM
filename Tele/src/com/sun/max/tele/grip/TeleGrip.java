@@ -21,15 +21,27 @@
 package com.sun.max.tele.grip;
 
 import com.sun.max.tele.reference.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 public abstract class TeleGrip extends Grip {
 
     private long gripOID = 0;
+
+    protected TeleGrip forwardedTeleGrip = null;
+
+    public enum State {
+        LIVE,
+        OBSOLETE,
+        DEAD;
+    }
+
+    private State state = State.LIVE;
 
     protected TeleGrip() {
     }
@@ -62,6 +74,31 @@ public abstract class TeleGrip extends Grip {
 
     public boolean isLocal() {
         return false;
+    }
+
+    public final void setForwardedTeleGrip(TeleGrip forwardedMutableTeleGrip) {
+        this.forwardedTeleGrip = forwardedMutableTeleGrip;
+    }
+
+    public final TeleGrip getForwardedTeleGrip() {
+        if (forwardedTeleGrip != null) {
+            return forwardedTeleGrip.getForwardedTeleGrip();
+        }
+        return this;
+    }
+
+    public State getState() {
+        if (forwardedTeleGrip != null) {
+            TeleGrip forwardedTeleGrip = getForwardedTeleGrip();
+            if (forwardedTeleGrip.toOrigin().equals(Word.zero())) {
+                return State.DEAD;
+            }
+            return State.OBSOLETE;
+        }
+        if (toOrigin().equals(Word.zero())) {
+            return State.DEAD;
+        }
+        return State.LIVE;
     }
 
     public static final TeleGrip ZERO = new TeleGrip() {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -40,7 +41,7 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -52,6 +53,7 @@ import com.sun.max.vm.value.*;
  * canonical surrogate for a heap object in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
 public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
@@ -75,12 +77,12 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * Map: Reference to {@link Object}s in the {@link TeleVM} --> canonical local {@link TeleObject} that represents the
      * object in the {@link TeleVM}. Relies on References being canonical and GC-safe.
      */
-    private  final GrowableMapping<Reference, TeleObject> referenceToTeleObject = HashMapping.createIdentityMapping();
+    private  final GrowableMapping<Reference, WeakReference<TeleObject>> referenceToTeleObject = HashMapping.createIdentityMapping();
 
     /**
      * Map: OID --> {@link TeleObject}.
      */
-    private final GrowableMapping<Long, TeleObject> oidToTeleObject = HashMapping.createEqualityMapping();
+    private final GrowableMapping<Long, WeakReference<TeleObject>> oidToTeleObject = HashMapping.createEqualityMapping();
 
     /**
      * Constructors for specific classes of tuple objects in the heap in the {@teleVM}.
@@ -153,6 +155,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         return Classes.getDeclaredConstructor(clazz, TeleVM.class, Reference.class);
     }
 
+    private TeleObject getTeleObjectFromReferenceToTeleObjectMap(Reference reference) {
+        TeleObject teleObject = null;
+        synchronized (referenceToTeleObject) {
+            final WeakReference<TeleObject> teleObjectRef = referenceToTeleObject.get(reference);
+            if (teleObjectRef != null) {
+                teleObject = teleObjectRef.get();
+            }
+        }
+        return teleObject;
+    }
+
     /**
      * Factory method for canonical {@link TeleObject} surrogate for heap objects in the {@link TeleVM}. Special subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
@@ -172,10 +185,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         if (reference.isZero()) {
             return null;
         }
-        TeleObject teleObject = null;
-        synchronized (referenceToTeleObject) {
-            teleObject = referenceToTeleObject.get(reference);
-        }
+        TeleObject teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+
         if (teleObject != null) {
             return teleObject;
         }
@@ -234,61 +245,53 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
             //teleObject = new TeleStaticTuple(teleVM(), reference);       ?????????
-            synchronized (referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    teleObject = new TeleStaticTuple(teleVM(), reference);
-                }
+            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            if (teleObject == null) {
+                teleObject = new TeleStaticTuple(teleVM(), reference);
             }
         } else if (classActor.isArrayClassActor()) {
-            synchronized (referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    teleObject = new TeleArrayObject(teleVM(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
-                }
+            // Check map again, just in case there's a race
+            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            if (teleObject == null) {
+                teleObject = new TeleArrayObject(teleVM(), reference, classActor.componentClassActor().kind, classActor.dynamicHub().specificLayout);
             }
         } else if (classActor.isHybridClassActor()) {
             final Class javaClass = classActor.toJava();
-            synchronized (referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    if (DynamicHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleDynamicHub(teleVM(), reference);
-                    } else if (StaticHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleStaticHub(teleVM(), reference);
-                    } else {
-                        throw FatalError.unexpected("invalid hybrid implementation type");
-                    }
+            // Check map again, just in case there's a race
+            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            if (teleObject == null) {
+                if (DynamicHub.class.isAssignableFrom(javaClass)) {
+                    teleObject = new TeleDynamicHub(teleVM(), reference);
+                } else if (StaticHub.class.isAssignableFrom(javaClass)) {
+                    teleObject = new TeleStaticHub(teleVM(), reference);
+                } else {
+                    throw FatalError.unexpected("invalid hybrid implementation type");
                 }
             }
         } else if (classActor.isTupleClassActor()) {
-            synchronized (referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
-                    try {
-                        teleObject = (TeleObject) constructor.newInstance(teleVM(), reference);
-                    } catch (InstantiationException e) {
-                        throw ProgramError.unexpected();
-                    } catch (IllegalAccessException e) {
-                        throw ProgramError.unexpected();
-                    } catch (InvocationTargetException e) {
-                        throw ProgramError.unexpected();
-                    }
+            // Check map again, just in case there's a race
+            teleObject = getTeleObjectFromReferenceToTeleObjectMap(reference);
+            if (teleObject == null) {
+                final Constructor constructor = lookupTeleTupleObjectConstructor(classActor);
+                try {
+                    teleObject = (TeleObject) constructor.newInstance(teleVM(), reference);
+                } catch (InstantiationException e) {
+                    throw ProgramError.unexpected();
+                } catch (IllegalAccessException e) {
+                    throw ProgramError.unexpected();
+                } catch (InvocationTargetException e) {
+                    throw ProgramError.unexpected();
                 }
             }
         } else {
             throw FatalError.unexpected("invalid object implementation type");
         }
 
-        oidToTeleObject.put(teleObject.getOID(), teleObject);
+        oidToTeleObject.put(teleObject.getOID(), new WeakReference<TeleObject>(teleObject));
+        //Log.println("OID: " + teleObject.getOID() + " ref: " + teleObject.getCurrentOrigin());
         assert oidToTeleObject.containsKey(teleObject.getOID());
 
-        referenceToTeleObject.put(reference, teleObject);
+        referenceToTeleObject.put(reference,  new WeakReference<TeleObject>(teleObject));
         return teleObject;
     }
 
@@ -309,7 +312,11 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
      * @return the {@link TeleObject} with specified OID.
      */
     public TeleObject lookupObject(long id) {
-        return oidToTeleObject.get(id);
+        WeakReference<TeleObject> teleObject = oidToTeleObject.get(id);
+        if (teleObject == null) {
+            return null;
+        }
+        return teleObject.get();
     }
 
     private int previousTeleObjectCount = 0;
@@ -317,8 +324,13 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
     public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
-        for (TeleObject teleObject : referenceToTeleObject.values()) {
-            teleObject.refresh(processEpoch);
+        for (WeakReference<TeleObject> teleObjectRef : referenceToTeleObject.values()) {
+            if (teleObjectRef != null) {
+                TeleObject teleObject = teleObjectRef.get();
+                if (teleObject != null) {
+                    teleObject.refresh(processEpoch);
+                }
+            }
         }
         final int currentTeleObjectCount = referenceToTeleObject.length();
         final StringBuilder sb = new StringBuilder(100);
