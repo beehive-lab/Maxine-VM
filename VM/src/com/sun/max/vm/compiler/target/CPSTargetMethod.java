@@ -83,16 +83,13 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return defaultResult;
     }
 
-    @Override
     public boolean isNative() {
         return classMethodActor().isNative();
     }
 
-    @Override
     public final void cleanup() {
     }
 
-    @Override
     public String name() {
         return description();
     }
