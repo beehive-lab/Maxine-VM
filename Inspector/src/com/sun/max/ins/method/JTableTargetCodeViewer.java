@@ -423,7 +423,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      * @return the color to be used
      */
     private Color getRowTextColor(int row) {
-        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : style().defaultCodeColor());
+        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
     }
 
     /**
@@ -589,7 +589,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             final String string = value.toString();
-            setText(string);
+            setValue(string, null);
             return this;
         }
     }

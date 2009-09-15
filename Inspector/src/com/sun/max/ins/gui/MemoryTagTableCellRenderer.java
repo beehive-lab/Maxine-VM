@@ -84,7 +84,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             label.setForeground(inspection().style().debugIPTagColor());
         } else {
             label.setIcon(null);
-            label.setForeground(inspection().style().defaultTextColor());
+            label.setForeground(null);
         }
         if (!watchpoints.isEmpty()) {
             toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");

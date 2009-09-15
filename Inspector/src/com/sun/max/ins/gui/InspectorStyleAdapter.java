@@ -75,65 +75,54 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Font textLabelFont() {
         return defaultFont();
     }
-    public Color textLabelColor() {
-        return defaultTextColor();
-    }
 
     // Defaults for integers displayed in decimal
     public Font decimalDataFont() {
         return defaultFont();
-    }
-    public Color decimalDataColor() {
-        return defaultTextColor();
     }
 
     // Defaults for integers displayed in hex
     public Font hexDataFont() {
         return defaultFont();
     }
-    public Color hexDataColor() {
-        return defaultTextColor();
-    }
 
     // Special styles for interpreted machine word values
     public Font wordDataFont() {
         return hexDataFont();
     }
-    public Color wordDataColor() {
-        return hexDataColor();
-    }
+
     public Color wordNullDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordValidObjectReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordUncheckedReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordInvalidObjectReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public  Color wordInvalidDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordStackLocationDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordCallEntryPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordCallReturnPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordUncheckedCallPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Font wordAlternateTextFont() {
         return defaultFont();
     }
     public Color wordSelectedColor() {
-        return defaultTextColor();
+        return null;
     }
     public Font wordFlagsFont() {
         return defaultFont();
@@ -145,15 +134,12 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultFont();
     }
     public Color primitiveDataColor() {
-        return defaultTextColor();
+        return null;
     }
 
     // Display of char values
     public Font charDataFont() {
         return defaultFont();
-    }
-    public Color charDataColor() {
-        return defaultTextColor();
     }
 
     // Display of string values
@@ -168,23 +154,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Font javaNameFont() {
         return defaultFont();
     }
-    public Color javaNameColor() {
-        return defaultTextColor();
-    }
     public Color javaUnresolvedNameColor() {
-        return defaultTextColor();
-    }
-    public Font javaClassNameFont() {
-        return javaNameFont();
+        return null;
     }
 
+
     // Default display of any kind of code
-    public Font defaultCodeFont() {
-        return defaultFont();
-    }
-    public Color defaultCodeColor() {
-        return defaultTextColor();
-    }
+
     private static final Icon codeViewCloseIcon = IconFactory.createCrossIcon(16, 16);
     public Icon codeViewCloseIcon() {
         return codeViewCloseIcon;
@@ -197,16 +173,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return bytecodeOperandFont();
     }
     public Font bytecodeOperandFont() {
-        return defaultCodeFont();
+        return null;
     }
     public int maxBytecodeOperandDisplayLength() {
         return maxStringInlineDisplayLength();
     }
-    public Color bytecodeColor() {
-        return defaultCodeColor();
-    }
     public Color bytecodeMethodEntryColor() {
-        return defaultCodeColor();
+        return null;
     }
 
     // Debugger interaction
@@ -252,7 +225,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     public Color debugIPTextColor() {
-        return defaultCodeColor();
+        return null;
     }
     public  Color debugIPTagColor() {
         return debugDefaultTagColor();
@@ -263,7 +236,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     public Color debugCallReturnTextColor() {
-        return defaultCodeColor();
+        return null;
     }
     public Color debugCallReturnTagColor() {
         return debugDefaultTagColor();
