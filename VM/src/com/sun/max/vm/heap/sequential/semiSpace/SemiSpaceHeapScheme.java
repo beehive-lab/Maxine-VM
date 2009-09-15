@@ -612,7 +612,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private boolean cannotGrow() {
-        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize());
+        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize().dividedBy(2));
     }
 
     /**
@@ -635,7 +635,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             // It is important to know now that we can allocate both spaces of the new size
             // and, if we cannot, to leave things as they are, so that the VM can continue
             // using the safety zone and perhaps then free enough space to continue.
-            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize());
+            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize().dividedBy(2));
             if (preGc && Heap.verbose()) {
                 Log.print("...new heap size: ");
                 Log.println(size.toLong());
