@@ -26,6 +26,7 @@ package com.sun.c1x.ci;
  * the backend of C1X.
  *
  * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
 public abstract class CiArchitecture {
 
@@ -33,23 +34,61 @@ public abstract class CiArchitecture {
         LittleEndian,
         BigEndian
     }
+
     /**
      * Represents the natural size of words (typically registers and pointers) of this architecture, in bytes.
      */
     public final int wordSize;
-    public final int bitsPerWord;
-    public final int logBytesPerInt;
-    public final String backend;
-    public final int loWordOffsetInBytes;
-    public final int hiWordOffsetInBytes;
-    public final int stackBias = 0;
-    public final CiRegister[] registers;
-    public final String name;
-    public final BitOrdering bitOrdering;
-    public final int framePadding;
-    public final int nativeCallDisplacementOffset;
-    public final int nativeMoveConstInstructionSize;
 
+    /**
+     * The name of the platform associated with this architecture. May either be "x86" or "SPARC".
+     */
+    public final String platform;
+
+    /**
+     * The offset of the lower half of a word in bytes.
+     */
+    public final int lowWordOffset;
+
+    /**
+     * The offset of the upper half of a word in bytes.
+     */
+    public final int highWordOffset;
+
+    /**
+     * Array of all available registers on this architecture.
+     */
+    public final CiRegister[] registers;
+
+    /**
+     * The bit ordering can be either little or big endian.
+     */
+    public final BitOrdering bitOrdering;
+
+    /**
+     * Additional padding that is added to the frame size of each method.
+     */
+    public final int framePadding;
+
+    /**
+     * Offset in bytes from the beginning of a call instruction to the displacement.
+     */
+    public final int machineCodeCallDisplacementOffset;
+
+    /**
+     * Size in bytes of a move instruction.
+     */
+    public final int machineCodeMoveConstInstructionSize;
+
+    private final String name;
+
+    /**
+     * Reflectively instantiates an architecture given its name.
+     * 
+     * @param name
+     *            the name of the wanted architecture
+     * @return the newly created architecture object
+     */
     public static CiArchitecture findArchitecture(String name) {
         // load and instantiate the backend via reflection
         String className = "com.sun.c1x.target." + name.toUpperCase();
@@ -69,21 +108,19 @@ public abstract class CiArchitecture {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
-        this.backend = backend;
-        this.bitsPerWord = wordSize * 8;
-        this.logBytesPerInt = (int) (Math.log(wordSize));
+        this.platform = backend;
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
-        this.nativeCallDisplacementOffset = nativeCallDisplacementOffset;
-        this.nativeMoveConstInstructionSize = nativeMoveConstInstructionSize;
+        this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
+        this.machineCodeMoveConstInstructionSize = nativeMoveConstInstructionSize;
         switch (bitOrdering) {
             case LittleEndian:
-                loWordOffsetInBytes = 0;
-                hiWordOffsetInBytes = wordSize;
+                lowWordOffset = 0;
+                highWordOffset = wordSize;
                 break;
             case BigEndian:
-                loWordOffsetInBytes = wordSize;
-                hiWordOffsetInBytes = 0;
+                lowWordOffset = wordSize;
+                highWordOffset = 0;
                 break;
             default:
 			throw new Error("Invalid bitordering!");
@@ -97,10 +134,6 @@ public abstract class CiArchitecture {
     @Override
     public String toString() {
         return name.toLowerCase();
-    }
-
-    public int bitsPerWord() {
-        return bitsPerWord;
     }
 
     /**
@@ -125,7 +158,7 @@ public abstract class CiArchitecture {
      * @return <code>true</code> if the backend of this architecture is x86
      */
     public boolean isX86() {
-        return "x86".equals(backend);
+        return "x86".equals(platform);
     }
 
     /**
@@ -134,6 +167,6 @@ public abstract class CiArchitecture {
      * @return <code>true</code> if the backend of this architecture is SPARC
      */
     public boolean isSPARC() {
-        return "SPARC".equals(backend);
+        return "SPARC".equals(platform);
     }
 }

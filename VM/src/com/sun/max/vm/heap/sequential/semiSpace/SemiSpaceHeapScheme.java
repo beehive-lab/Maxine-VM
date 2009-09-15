@@ -507,7 +507,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
                 Log.print("Forwarding ");
                 Log.print(hub.classActor.name.string);
                 Log.print(" from ");
@@ -569,7 +569,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             // The hub was copied
             Layout.writeHubGrip(origin, newHubGrip);
         }
-        final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
+        final Hub hub = UnsafeCast.asHub(newHubGrip.toJava());
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
@@ -900,7 +900,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);

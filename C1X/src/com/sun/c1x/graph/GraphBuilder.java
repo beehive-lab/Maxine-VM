@@ -1409,7 +1409,7 @@ public class GraphBuilder {
     private boolean tryFoldable(RiMethod target, Value[] args) {
         CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
-            pushReturn(returnBasicType(target), new Constant(result));
+            pushReturn(returnBasicType(target), append(new Constant(result)));
             return true;
         }
         return false;

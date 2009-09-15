@@ -125,6 +125,7 @@ public abstract class CodeViewer extends InspectorPanel {
     protected void createView() {
         toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
         toolBar = new InspectorToolBar(inspection());
+        toolBar.setBorder(style().defaultPaneBorder());
         toolBar.setFloatable(false);
         toolBar.setRollover(true);
         toolBarPanel.add(toolBar);
@@ -273,12 +274,8 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     @Override
-    public final void refresh(boolean force) {
+    public void refresh(boolean force) {
         updateCaches(force);
-        updateView(force);
-        updateSize();
-        invalidate();
-        repaint();
     }
 
     protected void updateSize() {
@@ -362,12 +359,6 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     /**
-     * Updates any label in the view that are based on state in the VM.
-     *
-     */
-    protected abstract void updateView(boolean force);
-
-    /**
      * Returns stack frame information, if any, associated with the row.
      */
     protected StackFrameInfo stackFrameInfo(int row) {
@@ -424,6 +415,21 @@ public abstract class CodeViewer extends InspectorPanel {
             return activeRows.elementAt(currentActiveRowIndex);
         }
         return -1;
+    }
+
+    /**
+     * Is there a currently active search that matches the specified row?
+     */
+    protected boolean isSearchMatchRow(int row) {
+        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
+        if (searchMatchingRows != null) {
+            for (int matchingRow : searchMatchingRows) {
+                if (row == matchingRow) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // TODO (mlvdv) figure out how to make this a view-specific binding without interference with global menu item accelerators.

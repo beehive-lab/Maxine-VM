@@ -21,6 +21,7 @@
 package com.sun.max.ins;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.vm.*;
 
 
@@ -29,7 +30,7 @@ import com.sun.max.vm.*;
 *
 * @author Michael Van De Vanter
 */
-public enum BootImageColumnKind {
+public enum BootImageColumnKind implements ColumnKind {
     NAME ("Parameter", "Boot Image configuration parameter", true, 20) {
         @Override
         public boolean canBeMadeInvisible() {
@@ -52,23 +53,14 @@ public enum BootImageColumnKind {
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -78,16 +70,10 @@ public enum BootImageColumnKind {
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

@@ -157,22 +157,10 @@ public class CiTarget {
     }
 
     public boolean isP6() {
-        return false;
-    }
-
-    public boolean supportsCx8() {
         return true;
     }
 
-    public boolean isWin64() {
-        return false;
-    }
-
-    public boolean isWindows() {
-        return false;
-    }
-
-    public boolean isSolaris() {
+    public boolean supportsCx8() {
         return true;
     }
 }

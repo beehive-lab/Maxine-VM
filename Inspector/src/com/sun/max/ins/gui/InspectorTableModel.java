@@ -18,26 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package com.sun.max.ins.gui;
 
-import java.lang.annotation.*;
+import javax.swing.table.*;
+
 
 /**
- * Refines testing of the reflection invocation stub generated for the annotated method.
- * 
- * @author Doug Simon
+ * A table model specialized for Inspector's table-based views.
+ *
+ * @author Michael Van De Vanter
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface STUB_TEST_PROPERTIES {
+public abstract class InspectorTableModel extends AbstractTableModel {
 
-    /**
-     * Specifies if the stub should be executed. Methods that have side effects on the test result should not have their stub executed.
-     */
-    boolean execute() default true;
-
-    /**
-     * Specifies if the result of executing the stub should be compared against the result of executed the method.
-     */
-    boolean compareResult() default true;
+    public void refresh() {
+        fireTableDataChanged();
+    }
 }

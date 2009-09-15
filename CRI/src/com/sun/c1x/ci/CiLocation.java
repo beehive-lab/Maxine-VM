@@ -28,6 +28,9 @@ package com.sun.c1x.ci;
  */
 public final class CiLocation extends CiValue {
 
+    /**
+     * Singleton object representing an invalid location.
+     */
     public static final CiLocation InvalidLocation = new CiLocation();
 
     public final CiKind kind;
@@ -37,6 +40,14 @@ public final class CiLocation extends CiValue {
     public final int stackSize;
     public final boolean callerStack;
 
+    /**
+     * Location representing a single register.
+     * 
+     * @param kind
+     *            the kind of the new location
+     * @param register
+     *            the register representing the new location
+     */
     public CiLocation(CiKind kind, CiRegister register) {
         assert kind.size == 1;
         this.kind = kind;

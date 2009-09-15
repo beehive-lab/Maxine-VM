@@ -101,7 +101,7 @@ public class FrameMap {
 
     int spOffsetForMonitorBase(int index) {
         int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SpillSlotSize;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.basicObjectLockSize();
+        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
         return offset;
     }
 
@@ -159,23 +159,12 @@ public class FrameMap {
         return Util.nonFatalUnimplemented(false);
     }
 
-    public int oopMapArgCount() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
     public CiLocation objectSlotRegname(int i) {
         return new CiLocation(CiKind.Object, this.spOffsetForSpill(i), SpillSlotSize, false);
-    }
-
-    public CiLocation monitorObjectRegname(int i) {
-        return Util.nonFatalUnimplemented(null);
-    }
-
-    public int stackRefMapSize() {
-        return ((frameSize + 7) >> 3) << 3; // round up to next byte size
     }
 
     public CiLocation locationForMonitor(int monitorIndex) {
         return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SpillSlotSize, false);
     }
+
 }

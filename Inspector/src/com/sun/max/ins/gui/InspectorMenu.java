@@ -27,53 +27,32 @@ import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
 /**
- * A menu that can be manifest in the GUI by a {@linkplain JPopupMenu pop-up menu} or a {@linkplain JMenu standard menu}.
+ * A menu that can be manifest in the GUI by a {@linkplain JMenu standard menu}.
+ * <br>
+ * The important characteristic of this menu is that it can be refreshed, in case it depends on any state (e.g. for being enabled).
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class InspectorMenu implements Prober {
+public final class InspectorMenu extends JMenu implements Prober {
 
-    private final Inspector inspector;
-    private AppendableSequence<InspectorMenuItems> inspectorMenuItems;
-
-    private final JPopupMenu popupMenu;
-
-    public JPopupMenu popupMenu() {
-        return popupMenu;
+    private final AppendableSequence<InspectorMenuItems> menuItems = new LinkSequence<InspectorMenuItems>();
+    private AppendableSequence<InspectorAction> actions = new LinkSequence<InspectorAction>();
+    private final String name;
+    /**
+     * Creates a standard menu that can be used on the Inspector menu bar.
+     * <br>
+     * Menu items may have state that gets update when refreshed.
+     */
+    public InspectorMenu(String name) {
+        super(name);
+        this.name = name;
     }
 
-    private final JMenu standardMenu;
-
-    public JMenu standardMenu() {
-        return standardMenu;
-    }
-
-    public InspectorMenu(Inspector inspector, String name) {
-        this.inspector = inspector;
-        popupMenu =  new JPopupMenu(name);
-        standardMenu = new JMenu(name);
-        if (inspector != null) {
-            add(inspector.getViewOptionsAction());
-            add(inspector.getRefreshAction());
-            addSeparator();
-            add(inspector.getCloseAction());
-            add(inspector.getCloseOtherInspectorsAction());
-            addSeparator();
-            add(inspector.getPrintAction());
-        }
-    }
-
-    public InspectorMenu(Inspector inspector) {
-        this(inspector, null);
-    }
-
-    public InspectorMenu() {
-        this(null, null);
-    }
-
-    public int length() {
-        return standardMenu.getItemCount();
+    /**
+     * @return the name given the menu at creation; used as key to find the menu.
+     */
+    public String getMenuName() {
+        return name;
     }
 
     /**
@@ -93,47 +72,22 @@ public final class InspectorMenu implements Prober {
     }
 
     public void add(InspectorAction action) {
-        action.append(standardMenu);
-        action.append(popupMenu);
+        actions.append(action);
+        super.add(action);
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
         addSeparator();
+        menuItems.append(inspectorMenuItems);
         inspectorMenuItems.addTo(this);
-        if (this.inspectorMenuItems == null) {
-            this.inspectorMenuItems = new LinkSequence<InspectorMenuItems>();
-        }
-        this.inspectorMenuItems.append(inspectorMenuItems);
-    }
-
-    public void add(InspectorMenu inspectorMenu) {
-        standardMenu.add(inspectorMenu.standardMenu);
-        popupMenu.add(inspectorMenu.standardMenu);
-    }
-
-    /**
-     * For menu items that do not change any Inspector or VM state, only local view state.
-     * @param menuItem
-     */
-    public void add(JMenuItem menuItem) {
-        standardMenu.add(menuItem);
-        popupMenu.add(menuItem);
-    }
-
-    public void addSeparator() {
-        standardMenu.addSeparator();
-        popupMenu.addSeparator();
-    }
-
-    public Inspection inspection() {
-        return inspector.inspection();
     }
 
     public void refresh(boolean force) {
-        if (this.inspectorMenuItems != null) {
-            for (InspectorMenuItems inspectorMenuItems : this.inspectorMenuItems) {
-                inspectorMenuItems.refresh(force);
-            }
+        for (InspectorMenuItems inspectorMenuItems : this.menuItems) {
+            inspectorMenuItems.refresh(force);
+        }
+        for (InspectorAction action : actions) {
+            action.refresh(force);
         }
     }
 

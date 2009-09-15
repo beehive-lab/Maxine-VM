@@ -45,6 +45,9 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String BOOTIMAGE_COLUMN_PREFERENCE = "bootImageViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -57,21 +60,7 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
     * persistent global choices are identical.
     */
     private BootImageViewPreferences(Inspection inspection) {
-        super(inspection, "BootImageViewPrefs", BootImageColumnKind.class, BootImageColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(BootImageColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(BootImageColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(BootImageColumnKind columnType) {
-        return columnType.label();
+        super(inspection, BOOTIMAGE_COLUMN_PREFERENCE, BootImageColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

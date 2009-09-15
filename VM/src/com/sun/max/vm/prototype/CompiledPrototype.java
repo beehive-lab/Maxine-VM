@@ -313,11 +313,13 @@ public class CompiledPrototype extends Prototype {
         final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
         final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
-        targetMethod.compilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
+        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
-        clearCirCache(targetMethod);
+        if (targetMethod instanceof CPSTargetMethod) {
+            clearCirCache(targetMethod);
+        }
     }
 
     private void clearCirCache(TargetMethod targetMethod) {
@@ -331,7 +333,7 @@ public class CompiledPrototype extends Prototype {
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {
         if (Trace.hasLevel(2)) {
-            Trace.line(2, "new target method: " + targetMethod.classMethodActor().format("%H.%n(%P)"));
+            Trace.line(2, "new target method: " + (targetMethod.classMethodActor() == null ? targetMethod.description() : targetMethod.classMethodActor().format("%H.%n(%P)")));
         }
     }
 
@@ -352,6 +354,7 @@ public class CompiledPrototype extends Prototype {
         if (methodActor == null) {
             return false;
         }
+
         if (isIndirectCall(relationship)) {
             // if this is an indirect call that has not been seen before, add all possibly reaching implementations
             // --even if this actual method implementation may not be compiled.
@@ -374,6 +377,7 @@ public class CompiledPrototype extends Prototype {
             // this method is already processed or on the queue.
             return false;
         }
+
         if (methodActor.isAnnotationPresent(BOOT_IMAGE_DIRECTIVE.class)) {
             final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
@@ -609,6 +613,7 @@ public class CompiledPrototype extends Prototype {
     private boolean hasCode(MethodActor methodActor) {
         return methodActor instanceof ClassMethodActor &&
             !methodActor.isAbstract() &&
+            !methodActor.isUnsafeCast() &&
             (methodActor.isHiddenToReflection() || !methodActor.isBuiltin());
     }
 
@@ -639,13 +644,12 @@ public class CompiledPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             if (targetMethod.classMethodActor() == null || (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor()))) {
                 if (!targetMethod.linkDirectCalls()) {
-                    targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             } else {
                 // Link at least direct calls in method prologue
                 if (!targetMethod.linkDirectCallsInPrologue()) {
-                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                    ProgramError.unexpected("did not link all direct calls in prologue - method: " + targetMethod);
                 }
             }
         }
@@ -665,9 +669,9 @@ public class CompiledPrototype extends Prototype {
     private void linkVTable(ClassActor classActor) {
         final DynamicHub dynamicHub = classActor.dynamicHub();
         for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + dynamicHub.vTableLength(); vTableIndex++) {
-            final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
-            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-            if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
+            final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
+            final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+            if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
                 dynamicHub.setWord(vTableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
             }
         }
@@ -703,9 +707,9 @@ public class CompiledPrototype extends Prototype {
                     for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                         final int methodITableIndex = interfaceITableIndex + interfaceMethodActor.iIndexInInterface();
                         final int iIndex = methodITableIndex - hub.iTableStartIndex;
-                        final VirtualMethodActor dynamicMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
-                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(dynamicMethodActor);
-                        if (targetMethod != null && !unlinkedMethods.contains(dynamicMethodActor)) {
+                        final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
+                        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
+                        if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
                             hub.setWord(methodITableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
                         }
                     }

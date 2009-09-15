@@ -21,14 +21,16 @@
 package com.sun.max.ins.object;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 
 
 /**
- * Defines the columns supported by the object inspector when viewing object fields.
+ * Defines the columns supported by the object inspector.
  *
  * @author Michael Van De Vanter
  */
-public enum ObjectFieldColumnKind {
+public enum ObjectColumnKind implements ColumnKind {
+
     TAG("Tag", "Tags: register targets, watchpoints, ...", true, 10) {
         @Override
         public boolean canBeMadeInvisible() {
@@ -47,44 +49,29 @@ public enum ObjectFieldColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private ObjectFieldColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private ObjectColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
         this.minWidth = minWidth;
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
@@ -94,6 +81,5 @@ public enum ObjectFieldColumnKind {
         return label;
     }
 
-    public static final IndexedSequence<ObjectFieldColumnKind> VALUES = new ArraySequence<ObjectFieldColumnKind>(values());
-
+    public static final IndexedSequence<ObjectColumnKind> VALUES = new ArraySequence<ObjectColumnKind>(values());
 }

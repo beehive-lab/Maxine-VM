@@ -45,7 +45,7 @@
  * task stopping/suspension. */
 static sigset_t _caughtSignals;
 
-Boolean task_read_registers(pid_t tid,
+boolean task_read_registers(pid_t tid,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters) {
@@ -138,7 +138,7 @@ void task_stat(pid_t tgid, pid_t tid, const char* format, ...) {
  */
 void log_signal_mask(unsigned long signalMask) {
     size_t signal;
-    Boolean first = true;
+    boolean first = true;
     for (signal = 0; signal < sizeof(signalMask); ++signal) {
         if ((signalMask & (1 << signal)) != 0) {
             if (first) {
@@ -335,7 +335,7 @@ jboolean process_resume_all_threads(pid_t pid) {
         return false;
     }
 
-    Boolean result = true;
+    boolean result = true;
     int n = 0;
     while (n < nTasks) {
         pid_t tid = tasks[n];
@@ -369,7 +369,7 @@ jboolean process_resume_all_threads(pid_t pid) {
 int process_wait_all_threads_stopped(pid_t pid) {
     pid_t pgid = getpgid(pid);
 
-    Boolean stopping = false;
+    boolean stopping = false;
     while (1) {
 
         pid_t *tasks;
@@ -523,7 +523,7 @@ int process_wait_all_threads_stopped_alternative(pid_t pid) {
     sigaddset(&caughtSignals, SIGTRAP);
     sigaddset(&caughtSignals, SIGSTOP);
 
-    Boolean stopping = false;
+    boolean stopping = false;
     while (1) {
 
         pid_t *tasks;
@@ -541,7 +541,7 @@ int process_wait_all_threads_stopped_alternative(pid_t pid) {
 
         int nStopped = 0;
         int nExited = 0;
-        Boolean allStopped = true;
+        boolean allStopped = true;
         int n = 0;
         while (n < nTasks) {
             pid_t tid = tasks[n];

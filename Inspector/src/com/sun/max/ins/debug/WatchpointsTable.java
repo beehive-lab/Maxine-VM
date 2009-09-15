@@ -48,25 +48,21 @@ import com.sun.max.vm.value.*;
  */
 public final class WatchpointsTable extends InspectorTable {
 
-    private final WatchpointsTableModel model;
+    private final WatchpointsTableModel tableModel;
     private final WatchpointsColumnModel columnModel;
-    private final TableColumn[] columns;
-
-    private MaxVMState lastRefreshedState = null;
 
     WatchpointsTable(Inspection inspection, WatchpointsViewPreferences viewPreferences) {
         super(inspection);
-        model = new WatchpointsTableModel();
-        columns = new TableColumn[WatchpointsColumnKind.VALUES.length()];
+        tableModel = new WatchpointsTableModel();
         columnModel = new WatchpointsColumnModel(viewPreferences);
-        configureDefaultTable(model, columnModel);
+        configureDefaultTable(tableModel, columnModel);
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled() && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
-            final InspectorMenu menu = new InspectorMenu();
-            final MaxWatchpoint watchpoint = (MaxWatchpoint) model.getValueAt(row, col);
+            final InspectorPopupMenu menu = new InspectorPopupMenu("Watchpoints");
+            final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(row, col);
             final TeleObject teleObject = watchpoint.getTeleObject();
             if (teleObject != null) {
                 menu.add(actions().inspectObject(teleObject, "Inspect Object"));
@@ -76,77 +72,46 @@ public final class WatchpointsTable extends InspectorTable {
         return null;
     }
 
-    /**
-     * Sets table selection to the memory watchpoint, if any, that is the current user focus.
-     */
     @Override
     public void updateFocusSelection() {
+        // Sets table selection to the memory watchpoint, if any, that is the current user focus.
         final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
-        final int row = model.findRow(watchpoint);
-        updateFocusSelection(row);
-    }
-
-    public void refresh(boolean force) {
-        lastRefreshedState = refresh(force, lastRefreshedState, model, columns);
-        model.refresh();
-    }
-
-    public void redisplay() {
-        redisplay(columns);
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
+        final int row = tableModel.findRow(watchpoint);
+        updateSelection(row);
     }
 
     @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // Row selection changed, perhaps by user mouse click or navigation;
         // update user focus to follow the selection.
-        final MaxWatchpoint watchpoint = (MaxWatchpoint) getChangedValueRow(listSelectionEvent);
-        if (watchpoint != null) {
-            focus().setWatchpoint(watchpoint);
+        super.valueChanged(listSelectionEvent);
+        if (!listSelectionEvent.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
+                focus().setWatchpoint(watchpoint);
+            }
         }
     }
 
-    private final class WatchpointsColumnModel extends InspectorTableColumnModel {
-
-        private final WatchpointsViewPreferences viewPreferences;
+    private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
-            this.viewPreferences = viewPreferences;
-            createColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(WatchpointsColumnKind.EAGER, null, new DefaultCellEditor(new JCheckBox()));
-            createColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
-            createColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
-        }
-
-        private void createColumn(WatchpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-            final int col = columnKind.ordinal();
-            columns[col] = createColumnInstance(columnKind, renderer, editor);
-            if (viewPreferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
+            super(WatchpointsColumnKind.VALUES.length(), viewPreferences);
+            addColumn(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.START, new StartAddressCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.SIZE, new SizeCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.END, new EndAddressCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.DESCRIPTION, new DescriptionCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.REGION, new RegionRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.READ, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(WatchpointsColumnKind.EAGER, null, new DefaultCellEditor(new JCheckBox()));
+            addColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
+            addColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
         }
     }
 
@@ -155,12 +120,7 @@ public final class WatchpointsTable extends InspectorTable {
      *
      * @author Michael Van De Vanter
      */
-    private final class WatchpointsTableModel extends AbstractTableModel {
-
-        void refresh() {
-            fireTableDataChanged();
-            updateFocusSelection();
-        }
+    private final class WatchpointsTableModel extends InspectorTableModel {
 
         public int getColumnCount() {
             return WatchpointsColumnKind.VALUES.length();
@@ -289,7 +249,6 @@ public final class WatchpointsTable extends InspectorTable {
             }
             return -1;
         }
-
     }
 
     /**
@@ -297,23 +256,18 @@ public final class WatchpointsTable extends InspectorTable {
      */
     private Color getRowTextColor(int row) {
         final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-        if (watchpointEvent != null && model.rowToWatchpoint(row).contains(watchpointEvent.address())) {
+        if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
         return style().defaultTextColor();
     }
 
-    private Color getRowBackgroundColor(int row) {
-        if (row == getSelectionModel().getMinSelectionIndex()) {
-            return style().defaultCodeAlternateBackgroundColor();
-        }
-        return style().defaultTextBackgroundColor();
-    }
 
-    private final class TagCellRenderer extends JLabel implements TableCellRenderer, Prober {
+    private final class TagCellRenderer extends JLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
             super("");
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -321,7 +275,7 @@ public final class WatchpointsTable extends InspectorTable {
             JLabel label = this;
             String labelText = "";
             String toolTipText = "";
-            setFont(inspection().style().defaultTextFont());
+            setFont(inspection().style().defaultFont());
             // See if any registers point here
             final MaxThread thread = inspection().focus().thread();
             if (thread != null) {
@@ -342,7 +296,7 @@ public final class WatchpointsTable extends InspectorTable {
             }
             // If a watchpoint is currently triggered here, add a pointer icon.
             final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-            if (watchpointEvent != null && model.rowToWatchpoint(row).contains(watchpointEvent.address())) {
+            if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
                 label.setIcon(inspection().style().debugIPTagIcon());
                 label.setForeground(inspection().style().debugIPTagColor());
             } else {
@@ -351,17 +305,10 @@ public final class WatchpointsTable extends InspectorTable {
             }
             label.setText(labelText);
             label.setToolTipText(toolTipText);
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
-
-        public void redisplay() {
-        }
-
-        public void refresh(boolean force) {
-        }
-
     }
-
 
 
     private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
@@ -372,6 +319,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public StartAddressCellRenderer(Inspection inspection) {
             this.inspection = inspection;
+            setOpaque(true);
         }
 
         @Override
@@ -388,7 +336,7 @@ public final class WatchpointsTable extends InspectorTable {
                 watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
-            label.setBackground(getRowBackgroundColor(row));
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
 
@@ -417,6 +365,7 @@ public final class WatchpointsTable extends InspectorTable {
             WatchpointStartWordValueLabel(Inspection inspection, WordValueLabel.ValueMode valueMode, MaxWatchpoint watchpoint) {
                 super(inspection, valueMode, watchpoint.start(), WatchpointsTable.this);
                 this.watchpoint = watchpoint;
+                setOpaque(true);
             }
 
             @Override
@@ -430,13 +379,14 @@ public final class WatchpointsTable extends InspectorTable {
 
         public SizeCellRenderer(Inspection inspection) {
             super(inspection, 0);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(watchpoint.size().toInt());
             setForeground(getRowTextColor(row));
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -461,11 +411,13 @@ public final class WatchpointsTable extends InspectorTable {
                 labelReference = null;
             }
             if (labelReference == null) {
-                labelReference = new WeakReference<WordValueLabel>(new WatchpointEndWordValueLabel(inspection(), ValueMode.WORD, watchpoint));
+                final WatchpointEndWordValueLabel newLabel = new WatchpointEndWordValueLabel(inspection(), ValueMode.WORD, watchpoint);
+                newLabel.setOpaque(true);
+                labelReference = new WeakReference<WordValueLabel>(newLabel);
                 watchpointToLabelMap.put(watchpoint, labelReference);
             }
             final WordValueLabel label = labelReference.get();
-            label.setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return label;
         }
 
@@ -507,6 +459,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public DescriptionCellRenderer(Inspection inspection) {
             super(inspection, "");
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -514,12 +467,13 @@ public final class WatchpointsTable extends InspectorTable {
             final String description = watchpoint.description();
             setText(description);
             setToolTipText(description);
+            // TODO (mlvdv)  Abstract this string, or come up with a method/predicate instead
             if (description.equals("RegionWatchpoint - GC removed corresponding Object")) {
                 setForeground(Color.RED);
             } else {
                 setForeground(getRowTextColor(row));
             }
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -528,12 +482,13 @@ public final class WatchpointsTable extends InspectorTable {
 
         public RegionRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
             setValue(new WordValue(watchpoint.start()));
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -542,10 +497,11 @@ public final class WatchpointsTable extends InspectorTable {
 
         TriggerThreadCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxWatchpoint watchpoint = model.rowToWatchpoint(row);
+            final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
             final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final MaxThread maxThread = watchpointEvent.maxThread();
@@ -556,7 +512,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(getRowTextColor(row));
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -565,10 +521,11 @@ public final class WatchpointsTable extends InspectorTable {
 
         TriggerAddressCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxWatchpoint watchpoint = model.rowToWatchpoint(row);
+            final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
             final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final String addressText = watchpointEvent.address().toHexString();
@@ -579,7 +536,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(getRowTextColor(row));
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -588,10 +545,11 @@ public final class WatchpointsTable extends InspectorTable {
 
         TriggerCodeCellRenderer(Inspection inspection) {
             super(inspection, null);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MaxWatchpoint watchpoint = model.rowToWatchpoint(row);
+            final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
             final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final int watchpointCode = watchpointEvent.eventCode();
@@ -617,7 +575,7 @@ public final class WatchpointsTable extends InspectorTable {
                 setToolTipText("No Thread stopped at this watchpoint");
             }
             setForeground(getRowTextColor(row));
-            setBackground(getRowBackgroundColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }

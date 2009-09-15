@@ -23,13 +23,12 @@ package com.sun.max.vm.jdk;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Method substitutions for {@link java.lang.Thread java.lang.Thread}.
@@ -52,10 +51,8 @@ final class JDK_java_lang_Thread {
      * Cast this object reference to the {@code java.lang.Thread} object it represents.
      * @return this object casted to {@code java.lang.Thread}
      */
-    @INLINE
-    private Thread thisThread() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native Thread thisThread();
 
     /**
      * Get the VM thread for this thread.

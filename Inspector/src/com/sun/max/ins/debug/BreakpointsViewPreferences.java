@@ -23,14 +23,15 @@ package com.sun.max.ins.debug;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 
 
 /**
- * Persistent preferences for viewing breakpoints in the VM.
+ * Persistent preferences for the table viewing breakpoints in the VM.
  *
  * @author Michael Van De Vanter
   */
-public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<BreakpointsColumnKind> {
+public final class BreakpointsViewPreferences extends TableColumnVisibilityPreferences<BreakpointsColumnKind> {
 
     private static BreakpointsViewPreferences globalPreferences;
 
@@ -44,6 +45,9 @@ public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableC
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String BREAKPOINTS_COLUMN_PREFERENCE = "breakpointsViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -56,21 +60,7 @@ public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableC
     * persistent global choices are identical.
     */
     private BreakpointsViewPreferences(Inspection inspection) {
-        super(inspection, "breakpointsViewPrefs", BreakpointsColumnKind.class, BreakpointsColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(BreakpointsColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(BreakpointsColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(BreakpointsColumnKind columnType) {
-        return columnType.label();
+        super(inspection, BREAKPOINTS_COLUMN_PREFERENCE, BreakpointsColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

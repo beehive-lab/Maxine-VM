@@ -348,16 +348,16 @@ public final class JniFunctions {
         if (methodActor == null || !methodActor.isInitializer()) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor dynamicMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
-        if (dynamicMethodActor == null) {
+        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
+        if (virtualMethodActor == null) {
             throw new NoSuchMethodException();
         }
 
-        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[signature.numberOfParameters()];
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(dynamicMethodActor);
-        return JniHandles.createLocalHandle(dynamicMethodActor.invokeConstructor(argumentValues).asObject());
+        traceReflectiveInvocation(virtualMethodActor);
+        return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
     @JNI_FUNCTION
@@ -477,14 +477,14 @@ public final class JniFunctions {
         if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor dynamicMethodActor = MethodSelectionSnippet.SelectVirtualMethod.quasiFold(object.unhand(), (VirtualMethodActor) methodActor);
+        final VirtualMethodActor virtualMethodActor = MethodSelectionSnippet.SelectVirtualMethod.quasiFold(object.unhand(), (VirtualMethodActor) methodActor);
 
-        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(dynamicMethodActor);
-        return dynamicMethodActor.invoke(argumentValues);
+        traceReflectiveInvocation(virtualMethodActor);
+        return virtualMethodActor.invoke(argumentValues);
 
     }
 
@@ -641,17 +641,17 @@ public final class JniFunctions {
         if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
             throw new NoSuchMethodException();
         }
-        final VirtualMethodActor dynamicMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
-        if (dynamicMethodActor == null) {
+        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
+        if (virtualMethodActor == null) {
             throw new NoSuchMethodException();
         }
 
-        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final SignatureDescriptor signature = virtualMethodActor.descriptor();
         final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
         copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
-        traceReflectiveInvocation(dynamicMethodActor);
-        return dynamicMethodActor.invoke(argumentValues);
+        traceReflectiveInvocation(virtualMethodActor);
+        return virtualMethodActor.invoke(argumentValues);
     }
 
     @JNI_FUNCTION
@@ -1974,13 +1974,18 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        FatalError.unexpected("GetStringCritical is unimplemented");
-        return null;
+        setCopyPointer(isCopy, true);
+        final char[] a = ((String) string.unhand()).toCharArray();
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
+        for (int i = 0; i < a.length; i++) {
+            pointer.setChar(i, a[i]);
+        }
+        return pointer;
     }
 
     @JNI_FUNCTION
-    private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer cString) {
-        FatalError.unexpected("ReleaseStringCritical is unimplemented");
+    private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
+        Memory.deallocate(chars);
     }
 
     @JNI_FUNCTION

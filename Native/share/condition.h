@@ -40,9 +40,9 @@ typedef condition_Struct *Condition;
 
 extern void condition_initialize(Condition condition);
 extern void condition_destroy(Condition condition);
-extern Boolean condition_wait(Condition condition, Mutex mutex);
-extern Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern Boolean condition_notify(Condition condition);
-extern Boolean condition_notifyAll(Condition condition);
+extern boolean condition_wait(Condition condition, Mutex mutex);
+extern boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
+extern boolean condition_notify(Condition condition);
+extern boolean condition_notifyAll(Condition condition);
 
 #endif /*__condition_h__*/

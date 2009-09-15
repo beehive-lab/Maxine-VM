@@ -122,7 +122,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             }
             if (stackPointer == null) {
                 // stack frame is inactive, remove it.
-                frame().dispose();
+                dispose();
                 return false;
             }
 

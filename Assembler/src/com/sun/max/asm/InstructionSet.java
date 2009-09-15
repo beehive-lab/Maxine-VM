@@ -40,19 +40,22 @@ public enum InstructionSet {
 
     public final Category category;
 
-    /** True if PC-relative control transfer instructions contain an offset relative to the start of the instruction.
-     *  False if PC-relative control transfer instructions contain an offset relative to the end of the instruction.
+    /**
+     * True if PC-relative control transfer instructions contain an offset relative to the start of the instruction.
+     * False if PC-relative control transfer instructions contain an offset relative to the end of the instruction.
      */
     public final boolean relativeBranchFromStart;
 
-    /** Offset to the return address of the caller from the caller's saved PC.
-     *  For example, a SPARC call instruction saves its address in %o7. The return address is typically 2 instructions after
-     *  (to account for the call instruction itself and the delay slot).
+    /**
+     * Offset to the return address of the caller from the caller's saved PC.
+     * For example, a SPARC call instruction saves its address in %o7. The return address is typically 2 instructions after
+     * (to account for the call instruction itself and the delay slot).
      */
     public final int offsetToReturnPC;
 
-    /** Width of an instruction (in bytes).
-     *  If instructions are of variable width, this field is zero.
+    /**
+     * Width of an instruction (in bytes).
+     * If instructions are of variable width, this field is zero.
      */
     public final int instructionWidth;
 

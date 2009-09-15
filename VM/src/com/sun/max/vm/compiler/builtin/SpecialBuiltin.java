@@ -362,11 +362,12 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final FlushRegisterWindows BUILTIN = new FlushRegisterWindows();
     }
 
-    public static class IntToFloat extends SpecialBuiltin {
+    @BUILTIN(builtinClass = IntToFloat.class)
+    public static float intToFloat(int value) {
+        return Float.intBitsToFloat(value);
+    }
 
-        public IntToFloat() {
-            super(UnsafeLoophole.class);
-        }
+    public static class IntToFloat extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -377,11 +378,12 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final IntToFloat BUILTIN = new IntToFloat();
     }
 
-    public static class FloatToInt extends SpecialBuiltin {
+    @BUILTIN(builtinClass = FloatToInt.class)
+    public static int floatToInt(float value) {
+        return Float.floatToRawIntBits(value);
+    }
 
-        public FloatToInt() {
-            super(UnsafeLoophole.class);
-        }
+    public static class FloatToInt extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -392,11 +394,12 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final FloatToInt BUILTIN = new FloatToInt();
     }
 
-    public static class LongToDouble extends SpecialBuiltin {
+    @BUILTIN(builtinClass = LongToDouble.class)
+    public static double longToDouble(long value) {
+        return Double.longBitsToDouble(value);
+    }
 
-        public LongToDouble() {
-            super(UnsafeLoophole.class);
-        }
+    public static class LongToDouble extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -407,11 +410,12 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final LongToDouble BUILTIN = new LongToDouble();
     }
 
-    public static class DoubleToLong extends SpecialBuiltin {
+    @BUILTIN(builtinClass = DoubleToLong.class)
+    public static long doubleToLong(double value) {
+        return Double.doubleToRawLongBits(value);
+    }
 
-        public DoubleToLong() {
-            super(UnsafeLoophole.class);
-        }
+    public static class DoubleToLong extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-
-/**
- * The <code>LIRPatchCode</code> enum represents the different types of Patching available on LIR Instructions.
- *
- * @author Marcelo Cintra
- *
+/*
+ * @Harness: java
+ * @Runs: (1L, 2L) = 0L;
+ * @Runs: (11L, 0L) = -11L;
  */
-public enum LIRPatchCode {
-    PatchNone,
-    PatchLow,
-    PatchHigh,
-    PatchNormal
+
+package jtt.except;
+
+public class BC_ldiv2 {
+    public static long test(long a, long b) {
+        try {
+            return a / b;
+        } catch (Exception e) {
+            return -11;
+        }
+    }
 }

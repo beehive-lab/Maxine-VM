@@ -1559,11 +1559,11 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         try {
             if (isResolved(classMethodRef)) {
                 try {
-                    final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                    if (shouldProfileMethodCall(dynamicMethodActor)) {
+                    final VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
+                    if (shouldProfileMethodCall(virtualMethodActor)) {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED_INSTRUMENTED);
                         beginBytecode(INVOKEVIRTUAL);
-                        final int vtableIndex = dynamicMethodActor.vTableIndex();
+                        final int vtableIndex = virtualMethodActor.vTableIndex();
                         assignIntTemplateArgument(0, vtableIndex);
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
@@ -1572,7 +1572,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     } else {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED);
                         beginBytecode(INVOKEVIRTUAL);
-                        assignIntTemplateArgument(0, dynamicMethodActor.vTableIndex());
+                        assignIntTemplateArgument(0, virtualMethodActor.vTableIndex());
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         emitAndRecordStops(template);
                     }
@@ -1656,10 +1656,10 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
         try {
             if (isResolved(classMethodRef)) {
-                final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
+                final VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                 final CompiledBytecodeTemplate template = getTemplate(INVOKESPECIAL, selectorKind, TemplateChooser.Selector.RESOLVED);
                 beginBytecode(INVOKESPECIAL);
-                recordDirectBytecodeCall(template, dynamicMethodActor);
+                recordDirectBytecodeCall(template, virtualMethodActor);
                 codeBuffer.emit(template);
                 return;
             }

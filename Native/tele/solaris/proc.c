@@ -32,7 +32,7 @@
 static void* _lastCall = 0;
 
 #define proc_call(name, argsFormat, ...) do {\
-    Boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
+    boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
     if (trace) { \
         log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), ##__VA_ARGS__); \
     } \
@@ -41,7 +41,7 @@ static void* _lastCall = 0;
 } while(0)
 
 #define proc_call_void(name, argsFormat, ...) do {\
-    Boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
+    boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
     if (trace) { \
         log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), ##__VA_ARGS__); \
     } \

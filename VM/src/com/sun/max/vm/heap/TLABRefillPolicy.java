@@ -64,13 +64,16 @@ public abstract class TLABRefillPolicy {
      */
     public abstract Size nextTlabSize();
 
+    @UNSAFE_CAST
+    private static native TLABRefillPolicy asTLABRefillPolicy(Object object);
+
     @INLINE
     public static TLABRefillPolicy getForCurrentThread(Pointer enabledVmThreadLocals) {
         final Reference reference = TLAB_REFILL_POLICY.getVariableReference(enabledVmThreadLocals);
         if (reference.isZero()) {
             return null;
         }
-        final TLABRefillPolicy tlabRefillPolicy =  UnsafeLoophole.cast(reference.toJava());
+        final TLABRefillPolicy tlabRefillPolicy = asTLABRefillPolicy(reference.toJava());
         return tlabRefillPolicy;
     }
 

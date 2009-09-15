@@ -131,7 +131,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress emitArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.firstArrayElementOffsetInBytes(type);
+        int offsetInBytes = compilation.runtime.firstArrayElementOffset(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
             LIRConstant constantIndexOpr = (LIRConstant) indexOpr;
@@ -189,7 +189,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             if (Util.isPowerOf2(c + 1)) {
                 lir().move(left, tmp);
                 lir().shiftLeft(left, Util.log2(c + 1), left);
-                lir().sub(left, tmp, result);
+                lir().sub(left, tmp, result, null);
                 return true;
             } else if (Util.isPowerOf2(c - 1)) {
                 lir().move(left, tmp);
@@ -335,7 +335,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         value.setDestroysRegister();
         value.loadItem();
-        LIROperand reg = rlock(x);
+        LIROperand reg = newRegister(x.type());
         lir().negate(value.result(), reg);
         setResult(x, reg);
     }
@@ -370,7 +370,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else if (x.opcode() == Bytecodes.DREM) {
             reg = callRuntime(new CiKind[]{CiKind.Double, CiKind.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, CiKind.Double, null);
         } else {
-            reg = rlock(x);
+            reg = newRegister(x.type());
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalLocation);
         }
 
@@ -505,9 +505,9 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             if (!C1XOptions.UseImplicitDiv0Checks && !x.checkFlag(Flag.NoZeroCheck)) {
                 lir().cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
-
-                // Create copy of code emit info as they must not be shared!
-                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(stateFor(x)));
+                lir().branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
+                 // don't need code emit info when using explicit checks
+                info = null;
             }
             LIROperand tmp = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx); // idiv and irem use rdx in their implementation
             if (x.opcode() == Bytecodes.IREM) {
@@ -862,7 +862,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.value(), this);
         value.loadItem();
         LIROperand input = value.result();
-        LIROperand result = rlock(x);
+        LIROperand result = newRegister(x.type());
 
         // arguments of lirConvert
         LIROperand convInput = input;
@@ -1165,7 +1165,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(value, spill);
-            lir().volatileMove(spill, tempDouble, CiKind.Long);
+            lir().volatileMove(spill, tempDouble, CiKind.Long, null);
             lir().volatileMove(tempDouble, address, CiKind.Long, info);
         } else {
             lir().store(value, address, info);
@@ -1182,7 +1182,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // SSE2+ mode it can be moved directly.
             LIROperand tempDouble = newRegister(CiKind.Double);
             lir().volatileMove(address, tempDouble, CiKind.Long, info);
-            lir().volatileMove(tempDouble, result, CiKind.Long);
+            lir().volatileMove(tempDouble, result, CiKind.Long, null);
             if (C1XOptions.SSEVersion < 2) {
                 // no spill slot needed in SSE2 mode because xmm.cpu register move is possible
                 setVregFlag(result, VregFlag.MustStartInMemory);
@@ -1197,14 +1197,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (isVolatile && type == CiKind.Long) {
             LIRAddress addr = new LIRAddress(src, offset, CiKind.Double);
             LIROperand tmp = newRegister(CiKind.Double);
-            lir().load(addr, tmp);
+            lir().load(addr, tmp, null);
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(tmp, spill);
             lir().move(spill, dst);
         } else {
             LIRAddress addr = new LIRAddress(src, offset, type);
-            lir().load(addr, dst);
+            lir().load(addr, dst, null);
         }
     }
 

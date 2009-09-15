@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.asm.*;
-import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
@@ -34,7 +32,7 @@ import com.sun.max.vm.stack.*;
  * hidden class is just a bridge from {@link TargetMethod#getEntryPoint(CallEntryPoint)} to
  * {@link IrMethod#getEntryPoint(CallEntryPoint)}.
  */
-public class IrTargetMethod extends TargetMethod {
+public class IrTargetMethod extends CPSTargetMethod {
 
     public static TargetMethod asTargetMethod(IrMethod irMethod) {
         if (irMethod == null) {
@@ -64,11 +62,6 @@ public class IrTargetMethod extends TargetMethod {
     }
 
     @Override
-    public InstructionSet instructionSet() {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
     public void patchCallSite(int callOffset, Word callTarget) {
         throw ProgramError.unexpected();
     }
@@ -80,16 +73,6 @@ public class IrTargetMethod extends TargetMethod {
 
     @Override
     public JavaStackFrameLayout stackFrameLayout() {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public void traceExceptionHandlers(IndentWriter writer) {
         throw ProgramError.unexpected();
     }
 }

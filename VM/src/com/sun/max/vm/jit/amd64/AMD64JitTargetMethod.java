@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jit.amd64;
 
-import com.sun.max.asm.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -32,6 +31,7 @@ import com.sun.max.vm.jit.*;
  * @author Bernd Mathiske
  * @author Laurent Daynes
  * @author Doug Simon
+ * @author Paul Caprioli
  */
 public class AMD64JitTargetMethod extends JitTargetMethod {
 
@@ -45,8 +45,11 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     }
 
     @Override
-    public InstructionSet instructionSet() {
-        return InstructionSet.AMD64;
+    public int bytecodePositionForCallSite(Pointer instructionPointer) {
+        // The instruction pointer is now just beyond the call machine instruction.
+        // In case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
+        // Thus we always look up what bytecode we were in during the call.
+        return bytecodePositionFor(instructionPointer.minus(1));
     }
 
     @Override

@@ -355,7 +355,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, framePointerState)) {
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, (AMD64JitTargetMethod) targetMethod, context, framePointerState)) {
                     return false;
                 }
                 break;
@@ -392,7 +392,7 @@ public class AMD64JitCompiler extends JitCompiler {
         return stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, flags);
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, AMD64JitTargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
@@ -411,7 +411,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Address throwAddress = stackFrameWalker.instructionPointer();
-        final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+        final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
 
         if (!catchAddress.isZero()) {

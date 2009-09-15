@@ -74,7 +74,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Paul Caprioli
  */
-public final class StackReferenceMapPreparer {
+public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     /**
      * An array of the VM thread locals that are GC roots.
@@ -469,8 +469,7 @@ public final class StackReferenceMapPreparer {
         }
     }
 
-    @INLINE
-    private void setReferenceMapBit(Pointer slotAddress) {
+    public void setReferenceMapBit(Pointer slotAddress) {
         referenceMap.setBit(referenceMapBitIndex(lowestStackSlot, slotAddress));
     }
 
@@ -511,41 +510,6 @@ public final class StackReferenceMapPreparer {
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
-    /**
-     * Prepares the reference map for a portion of memory that contains saved register state corresponding
-     * to a safepoint triggered at a particular instruction. This method fetches the reference map information
-     * for the specified method and then copies it over the reference map for this portion of memory.
-     *
-     * @param registerState a pointer to the saved register state
-     * @param instructionPointer the instruction pointer at the safepoint trap
-     */
-    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer) {
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        if (targetMethod != null) {
-            tracePrepareReferenceMap(targetMethod, targetMethod.findClosestStopIndex(instructionPointer, true), Pointer.zero(), "registers");
-            final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
-            if (safepointIndex < 0) {
-                Log.print("Could not find safepoint index for instruction at position ");
-                Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
-                Log.print(" in ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
-                FatalError.unexpected("Could not find safepoint index");
-            }
-
-            // The register reference maps come after all the frame reference maps in referenceMap.
-            int byteIndex = targetMethod.frameReferenceMapsSize() + (targetMethod.registerReferenceMapSize() * safepointIndex);
-
-            final int registersSlotIndex = referenceMapBitIndex(registerState);
-            for (int i = 0; i < targetMethod.registerReferenceMapSize(); i++) {
-                final byte referenceMapByte = targetMethod.referenceMaps()[byteIndex];
-                traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
-                final int baseSlotIndex = registersSlotIndex + (i * Bytes.WIDTH);
-                referenceMap.setBits(baseSlotIndex, referenceMapByte);
-                traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
-                byteIndex++;
-            }
-        }
-    }
 
     /**
      * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).
@@ -553,7 +517,7 @@ public final class StackReferenceMapPreparer {
      * @param slotAddress an address within the range of stack addresses covered by the reference map
      * @return the index of the bit for {@code slotAddress} in the reference map
      */
-    private int referenceMapBitIndex(Address slotAddress) {
+    public int referenceMapBitIndex(Address slotAddress) {
         return referenceMapBitIndex(lowestStackSlot, slotAddress.asPointer());
     }
 
@@ -567,21 +531,8 @@ public final class StackReferenceMapPreparer {
         return lowestStackSlot.plusWords(slotIndex);
     }
 
-    private void prepareFrameReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer) {
-        tracePrepareReferenceMap(targetMethod, stopIndex, refmapFramePointer, "frame");
-        int frameSlotIndex = referenceMapBitIndex(refmapFramePointer);
-        int byteIndex = stopIndex * targetMethod.frameReferenceMapSize();
-        for (int i = 0; i < targetMethod.frameReferenceMapSize(); i++) {
-            final byte frameReferenceMapByte = targetMethod.referenceMaps()[byteIndex];
-            traceReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
-            referenceMap.setBits(frameSlotIndex, frameReferenceMapByte);
-            traceReferenceMapByteAfter(refmapFramePointer, frameSlotIndex, frameReferenceMapByte);
-            frameSlotIndex += Bytes.WIDTH;
-            byteIndex++;
-        }
-    }
 
-    private void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
+    public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
         if (Heap.traceRootScanning()) {
             Log.print("  Preparing reference map for ");
             Log.print(label);
@@ -610,7 +561,7 @@ public final class StackReferenceMapPreparer {
      * @param referenceMapByte the value of the reference map byte
      * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
      */
-    private void traceReferenceMapByteBefore(int byteIndex, final byte referenceMapByte, String referenceMapLabel) {
+    public void traceReferenceMapByteBefore(int byteIndex, final byte referenceMapByte, String referenceMapLabel) {
         if (Heap.traceRootScanning()) {
             Log.print("    ");
             Log.print(referenceMapLabel);
@@ -632,7 +583,7 @@ public final class StackReferenceMapPreparer {
      * @param baseSlotIndex the index of the slot corresponding to bit 0 of {@code referenceMapByte}
      * @param referenceMapByte a the reference map byte
      */
-    private void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
+    public void traceReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte) {
         if (Heap.traceRootScanning()) {
             for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
                 if (((referenceMapByte >>> bitIndex) & 1) != 0) {
@@ -658,16 +609,12 @@ public final class StackReferenceMapPreparer {
      * references.
      *
      * @param caller the JIT compiled method that that made the call into the trampoline frame
-     * @param instructionPointer the address of the instruction in {@code caller} of the call into the trampoline frame
+     * @param instructionPointer the execution address in {@code caller}. This will be at the site of the call to the trampoline.
      * @param refmapFramePointer the address in the frame of {@code caller} to which the reference map for {@code caller} is relative
      * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
      */
     private void prepareTrampolineFrameForJITCaller(JitTargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
-        // The instruction pointer is now just beyond the call machine instruction.
-        // Just in case the call happens to be the last machine instruction for the invoke bytecode we are interested in, we subtract one byte.
-        // Thus we always look up what bytecode we were in during the call,
-        final int bytecodePosition = caller.bytecodePositionFor(instructionPointer.minus(1));
-
+        final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
         final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool();
         final byte[] code = codeAttribute.code();
@@ -821,6 +768,15 @@ public final class StackReferenceMapPreparer {
         }
     }
 
+    public boolean checkIgnoreCurrentFrame() {
+        if (ignoreCurrentFrame) {
+            // Skipping the top frame
+            ignoreCurrentFrame = false;
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Prepares the part of the reference map corresponding to a single stack frame of a VM thread.
      *
@@ -831,12 +787,8 @@ public final class StackReferenceMapPreparer {
      * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
      *         stack walker should continue to the next frame
      */
-    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
-        if (ignoreCurrentFrame) {
-            // Skipping the top frame
-            ignoreCurrentFrame = false;
-            return true;
-        }
+    public boolean prepareFrameReferenceMap(CPSTargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
+
         if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
@@ -875,7 +827,7 @@ public final class StackReferenceMapPreparer {
                 trampolineTargetMethod = null;
                 trampolineRefmapPointer = Pointer.zero();
             }
-            prepareFrameReferenceMap(targetMethod, stopIndex, refmapFramePointer);
+            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this);
         }
 
         // If the stack reference map is being completed, then the stack walk stops after the first trap stub
@@ -885,4 +837,7 @@ public final class StackReferenceMapPreparer {
         return true;
     }
 
+    public void setBits(int baseSlotIndex, byte referenceMapByte) {
+        referenceMap.setBits(baseSlotIndex, referenceMapByte);
+    }
 }

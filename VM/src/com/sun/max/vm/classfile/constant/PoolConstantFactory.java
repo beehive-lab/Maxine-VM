@@ -105,6 +105,10 @@ public final class PoolConstantFactory {
         return new FieldRefConstant.Unresolved(holder, name, type);
     }
 
+    public static ClassConstant createClassConstant(ClassActor classActor) {
+        return new ClassConstant.Resolved(classActor);
+    }
+
     public static ClassConstant createClassConstant(Class javaClass) {
         return new ClassConstant.Resolved(ClassActor.fromJava(javaClass));
     }

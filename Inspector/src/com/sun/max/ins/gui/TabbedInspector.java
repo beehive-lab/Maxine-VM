@@ -58,7 +58,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         super(inspection);
         tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
-            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName);
+            saveSettingsListener = createGeometrySettingsClient(this, settingsClientName + "Geometry");
         } else {
             saveSettingsListener = null;
         }
@@ -102,10 +102,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     }
 
     public void setSelected(Inspector_Type inspector) {
-        if (inspector.frame() instanceof Component) {
-            moveToFront();
-            tabbedPane.setSelectedComponent((Component) inspector.frame());
-        }
+        moveToFront();
+        tabbedPane.setSelectedComponent(inspector.frame());
     }
 
     public boolean isSelected(Inspector_Type inspector) {
@@ -132,27 +130,21 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     public void add(Inspector_Type inspector, String tabTitle, String tabToolTipText) {
         final InspectorFrame inspectorFrame = inspector.frame();
-        if (inspectorFrame instanceof Component) {
-            final Component component = (Component) inspectorFrame;
-            tabbedPane.addTab(tabTitle, component);
-            if (tabToolTipText != null) {
-                final int index = tabbedPane.indexOfComponent(component);
-                tabbedPane.setToolTipTextAt(index, tabToolTipText);
-            }
+        tabbedPane.addTab(tabTitle, inspectorFrame);
+        if (tabToolTipText != null) {
+            final int index = tabbedPane.indexOfComponent(inspectorFrame);
+            tabbedPane.setToolTipTextAt(index, tabToolTipText);
         }
     }
 
     public void add(Inspector_Type inspector, String tabTitle, String tabToolTipText, String frameTitle) {
         final InspectorFrame inspectorFrame = inspector.frame();
-        if (inspectorFrame instanceof Component) {
-            final Component component = (Component) inspectorFrame;
-            tabbedPane.addTab(tabTitle, component);
-            if (tabToolTipText != null) {
-                tabbedPane.setToolTipTextAt(tabbedPane.indexOfComponent(component), tabToolTipText);
-            }
-            if (frameTitle != null) {
-                inspectorFrame.setTitle(frameTitle);
-            }
+        tabbedPane.addTab(tabTitle, inspectorFrame);
+        if (tabToolTipText != null) {
+            tabbedPane.setToolTipTextAt(tabbedPane.indexOfComponent(inspectorFrame), tabToolTipText);
+        }
+        if (frameTitle != null) {
+            inspectorFrame.setTitle(frameTitle);
         }
     }
 
@@ -162,12 +154,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
      * tabbed frames.
      */
     public void addCloseIconToTab(Inspector_Type inspector) {
-        final InspectorFrame inspectorFrame = inspector.frame();
-        if (inspectorFrame instanceof Component) {
-            final Component component = (Component) inspectorFrame;
-            final int index = tabbedPane.indexOfComponent(component);
-            tabbedPane.setTabComponentAt(index, new ButtonTabComponent(inspection(), this, inspector, tabbedPane));
-        }
+        final int index = tabbedPane.indexOfComponent(inspector.frame());
+        tabbedPane.setTabComponentAt(index, new ButtonTabComponent(inspection(), this, inspector, tabbedPane));
     }
 
     public Iterator<Inspector_Type> iterator() {

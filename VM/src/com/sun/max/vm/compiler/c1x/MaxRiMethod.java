@@ -423,7 +423,7 @@ public class MaxRiMethod implements RiMethod {
         return -1;
     }
 
-    public int iIndexInInterface() {
+    public int indexInInterface() {
         if (methodActor instanceof InterfaceMethodActor) {
             return ((InterfaceMethodActor) methodActor).iIndexInInterface();
         }

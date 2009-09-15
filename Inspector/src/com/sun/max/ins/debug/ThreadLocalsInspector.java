@@ -58,7 +58,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return threadLocalsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences viewPreferences;

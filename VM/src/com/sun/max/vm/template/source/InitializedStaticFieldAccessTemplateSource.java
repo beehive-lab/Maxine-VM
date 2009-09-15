@@ -72,7 +72,7 @@ public class InitializedStaticFieldAccessTemplateSource {
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BOOLEAN)
     public static void zgetstatic(Object staticTuple, int offset) {
-        JitStackFrameOperation.pushInt(UnsafeLoophole.booleanToByte(TupleAccess.readBoolean(staticTuple, offset)));
+        JitStackFrameOperation.pushInt(UnsafeCast.asByte(TupleAccess.readBoolean(staticTuple, offset)));
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BYTE)
@@ -126,7 +126,7 @@ public class InitializedStaticFieldAccessTemplateSource {
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BOOLEAN)
     public static void zputstatic(Object staticTuple, int offset) {
-        final boolean value = UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.popInt());
+        final boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.popInt());
         TupleAccess.writeBoolean(staticTuple, offset, value);
     }
 }
