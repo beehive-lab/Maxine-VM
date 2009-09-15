@@ -106,6 +106,11 @@ public class JNI_invocations {
         System.out.println(benchtime); // + " ms");
     }
 
+    /**
+     * A native method that just returns.
+     */
+    public static native long nativework(long workload);
+
     public static class AllocationThread implements Runnable{
         private int nrJNIcalls;
         private int threadId;
@@ -170,9 +175,4 @@ public class JNI_invocations {
             }
         }
     }
-
-    /**
-     * A native method that just returns.
-     */
-    public static native long nativework(long workload);
 }
