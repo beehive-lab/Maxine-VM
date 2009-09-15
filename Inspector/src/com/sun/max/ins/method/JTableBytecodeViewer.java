@@ -57,7 +57,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final Inspection inspection;
     private final BytecodeTable table;
     private final BytecodeTableModel tableModel;
-    private final BytecodeTableColumnModel tableColumnModel;
     private final BytecodeViewPreferences instanceViewPreferences;
 
     public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
@@ -68,7 +67,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             @Override
             public void setIsVisible(BytecodeColumnKind columnKind, boolean visible) {
                 super.setIsVisible(columnKind, visible);
-                tableColumnModel.setColumnVisible(columnKind.ordinal(), visible);
+                table.getInspectorTableColumnModel().setColumnVisible(columnKind.ordinal(), visible);
                 JTableColumnResizer.adjustColumnPreferredWidths(table);
                 refresh(true);
             }
@@ -78,7 +77,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 tableModel.fireTableDataChanged();
             }
         };
-        tableColumnModel = new BytecodeTableColumnModel(instanceViewPreferences);
+        final BytecodeTableColumnModel tableColumnModel = new BytecodeTableColumnModel(instanceViewPreferences);
         table = new BytecodeTable(inspection, tableModel, tableColumnModel);
         createView();
     }

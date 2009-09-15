@@ -130,7 +130,7 @@ done
 command=$1
 shift
 if [ -n "$jvm_dbg_port" ]; then
-    jvm_args="$jvm_args -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$jvm_dbg_port"
+    jvm_args="$jvm_args -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=$jvm_dbg_port"
 fi
 jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
@@ -1260,7 +1260,7 @@ function usage() {
     echo "                    (default: value of the JAVA_HOME environment variable)"
     echo " -jvm <path>      Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -dbgport <num>   add following to Java VM arguments to enable attaching a debugger:"
-    echo "                      -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=<num>"
+    echo "                      -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=<num>"
     echo " -J<args>         Java VM arguments (default: ${default_jvm_args})"
     echo " -J/p<args>       prefix Java VM arguments"
     echo " -J/a<args>       suffix Java VM arguments"

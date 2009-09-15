@@ -61,8 +61,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     private final Inspection inspection;
-    private InspectorTableModel inspectorTableModel;
-    private InspectorTableColumnModel inspectorTableColumnModel;
 
     /**
      * Should selection be highlighted by a box around the selected row(s)?
@@ -85,8 +83,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         super(inspectorTableModel, inspectorTableColumnModel);
         this.showSelectionWithBox = true;
         this.inspection = inspection;
-        this.inspectorTableModel = inspectorTableModel;
-        this.inspectorTableColumnModel = inspectorTableColumnModel;
         selectedRowBackgroundColor = inspection.style().darken2(getBackground());
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
@@ -180,9 +176,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Sets up default view configuration for tables.
      */
     protected void configureDefaultTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        this.inspectorTableColumnModel = inspectorTableColumnModel;
-        this.inspectorTableModel = inspectorTableModel;
-        this.inspectorTableColumnModel = inspectorTableColumnModel;
         setModel(inspectorTableModel);
         setColumnModel(inspectorTableColumnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
@@ -201,9 +194,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Sets up standard view configuration for tables used to show memory in one way or another.
      */
     protected void configureMemoryTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
-        this.inspectorTableColumnModel = inspectorTableColumnModel;
-        this.inspectorTableModel = inspectorTableModel;
-        this.inspectorTableColumnModel = inspectorTableColumnModel;
         showSelectionWithBox = true;
         setModel(inspectorTableModel);
         setColumnModel(inspectorTableColumnModel);
@@ -218,6 +208,14 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         refresh(true);
         JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
         updateFocusSelection();
+    }
+
+    public InspectorTableColumnModel getInspectorTableColumnModel() {
+        return (InspectorTableColumnModel) getColumnModel();
+    }
+
+    public InspectorTableModel getInspectorTableModel() {
+        return (InspectorTableModel) getModel();
     }
 
     /**
@@ -249,12 +247,13 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     @Override
     protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(inspectorTableColumnModel) {
+        return new JTableHeader(getColumnModel()) {
             @Override
             public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
                 final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
+                final InspectorTableColumnModel inspectorTableColumnModel = getInspectorTableColumnModel();
+                final int index = inspectorTableColumnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = inspectorTableColumnModel.getColumn(index).getModelIndex();
                 return inspectorTableColumnModel.toolTipTextForColumn(modelIndex);
             }
         };
@@ -338,8 +337,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     public void refresh(boolean force) {
         MaxVMState maxVMState = maxVMState();
         if (maxVMState.newerThan(lastRefreshedState) || force) {
-            inspectorTableModel.refresh();
-            inspectorTableColumnModel.refresh(force);
+            getInspectorTableModel().refresh();
+            getInspectorTableColumnModel().refresh(force);
             lastRefreshedState = maxVMState;
             invalidate();
             repaint();
@@ -348,7 +347,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     public void redisplay() {
-        inspectorTableColumnModel.redisplay();
+        getInspectorTableColumnModel().redisplay();
         invalidate();
         repaint();
     }
