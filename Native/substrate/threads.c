@@ -474,7 +474,7 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  * Join a thread.
  * @C_FUNCTION - called from Java
  */
-jboolean nativeJoin(Address thread) {
+jboolean nonJniNativeJoin(Address thread) {
 #if log_THREADS
     log_println("BEGIN nativeJoin: %p", thread);
 #endif
@@ -486,6 +486,11 @@ jboolean nativeJoin(Address thread) {
     log_println("END nativeJoin: %p", thread);
 #endif
     return result;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_thread_VmThread_nativeJoin(JNIEnv *env, jclass c, Address thread) {
+	return nonJniNativeJoin(thread);
 }
 
 JNIEXPORT void JNICALL
