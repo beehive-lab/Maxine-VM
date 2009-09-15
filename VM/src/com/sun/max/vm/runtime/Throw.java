@@ -277,7 +277,14 @@ public final class Throw {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
                 Log.print("        -> ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethodActor(targetMethod.classMethodActor(), false);
+                final Pointer codeStart = targetMethod.codeStart();
+                Log.print(" [");
+                Log.print(codeStart);
+                Log.print("+");
+                Log.print(pointer.minus(codeStart).toInt());
+                Log.println("]");
+
             }
             pointer = pointer.plus(Word.size());
         }
