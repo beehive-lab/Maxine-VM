@@ -452,8 +452,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     setForeground(style().debugCallReturnTagColor());
                 }
             } else {
-                setIcon(style().debugDefaultTagIcon());
-                setForeground(style().debugDefaultTagColor());
+                setIcon(null);
+                setForeground(null);
             }
             setText(rowToTagText(row));
             final TeleBytecodeBreakpoint teleBytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
@@ -479,7 +479,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());
                 }
             } else {
-                setBorder(style().debugDefaultTagBorder());
+                setBorder(null);
             }
             setToolTipText(toolTipText.toString());
             setBackgroundForRow(this, row);

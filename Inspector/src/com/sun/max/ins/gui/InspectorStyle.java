@@ -147,10 +147,6 @@ public interface InspectorStyle {
 
     Color debugSelectedCodeBorderColor();
 
-    Border debugDefaultTagBorder();
-    Color debugDefaultTagColor();
-    Icon debugDefaultTagIcon();
-
     Border debugEnabledTargetBreakpointTagBorder();
     Border debugDisabledTargetBreakpointTagBorder();
     Border debugEnabledBytecodeBreakpointTagBorder();
