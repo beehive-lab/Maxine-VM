@@ -383,7 +383,7 @@ public class VmThread {
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
-            nativeJoin(nativeThread);
+            nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
         MaxineVM.host().setPhase(MaxineVM.Phase.PRIMORDIAL);
@@ -654,7 +654,15 @@ public class VmThread {
         return !vmThreadLocals.isZero() && LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
     }
 
+    /*
+     * This function exists for the benefit of the primordial thread, as per nonJniNativeSleep.
+     */
     @C_FUNCTION
+    private static native boolean nonJniNativeJoin(Word nativeThread);
+
+    /*
+     * This cannot be a C_FUNCTION as it blocks!
+     */
     private static native boolean nativeJoin(Word nativeThread);
 
     public boolean join() {
