@@ -36,6 +36,7 @@
 #include <mach/vm_map.h>
 
 #include "darwinTeleNativeThread.h"
+#include "auth.h"
 #include "log.h"
 #include "ptrace.h"
 #include "darwinMach.h"
@@ -204,7 +205,13 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
             task_t childTask;
+            if (acquireTaskportRight() != 0) {
+                return -1;
+            }
             if (Task_for_pid(POS, mach_task_self(), childPid, &childTask) != KERN_SUCCESS) {
+                log_println("");
+                log_println("    **** Could not access task for pid %d. You need to launch the Inspector as root ****", childPid);
+                log_println("");
                 return -1;
             }
             return (jlong) childTask;
