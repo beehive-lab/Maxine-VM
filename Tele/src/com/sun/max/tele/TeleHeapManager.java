@@ -302,11 +302,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
                 return true;
             }
         }
-        if (teleImmortalHeapRegion != null) {
-            if (teleImmortalHeapRegion.contains(address)) {
-                return true;
-            }
-        }
         return false;
     }
 
