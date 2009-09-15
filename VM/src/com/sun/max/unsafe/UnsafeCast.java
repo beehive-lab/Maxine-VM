@@ -26,7 +26,6 @@ import java.security.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reflection.*;
@@ -36,14 +35,12 @@ import com.sun.max.vm.thread.*;
 /**
  * A collection of methods used to perform {@link UNSAFE_CAST unchecked type casts}.
  *
- * The bodies of these methods exist solely so that the methods can be {@linkplain FOLD folded}.
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class UnsafeLoophole {
+public final class UnsafeCast {
     @PROTOTYPE_ONLY
-    private UnsafeLoophole() {
+    private UnsafeCast() {
     }
 
     @UNSAFE_CAST public static VmThread                 asVmThread(Object object) { return (VmThread) object; }
@@ -79,24 +76,4 @@ public final class UnsafeLoophole {
     @UNSAFE_CAST public static byte                     asByte(boolean value) { return value ? 1 : (byte) 0; }
     @UNSAFE_CAST public static char                     asChar(short value) { return (char) value; }
     @UNSAFE_CAST public static short                    asShort(char value) { return (short) value; }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.IntToFloat.class)
-    public static float asFloat(int value) {
-        return Float.intBitsToFloat(value);
-    }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.FloatToInt.class)
-    public static int asInt(float value) {
-        return Float.floatToRawIntBits(value);
-    }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.LongToDouble.class)
-    public static double asDouble(long value) {
-        return Double.longBitsToDouble(value);
-    }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.DoubleToLong.class)
-    public static long asLong(double value) {
-        return Double.doubleToRawLongBits(value);
-    }
 }

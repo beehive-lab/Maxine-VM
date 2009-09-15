@@ -45,8 +45,6 @@ public interface CodeStubVisitor {
 
     void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
 
-    void visitPatchingStub(PatchingStub patchingStub);
-
     void visitRangeCheckStub(RangeCheckStub visitor);
 
     void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);

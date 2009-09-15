@@ -24,6 +24,7 @@ import java.io.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -65,7 +66,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public boolean isAllOnes() {
-        return UnsafeLoophole.asInt(value) == -1;
+        return SpecialBuiltin.floatToInt(value) == -1;
     }
 
     @Override

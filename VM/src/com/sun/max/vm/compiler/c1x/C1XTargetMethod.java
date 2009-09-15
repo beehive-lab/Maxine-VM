@@ -135,9 +135,9 @@ public class C1XTargetMethod extends TargetMethod {
         Object[] referenceLiterals = objectReferences.toArray();
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCode().length);
         Code.allocate(targetBundleLayout, this);
-        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode);
+        this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
         // Patch relative instructions in the code buffer
         patchInstructions(targetBundleLayout, ciTargetMethod, relativeDataPos);
@@ -145,10 +145,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int[] serializeLiterals(CiTargetMethod ciTargetMethod, ByteArrayOutputStream output, List<Object> objectReferences) {
         Endianness endianness = Platform.hostOrTarget().endianess();
-        int[] relativeDataPos = new int[ciTargetMethod.dataPatchSites.size()];
+        int[] relativeDataPos = new int[ciTargetMethod.dataReferences.size()];
         int z = 0;
         int currentPos = 0;
-        for (DataPatchSite site : ciTargetMethod.dataPatchSites) {
+        for (DataPatch site : ciTargetMethod.dataReferences) {
 
             final CiConstant data = site.data;
             relativeDataPos[z] = currentPos;
@@ -189,8 +189,8 @@ public class C1XTargetMethod extends TargetMethod {
                 throw new RuntimeException(e);
             }
 
-            // Align on word boundary
-            while (currentPos % Platform.hostOrTarget().wordWidth().numberOfBytes != 0) {
+            // Align on double word boundary
+            while (currentPos % (Platform.hostOrTarget().wordWidth().numberOfBytes * 2) != 0) {
                 output.write(0);
                 currentPos++;
             }
@@ -222,7 +222,7 @@ public class C1XTargetMethod extends TargetMethod {
         int refSize = Platform.hostOrTarget().wordWidth().numberOfBytes;
 
         int z = 0;
-        for (DataPatchSite site : ciTargetMethod.dataPatchSites) {
+        for (DataPatch site : ciTargetMethod.dataReferences) {
 
             switch (site.data.basicType) {
 
@@ -253,23 +253,23 @@ public class C1XTargetMethod extends TargetMethod {
     private void initFrameLayout(CiTargetMethod ciTargetMethod) {
         this.referenceRegisterCount = ciTargetMethod.referenceRegisterCount();
         this.setFrameSize(ciTargetMethod.frameSize());
-        this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset);
+        this.setRegisterRestoreEpilogueOffset(ciTargetMethod.registerRestoreEpilogueOffset());
     }
 
     private void initStopPositions(CiTargetMethod ciTargetMethod) {
 
 
-        int numberOfIndirectCalls = ciTargetMethod.indirectCallSites.size();
-        int numberOfSafepoints = ciTargetMethod.safepointRefMaps.size();
-        int totalStopPositions = ciTargetMethod.directCallSites.size() + numberOfIndirectCalls + numberOfSafepoints;
+        int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
+        int numberOfSafepoints = ciTargetMethod.safepoints.size();
+        int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
 
         referenceMap = new byte[totalReferenceMapBytes() * totalStopPositions];
 
         int z = 0;
         int[] stopPositions = new int[totalStopPositions];
-        Object[] directCallees = new Object[ciTargetMethod.directCallSites.size()];
+        Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
-        for (CallSite site : ciTargetMethod.directCallSites) {
+        for (Call site : ciTargetMethod.directCalls) {
             initStopPosition(ciTargetMethod, z, stopPositions, site.codePos, site.registerMap, site.stackMap);
 
             if (site.globalStubID != null) {
@@ -287,12 +287,12 @@ public class C1XTargetMethod extends TargetMethod {
             z++;
         }
 
-        for (CallSite site : ciTargetMethod.indirectCallSites) {
+        for (Call site : ciTargetMethod.indirectCalls) {
             initStopPosition(ciTargetMethod, z, stopPositions, site.codePos, site.registerMap, site.stackMap);
             z++;
         }
 
-        for (SafepointRefMap safepoint : ciTargetMethod.safepointRefMaps) {
+        for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
             initStopPosition(ciTargetMethod, z, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
             z++;
         }
@@ -435,7 +435,7 @@ public class C1XTargetMethod extends TargetMethod {
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
 
         // iterate over direct calls
-        for (CiTargetMethod.CallSite site : prototypingCiTargetMethod.directCallSites) {
+        for (CiTargetMethod.Call site : prototypingCiTargetMethod.directCalls) {
             if (site.runtimeCall != null) {
                 directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
@@ -445,7 +445,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
 
         // iterate over all the calls and append them to the appropriate lists
-        for (CiTargetMethod.CallSite site : prototypingCiTargetMethod.indirectCallSites) {
+        for (CiTargetMethod.Call site : prototypingCiTargetMethod.indirectCalls) {
             assert site.method != null;
             if (site.method.isLoaded()) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");

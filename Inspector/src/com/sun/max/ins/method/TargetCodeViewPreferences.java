@@ -29,38 +29,32 @@ import com.sun.max.ins.gui.*;
  *
  * @author Michael Van De Vanter
   */
-public class TargetCodeViewerPreferences extends TableColumnVisibilityPreferences<TargetCodeColumnKind> {
+public class TargetCodeViewPreferences extends TableColumnVisibilityPreferences<TargetCodeColumnKind> {
 
-    private static TargetCodeViewerPreferences globalPreferences;
+    private static TargetCodeViewPreferences globalPreferences;
 
-    public static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
+    public static TargetCodeViewPreferences globalPreferences(Inspection inspection) {
         if (globalPreferences == null) {
-            globalPreferences = new TargetCodeViewerPreferences(inspection);
+            globalPreferences = new TargetCodeViewPreferences(inspection);
         }
         return globalPreferences;
     }
 
-    public TargetCodeViewerPreferences(TableColumnVisibilityPreferences<TargetCodeColumnKind> otherPreferences) {
+    // Prefix for all persistent column preferences in view
+    private static final String TARGET_CODE_COLUMN_PREFERENCE = "targetCodeViewColumn";
+
+    /**
+     * Creates the global, persistent set of preferences.
+     */
+    private TargetCodeViewPreferences(Inspection inspection) {
+        super(inspection, TARGET_CODE_COLUMN_PREFERENCE, TargetCodeColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional saving needed here.
+    }
+
+    /**
+     * Creates a non-persistent set of preferences by cloning another set of preferences (i.e. the globally persistent set).
+     */
+    public TargetCodeViewPreferences(TableColumnVisibilityPreferences<TargetCodeColumnKind> otherPreferences) {
         super(otherPreferences);
     }
-
-    public TargetCodeViewerPreferences(Inspection inspection) {
-        super(inspection, "targetCodeInspectorPrefs", TargetCodeColumnKind.class, TargetCodeColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(TargetCodeColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(TargetCodeColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(TargetCodeColumnKind columnType) {
-        return columnType.label();
-    }
-
 }

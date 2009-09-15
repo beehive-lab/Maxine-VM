@@ -53,10 +53,10 @@ public class TupleInspector extends ObjectInspector {
             targetMethodInspectorMenuItems = null;
         }
         if (classMethodInspectorMenuItems != null) {
-            frame().add(classMethodInspectorMenuItems);
+            getMenu(DEFAULT_INSPECTOR_MENU).add(classMethodInspectorMenuItems);
         }
         if (targetMethodInspectorMenuItems != null) {
-            frame().add(targetMethodInspectorMenuItems);
+            getMenu(DEFAULT_INSPECTOR_MENU).add(targetMethodInspectorMenuItems);
         }
     }
 
@@ -64,7 +64,7 @@ public class TupleInspector extends ObjectInspector {
     protected void createView() {
         super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleTupleObject);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
         frame().getContentPane().add(fieldsPane);
     }
 

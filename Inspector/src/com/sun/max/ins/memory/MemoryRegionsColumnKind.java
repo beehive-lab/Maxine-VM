@@ -21,13 +21,14 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 
 /**
  * Defines the columns that can be displayed describing a memory region in the VM.
  *
  * @author Michael Van De Vanter
  */
-public enum MemoryRegionsColumnKind {
+public enum MemoryRegionsColumnKind implements ColumnKind {
 
     TAG("Tag", "Additional information", true, -1),
     NAME("Name", "Role played by the region", true, -1) {
@@ -55,23 +56,14 @@ public enum MemoryRegionsColumnKind {
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -81,16 +73,10 @@ public enum MemoryRegionsColumnKind {
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

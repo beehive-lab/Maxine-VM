@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum BreakpointsColumnKind implements ColumnKind{
+public enum BreakpointsColumnKind implements ColumnKind {
     TAG ("Kind", "[T]arget, [B]ytecode, [S]ource", true, 20),
     ENABLED("En", "Enabled?", true, 5),
     DESCRIPTION("Description", "How/where the breakpoint was created", true, -1) {
@@ -54,23 +54,14 @@ public enum BreakpointsColumnKind implements ColumnKind{
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -80,16 +71,10 @@ public enum BreakpointsColumnKind implements ColumnKind{
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

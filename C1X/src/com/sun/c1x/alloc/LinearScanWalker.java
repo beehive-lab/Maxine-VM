@@ -35,19 +35,19 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public class LinearScanWalker extends IntervalWalker {
+final class LinearScanWalker extends IntervalWalker {
 
-    int firstReg; // the reg. number of the first phys. register
-    int lastReg; // the reg. nmber of the last phys. register
-    int numPhysRegs; // required by current interval
-    boolean adjacentRegs; // have lo/hi words of phys. regs be adjacent
+    private int firstReg; // the reg. number of the first phys. register
+    private int lastReg; // the reg. nmber of the last phys. register
+    private int numPhysRegs; // required by current interval
+    private boolean adjacentRegs; // have lo/hi words of phys. regs be adjacent
 
-    int[] usePos = new int[allocator.nofRegs];
-    int[] blockPos = new int[allocator.nofRegs];
+    private final int[] usePos = new int[allocator.nofRegs];
+    private final int[] blockPos = new int[allocator.nofRegs];
 
-    List<Interval>[] spillIntervals = Util.uncheckedCast(new List[allocator.nofRegs]);
+    private List<Interval>[] spillIntervals = Util.uncheckedCast(new List[allocator.nofRegs]);
 
-    MoveResolver moveResolver; // for ordering spill moves
+    private MoveResolver moveResolver; // for ordering spill moves
 
     // accessors mapped to same functions in class LinearScan
     int blockCount() {
@@ -137,7 +137,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void freeExcludeActiveFixed() {
         Interval list = activeFirst(IntervalKind.fixedKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             assert list.assignedReg() < allocator.nofRegs : "active interval must have a register assigned";
             excludeFromUse(list);
             list = list.next();
@@ -146,7 +146,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void freeExcludeActiveAny() {
         Interval list = activeFirst(IntervalKind.anyKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             excludeFromUse(list);
             list = list.next();
         }
@@ -154,7 +154,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void freeCollectInactiveFixed(Interval cur) {
         Interval list = inactiveFirst(IntervalKind.fixedKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             if (cur.to() <= list.currentFrom()) {
                 assert list.currentIntersectsAt(cur) == -1 : "must not intersect";
                 setUsePos(list, list.currentFrom(), true);
@@ -167,7 +167,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void freeCollectInactiveAny(Interval cur) {
         Interval list = inactiveFirst(IntervalKind.anyKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             setUsePos(list, list.currentIntersectsAt(cur), true);
             list = list.next();
         }
@@ -175,7 +175,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void freeCollectUnhandled(IntervalKind kind, Interval cur) {
         Interval list = unhandledFirst(kind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             setUsePos(list, list.intersectsAt(cur), true);
             if (kind == IntervalKind.fixedKind && cur.to() <= list.from()) {
                 setUsePos(list, list.from(), true);
@@ -186,7 +186,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void spillExcludeActiveFixed() {
         Interval list = activeFirst(IntervalKind.fixedKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             excludeFromUse(list);
             list = list.next();
         }
@@ -194,7 +194,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void spillBlockUnhandledFixed(Interval cur) {
         Interval list = unhandledFirst(IntervalKind.fixedKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             setBlockPos(list, list.intersectsAt(cur));
             list = list.next();
         }
@@ -202,7 +202,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void spillBlockInactiveFixed(Interval cur) {
         Interval list = inactiveFirst(IntervalKind.fixedKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             if (cur.to() > list.currentFrom()) {
                 setBlockPos(list, list.currentIntersectsAt(cur));
             } else {
@@ -215,7 +215,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void spillCollectActiveAny() {
         Interval list = activeFirst(IntervalKind.anyKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             setUsePos(list, Math.min(list.nextUsage(IntervalUseKind.loopEndMarker, currentPosition), list.to()), false);
             list = list.next();
         }
@@ -223,7 +223,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     void spillCollectInactiveAny(Interval cur) {
         Interval list = inactiveFirst(IntervalKind.anyKind);
-        while (list != Interval.end()) {
+        while (list != Interval.EndMarker) {
             if (list.currentIntersects(cur)) {
                 setUsePos(list, Math.min(list.nextUsage(IntervalUseKind.loopEndMarker, currentPosition), list.to()), false);
             }
@@ -631,7 +631,7 @@ public class LinearScanWalker extends IntervalWalker {
         freeCollectInactiveFixed(cur);
         freeCollectInactiveAny(cur);
         // freeCollectUnhandled(fixedKind, cur);
-        assert unhandledFirst(IntervalKind.fixedKind) == Interval.end() : "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
+        assert unhandledFirst(IntervalKind.fixedKind) == Interval.EndMarker : "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
 
         // usePos contains the start of the next interval that has this register assigned
         // (either as a fixed register or a normal allocated register in the past)
@@ -799,7 +799,7 @@ public class LinearScanWalker extends IntervalWalker {
       initUseLists(false);
       spillExcludeActiveFixed();
     //  spillBlockUnhandledFixed(cur);
-      assert unhandledFirst(IntervalKind.fixedKind) == Interval.end() :  "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
+      assert unhandledFirst(IntervalKind.fixedKind) == Interval.EndMarker :  "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
       spillBlockInactiveFixed(cur);
       spillCollectActiveAny();
       spillCollectInactiveAny(cur);
@@ -810,7 +810,7 @@ public class LinearScanWalker extends IntervalWalker {
             if (allocator.isProcessedRegNum(i)) {
               TTY.print("      reg %d: usePos: %d, blockPos: %d, intervals: ", i, usePos[i], blockPos[i]);
               for (int j = 0; j < spillIntervals[i].size(); j++) {
-                TTY.print("%d ", spillIntervals[i].get(j).regNum());
+                TTY.print("%d ", spillIntervals[i].get(j).registerNumber());
               }
               TTY.println();
             }
@@ -941,7 +941,7 @@ public class LinearScanWalker extends IntervalWalker {
 
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
-        if (allocator().gen().isVregFlagSet(cur.regNum(), LIRGenerator.VregFlag.ByteReg)) {
+        if (allocator().gen().isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
             assert cur.type() != CiKind.Float && cur.type() != CiKind.Double : "cpu regs only";
             firstReg = allocator.pdFirstByteReg;
             lastReg = allocator.pdLastByteReg;
@@ -963,7 +963,7 @@ public class LinearScanWalker extends IntervalWalker {
 
         LIROperand in = ((LIROp1) op).inOpr();
         LIROperand res = ((LIROp1) op).resultOpr();
-        return in.isVirtual() && res.isVirtual() && in.vregNumber() == from.regNum() && res.vregNumber() == to.regNum();
+        return in.isVirtual() && res.isVirtual() && in.vregNumber() == from.registerNumber() && res.vregNumber() == to.registerNumber();
     }
 
     // optimization (especially for phi functions of nested loops):
@@ -1036,7 +1036,7 @@ public class LinearScanWalker extends IntervalWalker {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("      splitParent: %d, insertMoveWhenActivated: %b", cur.splitParent().regNum(), cur.insertMoveWhenActivated());
+            TTY.println("      splitParent: %d, insertMoveWhenActivated: %b", cur.splitParent().registerNumber(), cur.insertMoveWhenActivated());
         }
 
         if (cur.assignedReg() >= allocator.nofRegs) {
@@ -1047,7 +1047,7 @@ public class LinearScanWalker extends IntervalWalker {
             splitStackInterval(cur);
             result = false;
 
-        } else if (allocator().gen().isVregFlagSet(cur.regNum(), LIRGenerator.VregFlag.MustStartInMemory)) {
+        } else if (allocator().gen().isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.MustStartInMemory)) {
             // activating an interval that must start in a stack slot : but may get a register later
             // used for lirRoundfp: rounding is done by store to stack and reload later
             // Util.traceLinearScan(4, "      interval must start in stack slot . split it before first use");
@@ -1082,7 +1082,7 @@ public class LinearScanWalker extends IntervalWalker {
         if (cur.insertMoveWhenActivated()) {
             assert cur.isSplitChild() : "must be";
             assert cur.currentSplitChild() != null : "must be";
-            assert cur.currentSplitChild().regNum() != cur.regNum() : "cannot insert move between same interval";
+            assert cur.currentSplitChild().registerNumber() != cur.registerNumber() : "cannot insert move between same interval";
             // Util.traceLinearScan(4, "Inserting move from interval %d to %d because insertMoveWhenActivated is set", cur.currentSplitChild().regNum(), cur.regNum());
 
             insertMove(cur.from(), cur.currentSplitChild(), cur);

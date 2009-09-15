@@ -305,7 +305,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             }
             case EXCEPTION_HANDLING: {
                 final Address throwAddress = instructionPointer;
-                final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
+                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
                     if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {

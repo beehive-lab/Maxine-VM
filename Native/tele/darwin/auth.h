@@ -18,53 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
 
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
-
+#ifndef __auth_h__
+#define __auth_h__ 1
 
 /**
- * A tabbed pane specialized for use in the Maxine Inspector.
+ * Attempts to acquire the system.privilege.taskport right for the current process. This
+ * right is required for using the task_for_pid() system call.
  *
- * @author Michael Van De Vanter
+ * TODO: While the acquisition of this right appears to succeed (according to /var/log/secure.log),
+ * the call to task_for_pid() still fails. Until we can ascertain what extra steps are need to
+ * authorize the Inspector process for use of this system call, the Inspector must be run as root.
+ *
+ * @see /etc/authorization
+ * @see man taskgated
  */
-public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
+extern int acquireTaskportRight();
 
-    private final Inspection inspection;
-
-    /**
-     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
-     */
-    protected InspectorTabbedPane(Inspection inspection) {
-        this.inspection = inspection;
-        //setOpaque(true);
-    }
-
-    public final Inspection inspection() {
-        return inspection;
-    }
-
-    public final MaxVM maxVM() {
-        return inspection.maxVM();
-    }
-
-    public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
-    }
-
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return inspection.focus();
-    }
-
-    public InspectionActions actions() {
-        return inspection.actions();
-    }
-
-}
+#endif /* __auth_h__ */

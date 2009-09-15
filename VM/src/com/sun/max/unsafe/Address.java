@@ -67,9 +67,9 @@ public abstract class Address extends Word {
         if (Word.width() == 64) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
-            return UnsafeLoophole.asAddress(n);
+            return UnsafeCast.asAddress(n);
         }
-        return UnsafeLoophole.asAddress(value);
+        return UnsafeCast.asAddress(value);
     }
 
     /**
@@ -87,9 +87,9 @@ public abstract class Address extends Word {
         }
         if (Word.width() == 64) {
             final long n = value;
-            return UnsafeLoophole.asAddress(n);
+            return UnsafeCast.asAddress(n);
         }
-        return UnsafeLoophole.asAddress(value);
+        return UnsafeCast.asAddress(value);
     }
 
     @INLINE
@@ -98,10 +98,10 @@ public abstract class Address extends Word {
             return BoxedAddress.from(value);
         }
         if (Word.width() == 64) {
-            return UnsafeLoophole.asAddress(value);
+            return UnsafeCast.asAddress(value);
         }
         final int n = (int) value;
-        return UnsafeLoophole.asAddress(n);
+        return UnsafeCast.asAddress(n);
     }
 
     @Override
@@ -162,10 +162,10 @@ public abstract class Address extends Word {
             return (int) box.nativeWord();
         }
         if (Word.width() == 64) {
-            final long n = UnsafeLoophole.asLong(this);
+            final long n = UnsafeCast.asLong(this);
             return (int) n;
         }
-        return UnsafeLoophole.asInt(this);
+        return UnsafeCast.asInt(this);
     }
 
     @INLINE
@@ -175,9 +175,9 @@ public abstract class Address extends Word {
             return box.nativeWord();
         }
         if (Word.width() == 64) {
-            return UnsafeLoophole.asLong(this);
+            return UnsafeCast.asLong(this);
         }
-        return 0xffffffffL & UnsafeLoophole.asInt(this);
+        return 0xffffffffL & UnsafeCast.asInt(this);
     }
 
     public final int compareTo(Address other) {

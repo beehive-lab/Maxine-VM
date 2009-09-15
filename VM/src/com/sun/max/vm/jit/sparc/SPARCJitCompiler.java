@@ -254,7 +254,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final StackUnwindingContext unwindingContext = UnsafeLoophole.asStackUnwindingContext(context);
+                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
                     if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {

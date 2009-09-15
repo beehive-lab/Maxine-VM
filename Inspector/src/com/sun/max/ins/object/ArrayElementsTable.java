@@ -27,15 +27,17 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
+import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -54,78 +56,70 @@ import com.sun.max.vm.value.*;
  */
 public final class ArrayElementsTable extends InspectorTable {
 
-    private final ObjectInspector objectInspector;
-    private final Inspection inspection;
     private final TeleObject teleObject;
-    private final Reference objectReference;  // Reference to an object is canonical; doesn't change
     private final Kind elementKind;
-    private final int elementSize;
+    private final TypeDescriptor elementTypeDescriptor;
     private final Offset startOffset;
     private final int startIndex;
     private final int arrayLength;
     private final String indexPrefix;
     private final WordValueLabel.ValueMode wordValueMode;
 
-    /** Maps display rows to element rows (indexes) in the table. */
-    private int[] rowToElementIndex;
-    private int visibleElementCount = 0;  // number of array elements being displayed
-
-    private final ArrayElementsTableModel model;
+    private final ArrayElementsTableModel tableModel;
     private final ArrayElementsTableColumnModel columnModel;
-    private final TableColumn[] columns;
 
-    private MaxVMState lastRefreshedState = null;
-
+    private final ObjectViewPreferences instanceViewPreferences;
 
     /**
      * A {@link JTable} specialized to display Maxine array elements.
      * This table is somewhat complex so that it can serve for both ordinary array elements
      * as well as the various array subsets (tables) in hybrid objects (hubs).
      *
-     * @param objectInspector the parent of this component
+     * @param inspection
+     * @param teleObject the object being inspected, of which the array elements arepart.
      * @param elementKind the Maxine value "kind" of the array elements.
      * @param startOffset memory position relative to the object origin where the displayed array starts
      * @param startIndex index into the array where the display starts
      * @param length number of elements to display
      * @param indexPrefix text to prepend to the displayed name(index) of each element.
      * @param wordValueMode how to display word values, based on their presumed use in the VM.
+     * @param instanceViewPreferences view preferences to be applied to this view instance
      */
-    ArrayElementsTable(final ObjectInspector objectInspector, final Kind elementKind, final Offset startOffset, int startIndex, int length, final String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
-        super(objectInspector.inspection());
-        this.objectInspector = objectInspector;
-        this.inspection = objectInspector.inspection();
-        this.teleObject = objectInspector.teleObject();
-        this.objectReference = teleObject.reference();
+    ArrayElementsTable(Inspection inspection,
+        TeleObject teleObject, final Kind elementKind, final TypeDescriptor elementTypeDescriptor,
+        final Offset startOffset, int startIndex, int length, final String indexPrefix,
+        WordValueLabel.ValueMode wordValueMode, ObjectViewPreferences instanceViewPreferences) {
+        super(inspection);
+        this.teleObject = teleObject;
         this.elementKind = elementKind;
-        this.elementSize = elementKind.width.numberOfBytes;
+        this.elementTypeDescriptor = elementTypeDescriptor;
         this.startOffset = startOffset;
         this.startIndex = startIndex;
         this.arrayLength = length;
         this.indexPrefix = indexPrefix;
         this.wordValueMode = wordValueMode;
+        this.instanceViewPreferences = instanceViewPreferences;
 
-        // Initialize map so that all elements will display
-        this.rowToElementIndex = new int[arrayLength];
-        for (int index = 0; index < arrayLength; index++) {
-            rowToElementIndex[index] = index;
-        }
-        this.visibleElementCount = arrayLength;
-
-        this.model = new ArrayElementsTableModel(inspection, teleObject.getCurrentOrigin());
-        this.columns = new TableColumn[ArrayElementColumnKind.VALUES.length()];
-        this.columnModel = new ArrayElementsTableColumnModel(objectInspector);
-        configureMemoryTable(model, columnModel);
+        this.tableModel = new ArrayElementsTableModel(inspection, teleObject.getCurrentOrigin());
+        this.columnModel = new ArrayElementsTableColumnModel(instanceViewPreferences);
+        configureMemoryTable(tableModel, columnModel);
         setFillsViewportHeight(true);
+        updateFocusSelection();
     }
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
-            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint") {
+            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
-                public void setWatchpoint() {
-                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
+                public MaxWatchpoint setWatchpoint() {
+                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
+                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (watchpoints.length() > 0) {
+                        return watchpoints.first();
+                    }
+                    return null;
                 }
             };
             toggleAction.perform();
@@ -133,23 +127,35 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled()) {
-            final InspectorMenu menu = new InspectorMenu();
-            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {
+            final InspectorPopupMenu menu = new InspectorPopupMenu();
+            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
                 @Override
-                public void setWatchpoint() {
-                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, null).perform();
+                public MaxWatchpoint setWatchpoint() {
+                    actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
+                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (watchpoints.length() > 0) {
+                        return watchpoints.first();
+                    }
+                    return null;
                 }
             });
-            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, model.rowToElementIndex(row), indexPrefix, "Watch this array element"));
+            menu.add(actions().setArrayElementWatchpoint(teleObject, elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, "Watch this array element"));
             menu.add(actions().setObjectWatchpoint(teleObject, "Watch this array's memory"));
-            menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
-            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
+            menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
+            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
         }
         return null;
+    }
+
+    @Override
+    public void updateFocusSelection() {
+        // Sets table selection to the memory word, if any, that is the current user focus.
+        final Address address = inspection().focus().address();
+        updateSelection(tableModel.findRow(address));
     }
 
     @Override
@@ -159,82 +165,29 @@ public final class ArrayElementsTable extends InspectorTable {
         super.valueChanged(e);
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
-            if (row >= 0 && row < model.getRowCount()) {
-                inspection().focus().setAddress(model.getAddress(row));
+            if (row >= 0 && row < tableModel.getRowCount()) {
+                inspection().focus().setAddress(tableModel.getAddress(row));
             }
         }
-    }
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            model.setOrigin(teleObject.getCurrentOrigin());
-            // Update the mapping between array elements and displayed rows.
-            if (teleObject.isLive()) {
-                if (objectInspector.hideNullArrayElements()) {
-                    final int previousVisibleCount = visibleElementCount;
-                    visibleElementCount = 0;
-                    for (int index = 0; index < arrayLength; index++) {
-                        if (!maxVM().getElementValue(elementKind, objectReference, index).isZero()) {
-                            rowToElementIndex[visibleElementCount++] = index;
-                        }
-                    }
-                    if (previousVisibleCount != visibleElementCount) {
-                        model.refresh();
-                    }
-                } else {
-                    if (visibleElementCount != arrayLength) {
-                        // Previously hiding but no longer; reset map
-                        for (int index = 0; index < arrayLength; index++) {
-                            rowToElementIndex[index] = index;
-                        }
-                        visibleElementCount = arrayLength;
-                    }
-                }
-                // Update selection, based on global address focus.
-                final int oldSelectedRow = getSelectedRow();
-                final int newRow = model.findRow(focus().address());
-                if (newRow >= 0) {
-                    getSelectionModel().setSelectionInterval(newRow, newRow);
-                } else {
-                    if (oldSelectedRow >= 0) {
-                        getSelectionModel().clearSelection();
-                    }
-                }
-                //
-                for (TableColumn column : columns) {
-                    final Prober prober = (Prober) column.getCellRenderer();
-                    prober.refresh(force);
-                }
-            }
-        }
-    }
-
-    public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
     }
 
     /**
-     * Add tool tip text to the column headers, as specified by {@link ArrayElementsColumnKind}.
-     *
-     * @see javax.swing.JTable#createDefaultTableHeader()
+     * A column model for array elements, to be used in an {@link ObjectInspector}.
+     * Column selection is driven by choices in the parent {@link ObjectInspector}.
+     * This implementation cannot update column choices dynamically.
      */
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return ArrayElementColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
+    private final class ArrayElementsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
+
+        ArrayElementsTableColumnModel(ObjectViewPreferences viewPreferences) {
+            super(ObjectColumnKind.VALUES.length(), viewPreferences);
+            addColumn(ObjectColumnKind.TAG, new TagRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.OFFSET, new PositionRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.TYPE, new TypeRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.NAME, new NameRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.VALUE, new ValueRenderer(inspection()), null);
+            addColumn(ObjectColumnKind.REGION, new RegionRenderer(inspection()), null);
+        }
     }
 
     /**
@@ -247,12 +200,26 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private final class ArrayElementsTableModel extends InspectorMemoryTableModel {
 
+        private final int elementSize;
+
+        /** Maps display rows to element rows (indexes) in the table. */
+        private int[] rowToElementIndex;
+        private int visibleElementCount = 0;  // number of array elements being displayed
+
         public ArrayElementsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
+            this.elementSize = elementKind.width.numberOfBytes;
+
+            // Initialize map so that all elements will display
+            this.rowToElementIndex = new int[arrayLength];
+            for (int index = 0; index < arrayLength; index++) {
+                rowToElementIndex[index] = index;
+            }
+            this.visibleElementCount = arrayLength;
         }
 
         public int getColumnCount() {
-            return ArrayElementColumnKind.VALUES.length();
+            return ObjectColumnKind.VALUES.length();
         }
 
         public int getRowCount() {
@@ -307,33 +274,30 @@ public final class ArrayElementsTable extends InspectorTable {
         public int rowToElementIndex(int row) {
             return rowToElementIndex[row];
         }
-    }
 
-    /**
-     * A column model for array elements, to be used in an {@link ObjectInspector}.
-     * Column selection is driven by choices in the parent {@link ObjectInspector}.
-     * This implementation cannot update column choices dynamically.
-     */
-    private final class ArrayElementsTableColumnModel extends DefaultTableColumnModel {
-
-        ArrayElementsTableColumnModel(ObjectInspector objectInspector) {
-            createColumn(ArrayElementColumnKind.TAG, new TagRenderer(), true);
-            createColumn(ArrayElementColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
-            createColumn(ArrayElementColumnKind.OFFSET, new PositionRenderer(), objectInspector.showOffsets());
-            createColumn(ArrayElementColumnKind.NAME, new NameRenderer(), true);
-            createColumn(ArrayElementColumnKind.VALUE, new ValueRenderer(), true);
-            createColumn(ArrayElementColumnKind.REGION, new RegionRenderer(), objectInspector.showMemoryRegions());
-        }
-
-        private void createColumn(ArrayElementColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (isVisible) {
-                addColumn(columns[col]);
+        @Override
+        public void refresh() {
+            setOrigin(teleObject.getCurrentOrigin());
+            // Update the mapping between array elements and displayed rows.
+            if (teleObject.isLive()) {
+                if (instanceViewPreferences.hideNullArrayElements()) {
+                    visibleElementCount = 0;
+                    for (int index = 0; index < arrayLength; index++) {
+                        if (!maxVM().getElementValue(elementKind,  teleObject.reference(), index).isZero()) {
+                            rowToElementIndex[visibleElementCount++] = index;
+                        }
+                    }
+                } else {
+                    if (visibleElementCount != arrayLength) {
+                        // Previously hiding but no longer; reset map
+                        for (int index = 0; index < arrayLength; index++) {
+                            rowToElementIndex[index] = index;
+                        }
+                        visibleElementCount = arrayLength;
+                    }
+                }
+                super.refresh();
             }
-            columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -342,7 +306,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private Color getRowTextColor(int row) {
         final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-        if (watchpointEvent != null && model.getMemoryRegion(row).contains(watchpointEvent.address())) {
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
         return style().defaultTextColor();
@@ -350,57 +314,87 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
 
-        TagRenderer() {
+        TagRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), focus().thread(), model.getWatchpoints(row));
+            final JLabel renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
+            renderer.setBackground(cellBackgroundColor(isSelected));
+            renderer.setOpaque(true);
             return renderer;
         }
     }
 
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
-        AddressRenderer() {
+        AddressRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), model.getOrigin());
+            setValue(tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
 
     private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
-        public PositionRenderer() {
+        public PositionRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(model.getOffset(row), model.getOrigin());
+            setValue(tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
+            return this;
+        }
+    }
+
+    private final class TypeRenderer extends TypeLabel implements TableCellRenderer {
+
+        public TypeRenderer(Inspection inspection) {
+            super(inspection);
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setValue(elementTypeDescriptor);
+            setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
 
     private final class NameRenderer extends LocationLabel.AsIndex implements TableCellRenderer {
 
-        public NameRenderer() {
+        public NameRenderer(Inspection inspection) {
             super(inspection, indexPrefix, 0, Offset.zero(), Address.zero());
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(row, model.getOffset(row), model.getOrigin());
+            setValue(row, tableModel.getOffset(row), tableModel.getOrigin());
             setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
+
+        private final Inspection inspection;
+
+        public ValueRenderer(Inspection inspection) {
+            this.inspection = inspection;
+        }
 
         private InspectorLabel[] labels = new InspectorLabel[arrayLength];
 
@@ -421,14 +415,14 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            final int elementIndex = model.rowToElementIndex(row);
+            final int elementIndex = tableModel.rowToElementIndex(row);
             InspectorLabel label = labels[elementIndex];
             if (label == null) {
                 if (elementKind == Kind.REFERENCE) {
                     label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind, objectReference, startIndex + elementIndex);
+                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -440,7 +434,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind, objectReference, startIndex + elementIndex);
+                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -452,7 +446,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new PrimitiveValueLabel(inspection, elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind, objectReference, startIndex + elementIndex);
+                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -461,13 +455,21 @@ public final class ArrayElementsTable extends InspectorTable {
                         }
                     };
                 }
+                label.setOpaque(true);
                 labels[elementIndex] = label;
             }
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
     }
 
     private final class RegionRenderer implements TableCellRenderer, Prober {
+
+        private final Inspection inspection;
+
+        public RegionRenderer(Inspection inspection) {
+            this.inspection = inspection;
+        }
 
         private InspectorLabel[] labels = new InspectorLabel[arrayLength];
 
@@ -488,17 +490,19 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            final int elementIndex = model.rowToElementIndex(row);
+            final int elementIndex = tableModel.rowToElementIndex(row);
             InspectorLabel label = labels[elementIndex];
             if (label == null) {
                 label = new MemoryRegionValueLabel(inspection) {
                     @Override
                     public Value fetchValue() {
-                        return maxVM().getElementValue(elementKind, objectReference, startIndex + elementIndex);
+                        return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                     }
                 };
+                label.setOpaque(true);
                 labels[elementIndex] = label;
             }
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
     }

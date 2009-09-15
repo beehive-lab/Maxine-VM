@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,37 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.max.ins.gui;
+
+import java.util.*;
+
+import javax.swing.*;
+
+import com.sun.max.collect.*;
+import com.sun.max.ins.*;
 
 
 /**
- * The <code>LIRPatchCode</code> enum represents the different types of Patching available on LIR Instructions.
+ * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
+ * <br>
+ * Contains only instances of {@link InspectorAction} and {@link JMenu}.
  *
- * @author Marcelo Cintra
- *
+ * @author Michael Van De Vanter
  */
-public enum LIRPatchCode {
-    PatchNone,
-    PatchLow,
-    PatchHigh,
-    PatchNormal
+public class InspectorPopupMenuItems implements Iterable<Object>{
+
+    private final LinkSequence<Object> items = new LinkSequence<Object>();
+
+    @Override
+    public Iterator<Object> iterator() {
+        return items.iterator();
+    }
+
+    public void add(JMenu menu) {
+        items.append(menu);
+    }
+
+    public void add(InspectorAction action) {
+        items.append(action);
+    }
 }

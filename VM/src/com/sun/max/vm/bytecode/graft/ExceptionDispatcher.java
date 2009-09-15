@@ -73,7 +73,7 @@ public class ExceptionDispatcher {
             return prototypeSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
-        Throwable exception = UnsafeLoophole.asThrowable(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
+        Throwable exception = UnsafeCast.asThrowable(VmThreadLocal.EXCEPTION_OBJECT.getVariableReference().toJava());
         VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(null);
         return exception;
     }

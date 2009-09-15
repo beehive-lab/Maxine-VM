@@ -108,10 +108,10 @@ public class JavaMethodInspector extends MethodInspector {
         // Assemble menu: override the standard frame menu by starting with an empty one and adding
         // view-specific commands.
         classMethodMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
-        frame().menu().add(classMethodMenuItems);
+        getMenu(METHOD_INSPECTOR_MENU).add(classMethodMenuItems);
         if (teleTargetMethod != null) {
             targetMethodMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
-            frame().menu().add(targetMethodMenuItems);
+            getMenu(METHOD_INSPECTOR_MENU).add(targetMethodMenuItems);
         } else {
             targetMethodMenuItems = null;
         }
@@ -241,7 +241,6 @@ public class JavaMethodInspector extends MethodInspector {
                     }
                     splitPane.setOneTouchExpandable(true);
                     splitPane.setResizeWeight(0.5);
-                    splitPane.setBackground(style().defaultBackgroundColor());
                     frame().getContentPane().add(splitPane);
                     frame().pack();
                     frame().invalidate();

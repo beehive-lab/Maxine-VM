@@ -104,7 +104,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 }
                 final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
                 final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                final VmThread vmThread = UnsafeLoophole.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
+                final VmThread vmThread = UnsafeCast.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
                 vmThread.stackReferenceMapPreparer().completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
             }
         }
