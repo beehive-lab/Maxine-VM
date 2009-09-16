@@ -100,11 +100,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
     protected boolean[] isBoundaryRow;
 
     /**
-     * Is this row part of a group with alternating visuals.
-     */
-    protected boolean [] isAlternateRow;
-
-    /**
      * Is this row a stop point in the target code.
      */
     protected boolean[] isStopRow;
@@ -147,8 +142,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
         Arrays.fill(isBoundaryRow, false);
         isStopRow = new boolean[targetInstructionCount];
         Arrays.fill(isStopRow, false);
-        isAlternateRow = new boolean[targetInstructionCount];
-        Arrays.fill(isAlternateRow, false);
 
         final BytecodeInfo[] bytecodeInfos = teleTargetRoutine.bytecodeInfos();
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
@@ -185,7 +178,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         ++bytecodeIndex;
                     } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
                 }
-                isAlternateRow[row] = alternate;
                 if (positionToStopIndex[instructionPosition] >= 0) {
                     isStopRow[row] = true;
                 }

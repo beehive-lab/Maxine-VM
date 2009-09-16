@@ -164,7 +164,6 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         final JPanel textPanel = new InspectorPanel(inspection);
 
         textPanel.add(new TextLabel(inspection, filterFieldLabel + ":"));
-        textField.setFont(style().javaClassNameFont());
         textField.setPreferredSize(new Dimension(500, 30));
         textField.getDocument().addDocumentListener(new TextListener());
         textPanel.add(textField);

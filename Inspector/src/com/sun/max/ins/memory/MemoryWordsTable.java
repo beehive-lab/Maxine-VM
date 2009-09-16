@@ -256,7 +256,7 @@ public final class MemoryWordsTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
-        return style().defaultTextColor();
+        return null;
     }
 
     /**

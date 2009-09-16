@@ -224,7 +224,6 @@ public class StackInspector extends Inspector {
             toolTip = "Stack " + modelIndex + ":  " + toolTip;
             setToolTipText(toolTip);
             component = super.getListCellRendererComponent(list, name, modelIndex, isSelected, cellHasFocus);
-            component.setFont(style().defaultCodeFont());
             if (modelIndex == 0) {
                 component.setForeground(style().wordCallEntryPointColor());
             } else {

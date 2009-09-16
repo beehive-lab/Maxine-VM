@@ -56,29 +56,22 @@ public interface InspectorStyle {
     // Default text
     Font defaultFont();
     int defaultTextFontSize();
-    Color defaultTextColor();
     Color defaultErrorTextColor();
     Color defaultErrorTextBackgroundColor();
 
     // Plain text labels
     Font textLabelFont();
-    Color textLabelColor();
 
     // Defaults for integers displayed in decimal
     Font decimalDataFont();
-    Color decimalDataColor();
 
     // Defaults for integers displayed in hex
     Font hexDataFont();
-    Color hexDataColor();
 
    // Special styles for interpreted machine word  values
 
     /** font for displaying word data as hex. */
     Font wordDataFont();
-
-    /** default foreground color for displaying word data as hex. */
-    Color wordDataColor();
 
     /** special foreground color for displaying the null word. */
     Color wordNullDataColor();
@@ -119,11 +112,9 @@ public interface InspectorStyle {
 
     // Display of primitive Java data values
     Font primitiveDataFont();
-    Color primitiveDataColor();
 
     // Display of char values
     Font charDataFont();
-    Color charDataColor();
 
     // Display of string values
     /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
@@ -133,13 +124,9 @@ public interface InspectorStyle {
 
     // Names for Java entities
     Font javaNameFont();
-    Color javaNameColor();
-    Font javaClassNameFont();
     Color javaUnresolvedNameColor();
 
     // Default display of any kind of code
-    Font defaultCodeFont();
-    Color defaultCodeColor();
     Color defaultCodeAlternateBackgroundColor();
     Icon codeViewCloseIcon();
 
@@ -149,7 +136,6 @@ public interface InspectorStyle {
     Font bytecodeMnemonicFont();
     Font bytecodeOperandFont();
     int maxBytecodeOperandDisplayLength();
-    Color bytecodeColor();
     Color bytecodeMethodEntryColor();
 
     // Debugger interaction
@@ -160,10 +146,6 @@ public interface InspectorStyle {
     Color vmTerminatedBackgroundColor();
 
     Color debugSelectedCodeBorderColor();
-
-    Border debugDefaultTagBorder();
-    Color debugDefaultTagColor();
-    Icon debugDefaultTagIcon();
 
     Border debugEnabledTargetBreakpointTagBorder();
     Border debugDisabledTargetBreakpointTagBorder();
