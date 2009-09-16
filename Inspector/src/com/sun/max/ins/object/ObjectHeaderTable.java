@@ -246,7 +246,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
-        return style().defaultTextColor();
+        return null;
     }
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {

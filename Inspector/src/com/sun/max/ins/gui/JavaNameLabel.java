@@ -58,7 +58,6 @@ public class JavaNameLabel extends InspectorLabel {
 
     public void redisplay() {
         setFont(style().javaNameFont());
-        setForeground(style().javaNameColor());
     }
 
 }
