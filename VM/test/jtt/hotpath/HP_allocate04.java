@@ -27,7 +27,10 @@ public class HP_allocate04 {
 
     public static int test(int count) {
         int [] a = new int[count];
-        initialize(a);
+
+        for (int i = 0; i < a.length; i++) {
+            a[i] = i;
+        }
 
         int i = 0;
         int iwrap = count - 1;
@@ -39,11 +42,5 @@ public class HP_allocate04 {
             i++;
         }
         return sum;
-    }
-
-    public static void initialize(int[] a) {
-        for (int i = 0; i < a.length; i++) {
-            a[i] = i;
-        }
     }
 }
