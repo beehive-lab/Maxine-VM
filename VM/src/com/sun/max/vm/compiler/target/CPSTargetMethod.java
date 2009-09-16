@@ -79,6 +79,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super(classMethodActor, compilerScheme, null);
     }
 
+    @Override
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
@@ -97,10 +98,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return description();
     }
 
+    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
 
+    @Override
     public Class<? extends IrTraceObserver> irTraceObserverType() {
         return IrTraceObserver.class;
     }
@@ -433,10 +436,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
     }
 
+    @Override
     public final boolean isGenerated() {
         return code != null;
     }
 
+    @Override
     public final String traceToString() {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
