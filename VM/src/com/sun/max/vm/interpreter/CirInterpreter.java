@@ -31,6 +31,7 @@ import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
@@ -147,7 +148,8 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
     }
 
     @Override
-    public Value execute(CirMethod cirMethod, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
+        CirMethod cirMethod = (CirMethod) method;
         CirCall call = new CirCall(cirMethod, arguments.length > 0 ? valuesToCirArguments(arguments) : CirCall.NO_ARGUMENTS);
         cirOptimizer = new CirOptimizer(cirGenerator, cirMethod, call, CirInliningPolicy.NONE);
 

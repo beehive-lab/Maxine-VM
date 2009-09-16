@@ -28,6 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.TirInstruction.*;
@@ -278,7 +279,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
     }
 
     @Override
-    public Value execute(TirTree method, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
         assert false : "Not supported.";
         return null;
     }

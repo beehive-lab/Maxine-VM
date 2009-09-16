@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+import com.sun.max.asm.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
- * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.MaxPackage
- *
- * @author Ben L. Titzer
+ * @author
  */
-public class Package extends VMPackage {
-    public Package() {
+public class C1XTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
-        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
-       // registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
-
-        //super();
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
+    public C1XTranslatorTestSetup(Test test) {
+        super(test);
     }
 
     @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package().isPartOfMaxineVM(vmConfiguration);
+    public TargetMethod translate(ClassMethodActor classMethodActor) {
+        return  javaPrototype().vmConfiguration().jitScheme().compile(classMethodActor);
+    }
+
+    private boolean isCompilable(MethodActor method) {
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isUnsafeCast();
+    }
+    @Override
+    protected VMConfiguration createVMConfiguration() {
+        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64), new com.sun.max.vm.compiler.c1x.Package());
     }
 }
