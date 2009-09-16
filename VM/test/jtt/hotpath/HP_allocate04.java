@@ -19,13 +19,10 @@
  * Company, Ltd.
  */
 package jtt.hotpath;
-
-
 /*
  * @Harness: java
  * @Runs: 80 = 3120;
  */
-
 public class HP_allocate04 {
 
     public static int test(int count) {
