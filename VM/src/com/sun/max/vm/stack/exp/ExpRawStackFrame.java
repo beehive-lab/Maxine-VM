@@ -18,43 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+package com.sun.max.vm.stack.exp;
+
+import com.sun.max.vm.stack.exp.ExpStackWalker.*;
+
+/**
+ *
+ *
+ * @author Thomas Wuerthinger
  */
-package test.com.sun.max.vm.jtrun.some;
+public class ExpRawStackFrame {
 
-import test.com.sun.max.vm.jtrun.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-
-public class JavaTesterRunScheme extends AbstractTester {
-
-    public JavaTesterRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public ExpRawStackFrame(ExpStackFrameLayout layout, Cursor cursor) {
+        this.layout = layout;
+        this.cursor = cursor;
     }
 
-    @PROTOTYPE_ONLY
-    @Override
-    public Class<?>[] getClassList() {
-        return classList;
-    }
-
-    @PROTOTYPE_ONLY
-// GENERATED TEST RUNS
-    private static final Class<?>[] classList = {
-    };
-    @Override
-    public void runTests() {
-        total = testEnd - testStart;
-        testNum = testStart;
-        while (testNum < testEnd) {
-            switch(testNum) {
-                case 0:
-                    JavaTesterTests.jtt_jasm_Loop00();
-            }
-        }
-        reportPassed(passed, total);
-    }
-// END GENERATED TEST RUNS
+    public final ExpStackFrameLayout layout;
+    public final Cursor cursor;
 }

@@ -235,7 +235,7 @@ final class ControlFlowOptimizer {
                 assert curLastOp.info == null : "return instructions do not have debug information";
 
                 assert curLastOp instanceof LIROp1 : "return must be LIROp1";
-                LIROperand returnOpr = ((LIROp1) curLastOp).inOpr();
+                LIROperand returnOpr = ((LIROp1) curLastOp).operand();
 
                 for (int j = block.numberOfPreds() - 1; j >= 0; j--) {
                     BlockBegin pred = block.predAt(j);

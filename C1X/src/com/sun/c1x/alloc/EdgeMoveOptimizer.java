@@ -110,7 +110,7 @@ final class EdgeMoveOptimizer {
             assert op2 instanceof LIROp1 : "move must be LIROp1";
             LIROp1 move1 = (LIROp1) op1;
             LIROp1 move2 = (LIROp1) op2;
-            if (move1.info == move2.info && move1.inOpr() == move2.inOpr() && move1.resultOpr() == move2.resultOpr()) {
+            if (move1.info == move2.info && move1.operand() == move2.operand() && move1.result() == move2.result()) {
                 // these moves are exactly equal and can be optimized
                 return false;
             }

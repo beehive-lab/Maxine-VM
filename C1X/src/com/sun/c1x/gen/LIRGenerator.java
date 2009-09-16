@@ -62,7 +62,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     // Flags that can be set on vregs
     public enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
-        CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
         NumVregFlags
     }
@@ -310,16 +309,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         left.loadItem();
-        if (canInlineAsConstant(right.value())) {
-            right.dontLoadItem();
-        } else {
+        if (!canInlineAsConstant(right.value())) {
             right.loadItem();
         }
 
         LIRItem tVal = new LIRItem(x.trueValue(), this);
         LIRItem fVal = new LIRItem(x.falseValue(), this);
-        tVal.dontLoadItem();
-        fVal.dontLoadItem();
         LIROperand reg = rlockResult(x);
 
         lir.cmp(lirCond(x.condition()), left.result(), right.result());
@@ -541,10 +536,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         array.loadItem();
-        if (index.isConstant() && canInlineAsConstant(x.index())) {
-            // let it be a constant
-            index.dontLoadItem();
-        } else {
+        if (!(index.isConstant() && canInlineAsConstant(x.index()))) {
             index.loadItem();
         }
 
@@ -1335,10 +1327,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem off = new LIRItem(x.offset(), this);
 
         src.loadItem();
-        if (off.isConstant() && canInlineAsConstant(x.offset())) {
-            // let it be a constant
-            off.dontLoadItem();
-        } else {
+        if (!(off.isConstant() && canInlineAsConstant(x.offset()))) {
             off.loadItem();
         }
 

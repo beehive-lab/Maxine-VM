@@ -305,9 +305,6 @@ public class LinearScan {
         if (gen().isVregFlagSet(from.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
             gen().setVregFlag(to.registerNumber(), LIRGenerator.VregFlag.ByteReg);
         }
-        if (gen().isVregFlagSet(from.registerNumber(), LIRGenerator.VregFlag.CalleeSaved)) {
-            gen().setVregFlag(to.registerNumber(), LIRGenerator.VregFlag.CalleeSaved);
-        }
 
         // Note: do not copy the mustStartInMemory flag because it is not necessary for child
         // intervals (only the very beginning of the interval must be in memory)
@@ -559,10 +556,10 @@ public class LinearScan {
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
                     assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
-                    assert ((LIROp1) op).resultOpr().isVirtual() : "LinearScan inserts only moves to virtual registers";
+                    assert ((LIROp1) op).result().isVirtual() : "LinearScan inserts only moves to virtual registers";
 
                     LIROp1 op1 = (LIROp1) op;
-                    Interval curInterval = intervalAt(op1.resultOpr().vregNumber());
+                    Interval curInterval = intervalAt(op1.result().vregNumber());
 
                     if (curInterval.assignedReg() >= nofRegs && curInterval.alwaysInMemory()) {
                         // move target is a stack slot that is always correct, so eliminate instruction
@@ -1156,7 +1153,7 @@ public class LinearScan {
     IntervalUseKind useKindOfOutputOperand(LIRInstruction op, LIROperand opr) {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
-            LIROperand res = move.resultOpr();
+            LIROperand res = move.result();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
 
             if (resultInMemory) {
@@ -1164,11 +1161,11 @@ public class LinearScan {
                 // This interval will always get a stack slot first, so return noUse.
                 return IntervalUseKind.noUse;
 
-            } else if (move.inOpr().isStack()) {
+            } else if (move.operand().isStack()) {
                 // method argument (condition must be equal to handleMethodArguments)
                 return IntervalUseKind.noUse;
 
-            } else if (move.inOpr().isRegister() && move.resultOpr().isRegister()) {
+            } else if (move.operand().isRegister() && move.result().isRegister()) {
                 // Move from register to register
                 if (blockOfOpWithId(op.id()).checkBlockFlag(BlockBegin.BlockFlag.OsrEntry)) {
                     // special handling of phi-function moves inside osr-entry blocks
@@ -1191,7 +1188,7 @@ public class LinearScan {
     IntervalUseKind useKindOfInputOperand(LIRInstruction op, LIROperand opr) {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
-            LIROperand res = move.resultOpr();
+            LIROperand res = move.result();
             boolean resultInMemory = res.isVirtual() && gen().isVregFlagSet(res.vregNumber(), LIRGenerator.VregFlag.MustStartInMemory);
 
             if (resultInMemory) {
@@ -1199,7 +1196,7 @@ public class LinearScan {
                 // To avoid moves from stack to stack (not allowed) force the input operand to a register
                 return IntervalUseKind.mustHaveRegister;
 
-            } else if (move.inOpr().isRegister() && move.resultOpr().isRegister()) {
+            } else if (move.operand().isRegister() && move.result().isRegister()) {
                 // Move from register to register
                 if (blockOfOpWithId(op.id()).checkBlockFlag(BlockBegin.BlockFlag.OsrEntry)) {
                     // special handling of phi-function moves inside osr-entry blocks
@@ -1287,10 +1284,10 @@ public class LinearScan {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
-            if (move.inOpr().isStack()) {
+            if (move.operand().isStack()) {
                 if (C1XOptions.DetailedAsserts) {
                     int argSize = compilation().method().signatureType().argumentSlots(!compilation().method.isStatic());
-                    LIROperand o = move.inOpr();
+                    LIROperand o = move.operand();
                     if (o.isSingleStack()) {
                         assert o.singleStackIx() >= 0 && o.singleStackIx() < argSize : "out of range";
                     } else if (o.isDoubleStack()) {
@@ -1301,14 +1298,14 @@ public class LinearScan {
 
                     assert move.id() > 0 : "invalid id";
                     assert blockOfOpWithId(move.id()).numberOfPreds() == 0 : "move from stack must be in first block";
-                    assert move.resultOpr().isVirtual() : "result of move must be a virtual register";
+                    assert move.result().isVirtual() : "result of move must be a virtual register";
 
                     // Util.traceLinearScan(4, "found move from stack slot %d to vreg %d", o.isSingleStack() ? o.singleStackIx() : o.doubleStackIx(), regNum(move.resultOpr()));
                 }
 
-                Interval interval = intervalAt(regNum(move.resultOpr()));
+                Interval interval = intervalAt(regNum(move.result()));
 
-                int stackSlot = nofRegs + (move.inOpr().isSingleStack() ? move.inOpr().singleStackIx() : move.inOpr().doubleStackIx());
+                int stackSlot = nofRegs + (move.operand().isSingleStack() ? move.operand().singleStackIx() : move.operand().doubleStackIx());
                 interval.setCanonicalSpillSlot(stackSlot);
                 interval.assignReg(stackSlot);
             }
@@ -1322,9 +1319,9 @@ public class LinearScan {
         if (op.code == LIROpcode.Move) {
             LIROp1 move = (LIROp1) op;
 
-            LIROperand inOpr = move.inOpr();
+            LIROperand inOpr = move.operand();
 
-            if (move.resultOpr().isDoubleCpu() && inOpr.isLocation()) {
+            if (move.result().isDoubleCpu() && inOpr.isLocation()) {
                 if (inOpr instanceof LIRAddress) {
                     final LIRAddress pointer = (LIRAddress) inOpr;
                     LIRLocation base = pointer.base();
@@ -1346,8 +1343,8 @@ public class LinearScan {
             case Convert: {
                 LIROp1 move = (LIROp1) op;
 
-                LIROperand moveFrom = move.inOpr();
-                LIROperand moveTo = move.resultOpr();
+                LIROperand moveFrom = move.operand();
+                LIROperand moveTo = move.result();
 
                 if (moveTo.isRegister() && moveFrom.isRegister()) {
                     Interval from = intervalAt(regNum(moveFrom));
@@ -2291,7 +2288,7 @@ public class LinearScan {
 
         LIRLocation res = (LIRLocation) operandForInterval(interval);
 
-        assert !gen().isVregFlagSet(opr.vregNumber(), LIRGenerator.VregFlag.CalleeSaved) || !frameMap.isCallerSaveRegister(res) : "bad allocation";
+        assert !frameMap.isCallerSaveRegister(res) : "bad allocation";
 
         return res;
     }
@@ -2823,8 +2820,8 @@ public class LinearScan {
             // remove useless moves
             if (op.code == LIROpcode.Move) {
                 LIROp1 move = (LIROp1) op;
-                LIROperand src = move.inOpr();
-                LIROperand dst = move.resultOpr();
+                LIROperand src = move.operand();
+                LIROperand dst = move.result();
                 if (dst == src || !dst.isLocation() && !src.isLocation() && src.equals(dst)) {
                     instructions.set(j, null);
                     hasDead = true;

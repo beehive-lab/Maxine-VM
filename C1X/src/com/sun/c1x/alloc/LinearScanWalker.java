@@ -961,8 +961,8 @@ final class LinearScanWalker extends IntervalWalker {
         }
         assert op instanceof LIROp1 : "move must be LIROp1";
 
-        LIROperand in = ((LIROp1) op).inOpr();
-        LIROperand res = ((LIROp1) op).resultOpr();
+        LIROperand in = ((LIROp1) op).operand();
+        LIROperand res = ((LIROp1) op).result();
         return in.isVirtual() && res.isVirtual() && in.vregNumber() == from.registerNumber() && res.vregNumber() == to.registerNumber();
     }
 
