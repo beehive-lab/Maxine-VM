@@ -1909,8 +1909,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
+//                if (curVal instanceof Phi) {
+//                    operandForPhi((Phi) curVal);
+//                }
                 LIROperand operand = curVal.operand();
-                if (curVal.operand().isIllegal()) {
+                if (operand == null || operand.isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
                     operand = operandForInstruction(curVal);
                 }

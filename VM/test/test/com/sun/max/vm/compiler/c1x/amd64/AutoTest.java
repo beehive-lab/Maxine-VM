@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+import junit.framework.*;
 
-/**
- * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.MaxPackage
- *
- * @author Ben L. Titzer
- */
-public class Package extends VMPackage {
-    public Package() {
+import com.sun.max.ide.*;
 
-        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
-       // registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
-
-        //super();
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package().isPartOfMaxineVM(vmConfiguration);
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AutoTest.suite());
+    }
+
+    public static Test suite() {
+        return new C1XTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
 }

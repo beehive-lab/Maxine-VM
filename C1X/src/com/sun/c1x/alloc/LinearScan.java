@@ -2756,7 +2756,6 @@ public class LinearScan {
     }
 
     void assignRegNum(List<LIRInstruction> instructions, IntervalWalker iw) {
-        //LIRVisitState visitor = new LIRVisitState();
         int numInst = instructions.size();
         boolean hasDead = false;
 
@@ -2772,9 +2771,6 @@ public class LinearScan {
             }
             int opId = op.id();
 
-            // visit instruction to get list of operands
-            //visitor.visit(op);
-
             // iterate all modes of the visitor and process all virtual operands
             for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
                 int n = op.oprCount(mode);
@@ -2785,8 +2781,6 @@ public class LinearScan {
                     }
                 }
             }
-
-            //visitor.visitReplace(op);
 
             if (op.infoCount() > 0) {
                 // exception handling

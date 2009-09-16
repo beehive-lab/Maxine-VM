@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+import com.sun.max.*;
 
 /**
- * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.MaxPackage
+ * @see MaxPackage
  *
- * @author Ben L. Titzer
+ * @author Marcelo Cintra
  */
-public class Package extends VMPackage {
+public class Package extends MaxPackage {
     public Package() {
-
-        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
-       // registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
-
-        //super();
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package().isPartOfMaxineVM(vmConfiguration);
+        super();
     }
 }
