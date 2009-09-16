@@ -155,17 +155,16 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
      * <p>
      * The critical state of the registers before the RET instruction is:
      * <ul>
-     * <li>%i0 must hold the exception object</li>
-     * <li>%i7 must hold the catch address, minus 8 -- the ret instruction assume %i7 holds the address of a call
-     * instruction and always jump to %i7 + 2 instructions. So we have pass it the catch address - 2 instructions.</li>
+     * <li>%i7 must hold the catch address, minus 8 -- the RET instruction assumes %i7 holds the address of a call
+     *     instruction and jumps to (%i7 + 2 instructions).  So we pass it (the catch address - 2 instructions).</li>
      * <li>%i6 must hold the stack pointer of the handler</li>
-     * The register windows must be flushed before unwinding so all register windows are cleaned.
+     *     The register windows must be flushed before unwinding so all register windows are cleaned.</li>
      * </ul>
      *
      * @param throwable the exception object
      * @param catchAddress the address of the handler code (actually the dispatcher code)
-     * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
-     *            returning from this method
+     * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound
+     *            upon returning from this method
      */
     @NEVER_INLINE
     private static void unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
@@ -191,9 +190,9 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         switch(purpose) {
             case EXCEPTION_HANDLING: {
                 assert !isTopFrame;
-                // Record this JIT -> OPT adapter frame.
-                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                unwindingContext.record(stackPointer, stackFrameWalker.framePointer());
+                // Record this JIT -> OPT adapter frame's frame pointer as the next stack pointer
+                //final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
+                //stackUnwindingContext.setStackPointer(???);
                 break;
             }
             case REFERENCE_MAP_PREPARING: {
@@ -216,13 +215,13 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
         }
-        // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer
-        //  of the jited caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
+        // Jit to Opt adapter frame exploits the use of register windows by optimized code to leave the frame pointer
+        // of the JITed caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
         // This avoids writing these to the stack then reloading them.
         // The saving of the return address register takes place at the JIT entry point, so that by the first instruction
         // of the adapter, the return address is in SAVED_CALLER_ADDRESS.
         // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
-        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
+        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, jitFramePointer).asPointer();
         final Pointer callerStackPointer;
@@ -399,8 +398,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
                     unwind(throwable, catchAddress, stackPointer);
                 }
-                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                unwindingContext.record(stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
+                // Record the caller's stack pointer, which is our frame pointer:
+                stackUnwindingContext.setStackPointer(framePointer);
                 break;
             }
             case RAW_INSPECTING: {

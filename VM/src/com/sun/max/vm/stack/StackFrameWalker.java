@@ -458,7 +458,7 @@ public abstract class StackFrameWalker {
      * Walks a thread's stack for the purpose of raising an exception.
      */
     public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable));
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, throwable));
     }
 
     /**
