@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,27 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package com.sun.max.ins.gui;
 
-import com.sun.c1x.util.*;
+import javax.swing.*;
+
+import com.sun.max.ins.*;
+import com.sun.max.program.*;
+
 
 /**
- * The <code>NativeMovRegMem</code> class definition.
+ * A specialization of popup menus for use in the Inspector.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * @author Michael Van De Vanter
  */
-public class NativeMovRegMem {
+public class InspectorPopupMenu extends JPopupMenu {
 
-    public static NativeMovRegMem nativeMoveRegMemAt(int i) {
-        return Util.nonFatalUnimplemented(null);
+    public InspectorPopupMenu(String name) {
+        super(name);
+    }
+
+    public InspectorPopupMenu() {
     }
 
     /**
-     * @param fieldOffset
+     * Adds to the menu an untyped object that can be either an {@link InspectorAction}
+     * or a {@link JMenu}.
      */
-    public void setOffset(int fieldOffset) {
-        Util.nonFatalUnimplemented();
+    public void add(Object object) {
+        if (object instanceof InspectorAction) {
+            final InspectorAction action = (InspectorAction) object;
+            this.add(action);
+        } else if (object instanceof JMenu) {
+            final JMenu menu = (JMenu) object;
+            this.add(menu);
+        } else {
+            ProgramError.unexpected("Inappropriate argument");
+        }
     }
 
+    public void add(InspectorPopupMenuItems menuItems) {
+        for (Object item : menuItems) {
+            this.add(item);
+        }
+    }
 }

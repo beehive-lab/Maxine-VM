@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- *  A label for the textual presentation of Target code in the VM.
+ *  A bold label for displaying target code from the VM.
  *
  * @author Michael Van De Vanter
  *
@@ -33,6 +33,7 @@ public class TargetCodeLabel extends InspectorLabel {
 
     public TargetCodeLabel(Inspection inspection, String text) {
         super(inspection, text);
+        setOpaque(true);
         redisplay();
     }
 
@@ -41,14 +42,17 @@ public class TargetCodeLabel extends InspectorLabel {
     }
 
     public void setValue(String text, String toolTipText) {
-        setText(text);
+        setText("<html><b>" + text + "</b>");
         setToolTipText(toolTipText);
     }
 
+    @Override
+    public void setText(String text) {
+        super.setText("<html><b>" + text + "</b>");
+    }
+
     public final void redisplay() {
-        setFont(style().defaultTextFont());
-        setForeground(style().targetCodeColor());
-        setBackground(style().targetCodeBackgroundColor());
+        setFont(style().defaultFont());
     }
 
 }

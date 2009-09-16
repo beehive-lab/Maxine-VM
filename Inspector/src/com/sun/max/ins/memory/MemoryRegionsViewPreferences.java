@@ -44,6 +44,9 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String MEMORY_REGIONS_COLUMN_PREFERENCE = "memoryRegionsViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -56,21 +59,7 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
     * persistent global choices are identical.
     */
     private MemoryRegionsViewPreferences(Inspection inspection) {
-        super(inspection, "memoryRegionsViewPrefs", MemoryRegionsColumnKind.class, MemoryRegionsColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(MemoryRegionsColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(MemoryRegionsColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(MemoryRegionsColumnKind columnType) {
-        return columnType.label();
+        super(inspection, MEMORY_REGIONS_COLUMN_PREFERENCE, MemoryRegionsColumnKind.VALUES);
+        // There are no view preferences beyond the column choices, so no additional machinery needed here.
     }
 }

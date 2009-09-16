@@ -207,7 +207,7 @@ final class JavaStackFramePanel extends StackFramePanel<JavaStackFrame> {
                 if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex)) {
                     slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
                 } else {
-                    slotLabel.setForeground(style().textLabelColor());
+                    slotLabel.setForeground(null);
                 }
             }
         }

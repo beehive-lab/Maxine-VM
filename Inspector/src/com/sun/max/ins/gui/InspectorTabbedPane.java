@@ -40,8 +40,7 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
      */
     protected InspectorTabbedPane(Inspection inspection) {
         this.inspection = inspection;
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
+        //setOpaque(true);
     }
 
     public final Inspection inspection() {

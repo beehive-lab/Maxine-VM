@@ -250,6 +250,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     protected final void setFrameSize(int frameSize) {
+        assert frameSize != -1 : "invalid frame size!";
         this.frameSize = frameSize;
     }
 

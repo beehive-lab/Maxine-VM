@@ -62,14 +62,29 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     private static final int TRACE_VALUE = 2;
 
+    private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(16, 16);
+    public static final String DEFAULT_INSPECTOR_MENU = "Default";
+    public static final String VIEW_INSPECTOR_MENU = "View";
+    public static final String METHOD_INSPECTOR_MENU = "Method";
+
+    public InspectorMenu createDefaultMenu() {
+        final InspectorMenu menu = new InspectorMenu(Inspector.DEFAULT_INSPECTOR_MENU);
+        menu.add(getViewOptionsAction());
+        menu.add(getRefreshAction());
+        menu.addSeparator();
+        menu.add(getCloseAction());
+        menu.add(getCloseOtherInspectorsAction());
+        menu.addSeparator();
+        menu.add(getPrintAction());
+        menu.setText(null);
+        menu.setIcon(FRAME_ICON);
+        return menu;
+    }
+
     private InspectorFrame frame;
 
     /**
      * @return the inspector frame in which the Inspector displays its view.
-     *
-     * <strong>NOTE</strong> The need for the distinction between and {@link InspectorFrame} and the
-     * actual implementation class, which is a {@link JInternalFrame} is an anachronism
-     * from an earlier design phase.  It should be cleaned up.
      */
     public final InspectorFrame frame() {
         return frame;
@@ -79,7 +94,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @return the window system component in which the Inspector displays its view.
      */
     public final Component component() {
-        return (Component) frame;
+        return frame;
     }
 
     /**
@@ -157,7 +172,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param menu  optional menu to replace the default frame menu
      */
     protected void createFrame(InspectorMenu menu) {
-        frame = new InternalInspectorFrame(this, menu);
+        frame = new InspectorFrame(this, menu);
         updateFrameTitle();
         createView();
         frame.pack();
@@ -199,6 +214,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected InspectorTable getTable() {
         return null;
+    }
+
+    protected InspectorMenu getMenu(String menuName) {
+        return frame.getMenu(menuName);
     }
 
     public void vmStateChanged(boolean force) {
@@ -347,7 +366,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return new InspectorAction(inspection(), "Close") {
             @Override
             protected void procedure() {
-                frame().dispose();
+                dispose();
             }
         };
     }

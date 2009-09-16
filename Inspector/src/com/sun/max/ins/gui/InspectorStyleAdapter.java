@@ -48,6 +48,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color frameBorderFlashColor() {
         return InspectorStyle.Red;
     }
+    private Border defaultPaneBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, defaultBorderColor());
+    public Border defaultPaneBorder() {
+        return defaultPaneBorder;
+    }
     private Border defaultPaneTopBorder = BorderFactory.createMatteBorder(2, 0, 0, 0, defaultBorderColor());
     public Border defaultPaneTopBorder() {
         return defaultPaneTopBorder;
@@ -60,9 +64,6 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color defaultTextColor() {
         return InspectorStyle.Black;
     }
-    public Color defaultTextBackgroundColor() {
-        return defaultBackgroundColor();
-    }
     public Color defaultErrorTextColor() {
         return InspectorStyle.Red;
     }
@@ -74,103 +75,54 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Font textLabelFont() {
         return defaultFont();
     }
-    public int textLabelFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color textLabelColor() {
-        return defaultTextColor();
-    }
-    public Color textLabelBackgroundColor() {
-        return defaultTextBackgroundColor();
-    }
-
-    // Defaults for textual titles
-    public Font textTitleFont() {
-        return defaultFont();
-    }
-    public int textTitleFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color textTitleColor() {
-        return defaultTextColor();
-    }
-    public Color textTitleBackgroundColor() {
-        return defaultTextBackgroundColor();
-    }
 
     // Defaults for integers displayed in decimal
     public Font decimalDataFont() {
         return defaultFont();
-    }
-    public int decimalDataFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color decimalDataColor() {
-        return defaultTextColor();
-    }
-    public Color decimalDataBackgroundColor() {
-        return defaultTextBackgroundColor();
     }
 
     // Defaults for integers displayed in hex
     public Font hexDataFont() {
         return defaultFont();
     }
-    public int hexDataFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color hexDataColor() {
-        return defaultTextColor();
-    }
-    public Color hexDataBackgroundColor() {
-        return defaultTextBackgroundColor();
-    }
 
     // Special styles for interpreted machine word values
     public Font wordDataFont() {
         return hexDataFont();
     }
-    public int wordDataFontSize() {
-        return hexDataFontSize();
-    }
-    public Color wordDataColor() {
-        return hexDataColor();
-    }
-    public Color wordDataBackgroundColor() {
-        return hexDataBackgroundColor();
-    }
+
     public Color wordNullDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordValidObjectReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordUncheckedReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordInvalidObjectReferenceDataColor() {
-        return hexDataColor();
+        return null;
     }
     public  Color wordInvalidDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordStackLocationDataColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordCallEntryPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordCallReturnPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Color wordUncheckedCallPointColor() {
-        return hexDataColor();
+        return null;
     }
     public Font wordAlternateTextFont() {
         return defaultFont();
     }
     public Color wordSelectedColor() {
-        return defaultTextColor();
+        return null;
     }
     public Font wordFlagsFont() {
         return defaultFont();
@@ -181,37 +133,16 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Font primitiveDataFont() {
         return defaultFont();
     }
-    public int primitiveDataFontSize() {
-        return defaultTextFontSize();
-    }
     public Color primitiveDataColor() {
-        return defaultTextColor();
-    }
-    public Color primitiveDataBackgroundColor() {
-        return defaultTextBackgroundColor();
+        return null;
     }
 
     // Display of char values
     public Font charDataFont() {
         return defaultFont();
     }
-    public int charDataFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color charDataColor() {
-        return defaultTextColor();
-    }
 
     // Display of string values
-    public Font stringDataFont() {
-        return defaultFont();
-    }
-    public int stringDataFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color stringDataColor() {
-        return defaultTextColor();
-    }
     public int maxStringInlineDisplayLength() {
         return 40;
     }
@@ -223,120 +154,35 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Font javaNameFont() {
         return defaultFont();
     }
-    public int javaNameFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color javaNameColor() {
-        return defaultTextColor();
-    }
     public Color javaUnresolvedNameColor() {
-        return defaultTextColor();
-    }
-    public Color javaNameBackgroundColor() {
-        return defaultTextBackgroundColor();
-    }
-    public Font javaClassNameFont() {
-        return javaNameFont();
-    }
-    public Font javaCodeFont() {
-        return javaNameFont();
+        return null;
     }
 
+
     // Default display of any kind of code
-    public Font defaultCodeFont() {
-        return defaultFont();
-    }
-    public int defaultCodeFontSize() {
-        return defaultTextFontSize();
-    }
-    public Color defaultCodeColor() {
-        return defaultTextColor();
-    }
-    public Color defaultCodeBackgroundColor() {
-        return defaultTextBackgroundColor();
-    }
-    public Color defaultCodeAlternateBackgroundColor() {
-        return defaultCodeBackgroundColor();
-    }
-    public Color defaultCodeStopBackgroundColor() {
-        return defaultCodeBackgroundColor();
-    }
+
     private static final Icon codeViewCloseIcon = IconFactory.createCrossIcon(16, 16);
     public Icon codeViewCloseIcon() {
         return codeViewCloseIcon;
     }
 
     // Display of machine code
-    public Font defaultTextFont() {
-        return defaultCodeFont();
-    }
-    public int targetCodeFontSize() {
-        return defaultCodeFontSize();
-    }
-    public Color targetCodeColor() {
-        return defaultCodeColor();
-    }
-    public Color targetCodeBackgroundColor() {
-        return defaultCodeBackgroundColor();
-    }
-    public Color targetCodeAlternateBackgroundColor() {
-        return defaultCodeAlternateBackgroundColor();
-    }
-    public Color targetCodeStopBackgroundColor() {
-        return defaultCodeStopBackgroundColor();
-    }
 
     // Display of  bytecodes
     public Font bytecodeMnemonicFont() {
         return bytecodeOperandFont();
     }
     public Font bytecodeOperandFont() {
-        return defaultCodeFont();
-    }
-    public int bytecodeFontSize() {
-        return defaultCodeFontSize();
+        return null;
     }
     public int maxBytecodeOperandDisplayLength() {
         return maxStringInlineDisplayLength();
     }
-    public Color bytecodeColor() {
-        return defaultCodeColor();
-    }
-    public Color bytecodeBackgroundColor() {
-        return defaultCodeBackgroundColor();
-    }
     public Color bytecodeMethodEntryColor() {
-        return defaultCodeColor();
-    }
-
-    // Display of source code
-    public Font sourceCodeFont() {
-        return defaultCodeFont();
-    }
-    public int sourceCodeFontSize() {
-        return defaultCodeFontSize();
-    }
-    public Color sourceCodeColor() {
-        return defaultCodeColor();
-    }
-    public Color sourcecodeBackgroundColor() {
-        return defaultCodeBackgroundColor();
+        return null;
     }
 
     // Debugger interaction
-
-    public Color vmStoppedBackgroundColor() {
-        return defaultBackgroundColor();
-    }
-    public Color vmStoppedinGCBackgroundColor() {
-        return defaultBackgroundColor();
-    }
-    public Color vmRunningBackgroundColor() {
-        return defaultBackgroundColor();
-    }
-    public Color vmTerminatedBackgroundColor() {
-        return defaultBackgroundColor();
-    }
 
     private static final Dimension debugTagIconSize = new Dimension(16, 12);
 
@@ -344,16 +190,8 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return Color.black;
     }
 
-    private static final Border debugDefaultTagBorder = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-    public Border debugDefaultTagBorder() {
-        return debugDefaultTagBorder;
-    }
     public Color debugDefaultTagColor() {
         return InspectorStyle.Black;
-    }
-    private static final Icon debugDefaultTagIcon = IconFactory.createBlank(debugTagIconSize);
-    public Icon debugDefaultTagIcon() {
-        return debugDefaultTagIcon;
     }
 
     private static final Border debugEnabledBreakpointTagBorder = BorderFactory.createLineBorder(Color.black, 2);
@@ -379,10 +217,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     public Color debugIPTextColor() {
-        return defaultCodeColor();
+        return null;
     }
     public  Color debugIPTagColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     private static final Icon debugIPTagIcon = IconFactory.createRightArrow(debugTagIconSize);
     public Icon debugIPTagIcon() {
@@ -390,10 +228,10 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
 
     public Color debugCallReturnTextColor() {
-        return defaultCodeColor();
+        return null;
     }
     public Color debugCallReturnTagColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     private static final Icon debugCallReturnTagIcon = IconFactory.createLeftArrow(debugTagIconSize);
     public Icon debugCallReturnTagIcon() {
@@ -532,7 +370,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugSelectedCodeBorderColor();
     }
     public Color memoryDefaultTagTextColor() {
-        return debugDefaultTagColor();
+        return InspectorStyle.Black;
     }
     public Color memoryRegisterTagTextColor() {
         //return debugCallReturnTextColor();
@@ -619,6 +457,20 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultTableShowVerticalLines();
     }
 
+    private static final double DARKEN1_FACTOR = 0.95;
+    public Color darken1(Color color) {
+        return new Color(Math.max((int) (color.getRed()  * DARKEN1_FACTOR), 0),
+            Math.max((int) (color.getGreen() * DARKEN1_FACTOR), 0),
+            Math.max((int) (color.getBlue() * DARKEN1_FACTOR), 0));
+    }
+
+    private static final double DARKEN2_FACTOR = 0.8;
+    public Color darken2(Color color) {
+        return new Color(Math.max((int) (color.getRed()  * DARKEN2_FACTOR), 0),
+            Math.max((int) (color.getGreen() * DARKEN2_FACTOR), 0),
+            Math.max((int) (color.getBlue() * DARKEN2_FACTOR), 0));
+    }
+
     /** Returns an ImageIcon, or null if the path was invalid. */
     protected ImageIcon createImageIcon(String path, String description) {
         final java.net.URL imgURL = getClass().getResource(path);
@@ -628,6 +480,5 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         System.err.println("Couldn't find file: " + path);
         return null;
     }
-
 
 }

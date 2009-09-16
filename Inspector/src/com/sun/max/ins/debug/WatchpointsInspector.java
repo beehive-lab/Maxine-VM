@@ -22,8 +22,6 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -56,7 +54,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         return watchpointsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "watchpointsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final WatchpointsViewPreferences viewPreferences;
@@ -66,10 +64,10 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     private WatchpointsInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
-        viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection());
+        viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
         createFrame(null);
-        frame().add(new WatchpointFrameMenuItems());
+        getMenu(DEFAULT_INSPECTOR_MENU).add(new WatchpointFrameMenuItems());
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -81,8 +79,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     protected void createView() {
         table = new WatchpointsTable(inspection(), viewPreferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
-        frame().setContentPane(scrollPane);
+        frame().setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

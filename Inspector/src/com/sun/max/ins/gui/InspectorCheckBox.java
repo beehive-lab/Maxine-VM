@@ -41,9 +41,8 @@ public final class InspectorCheckBox extends JCheckBox {
     public InspectorCheckBox(Inspection inspection, String text, String toolTipText, boolean selected) {
         super(text, selected);
         setToolTipText(toolTipText);
-        setOpaque(true);
+        setOpaque(false);
         setFont(inspection.style().textLabelFont());
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
 }

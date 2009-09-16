@@ -60,7 +60,7 @@ public class TypeLabel extends InspectorLabel {
                     }
                 }
                 case MouseEvent.BUTTON3: {
-                    final InspectorMenu menu = new InspectorMenu();
+                    final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
                     final InspectorAction inspectActorAction = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
@@ -71,7 +71,7 @@ public class TypeLabel extends InspectorLabel {
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 
-                    menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     break;
                 }
                 default: {
@@ -113,16 +113,14 @@ public class TypeLabel extends InspectorLabel {
     }
 
     public void redisplay() {
-        setFont(style().javaClassNameFont());
-        setBackground(style().javaNameBackgroundColor());
         updateText();
+        setFont(style().defaultFont());
     }
 
     private void updateText() {
         if (typeDescriptor == null) {
             setText("");
             setToolTipText("");
-            setForeground(style().javaNameColor());
         } else {
             final Class javaType = typeDescriptor.resolveType(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
             setText(javaType.getSimpleName());
@@ -130,7 +128,6 @@ public class TypeLabel extends InspectorLabel {
                 setForeground(style().javaUnresolvedNameColor());
                 setToolTipText("<unloaded>" +  javaType.getName());
             } else {
-                setForeground(style().javaNameColor());
                 setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
             }
         }

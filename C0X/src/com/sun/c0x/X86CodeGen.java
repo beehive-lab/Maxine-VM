@@ -356,7 +356,7 @@ public class X86CodeGen extends CodeGen {
     @Override
     Location genArrayLoad(CiKind basicType, Location array, Location index) {
         int arrayElemSize = target.sizeInBytes(basicType);
-        int arrayBaseOffset = runtime.firstArrayElementOffsetInBytes(basicType);
+        int arrayBaseOffset = runtime.firstArrayElementOffset(basicType);
         CiRegister objReg = allocSrc(array, CiKind.Object);
         CiRegister indReg = allocSrc(index, CiKind.Int);
         genBoundsCheck(objReg, indReg);
@@ -369,7 +369,7 @@ public class X86CodeGen extends CodeGen {
     @Override
     void genArrayStore(CiKind basicType, Location array, Location index, Location value) {
         int arrayElemSize = target.sizeInBytes(basicType);
-        int arrayBaseOffset = runtime.firstArrayElementOffsetInBytes(basicType);
+        int arrayBaseOffset = runtime.firstArrayElementOffset(basicType);
         CiRegister objReg = allocSrc(array, CiKind.Object);
         CiRegister indReg = allocSrc(index, CiKind.Int);
         CiRegister valReg = allocSrc(value, basicType);

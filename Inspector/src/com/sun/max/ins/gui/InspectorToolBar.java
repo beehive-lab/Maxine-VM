@@ -43,7 +43,6 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
         this.inspection = inspection;
         setFloatable(false);
         setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {

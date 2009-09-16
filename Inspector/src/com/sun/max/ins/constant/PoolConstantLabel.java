@@ -134,7 +134,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                         handleLeftButtonEvent();
                         break;
                     case MouseEvent.BUTTON3: {
-                        showMenu(mouseEvent);
+                        createPopupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                     }
                     default: {
@@ -196,8 +196,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         setToolTipText(toolTipPrefix + "#" + Integer.toString(index) + "; //" + kind + " " + name + " (" + resolution + ")");
     }
 
-    protected void showMenu(MouseEvent mouseEvent) {
-        final InspectorMenu menu = new InspectorMenu();
+    private InspectorPopupMenu createPopupMenu() {
+        final InspectorPopupMenu menu = new InspectorPopupMenu();
         if (telePoolConstant != null) {
             menu.add(inspection().actions().copyWord(telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
             menu.add(inspection().actions().inspectObjectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
@@ -205,13 +205,13 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             menu.add(inspection().actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
             specializeMenu(menu);
         }
-        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        return menu;
     }
 
     /**
      * Opportunity for subclasses to add additional menu items, depending on the type and state of the constant.
      */
-    protected void specializeMenu(InspectorMenu menu) {
+    protected void specializeMenu(InspectorPopupMenu menu) {
     }
 
     /**
@@ -243,14 +243,14 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("Class", typeDescriptor.toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }
         }
 
         @Override
-        protected void specializeMenu(InspectorMenu menu) {
+        protected void specializeMenu(InspectorPopupMenu menu) {
             if (isResolved()) {
                 menu.addSeparator();
                 final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) telePoolConstant();
@@ -286,14 +286,14 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("Field", holderName + "." + fieldName + ":" + fieldRefConstant.type(localConstantPool()).toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }
         }
 
         @Override
-        protected void specializeMenu(InspectorMenu menu) {
+        protected void specializeMenu(InspectorPopupMenu menu) {
             if (isResolved()) {
                 menu.addSeparator();
                 final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) telePoolConstant();
@@ -350,13 +350,13 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 if (teleClassMethodActor.hasCodeAttribute()) {
                     setForeground(style().bytecodeMethodEntryColor());
                 } else {
-                    setForeground(style().bytecodeColor());
+                    setForeground(null);
                 }
             }
         }
 
         @Override
-        protected void specializeMenu(InspectorMenu menu) {
+        protected void specializeMenu(InspectorPopupMenu menu) {
             checkResolved();
             if (teleClassMethodActor != null) {
                 menu.addSeparator();
@@ -399,14 +399,14 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("InterfaceMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }
         }
 
         @Override
-        protected void specializeMenu(InspectorMenu menu) {
+        protected void specializeMenu(InspectorPopupMenu menu) {
             if (isResolved()) {
                 menu.addSeparator();
                 final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) telePoolConstant();

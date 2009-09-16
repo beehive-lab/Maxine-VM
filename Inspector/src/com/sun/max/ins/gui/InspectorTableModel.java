@@ -20,16 +20,17 @@
  */
 package com.sun.max.ins.gui;
 
-import javax.swing.*;
+import javax.swing.table.*;
 
-import com.sun.max.ins.*;
 
-public class TitleLabel extends JLabel {
+/**
+ * A table model specialized for Inspector's table-based views.
+ *
+ * @author Michael Van De Vanter
+ */
+public abstract class InspectorTableModel extends AbstractTableModel {
 
-    public TitleLabel(Inspection inspection, String text) {
-        super(text);
-        setForeground(inspection.style().textTitleColor());
-        setFont(inspection.style().textTitleFont());
+    public void refresh() {
+        fireTableDataChanged();
     }
-
 }

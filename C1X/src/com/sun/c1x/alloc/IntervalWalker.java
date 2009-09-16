@@ -28,9 +28,9 @@ import com.sun.c1x.debug.*;
  *
  * @author Thomas Wuerthinger
  */
-public class IntervalWalker {
+class IntervalWalker {
 
-    C1XCompilation compilation;
+    protected final C1XCompilation compilation;
     LinearScan allocator;
 
     Interval[] unhandledFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, not
@@ -102,10 +102,10 @@ public class IntervalWalker {
         this.allocator = allocator;
         unhandledFirst[IntervalKind.fixedKind.ordinal()] = unhandledFixedFirst;
         unhandledFirst[IntervalKind.anyKind.ordinal()] = unhandledAnyFirst;
-        activeFirst[IntervalKind.fixedKind.ordinal()] = Interval.end();
-        inactiveFirst[IntervalKind.fixedKind.ordinal()] = Interval.end();
-        activeFirst[IntervalKind.anyKind.ordinal()] = Interval.end();
-        inactiveFirst[IntervalKind.anyKind.ordinal()] = Interval.end();
+        activeFirst[IntervalKind.fixedKind.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.fixedKind.ordinal()] = Interval.EndMarker;
+        activeFirst[IntervalKind.anyKind.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.anyKind.ordinal()] = Interval.EndMarker;
         currentPosition = -1;
         current = null;
         nextInterval();
@@ -157,11 +157,11 @@ public class IntervalWalker {
     Interval removeFromList(Interval list, Interval i) {
         Interval prev = null;
         Interval cur = list;
-        while (cur != Interval.end() && cur != i) {
+        while (cur != Interval.EndMarker && cur != i) {
             prev = cur;
             cur = cur.next;
         }
-        if (cur != Interval.end()) {
+        if (cur != Interval.EndMarker) {
             assert cur == i : "check";
             if (prev == null) {
                 return cur.next;
@@ -254,14 +254,14 @@ public class IntervalWalker {
         Interval any = unhandledFirst[IntervalKind.anyKind.ordinal()];
         Interval fixed = unhandledFirst[IntervalKind.fixedKind.ordinal()];
 
-        if (any != Interval.end()) {
+        if (any != Interval.EndMarker) {
             // intervals may start at same position . prefer fixed interval
-            kind = fixed != Interval.end() && fixed.from() <= any.from() ? IntervalKind.fixedKind : IntervalKind.anyKind;
+            kind = fixed != Interval.EndMarker && fixed.from() <= any.from() ? IntervalKind.fixedKind : IntervalKind.anyKind;
 
             assert kind == IntervalKind.fixedKind && fixed.from() <= any.from() || kind == IntervalKind.anyKind && any.from() <= fixed.from() : "wrong interval!!!";
-            assert any == Interval.end() || fixed == Interval.end() || any.from() != fixed.from() || kind == IntervalKind.fixedKind : "if fixed and any-Interval start at same position, fixed must be processed first";
+            assert any == Interval.EndMarker || fixed == Interval.EndMarker || any.from() != fixed.from() || kind == IntervalKind.fixedKind : "if fixed and any-Interval start at same position, fixed must be processed first";
 
-        } else if (fixed != Interval.end()) {
+        } else if (fixed != Interval.EndMarker) {
             kind = IntervalKind.fixedKind;
         } else {
             current = null;
@@ -270,7 +270,7 @@ public class IntervalWalker {
         currentKind = kind;
         current = unhandledFirst[kind.ordinal()];
         unhandledFirst[kind.ordinal()] = current.next();
-        current.setNext(Interval.end());
+        current.setNext(Interval.EndMarker);
         current.rewindRange();
     }
 

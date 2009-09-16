@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,42 +18,37 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.max.ins.gui;
+
+import java.util.*;
+
+import javax.swing.*;
+
+import com.sun.max.collect.*;
+import com.sun.max.ins.*;
 
 
 /**
- * The <code>VMReg</code> class definition.
+ * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
+ * <br>
+ * Contains only instances of {@link InspectorAction} and {@link JMenu}.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
+ * @author Michael Van De Vanter
  */
-public class VMReg {
+public class InspectorPopupMenuItems implements Iterable<Object>{
 
-    /**
-     * @return
-     */
-    public int value() {
-        // TODO Auto-generated method stub
-        return 0;
+    private final LinkSequence<Object> items = new LinkSequence<Object>();
+
+    @Override
+    public Iterator<Object> iterator() {
+        return items.iterator();
     }
 
-    /**
-     * @return
-     */
-    public String name() {
-        // TODO Auto-generated method stub
-        return null;
+    public void add(JMenu menu) {
+        items.append(menu);
     }
 
-    public boolean isValid() {
-        // TODO Auto-generated method stub
-        return true;
+    public void add(InspectorAction action) {
+        items.append(action);
     }
-
-    public VMReg next() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

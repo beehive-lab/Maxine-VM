@@ -43,7 +43,6 @@ public class JavaTesterRunScheme extends AbstractTester {
     @PROTOTYPE_ONLY
 // GENERATED TEST RUNS
     private static final Class<?>[] classList = {
-        jtt.jasm.Loop00.class
     };
     @Override
     public void runTests() {

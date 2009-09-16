@@ -307,6 +307,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
             index++;
         }
+
+        asm.setFrameSize(this.frameSize);
     }
 
     private void prologue(boolean savesRegisters) {

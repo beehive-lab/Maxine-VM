@@ -23,23 +23,87 @@ package com.sun.max.ins.debug;
 
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
+import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
+
 
 /**
- * Abstract Inspector column Table.
- * @author Hannes Payer
+ * An abstract table column model specialized for Inspector table-based views.
  *
+ * @author Hannes Payer
+ * @author Michael Van De Vanter
  */
-public abstract class InspectorTableColumnModel extends DefaultTableColumnModel {
+public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnKind> extends DefaultTableColumnModel implements Prober {
 
-    protected TableColumn createColumnInstance(ColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-        final TableColumn tableColumn;
-        final int col = columnKind.ordinal();
-        tableColumn = new TableColumn(col, 0, renderer, editor);
+    private final TableColumn[] columns;
+    private final GrowableMapping<Integer, ColumnKind_Type> columnKinds;
+    private final TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences;
+
+    /**
+     * Creates a specialized table column model.
+     *
+     * @param columnKindCount the number of table columns that will be created
+     * @param viewPreferences
+     */
+    public InspectorTableColumnModel(int columnKindCount, TableColumnVisibilityPreferences<ColumnKind_Type> viewPreferences) {
+        this.columns = new TableColumn[columnKindCount];
+        this.columnKinds = new IdentityHashMapping<Integer, ColumnKind_Type>();
+        this.viewPreferences = viewPreferences;
+    }
+
+    public final void refresh(boolean force) {
+        for (TableColumn column : columns) {
+            final TableCellRenderer cellRenderer = column.getCellRenderer();
+            if (cellRenderer instanceof Prober) {
+                final Prober prober = (Prober) cellRenderer;
+                prober.refresh(force);
+            }
+        }
+    }
+
+    public final void redisplay() {
+        for (TableColumn column : columns) {
+            final TableCellRenderer cellRenderer = column.getCellRenderer();
+            if (cellRenderer instanceof Prober) {
+                final Prober prober = (Prober) cellRenderer;
+                prober.redisplay();
+            }
+        }
+    }
+
+    /**
+     * Sets the visibility of a column already added to this model.
+     *
+     * @param col index of a column already added to this model
+     * @param visible whether the column should now be visible
+     */
+    public void setColumnVisible(int col, boolean visible) {
+        final TableColumn tableColumn = columns[col];
+        if (visible) {
+            addColumn(tableColumn);
+        } else {
+            removeColumn(tableColumn);
+        }
+    }
+
+    /**
+     * Adds a column to this model, which may or not be visible depending on the initial description of the column kind.
+     */
+    protected final void addColumn(ColumnKind_Type columnKind, TableCellRenderer renderer, TableCellEditor editor) {
+        final TableColumn tableColumn = new TableColumn(columnKind.ordinal(), 0, renderer, editor);
         tableColumn.setHeaderValue(columnKind.label());
         tableColumn.setMinWidth(columnKind.minWidth());
         tableColumn.setIdentifier(columnKind);
+        columnKinds.put(columnKind.ordinal(), columnKind);
+        columns[columnKind.ordinal()] = tableColumn;
+        if (viewPreferences.isVisible(columnKind)) {
+            addColumn(tableColumn);
+        }
+    }
 
-        return tableColumn;
+    public String toolTipTextForColumn(int index) {
+        return columnKinds.get(index).toolTipText();
     }
 
 }

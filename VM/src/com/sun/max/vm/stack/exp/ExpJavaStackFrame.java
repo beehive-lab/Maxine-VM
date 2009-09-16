@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package com.sun.max.vm.stack.exp;
 
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.value.*;
 
 /**
- * The <code>LIRPatchCode</code> enum represents the different types of Patching available on LIR Instructions.
  *
- * @author Marcelo Cintra
  *
+ * @author Thomas Wuerthinger
  */
-public enum LIRPatchCode {
-    PatchNone,
-    PatchLow,
-    PatchHigh,
-    PatchNormal
+public interface ExpJavaStackFrame {
+    ClassMethodActor classMethodActor();
+    BytecodeLocation bytecodeLocation();
+    Value[] getLocals();
+    Value[] getExpressionStack();
+    Value[] getMonitors();
 }
