@@ -46,8 +46,23 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * Singleton manages the creation and maintenance of instances of {@link TeleObject}, each of which is a
- * canonical surrogate for a heap object in the {@link TeleVM}.
+ * A singleton factory that manages the creation and maintenance of
+ * instances of {@link TeleObject}, each of which is a
+ * canonical surrogate for an object in the VM.
+ * <br>
+ * A {@link TeleObject} is intended to be cannonical, so the unique instance for each object can be
+ * retrieved either by location or by OID.  Exceptions to this can occur because of GC:
+ * <ul>
+ * <li>An object in the VM can be released by the running application and "collected" by the
+ * GC.  As soon as this is discovered, the {@TeleObject} that refers to it is marked "dead".
+ * <li>During some phases of copying GC, there may be two instances that refer to what
+ * is semantically the same object: one referring to the old copy and one referring to the new.</li>
+ * <li>As soon as a duplication due to copying is discovered, the {@link TeleObject} that refers
+ * to the old copy is marked "obsolete".  It is possible to discover the {@link TeleObject} that
+ * refers to the newer copy of the object.</li>
+ * <li>A {@link TeleObject} that is either "dead" or "obsolete" is removed from the maps
+ *  and cannot be discovered, either by location or OID.</li>
+ * </ul>
  *
  * @author Michael Van De Vanter
  */
@@ -70,8 +85,8 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
     // TODO (mlvdv)  TeleObject weak references
 
     /**
-     * Map: Reference to {@link Object}s in the {@link TeleVM} --> canonical local {@link TeleObject} that represents the
-     * object in the {@link TeleVM}. Relies on References being canonical and GC-safe.
+     * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
+     * object in the VM. Relies on References being canonical and GC-safe.
      */
     private  final GrowableMapping<Reference, TeleObject> referenceToTeleObject = HashMapping.createIdentityMapping();
 
@@ -152,17 +167,17 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
     }
 
     /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the {@link TeleVM}. Special subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the VM.  Specific subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
-     *
+     * <br>
      * Returns null for the distinguished zero {@link Reference}.
-     *
-     * Care is taken to avoid I/O with the {@link TeleVM} during synchronized
+     * <br>
+     * Care is taken to avoid I/O with the VM during synchronized
      * access to the canonicalization map.  There is a small exception
      * to this for {@link TeleTargetMethod}.
-     * @param reference a Java object in the {@link TeleVM}
      *
+     * @param reference non-null location of a Java object in the VM
      * @return canonical local surrogate for the object
      */
     public TeleObject make(Reference reference) {
@@ -177,16 +192,33 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         if (teleObject != null) {
             return teleObject;
         }
-        // Keep all the {@link TeleVM} traffic outside of synchronization.
+        // Keep all the VM traffic outside of synchronization.
         if (!teleVM().isValidOrigin(reference.toOrigin())) {
             return null;
         }
 
+        // Most important of the roles played by a {@link TeleObject} is to capture
+        // the type of the object at the specified location.  This gets done empirically,
+        // by examining the meta-information stored with the presumed object.
+        // Because of the meta-circular design, this relies on analysis of meta-information
+        // in the VM that is also stored as objects (notably hubs and class actors).  This
+        // must be done carefully in order to avoid circularities, which is why the initial
+        // investigation must be done using the lowest level memory reading primitives.
+
+        // Location of the {@link Hub} in the VM that describes the layout of the presumed object.
         Reference hubReference;
+
+        // Location of the {@link ClassActor} in the VM that describes the type of the presumed object.
         Reference classActorReference;
+
+        // Local copy of the {@link ClassActor} in the VM that describes the type of the presumed object.
+        // We presume to have loaded exactly the same classes as in the VM, so we can use this local
+        // copy for a kind of reflective access to the structure of the presumed object.
         ClassActor classActor;
 
         try {
+            // If the location in fact points to a well-formed object in the VM, we will be able to determine the
+            // meta-information necessary to understanding how to access information in the object.
             hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
             classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
             classActor = teleVM().makeClassActor(classActorReference);
