@@ -49,13 +49,14 @@ import com.sun.c1x.ir.*;
  *  After peeling the first iteration
  *
  *           ---------
- *           | LH    |
+ *           | LH'    |
  *           --------
  *               |
  *               v
  *           -----------
  *           |  loop   |---------
- *       ----|  body   |        |
+ *       ----|  body'  |        |
+ *       |   |(1st it.)|        |
  *       |   -----------        |
  *   back|    back|    |exit1   |exit2
  *       |        |    |        |
@@ -63,13 +64,13 @@ import com.sun.c1x.ir.*;
  *          |     |    |        |
  *          V     V    |        |
  *          ---------  |        |
- *    ----> |  LH'  |  |        |
+ *    ----> |  LH   |  |        |
  *    | |    --------  |        |
  *    | |       |      |        |
  *    | |       v      |        |
  *    | |  ----------- |        |
  *    | |  |  loop   |-|------  |
- *    | ---|  body'  | |exit2|  |
+ *    | ---|  body   | |exit2|  |
  *    |back|         | |     |  |
  *    |    ----------- |     |  |
  *    | back|  exit1|  |     |  |
@@ -80,9 +81,9 @@ import com.sun.c1x.ir.*;
  *                | Ex1 |  | Ex2 |
  *                -------  -------
  *
- * The cloned loop will become the new loop.
- * Back edges in the origial loop will point to LH'
- * Phi functions will be removed in LH
+ * The cloned loop will become the first iteration.
+ * Back edges in the cloned loop will point to LH
+ * Phi functions will be removed in LH', if possible
  * new Phi might be added in the merging exit points
  *
  * @author Marcelo Cintra
@@ -165,7 +166,7 @@ public class LoopPeeler extends ValueVisitor {
     }
 
     public void cloneInstructions(BlockBegin block) {
-        // we need a reference for the current block when
+        // A reference for the current block is needed when
         // cloning a Phi instruction
         BlockBegin clonedBlock = (BlockBegin) lookup(block);
         currentBlock = clonedBlock;
@@ -173,6 +174,7 @@ public class LoopPeeler extends ValueVisitor {
         clonedBlock.setEnd((BlockEnd) lookup(block.end()));
     }
 
+    // TODO : Refactor the visit instructions
     @Override
     public void visitPhi(Phi i) {
         assert false : "Local instructions should not appear in a Loop body";
@@ -690,7 +692,7 @@ public class LoopPeeler extends ValueVisitor {
     private void performLoopPeeling() {
         // clone the loop header, loop body, blocks and instructions
         // make the cloned loop the 1st iteration
-        // remove unecessary phis in loop header.
+        // remove unnecessary phis in loop header.
         clonedLoop = cloneLoop();
 
 
