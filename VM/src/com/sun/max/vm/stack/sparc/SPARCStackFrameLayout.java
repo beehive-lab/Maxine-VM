@@ -145,20 +145,20 @@ public final class SPARCStackFrameLayout {
         return getCallerFramePointer(stackFrameWalker, unbias(stackFrameWalker.framePointer()));
     }
 
-    public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer registerWindow) {
-        return stackFrameWalker.readWord(registerWindow, offset_in_saved_window(GPR.I6)).asPointer();
+    public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer unbiasedFramePointer) {
+        return stackFrameWalker.readWord(unbiasedFramePointer, offset_in_saved_window(GPR.I6)).asPointer();
     }
 
-    public static void setRegisterInSavedWindow(Pointer framePointer, GPR register, Word data) {
-        unbias(framePointer).writeWord(offset_in_saved_window(register), data);
+    public static void setRegisterInSavedWindow(Pointer stackPointer, GPR register, Word data) {
+        unbias(stackPointer).writeWord(offset_in_saved_window(register), data);
     }
 
-    public static Word getRegisterInSavedWindow(Pointer framePointer, GPR register) {
-        return unbias(framePointer).readWord(offset_in_saved_window(register));
+    public static Word getRegisterInSavedWindow(Pointer stackPointer, GPR register) {
+        return unbias(stackPointer).readWord(offset_in_saved_window(register));
     }
 
-    public static void setCallerFramePointer(Pointer framePointer, Pointer callerFramePointer) {
-        unbias(framePointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
+    public static void setCallerFramePointer(Pointer stackPointer, Pointer callerFramePointer) {
+        unbias(stackPointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
     }
 
     private SPARCStackFrameLayout() {
