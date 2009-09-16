@@ -37,11 +37,8 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
 
-    protected abstract TemplateBasedTargetGenerator targetGenerator();
-
-    public Sequence<IrGenerator> irGenerators() {
-        return new DeterministicSet.Singleton<IrGenerator>(targetGenerator());
-    }
+    @PROTOTYPE_ONLY
+    private boolean isInitialized;
 
     protected JitCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -57,9 +54,6 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     }
 
     @PROTOTYPE_ONLY
-    private boolean isInitialized;
-
-    @PROTOTYPE_ONLY
     private void init() {
         synchronized (this) {
             if (!isInitialized) {
@@ -69,12 +63,16 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
         }
     }
 
-    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
+    protected abstract TemplateBasedTargetGenerator targetGenerator();
 
+    public Sequence<IrGenerator> irGenerators() {
+        return new DeterministicSet.Singleton<IrGenerator>(targetGenerator());
+    }
+
+    public JitTargetMethod compile(ClassMethodActor classMethodActor) {
         if (MaxineVM.isPrototyping()) {
             init();
         }
-
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
     }
 

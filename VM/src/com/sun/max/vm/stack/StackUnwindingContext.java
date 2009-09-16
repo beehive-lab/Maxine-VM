@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
  * Platforms that needs additional information must extend this class.
  *
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public class StackUnwindingContext {
     /**
@@ -35,31 +36,18 @@ public class StackUnwindingContext {
      */
     public final Throwable throwable;
     protected Word stackPointer;
-    protected Word framePointer;
-    protected boolean isTopFrame;
 
-    public StackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
+    public StackUnwindingContext(Word stackPointer, Throwable throwable) {
         this.throwable = throwable;
         this.stackPointer = stackPointer;
-        this.framePointer = framePointer;
-        this.isTopFrame = true;
     }
 
-    public void record(Pointer stackPointer, Pointer framePointer) {
+    public void setStackPointer(Pointer stackPointer) {
         this.stackPointer = stackPointer;
-        this.framePointer = framePointer;
-        this.isTopFrame = false;
     }
 
     public Pointer stackPointer() {
         return stackPointer.asPointer();
     }
 
-    public Pointer framePointer() {
-        return framePointer.asPointer();
-    }
-
-    public boolean isTopFrame() {
-        return isTopFrame;
-    }
 }
