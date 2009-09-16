@@ -18,43 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+package com.sun.max.vm.stack.exp;
+
+import java.util.*;
+
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.stack.exp.ExpStackWalker.*;
+
+/**
+ *
+ *
+ * @author Thomas Wuerthinger
  */
-package test.com.sun.max.vm.jtrun.some;
+public interface ExpStackFrameLayout {
 
-import test.com.sun.max.vm.jtrun.*;
+    void advance(ExpStackWalker.Cursor current);
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+    Address findCatchAddress(ExpStackWalker.Cursor current, Class<? extends Throwable> throwableClass);
 
-public class JavaTesterRunScheme extends AbstractTester {
+    void unwindToAddress(Throwable exception, ExpStackWalker.Cursor current, Address address);
 
-    public JavaTesterRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
+    void prepareReferenceMap(Cursor current, ExpReferenceMapPreparer preparer);
 
-    @PROTOTYPE_ONLY
-    @Override
-    public Class<?>[] getClassList() {
-        return classList;
-    }
+    void prepareCalleeReferenceMap(ExpStackWalker.Cursor caller, ExpStackWalker.Cursor current, ExpReferenceMapPreparer preparer);
 
-    @PROTOTYPE_ONLY
-// GENERATED TEST RUNS
-    private static final Class<?>[] classList = {
-    };
-    @Override
-    public void runTests() {
-        total = testEnd - testStart;
-        testNum = testStart;
-        while (testNum < testEnd) {
-            switch(testNum) {
-                case 0:
-                    JavaTesterTests.jtt_jasm_Loop00();
-            }
-        }
-        reportPassed(passed, total);
-    }
-// END GENERATED TEST RUNS
+    String description(ExpStackWalker.Cursor current);
+
+    void appendJavaFrames(ExpStackWalker.Cursor current, List<ExpJavaStackFrame> frames);
 }
