@@ -207,6 +207,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             return new Key();
         }
 
+        @Override
         public MethodActor resolve(ConstantPool pool, int index) {
             final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
