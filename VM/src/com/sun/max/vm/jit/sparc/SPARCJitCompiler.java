@@ -285,8 +285,8 @@ public class SPARCJitCompiler extends JitCompiler {
                     // frame pointer - (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
                     final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
                     final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
-                    // Push the exception on top of the stack first
-                    // catcherTopOfStackPointer.writeReference(0, null);
+                    // Set the top of stack to null (will be replaced later with the throwable)
+                    catcherTopOfStackPointer.writeReference(0, null);
 
                     // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
                     // mandatory output register.  We also need to bias it.
