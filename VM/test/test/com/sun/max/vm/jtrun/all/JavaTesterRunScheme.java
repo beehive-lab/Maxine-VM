@@ -305,6 +305,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.hotpath.HP_allocate01.class,
         jtt.hotpath.HP_allocate02.class,
         jtt.hotpath.HP_allocate03.class,
+        jtt.hotpath.HP_allocate04.class,
         jtt.hotpath.HP_array01.class,
         jtt.hotpath.HP_array02.class,
         jtt.hotpath.HP_array03.class,
@@ -330,7 +331,6 @@ public class JavaTesterRunScheme extends AbstractTester {
         jtt.hotpath.HP_scope02.class,
         jtt.hotpath.HP_series.class,
         jtt.hotpath.HP_trees01.class,
-        jtt.jasm.Loop00.class,
         jtt.jdk.Class_getName.class,
         jtt.jdk.EnumMap01.class,
         jtt.jdk.EnumMap02.class,
@@ -1446,82 +1446,82 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.jtt_hotpath_HP_allocate03();
                     break;
                 case 265:
-                    JavaTesterTests.jtt_hotpath_HP_array01();
+                    JavaTesterTests.jtt_hotpath_HP_allocate04();
                     break;
                 case 266:
-                    JavaTesterTests.jtt_hotpath_HP_array02();
+                    JavaTesterTests.jtt_hotpath_HP_array01();
                     break;
                 case 267:
-                    JavaTesterTests.jtt_hotpath_HP_array03();
+                    JavaTesterTests.jtt_hotpath_HP_array02();
                     break;
                 case 268:
-                    JavaTesterTests.jtt_hotpath_HP_array04();
+                    JavaTesterTests.jtt_hotpath_HP_array03();
                     break;
                 case 269:
-                    JavaTesterTests.jtt_hotpath_HP_control01();
+                    JavaTesterTests.jtt_hotpath_HP_array04();
                     break;
                 case 270:
-                    JavaTesterTests.jtt_hotpath_HP_control02();
+                    JavaTesterTests.jtt_hotpath_HP_control01();
                     break;
                 case 271:
-                    JavaTesterTests.jtt_hotpath_HP_convert01();
+                    JavaTesterTests.jtt_hotpath_HP_control02();
                     break;
                 case 272:
-                    JavaTesterTests.jtt_hotpath_HP_count();
+                    JavaTesterTests.jtt_hotpath_HP_convert01();
                     break;
                 case 273:
-                    JavaTesterTests.jtt_hotpath_HP_dead01();
+                    JavaTesterTests.jtt_hotpath_HP_count();
                     break;
                 case 274:
-                    JavaTesterTests.jtt_hotpath_HP_demo01();
+                    JavaTesterTests.jtt_hotpath_HP_dead01();
                     break;
                 case 275:
-                    JavaTesterTests.jtt_hotpath_HP_field01();
+                    JavaTesterTests.jtt_hotpath_HP_demo01();
                     break;
                 case 276:
-                    JavaTesterTests.jtt_hotpath_HP_field02();
+                    JavaTesterTests.jtt_hotpath_HP_field01();
                     break;
                 case 277:
-                    JavaTesterTests.jtt_hotpath_HP_field03();
+                    JavaTesterTests.jtt_hotpath_HP_field02();
                     break;
                 case 278:
-                    JavaTesterTests.jtt_hotpath_HP_field04();
+                    JavaTesterTests.jtt_hotpath_HP_field03();
                     break;
                 case 279:
-                    JavaTesterTests.jtt_hotpath_HP_idea();
+                    JavaTesterTests.jtt_hotpath_HP_field04();
                     break;
                 case 280:
-                    JavaTesterTests.jtt_hotpath_HP_inline01();
+                    JavaTesterTests.jtt_hotpath_HP_idea();
                     break;
                 case 281:
-                    JavaTesterTests.jtt_hotpath_HP_inline02();
+                    JavaTesterTests.jtt_hotpath_HP_inline01();
                     break;
                 case 282:
-                    JavaTesterTests.jtt_hotpath_HP_invoke01();
+                    JavaTesterTests.jtt_hotpath_HP_inline02();
                     break;
                 case 283:
-                    JavaTesterTests.jtt_hotpath_HP_life();
+                    JavaTesterTests.jtt_hotpath_HP_invoke01();
                     break;
                 case 284:
-                    JavaTesterTests.jtt_hotpath_HP_nest01();
+                    JavaTesterTests.jtt_hotpath_HP_life();
                     break;
                 case 285:
-                    JavaTesterTests.jtt_hotpath_HP_nest02();
+                    JavaTesterTests.jtt_hotpath_HP_nest01();
                     break;
                 case 286:
-                    JavaTesterTests.jtt_hotpath_HP_scope01();
+                    JavaTesterTests.jtt_hotpath_HP_nest02();
                     break;
                 case 287:
-                    JavaTesterTests.jtt_hotpath_HP_scope02();
+                    JavaTesterTests.jtt_hotpath_HP_scope01();
                     break;
                 case 288:
-                    JavaTesterTests.jtt_hotpath_HP_series();
+                    JavaTesterTests.jtt_hotpath_HP_scope02();
                     break;
                 case 289:
-                    JavaTesterTests.jtt_hotpath_HP_trees01();
+                    JavaTesterTests.jtt_hotpath_HP_series();
                     break;
                 case 290:
-                    JavaTesterTests.jtt_jasm_Loop00();
+                    JavaTesterTests.jtt_hotpath_HP_trees01();
                     break;
                 case 291:
                     JavaTesterTests.jtt_jdk_Class_getName();

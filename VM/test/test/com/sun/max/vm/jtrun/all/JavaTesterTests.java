@@ -8961,6 +8961,22 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void jtt_hotpath_HP_allocate04() {
+        JavaTesterRunScheme.begin("jtt.hotpath.HP_allocate04");
+        String runString = null;
+        try {
+        // (80) == 3120
+            runString = "(80)";
+            if (3120 != jtt.hotpath.HP_allocate04.test(80)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void jtt_hotpath_HP_array01() {
         JavaTesterRunScheme.begin("jtt.hotpath.HP_array01");
         String runString = null;
@@ -9400,46 +9416,6 @@ public class JavaTesterTests {
         // (1000) == 8100
             runString = "(1000)";
             if (8100 != jtt.hotpath.HP_trees01.test(1000)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
-    static void jtt_jasm_Loop00() {
-        JavaTesterRunScheme.begin("jtt.jasm.Loop00");
-        String runString = null;
-        try {
-        // (0) == -1
-            runString = "(0)";
-            if (-1 != jtt.jasm.Loop00.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (1) == -1
-            runString = "(1)";
-            if (-1 != jtt.jasm.Loop00.test(1)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (2) == -1
-            runString = "(2)";
-            if (-1 != jtt.jasm.Loop00.test(2)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (3) == -1
-            runString = "(3)";
-            if (-1 != jtt.jasm.Loop00.test(3)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        // (111) == -1
-            runString = "(111)";
-            if (-1 != jtt.jasm.Loop00.test(111)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
