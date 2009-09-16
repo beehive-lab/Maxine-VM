@@ -793,13 +793,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
-        // Immortal heap allocation
-        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
-        if (!immortalAllocation.isZero()) {
-            return ImmortalHeap.allocate(size, true);
-        }
-
-        // Should we refill the TLAB ?
+          // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
@@ -1126,21 +1120,4 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    @Override
-    public void disableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
-        if (usesTLAB()) {
-            super.disableImmortalMemoryAllocation();
-        }
-    }
-
-    @Override
-    public void enableImmortalMemoryAllocation() {
-        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
-        if (usesTLAB()) {
-            super.enableImmortalMemoryAllocation();
-        }
-    }
 }

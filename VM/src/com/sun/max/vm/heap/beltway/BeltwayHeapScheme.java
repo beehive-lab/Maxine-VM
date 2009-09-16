@@ -167,6 +167,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected abstract int [] beltHeapPercentage();
     protected abstract String [] beltDescriptions();
     protected abstract HeapBoundChecker heapBoundChecker();
+    protected abstract void initializeTlabAllocationBelt();
 
     public Size getMaxHeapSize() {
         return dynamicHeapMaxSize;
@@ -218,6 +219,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts(this);
+            initializeTlabAllocationBelt(); // enable tlab allocation -- needed for InspectableHeapInfo.
+
             InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
