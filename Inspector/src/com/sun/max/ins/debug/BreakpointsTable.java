@@ -315,6 +315,14 @@ public final class BreakpointsTable extends InspectorTable {
 
     }
 
+    /**
+     * @return color the text specially in the row where a triggered breakpoint is displayed
+     */
+    private Color getRowTextColor(int row) {
+        return (tableModel.get(row).triggerThread() == null) ? null : inspection().style().debugIPTagColor();
+    }
+
+
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
@@ -324,8 +332,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
+            setIcon((breakpointData.triggerThread() == null) ? null : inspection().style().debugIPTagIcon());
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -341,6 +351,7 @@ public final class BreakpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -357,6 +368,7 @@ public final class BreakpointsTable extends InspectorTable {
             final BreakpointData breakpointData = tableModel.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -373,6 +385,7 @@ public final class BreakpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setToolTipText(tableModel.get(row).conditionStatus());
             final JComponent component = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return component;
         }
@@ -401,6 +414,7 @@ public final class BreakpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this breakpoint");
             }
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }

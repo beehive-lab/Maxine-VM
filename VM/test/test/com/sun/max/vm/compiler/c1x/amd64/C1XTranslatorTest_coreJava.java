@@ -18,41 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.ins.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
 
 /**
- *  A bold label for displaying target code from the VM.
+ * Translates and optimizes almost all packages in the project to test the optimizer.
  *
- * @author Michael Van De Vanter
- *
+ * @author Bernd Mathiske
  */
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public class C1XTranslatorTest_coreJava extends CompilerTest_coreJava {
 
-public class TargetCodeLabel extends InspectorLabel {
-
-    public TargetCodeLabel(Inspection inspection, String text) {
-        super(inspection, text);
-        setOpaque(true);
-        redisplay();
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(C1XTranslatorTest_coreJava.suite());
     }
 
-    public final void refresh(boolean force) {
-        // no remote data to refresh.
+    public static Test suite() {
+        return new C1XTranslatorTestSetup(new TestSuite(C1XTranslatorTest_coreJava.class));
     }
 
-    public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
-    }
-
-    @Override
-    public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
-    }
-
-    public final void redisplay() {
-        setFont(style().defaultFont());
+    public C1XTranslatorTest_coreJava(String name) {
+        super(name);
     }
 
 }

@@ -18,41 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.ins.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+import com.sun.max.asm.*;
+import com.sun.max.platform.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
- *  A bold label for displaying target code from the VM.
- *
- * @author Michael Van De Vanter
- *
+ * @author
  */
+public class C1XTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
-public class TargetCodeLabel extends InspectorLabel {
-
-    public TargetCodeLabel(Inspection inspection, String text) {
-        super(inspection, text);
-        setOpaque(true);
-        redisplay();
-    }
-
-    public final void refresh(boolean force) {
-        // no remote data to refresh.
-    }
-
-    public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
+    public C1XTranslatorTestSetup(Test test) {
+        super(test);
     }
 
     @Override
-    public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
+    public TargetMethod translate(ClassMethodActor classMethodActor) {
+        return  javaPrototype().vmConfiguration().jitScheme().compile(classMethodActor);
     }
 
-    public final void redisplay() {
-        setFont(style().defaultFont());
+    private boolean isCompilable(MethodActor method) {
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isUnsafeCast();
     }
-
+    @Override
+    protected VMConfiguration createVMConfiguration() {
+        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64), new com.sun.max.vm.compiler.c1x.Package());
+    }
 }

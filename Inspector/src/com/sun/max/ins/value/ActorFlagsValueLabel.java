@@ -63,7 +63,6 @@ public final class ActorFlagsValueLabel extends ValueLabel {
 
     public void redisplay() {
         setFont(style().primitiveDataFont());
-        setForeground(style().primitiveDataColor());
         updateText();
     }
 

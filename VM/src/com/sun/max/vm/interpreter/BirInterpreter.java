@@ -34,6 +34,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.hotpath.AsynchronousProfiler;
@@ -111,7 +112,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
     }
 
     @Override
-    public Value execute(BirMethod method, Value... arguments) {
+    public Value execute(IrMethod method, Value... arguments) {
         final BytecodeEvaluator evaluator = new BytecodeEvaluator();
         final BytecodeScanner scanner = new BytecodeScanner(evaluator);
 

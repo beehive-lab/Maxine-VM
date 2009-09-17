@@ -243,7 +243,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("Class", typeDescriptor.toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }
@@ -286,7 +286,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("Field", holderName + "." + fieldName + ":" + fieldRefConstant.type(localConstantPool()).toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }
@@ -350,7 +350,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 if (teleClassMethodActor.hasCodeAttribute()) {
                     setForeground(style().bytecodeMethodEntryColor());
                 } else {
-                    setForeground(style().bytecodeColor());
+                    setForeground(null);
                 }
             }
         }
@@ -399,7 +399,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             }
             setJavapResolvableToolTipText("InterfaceMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
             if (isResolved()) {
-                setForeground(style().bytecodeColor());
+                setForeground(null);
             } else {
                 setForeground(style().javaUnresolvedNameColor());
             }

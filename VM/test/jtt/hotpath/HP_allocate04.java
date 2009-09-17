@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,41 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
-
-import com.sun.max.ins.*;
-
-/**
- *  A bold label for displaying target code from the VM.
- *
- * @author Michael Van De Vanter
- *
+package jtt.hotpath;
+/*
+ * @Harness: java
+ * @Runs: 80 = 3120;
  */
+public class HP_allocate04 {
 
-public class TargetCodeLabel extends InspectorLabel {
+    public static int test(int count) {
+        int [] a = new int[count];
 
-    public TargetCodeLabel(Inspection inspection, String text) {
-        super(inspection, text);
-        setOpaque(true);
-        redisplay();
+        for (int i = 0; i < a.length; i++) {
+            a[i] = i;
+        }
+
+        int i = 0;
+        int iwrap = count - 1;
+        int sum = 0;
+
+        while (i < count) {
+            sum += (a[i] + a[iwrap]) / 2;
+            iwrap = i;
+            i++;
+        }
+        return sum;
     }
-
-    public final void refresh(boolean force) {
-        // no remote data to refresh.
-    }
-
-    public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
-    }
-
-    @Override
-    public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
-    }
-
-    public final void redisplay() {
-        setFont(style().defaultFont());
-    }
-
 }

@@ -18,41 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.ins.*;
+import junit.framework.*;
 
-/**
- *  A bold label for displaying target code from the VM.
- *
- * @author Michael Van De Vanter
- *
- */
+import com.sun.max.ide.*;
 
-public class TargetCodeLabel extends InspectorLabel {
-
-    public TargetCodeLabel(Inspection inspection, String text) {
-        super(inspection, text);
-        setOpaque(true);
-        redisplay();
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
     }
 
-    public final void refresh(boolean force) {
-        // no remote data to refresh.
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AutoTest.suite());
     }
 
-    public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
+    public static Test suite() {
+        return new C1XTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
-
-    @Override
-    public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
-    }
-
-    public final void redisplay() {
-        setFont(style().defaultFont());
-    }
-
 }

@@ -36,7 +36,7 @@ public class ComputeLinearScanOrder {
     private int maxBlockId; // the highest blockId of a block
     private int numBlocks; // total number of blocks (smaller than maxBlockId)
     private int numLoops; // total number of loops
-    private boolean iterativeDominators; // method requires iterative computation of dominatiors
+    private boolean iterativeDominators; // method requires iterative computation of dominators
 
     List<BlockBegin> linearScanOrder; // the resulting list of blocks in correct order
 

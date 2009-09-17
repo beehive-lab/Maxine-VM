@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.interpreter.eir.EirCPU.*;
 import com.sun.max.vm.interpreter.eir.EirStack.*;
@@ -139,7 +140,8 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     protected abstract EirCPU cpu();
 
     @Override
-    public Value execute(EirMethod eirMethod, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
+        EirMethod eirMethod = (EirMethod) method;
         if (eirMethod.isNative() && !eirMethod.isGenerated()) {
             try {
                 return eirMethod.classMethodActor().invoke(arguments);

@@ -18,41 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.ins.*;
+import com.sun.max.*;
 
 /**
- *  A bold label for displaying target code from the VM.
+ * @see MaxPackage
  *
- * @author Michael Van De Vanter
- *
+ * @author Marcelo Cintra
  */
-
-public class TargetCodeLabel extends InspectorLabel {
-
-    public TargetCodeLabel(Inspection inspection, String text) {
-        super(inspection, text);
-        setOpaque(true);
-        redisplay();
+public class Package extends MaxPackage {
+    public Package() {
+        super();
     }
-
-    public final void refresh(boolean force) {
-        // no remote data to refresh.
-    }
-
-    public void setValue(String text, String toolTipText) {
-        setText("<html><b>" + text + "</b>");
-        setToolTipText(toolTipText);
-    }
-
-    @Override
-    public void setText(String text) {
-        super.setText("<html><b>" + text + "</b>");
-    }
-
-    public final void redisplay() {
-        setFont(style().defaultFont());
-    }
-
 }
