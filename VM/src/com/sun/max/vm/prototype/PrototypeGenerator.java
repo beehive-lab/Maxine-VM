@@ -32,6 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
@@ -83,9 +84,9 @@ public final class PrototypeGenerator {
             "Specifies the heap scheme for the target.");
     private final Option<MaxPackage> monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
             "Specifies the monitor scheme for the target.");
-    private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), CompilerScheme.class,
+    private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
             "Specifies the compiler scheme for the target.");
-    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
+    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
     private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");
@@ -233,8 +234,11 @@ public final class PrototypeGenerator {
      * @param tree a boolean indicating whether to record an object tree, which is useful for debugging
      * @return the final graph prototype of the VM
      */
-    public GraphPrototype createGraphPrototype(final boolean tree) {
+    public GraphPrototype createGraphPrototype(final boolean tree, boolean prototypeJit) {
         final JavaPrototype javaPrototype = createJavaPrototype(true);
+        if (prototypeJit) {
+            javaPrototype.vmConfiguration().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
+        }
         try {
             javaPrototype.loadCoreJavaPackages();
             final Timer compileTimer = GlobalMetrics.newTimer("CompiledPrototype", Clock.SYSTEM_MILLISECONDS);
@@ -291,9 +295,9 @@ public final class PrototypeGenerator {
      * @param tree a boolean indicating whether to produce an object tree
      * @return a completed data prototype
      */
-    DataPrototype createDataPrototype(boolean tree) {
+    DataPrototype createDataPrototype(boolean tree, boolean prototypeJit) {
         final Timer dataTimer = GlobalMetrics.newTimer("DataPrototype", Clock.SYSTEM_MILLISECONDS);
-        final GraphPrototype graphPrototype = createGraphPrototype(tree);
+        final GraphPrototype graphPrototype = createGraphPrototype(tree, prototypeJit);
         dataTimer.start();
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null);
         dataTimer.stop();

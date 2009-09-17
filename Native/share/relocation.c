@@ -27,6 +27,8 @@
 #include "dataio.h"
 #include "relocation.h"
 
+#define DEBUG_RELOCATION 0
+
 #define RELOCATION_LOOP(wordType, getWord, putWord) do { \
         for (i = 0; i < relocationDataSize; i++) { \
             Byte byte = bytes[i]; \
@@ -38,7 +40,10 @@
                         Address p = (base + dataOffset); \
                         wordType value = getWord(p); \
                         if (value != (wordType) 0) { \
-                            value = value + base; \
+                            if (DEBUG_RELOCATION) { \
+                                log_println("%p: %p -> %p", p, value, value + relocatedHeap); \
+                            } \
+                            value = value + relocatedHeap; \
                             putWord(p, value); \
                         } \
                     } \
@@ -48,7 +53,16 @@
         } \
     } while (0)
 
-void relocation_apply(void *heap, void *relocationData, int relocationDataSize, int cacheAlignment, int isBigEndian, int wordSize) {
+/**
+ * Relocates the pointers in the heap and code. All the pointers are assumed to be
+ * canonicalized; their current values assume that the heap and code start address 0.
+ *
+ * @param heap the physical address at which the (contiguous) heap and code reside
+ * @param relocatedHeap the logical address to which the heap and code is being relocated
+ * @param relocationData the bit map denoting where all the pointers are in the heap and code
+ * @param relocationDataSize the size (in bytes) of the bit map
+ */
+void relocation_apply(void *heap, Address relocatedHeap, void *relocationData, int relocationDataSize, int isBigEndian, int wordSize) {
     int i, bit;
     Address base = (Address) heap;
     Byte *bytes = (Byte *) relocationData;
@@ -67,16 +81,17 @@ void relocation_apply(void *heap, void *relocationData, int relocationDataSize, 
             RELOCATION_LOOP(Unsigned8, readLittleEndianUnsigned8, writeLittleEndianUnsigned8);
         }
     } else {
+        log_println("wordSize=%d", wordSize);
         c_ASSERT(false);
     }
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap,
-                                                       jbyteArray relocationData, jint relocationDataSize, jint cacheAlignment,
+Java_com_sun_max_vm_prototype_BootImage_nativeRelocate(JNIEnv *env, jclass c, jlong heap, jlong relocatedHeap,
+                                                       jbyteArray relocationData, jint relocationDataSize,
                                                        jint isBigEndian, jint wordSize) {
     jboolean isCopy;
     jbyte *bytes = (*env)->GetByteArrayElements(env, relocationData, &isCopy);
-    relocation_apply((void *) (Address) heap, bytes, relocationDataSize, cacheAlignment, isBigEndian, wordSize);
+    relocation_apply((void *) (Address) heap, (Address) relocatedHeap, bytes, relocationDataSize, isBigEndian, wordSize);
     (*env)->ReleaseByteArrayElements(env, relocationData, bytes, JNI_ABORT);
 }

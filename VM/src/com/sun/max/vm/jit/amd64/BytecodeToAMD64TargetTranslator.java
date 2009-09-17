@@ -37,6 +37,7 @@ import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
@@ -62,13 +63,13 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     /**
      * Canonicalized Target ABI.
      */
-    private static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI;
+    public static final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> TARGET_ABI;
 
     private final AMD64Assembler asm = new AMD64Assembler();
 
     @Override
     public TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI() {
-        return targetABI;
+        return TARGET_ABI;
     }
 
     @Override
@@ -84,7 +85,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        final AMD64GeneralRegister64 register = targetABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final AMD64GeneralRegister64 register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
         asm.reset();
         asm.mov(register, argument);
         codeBuffer.emitCodeFrom(asm);
@@ -92,25 +93,25 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignFloatTemplateArgument(int parameterIndex, float argument) {
-        final AMD64GeneralRegister32 scratch = AMD64GeneralRegister32.from(targetABI.scratchRegister());
+        final AMD64GeneralRegister32 scratch = AMD64GeneralRegister32.from(TARGET_ABI.scratchRegister());
         asm.reset();
-        asm.movl(scratch, UnsafeLoophole.floatToInt(argument));
-        asm.movdl(targetABI.floatingPointParameterRegisters().get(parameterIndex), scratch);
+        asm.movl(scratch, SpecialBuiltin.floatToInt(argument));
+        asm.movdl(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), scratch);
         codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignLongTemplateArgument(int parameterIndex, long argument) {
         asm.reset();
-        asm.mov(targetABI.integerIncomingParameterRegisters().get(parameterIndex), argument);
+        asm.mov(TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex), argument);
         codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
         asm.reset();
-        asm.mov(targetABI.scratchRegister(), UnsafeLoophole.doubleToLong(argument));
-        asm.movdq(targetABI.floatingPointParameterRegisters().get(parameterIndex), targetABI.scratchRegister());
+        asm.mov(TARGET_ABI.scratchRegister(), SpecialBuiltin.doubleToLong(argument));
+        asm.movdq(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
     }
 
@@ -123,7 +124,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 codeBuffer.emit((byte) 0x48); // rex prefix (without partial register encoding since we only use a couple of template parameters)
                 codeBuffer.emit((byte) 0x8B); // opcode for rpi_mov(AMD64GeneralRegister64, offset32)
 
-                final int register = targetABI.integerIncomingParameterRegisters().get(parameterIndex).ordinal();
+                final int register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex).ordinal();
                 codeBuffer.emit((byte) (5 | (register << 3))); // mod/rm byte encoding address mode and destination register
 
                 final int instructionSize = 7;
@@ -416,7 +417,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     @Override
     protected void emitReturn() {
         asm.reset();
-        asm.addq(targetABI.framePointer(), framePointerAdjustment());
+        asm.addq(TARGET_ABI.framePointer(), framePointerAdjustment());
         asm.leave();
         // when returning, retract from the caller stack the space saved for parameters.
         final short stackAmountInBytes = (short) jitStackFrameLayout.sizeOfParameters();
@@ -449,9 +450,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
             // method entry point: setup a regular frame
             asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
-            asm.subq(targetABI.framePointer(), framePointerAdjustment());
+            asm.subq(TARGET_ABI.framePointer(), framePointerAdjustment());
             if (Trap.STACK_BANGING) {
-                asm.mov(targetABI.scratchRegister(), -Trap.stackGuardSize, targetABI.stackPointer().indirect());
+                asm.mov(TARGET_ABI.scratchRegister(), -Trap.stackGuardSize, TARGET_ABI.stackPointer().indirect());
             }
             codeBuffer.emitCodeFrom(asm);
 
@@ -475,7 +476,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
+        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;
@@ -562,9 +563,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         final byte offsetToTargetDisp = 4;
 
         // Load top of stack into temporary
-        asm.mov(valueRegister, 0, targetABI.stackPointer().indirect());
+        asm.mov(valueRegister, 0, TARGET_ABI.stackPointer().indirect());
         // Pop top of stack
-        asm.addq(targetABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        asm.addq(TARGET_ABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
         asm.rip_lea(tableRegister, valueTable);
         asm.bindLabel(initLastMatchIndex);   // marker for template customization.
         asm.mov(indexRegister, 1);
@@ -606,9 +607,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             directives.inlineByte(zero);
         }
         // Load top of stack into temporary
-        asm.mov(indexRegister, 0, targetABI.stackPointer().indirect());
+        asm.mov(indexRegister, 0, TARGET_ABI.stackPointer().indirect());
         // Pop top of stack
-        asm.addq(targetABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        asm.addq(TARGET_ABI.stackPointer(), JitStackFrameLayout.JIT_SLOT_SIZE);
         // subtract the low value from the switch index
         asm.bindLabel(indexAdjust);
         asm.sub_EAX(0);

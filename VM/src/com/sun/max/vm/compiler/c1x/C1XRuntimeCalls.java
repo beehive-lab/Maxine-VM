@@ -229,10 +229,9 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
-
-        for (int i = 0; i < lengths.length; i++) {
-            if (lengths[i] < 0) {
-                Throw.negativeArraySizeException(lengths[i]);
+        for (int length : lengths) {
+            if (length < 0) {
+                Throw.negativeArraySizeException(length);
             }
         }
         return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
@@ -447,8 +446,8 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {
-        final VirtualMethodActor dynamicMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-        return dynamicMethodActor.vTableIndex();
+        final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+        return virtualMethodActor.vTableIndex();
     }
 
 

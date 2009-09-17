@@ -248,15 +248,21 @@ public class SPARCJitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, frameState)) {
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, jitTargetMethod, context, frameState)) {
                     return false;
                 }
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final StackUnwindingContext unwindingContext = UnsafeLoophole.cast(context);
+                final StackUnwindingContext unwindingContext = UnsafeCast.asStackUnwindingContext(context);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, unwindingContext.throwable.getClass());
                 if (!catchAddress.isZero()) {
+                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                        Log.print("StackFrameWalk: Handler position for exception at position ");
+                        Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                        Log.print(" is ");
+                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+                    }
                     // The Java operand stack of the method that handles the exception is always cleared.
                     // A null object is then pushed to ensure the depth of the stack is as expected upon
                     // entry to an exception handler. However, the handler must have a prologue that loads
@@ -313,7 +319,7 @@ public class SPARCJitCompiler extends JitCompiler {
         return true;
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_STATE frameState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod, Object context, FRAME_STATE frameState) {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
@@ -326,7 +332,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 return true;
             }
         }
-        final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, (SPARCJitTargetMethod) targetMethod);
+        final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, targetMethod);
         final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(stackFrameWalker.stackPointer());
         return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), localVariablesBase,
                                                      operandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE);
@@ -558,6 +564,8 @@ public class SPARCJitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
         if (phase == MaxineVM.Phase.STARTING) {
             final TargetABI jitABI = vmConfiguration().targetABIsScheme().jitABI();
             jitFramePointerRegister = (GPR) jitABI.framePointer();

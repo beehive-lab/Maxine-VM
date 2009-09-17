@@ -24,6 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
@@ -76,12 +77,13 @@ public abstract class X86Assembler extends AbstractAssembler {
         private static final int REXWRXB = 0x4F;
     }
 
-    public X86Assembler(CiTarget target) {
-        super(target);
+    public X86Assembler(CiTarget target, int frameSize) {
+        super(target, frameSize);
     }
 
     private static int encode(CiRegister r) {
         assert r.encoding < 16;
+        assert r.encoding >= 0;
         return r.encoding & 0x7;
     }
 
@@ -142,13 +144,23 @@ public abstract class X86Assembler extends AbstractAssembler {
     void emitOperandHelper(CiRegister reg, Address addr) {
 
         CiRegister base = addr.base;
+
+
         CiRegister index = addr.index;
         Address.ScaleFactor scale = addr.scale;
         int disp = addr.disp;
 
+        if (base == CiRegister.Stack) {
+            base = this.target.stackRegister;
+        } else if (base == CiRegister.CallerStack) {
+            base = this.target.stackRegister;
+            disp += targetMethod.frameSize() + target.arch.wordSize;
+        }
+
+
         // Encode the registers as needed in the fields they are used in
 
-        assert reg != CiRegister.noreg;
+        assert reg != CiRegister.None;
 
         int regenc = encode(reg) << 3;
         int indexenc = index.isValid() ? encode(index) << 3 : 0;
@@ -161,25 +173,25 @@ public abstract class X86Assembler extends AbstractAssembler {
                 if (disp == 0 && base != X86.rbp && (!target.arch.is64bit() || base != X86.r13)) {
                     // [base + indexscale]
                     // [00 reg 100][ss index base]
-                    assert index != X86.rsp : "illegal addressing mode";
+                    assert index != target.stackRegister : "illegal addressing mode";
                     emitByte(0x04 | regenc);
                     emitByte(scale.value << 6 | indexenc | baseenc);
                 } else if (Util.is8bit(disp)) {
                     // [base + indexscale + imm8]
                     // [01 reg 100][ss index base] imm8
-                    assert index != X86.rsp : "illegal addressing mode";
+                    assert index != target.stackRegister : "illegal addressing mode";
                     emitByte(0x44 | regenc);
                     emitByte(scale.value << 6 | indexenc | baseenc);
                     emitByte(disp & 0xFF);
                 } else {
                     // [base + indexscale + disp32]
                     // [10 reg 100][ss index base] disp32
-                    assert index != X86.rsp : "illegal addressing mode";
+                    assert index != target.stackRegister : "illegal addressing mode";
                     emitByte(0x84 | regenc);
                     emitByte(scale.value << 6 | indexenc | baseenc);
                     emitInt(disp);
                 }
-            } else if (base == X86.rsp || (target.arch.is64bit() && base == X86.r12)) {
+            } else if (base == target.stackRegister || (target.arch.is64bit() && base == X86.r12)) {
                 // [rsp + disp]
                 if (disp == 0) {
                     // [rsp]
@@ -201,7 +213,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 }
             } else {
                 // [base + disp]
-                assert base != X86.rsp && (!target.arch.is64bit() || base != X86.r12) : "illegal addressing mode";
+                assert base != target.stackRegister && (!target.arch.is64bit() || base != X86.r12) : "illegal addressing mode";
                 if (disp == 0 && base != X86.rbp && (!target.arch.is64bit() || base != X86.r13)) {
                     // [base]
                     // [00 reg base]
@@ -223,7 +235,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 assert scale != Address.ScaleFactor.noScale : "inconsistent Address";
                 // [indexscale + disp]
                 // [00 reg 100][ss index 101] disp32
-                assert index != X86.rsp : "illegal addressing mode";
+                assert index != target.stackRegister : "illegal addressing mode";
                 emitByte(0x04 | regenc);
                 emitByte(scale.value << 6 | indexenc | 0x05);
                 emitInt(disp);
@@ -458,7 +470,9 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void call(CiRegister dst) {
+    public final void call(CiRegister dst, RiMethod method, boolean[] stackReferenceMap) {
+
+        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         // this may be true but dbx disassembles it as if it
         // were 32bits...
         // int encode = prefixAndEncode(dst.encoding());
@@ -469,23 +483,31 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xD0 | encode);
     }
 
-    public final void call(RiMethod method) {
-        recordDirectCall(codeBuffer.position(), method, new boolean[0]);
+    public final void call(RiMethod method, boolean[] stackReferenceMap) {
+        recordDirectCall(codeBuffer.position(), method, stackReferenceMap);
         emitByte(0xE8);
         emitInt(0);
 
     }
-    public final void call(Address adr) {
+    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
 
+        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         prefix(adr);
         emitByte(0xFF);
         emitOperand(X86.rdx, adr);
 
     }
 
-    protected final void emitGlobalStubCall(Object globalStubID) {
+    protected final void emitGlobalStubCall(Object globalStubID, CodeEmitInfo info) {
         assert !(globalStubID instanceof GlobalStub);
-        recordGlobalStubCall(codeBuffer.position(), globalStubID, new boolean[0]);
+
+        int position = codeBuffer.position();
+        if (info == null) {
+            recordGlobalStubCall(position, globalStubID, null, null);
+        } else {
+            recordGlobalStubCall(position, globalStubID, info.oopMap.registerMap(), info.oopMap.stackMap());
+        }
+
         emitByte(0xE8);
         emitInt(0);
     }
@@ -502,7 +524,8 @@ public abstract class X86Assembler extends AbstractAssembler {
      *            the destination of the call
      */
     public void callRuntime(CiRuntimeCall runtimeCall, RiMethod method) {
-        recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[0]);
+        // TODO: Fill in reference map correctly!
+        recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[targetMethod.frameSize() / target.arch.wordSize]);
         emitByte(0xE8);
         emitInt(0);
     }
@@ -3405,8 +3428,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     @Override
     public final void patchJumpTarget(int branch, int branchTarget) {
-        assert target.arch.isX86();
-
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
                         ||

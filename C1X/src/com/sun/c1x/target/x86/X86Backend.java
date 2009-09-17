@@ -22,7 +22,6 @@ package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
@@ -37,8 +36,8 @@ import com.sun.c1x.target.*;
  */
 public class X86Backend extends Backend {
 
-    public X86Backend(CiTarget target) {
-        super(target);
+    public X86Backend(C1XCompiler compiler) {
+        super(compiler);
     }
     /**
      * Creates a new LIRGenerator for x86.
@@ -61,16 +60,16 @@ public class X86Backend extends Backend {
     }
 
     @Override
-    public FrameMap newFrameMap(C1XCompilation compilation, RiMethod method, int numberOfLocks, int maxStack) {
-        return new X86FrameMap(compilation, method, numberOfLocks, maxStack);
+    public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
+        return new FrameMap(compiler, method, numberOfLocks);
     }
     @Override
-    public AbstractAssembler newAssembler(C1XCompiler compiler) {
-        return new X86MacroAssembler(compiler, compiler.target);
+    public AbstractAssembler newAssembler(int frameSize) {
+        return new X86MacroAssembler(compiler, compiler.target, frameSize);
     }
 
     @Override
-    public GlobalStubEmitter newGlobalStubEmitter(C1XCompiler compiler) {
+    public GlobalStubEmitter newGlobalStubEmitter() {
         return new X86GlobalStubEmitter(compiler);
     }
 }

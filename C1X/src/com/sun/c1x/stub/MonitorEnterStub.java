@@ -41,6 +41,7 @@ public class MonitorEnterStub extends CodeStub {
      */
     public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
         super(info);
+        assert !objReg.isIllegal() : "cannot be illegal";
         setOperands(0, 0, objReg, lockReg);
     }
 

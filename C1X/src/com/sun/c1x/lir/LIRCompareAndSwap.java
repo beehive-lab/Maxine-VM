@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.*;
-
 
 /**
  * The <code>LIRCompareAndSwap</code> class definition.
@@ -41,7 +39,7 @@ public class LIRCompareAndSwap extends LIRInstruction {
      * @param tmp2
      */
     public LIRCompareAndSwap(LIROpcode opcode, LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand tmp1, LIROperand tmp2) {
-        super(opcode, LIROperandFactory.IllegalOperand, null, false, null, 0, 2, addr, cmpValue, newValue);
+        super(opcode, LIROperandFactory.IllegalLocation, null, false, null, 0, 2, addr, cmpValue, newValue);
     }
 
     /**
@@ -79,19 +77,5 @@ public class LIRCompareAndSwap extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitCompareAndSwap(this);
-    }
-
-    /**
-     * Prints this instruction.
-     *
-     * @param out the output stream
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        address().print(out);
-        out.print(" ");
-        cmpValue().print(out);
-        out.print(" ");
-        newValue().print(out);
     }
 }

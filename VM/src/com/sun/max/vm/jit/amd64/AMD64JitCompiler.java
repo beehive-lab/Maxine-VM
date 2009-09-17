@@ -95,6 +95,8 @@ public class AMD64JitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
+        super.initialize(phase);
+
         if (MaxineVM.isPrototyping()) {
             unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
@@ -353,7 +355,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, framePointerState)) {
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, (AMD64JitTargetMethod) targetMethod, context, framePointerState)) {
                     return false;
                 }
                 break;
@@ -390,7 +392,7 @@ public class AMD64JitCompiler extends JitCompiler {
         return stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase, flags);
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, AMD64JitTargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
@@ -409,10 +411,16 @@ public class AMD64JitCompiler extends JitCompiler {
 
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Address throwAddress = stackFrameWalker.instructionPointer();
-        final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+        final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
 
         if (!catchAddress.isZero()) {
+            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                Log.print("StackFrameWalk: Handler position for exception at position ");
+                Log.print(throwAddress.minus(targetMethod.codeStart()).toInt());
+                Log.print(" is ");
+                Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+            }
             final Throwable throwable = stackUnwindingContext.throwable;
             final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
             // The Java operand stack of the method that handles the exception is always cleared.

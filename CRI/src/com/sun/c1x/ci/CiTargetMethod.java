@@ -20,9 +20,11 @@
  */
 package com.sun.c1x.ci;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.sun.c1x.ri.*;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiType;
 
 /**
  * This interface represents the result which encapsulates compiler output, including
@@ -34,13 +36,28 @@ import com.sun.c1x.ri.*;
  */
 public class CiTargetMethod {
 
-    public static class SafepointRefMap {
+    /**
+     * Represents a code position with associated additional information.
+     * 
+     */
+    public abstract static class Site {
         public final int codePos;
+
+        public Site(int codePos) {
+            this.codePos = codePos;
+        }
+    }
+
+    /**
+     * Represents a safepoint and stores the register and stack reference map.
+     * 
+     */
+    public static final class Safepoint extends Site {
         public final boolean[] registerMap;
         public final boolean[] stackMap;
 
-        SafepointRefMap(int codePos, boolean[] registerMap, boolean[] stackMap) {
-            this.codePos = codePos;
+        private Safepoint(int codePos, boolean[] registerMap, boolean[] stackMap) {
+            super(codePos);
             this.registerMap = registerMap;
             this.stackMap = stackMap;
         }
@@ -56,33 +73,27 @@ public class CiTargetMethod {
         }
     }
 
-    private static String mapToString(String name, boolean[] map) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(' ');
-        sb.append(name);
-        sb.append('[');
-        for (boolean b : map) {
-            sb.append(b ? '1' : '0');
-        }
-        sb.append(']');
-        return sb.toString();
-    }
+    /**
+     * Represents a call in the code and includes a stack reference map and optionally a register reference map. The
+     * call can either be a runtime call, a global stub call or a call to a normal method.
+     * 
+     */
+    public static final class Call extends Site {
 
-    public static class CallSite {
-        public final int codePos;
         public final CiRuntimeCall runtimeCall;
         public final RiMethod method;
         public final Object globalStubID;
-        public final boolean direct;
-        public final boolean[] stackMap;
 
-        CallSite(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean direct, boolean[] stackMap) {
-            this.codePos = codePos;
+        public final boolean[] stackMap;
+        public final boolean[] registerMap;
+
+        private Call(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean[] registerMap, boolean[] stackMap) {
+            super(codePos);
             this.runtimeCall = runtimeCall;
             this.method = method;
-            this.direct = direct;
             this.stackMap = stackMap;
             this.globalStubID = globalStubID;
+            this.registerMap = registerMap;
         }
 
         @Override
@@ -104,54 +115,47 @@ public class CiTargetMethod {
             sb.append(" at pos ");
             sb.append(codePos);
 
-            if (direct) {
-                sb.append(" (direct)");
-            } else {
-                sb.append(" (indirect)");
+            if (stackMap != null) {
+                sb.append(mapToString("stackMap", stackMap));
             }
 
-            sb.append(mapToString("stackMap", stackMap));
+            if (registerMap != null) {
+                sb.append(mapToString("registerMap", registerMap));
+            }
+
             return sb.toString();
         }
     }
 
-    public static class DataPatchSite {
-        public final int codePos;
-        public final int dataPos;
+    /**
+     * Represents a reference to data from the code. The associated data can be any constant.
+     * 
+     */
+    public static final class DataPatch extends Site {
+        public final CiConstant data;
 
-        DataPatchSite(int codePos, int dataPos) {
-            this.codePos = codePos;
-            this.dataPos = dataPos;
+        private DataPatch(int codePos, CiConstant data) {
+            super(codePos);
+            this.data = data;
         }
 
         @Override
         public String toString() {
-            return String.format("Data patch site at pos %d referring to data pos %d", codePos, dataPos);
+            return String.format("Data patch site at pos %d referring to data %s", codePos, data);
         }
     }
 
-    public static class RefPatchSite {
-        public final int codePos;
-        public final Object referrent;
-
-        RefPatchSite(int codePos, Object referrent) {
-            this.codePos = codePos;
-            this.referrent = referrent;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("Reference patch site at pos %d to object %s", codePos, referrent);
-        }
-    }
-
-    public static class ExceptionHandler {
-        public final int codePos;
+    /**
+     * Represents exception handler information for a specific code position. It includes the catch code position as
+     * well as the caught exception type.
+     * 
+     */
+    public static final class ExceptionHandler extends Site {
         public final int handlerPos;
         public final RiType exceptionType;
 
-        ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
-            this.codePos = codePos;
+        private ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
+            super(codePos);
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
         }
@@ -162,24 +166,44 @@ public class CiTargetMethod {
         }
     }
 
-    public CiBailout bailout;
+    /**
+     * List of safepoints in the code.
+     */
+    public final List<Safepoint> safepoints = new ArrayList<Safepoint>();
 
-    public final List<SafepointRefMap> safepointRefMaps = new ArrayList<SafepointRefMap>();
-    public final List<CallSite> callSites = new ArrayList<CallSite>();
-    public final List<DataPatchSite> dataPatchSites = new ArrayList<DataPatchSite>();
-    public final List<RefPatchSite> refPatchSites = new ArrayList<RefPatchSite>();
+    /**
+     * List of direct calls in the code.
+     */
+    public final List<Call> directCalls = new ArrayList<Call>();
+
+    /**
+     * List of indirect calls in the code.
+     */
+    public final List<Call> indirectCalls = new ArrayList<Call>();
+
+    /**
+     * List of data references in the code.
+     */
+    public final List<DataPatch> dataReferences = new ArrayList<DataPatch>();
+
+    /**
+     * List of exception handlers in the code.
+     */
     public final List<ExceptionHandler> exceptionHandlers = new ArrayList<ExceptionHandler>();
 
-    public int registerSize;
-    public int frameSize;
-    public int registerRestoreEpilogueOffset;
-    public byte[] targetCode;
-    public int targetCodeSize;
-    public byte[] data;
-    public int dataSize;
+    private final int referenceRegisterCount;
+    private int frameSize = -1;
+    private int registerRestoreEpilogueOffset = -1;
+    private byte[] targetCode;
 
-    int directCalls;
-    int indirectCalls;
+    /**
+     * Constructs a new target method.
+     * 
+     * @param referenceRegisterCount the number of registers in the register reference maps
+     */
+    public CiTargetMethod(int referenceRegisterCount) {
+        this.referenceRegisterCount = referenceRegisterCount;
+    }
 
     /**
      * Sets the frame size in bytes. Does not include the return address pushed onto the
@@ -197,12 +221,10 @@ public class CiTargetMethod {
      * @param code the machine code generated
      * @param size the size of the code within the array
      */
-    public void setTargetCode(byte[] code, int size) {
+    public void setTargetCode(byte[] code) {
         assert code != null;
         targetCode = code;
-        targetCodeSize = size;
     }
-
 
     /**
      * Records a reference map at a call location in the code array.
@@ -212,62 +234,47 @@ public class CiTargetMethod {
      * @param stackMap     the bitmap that indicates which stack locations
      */
     public void recordRuntimeCall(int codePosition, CiRuntimeCall runtimeCall, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, runtimeCall, null, null, true, stackMap));
-        directCalls++;
-        //assert stackMap.length == frameSize;
-    }
-
-    public void recordGlobalStubCall(int codePosition, Object globalStubCall, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, null, globalStubCall, true, stackMap));
-        directCalls++;
-        //assert stackMap.length == frameSize;
+        directCalls.add(new Call(codePosition, runtimeCall, null, null, null, stackMap));
     }
 
     /**
-     * Records a reference to the data section in the code section (e.g. to
-     * load an integer or floating point constant).
-     *
+     * Records a global stub call in the code array.
+     * 
+     * @param codePosition the position of the start of the call instruction in the code array
+     * @param globalStubCallID the object identifying the global stub
+     * @param registerMap the register reference map for the call site (may be null)
+     * @param stackMap the stack reference map for the call site
+     */
+    public void recordGlobalStubCall(int codePosition, Object globalStubCallID, boolean[] registerMap, boolean[] stackMap) {
+        directCalls.add(new Call(codePosition, null, null, globalStubCallID, registerMap, stackMap));
+    }
+
+    /**
+     * Records a reference to the data section in the code section (e.g. to load an integer or floating point constant).
+     * 
      * @param codePosition the position in the code where the data reference occurs
-     * @param dataPosition the position in the data which is referred to
+     * @param data the data that is referenced
      */
-    public void recordDataReferenceInCode(int codePosition, int dataPosition) {
-        assert codePosition >= 0 && dataPosition >= 0;
-        dataPatchSites.add(new DataPatchSite(codePosition, dataPosition));
-    }
-
-    /**
-     * Records an object reference in the code section and the object that is
-     * referred to.
-     *
-     * @param codePosition the position in the code section
-     * @param ref          the object that is referenced
-     */
-    public void recordObjectReferenceInCode(int codePosition, Object ref) {
-        refPatchSites.add(new RefPatchSite(codePosition, ref));
+    public void recordDataReference(int codePosition, CiConstant data) {
+        assert codePosition >= 0 && data != null;
+        dataReferences.add(new DataPatch(codePosition, data));
     }
 
     /**
      * Records a direct method call to the specified method in the code.
+     * 
      * @param codePosition the position in the code array
      * @param method the method being called
      * @param stackMap the bitmap that indicates which stack locations
+     * @param direct true if this is a direct call, false otherwise
      */
-    public void recordDirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, true, stackMap));
-        directCalls++;
-        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
-    }
-
-    /**
-     * Records an indirect method call to the specified method in the code.
-     * @param codePosition the position in the code array
-     * @param method the method being called
-     * @param stackMap the bitmap that indicates which stack locations
-     */
-    public void recordIndirectCall(int codePosition, RiMethod method, boolean[] stackMap) {
-        callSites.add(new CallSite(codePosition, null, method, null, false, stackMap));
-        indirectCalls++;
-        //assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+    public void recordCall(int codePosition, RiMethod method, boolean[] stackMap, boolean direct) {
+        final Call callSite = new Call(codePosition, null, method, null, null, stackMap);
+        if (direct) {
+            directCalls.add(callSite);
+        } else {
+            indirectCalls.add(callSite);
+        }
     }
 
     /**
@@ -282,24 +289,6 @@ public class CiTargetMethod {
     }
 
     /**
-     * Sets the data that has been generated by the compiler, which may
-     * include binary representations of floating point and integer constants,
-     * as well as object references.
-     *
-     * @param data the data generated
-     * @param size the size of the data within the array
-     */
-    public void setData(byte[] data, int size) {
-        if (size == 0) {
-            this.data = null;
-            this.dataSize = 0;
-        } else {
-            this.data = data;
-            this.dataSize = size;
-        }
-    }
-
-    /**
      * Records the reference maps at a safepoint location in the code array.
      *
      * @param codePosition the position in the code array
@@ -308,24 +297,64 @@ public class CiTargetMethod {
      *                     are references
      */
     public void recordSafepoint(int codePosition, boolean[] registerMap, boolean[] stackMap) {
-        safepointRefMaps.add(new SafepointRefMap(codePosition, registerMap, stackMap));
-        if (registerSize == 0) {
-            registerSize = registerMap.length;
-        }
-        assert registerSize == registerMap.length : "compiler produced register maps of different sizes";
-        assert stackMap.length == frameSize : "compiler produced stack map that doesn't cover whole frame";
+        safepoints.add(new Safepoint(codePosition, registerMap, stackMap));
+        assert referenceRegisterCount == registerMap.length : "compiler produced register maps of different sizes";
     }
 
-    public int directCalls() {
-        return directCalls;
-    }
-
-    public int indirectCalls() {
-        return indirectCalls;
-    }
-
+    /**
+     * Allows a method to specify the offset of the epilogue that restores the callee saved registers. Must be called
+     * iff the method is a callee saved method and stores callee registers on the stack.
+     * 
+     * @param registerRestoreEpilogueOffset
+     */
     public void setRegisterRestoreEpilogueOffset(int registerRestoreEpilogueOffset) {
         this.registerRestoreEpilogueOffset = registerRestoreEpilogueOffset;
+    }
+
+    /**
+     * The frame size of the method in bytes.
+     * 
+     * @return the frame size
+     */
+    public int frameSize() {
+        assert frameSize != -1 : "frame size not yet initialized!";
+        return frameSize;
+    }
+
+    /**
+     * The size of the register reference map.
+     * 
+     * @return the number of registers that can hold references
+     */
+    public int referenceRegisterCount() {
+        return referenceRegisterCount;
+    }
+
+    /**
+     * @return the code offset of the start of the epilogue that restores all callee saved registers, or -1 if this is
+     *         not a callee saved method
+     */
+    public int registerRestoreEpilogueOffset() {
+        return registerRestoreEpilogueOffset;
+    }
+
+    /**
+     * @return the machine code generated for this method
+     */
+    public byte[] targetCode() {
+        return targetCode;
+    }
+
+    private static String mapToString(String name, boolean[] map) {
+        StringBuffer sb = new StringBuffer();
+        sb.append(' ');
+        sb.append(name);
+        sb.append('[');
+        for (boolean b : map) {
+            sb.append(b ? '1' : '0');
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
 }

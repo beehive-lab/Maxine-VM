@@ -27,13 +27,11 @@ import java.util.*;
 import sun.reflect.annotation.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * Method substitutions for {@link java.lang.reflect.Constructor java.lang.reflect.Constructor}.
+ * Method substitutions for {@link Constructor}.
  *
- * @see java.lang.reflect.Constructor
  * @author Mick Jordan
  */
 @METHOD_SUBSTITUTIONS(Constructor.class)
@@ -43,13 +41,10 @@ final class JDK_java_lang_reflect_Constructor {
     }
 
     /**
-     * Cast this object to the {@code java.lang.Constructor} type.
-     * @return this object casted as a {@code java.lang.Constructor}
+     * An unsafe cast from this to {@link Constructor}.
      */
-    @INLINE
-    private Constructor thisConstructor() {
-        return UnsafeLoophole.cast(this);
-    }
+    @UNSAFE_CAST
+    private native Constructor thisConstructor();
 
     /**
      * Gets the method actor corresponding to this constructor.

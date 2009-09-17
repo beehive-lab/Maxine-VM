@@ -384,7 +384,6 @@ public class VmThread {
             FatalError.unexpected("Could not start main native thread.");
         } else {
             nativeJoin(nativeThread);
-            VmThreadMap.ACTIVE.joinAllNonDaemons();
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
         MaxineVM.host().setPhase(MaxineVM.Phase.PRIMORDIAL);
@@ -416,7 +415,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return mainVMThread;
         }
-        return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
     }
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
@@ -505,8 +504,9 @@ public class VmThread {
             }
             vmThread.terminationCause = throwable;
         } finally {
-            // If this is the main thread terminating, initiate shutdown hooks
+            // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
             if (vmThread == mainVMThread) {
+                VmThreadMap.ACTIVE.joinAllNonDaemons();
                 invokeShutdownHooks();
             }
             vmThread.beTerminated();
@@ -687,7 +687,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return mainVMThread;
         }
-        return UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
     public JniHandle createLocalHandle(Object object) {

@@ -71,6 +71,7 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  * @author Michael Bebenita
+ * @author Paul Caprioli
  */
 public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
@@ -83,15 +84,13 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     protected boolean emitBackwardEdgeSafepointAtTarget;
 
-    public abstract TargetABI targetABI();
-
     private final TemplateTable templateTable;
 
     protected final JitStackFrameLayout jitStackFrameLayout;
 
     private final int bytecodeLength;
 
-    protected final CodeBuffer codeBuffer;
+    public final CodeBuffer codeBuffer;
 
     protected final boolean isTraceInstrumented;
 
@@ -105,7 +104,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     /**
      * The actor of the method being compiled.
      */
-    private final ClassMethodActor classMethodActor;
+    public final ClassMethodActor classMethodActor;
 
     /**
      * Constant pool of the compiled method.
@@ -143,6 +142,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
 
+
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
         if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
             FatalError.unexpected("Cannot JIT compile method that uses Word types: " + classMethodActor.format("%H.%n(%p)"));
@@ -176,6 +176,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         }
 
     }
+
+    public abstract TargetABI targetABI();
 
     private void beginBytecode(Bytecode info) {
         final int opcodePosition = currentOpcodePosition();
@@ -511,7 +513,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             catchBlockPosns[index++] = bytecodeToTargetCodePosition(einfo.handlerPosition());
             nextRange = einfo.endPosition();
         }
-        if (nextRange < classMethodActor().codeAttribute().code().length) {
+        if (nextRange < classMethodActor.codeAttribute().code().length) {
             catchRangePosns[index] = bytecodeToTargetCodePosition(nextRange);
             catchBlockPosns[index++] = 0;
         }
@@ -791,10 +793,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         emitAndRecordStops(template);
     }
 
-    public CodeBuffer codeBuffer() {
-        return codeBuffer;
-    }
-
     /**
      * Gets the number of slots to be reserved as spill space for the templates from which this translated method is
      * composed. Note that this value may be conservative. That is, it may be greater than number of slots actually used
@@ -816,10 +814,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     protected abstract int registerReferenceMapSize();
-
-    public ClassMethodActor classMethodActor() {
-        return classMethodActor;
-    }
 
     // Template generation
     // --------------------------
@@ -1565,11 +1559,11 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         try {
             if (isResolved(classMethodRef)) {
                 try {
-                    final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                    if (shouldProfileMethodCall(dynamicMethodActor)) {
+                    final VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
+                    if (shouldProfileMethodCall(virtualMethodActor)) {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED_INSTRUMENTED);
                         beginBytecode(INVOKEVIRTUAL);
-                        final int vtableIndex = dynamicMethodActor.vTableIndex();
+                        final int vtableIndex = virtualMethodActor.vTableIndex();
                         assignIntTemplateArgument(0, vtableIndex);
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         assignReferenceLiteralTemplateArgument(2, methodProfileBuilder.methodProfileObject());
@@ -1578,7 +1572,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     } else {
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED);
                         beginBytecode(INVOKEVIRTUAL);
-                        assignIntTemplateArgument(0, dynamicMethodActor.vTableIndex());
+                        assignIntTemplateArgument(0, virtualMethodActor.vTableIndex());
                         assignIntTemplateArgument(1, receiverStackIndex(signatureDescriptor));
                         emitAndRecordStops(template);
                     }
@@ -1662,10 +1656,10 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
         try {
             if (isResolved(classMethodRef)) {
-                final VirtualMethodActor dynamicMethodActor = classMethodRef.resolveVirtual(constantPool, index);
+                final VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                 final CompiledBytecodeTemplate template = getTemplate(INVOKESPECIAL, selectorKind, TemplateChooser.Selector.RESOLVED);
                 beginBytecode(INVOKESPECIAL);
-                recordDirectBytecodeCall(template, dynamicMethodActor);
+                recordDirectBytecodeCall(template, virtualMethodActor);
                 codeBuffer.emit(template);
                 return;
             }

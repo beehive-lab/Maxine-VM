@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.tir.pipeline;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.dir.*;
@@ -45,7 +44,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         }
 
         private int serial = 0;
-        private VariableSequence<DirVariable> [] dirtyStacks = UnsafeLoophole.cast(Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
+        private final VariableSequence<DirVariable>[] dirtyStacks;
         private VariableSequence<DirVariable> dirtyStack(Kind kind) {
             return dirtyStacks[kind.asEnum.ordinal()];
         }
@@ -53,6 +52,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         private VariableMapping<TirInstruction, DirVariable> bindings = new IdentityHashMapping<TirInstruction, DirVariable>();
 
         public VariableAllocator() {
+            Class<VariableSequence<DirVariable>[]> type = null;
+            dirtyStacks = StaticLoophole.cast(type, Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
             for (Kind kind : new Kind[] {Kind.INT, Kind.FLOAT, Kind.LONG, Kind.DOUBLE, Kind.REFERENCE, Kind.VOID}) {
                 dirtyStacks[kind.asEnum.ordinal()] = new ArrayListSequence<DirVariable>();
             }

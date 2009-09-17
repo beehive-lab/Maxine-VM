@@ -50,6 +50,8 @@ import com.sun.max.vm.value.*;
  * To support this, array length is always encoded in the length word
  * by shifting 1 to the left and then adding 1.
  *
+ * See the package level documentation for a more detailed description.
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -107,7 +109,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     @ACCESSOR(Pointer.class)
     @INLINE(override = true)
     public Pointer originToCell(Pointer origin) {
-        return isArray(origin) ? origin.plus(arrayLengthOffset) : origin.plus(hubOffset);
+        return !isTuple(origin) ? origin.plus(arrayLengthOffset) : origin.plus(hubOffset);
     }
 
     public Offset getOffsetFromOrigin(HeaderField headerField) {
@@ -121,7 +123,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     private Hub getHub(Accessor accessor) {
-        return UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        return UnsafeCast.asHub(readHubReference(accessor).toJava());
     }
 
     public Layout.Category category(Accessor accessor) {

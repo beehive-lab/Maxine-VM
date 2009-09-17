@@ -30,7 +30,8 @@ import com.sun.max.unsafe.*;
  */
 public final class MutableTeleGrip extends RemoteTeleGrip {
 
-    private final int index;
+    private int index;
+    private Address lastValidPointer = Address.zero();
 
     int index() {
         if (forwardedTeleGrip != null) {
@@ -43,8 +44,32 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
     }
 
     @Override
+    public State getState() {
+        if (forwardedTeleGrip != null) {
+            MutableTeleGrip forwardedTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
+            if (forwardedTeleGrip.index() == -1) {
+                return State.DEAD;
+            }
+            return State.OBSOLETE;
+        }
+        if (index == -1) {
+            return State.DEAD;
+        }
+        return State.LIVE;
+    }
+
+    @Override
     public Address raw() {
-        return teleGripScheme().getRawGrip(this);
+        if (index == -1) {
+            return lastValidPointer;
+        }
+        Address tmp = teleGripScheme().getRawGrip(this);
+        if (!tmp.equals(Address.zero())) {
+            lastValidPointer = tmp;
+            return tmp;
+        }
+        index = -1;
+        return lastValidPointer;
     }
 
     MutableTeleGrip(TeleGripScheme teleGripScheme, int index) {

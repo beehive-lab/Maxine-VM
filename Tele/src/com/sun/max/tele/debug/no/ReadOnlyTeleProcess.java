@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug.no;
 
 import java.io.*;
+import java.math.*;
 import java.nio.*;
 import java.nio.channels.FileChannel.*;
 
@@ -41,6 +42,11 @@ import com.sun.max.vm.prototype.BootImage.*;
  */
 public final class ReadOnlyTeleProcess extends TeleProcess {
 
+    /**
+     * Name of system property that specifies the address to which the read-only heap should be relocated.
+     */
+    public static final String HEAP_PROPERTY = "max.heap";
+
     private final DataAccess dataAccess;
     private final Pointer heap;
 
@@ -51,7 +57,23 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
         super(teleVM, platform, ProcessState.NO_PROCESS);
-        heap = Pointer.zero();
+        long heap = 0L;
+        String heapValue = System.getProperty(HEAP_PROPERTY);
+        if (heapValue != null) {
+            try {
+                int radix = 10;
+                if (heapValue.startsWith("0x")) {
+                    radix = 16;
+                    heapValue = heapValue.substring(2);
+                }
+                // Use BigInteger to handle unsigned 64-bit values that are greater than Long.MAX_VALUE
+                BigInteger bi = new BigInteger(heapValue.substring(2), radix);
+                heap = bi.longValue();
+            } catch (NumberFormatException e) {
+                throw new BootImageException("Error parsing value of " + HEAP_PROPERTY + " system property: " + heapValue, e);
+            }
+        }
+        this.heap = Pointer.fromLong(heap);
         try {
             dataAccess = map(teleVM.bootImageFile(), teleVM.bootImage());
         } catch (IOException ioException) {
@@ -70,14 +92,19 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
      * @return a {@link DataAccess} object that can be used to access the mapped sections
      * @throws IOException if an IO error occurs while performing the memory mapping
      */
-    public DataAccess map(File bootImageFile, BootImage bootImage) throws IOException {
-        final RandomAccessFile randomAccessFile = new RandomAccessFile(bootImageFile, "r");
+    private DataAccess map(File bootImageFile, BootImage bootImage) throws IOException {
+        final RandomAccessFile randomAccessFile = new RandomAccessFile(bootImageFile, "rwd");
         final Header header = bootImage.header;
         int heapOffset = bootImage.heapOffset();
         int heapAndCodeSize = header.heapSize + header.codeSize;
-        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.READ_ONLY, heapOffset, heapAndCodeSize);
+        final MappedByteBuffer bootImageBuffer = randomAccessFile.getChannel().map(MapMode.PRIVATE, heapOffset, heapAndCodeSize);
         bootImageBuffer.order(bootImage.vmConfiguration.platform().processorKind.dataModel.endianness.asByteOrder());
         randomAccessFile.close();
+
+        if (!heap.isZero()) {
+            long address = (Long) WithoutAccessCheck.getInstanceField(bootImageBuffer, "address");
+            bootImage.relocate(address, heap);
+        }
         return new MappedByteBufferDataAccess(bootImageBuffer, heap, header.wordWidth());
     }
 

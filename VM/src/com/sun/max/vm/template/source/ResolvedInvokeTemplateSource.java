@@ -25,7 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -103,7 +103,7 @@ public final class ResolvedInvokeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.VOID)
     public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -111,7 +111,7 @@ public final class ResolvedInvokeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.FLOAT)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -119,7 +119,7 @@ public final class ResolvedInvokeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.LONG)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -127,7 +127,7 @@ public final class ResolvedInvokeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.DOUBLE)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -135,7 +135,7 @@ public final class ResolvedInvokeTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.WORD)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 

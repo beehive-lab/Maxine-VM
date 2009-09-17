@@ -167,7 +167,7 @@ public class IR {
      */
     public void verifyAndPrint(String phase) {
         if (C1XOptions.IRChecking) {
-            new IRChecker(this).check();
+            new IRChecker(this, phase).check();
         }
         CFGPrinter cfgPrinter = compilation.cfgPrinter();
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
@@ -196,7 +196,7 @@ public class IR {
 
         // create new successor and mark it for special block order treatment
         BlockBegin newSucc = new BlockBegin(bci, nextBlockNumber());
-        newSucc.setBlockFlag(BlockBegin.BlockFlag.CriticalEdgeSplit);
+        newSucc.setCriticalEdgeSplit(true);
 
         // This goto is not a safepoint.
         Goto e = new Goto(target, null, false);
@@ -233,6 +233,22 @@ public class IR {
             }
         }
         return newSucc;
+    }
+
+    public void replaceBlock(BlockBegin oldBlock, BlockBegin newBlock) {
+        assert !oldBlock.isExceptionEntry() : "cannot replace exception handler blocks (yet)";
+        for (BlockBegin succ : oldBlock.end().successors()) {
+            succ.removePredecessor(oldBlock);
+        }
+        for (BlockBegin pred : oldBlock.predecessors()) {
+            // substitute the new successor for this block in each predecessor
+            pred.end().substituteSuccessor(oldBlock, newBlock);
+            // and add each predecessor to the successor
+            newBlock.addPredecessor(pred);
+    }
+        // this block is now disconnected; remove all its incoming and outgoing edges
+        oldBlock.predecessors().clear();
+        oldBlock.end().successors().clear();
     }
 
     /**

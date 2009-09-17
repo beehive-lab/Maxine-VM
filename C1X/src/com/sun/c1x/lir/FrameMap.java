@@ -20,12 +20,9 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.Location.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
@@ -34,160 +31,77 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  *
  */
-public abstract class FrameMap {
+public class FrameMap {
 
-    public static final int spillSlotSizeInBytes = 4;
+    public static final int SpillSlotSize = 4;
 
-    int framesize;
-    int argcount;
-    int numMonitors;
-    int numSpills;
-    int reservedArgumentAreaSize;
-    int oopMapArgCount;
+    private final C1XCompiler compilation;
 
-    CallingConvention incomingArguments;
-    int[] argumentLocations;
-    final C1XCompilation compilation;
+    private final CallingConvention incomingArguments;
+    private final int monitorCount;
 
-    private int firstAvailableSpInFrame;
+    // Values set after register allocation is complete
+    private int frameSize;
+    private int spillSlotCount;
 
-    public FrameMap(C1XCompilation compilation, RiMethod method, int monitors, int maxStack) {
+    // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
+    private int reservedOutgoingArgumentsArea;
 
-        this.compilation = compilation;
-        framesize = -1;
-        numSpills = -1;
-        argcount = method.signatureType().argumentSlots(!method.isStatic());
+    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
+        this.compilation = compiler;
+        frameSize = -1;
+        spillSlotCount = -1;
 
         assert monitors >= 0 : "not set";
-        numMonitors = monitors;
-        reservedArgumentAreaSize = 0;
-
-        argcount = method.signatureType().argumentSlots(!method.isStatic());
-        argumentLocations = new int[argcount];
-        for (int i = 0; i < argcount; i++) {
-            argumentLocations[i] = -1;
-        }
-        incomingArguments = javaCallingConvention(signatureTypeArrayFor(method), false);
-        oopMapArgCount = incomingArguments.reservedStackSlots();
-
-        int javaIndex = 0;
-        for (int i = 0; i < incomingArguments.length(); i++) {
-            LIROperand opr = incomingArguments.at(i);
-            if (opr.isStack()) {
-                int stackIndex = opr.stackIx();
-                argumentLocations[javaIndex] = compilation.runtime.overflowArgumentsSize(opr.basicType) * (stackIndex - 1) - compilation.target.arch.stackBias;
-                incomingArguments.setArg(i, LIROperandFactory.stack(javaIndex, opr.type()));
-            }
-            javaIndex += opr.type().size;
-        }
-    }
-
-    public int getArgumentLocation(int index) {
-        return argumentLocations[index];
-    }
-
-    private static CiKind[] signatureTypeArrayFor(RiMethod method) {
-        RiSignature sig = method.signatureType();
-        CiKind[] sta = new CiKind[sig.argumentCount(!method.isStatic())];
-
-        int z = 0;
-
-        // add receiver, if any
-        if (!method.isStatic()) {
-            sta[z++] = CiKind.Object;
-        }
-
-        // add remaining arguments
-        for (int i = 0; i < sig.argumentCount(false); i++) {
-            RiType type = sig.argumentTypeAt(i);
-            CiKind t = type.basicType();
-            sta[z++] = t;
-        }
-
-        assert z == sta.length;
-
-        // done
-        return sta;
+        monitorCount = monitors;
+        incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false);
     }
 
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-
-        CiLocation[] regs = new CiLocation[signature.length];
-        int preservedStackSlots = compilation.runtime.runtimeCallingConvention(signature, regs);
-        List<LIROperand> args = new ArrayList<LIROperand>(signature.length);
-        for (int i = 0; i < signature.length; i++) {
-            args.add(mapToOpr(signature[i], regs[i], true));
-        }
-
-        return new CallingConvention(args, preservedStackSlots);
+        CiLocation[] locations = compilation.runtime.runtimeCallingConvention(signature);
+        return createCallingConvention(locations, true);
     }
 
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
-
-        CiLocation[] regs = new CiLocation[signature.length];
-        int preservedStackSlots = compilation.runtime.javaCallingConvention(signature, regs, outgoing);
-        List<LIROperand> args = new ArrayList<LIROperand>(signature.length);
-        for (int i = 0; i < signature.length; i++) {
-            args.add(mapToOpr(signature[i], regs[i], outgoing));
-        }
-
-        return new CallingConvention(args, preservedStackSlots);
+        CiLocation[] locations = compilation.runtime.javaCallingConvention(signature, outgoing);
+        return createCallingConvention(locations, outgoing);
     }
 
-    private LIROperand mapToOpr(CiKind t, CiLocation location, boolean outgoing) {
-
-        if (location.isStackOffset()) {
-            if (outgoing) {
-                int stackOffset = (location.stackOffset - 1) * compilation.target.arch.wordSize; // TODO: Fix this hack! //spillSlotSizeInBytes;
-                reservedArgumentAreaSize = Math.max(reservedArgumentAreaSize, stackOffset + compilation.target.arch.wordSize);
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, stackRegister()), stackOffset, t);
-            } else {
-                return LIROperandFactory.stack(location.stackOffset, t);
-            }
-        } else if (location.second == null) {
-            assert location.first != null;
-            return new LIRLocation(t, location.first);
-        } else {
-            assert location.first != null;
-            return new LIRLocation(t, location.first, location.second);
+    private CallingConvention createCallingConvention(CiLocation[] locations, boolean outgoing) {
+        final CallingConvention result = new CallingConvention(locations);
+        if (outgoing) {
+            reservedOutgoingArgumentsArea = Math.max(reservedOutgoingArgumentsArea, result.overflowArgumentsSize());
         }
+        return result;
     }
 
     public CallingConvention incomingArguments() {
         return this.incomingArguments;
     }
 
-    public abstract CiRegister stackRegister();
-
     public Address addressForSlot(int stackSlot) {
         return addressForSlot(stackSlot, 0);
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(stackRegister(), spOffsetForSlot(stackSlot) + offset);
+        return new Address(compilation.target.stackRegister, spOffsetForSlot(stackSlot) + offset);
     }
 
     int spOffsetForSlot(int index) {
-        if (index < argcount()) {
-            int offset = argumentLocations[index];
-            assert offset != -1 : "not a memory argument";
-            assert offset >= framesize() : "argument inside of frame";
-            return offset;
-        }
-        int offset = spOffsetForSpill(index - argcount());
-        assert offset < framesize() : "spill outside of frame";
+        int offset = spOffsetForSpill(index);
+        assert offset < frameSize() : "spill outside of frame";
         return offset;
     }
 
     int spOffsetForSpill(int index) {
-        assert index >= 0 && index < numSpills : "out of range";
-        int offset = Util.roundTo(firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) + index * spillSlotSizeInBytes;
+        assert index >= 0 && index < spillSlotCount : "out of range";
+        int offset = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SpillSlotSize;
         return offset;
     }
 
     int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundTo(firstAvailableSpInFrame + reservedArgumentAreaSize, Double.SIZE / Byte.SIZE) + numSpills * spillSlotSizeInBytes;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.basicObjectLockSize();
+        int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SpillSlotSize;
+        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
         return offset;
     }
 
@@ -202,11 +116,7 @@ public abstract class FrameMap {
     }
 
     void checkMonitorIndex(int monitorIndex) {
-        assert monitorIndex >= 0 && monitorIndex < numMonitors : "bad index";
-    }
-
-    public int reservedArgumentAreaSize() {
-        return reservedArgumentAreaSize;
+        assert monitorIndex >= 0 && monitorIndex < monitorCount : "bad index";
     }
 
     public int addressForMonitorLock(int monitorNo) {
@@ -217,94 +127,44 @@ public abstract class FrameMap {
         return Util.nonFatalUnimplemented(null);
     }
 
-    public int framesize() {
-        assert framesize != -1 : "hasn't been calculated";
-        return framesize;
+    public int frameSize() {
+        assert frameSize != -1 : "hasn't been calculated";
+        return frameSize;
     }
 
-    public int argcount() {
-        return argcount;
-    }
-
-    public boolean finalizeFrame(int nofSlots) {
-        assert nofSlots >= 0 : "must be positive";
-        assert numSpills == -1 : "can only be set once";
-        numSpills = nofSlots;
-        assert framesize == -1 : "should only be calculated once";
-
-        // TODO: Add offset of deopt orig pc
-        framesize = Util.roundTo(spOffsetForMonitorBase(0) + numMonitors * compilation.runtime.sizeofBasicObjectLock() +
-
+    public void finalizeFrame(int spillSlotCount) {
+        assert spillSlotCount >= 0 : "must be positive";
+        assert this.spillSlotCount == -1 : "can only be set once";
+        this.spillSlotCount = spillSlotCount;
+        assert frameSize == -1 : "should only be calculated once";
+        frameSize = Util.roundTo(spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock() +
         compilation.target.arch.framePadding, compilation.target.stackAlignment);
-
-        int javaIndex = 0;
-        for (int i = 0; i < incomingArguments.length(); i++) {
-            LIROperand opr = incomingArguments.at(i);
-            if (opr.isStack()) {
-                assert argumentLocations[javaIndex] != -1;
-                argumentLocations[javaIndex] += framesizeInBytes() + compilation.target.arch.wordSize;
-            }
-            javaIndex += opr.basicType.size;
-        }
-        // make sure it's expressible on the platform
-        return validateFrame();
-    }
-
-    private int framesizeInBytes() {
-        return framesize;
-    }
-
-    private boolean validateFrame() {
-        return true;
     }
 
     public CiLocation regname(LIROperand opr) {
-        return Util.nonFatalUnimplemented(null);
+        if (opr.isStack()) {
+            return new CiLocation(opr.kind, opr.stackIx() * SpillSlotSize, SpillSlotSize * opr.kind.size, false);
+        } else if (opr.isRegister()) {
+            if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
+                return new CiLocation(opr.kind, opr.asRegisterLo(), opr.asRegisterHi());
+            } else {
+                return new CiLocation(opr.kind, opr.asRegister());
+            }
+        } else {
+            throw Util.shouldNotReachHere();
+        }
     }
 
     public boolean isCallerSaveRegister(LIROperand res) {
         return Util.nonFatalUnimplemented(false);
     }
 
-    public int oopMapArgCount() {
-        return Util.nonFatalUnimplemented(0);
+    public CiLocation objectSlotRegname(int i) {
+        return new CiLocation(CiKind.Object, this.spOffsetForSpill(i), SpillSlotSize, false);
     }
 
-    public CiLocation slotRegname(int i) {
-        return Util.nonFatalUnimplemented(null);
+    public CiLocation locationForMonitor(int monitorIndex) {
+        return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SpillSlotSize, false);
     }
 
-    public CiLocation monitorObjectRegname(int i) {
-        return Util.nonFatalUnimplemented(null);
-    }
-
-    public boolean locationForMonitorObject(int monitorIndex, Location[] loc) {
-        return Util.nonFatalUnimplemented(false);
-    }
-
-    public boolean locationForMonitorLock(int monitorIndex, Location[] loc) {
-        return Util.nonFatalUnimplemented(false);
-    }
-
-    public boolean locationsForSlot(int name, LocationType locType, Location[] loc) {
-        return Util.nonFatalUnimplemented(false);
-    }
-
-    public boolean locationsForSlot(int doubleStackIx, LocationType locType, Location[] loc1, Object object) {
-        return Util.nonFatalUnimplemented(false);
-    }
-
-    public LIROperand receiverOpr() {
-        return mapToOpr(CiKind.Object, compilation.runtime.receiverLocation(), false);
-    }
-
-    public abstract boolean allocatableRegister(CiRegister r);
-
-    public LIROperand returnOpr(CiKind object) {
-        return LIROperandFactory.singleLocation(object, compilation.runtime.returnRegister(object));
-    }
-
-    public int stackRefMapSize() {
-        return ((framesize + 7) >> 3) << 3; // round up to next byte size
-    }
 }

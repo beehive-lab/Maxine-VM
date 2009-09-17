@@ -23,17 +23,20 @@ package com.sun.max.vm.compiler.ir;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.observer.*;
+import com.sun.max.vm.runtime.*;
 
-public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerScheme, IrMethod_Type extends IrMethod> {
+public abstract class IrGenerator<CompilerScheme_Type extends RuntimeCompilerScheme, IrMethod_Type extends IrMethod> {
 
     private long numberOfCompilations = 0L;
 
     private final CompilerScheme_Type compilerScheme;
-    private final String irName;
+    public final String irName;
+    public final Class<IrMethod_Type> irMethodType;
 
     @RESET
     protected transient LinkedList<IrObserver> irObservers;
@@ -41,10 +44,12 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
     protected IrGenerator(CompilerScheme_Type compilerScheme, String irName) {
         this.compilerScheme = compilerScheme;
         this.irName = irName;
-    }
-
-    public final String irName() {
-        return irName;
+        Class<Class<IrMethod_Type>> type = null;
+        try {
+            irMethodType = StaticLoophole.cast(type, getClass().getMethod("createIrMethod", ClassMethodActor.class).getReturnType());
+        } catch (Exception e) {
+            throw FatalError.unexpected("Error getting exact IrMethod type for compiler", e);
+        }
     }
 
     public CompilerScheme_Type compilerScheme() {

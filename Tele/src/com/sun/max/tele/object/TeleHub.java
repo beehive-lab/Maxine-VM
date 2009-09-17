@@ -72,6 +72,10 @@ public abstract class TeleHub extends TeleHybridObject {
         return Kind.WORD;
     }
 
+    public TypeDescriptor vTableType() {
+        return JavaTypeDescriptor.WORD;
+    }
+
     /**
      * @return index into the object (viewed as an array of words) of the beginning of the vTable.
      */
@@ -100,6 +104,10 @@ public abstract class TeleHub extends TeleHybridObject {
      */
     public Kind iTableKind() {
         return Kind.WORD;
+    }
+
+    public TypeDescriptor iTableType() {
+        return JavaTypeDescriptor.WORD;
     }
 
     /**
@@ -133,6 +141,13 @@ public abstract class TeleHub extends TeleHybridObject {
     }
 
     /**
+     * @return type descriptor for the kind of information stored in the mTable
+     */
+    public TypeDescriptor mTableType() {
+        return JavaTypeDescriptor.INT;
+    }
+
+    /**
      * @return index into the object (viewed as an array of integers) of the beginning of the mTable.
      */
     public int mTableStartIndex() {
@@ -160,6 +175,13 @@ public abstract class TeleHub extends TeleHybridObject {
      */
     public Kind referenceMapKind() {
         return Kind.INT;
+    }
+
+    /**
+     * @return a type descriptor for the kind of information stored in the reference map
+     */
+    public TypeDescriptor referenceMapType() {
+        return JavaTypeDescriptor.INT;
     }
 
     /**

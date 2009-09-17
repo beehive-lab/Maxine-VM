@@ -26,31 +26,24 @@ import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
 
 /**
  * This class optimizes moves, particularly those that result from eliminating SSA form.
- * 
+ *
  * @author Thomas Wuerthinger
  */
-public final class EdgeMoveOptimizer {
+final class EdgeMoveOptimizer {
 
-    // the class maintains a list with all lir-instruction-list of the
-    // successors (predecessors) and the current index into the lir-lists
-    List<List<LIRInstruction>> edgeInstructions;
-    List<Integer> edgeInstructionsIdx;
-
-    private EdgeMoveOptimizer() {
-        edgeInstructions = new ArrayList<List<LIRInstruction>>(4);
-        edgeInstructionsIdx = new ArrayList<Integer>(4);
-    }
-
-    public static void optimize(List<BlockBegin> code) {
+    /**
+     * Optmizes moves on block edges.
+     * @param blockList a list of blocks whose moves should be optimized
+     */
+    public static void optimize(List<BlockBegin> blockList) {
         EdgeMoveOptimizer optimizer = new EdgeMoveOptimizer();
 
         // ignore the first block in the list (index 0 is not processed)
-        for (int i = code.size() - 1; i >= 1; i--) {
-            BlockBegin block = code.get(i);
+        for (int i = blockList.size() - 1; i >= 1; i--) {
+            BlockBegin block = blockList.get(i);
 
             if (block.numberOfPreds() > 1 && !block.checkBlockFlag(BlockBegin.BlockFlag.ExceptionEntry)) {
                 optimizer.optimizeMovesAtBlockEnd(block);
@@ -61,20 +54,30 @@ public final class EdgeMoveOptimizer {
         }
     }
 
+    // the class maintains a list with all lir-instruction-list of the
+    // successors (predecessors) and the current index into the lir-lists
+    private final List<List<LIRInstruction>> edgeInstructions;
+    private final List<Integer> edgeInstructionsIdx;
+
+    private EdgeMoveOptimizer() {
+        edgeInstructions = new ArrayList<List<LIRInstruction>>(4);
+        edgeInstructionsIdx = new ArrayList<Integer>(4);
+    }
+
     // clear all internal data structures
-    void initInstructions() {
+    private void initInstructions() {
         edgeInstructions.clear();
         edgeInstructionsIdx.clear();
     }
 
     // append a lir-instruction-list and the index of the current operation in to the list
-    void appendInstructions(List<LIRInstruction> instructions, int instructionsIdx) {
+    private void appendInstructions(List<LIRInstruction> instructions, int instructionsIdx) {
         edgeInstructions.add(instructions);
         edgeInstructionsIdx.add(instructionsIdx);
     }
 
     // return the current operation of the given edge (predecessor or successor)
-    LIRInstruction instructionAt(int edge) {
+    private LIRInstruction instructionAt(int edge) {
         List<LIRInstruction> instructions = edgeInstructions.get(edge);
         int idx = edgeInstructionsIdx.get(edge);
 
@@ -86,7 +89,7 @@ public final class EdgeMoveOptimizer {
     }
 
     // removes the current operation of the given edge (predecessor or successor)
-    void removeCurInstruction(int edge, boolean decrementIndex) {
+    private void removeCurInstruction(int edge, boolean decrementIndex) {
         List<LIRInstruction> instructions = edgeInstructions.get(edge);
         int idx = edgeInstructionsIdx.get(edge);
         instructions.remove(idx);
@@ -96,7 +99,7 @@ public final class EdgeMoveOptimizer {
         }
     }
 
-    boolean operationsDifferent(LIRInstruction op1, LIRInstruction op2) {
+    private boolean operationsDifferent(LIRInstruction op1, LIRInstruction op2) {
         if (op1 == null || op2 == null) {
             // at least one block is already empty . no optimization possible
             return true;
@@ -118,8 +121,8 @@ public final class EdgeMoveOptimizer {
         return true;
     }
 
-    void optimizeMovesAtBlockEnd(BlockBegin block) {
-        Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
+    private void optimizeMovesAtBlockEnd(BlockBegin block) {
+        // Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
 
         if (block.isPredecessor(block)) {
             // currently we can't handle this correctly.
@@ -184,8 +187,8 @@ public final class EdgeMoveOptimizer {
         }
     }
 
-    void optimizeMovesAtBlockBegin(BlockBegin block) {
-        Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
+    private void optimizeMovesAtBlockBegin(BlockBegin block) {
+        // Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
 
         initInstructions();
         int numSux = block.numberOfSux();
@@ -198,7 +201,7 @@ public final class EdgeMoveOptimizer {
         assert ((LIRBranch) curInstructions.get(curInstructions.size() - 1)).cond() == LIRCondition.Always : "block must end with unconditional branch";
 
         if (curInstructions.get(curInstructions.size() - 1).info != null) {
-            // can no optimize instructions when debug info is needed
+            // cannot optimize instructions when debug info is needed
             return;
         }
 

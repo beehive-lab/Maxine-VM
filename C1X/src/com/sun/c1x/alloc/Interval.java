@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public class Interval {
+public final class Interval {
 
     enum IntervalUseKind {
         // priority of use kinds must be ascending
@@ -100,57 +100,49 @@ public class Interval {
         }
     }
 
-    int regNum;
-    CiKind type; // valid only for virtual registers
-    Range first; // sorted list of Ranges
-    List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
+    private int registerNumber;
+    private CiKind type; // valid only for virtual registers
+    private Range first; // sorted list of Ranges
+    private List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
 
-    Range current; // interval iteration: the current Range
+    private Range current; // interval iteration: the current Range
     Interval next; // interval iteration: sorted list of Intervals (ends with sentinel)
-    IntervalState state; // interval iteration: to which set belongs this interval
+    private IntervalState state; // interval iteration: to which set belongs this interval
 
-    int assignedReg;
-    int assignedRegHi;
+    private int assignedRegister;
+    private int assignedHighRegister;
 
-    int cachedTo; // cached value: to of last range (-1: not cached)
-    LIROperand cachedOpr;
-    CiLocation cachedVmReg;
+    private int cachedTo; // cached value: to of last range (-1: not cached)
+    private LIROperand cachedOpr;
+    private CiLocation cachedVmReg;
 
-    Interval splitParent; // the original interval where this interval is derived from
-    List<Interval> splitChildren; // list of all intervals that are split off from this interval (only available for
-    // split parents)
-    Interval currentSplitChild; // the current split child that has been active or inactive last (always stored in split
-    // parents)
+    private Interval splitParent; // the original interval where this interval is derived from
+    private List<Interval> splitChildren; // list of all intervals that are split off from this interval (only available for split parents)
+    private Interval currentSplitChild; // the current split child that has been active or inactive last (always stored in split parents)
 
-    int canonicalSpillSlot; // the stack slot where all split parts of this interval are spilled to (always stored in
-    // split parents)
-    boolean insertMoveWhenActivated; // true if move is inserted between currentSplitChild and this interval when
-    // interval gets active the first time
-    IntervalSpillState spillState; // for spill move optimization
-    int spillDefinitionPos; // position where the interval is defined (if defined only once)
-    Interval registerHint; // this interval should be in the same register as the hint interval
-
-    static Interval end() {
-        return end;
-    }
+    private int canonicalSpillSlot; // the stack slot where all split parts of this interval are spilled to (always stored in split parents)
+    private boolean insertMoveWhenActivated; // true if move is inserted between currentSplitChild and this interval when interval gets active the first time
+    private IntervalSpillState spillState; // for spill move optimization
+    private int spillDefinitionPos; // position where the interval is defined (if defined only once)
+    private Interval registerHint; // this interval should be in the same register as the hint interval
 
     // accessors
-    int regNum() {
-        return regNum;
+    int registerNumber() {
+        return registerNumber;
     }
 
-    void setRegNum(int r) {
-        assert regNum == -1 : "cannot change regNum";
-        regNum = r;
+    void setRegisterNumber(int r) {
+        assert registerNumber == -1 : "cannot change regNum";
+        registerNumber = r;
     }
 
     CiKind type() {
-        assert regNum == -1 || regNum >= CiRegister.vregBase : "cannot access type for fixed interval";
+        assert registerNumber == -1 || registerNumber >= CiRegister.FirstVirtualRegisterNumber : "cannot access type for fixed interval";
         return type;
     }
 
     void setType(CiKind type) {
-        assert regNum < CiRegister.vregBase || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
+        assert registerNumber < CiRegister.FirstVirtualRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
         assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these basic types should have int type registers";
         this.type = type;
     }
@@ -184,23 +176,23 @@ public class Interval {
     }
 
     int assignedReg() {
-        return assignedReg;
+        return assignedRegister;
     }
 
     int assignedRegHi() {
-        return assignedRegHi;
+        return assignedHighRegister;
     }
 
     void assignReg(int reg) {
         assert reg != 5;
-        assignedReg = reg;
-        assignedRegHi = LinearScan.getAnyreg();
+        assignedRegister = reg;
+        assignedHighRegister = LinearScan.getAnyreg();
     }
 
     void assignReg(int reg, int regHi) {
         assert reg != 5;
-        assignedReg = reg;
-        assignedRegHi = regHi;
+        assignedRegister = reg;
+        assignedHighRegister = regHi;
     }
 
     void setRegisterHint(Interval i) {
@@ -315,7 +307,7 @@ public class Interval {
     }
 
     void nextRange() {
-        assert this != end : "not allowed on sentinel";
+        assert this != EndMarker : "not allowed on sentinel";
         current = current.next();
     }
 
@@ -328,7 +320,7 @@ public class Interval {
     }
 
     boolean currentAtEnd() {
-        return current == Range.end();
+        return current == Range.EndMarker;
     }
 
     boolean currentIntersects(Interval it) {
@@ -340,22 +332,22 @@ public class Interval {
     }
 
     // initialize sentinel
-    static Interval end = new Interval(-1);
+    static final Interval EndMarker = new Interval(-1);
 
     Interval(int regNum) {
 
-        this.regNum = regNum;
+        this.registerNumber = regNum;
         this.type = CiKind.Illegal;
-        this.first = Range.end();
+        this.first = Range.EndMarker;
         this.usePosAndKinds = new ArrayList<Integer>(12);
-        this.current = Range.end();
-        this.next = end;
+        this.current = Range.EndMarker;
+        this.next = EndMarker;
         this.state = IntervalState.invalidState;
-        this.assignedReg = LinearScan.getAnyreg();
-        this.assignedRegHi = LinearScan.getAnyreg();
+        this.assignedRegister = LinearScan.getAnyreg();
+        this.assignedHighRegister = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperandFactory.IllegalOperand;
-        this.cachedVmReg = null; // TODO: Check if to use VMReg.Bad
+        this.cachedOpr = LIROperandFactory.IllegalLocation;
+        this.cachedVmReg = null;
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
         this.registerHint = null;
@@ -367,10 +359,10 @@ public class Interval {
     }
 
     int calcTo() {
-        assert first != Range.end() : "interval has no range";
+        assert first != Range.EndMarker : "interval has no range";
 
         Range r = first;
-        while (r.next() != Range.end()) {
+        while (r.next() != Range.EndMarker) {
             r = r.next();
         }
         return r.to();
@@ -391,7 +383,7 @@ public class Interval {
                 for (int j = i + 1; j < splitChildren.size(); j++) {
                     Interval i2 = splitChildren.get(j);
 
-                    assert i1.regNum() != i2.regNum() : "same register number";
+                    assert i1.registerNumber() != i2.registerNumber() : "same register number";
 
                     if (i1.from() < i2.from()) {
                         assert i1.to() <= i2.from() && i1.to() < i2.to() : "intervals overlapping";
@@ -467,7 +459,7 @@ public class Interval {
             for (i = 0; i < len; i++) {
                 Interval tmp = splitChildren.get(i);
                 if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
-                    TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.regNum(), tmp.regNum()));
+                    TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
                     result.print(TTY.out, allocator);
                     tmp.print(TTY.out, allocator);
                     assert false : "two valid result intervals found";
@@ -577,7 +569,7 @@ public class Interval {
 
         // do not add use positions for precolored intervals because
         // they are never used
-        if (useKind != IntervalUseKind.noUse && regNum() >= CiRegister.vregBase) {
+        if (useKind != IntervalUseKind.noUse && registerNumber() >= CiRegister.FirstVirtualRegisterNumber) {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
@@ -602,7 +594,7 @@ public class Interval {
 
     void addRange(int from, int to) {
         assert from < to : "invalid range";
-        assert first() == Range.end() || to < first().next().from() : "not inserting at begin of interval";
+        assert first() == Range.EndMarker || to < first().next().from() : "not inserting at begin of interval";
         assert from <= first().to() : "not inserting at begin of interval";
 
         if (first().from() <= to) {
@@ -655,21 +647,21 @@ public class Interval {
         // split the ranges
         Range prev = null;
         Range cur = first;
-        while (cur != Range.end() && cur.to() <= splitPos) {
+        while (cur != Range.EndMarker && cur.to() <= splitPos) {
             prev = cur;
             cur = cur.next();
         }
-        assert cur != Range.end() : "split interval after end of last range";
+        assert cur != Range.EndMarker : "split interval after end of last range";
 
         if (cur.from() < splitPos) {
             result.first = new Range(splitPos, cur.to(), cur.next());
             cur.setTo(splitPos);
-            cur.setNext(Range.end());
+            cur.setNext(Range.EndMarker);
 
         } else {
             assert prev != null : "split before start of first range";
             result.first = cur;
-            prev.setNext(Range.end());
+            prev.setNext(Range.EndMarker);
         }
         result.current = result.first;
         cachedTo = -1; // clear cached value
@@ -709,7 +701,7 @@ public class Interval {
 
 
     boolean isVirtualInterval() {
-        return regNum() >= CiRegister.vregBase;
+        return registerNumber() >= CiRegister.FirstVirtualRegisterNumber;
     }
 
     // split this interval at the specified position and return
@@ -731,7 +723,7 @@ public class Interval {
         result.addRange(first.from(), splitPos);
 
         if (splitPos == first.to()) {
-            assert first.next() != Range.end() : "must not be at end";
+            assert first.next() != Range.EndMarker : "must not be at end";
             first = first.next();
         } else {
             first.setFrom(splitPos);
@@ -744,10 +736,10 @@ public class Interval {
     boolean covers(int opId, LIRInstruction.OperandMode mode) {
         Range cur = first;
 
-        while (cur != Range.end() && cur.to() < opId) {
+        while (cur != Range.EndMarker && cur.to() < opId) {
             cur = cur.next();
         }
-        if (cur != Range.end()) {
+        if (cur != Range.EndMarker) {
             assert cur.to() != cur.next().from() : "ranges not separated";
 
             if (mode == LIRInstruction.OperandMode.OutputMode) {
@@ -766,7 +758,7 @@ public class Interval {
         assert from() <= holeFrom && holeTo <= to() : "index out of interval";
 
         Range cur = first;
-        while (cur != Range.end()) {
+        while (cur != Range.EndMarker) {
             assert cur.to() < cur.next().from() : "no space between ranges";
 
             // hole-range starts before this range . hole
@@ -790,13 +782,12 @@ public class Interval {
 
     @Override
     public String toString() {
-        return regNum() + " " + typeName();
+        return registerNumber() + " " + typeName();
     }
 
     private String typeName() {
-
         String typeName;
-        if (regNum() < CiRegister.vregBase) {
+        if (registerNumber() < CiRegister.FirstVirtualRegisterNumber) {
             typeName = "fixed";
         } else {
             typeName = type().name();
@@ -807,7 +798,7 @@ public class Interval {
     public void print(LogStream out, LinearScan allocator) {
 
         LIROperand opr = LIROperandFactory.illegal();
-        if (regNum() < CiRegister.vregBase) {
+        if (registerNumber() < CiRegister.FirstVirtualRegisterNumber) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
                 opr = LIROperandFactory.singleLocation(CiKind.Int, allocator.toRegister(assignedReg()));
@@ -822,17 +813,15 @@ public class Interval {
             }
         }
 
-        out.printf("%d %s ", regNum(), typeName());
-        if (opr.isValid()) {
-            out.print("\"");
-            opr.print(out);
-            out.print("\" ");
+        out.printf("%d %s ", registerNumber(), typeName());
+        if (!opr.isIllegal()) {
+            out.printf("\"%s\"", opr);
         }
-        out.printf("%d %d ", splitParent().regNum(), registerHint(false, allocator) != null ? registerHint(false, allocator).regNum() : -1);
+        out.printf("%d %d ", splitParent().registerNumber(), registerHint(false, allocator) != null ? registerHint(false, allocator).registerNumber() : -1);
 
         // print ranges
         Range cur = first;
-        while (cur != Range.end()) {
+        while (cur != Range.EndMarker) {
             cur.print(out);
             cur = cur.next();
             assert cur != null : "range list not closed with range sentinel";

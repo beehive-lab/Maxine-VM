@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.debug.*;
-
 
 /**
  * The <code>LIROp3</code> class definition.
@@ -83,21 +81,5 @@ public class LIROp3 extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitOp3(this);
-    }
-
-    /**
-     * Prints this instruction.
-     *
-     * @param out the output log stream.
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        opr1().print(out);
-        out.print(" ");
-        opr2().print(out);
-        out.print(" ");
-        opr3().print(out);
-        out.print(" ");
-        result().print(out);
     }
 }

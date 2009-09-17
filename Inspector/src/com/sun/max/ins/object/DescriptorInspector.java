@@ -60,7 +60,7 @@ public class DescriptorInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleDescriptor);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleDescriptor, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

@@ -386,7 +386,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
             if (oldValue == null) {
                 totalCopies++;
                 if ((numberOfCopies % 100) == 0) {
-                    Trace.line(1, "Deep object copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
+                    Trace.line(1, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
                 }
             }
         }

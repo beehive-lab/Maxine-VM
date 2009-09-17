@@ -51,7 +51,6 @@ public abstract class DataLabel extends InspectorLabel {
         // Default styles
         setFont(style().primitiveDataFont());
         setForeground(style().primitiveDataColor());
-        setBackground(style().primitiveDataBackgroundColor());
     }
 
     /**
@@ -76,7 +75,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
         }
     }
 
@@ -92,7 +90,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
         }
     }
 
@@ -113,7 +110,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -154,7 +150,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -197,7 +192,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -234,7 +228,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
         }
     }
 
@@ -252,7 +245,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().charDataFont());
             setForeground(style().charDataColor());
-            setBackground(style().primitiveDataBackgroundColor());
         }
     }
 
@@ -269,7 +261,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
         }
     }
 
@@ -290,7 +281,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
         }
 
         protected void setValue(int n) {
@@ -321,7 +311,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
         }
 
         protected void setValue(int n) {
@@ -348,10 +337,9 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color, and background for floats
+            // TODO: define a font, color for floats
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
         }
 
         protected void updateText() {
@@ -377,7 +365,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
         }
     }
 
@@ -393,7 +380,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
         }
     }
 
@@ -409,10 +395,9 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color, and background for doubles
+            // TODO: define a font, color, for doubles
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
         }
 
         private void updateText() {
@@ -445,15 +430,15 @@ public abstract class DataLabel extends InspectorLabel {
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                    switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
-                            final InspectorMenu menu = new InspectorMenu();
+                            final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));
                             menu.add(inspection().actions().inspectMemoryWords(address, null));
                             if (maxVM().watchpointsEnabled()) {
                                 menu.add(inspection().actions().setWordWatchpoint(address, null));
                             }
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
                         }
                         case MouseEvent.BUTTON2: {
@@ -479,7 +464,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -569,7 +553,6 @@ public abstract class DataLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 

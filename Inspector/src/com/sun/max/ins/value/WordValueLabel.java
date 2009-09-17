@@ -179,7 +179,7 @@ public class WordValueLabel extends ValueLabel {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 //System.out.println("WVL (" + _valueMode.toString() + ", " + _valueKind.toString() + ")");
-                switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         final InspectorAction inspectAction = getInspectValueAction(value());
                         if (inspectAction != null) {
@@ -195,7 +195,7 @@ public class WordValueLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON3: {
-                        final InspectorMenu menu = new InspectorMenu();
+                        final InspectorPopupMenu menu = new InspectorPopupMenu();
                         menu.add(new WordValueMenuItems(inspection(), value()));
                         switch (displayMode) {
                             case OBJECT_REFERENCE:
@@ -204,7 +204,8 @@ public class WordValueLabel extends ValueLabel {
                                 final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
                                 if (teleClassMethodActor != null) {
                                     // Add method-related menu items
-                                    menu.add(new ClassMethodMenuItems(inspection(), teleClassMethodActor));
+                                    final ClassMethodMenuItems items = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
+                                    items.addTo(menu);
                                 }
                                 break;
                             }
@@ -217,7 +218,7 @@ public class WordValueLabel extends ValueLabel {
                                 break;
                             }
                         }
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
             }
@@ -339,7 +340,6 @@ public class WordValueLabel extends ValueLabel {
         if (value == null) {
             return;
         }
-        setBackground(style().wordDataBackgroundColor());
         if (value == VoidValue.VOID) {
             setFont(style().wordAlternateTextFont());
             setForeground(style().wordInvalidDataColor());
@@ -388,10 +388,18 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setText(hexString);
-                if (valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject) + toolTipSuffix);
-                } else {
-                    setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                try {
+                    if (valueMode == ValueMode.LITERAL_REFERENCE) {
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject) + toolTipSuffix);
+                    } else {
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(teleObject));
+                    }
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    teleObject = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
                 }
                 break;
             }
@@ -408,11 +416,14 @@ public class WordValueLabel extends ValueLabel {
                         }
                         break;
                     }
-                } catch (NoClassDefFoundError noClassDefFoundError) {
-                    // some required class is only known in the tele VM
-                    System.out.println("WVL: setAlternateReferenceText error" + noClassDefFoundError);
+                } catch (Throwable throwable) {
+                    // If we don't catch this the views will not be updated at all.
+                    teleObject = null;
+                    displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                    throwable.printStackTrace(Trace.stream());
+                    break;
                 }
-                System.out.println("WVL:  set AlternateReferenceText failed");
                 displayMode = DisplayMode.OBJECT_REFERENCE;
                 updateText();
                 break;
@@ -776,9 +787,7 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
-    private final class WordValueMenuItems implements InspectorMenuItems {
-
-        private final InspectorAction copyWordAction;
+    private final class WordValueMenuItems extends InspectorPopupMenuItems {
 
         private final class MenuInspectObjectAction extends InspectorAction {
 
@@ -796,9 +805,6 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final MenuInspectObjectAction menuInspectObjectAction;
-
-
         private final class MenuToggleDisplayAction extends InspectorAction {
 
             private final InspectorAction toggleAction;
@@ -814,9 +820,6 @@ public class WordValueLabel extends ValueLabel {
                 toggleAction.perform();
             }
         }
-
-        private final MenuToggleDisplayAction menuToggleDisplayAction;
-
 
         private final class MenuInspectMemoryWordsAction extends InspectorAction {
 
@@ -839,9 +842,6 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final MenuInspectMemoryWordsAction menuInspectMemoryWordsAction;
-
-
         private final class MenuShowMemoryRegionAction extends InspectorAction {
 
             private final InspectorAction showMemoryRegionAction;
@@ -863,35 +863,13 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        private final MenuShowMemoryRegionAction menuShowMemoryRegionAction;
-
-        private WordValueMenuItems(Inspection inspection, Value value) {
-            copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
-            menuInspectObjectAction = new MenuInspectObjectAction(value);
-            menuToggleDisplayAction = new MenuToggleDisplayAction();
-            menuInspectMemoryWordsAction = new MenuInspectMemoryWordsAction(value);
-            menuShowMemoryRegionAction = new MenuShowMemoryRegionAction(value);
-        }
-
-        public void addTo(InspectorMenu menu) {
-            menu.add(copyWordAction);
-            menu.add(menuInspectObjectAction);
-            menu.add(menuToggleDisplayAction);
-            menu.add(menuInspectMemoryWordsAction);
-            menu.add(menuShowMemoryRegionAction);
-            menu.addSeparator();
-
-        }
-        public Inspection inspection() {
-            return WordValueLabel.this.inspection();
-        }
-
-        public void refresh(boolean force) {
-        }
-
-        public void redisplay() {
+        public WordValueMenuItems(Inspection inspection, Value value) {
+            add(inspection.actions().copyValue(value, "Copy value to clipboard"));
+            add(new MenuInspectObjectAction(value));
+            add(new MenuToggleDisplayAction());
+            add(new MenuInspectMemoryWordsAction(value));
+            add(new MenuShowMemoryRegionAction(value));
         }
     }
-
 
 }

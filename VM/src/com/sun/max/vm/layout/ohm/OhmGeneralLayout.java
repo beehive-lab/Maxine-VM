@@ -36,7 +36,10 @@ import com.sun.max.vm.value.*;
 /**
  * Origin, Header, Mixed.
  *
- * Header words in tuples: hub, misc Header words in arrays: hub, misc, length
+ * Header words in tuples: hub, misc
+ * Header words in arrays: hub, misc, length
+ *
+ * See the package level documentation for a more detailed description.
  *
  * @author Bernd Mathiske
  */
@@ -47,10 +50,6 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     public boolean isHybridLayout() {
-        return false;
-    }
-
-    public boolean isArrayLayout() {
         return false;
     }
 
@@ -104,7 +103,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
 
     @INLINE
     private Hub getHub(Accessor accessor) {
-        return UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        return UnsafeCast.asHub(readHubReference(accessor).toJava());
     }
 
     @INLINE

@@ -20,12 +20,8 @@
  */
 package com.sun.max.ins;
 
-import java.awt.event.*;
-
 import javax.swing.*;
 
-import com.sun.max.ins.gui.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -33,15 +29,7 @@ import com.sun.max.tele.TeleVM.*;
 import com.sun.max.vm.prototype.*;
 
 /**
- * Interactive, visual tool for development of the Maxine VM.
- * <BR>
- * Depending on a command line option, either:
- * <UL>
- * <LI>Starts a running VM from a boot image, and opens an inspection window
- * providing remote access and debugging; or</LI>
- * <LI>Maps a boot image into memory and opens an inspection window
- * in which one can inspect object and memory contents from the boot image.</LI>
- * </UL>
+ * Interactive, visual tool for debugging a running instance of the Maxine VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -52,50 +40,15 @@ public final class MaxineInspector {
 
     private static final String tracePrefix = "[MaxineInspector] ";
 
-    public static int mouseButtonWithModifiers(MouseEvent mouseEvent) {
-        if (OperatingSystem.current() == OperatingSystem.DARWIN && mouseEvent.getButton() == MouseEvent.BUTTON1) {
-            if (mouseEvent.isControlDown()) {
-                if (!mouseEvent.isAltDown()) {
-                    return MouseEvent.BUTTON3;
-                }
-            } else if (mouseEvent.isAltDown()) {
-                return MouseEvent.BUTTON2;
-            }
-        }
-        return mouseEvent.getButton();
-    }
-
     private MaxineInspector() {
-    }
-
-    /**
-     * Initializes the UI system to meet current requirements such as the requirement that the L&F for {@link InspectorFrame}s
-     * renders a "frame icon" at the top left of a frame's title bar. Using the Metal L&F is the mechanism currently employed
-     * for meeting this requirement.
-     */
-    public static void initializeSwing() {
-        try {
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-//            System.out.println("L&F=" + UIManager.getLookAndFeel());
-//            System.out.println("Theme=" + MetalLookAndFeel.getCurrentTheme());
-        } catch (Exception e) {
-            ProgramError.unexpected("Could not set L&F to MetalLookAndFeel");
-        }
-
-        //System.setProperty("apple.laf.useScreenMenuBar", "true");
-        JFrame.setDefaultLookAndFeelDecorated(true);
-        JDialog.setDefaultLookAndFeelDecorated(true);
     }
 
     public static void main(final String[] args) {
         Trace.begin(TRACE_VALUE, tracePrefix + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
 
-        initializeSwing();
-        final Options options = new Options();
+        Inspection.initializeSwing();
+        final Options options = new Options(false);
         Trace.addTo(options);
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
         options.parseArguments(args);

@@ -24,7 +24,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
@@ -64,20 +63,28 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     private final Inspection inspection;
 
     /**
-     * Should the table paint a box around the currently selected row(s)?
+     * Should selection be highlighted by a box around the selected row(s)?
+     * If not, use default background shading.
      */
-    private boolean paintSelectionBox = false;
+    private boolean showSelectionWithBox = false;
+
+    private final Color selectedRowBackgroundColor;
 
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
+     * <br>
+     * Used only at this time by the two code viewers, all of which is
+     * subject to further refactoring.
      *
      * @param model a model for the table
      * @param tableColumnModel a column model for the table
      */
-    protected InspectorTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
-        super(model, tableColumnModel);
+    protected InspectorTable(Inspection inspection, InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        super(inspectorTableModel, inspectorTableColumnModel);
+        this.showSelectionWithBox = true;
         this.inspection = inspection;
-        initialize();
+        selectedRowBackgroundColor = inspection.style().darken2(getBackground());
+        getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
 
@@ -86,7 +93,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
-        initialize();
+        selectedRowBackgroundColor = inspection.style().darken2(getBackground());
+        getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
 
@@ -99,7 +107,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
             final int row = rowAtPoint(p);
             //System.out.println("(" + row + "," + col + ")");
             if ((col != -1) && (row != -1)) {
-                switch(MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1:
                         // Give subclass an opportunity to handle a left-click specially.
                         mouseButton1Clicked(row, modelCol, mouseEvent);
@@ -110,9 +118,9 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
                         break;
                     case MouseEvent.BUTTON3:
                         // Pop up a menu, if provided by subclass.
-                        final InspectorMenu menu = getDynamicMenu(row, modelCol, mouseEvent);
-                        if (menu != null) {
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        final InspectorPopupMenu popupMenu = getPopupMenu(row, modelCol, mouseEvent);
+                        if (popupMenu != null) {
+                            popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         }
                         break;
                 }
@@ -158,18 +166,18 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * @param row row in the table model where the click took place
      * @param col column in the column model where the click took place
      * @param mouseEvent the originating event
-     * @return a menu suitable for popup, null if none relevant to location and circumstances.
+     * @return a popup menu, null if none relevant to location and circumstances.
      */
-    protected InspectorMenu getDynamicMenu(int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
         return null;
     }
 
     /**
      * Sets up default view configuration for tables.
      */
-    protected void configureDefaultTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
-        setModel(tableModel);
-        setColumnModel(columnModel);
+    protected void configureDefaultTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        setModel(inspectorTableModel);
+        setColumnModel(inspectorTableColumnModel);
         setShowHorizontalLines(style().defaultTableShowHorizontalLines());
         setShowVerticalLines(style().defaultTableShowVerticalLines());
         setIntercellSpacing(style().defaultTableIntercellSpacing());
@@ -185,10 +193,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     /**
      * Sets up standard view configuration for tables used to show memory in one way or another.
      */
-    protected void configureMemoryTable(TableModel tableModel, DefaultTableColumnModel columnModel) {
-        paintSelectionBox = true;
-        setModel(tableModel);
-        setColumnModel(columnModel);
+    protected void configureMemoryTable(InspectorTableModel inspectorTableModel, InspectorTableColumnModel inspectorTableColumnModel) {
+        showSelectionWithBox = true;
+        setModel(inspectorTableModel);
+        setColumnModel(inspectorTableColumnModel);
         setFillsViewportHeight(true);
         setShowHorizontalLines(style().memoryTableShowHorizontalLines());
         setShowVerticalLines(style().memoryTableShowVerticalLines());
@@ -202,19 +210,31 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         updateFocusSelection();
     }
 
+    public InspectorTableColumnModel getInspectorTableColumnModel() {
+        return (InspectorTableColumnModel) getColumnModel();
+    }
 
-    private void initialize() {
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
-        getTableHeader().setBackground(inspection.style().defaultBackgroundColor());
-        getTableHeader().setFont(style().defaultTextFont());
+    public InspectorTableModel getInspectorTableModel() {
+        return (InspectorTableModel) getModel();
+    }
+
+    /**
+     * Gets the appropriate background color for rendering a table cell, depending on the selection.
+     * If the alternate selection highlighting choice is enabled (painting a box around the row(s)),
+     * then only return the default background shading.
+     *
+     * @param isSelected whether the cell being rendered is part of the current selection
+     * @return the appropriate, default background color for the cell.
+     */
+    protected Color cellBackgroundColor(boolean isSelected) {
+        return (isSelected && getRowSelectionAllowed() && !showSelectionWithBox) ? getSelectionBackground() : getBackground();
     }
 
     /**
      * Updates table state to display a new request for row
      * selection; clears table selection if -1.
      */
-    public void updateFocusSelection(int row) {
+    protected void updateSelection(int row) {
         if (row < 0) {
             clearSelection();
         } else  if (row != getSelectedRow()) {
@@ -222,10 +242,27 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         }
     }
 
+    /**
+     * Add tool tip text to the column headers, as specified by the column model.
+     */
+    @Override
+    protected JTableHeader createDefaultTableHeader() {
+        return new JTableHeader(getColumnModel()) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final InspectorTableColumnModel inspectorTableColumnModel = getInspectorTableColumnModel();
+                final int index = inspectorTableColumnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = inspectorTableColumnModel.getColumn(index).getModelIndex();
+                return inspectorTableColumnModel.toolTipTextForColumn(modelIndex);
+            }
+        };
+    }
+
     @Override
     public void paintChildren(Graphics g) {
         super.paintChildren(g);
-        if (paintSelectionBox) {
+        if (showSelectionWithBox && getRowSelectionAllowed()) {
             // Draw a box around the selected row in the table
             final int row = getSelectedRow();
             if (row >= 0) {
@@ -233,20 +270,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
                 g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
             }
         }
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return WatchpointsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
     }
 
     public final Inspection inspection() {
@@ -303,54 +326,30 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     /**
-     * Notifies subclasses that some focus state of interest has changed, typically
+     * Notification that some focus state of interest has changed, typically
      * causing the table's row selection to follow the new focus.
      */
     public void updateFocusSelection() {
     }
 
-    public MaxVMState refresh(boolean force, MaxVMState lastRefreshedState, TableModel tableModel, TableColumn[] columns) {
+    private MaxVMState lastRefreshedState;
+
+    public void refresh(boolean force) {
         MaxVMState maxVMState = maxVMState();
         if (maxVMState.newerThan(lastRefreshedState) || force) {
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                if (prober != null) {
-                    prober.refresh(force);
-                }
-            }
-        } else {
-            maxVMState = lastRefreshedState;
+            getInspectorTableModel().refresh();
+            getInspectorTableColumnModel().refresh(force);
+            lastRefreshedState = maxVMState;
+            invalidate();
+            repaint();
         }
-        invalidate();
-        repaint();
-
-        return maxVMState;
+        updateFocusSelection();
     }
 
-    public void redisplay(TableColumn[] columns) {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            if (prober != null) {
-                prober.redisplay();
-            }
-        }
+    public void redisplay() {
+        getInspectorTableColumnModel().redisplay();
         invalidate();
         repaint();
-    }
-
-    /**
-     * @param listSelectionEvent a change to the current selection in the table
-     * @return the newly selected row, null if cannot be determined.
-     */
-    public Object getChangedValueRow(ListSelectionEvent listSelectionEvent) {
-        super.valueChanged(listSelectionEvent);
-        if (!listSelectionEvent.getValueIsAdjusting()) {
-            final int row = getSelectedRow();
-            if (row >= 0) {
-                return getValueAt(row, 0);
-            }
-        }
-        return null;
     }
 
     /**

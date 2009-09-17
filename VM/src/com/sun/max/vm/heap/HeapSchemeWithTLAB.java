@@ -172,7 +172,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer tlabMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
             Pointer tlabTop = enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer();
             if (Heap.traceAllocation()) {
-                final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+                final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.printVmThread(vmThread, false);
                 Log.print(": Resetting TLAB [TOP=");
@@ -327,7 +327,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         enabledVmThreadLocals.setWord(TLAB_MARK.index, tlab);
         if (Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
             Log.print(": Refill TLAB with ");
             Log.print(tlab);
@@ -383,19 +383,24 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (end.greaterThan(tlabEnd)) {
             // Slow path may be taken because of a genuine refill request, or because allocation was disable.
             // Check for the second here.
-            if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
-                Log.print("Trying to allocate ");
-                Log.print(size.toLong());
-                Log.print(" bytes on thread ");
-                Log.printVmThread(VmThread.current(), false);
-                Log.println(" while allocation is disabled");
-                FatalError.unexpected("Trying to allocate while allocation is disabled");
-            }
+            checkAllocationEnabled(size);
             // This path will always be taken if TLAB allocation is not enabled.
             return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
         return cell;
+    }
+
+    @NEVER_INLINE
+    private void checkAllocationEnabled(Size size) {
+        if (!ALLOCATION_DISABLED.getConstantWord().isZero()) {
+            Log.print("Trying to allocate ");
+            Log.print(size.toLong());
+            Log.print(" bytes on thread ");
+            Log.printVmThread(VmThread.current(), false);
+            Log.println(" while allocation is disabled");
+            FatalError.unexpected("Trying to allocate while allocation is disabled");
+        }
     }
 
     protected final void setTlabAllocationMark(Pointer enabledVmThreadLocals, Pointer newAllocationMark) {
@@ -426,9 +431,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
-        final Size newSize = Layout.hybridLayout().getArraySize(length);
-        final Pointer newCell = tlabAllocate(newSize);
-        return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
+        final Size size = Layout.hybridLayout().getArraySize(length);
+        final Pointer cell = tlabAllocate(size);
+        return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
     @NO_SAFEPOINTS("object allocation and initialization must be atomic")

@@ -70,7 +70,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         }
     }
 
-    protected TemplateBasedTargetGenerator(DynamicCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
+    protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
         super(dynamicCompilerScheme, instructionSet);
     }
 
@@ -82,7 +82,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);
 
     @Override
-    protected void generateIrMethod(ExceptionRangeTargetMethod targetMethod) {
+    protected void generateIrMethod(CPSTargetMethod targetMethod) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
@@ -114,7 +114,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(
                         0,
                         (referenceLiterals == null) ? 0 : referenceLiterals.length,
-                        codeGenerator.codeBuffer().currentPosition());
+                        codeGenerator.codeBuffer.currentPosition());
         Code.allocate(targetBundleLayout, targetMethod);
 
         codeGenerator.setGenerated(
@@ -123,7 +123,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         null, // java frame descriptors
                         null, // no scalar literals ever
                         referenceLiterals,
-                        codeGenerator.codeBuffer(),
+                        codeGenerator.codeBuffer,
                         optimizedCallerAdapterFrameCodeSize,
                         codeGenerator.adapterReturnPosition(),
                         codeGenerator.targetABI());

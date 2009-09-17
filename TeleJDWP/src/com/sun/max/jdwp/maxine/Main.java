@@ -105,8 +105,7 @@ public class Main {
         final File bootImageFile = BootImageGenerator.getDefaultBootImageFilePath();
         TeleVM t = null;
         try {
-            final Options options = new Options();
-            options.debugOption.setValue(Boolean.TRUE);
+            final Options options = new Options(false);
             options.sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
             options.vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
             options.bootImageFileOption.setValue(bootImageFile);

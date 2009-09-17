@@ -103,10 +103,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     public void suspend() throws OSExecutionRequestException {
-        for (TeleNativeThread thread : threads()) {
-            if (!thread.threadSuspend()) {
-                throw new OSExecutionRequestException("Could not suspend the VM [problem suspending + " + thread + "]");
-            }
+        if (!GuestVMXenDBChannel.suspendAll()) {
+            throw new OSExecutionRequestException("Could not suspend the VM");
         }
     }
 

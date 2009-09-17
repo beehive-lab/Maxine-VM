@@ -113,7 +113,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         classToTeleTupleObjectConstructor.put(ReferenceClassActor.class, getConstructor(TeleReferenceClassActor.class));
         // Maxine code management
         classToTeleTupleObjectConstructor.put(JitTargetMethod.class, getConstructor(TeleJitTargetMethod.class));
-        classToTeleTupleObjectConstructor.put(C1XTargetMethod.class, getConstructor(TeleOptimizedTargetMethod.class));
+        classToTeleTupleObjectConstructor.put(C1XTargetMethod.class, getConstructor(TeleC1XTargetMethod.class));
         classToTeleTupleObjectConstructor.put(OptimizedTargetMethod.class, getConstructor(TeleOptimizedTargetMethod.class));
         classToTeleTupleObjectConstructor.put(RuntimeStub.class, getConstructor(TeleRuntimeStub.class));
         classToTeleTupleObjectConstructor.put(CodeRegion.class, getConstructor(TeleCodeRegion.class));

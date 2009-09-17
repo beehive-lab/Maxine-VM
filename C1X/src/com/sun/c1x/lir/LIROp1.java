@@ -21,8 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
-import com.sun.c1x.util.*;
 
 /**
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
@@ -38,8 +36,6 @@ public class LIROp1 extends LIRInstruction {
     }
 
     protected CiKind type;              // the operand type
-    protected LIRPatchCode patch;       // only required for patching (TODO:NEEDS_CLEANUP: do we want a special instruction
-                                        // for patching?)
 
 
     protected LIRMoveKind flags = LIRMoveKind.Normal; // flag that indicate the kind of move
@@ -65,24 +61,10 @@ public class LIROp1 extends LIRInstruction {
      * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info) {
         super(opcode, result, info, false, null, 0, 0, opr);
         this.type = type;
-        this.patch = patch;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
-    }
-
-    /**
-     * Constructs a new LIROp1 instruction.
-     *
-     * @param opcode the instruction's opcode
-     * @param opr the first input operand
-     * @param result the operand that holds the result of this instruction
-     * @param type the basic type of this instruction
-     * @param patch the patching code for this instruction
-     */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch) {
-        this(opcode, opr, result, type, patch, null);
     }
 
     /**
@@ -94,7 +76,7 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type) {
-        this(opcode, opr, result, type, LIRPatchCode.PatchNone);
+        this(opcode, opr, result, type, null);
     }
 
     /**
@@ -115,7 +97,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      */
     public LIROp1(LIROpcode opcode, LIROperand opr) {
-        this(opcode, opr, LIROperandFactory.IllegalOperand);
+        this(opcode, opr, LIROperandFactory.IllegalLocation);
     }
 
     /**
@@ -127,14 +109,13 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
-     * @param unaligned the kind of move the instruction represents
+     * @param moveKind the kind of move the instruction represents
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRPatchCode patch, CodeEmitInfo info, LIRMoveKind unaligned) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info, LIRMoveKind moveKind) {
         super(opcode, result, info, false, null, 0, 0, opr);
         this.type = type;
-        this.patch = patch;
         assert opcode == LIROpcode.Move : "The " + opcode + " is not valid on LIROp1. Opcode must be of type LIROpcode.Move";
-        setKind(unaligned);
+        setKind(moveKind);
     }
 
     /**
@@ -145,9 +126,8 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
-        super(opcode, LIROperandFactory.IllegalOperand, info, false, null, 0, 0, opr);
+        super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr);
         this.type = CiKind.Illegal;
-        this.patch = LIRPatchCode.PatchNone;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
 
@@ -158,15 +138,6 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROperand operand() {
         return operand(0);
-    }
-
-    /**
-     * Gets patch code of this instruction.
-     *
-     * @return patch the patch code for this instruction.
-     */
-    public LIRPatchCode patchCode() {
-        return patch;
     }
 
     /**
@@ -218,38 +189,10 @@ public class LIROp1 extends LIRInstruction {
     }
 
     @Override
-    public void printInstruction(LogStream out) {
-        operand().print(out);
-        out.print(" ");
-        this.result().print(out);
-        out.print(" ");
-        printPatchCode(out, patchCode());
-    }
-
-
-    protected static void printPatchCode(LogStream out, LIRPatchCode code) {
-        switch (code) {
-            case PatchNone:
-                break;
-            case PatchLow:
-                out.print("[PatchLow]");
-                break;
-            case PatchHigh:
-                out.print("[PatchHigh]");
-                break;
-            case PatchNormal:
-                out.print("[PatchNormal]");
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
-    }
-
-    @Override
     public boolean verify() {
         switch (code) {
             case Move:
-                assert operand().isValid() && result().isValid() : "Operand and result must be valid in a LIROp1 move instruction.";
+                assert (!operand().isIllegal()) && (!result().isIllegal()) : "Operand and result must be valid in a LIROp1 move instruction.";
                 break;
             case NullCheck:
                 assert operand().isRegister() : "Operand must be a register in a LIROp1 null check instruction.";

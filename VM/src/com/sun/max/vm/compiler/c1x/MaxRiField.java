@@ -41,7 +41,8 @@ public class MaxRiField implements RiField {
 
     final MaxRiConstantPool constantPool;
     final CiKind basicType; // cached for performance
-    FieldRefConstant fieldRef;
+    final FieldRefConstant fieldRef;
+    final int cpi;
     FieldActor fieldActor;
 
     /**
@@ -53,17 +54,21 @@ public class MaxRiField implements RiField {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
         this.basicType = MaxRiType.kindToBasicType(fieldActor.kind);
+        this.fieldRef = null;
+        this.cpi = 0;
     }
 
     /**
      * Creates a new unresolved field with the specified field ref constant.
      * @param constantPool the constant pool in which the field is referenced
      * @param fieldRef the field reference
+     * @param cpi the constant pool index
      */
-    public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef) {
+    public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef, int cpi) {
         this.constantPool = constantPool;
         this.fieldRef = fieldRef;
         this.basicType = MaxRiType.kindToBasicType(fieldRef.type(constantPool.constantPool).toKind());
+        this.cpi = cpi;
     }
 
     /**
@@ -85,7 +90,8 @@ public class MaxRiField implements RiField {
         if (fieldActor != null) {
             return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool);
         }
-        return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool));
+        // TODO: get the correct CPI of the field's type
+        return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool), 0);
     }
 
     /**
@@ -104,7 +110,8 @@ public class MaxRiField implements RiField {
         if (fieldActor != null) {
             return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool);
         }
-        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool));
+        // TODO: get the correct cpi of the field's holder
+        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), 0);
     }
 
     /**

@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
@@ -48,34 +49,32 @@ import com.sun.max.vm.value.*;
   */
 public final class ThreadLocalsTable extends InspectorTable {
 
-    private final ThreadLocalsViewPreferences preferences;
-
-    private final ThreadLocalsTableModel model;
+    private final ThreadLocalsTableModel tableModel;
     private final ThreadLocalsTableColumnModel columnModel;
-    private final TableColumn[] columns;
-
-    private MaxVMState lastRefreshedState = null;
 
     /**
-     * A {@link JTable} specialized to display Maxine thread local fields.
+     * A table specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(Inspection inspection, final TeleThreadLocalValues threadLocalValues, ThreadLocalsViewPreferences preferences) {
+    public ThreadLocalsTable(Inspection inspection, final TeleThreadLocalValues threadLocalValues, ThreadLocalsViewPreferences viewPreferences) {
         super(inspection);
-        this.preferences = preferences;
-        this.model = new ThreadLocalsTableModel(inspection, threadLocalValues);
-        this.columns = new TableColumn[ThreadLocalsColumnKind.VALUES.length()];
-        this.columnModel = new ThreadLocalsTableColumnModel(inspection);
-        configureMemoryTable(model, columnModel);
+        this.tableModel = new ThreadLocalsTableModel(inspection, threadLocalValues);
+        this.columnModel = new ThreadLocalsTableColumnModel(viewPreferences);
+        configureMemoryTable(tableModel, columnModel);
     }
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
-            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint") {
+            final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
-                public void setWatchpoint() {
-                    actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
+                public MaxWatchpoint setWatchpoint() {
+                    actions().setThreadLocalWatchpoint(tableModel.getTeleThreadLocalValues(), row, null).perform();
+                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (watchpoints.length() > 0) {
+                        return watchpoints.first();
+                    }
+                    return null;
                 }
             };
             toggleAction.perform();
@@ -83,22 +82,34 @@ public final class ThreadLocalsTable extends InspectorTable {
     }
 
     @Override
-    protected InspectorMenu getDynamicMenu(final int row, int col, MouseEvent mouseEvent) {
+    protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         if (maxVM().watchpointsEnabled() && col == ThreadLocalsColumnKind.TAG.ordinal()) {
-            final InspectorMenu menu = new InspectorMenu();
-            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), model, row, "Toggle watchpoint (double-click)") {
+            final InspectorPopupMenu menu = new InspectorPopupMenu();
+            menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
                 @Override
-                public void setWatchpoint() {
-                    actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, null).perform();
+                public MaxWatchpoint setWatchpoint() {
+                    actions().setThreadLocalWatchpoint(tableModel.getTeleThreadLocalValues(), row, null).perform();
+                    final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
+                    if (watchpoints.length() > 0) {
+                        return watchpoints.first();
+                    }
+                    return null;
                 }
             });
-            menu.add(actions().setThreadLocalWatchpoint(model.getTeleThreadLocalValues(), row, "Watch this memory location"));
-            menu.add(Watchpoints.createEditMenu(inspection(), model.getWatchpoints(row)));
-            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), model.getWatchpoints(row)));
+            menu.add(actions().setThreadLocalWatchpoint(tableModel.getTeleThreadLocalValues(), row, "Watch this memory location"));
+            menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
+            menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
             return menu;
         }
         return null;
+    }
+
+    @Override
+    public void updateFocusSelection() {
+        // Sets table selection to the memory word, if any, that is the current user focus.
+        final Address address = inspection().focus().address();
+        updateSelection(tableModel.findRow(address));
     }
 
     @Override
@@ -108,57 +119,28 @@ public final class ThreadLocalsTable extends InspectorTable {
         super.valueChanged(e);
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
-            if (row >= 0 && row < model.getRowCount()) {
-                inspection().focus().setAddress(model.getAddress(row));
+            if (row >= 0 && row < tableModel.getRowCount()) {
+                inspection().focus().setAddress(tableModel.getAddress(row));
             }
         }
     }
 
-    private void setAddressFocus(Address address) {
-        inspection().focus().setAddress(address);
-    }
+    /**
+     * A column model for thread local values.
+     * Column selection is driven by choices in the parent.
+     * This implementation cannot update column choices dynamically.
+     */
+    private final class ThreadLocalsTableColumnModel extends InspectorTableColumnModel<ThreadLocalsColumnKind> {
 
-    public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
+        ThreadLocalsTableColumnModel(ThreadLocalsViewPreferences viewPreferences) {
+            super(ThreadLocalsColumnKind.VALUES.length(), viewPreferences);
+            addColumn(ThreadLocalsColumnKind.TAG, new TagRenderer(inspection()), null);
+            addColumn(ThreadLocalsColumnKind.ADDRESS, new AddressRenderer(inspection()), null);
+            addColumn(ThreadLocalsColumnKind.POSITION, new PositionRenderer(inspection()), null);
+            addColumn(ThreadLocalsColumnKind.NAME, new NameRenderer(inspection()), null);
+            addColumn(ThreadLocalsColumnKind.VALUE, new ValueRenderer(), null);
+            addColumn(ThreadLocalsColumnKind.REGION, new RegionRenderer(), null);
         }
-        invalidate();
-        repaint();
-    }
-
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            final int oldSelectedRow = getSelectedRow();
-            final int newRow = model.findRow(focus().address());
-            if (newRow >= 0) {
-                getSelectionModel().setSelectionInterval(newRow, newRow);
-            } else {
-                if (oldSelectedRow >= 0) {
-                    getSelectionModel().clearSelection();
-                }
-            }
-            for (TableColumn column : columns) {
-                final Prober prober = (Prober) column.getCellRenderer();
-                prober.refresh(force);
-            }
-            model.refresh();
-        }
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        final JTableHeader header = new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return ThreadLocalsColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-        return header;
     }
 
 /**
@@ -172,14 +154,6 @@ public final class ThreadLocalsTable extends InspectorTable {
         public ThreadLocalsTableModel(Inspection inspection, TeleThreadLocalValues teleThreadLocalValues) {
             super(inspection, teleThreadLocalValues.start());
             this.teleThreadLocalValues = teleThreadLocalValues;
-        }
-
-        public MaxThread getThread() {
-            return teleThreadLocalValues.getMaxThread();
-        }
-
-        public TeleThreadLocalValues getTeleThreadLocalValues() {
-            return teleThreadLocalValues;
         }
 
         public int getColumnCount() {
@@ -197,6 +171,13 @@ public final class ThreadLocalsTable extends InspectorTable {
         @Override
         public Class< ? > getColumnClass(int col) {
             return VmThreadLocal.class;
+        }
+        public MaxThread getThread() {
+            return teleThreadLocalValues.getMaxThread();
+        }
+
+        public TeleThreadLocalValues getTeleThreadLocalValues() {
+            return teleThreadLocalValues;
         }
 
         @Override
@@ -233,39 +214,11 @@ public final class ThreadLocalsTable extends InspectorTable {
     }
 
     /**
-     * A column model for thread local values.
-     * Column selection is driven by choices in the parent.
-     * This implementation cannot update column choices dynamically.
-     */
-    private final class ThreadLocalsTableColumnModel extends DefaultTableColumnModel {
-
-        ThreadLocalsTableColumnModel(Inspection inspection) {
-            createColumn(ThreadLocalsColumnKind.TAG, new TagRenderer(inspection));
-            createColumn(ThreadLocalsColumnKind.ADDRESS, new AddressRenderer(inspection));
-            createColumn(ThreadLocalsColumnKind.POSITION, new PositionRenderer(inspection));
-            createColumn(ThreadLocalsColumnKind.NAME, new NameRenderer(inspection));
-            createColumn(ThreadLocalsColumnKind.VALUE, new ValueRenderer());
-            createColumn(ThreadLocalsColumnKind.REGION, new RegionRenderer());
-        }
-
-        private void createColumn(ThreadLocalsColumnKind columnKind, TableCellRenderer renderer) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, null);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (preferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
-            columns[col].setIdentifier(columnKind);
-        }
-    }
-
-    /**
      * @return color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
         final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
-        if (watchpointEvent != null && model.getMemoryRegion(row).contains(watchpointEvent.address())) {
+        if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
         return style().defaultTextColor();
@@ -278,8 +231,9 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Component renderer = getRenderer(model.getMemoryRegion(row), model.getThread(), model.getWatchpoints(row));
+            final Component renderer = getRenderer(tableModel.getMemoryRegion(row), tableModel.getThread(), tableModel.getWatchpoints(row));
             renderer.setForeground(getRowTextColor(row));
+            renderer.setBackground(cellBackgroundColor(isSelected));
             return renderer;
         }
     }
@@ -288,12 +242,14 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         AddressRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
-            setValue(Offset.fromInt(vmThreadLocal.offset), model.getOrigin());
+            setValue(Offset.fromInt(vmThreadLocal.offset), tableModel.getOrigin());
             setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -302,12 +258,14 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public PositionRenderer(Inspection inspection) {
             super(inspection, 0, Address.zero(), Word.size());
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final VmThreadLocal vmThreadLocal = (VmThreadLocal) value;
-            setValue(Offset.fromInt(vmThreadLocal.offset), model.getOrigin());
+            setValue(Offset.fromInt(vmThreadLocal.offset), tableModel.getOrigin());
             setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
@@ -316,6 +274,7 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public NameRenderer(Inspection inspection) {
             super(inspection);
+            setOpaque(true);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -327,13 +286,14 @@ public final class ThreadLocalsTable extends InspectorTable {
             } else {
                 setForeground(getRowTextColor(row));
             }
+            setBackground(cellBackgroundColor(isSelected));
             return this;
         }
     }
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[model.getRowCount()];
+        private InspectorLabel[] labels = new InspectorLabel[tableModel.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -359,7 +319,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                 label = new WordValueLabel(inspection(), valueMode, ThreadLocalsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return model.rowToVariableValue(row);
+                        return tableModel.rowToVariableValue(row);
                     }
                     @Override
                     public void updateText() {
@@ -367,15 +327,17 @@ public final class ThreadLocalsTable extends InspectorTable {
                         ThreadLocalsTable.this.repaint();
                     }
                 };
+                label.setOpaque(true);
                 labels[row] = label;
             }
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
     }
 
     private final class RegionRenderer implements TableCellRenderer, Prober {
 
-        private InspectorLabel[] labels = new InspectorLabel[model.getRowCount()];
+        private InspectorLabel[] labels = new InspectorLabel[tableModel.getRowCount()];
 
         public void refresh(boolean force) {
             for (InspectorLabel label : labels) {
@@ -399,11 +361,13 @@ public final class ThreadLocalsTable extends InspectorTable {
                 label = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {
-                        return model.rowToVariableValue(row);
+                        return tableModel.rowToVariableValue(row);
                     }
                 };
+                label.setOpaque(true);
                 labels[row] = label;
             }
+            label.setBackground(cellBackgroundColor(isSelected));
             return label;
         }
     }

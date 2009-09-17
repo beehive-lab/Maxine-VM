@@ -60,7 +60,7 @@ class Utf8ConstantInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleUtf8Constant);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleUtf8Constant, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

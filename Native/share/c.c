@@ -59,7 +59,7 @@ int _c_unimplemented(const char* function, const char* file, int line) {
     return -1;
 }
 
-void _c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
+void _c_assert(boolean condition, char *conditionString, char *fileName, int lineNumber) {
     if (!condition) {
         log_println("assert %s[%d]: %s", fileName, lineNumber, conditionString);
         exit(1);

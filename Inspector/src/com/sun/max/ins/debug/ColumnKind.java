@@ -21,17 +21,41 @@
 
 package com.sun.max.ins.debug;
 
+
 /**
- * ColumnKind general interface.
- * @author Hannes Payer
+ * ColumnKind general interface; must be implemented by Enums.
  *
+ * @author Hannes Payer
+ * @author Michael Van De Vanter
  */
 public interface ColumnKind {
+
+    /**
+     * @return text to appear in the column header
+     */
     String label();
+
+    /**
+     * @return text to appear in the column header's toolTip, null if none specified.
+     */
     String toolTipText();
-    String toString();
+
+    /**
+     * @return whether this column kind can be made invisible; default true.
+     */
     boolean canBeMadeInvisible();
+
+    /**
+     * Determines if this column should be visible by default; default true.
+     */
     boolean defaultVisibility();
+
+    /**
+     * @return minimum width allowed for this column when resized by user; -1 if none specified.
+     */
     int minWidth();
+
     int ordinal();
+    String name();
+    String toString();
 }

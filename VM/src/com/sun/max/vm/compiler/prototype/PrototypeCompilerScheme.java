@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.prototype;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -29,7 +28,7 @@ import com.sun.max.vm.compiler.ir.*;
 /**
  * @author Bernd Mathiske
  */
-public class PrototypeCompilerScheme extends AbstractCompiler {
+public class PrototypeCompilerScheme extends CPSAbstractCompiler {
 
     public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -37,9 +36,10 @@ public class PrototypeCompilerScheme extends AbstractCompiler {
 
     @Override
     public IrGenerator irGenerator() {
-        throw ProgramError.unexpected();
+        return null;
     }
 
+    @Override
     public Sequence<IrGenerator> irGenerators() {
         return Sequence.Static.empty(IrGenerator.class);
     }

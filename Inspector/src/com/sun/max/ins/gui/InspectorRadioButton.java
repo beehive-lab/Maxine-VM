@@ -41,8 +41,7 @@ public final class InspectorRadioButton extends JRadioButton {
     public InspectorRadioButton(Inspection inspection, String text, String toolTipText) {
         super(text);
         setToolTipText(toolTipText);
-        setOpaque(true);
+        setOpaque(false);
         setFont(inspection.style().textLabelFont());
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 }

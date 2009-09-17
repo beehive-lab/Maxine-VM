@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.*;
 public class Package extends VMPackage {
     public Package() {
         super();
-        registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
+        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
     }
 
     @Override

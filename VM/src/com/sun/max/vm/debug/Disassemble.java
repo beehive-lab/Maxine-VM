@@ -21,6 +21,7 @@
 package com.sun.max.vm.debug;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -108,7 +109,14 @@ public final class Disassemble {
             protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
                 String string = super.disassembledObjectString(disassembler, disassembledObject);
                 if (string.startsWith("call ")) {
-                    final BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+
+                    final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
+                    final Iterator<? extends BytecodeLocation> bytecodeLocationsFor = targetMethod.getBytecodeLocationsFor(instructionPointer);
+                    BytecodeLocation bytecodeLocation = null;
+                    if (bytecodeLocationsFor != null && bytecodeLocationsFor.hasNext()) {
+                        bytecodeLocation = bytecodeLocationsFor.next();
+                    }
+
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {

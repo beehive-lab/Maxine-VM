@@ -33,7 +33,7 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public class RegisterVerifier {
+final class RegisterVerifier {
 
     LinearScan allocator;
     List<BlockBegin> workList; // all blocks that must be processed
@@ -126,7 +126,7 @@ public class RegisterVerifier {
             TTY.print("    ");
             for (int i = 0; i < stateSize(); i++) {
                 if (inputState.get(i) != null) {
-                    TTY.print(" %4d", inputState.get(i).regNum());
+                    TTY.print(" %4d", inputState.get(i).registerNumber());
                 } else {
                     TTY.print("   __");
                 }
@@ -139,13 +139,13 @@ public class RegisterVerifier {
         processOperations(block.lir(), inputState);
 
         // iterate all successors
-        for (int i = 0; i < block.numberOfSux(); i++) {
-            processSuccessor(block.suxAt(i), inputState);
+        for (BlockBegin succ : block.end().successors()) {
+            processSuccessor(succ, inputState);
         }
     }
 
     void processXhandler(ExceptionHandler xhandler, List<Interval> inputState) {
-        Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
+        // Util.traceLinearScan(2, "processXhandler B%d", xhandler.entryBlock().blockID);
 
         // must copy state because it is modified
         inputState = copy(inputState);
@@ -175,23 +175,23 @@ public class RegisterVerifier {
                         savedStateCorrect = false;
                         savedState.set(i, null);
 
-                        Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
+                        // Util.traceLinearScan(4, "processSuccessor B%d: invalidating slot %d", block.blockID, i);
                     }
                 }
             }
 
             if (savedStateCorrect) {
                 // already processed block with correct inputState
-                Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
+                // Util.traceLinearScan(2, "processSuccessor B%d: previous visit already correct", block.blockID);
             } else {
                 // must re-visit this block
-                Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
+                // Util.traceLinearScan(2, "processSuccessor B%d: must re-visit because input state changed", block.blockID);
                 addToWorkList(block);
             }
 
         } else {
             // block was not processed before, so set initial inputState
-            Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
+            // Util.traceLinearScan(2, "processSuccessor B%d: initial visit", block.blockID);
 
             setStateForBlock(block, copy(inputState));
             addToWorkList(block);
@@ -207,9 +207,9 @@ public class RegisterVerifier {
     void statePut(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (interval != null) {
-                Util.traceLinearScan(4, "        reg[%d] = %d", reg, interval.regNum());
+                // Util.traceLinearScan(4, "        reg[%d] = %d", reg, interval.regNum());
             } else if (inputState.get(reg) != null) {
-                Util.traceLinearScan(4, "        reg[%d] = null", reg);
+                // Util.traceLinearScan(4, "        reg[%d] = null", reg);
             }
 
             inputState.set(reg, interval);
@@ -219,7 +219,7 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.regNum() + " but interval " + inputState.get(reg));
+                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.registerNumber() + " but interval " + inputState.get(reg));
             }
         }
         return true;
@@ -243,7 +243,7 @@ public class RegisterVerifier {
             int j;
             int n = op.oprCount(LIRInstruction.OperandMode.InputMode);
             for (j = 0; j < n; j++) {
-                LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
+                LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
@@ -263,7 +263,7 @@ public class RegisterVerifier {
             }
 
             // process xhandler before output and temp operands
-            List<ExceptionHandler> xhandlers = op.allXhandler();
+            List<ExceptionHandler> xhandlers = op.exceptionEdges();
             n = xhandlers.size();
             for (int k = 0; k < n; k++) {
                 processXhandler(xhandlers.get(k), inputState);

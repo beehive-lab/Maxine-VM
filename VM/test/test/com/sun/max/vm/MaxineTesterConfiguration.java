@@ -51,6 +51,8 @@ public class MaxineTesterConfiguration {
     static final Expectation RAND_AMD64 = new Expectation(null, ProcessorModel.AMD64, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.NONDETERMINISTIC);
 
+    static final Expectation PASS_SOLARIS_AMD64 = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.AMD64, ExpectedResult.PASS);
+
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapoTests = new LinkedList<String>();
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
@@ -58,6 +60,7 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeImageConfigs = new LinkedList<String>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
+    static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
     static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
     static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
@@ -107,6 +110,11 @@ public class MaxineTesterConfiguration {
         jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
         jtt(jtt.lang.ClassLoader_loadClass01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Class_asSubclass01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
+        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
+        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
         jtt(jtt.lang.Object_clone01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Object_notify01.class,               RAND_SPARC);  // Fails: @jitjit,          @jitopt
         jtt(jtt.lang.Object_notifyAll01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
@@ -199,11 +207,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.except.Throw_Synchronized03.class,        RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.except.Throw_Synchronized04.class,        RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.except.Throw_Synchronized05.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.lang.Object_toString02.class,             RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.micro.VarArgs_String01.class,             RAND_SPARC);  // Fails:                   @jitopt
         jtt(jtt.micro.VarArgs_boolean01.class,            RAND_SPARC);  // Fails:                   @jitopt
@@ -302,7 +305,7 @@ public class MaxineTesterConfiguration {
         imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("optc1x", "-run=test.com.sun.max.vm.jtrun.c1x", "-native-tests", "-test-callee-c1x");
+        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
         imageConfig("java", "-run=com.sun.max.vm.run.java");
 
         maxvmConfig("std");
@@ -347,6 +350,12 @@ public class MaxineTesterConfiguration {
         imageParams.put(name, params);
     }
 
+    private static void imageConfig(String name, Expectation result, String... params) {
+        zeeImageConfigs.add(name);
+        configResultMap.put(name, new Expectation[]{result});
+        imageParams.put(name, params);
+    }
+
     private static void maxvmConfig(String name, String... params) {
         zeeMaxvmConfigs.add(name);
         maxvmParams.put(name, params);
@@ -367,7 +376,25 @@ public class MaxineTesterConfiguration {
         if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
             return "optopt,optjit";
         }
-        return "optopt,jitopt,optjit,jitjit";
+        return "optc1x,optopt,jitopt,optjit,jitjit";
+    }
+
+    public static boolean isSupported(String config) {
+
+        Expectation[] expect = configResultMap.get(config);
+        if (expect != null) {
+            final Platform platform = Platform.host();
+            for (Expectation e : expect) {
+                if (e.matches(platform)) {
+                    if (e.expectedResult == ExpectedResult.PASS) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        return true;
     }
 
     public static String[] getImageConfigArgs(String imageConfig) {

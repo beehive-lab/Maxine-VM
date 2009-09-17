@@ -54,17 +54,17 @@ public abstract class StackFrameWalker {
     /**
      * A VM option for enabling stack frame walk tracing.
      */
-    public static final VMBooleanXXOption traceStackWalk = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
+    public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
-    private final CompilerScheme compilerScheme;
+    private final BootstrapCompilerScheme compilerScheme;
 
-    protected StackFrameWalker(CompilerScheme compilerScheme) {
+    protected StackFrameWalker(BootstrapCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
     }
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link DynamicCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
+     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
      * must deal with each type of stack walk.
      *
      * @author Doug Simon
@@ -136,8 +136,8 @@ public abstract class StackFrameWalker {
      *            {@code purpose}
      */
     private void walk(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Purpose purpose, Object context) {
-
-        if (traceStackWalk.getValue()) {
+        final boolean traceStackWalk = TRACE_STACK_WALK.getValue();
+        if (traceStackWalk) {
             Log.print("StackFrameWalk: Start stack frame walk for purpose ");
             Log.println(purpose);
         }
@@ -161,7 +161,7 @@ public abstract class StackFrameWalker {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
             if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
 
-                if (traceStackWalk.getValue()) {
+                if (traceStackWalk) {
                     Log.print("StackFrameWalk: Frame for ");
                     if (targetMethod.classMethodActor() == null) {
                         Log.print(targetMethod.description());
@@ -178,7 +178,7 @@ public abstract class StackFrameWalker {
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                final DynamicCompilerScheme compilerScheme = targetMethod.compilerScheme;
+                final RuntimeCompilerScheme compilerScheme = targetMethod.compilerScheme;
 
                 TargetMethod oldLastJavaCallee = lastJavaCallee;
 
@@ -196,7 +196,7 @@ public abstract class StackFrameWalker {
                 }
             } else {
                 final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
-                if (traceStackWalk.getValue()) {
+                if (traceStackWalk) {
                     if (stub != null) {
                         Log.print("StackFrameWalk: Frame for stub ");
                         Log.print(stub.description());
@@ -271,7 +271,7 @@ public abstract class StackFrameWalker {
             isTopFrame = false;
         }
 
-        if (traceStackWalk.getValue()) {
+        if (traceStackWalk) {
             Log.println("Finished walking the stack, returning! ");
         }
     }
@@ -281,9 +281,9 @@ public abstract class StackFrameWalker {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
             if (classMethodActor.isCFunction() && !classMethodActor.isTrapStub()) {
                 Log.print("Caller of VM entry point (@C_FUNCTION method) \"");
-                Log.print(lastJavaCallee.name());
+                Log.print(lastJavaCallee.description());
                 Log.print("\" is not native code: ");
-                Log.print(targetMethod.name());
+                Log.print(targetMethod.description());
                 Log.print(targetMethod.classMethodActor().descriptor().string);
                 Log.print(" in ");
                 Log.println(targetMethod.classMethodActor().holder().name.string);
@@ -375,12 +375,12 @@ public abstract class StackFrameWalker {
      * @param instructionPointer the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
      *            {@link NativeCallPrologueForC}
      * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if the native
-     *            stub has no {@linkplain TargetMethod#isNativeFunctionCall(int)} just after {@code instructionPointer}.
+     *            stub has no native call just after {@code instructionPointer}.
      *            If this value is false and the search fails, then {@code instructionPointer} is returned.
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer instructionPointer, boolean fatalIfNotFound) {
-        final TargetMethod nativeStubTargetMethod = targetMethodFor(instructionPointer);
+        final CPSTargetMethod nativeStubTargetMethod = (CPSTargetMethod) targetMethodFor(instructionPointer);
         if (nativeStubTargetMethod != null) {
             final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(instructionPointer);
             final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);
@@ -475,7 +475,7 @@ public abstract class StackFrameWalker {
      */
     @INLINE
     public final void reset() {
-        if (traceStackWalk.getValue()) {
+        if (TRACE_STACK_WALK.getValue()) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
             Log.println(purpose);
         }

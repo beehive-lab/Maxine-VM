@@ -148,34 +148,6 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    public CiRegister getCRarg(int i) {
-        // TODO: move this out of the compiler interface
-        switch(i) {
-            case 0:
-                return X86.rdi;
-            case 1:
-                return X86.rsi;
-            case 2:
-                return X86.rdx;
-            case 3:
-                return X86.rcx;
-            case 4:
-                return X86.r8;
-            case 5:
-                return X86.r9;
-        }
-        Util.unimplemented();
-        throw Util.shouldNotReachHere();
-    }
-
-    public CiRegister getJRarg(int i) {
-        // TODO: move this out of the compiler interface
-        if (i == 5) {
-            return getCRarg(0);
-        }
-        return getCRarg(i + 1);
-    }
-
     ClassMethodActor asClassMethodActor(RiMethod method, String operation) {
         if (method instanceof MaxRiMethod) {
             return ((MaxRiMethod) method).asClassMethodActor(operation);
@@ -216,18 +188,12 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    public int klassJavaMirrorOffsetInBytes() {
+    public int javaClassObjectOffset() {
         throw Util.unimplemented();
     }
 
-    public int hubOffsetInBytes() {
+    public int hubOffset() {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
-    }
-
-    public int overflowArgumentsSize(CiKind basicType) {
-        // TODO: Return wordSize
-        // Currently must be a constant!!
-        return 8;
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -235,11 +201,11 @@ public class MaxRiRuntime implements RiRuntime {
         return offset > 0xbad;
     }
 
-    public int threadExceptionOopOffset() {
+    public int threadExceptionOffset() {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
-    public int threadObjOffset() {
+    public int threadObjectOffset() {
         throw Util.unimplemented();
     }
 
@@ -257,7 +223,7 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
-    public int firstArrayElementOffsetInBytes(CiKind type) {
+    public int firstArrayElementOffset(CiKind type) {
         return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
@@ -273,87 +239,16 @@ public class MaxRiRuntime implements RiRuntime {
         return Util.nonFatalUnimplemented(0);
     }
 
-    public int basicObjectLockSize() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    public int elementKlassOffsetInBytes() {
+    public int elementHubOffset() {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
-    }
-
-    public int initStateOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int instanceKlassFullyInitialized() {
-        throw Util.unimplemented();
     }
 
     public int interpreterFrameMonitorSize() {
         throw Util.unimplemented();
     }
 
-    public CiRegister javaCallingConventionReceiverRegister() {
-        return X86.rax;
-    }
-
-    public int markOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int methodDataNullSeenByteConstant() {
-        throw Util.unimplemented();
-    }
-
-    public int secondarySuperCacheOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int secondarySupersOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int superCheckOffsetOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabEndOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabSizeOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabStartOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabTopOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int biasedLockMaskInPlace() {
-        throw Util.unimplemented();
-    }
-
-    public int biasedLockPattern() {
-        throw Util.unimplemented();
-    }
 
     public boolean dtraceAllocProbes() {
-        throw Util.unimplemented();
-    }
-
-    public int getMinObjAlignmentInBytesMask() {
-        throw Util.unimplemented();
-    }
-
-    public int instanceOopDescBaseOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int itableInterfaceOffsetInBytes() {
         throw Util.unimplemented();
     }
 
@@ -361,45 +256,25 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int itableOffsetEntrySize() {
+    public int initialMarkWord() {
         throw Util.unimplemented();
     }
 
-    public int itableOffsetOffsetInBytes() {
+    public int maximumArrayLength() {
         throw Util.unimplemented();
     }
 
-    public int klassPartOffsetInBytes() {
-        throw Util.unimplemented();
+    public CiLocation[] runtimeCallingConvention(CiKind[] signature) {
+        return javaCallingConvention(signature, true);
     }
 
-    public int markOopDescPrototype() {
-        throw Util.unimplemented();
-    }
-
-    public int maxArrayAllocationLength() {
-        throw Util.unimplemented();
-    }
-
-    public int prototypeHeaderOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int vtableLengthOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int runtimeCallingConvention(CiKind[] signature, CiLocation[] regs) {
-        return javaCallingConvention(signature, regs, true);
-    }
-
-    public int javaCallingConvention(CiKind[] types, CiLocation[] result, boolean outgoing) {
-
-        assert result.length == types.length;
+    public CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing) {
+        CiLocation[] result = new CiLocation[types.length];
 
         int currentGeneral = 0;
         int currentXMM = 0;
-        int currentStackSlot = 1;
+        int currentStackSlot = 0;
+        final int wordSize = VMConfiguration.hostOrTarget().platform.wordWidth().numberOfBytes;
 
         for (int i = 0; i < types.length; i++) {
 
@@ -417,9 +292,9 @@ public class MaxRiRuntime implements RiRuntime {
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
                         if (kind == CiKind.Long) {
-                            result[i] = new CiLocation(register, register);
+                            result[i] = new CiLocation(kind, register, register);
                         } else {
-                            result[i] = new CiLocation(register);
+                            result[i] = new CiLocation(kind, register);
                         }
                     }
                     break;
@@ -429,9 +304,9 @@ public class MaxRiRuntime implements RiRuntime {
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
                         if (kind == CiKind.Float) {
-                            result[i] = new CiLocation(register);
+                            result[i] = new CiLocation(kind, register);
                         } else {
-                            result[i] = new CiLocation(register, register);
+                            result[i] = new CiLocation(kind, register, register);
                         }
                     }
                     break;
@@ -441,16 +316,12 @@ public class MaxRiRuntime implements RiRuntime {
             }
 
             if (result[i] == null) {
-                result[i] = new CiLocation(currentStackSlot);
-                currentStackSlot++; //+= kind.size;
+                result[i] = new CiLocation(kind, currentStackSlot, wordSize, !outgoing);
+                currentStackSlot += wordSize;
             }
         }
 
-        return currentStackSlot - 1;
-    }
-
-    public CiLocation receiverLocation() {
-        return new CiLocation(generalParameterRegisters[0]);
+        return result;
     }
 
     public int sizeofBasicObjectLock() {
@@ -498,7 +369,7 @@ public class MaxRiRuntime implements RiRuntime {
     public CiRegister returnRegister(CiKind object) {
 
         if (object == CiKind.Void) {
-            return CiRegister.noreg;
+            return CiRegister.None;
         }
 
         if (object == CiKind.Float || object == CiKind.Double) {
@@ -510,7 +381,7 @@ public class MaxRiRuntime implements RiRuntime {
     int memberIndex;
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
-        return new C1XTargetMethodGenerator(new C1XCompilerScheme(VMConfiguration.target()), null, name, ciTargetMethod).finish();
+        return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);
     }
 
     public RiType primitiveArrayType(CiKind elemType) {
@@ -518,6 +389,10 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public CiRegister threadRegister() {
+        return X86.r14;
+    }
+
+    public CiRegister getSafepointRegister() {
         return X86.r14;
     }
 
@@ -585,14 +460,8 @@ public class MaxRiRuntime implements RiRuntime {
         return previous;
     }
 
-    @Override
     public RiType getRiType(Class<?> javaClass) {
-        ClassActor classActor = null;
-        try {
-            classActor = ClassActor.fromJava(javaClass);
-        } catch (Throwable t) {
-            // do nothing.
-        }
-        return canonicalRiType(classActor, globalConstantPool);
+        // TODO: using target is probably necessary here
+        return canonicalRiType(ClassActor.fromJava(javaClass), globalConstantPool);
     }
 }

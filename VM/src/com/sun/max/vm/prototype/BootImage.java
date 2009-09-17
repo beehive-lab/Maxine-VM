@@ -797,4 +797,17 @@ public class BootImage {
             throw new InternalError("Error trying to map section of image file: " + e);
         }
     }
+
+    private static native void nativeRelocate(long heap, long relocatedHeap, byte[] relocationDataPointer, int relocationDataSize, int isBigEndian, int wordSize);
+
+    /**
+     * Relocates the pointers in the heap and code. All the pointers are assumed to be
+     * canonicalized; their current values assume that the heap and code start address 0.
+     *
+     * @param heap the physical address at which the (contiguous) heap and code reside
+     * @param relocatedHeap the logical address to which the heap and code is being relocated
+     */
+    public void relocate(long heap, Address relocatedHeap) {
+        nativeRelocate(heap, relocatedHeap.toLong(), relocationData, relocationData.length, header.isBigEndian, header.wordSize);
+    }
 }

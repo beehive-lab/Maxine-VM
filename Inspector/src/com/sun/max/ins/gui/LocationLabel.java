@@ -42,9 +42,9 @@ public abstract class LocationLabel extends InspectorLabel {
     /**
      * @return a menu containing actions suitable for a generic memory location.
      */
-    protected InspectorMenu createLocationMenu() {
+    protected InspectorPopupMenu createLocationMenu() {
+        final InspectorPopupMenu menu = new InspectorPopupMenu("Location");
         final Address address = origin.plus(value);
-        final InspectorMenu menu = new InspectorMenu();
         menu.add(inspection().actions().copyWord(address, null));
         menu.add(inspection().actions().inspectMemoryWords(address, null));
         return menu;
@@ -87,10 +87,9 @@ public abstract class LocationLabel extends InspectorLabel {
             addMouseListener(new InspectorMouseClickAdapter(inspection) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                    switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                         case MouseEvent.BUTTON3: {
-                            final InspectorMenu menu = createLocationMenu();
-                            menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            createLocationMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                             break;
                         }
                         default: {
@@ -138,7 +137,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -166,7 +164,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
-            setBackground(style().hexDataBackgroundColor());
             updateText();
         }
 
@@ -198,7 +195,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public final void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -240,7 +236,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -289,7 +284,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -332,7 +326,6 @@ public abstract class LocationLabel extends InspectorLabel {
         public void redisplay() {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
-            setBackground(style().decimalDataBackgroundColor());
             updateText();
         }
 
@@ -374,9 +367,8 @@ public abstract class LocationLabel extends InspectorLabel {
         }
 
         public final void redisplay() {
-            setFont(style().defaultTextFont());
+            setFont(style().defaultFont());
             setForeground(style().defaultTextColor());
-            setBackground(style().defaultTextBackgroundColor());
             updateText();
         }
 

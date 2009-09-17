@@ -205,7 +205,7 @@ Psetrun_dbg(struct ps_prochandle *P,
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
-    _libproc_debug = 1;
+    _libproc_debug = log_TELE;
 
     sysset_t syscalls;
     premptyset(&syscalls);

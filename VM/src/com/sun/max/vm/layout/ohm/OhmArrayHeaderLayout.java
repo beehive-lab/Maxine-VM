@@ -61,7 +61,6 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
         headerSize = elementsOffset;
     }
 
-    @Override
     public boolean isArrayLayout() {
         return true;
     }
@@ -73,7 +72,7 @@ public class OhmArrayHeaderLayout extends OhmGeneralLayout implements ArrayHeade
 
     @INLINE
     public final Kind getElementKind(Accessor accessor) {
-        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(readHubReference(accessor).toJava());
+        final ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(readHubReference(accessor).toJava());
         return arrayClassActor.componentClassActor().kind;
     }
 

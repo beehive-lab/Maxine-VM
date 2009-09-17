@@ -491,14 +491,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      */
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
-
-        if (verifyReferences) {
-            DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
-        }
         if (fromSpace.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
             if (!forwardGrip.isZero()) {
                 return forwardGrip;
+            }
+            if (verifyReferences) {
+                DebugHeap.verifyGripAtIndex(Address.zero(), 0, grip, toSpace, fromSpace);
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
@@ -509,7 +508,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
-                final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
+                final Hub hub = UnsafeCast.asHub(Layout.readHubReference(grip).toJava());
                 Log.print("Forwarding ");
                 Log.print(hub.classActor.name.string);
                 Log.print(" from ");
@@ -571,7 +570,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             // The hub was copied
             Layout.writeHubGrip(origin, newHubGrip);
         }
-        final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
+        final Hub hub = UnsafeCast.asHub(newHubGrip.toJava());
 
         // Update the other references in the object
         final SpecificLayout specificLayout = hub.specificLayout;
@@ -614,7 +613,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private boolean cannotGrow() {
-        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize());
+        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize().dividedBy(2));
     }
 
     /**
@@ -637,7 +636,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             // It is important to know now that we can allocate both spaces of the new size
             // and, if we cannot, to leave things as they are, so that the VM can continue
             // using the safety zone and perhaps then free enough space to continue.
-            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize());
+            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize().dividedBy(2));
             if (preGc && Heap.verbose()) {
                 Log.print("...new heap size: ");
                 Log.println(size.toLong());
@@ -902,7 +901,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         final int padWords = DebugHeap.writeCellPadding(tlabMark, tlabTop);
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            final VmThread vmThread = UnsafeLoophole.cast(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
+            final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
             Log.printVmThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);

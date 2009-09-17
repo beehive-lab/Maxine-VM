@@ -50,6 +50,14 @@ import com.sun.max.vm.type.*;
  */
 public final class MaxineVM {
 
+    @PROTOTYPE_ONLY
+    private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
+        @Override
+        protected synchronized MaxineVM initialValue() {
+            return host();
+        }
+    };
+
     public static final String VERSION = "0.2";
     public static final int HARD_EXIT_CODE = -2;
 
@@ -133,6 +141,11 @@ public final class MaxineVM {
         PROTOTYPING,
 
         /**
+         * Creating the compiled prototype.
+         */
+        CREATING_COMPILED_PROTOTYPE,
+
+        /**
          * Executing target VM code, but many features do not work yet.
          */
         PRIMORDIAL,
@@ -150,7 +163,7 @@ public final class MaxineVM {
         /**
          * Executing application code.
          */
-        RUNNING
+        RUNNING,
     }
 
     /**
@@ -248,14 +261,6 @@ public final class MaxineVM {
     public static void setTarget(MaxineVM vm) {
         target = vm;
     }
-
-    @PROTOTYPE_ONLY
-    private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
-        @Override
-        protected synchronized MaxineVM initialValue() {
-            return host();
-        }
-    };
 
     /**
      * Runs a given command that is not expected to throw a checked exception in the context of the target VM

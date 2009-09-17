@@ -41,15 +41,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         this.compilation = lirAssembler.compilation;
     }
 
-    private int overflowArgumentsSize(CallingConvention cc) {
-        int result = 0;
-        for (LIROperand op : cc.args()) {
-            if (op.isStack()) {
-                result += compilation.runtime.overflowArgumentsSize(op.basicType);
-            }
-        }
-        return result;
-    }
 
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
@@ -64,15 +55,15 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // save the caller's RBP
 
 
-        final int wordSize =  masm.target.arch.wordSize;
+        final int wordSize =  compilation.target.arch.wordSize;
 
-        // Receive calling convention
+        // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
-        CallingConvention cc = map.incomingArguments();
+        CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true);
 
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
-        final int adapterFrameSize = overflowArgumentsSize(cc);
+        final int adapterFrameSize = cc.overflowArgumentsSize();
 
         // Allocate space on the stack (adapted parameters + caller's frame pointer)
         masm.push(X86.rbp);
@@ -92,20 +83,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         int jitCallerStackOffset = adapterFrameSize + framePrefixSize;
 
         final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
-        for (int i = cc.args().size() - 1; i >= 0;  i--) {
-            LIROperand dst = cc.args().get(i);
-            CiKind t = dst.basicType;
-            LIROperand src = LIROperandFactory.address(X86.rsp, jitCallerStackOffset, t);
-
-            if (dst.isStack()) {
-                int stackSlot = dst.stackIx();
-
-                int argumentLocation = compilation.frameMap().getArgumentLocation(stackSlot);
-                int displacement = argumentLocation - compilation.frameMap().framesize() - wordSize;
-                dst = LIROperandFactory.address(X86.rsp, displacement, t);
-                assert displacement < adapterFrameSize && displacement >= 0;
-            }
-            ce.moveOp(src, dst, t, LIRPatchCode.PatchNone, null, false);
+        for (int i = cc.locations().length - 1; i >= 0;  i--) {
+            CiLocation location = cc.locations()[i];
+            CiKind t = location.kind;
+            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, t);
+            ce.moveOp(src, cc.at(i), t, null, false);
             jitCallerStackOffset += t.size * jitSlotSize;
         }
 
@@ -138,7 +120,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
         // next registers will get stored on the stack
         for (int i = 0; i < 5; i++) {
-            LIROperand r1 = cc.args().get(i);
+            LIROperand r1 = cc.arguments().get(i);
             if (r1.isStack()) {
                 int stOff = r1.singleStackIx() * compilation.target.arch.wordSize;
                 masm.movptr(new Address(X86.rsp, stOff), r[i]);
@@ -159,7 +141,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowArrayStoreException);
+        masm.callGlobalStub(GlobalStub.ThrowArrayStoreException, stub.info);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -176,7 +158,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowDiv0Exception);
+        masm.callGlobalStub(GlobalStub.ThrowDiv0Exception, stub.info);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -190,7 +172,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowNullPointerException);
+        masm.callGlobalStub(GlobalStub.ThrowNullPointerException, stub.info);
         ce.addCallInfoHere(stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -203,7 +185,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.MonitorEnter, CiRegister.noreg, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        masm.callGlobalStub(GlobalStub.MonitorEnter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         masm.jmp(stub.continuation);
@@ -217,7 +199,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
 
-        masm.callGlobalStub(GlobalStub.MonitorExit, CiRegister.noreg, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         masm.jmp(stub.continuation);
     }
 
@@ -225,7 +207,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        masm.callGlobalStub(stub.stubId, stub.result().asRegister(), stub.klassReg().asRegister());
+        masm.callGlobalStub(stub.stubId, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
         masm.jmp(stub.continuation);
     }
 
@@ -233,7 +215,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, X86.rax, X86.rdx, X86.rbx);
+        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
@@ -244,125 +226,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, X86.rax, X86.rdx, X86.rbx);
+        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
         ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
-    }
-
-    public void visitPatchingStub(PatchingStub stub) {
-        assert compilation.target.arch.nativeMoveConstInstructionSize <= stub.bytesToCopy && stub.bytesToCopy <= 0xFF : "not enough room for call";
-
-        // TODO: Implement this properly!
-//
-// Label callPatch = new Label();
-//
-// // static field accesses have special semantics while the class
-// // initializer is being run so we emit a test which can be used to
-// // check that this code is being executed by the initializing
-// // thread.
-// Pointer beingInitializedEntry = lir(). pc();
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment(" patch template");
-// }
-// if (stub.id() == PatchID.LoadKlassId) {
-// // produce a copy of the load klass instruction for use by the being initialized case
-// Pointer start = lir(). pc();
-// Object o = null;
-// lir(). movoop(stub.obj, o);
-//
-// if (C1XOptions.DetailedAsserts) {
-// for (int i = 0; i < stub.bytesToCopy; i++) {
-// Pointer ptr = (Pointer)(stub.pcStart + i);
-// int aByte = (ptr) & 0xFF;
-// assert aByte == *start++ : "should be the same code";
-// }
-// }
-// } else {
-// // make a copy the code which is going to be patched.
-// for ( int i = 0; i < bytesToCopy; i++) {
-// Pointer ptr = (Pointer)(pcStart + i);
-// int aByte = (ptr) & 0xFF;
-// lir(). aByte (aByte);
-// *ptr = 0x90; // make the site look like a nop
-// }
-// }
-//
-// Pointer endOfPatch = lir(). pc();
-// int bytesToSkip = 0;
-// if (stub.id() == PatchID.LoadKlassId) {
-// int offset = lir(). offset();
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment(" beingInitialized check");
-// }
-// assert stub.obj != Register.noreg : "must be a valid register";
-// Register tmp = X86Register.rax;
-// if (stub.obj == tmp) tmp = X86Register.rbx;
-// lir(). push(tmp);
-// lir(). getThread(tmp);
-// lir(). cmpptr(tmp, new Address(stub.obj, compilation.runtime.initThreadOffsetInBytes() +
-        // compilation.runtime.sizeofKlassOopDesc()));
-// lir(). pop(tmp);
-// lir(). jcc(X86Assembler.Condition.notEqual, callPatch);
-//
-// // accessField patches may execute the patched code before it's
-// // copied back into place so we need to jump back into the main
-// // code of the nmethod to continue execution.
-// lir(). jmp(stub.patchSiteContinuation);
-//
-// // make sure this extra code gets skipped
-// bytesToSkip += lir(). offset() - offset;
-// }
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment("patch data encoded as movl");
-// }
-// // Now emit the patch record telling the runtime how to find the
-// // pieces of the patch. We only need 3 bytes but for readability of
-// // the disassembly we make the data look like a movl reg, imm32,
-// // which requires 5 bytes
-// int sizeofPatchRecord = 5;
-// bytesToSkip += sizeofPatchRecord;
-//
-// // emit the offsets needed to find the code to patch
-// int beingInitializedEntryOffset = lir(). pc() - beingInitializedEntry + sizeofPatchRecord;
-//
-// lir(). aByte(0xB8);
-// lir(). aByte(0);
-// lir(). aByte(beingInitializedEntryOffset);
-// lir(). aByte(bytesToSkip);
-// lir(). aByte(stub.bytesToCopy);
-// Pointer patchInfoPc = lir(). pc();
-// assert patchInfoPc - endOfPatch == bytesToSkip : "incorrect patch info";
-//
-// Pointer entry = lir(). pc();
-// NativeGeneralJump.insertUnconditional((Pointer)pcStart, entry);
-// CiRuntimeCall target = null;
-// switch (stub.id()) {
-// case AccessFieldId: target = CiRuntimeCall.AccessFieldPatching; break;
-// case LoadKlassId: target = CiRuntimeCall.LoadKlassPatching; break;
-// default: throw Util.shouldNotReachHere();
-// }
-// lir(). bind(callPatch);
-//
-// if (C1XOptions.CommentedAssembly) {
-// lir(). blockComment("patch entry point");
-// }
-// lir(). call(new RuntimeAddress(target));
-// assert patchInfoOffset == (patchInfoPc - lir(). pc()) : "must not change";
-// ce.addCallInfoHere(info);
-// int jmpOff = lir(). offset();
-// lir(). jmp(stub.patchSiteEntry);
-// // Add enough nops so deoptimization can overwrite the jmp above with a call
-// // and not destroy the world.
-// for (int j = lir(). offset() ; j < jmpOff + 5 ; j++ ) {
-// lir(). nop();
-// }
-// if (stub.id() == PatchID.LoadKlassId) {
-// CodeSection cs = lir(). codeSection();
-// RelocIterator iter(cs, (Pointer)pcStart, (Pointer)(pcStart + 1));
-// RelocInfo.Type.changeRelocInfoForAddress(&iter, (Pointer) pcStart, RelocInfo.Type.oopType, RelocInfo.Type.none);
-// }
     }
 
     public void visitRangeCheckStub(RangeCheckStub stub) {
@@ -374,10 +242,13 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             stubId = GlobalStub.ThrowRangeCheckFailed;
         }
 
-        if (stub.index().isCpuRegister()) {
-            masm.callGlobalStub(stubId, CiRegister.noreg, stub.index().asRegister());
+        LIROperand index = stub.index();
+        if (index.isRegister()) {
+            masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
         } else {
-            masm.callGlobalStub(stubId, CiRegister.noreg, new RegisterOrConstant(stub.index().asInt()));
+            assert index.isConstant();
+            LIRConstant constantIndex = (LIRConstant) index;
+            masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
         }
 
         ce.addCallInfoHere(stub.info);
@@ -393,9 +264,9 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         masm.bind(stub.entry);
         if (stub.obj().isIllegal()) {
-            masm.callGlobalStub(stub.stub);
+            masm.callGlobalStub(stub.stub, stub.info);
         } else {
-            masm.callGlobalStub(stub.stub, CiRegister.noreg, stub.obj().asRegister());
+            masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
         }
         ce.addCallInfoHere(stub.info);
 

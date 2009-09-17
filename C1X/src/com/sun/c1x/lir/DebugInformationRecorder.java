@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
 import com.sun.c1x.ri.*;
 
 /**
@@ -53,24 +51,6 @@ public class DebugInformationRecorder {
     public void endNonSafepoint(int pcOffset) {
         // TODO Auto-generated method stub
 
-    }
-
-    /**
-     * @param locals
-     * @return
-     */
-    public long createScopeValues(List<ScopeValue> locals) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * @param monitors
-     * @return
-     */
-    public long createMonitorValues(List<MonitorValue> monitors) {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
     /**

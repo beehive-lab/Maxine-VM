@@ -244,7 +244,7 @@ static off_t pageAligned(off_t offset) {
 
 static void checkTrailer(int fd) {
 #if !MEMORY_IMAGE
-    off_t fileSize, offset;
+    off_t fileSize, expectedFileSize, offset;
     int n;
 #endif
     off_t trailerOffset;
@@ -255,14 +255,12 @@ static void checkTrailer(int fd) {
 
 #if !MEMORY_IMAGE
     fileSize = lseek(fd, 0, SEEK_END);
+    expectedFileSize = trailerOffset + sizeof(trailerStruct);
     if (fileSize < 0) {
         log_exit(1, "could not set end position in file");
     }
-    if (fileSize - (off_t) sizeof(trailerStruct) < trailerOffset) {
-        log_exit(2, "truncated file: expected %u bytes, read %");
-    }
-    if (fileSize - (off_t) sizeof(trailerStruct) > trailerOffset) {
-        log_println("WARNING: file too large - expected: %d,  found %d", (int) (trailerOffset + sizeof(trailerStruct)), (int) fileSize);
+    if (fileSize != expectedFileSize) {
+        log_exit(2, "wrong image file size: expected %u bytes, read %u", expectedFileSize,  fileSize);
     }
     offset = lseek(fd, trailerOffset, SEEK_SET);
     if (offset != trailerOffset) {
@@ -367,7 +365,7 @@ static void relocate(int fd) {
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
 #endif
 
-    relocation_apply((void *) theHeap, relocationData, theHeader->relocationDataSize, theHeader->cacheAlignment, word_BIG_ENDIAN, theHeader->wordSize);
+    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE
     free(relocationData);

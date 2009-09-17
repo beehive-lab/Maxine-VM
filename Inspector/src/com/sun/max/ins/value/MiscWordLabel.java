@@ -55,7 +55,7 @@ public final class MiscWordLabel extends ValueLabel {
         addMouseListener(new InspectorMouseClickAdapter(inspection()) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
-                switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
+                switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
                         final InspectorAction inspectAction = getInspectJavaMonitorAction();
                         if (inspectAction.isEnabled()) {
@@ -68,10 +68,10 @@ public final class MiscWordLabel extends ValueLabel {
                         break;
                     }
                     case MouseEvent.BUTTON3: {
-                        final InspectorMenu menu = new InspectorMenu();
+                        final InspectorPopupMenu menu = new InspectorPopupMenu("Header Misc. Word");
                         menu.add(getCopyWordAction());
                         menu.add(getInspectJavaMonitorAction());
-                        menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     }
                 }
             }
@@ -86,7 +86,6 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     public void redisplay() {
-        setBackground(style().hexDataBackgroundColor());
         setFont(style().hexDataFont());
         setForeground(style().hexDataColor());
         updateText();

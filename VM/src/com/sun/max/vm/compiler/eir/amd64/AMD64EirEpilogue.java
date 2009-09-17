@@ -58,7 +58,7 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
                     // Also, note that this works too with an adapter frame. In that case, the trampoline returns the adapter frame's RIP and
                     // the call entry point of the method was stored directly on the adapter frame.
 
-                    // Last, we manipulate the frame pointer only once, and at the end, so as not minimize the work for stack walkers.
+                    // Last, we manipulate the frame pointer only once, and at the end, so as to minimize the work for stack walkers.
                     final AMD64GeneralRegister64 newRipRegister = ((AMD64EirRegister.General) emitter.abi().getResultLocation(Kind.WORD)).as64();
                     if (frameSize == 0) {
                         asm.push(newRipRegister);

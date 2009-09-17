@@ -40,10 +40,7 @@ public abstract class BuiltinsSnippet extends Snippet {
         @SNIPPET
         @INLINE
         public static Object getStaticTuple(FieldActor fieldActor) {
-            // This cast merely avoids the interface call 'Holder.staticTuple()',
-            // which cannot be eliminated at snippet optimization time yet.
-            final ClassActor classActor = UnsafeLoophole.cast(fieldActor.holder());
-            return classActor.staticTuple();
+            return UnsafeCast.asClassActor(fieldActor.holder()).staticTuple();
         }
         public static final GetStaticTuple SNIPPET = new GetStaticTuple();
     }

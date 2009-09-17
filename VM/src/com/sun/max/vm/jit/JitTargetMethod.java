@@ -44,7 +44,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
+public abstract class JitTargetMethod extends CPSTargetMethod {
 
     private int adapterReturnPosition;
     private int optimizedCallerAdapterFrameCodeSize;
@@ -80,7 +80,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
     private int[] bytecodeToTargetCodePositionMap;
 
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, DynamicCompilerScheme compilerScheme) {
+    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }
 
@@ -131,18 +131,12 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
     }
 
-    @Override
-    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
-        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
-    }
-
     /**
      * Gets the bytecode position for a machine code instruction address.
      *
-     * @param instructionPointer
-     *                an instruction pointer that may denote an instruction in this target method
+     * @param instructionPointer an instruction pointer that may denote an instruction in this target method
      * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
-     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode.  This will be
      *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
      *         code, prologue or epilogue.
      */
@@ -152,6 +146,19 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         return bytecodePositionFor(targetCodePosition);
     }
+
+    /**
+     * Gets the bytecode position for a machine code call site address.
+     *
+     * @param instructionPointer an instruction pointer that may denote a call site in this target method.   The pointer
+     *        is passed as was written to the platform-specific link register.  E.g. on SPARC, the instructionPointer is
+     *        the PC of the call itself.  On AMD64, the instructionPointer is the PC of the instruction following the call.
+     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
+     *         code, prologue or epilogue.
+     */
+    public abstract int bytecodePositionForCallSite(Pointer instructionPointer);
 
     /**
      * This method is guaranteed not to perform allocation.
@@ -236,8 +243,7 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
             codeOrCodeBuffer,
             encodedInlineDataDescriptors,
             jitStackFrameLayout.frameSize(),
-            jitStackFrameLayout.frameReferenceMapSize(),
-            abi
+            jitStackFrameLayout.frameReferenceMapSize(), abi
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -286,9 +292,13 @@ public abstract class JitTargetMethod extends ExceptionRangeTargetMethod {
         }
     }
 
-    @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
         finalizeReferenceMaps();
+
+        if (stackReferenceMapPreparer.checkIgnoreCurrentFrame()) {
+            return true;
+        }
+
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter);
     }
 

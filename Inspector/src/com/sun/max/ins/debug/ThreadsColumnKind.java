@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public enum ThreadsColumnKind {
+public enum ThreadsColumnKind implements ColumnKind {
 
     ID("ID", "ID assigned by VM, none if native", true, 15),
     HANDLE("Handle", "Native thread library handle", true, 15),
@@ -40,7 +40,6 @@ public enum ThreadsColumnKind {
         }
     },
     STATUS("Status", null, true, -1);
-
 
     private final String label;
     private final String toolTipText;
@@ -55,23 +54,14 @@ public enum ThreadsColumnKind {
         assert defaultVisibility || canBeMadeInvisible();
     }
 
-    /**
-     * @return text to appear in the column header
-     */
     public String label() {
         return label;
     }
 
-    /**
-     * @return text to appear in the column header's toolTip, null if none specified.
-     */
     public String toolTipText() {
         return toolTipText;
     }
 
-    /**
-     * @return minimum width allowed for this column when resized by user; -1 if none specified.
-     */
     public int minWidth() {
         return minWidth;
     }
@@ -81,16 +71,10 @@ public enum ThreadsColumnKind {
         return label;
     }
 
-    /**
-     * @return whether this column kind can be made invisible; default true.
-     */
     public boolean canBeMadeInvisible() {
         return true;
     }
 
-    /**
-     * Determines if this column should be visible by default; default true.
-     */
     public boolean defaultVisibility() {
         return defaultVisibility;
     }

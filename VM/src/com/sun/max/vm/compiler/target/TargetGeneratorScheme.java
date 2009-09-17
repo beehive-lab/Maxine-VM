@@ -25,6 +25,6 @@ import com.sun.max.vm.compiler.*;
 /**
  * @author Bernd Mathiske
  */
-public interface TargetGeneratorScheme extends CompilerScheme {
+public interface TargetGeneratorScheme extends BootstrapCompilerScheme {
     TargetGenerator targetGenerator();
 }

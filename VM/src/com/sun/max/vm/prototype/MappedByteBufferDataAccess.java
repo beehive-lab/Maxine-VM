@@ -55,14 +55,13 @@ public final class MappedByteBufferDataAccess extends DataAccessAdapter {
     }
 
     private int asOffset(Address address) {
+        if (base.isZero()) {
+            return address.toInt();
+        }
         if (address.lessThan(base)) {
             throw new DataIOError(address);
         }
-
-        if (address.toLong() < 0 || address.toLong() > Integer.MAX_VALUE) {
-            throw new DataIOError(address);
-        }
-        return base.toInt() + address.toInt();
+        return address.minus(base).toInt();
     }
 
     public byte readByte(Address address) {

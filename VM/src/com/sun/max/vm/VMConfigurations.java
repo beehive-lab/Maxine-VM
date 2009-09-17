@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.asm.InstructionSet.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.trampoline.template.Package;
 
 
 /**
@@ -38,7 +39,7 @@ public final class VMConfigurations {
     private VMConfigurations() {
     }
 
-    private static VMPackage defaultCompilerPackage(Platform platform) {
+    public static VMPackage defaultCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
@@ -49,7 +50,7 @@ public final class VMConfigurations {
         }
     }
 
-    private static VMPackage defaultJitCompilerPackage(Platform platform) {
+    public static VMPackage defaultJitCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.jit.amd64.Package();
@@ -60,7 +61,7 @@ public final class VMConfigurations {
         }
     }
 
-    private static VMPackage defaultTargetABIsPackage(Platform platform) {
+    public static VMPackage defaultTargetABIsScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
                 return new com.sun.max.vm.compiler.target.amd64.Package();
@@ -71,50 +72,101 @@ public final class VMConfigurations {
         }
     }
 
-    private static VMPackage defaultHeapPackage() {
+    public static VMPackage defaultHeapScheme() {
         return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
-    private static VMPackage defaultReferenceScheme() {
+    public static VMPackage defaultReferenceScheme() {
         return new com.sun.max.vm.reference.heap.Package();
     }
 
-    private static VMPackage defaultLayoutPackage(Platform platform) {
-        if (false && platform.instructionSet().category == Category.RISC) {
-            // The HOM layout does not work yet. Also, debugging the reason why with
-            // the inspector is not yet possible as the inspector relies on
-            // GeneralLayout.originToCell() to work *without* reading memory.
-            // This is not the case for HomGeneralLayout.
+    public static VMPackage defaultLayoutScheme(Platform platform) {
+        if (platform.instructionSet().category == Category.RISC) {
+            // On SPARC, the HOM layout enables more optimized code for accessing array elements
+            // smaller than a word as there is no need to perform address arithmetic to skip
+            // over the header; the origin is pointing at array element 0.
+            // A disadvantage of HOM is that the cell and origin addresses
+            // of an object are not one and the same (which they are for OHM)
+            // and converting between them requires reading memory.
             return new com.sun.max.vm.layout.hom.Package();
         }
         return new com.sun.max.vm.layout.ohm.Package();
     }
 
+    public static com.sun.max.vm.run.java.Package defaultRunScheme() {
+        return new com.sun.max.vm.run.java.Package();
+    }
+
+    public static com.sun.max.vm.grip.direct.Package defaultGripScheme() {
+        return new com.sun.max.vm.grip.direct.Package();
+    }
+
+    public static com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package defaultMonitorScheme() {
+        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
+    }
+
+    public static Package defaultTrampolineScheme() {
+        return new com.sun.max.vm.trampoline.template.Package();
+    }
+
     public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), defaultLayoutPackage(platform),
-                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform), new com.sun.max.vm.trampoline.template.Package(),
-                        defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
+        return new VMConfiguration(buildLevel, platform,
+            defaultGripScheme(),
+            defaultReferenceScheme(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            defaultMonitorScheme(),
+            defaultCompilerScheme(platform),
+            defaultJitCompilerScheme(platform),
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
     }
 
     public static VMConfiguration createStandardInterpreter(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), defaultLayoutPackage(platform),
-                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform), new com.sun.max.vm.trampoline.template.Package(),
-                        defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
+        return new VMConfiguration(buildLevel, platform,
+            defaultGripScheme(),
+            defaultReferenceScheme(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            defaultMonitorScheme(),
+            defaultCompilerScheme(platform),
+            defaultJitCompilerScheme(platform),
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
-        return createStandard(buildLevel, platform, defaultCompilerPackage(platform));
+        return createStandard(buildLevel, platform,
+            defaultCompilerScheme(platform));
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform, VMPackage compilerPackage) {
-        return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), defaultLayoutPackage(platform),
-                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), compilerPackage, null, new com.sun.max.vm.trampoline.template.Package(), defaultTargetABIsPackage(platform),
-                        new com.sun.max.vm.run.java.Package());
+        return new VMConfiguration(buildLevel, platform,
+            defaultGripScheme(),
+            defaultReferenceScheme(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            defaultMonitorScheme(),
+            compilerPackage,
+            null,
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
     }
 
     public static VMConfiguration createPrototype(BuildLevel buildLevel, Platform platform) {
-        return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.prototype.Package(), new com.sun.max.vm.reference.prototype.Package(), defaultLayoutPackage(platform),
-                        defaultHeapPackage(), new com.sun.max.vm.monitor.prototype.Package(), new com.sun.max.vm.compiler.prototype.Package(), null, new com.sun.max.vm.trampoline.template.Package(), defaultTargetABIsPackage(platform),
-                        new com.sun.max.vm.run.java.Package());
+        return new VMConfiguration(buildLevel, platform,
+            new com.sun.max.vm.grip.prototype.Package(),
+            new com.sun.max.vm.reference.prototype.Package(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            new com.sun.max.vm.monitor.prototype.Package(),
+            new com.sun.max.vm.compiler.prototype.Package(),
+            null,
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
     }
 }

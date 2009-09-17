@@ -23,7 +23,11 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Marks a field, method or constructor that is reflected upon by the inspector.
+ * Marks a field, method or constructor that is reflected upon by the Inspector.
+ *
+ * The Inspector uses this annotation to auto-generate objects for accessing the
+ * annotated entity in the remote VM process. See the {@code TeleFields}
+ * and {@code TeleMethods} classes in the Tele project.
  *
  * @author Doug Simon
  */

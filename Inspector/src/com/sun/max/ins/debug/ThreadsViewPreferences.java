@@ -44,6 +44,9 @@ public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColum
         return globalPreferences;
     }
 
+    // Prefix for all persistent column preferences in view
+    private static final String THREADS_COLUMN_PREFERENCE = "threadsViewColumn";
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -56,21 +59,6 @@ public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColum
     * persistent global choices are identical.
     */
     private ThreadsViewPreferences(Inspection inspection) {
-        super(inspection, "threadsViewPrefs", ThreadsColumnKind.class, ThreadsColumnKind.VALUES);
-    }
-
-    @Override
-    protected boolean canBeMadeInvisible(ThreadsColumnKind columnType) {
-        return columnType.canBeMadeInvisible();
-    }
-
-    @Override
-    protected boolean defaultVisibility(ThreadsColumnKind columnType) {
-        return columnType.defaultVisibility();
-    }
-
-    @Override
-    protected String label(ThreadsColumnKind columnType) {
-        return columnType.label();
+        super(inspection, THREADS_COLUMN_PREFERENCE, ThreadsColumnKind.VALUES);
     }
 }

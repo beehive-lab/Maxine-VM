@@ -42,7 +42,7 @@ public final class ByteArrayBitMap implements Cloneable {
     private int offset;
 
     /**
-     * The number of bytes in {@link #bytes} reserved for this bit map's bits start.
+     * The number of bytes in {@link #bytes} reserved for this bit map's bits.
      */
     private int size;
 

@@ -98,8 +98,12 @@ public abstract class TeleVM implements MaxVM {
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
      */
     public static class Options extends OptionSet {
-        public final Option<Boolean> debugOption = newBooleanOption("d", false,
-            "Makes the inspector create a Maxine VM process as the target of inspection. If omitted or 'false', then the boot image is inspected.");
+
+        /**
+         * Specifies if these options apply when creating a {@linkplain TeleVM#createReadOnly(File, Classpath) read-only} Tele VM.
+         */
+        public final boolean readOnly;
+
         public final Option<File> bootImageFileOption = newFileOption("i", BootImageGenerator.getDefaultBootImageFilePath(),
             "Path to boot image file.");
         public final Option<File> bootJarOption = newFileOption("j", BootImageGenerator.getDefaultBootImageJarFilePath(),
@@ -109,18 +113,43 @@ public abstract class TeleVM implements MaxVM {
             "boot image classes but before the locations corresponding to the class path of this JVM process.");
         public final Option<List<String>> sourcepathOption = newStringListOption("sourcepath", null, File.pathSeparatorChar,
             "Additional locations to use when searching for Java source files. These locations are searched before the default locations.");
-        public final Option<Boolean> relocateOption = newBooleanOption("b", false,
-            "Specifies if the heap and code in the boot image is to be relocated. Ignored if -" + debugOption.getName() + " is specified.");
-        public final Option<String> vmArguments = newStringOption("a", null,
-            "Specifies the arguments to the target VM.");
         public final Option<File> commandFileOption = newFileOption("c", "",
             "Executes the commands in a file on startup.");
-        public final Option<Integer> debuggeeIdOption = newIntegerOption("id", -1,
-            "Process id of VM instance to which this debugger should attach. A value of -1 indicates that a new VM " +
-            "process should be started using the arguments specified by the -" + vmArguments + " option.");
         public final Option<String> logLevelOption = newStringOption("logLevel", Level.SEVERE.getName(),
             "Level to set for java.util.logging root logger.");
+
+        /**
+         * This field is {@code null} if {@link #readOnly} is {@code false}.
+         */
+        public final Option<String> heapOption;
+
+        /**
+         * This field is {@code null} if {@link #readOnly} is {@code true}.
+         */
+        public final Option<String> vmArguments;
+
+        /**
+         * This field is {@code null} if {@link #readOnly} is {@code true}.
+         */
+        public final Option<Integer> debuggeeIdOption;
+
+        public Options(boolean readOnly) {
+            this.readOnly = readOnly;
+            if (readOnly) {
+                heapOption = newStringOption("heap", null, "Relocation address for the heap and code in the boot image.");
+                vmArguments = null;
+                debuggeeIdOption = null;
+            } else {
+                heapOption = null;
+                vmArguments = newStringOption("a", null, "Specifies the arguments to the target VM.");
+                debuggeeIdOption = newIntegerOption("id", -1,
+                    "Process id of VM instance to which this debugger should attach. A value of -1 indicates that a new VM " +
+                    "process should be started using the arguments specified by the -" + vmArguments + " option.");
+            }
+        }
     }
+
+
 
     /**
      * Creates a new VM instance based on a given set of options.
@@ -163,10 +192,9 @@ public abstract class TeleVM implements MaxVM {
         }
         checkClasspath(sourcepath);
 
-        final String value = options.vmArguments.getValue();
-        final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.trim().split(" "));
-
-        if (options.debugOption.getValue()) {
+        if (!options.readOnly) {
+            final String value = options.vmArguments.getValue();
+            final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.trim().split(" "));
             teleVM = create(bootImageFile, sourcepath, commandLineArguments, options.debuggeeIdOption.getValue());
             teleVM.teleProcess().initializeState();
             try {
@@ -181,6 +209,11 @@ public abstract class TeleVM implements MaxVM {
             }
 
         } else {
+            String heap = options.heapOption.getValue();
+            if (heap != null) {
+                assert System.getProperty(ReadOnlyTeleProcess.HEAP_PROPERTY) == null;
+                System.setProperty(ReadOnlyTeleProcess.HEAP_PROPERTY, heap);
+            }
             teleVM = createReadOnly(bootImageFile, sourcepath);
             teleVM.refresh(0);
         }
@@ -476,7 +509,9 @@ public abstract class TeleVM implements MaxVM {
                 this.teleProcess = createTeleProcess(commandLineArguments, agent);
                 this.bootImageStart = loadBootImage(agent);
             } catch (BootImageException e) {
-                agent.close();
+                if (agent != null) {
+                    agent.close();
+                }
                 throw e;
             }
         }
@@ -820,15 +855,16 @@ public abstract class TeleVM implements MaxVM {
         if (origin.isZero()) {
             return false;
         }
+
         try {
             if (!containsInHeap(origin) && !containsInCode(origin)) {
                 return false;
             }
-//            if (false && isInGC() && containsInDynamicHeap(origin)) {
-//                //  Assume that any reference to the dynamic heap is invalid during GC.
-//                return false;
-//            }
-            if (bootImage.vmConfiguration.debugging()) {
+            if (false && isInGC() && containsInDynamicHeap(origin)) {
+                //  Assume that any reference to the dynamic heap is invalid during GC.
+                return false;
+            }
+            if (false && bootImage.vmConfiguration.debugging()) {
                 final Pointer cell = layoutScheme().generalLayout.originToCell(origin);
                 // Checking is easy in a debugging build; there's a special word preceding each object
                 final Word tag = dataAccess().getWord(cell, 0, -1);
@@ -1054,14 +1090,14 @@ public abstract class TeleVM implements MaxVM {
         try {
             return makeClassActor(name);
         } catch (ClassNotFoundException classNotFoundException) {
-            // Not loaded and not available on local classpath; load by copying
-            // classfile from the VM
+            // Not loaded and not available on local classpath; load by copying classfile from the VM
             final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
-            ProgramError.check(teleByteArrayObject != null, "could not find class actor: " + name);
+            if (teleByteArrayObject == null) {
+                throw new NoClassDefFoundError("Could not retrieve class file from VM for " + name);
+            }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(
-                    name, classfile);
+            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(name, classfile);
         }
     }
 
@@ -1918,17 +1954,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public Pointer getForwardedObjectPointer(Pointer pointer) {
-        if (isInGC()) {
-            return VMConfiguration.hostOrTarget().heapScheme().getForwardedObjectPointer(pointer);
-        }
-        return pointer;
+        return VMConfiguration.hostOrTarget().heapScheme().getForwardedObjectPointer(pointer);
     }
 
     public Pointer getForwardedObject(Pointer pointer) {
-        if (isInGC()) {
-            return VMConfiguration.hostOrTarget().heapScheme().getForwardedObject(pointer, teleProcess.dataAccess());
-        }
-        return pointer;
+        return VMConfiguration.hostOrTarget().heapScheme().getForwardedObject(pointer, teleProcess.dataAccess());
     }
 
     /**

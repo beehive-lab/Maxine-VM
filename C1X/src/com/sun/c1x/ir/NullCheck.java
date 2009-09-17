@@ -43,7 +43,9 @@ public class NullCheck extends StateSplit {
         super(obj.type(), stateBefore);
         this.object = obj;
         setFlag(Flag.NonNull);
-        setNeedsNullCheck(!obj.isNonNull());
+        if (object.isNonNull()) {
+            redundantNullCheck();
+        }
     }
 
     /**
@@ -52,20 +54,6 @@ public class NullCheck extends StateSplit {
      */
     public Value object() {
         return object;
-    }
-
-    /**
-     * Sets whether this instruction requires a null check.
-     * @param on {@code true} if this instruction requires a null check
-     */
-    public void setNeedsNullCheck(boolean on) {
-        if (on) {
-            assert stateBefore != null;
-            setFlag(Value.Flag.NoNullCheck);
-        } else {
-            stateBefore = null;
-            clearFlag(Value.Flag.NoNullCheck);
-        }
     }
 
     /**
@@ -123,6 +111,7 @@ public class NullCheck extends StateSplit {
 
     @Override
     public boolean internalClearNullCheck() {
+        stateBefore = null;
         return true;
     }
 }

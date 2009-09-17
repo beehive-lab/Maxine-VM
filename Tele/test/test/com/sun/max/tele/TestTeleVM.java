@@ -43,7 +43,7 @@ public class TestTeleVM {
     private static TeleVM teleVM = null;
 
     public static TeleVM create() {
-        final Options options = new Options();
+        final Options options = new Options(false);
 
         final File bootJar = BootImageGenerator.getDefaultBootImageJarFilePath();
         Classpath classpathPrefix = Classpath.EMPTY;
@@ -59,7 +59,6 @@ public class TestTeleVM {
             projectDirectory.toString() + "/bin " +
             "test.com.sun.max.tele.HelloWorld";
 
-        options.debugOption.setValue(Boolean.TRUE);
         options.bootImageFileOption.setValue(BootImageGenerator.getDefaultBootImageFilePath());
         options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
         options.vmArguments.setValue(vmArguments);

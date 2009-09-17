@@ -35,6 +35,8 @@ public abstract class TeleGrip extends Grip {
 
     protected TeleGrip forwardedTeleGrip = null;
 
+    protected boolean collectedByGC = false;
+
     public enum State {
         LIVE,
         OBSOLETE,

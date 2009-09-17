@@ -39,12 +39,12 @@ public interface InspectorStyle {
     String name();
 
     // Window, Frame, Desktop attributes
-    /** Default background color for all inspector display elements. */
-    Color defaultBackgroundColor();
     /** Default color for all custom borders used in the inspector. */
     Color defaultBorderColor();
     /** Default color used to flash borders. */
     Color frameBorderFlashColor();
+    /** Default border for ordinary tool bars, etc. */
+    Border defaultPaneBorder();
     /** Default top-only border for display elements that are parts of a larger frame. */
     Border defaultPaneTopBorder();
     /** Default bottom-only border for display elements that are parts of a larger frame. */
@@ -57,47 +57,28 @@ public interface InspectorStyle {
     Font defaultFont();
     int defaultTextFontSize();
     Color defaultTextColor();
-    Color defaultTextBackgroundColor();
     Color defaultErrorTextColor();
     Color defaultErrorTextBackgroundColor();
 
     // Plain text labels
     Font textLabelFont();
-    int textLabelFontSize();
     Color textLabelColor();
-    Color textLabelBackgroundColor();
-
-    // Defaults for textual titles
-    Font textTitleFont();
-    int textTitleFontSize();
-    Color textTitleColor();
-    Color textTitleBackgroundColor();
 
     // Defaults for integers displayed in decimal
     Font decimalDataFont();
-    int decimalDataFontSize();
     Color decimalDataColor();
-    Color decimalDataBackgroundColor();
 
     // Defaults for integers displayed in hex
     Font hexDataFont();
-    int hexDataFontSize();
     Color hexDataColor();
-    Color hexDataBackgroundColor();
 
    // Special styles for interpreted machine word  values
 
     /** font for displaying word data as hex. */
     Font wordDataFont();
 
-    /** font size for displaying word data as hex. */
-    int wordDataFontSize();
-
     /** default foreground color for displaying word data as hex. */
     Color wordDataColor();
-
-    /** default background color for displaying word data as hex. */
-    Color wordDataBackgroundColor();
 
     /** special foreground color for displaying the null word. */
     Color wordNullDataColor();
@@ -138,22 +119,13 @@ public interface InspectorStyle {
 
     // Display of primitive Java data values
     Font primitiveDataFont();
-    int primitiveDataFontSize();
     Color primitiveDataColor();
-    Color primitiveDataBackgroundColor();
 
     // Display of char values
     Font charDataFont();
-    int charDataFontSize();
     Color charDataColor();
 
     // Display of string values
-    /** Font to use when displaying generic string data. */
-    Font stringDataFont();
-    /** Font size to use when displaying generic string data. */
-    int stringDataFontSize();
-    /** Foreground color to use when displaying generic string data. */
-    Color stringDataColor();
     /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
     int maxStringInlineDisplayLength();
     /** Maximum number of elements from a char array to display when viewing as text. */
@@ -161,44 +133,24 @@ public interface InspectorStyle {
 
     // Names for Java entities
     Font javaNameFont();
-    int javaNameFontSize();
     Color javaNameColor();
-    Color javaNameBackgroundColor();
     Font javaClassNameFont();
     Color javaUnresolvedNameColor();
-    Font javaCodeFont();
 
     // Default display of any kind of code
     Font defaultCodeFont();
-    int defaultCodeFontSize();
     Color defaultCodeColor();
-    Color defaultCodeBackgroundColor();
     Color defaultCodeAlternateBackgroundColor();
-    Color defaultCodeStopBackgroundColor();
     Icon codeViewCloseIcon();
 
     // Display of target code
-    Font defaultTextFont();
-    int targetCodeFontSize();
-    Color targetCodeColor();
-    Color targetCodeBackgroundColor();
-    Color targetCodeAlternateBackgroundColor();
-    Color targetCodeStopBackgroundColor();
 
     // Display of bytecodes
     Font bytecodeMnemonicFont();
     Font bytecodeOperandFont();
-    int bytecodeFontSize();
     int maxBytecodeOperandDisplayLength();
     Color bytecodeColor();
-    Color bytecodeBackgroundColor();
     Color bytecodeMethodEntryColor();
-
-    // Display of source code
-    Font sourceCodeFont();
-    int sourceCodeFontSize();
-    Color sourceCodeColor();
-    Color sourcecodeBackgroundColor();
 
     // Debugger interaction
 
@@ -322,6 +274,16 @@ public interface InspectorStyle {
     boolean codeTableShowHorizontalLines();
     /** Choice to display vertical lines in table-based code views. */
     boolean codeTableShowVerticalLines();
+
+    // Custom operations on colors.
+    /**
+     *  Very slightly darken a color, much less than {@link Color#darker()}.
+     */
+    Color darken1(Color color);
+    /**
+     * Darken a color, more than {@link #darken1(Color)}, less than {@link Color#darker()}.
+     */
+    Color darken2(Color color);
 
     // Standard Color Palates.  Please don't change; create new colors if needed.
     // Palate 1:  Primary colors, designed to work well together

@@ -30,5 +30,5 @@ import com.sun.max.vm.compiler.cir.*;
  * @author Aziz Ghuloum
  */
 public interface Lowerable {
-    void toLCir(Lowerable op, CirCall call, CompilerScheme compilerScheme);
+    void toLCir(Lowerable op, CirCall call, BootstrapCompilerScheme compilerScheme);
 }
