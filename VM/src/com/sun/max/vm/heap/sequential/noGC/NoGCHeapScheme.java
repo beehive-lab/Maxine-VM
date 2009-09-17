@@ -347,4 +347,16 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         FatalError.unexpected("Non implemented");
     }
 
+    @Override
+    public Pointer getForwardedObjectPointer(Pointer value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

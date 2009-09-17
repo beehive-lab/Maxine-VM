@@ -233,4 +233,16 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
     }
+
+    @Override
+    public Pointer getForwardedObjectPointer(Pointer value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
