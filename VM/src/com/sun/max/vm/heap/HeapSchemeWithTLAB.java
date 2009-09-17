@@ -78,14 +78,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_TOP_TMP
-        = new VmThreadLocal("_TLAB_TOP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_TOP_TMP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
 
     /**
      * The temporary allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_MARK_TMP
-        = new VmThreadLocal("_TLAB_MARK", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal("_TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.
