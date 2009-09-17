@@ -47,7 +47,7 @@ public final class MaxineInspector {
         Trace.begin(TRACE_VALUE, tracePrefix + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
 
-        Inspection.initializeSwing();
+
         final Options options = new Options(false);
         Trace.addTo(options);
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
@@ -62,6 +62,7 @@ public final class MaxineInspector {
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
+                    Inspection.initializeSwing();
                     new Inspection(maxVM);
                 }
             });

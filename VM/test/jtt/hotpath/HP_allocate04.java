@@ -18,29 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.c1x;
-
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-
-/**
- * The package class that describes the C1X packages to the Maxine configurator.
- * @see com.sun.max.MaxPackage
- *
- * @author Ben L. Titzer
+package jtt.hotpath;
+/*
+ * @Harness: java
+ * @Runs: 80 = 3120;
  */
-public class Package extends VMPackage {
-    public Package() {
+public class HP_allocate04 {
 
-        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
-       // registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
+    public static int test(int count) {
+        int [] a = new int[count];
 
-        //super();
-        registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
-    }
+        for (int i = 0; i < a.length; i++) {
+            a[i] = i;
+        }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package().isPartOfMaxineVM(vmConfiguration);
+        int i = 0;
+        int iwrap = count - 1;
+        int sum = 0;
+
+        while (i < count) {
+            sum += (a[i] + a[iwrap]) / 2;
+            iwrap = i;
+            i++;
+        }
+        return sum;
     }
 }

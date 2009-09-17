@@ -123,6 +123,24 @@ public final class VMConfigurations {
             defaultRunScheme());
     }
 
+    public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform, VMPackage jitPackage) {
+        return new VMConfiguration(buildLevel, platform,
+            defaultGripScheme(),
+            defaultReferenceScheme(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            defaultMonitorScheme(),
+            defaultCompilerScheme(platform),
+            jitPackage,
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
+    }
+
+    public static VMPackage defaultMonitorPackage() {
+        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
+    }
+
     public static VMConfiguration createStandardInterpreter(BuildLevel buildLevel, Platform platform) {
         return new VMConfiguration(buildLevel, platform,
             defaultGripScheme(),
