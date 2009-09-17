@@ -163,6 +163,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
     private int numberOfGarbageCollectionInvocations;
+    private long lastGCTime;
 
     /**
      * A VM option for disabling use of TLABs.
@@ -207,6 +208,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+
+            lastGCTime = System.currentTimeMillis();
 
             // From now on we can allocate
 
@@ -355,6 +358,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
+
+                lastGCTime = System.currentTimeMillis();
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -1142,5 +1147,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }
+    }
+
+    @Override
+    public long maxObjectInspectionAge() {
+        return System.currentTimeMillis() - lastGCTime;
     }
 }
