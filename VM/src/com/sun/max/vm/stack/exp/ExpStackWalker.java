@@ -104,7 +104,6 @@ public abstract class ExpStackWalker {
             this.preparer = preparer;
         }
 
-        @Override
         public void visit(ExpStackFrameLayout layout, Cursor last, Cursor current) {
             //layout.prepareReferenceMap(last, current, preparer);
         }
@@ -216,7 +215,6 @@ public abstract class ExpStackWalker {
             this.exception = exception;
         }
 
-        @Override
         public void visit(ExpStackFrameLayout layout, Cursor last, Cursor current) {
             Address catchAddress = layout.findCatchAddress(current, exception.getClass());
             if (!catchAddress.isZero()) {
@@ -254,7 +252,6 @@ public abstract class ExpStackWalker {
     private class GatherJavaFramesVisitor implements InternalVisitor {
         public final List<ExpJavaStackFrame> frames = new ArrayList<ExpJavaStackFrame>(5);
 
-        @Override
         public void visit(ExpStackFrameLayout layout, Cursor last, Cursor current) {
             layout.appendJavaFrames(current, frames);
         }
@@ -278,7 +275,6 @@ public abstract class ExpStackWalker {
     private class GatherRawFramesVisitor implements InternalVisitor {
         public final List<ExpRawStackFrame> frames = new ArrayList<ExpRawStackFrame>(5);
 
-        @Override
         public void visit(ExpStackFrameLayout layout, Cursor last, Cursor current) {
             frames.add(new ExpRawStackFrame(layout, current.copy()));
         }
