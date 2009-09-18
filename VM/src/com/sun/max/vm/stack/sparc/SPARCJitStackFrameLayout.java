@@ -32,20 +32,22 @@ import com.sun.max.vm.stack.*;
  * Describes a stack frame for a method produced by the {@linkplain SPARCJitCompiler SPARC JIT compiler}.
  * The JIT compiler doesn't use register windows for JIT-compiled code. Instead, it re-uses the same register window
  * across successive jit-compiled code to jit-compiled code calls.
- * As for the sparcv9 (64 bit) JIT compiler, it uses a frame and a stack pointer. The stack pointer is the native stack pointer
- * defined by the SPARC platform (i.e., %o6). It is used as an operand stack (as defined in the JVM specification).
- * The frame pointer is a synthetic pointer (%l0) explicitly maintained by the SPARC JIT runtime.
+ * As for the sparcv9 (64 bit) JIT compiler, it uses a frame and a stack pointer.
+ * The stack pointer is the native stack pointer defined by the SPARC platform (i.e., %o6).
+ * It is used as an operand stack (as defined in the JVM specification).
+ * The frame pointer is a synthetic pointer (%l6) explicitly maintained by the SPARC JIT runtime.
  * The native frame pointer (%i6), the one defined by the ABI and known by the OS, points to the base of the register window,
  * and is not manipulated at all by JITed code.
  *
- * Frames of JITed code are synthetic in that the operating system only sees a single native stack frame, delimited by %i6 and %o6.
+ * Frames of JITed code are synthetic in that the operating system only sees a single native stack frame,
+ * delimited by %i6 and %o6.
  * That native stack frame must follow the requirement of the SPARC ABI, namely, it must be at all times 16-byte aligned,
- * must have a area for saving the current register window at its base, and both the stack and frame pointer registers (%i6 and %o6) hold
- * a biased address. The consequence for the JIT frame is that the top frame always end with an
+ * must have a area for saving the current register window at its base, and both the stack and frame pointer registers
+ * (%i6 and %o6) hold a biased address. The consequence for the JIT frame is that the top frame always end with the
+ * register spill area.
  *
- *
- * Because register windows aren't used, the JIT runtime explicitly saves the caller's context on the stack (i.e., its code pointer
- * and frame pointer).
+ * Because register windows aren't used, the JIT runtime explicitly saves the caller's context on the stack
+ * (i.e., its code pointer and frame pointer).
  *
  * The layout of the stack is as follows:
  * <p>
@@ -65,7 +67,9 @@ import com.sun.max.vm.stack.*;
  *          [+(T-1)] | template spill slot (T-1)      | Template            |
  *                   |     ...                        | spill               |
  *              [+0] | template spill slot 0          | area            frameSize()
- *  FP (%l0)  ==>    +--------------------------------+----------------     |
+ *  FP (%l6)  ==>    +--------------------------------+----------------     |
+ *                   | Literal Base                   |                     |
+ *                   +--------------------------------+----------------     |
  *              [-J] | Java non-parameter local 0     | Java                |
  *                   |     ...                        | non-parameters      |
  *          [-(L*J)] | Java non-parameter local (L-1) | locals              v
@@ -98,10 +102,11 @@ import com.sun.max.vm.stack.*;
  *
  * @author Doug Simon
  * @author Laurent Daynes
+ * @author Paul Caprioli
  */
 public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
     /**
-     * Size of the area in the Optimized to Jited code frame adapter used to set floating point register to immediate floating point value.
+     * Size of the area in the Optimized to JITed code frame adapter used to set floating point register to immediate floating point value.
      * We make it 16 bytes area to make adapter frame 16-byte aligned.
      * @see {@link #OFFSET_TO_FLOATING_POINT_TEMP_AREA}
      */
@@ -109,7 +114,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
 
     /**
      * SPARC instruction set doesn't include instruction for setting a floating-point register to a literal value.
-     * Instead, one must set a memory location and load it using a ld or ldd instruction. Alternatively, one may
+     * Instead, one must set a memory location and load it using a ld or ldd instruction.  Alternatively, one may
      * set an immediate word in a integer register, store it in memory, and load it in a floating point register.
      * The JIT use the latter approach for setting floating point (single or double precision) "constant".
      * Each opt->jit adapter frame has an 8 bytes slot reserved in the adapter frame for this purpose.
