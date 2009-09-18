@@ -20,11 +20,12 @@
  */
 package com.sun.max.tele.grip;
 
+import com.sun.max.tele.grip.TeleGrip.*;
 import com.sun.max.unsafe.*;
 
 /**
  * Canonicalized constant tele grip, for locations known not to change under GC.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
@@ -37,5 +38,10 @@ public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
     public void finalize() throws Throwable {
         teleGripScheme().finalizeCanonicalConstantTeleGrip(this);
         super.finalize();
+    }
+
+    @Override
+    public State getState() {
+        return State.LIVE;
     }
 }

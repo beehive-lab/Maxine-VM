@@ -129,10 +129,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         return this;
     }
 
-    public Pointer getLastValidPointer() {
-        return lastValidPointer;
-    }
-
     protected void refresh(long processEpoch) {
         /*if (reference.toOrigin().equals(Pointer.zero())) {
             live = false;
@@ -284,14 +280,16 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
-        if (isObsolete() || isDead()) {
-            return teleHub;
-        }
         Pointer pointer = teleVM().getForwardedObject(reference.toOrigin());
         Word word = teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(Reference.fromOrigin(pointer));
         pointer = teleVM().getForwardedObject(word.asPointer());
         final Reference hubReference = teleVM().wordToReference(pointer);
-        teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
+        TeleHub teleHubTmp = (TeleHub) teleVM().makeTeleObject(hubReference);
+        if (teleHubTmp != null) {
+            teleHub = teleHubTmp;
+        } else {
+            return teleHub;
+        }
         return teleHub;
     }
 
