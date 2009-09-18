@@ -53,18 +53,11 @@ import com.sun.max.vm.reference.*;
  * @see InspectableHeapInfo
  * @see TeleRoots
  */
-public final class TeleHeapManager extends AbstractTeleVMHolder {
+public abstract class TeleHeapManager extends AbstractTeleVMHolder {
 
     private static final int TRACE_VALUE = 2;
 
-    private static TeleHeapManager teleHeapManager;
-
-    public static TeleHeapManager make(TeleVM teleVM) {
-        if (teleHeapManager ==  null) {
-            teleHeapManager = new TeleHeapManager(teleVM);
-        }
-        return teleHeapManager;
-    }
+    protected static TeleHeapManager teleHeapManager;
 
     private TeleRuntimeMemoryRegion teleBootHeapRegion = null;
 
@@ -73,7 +66,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     /**
      * Surrogates for each of the heap regions created by GC implementations in the {@link TeleVM}.
      */
-    private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
+    protected TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
@@ -89,7 +82,9 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
 
-    private TeleHeapManager(TeleVM teleVM) {
+    public abstract boolean isInLiveMemory(Address address);
+
+    protected TeleHeapManager(TeleVM teleVM) {
         super(teleVM);
     }
 
