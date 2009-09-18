@@ -105,8 +105,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
