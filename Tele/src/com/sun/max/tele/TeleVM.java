@@ -429,7 +429,7 @@ public abstract class TeleVM implements MaxVM {
 
     private int interpreterUseLevel = 0;
 
-    private final TeleHeapManager teleHeapManager;
+    private final TeleSemiSpaceHeapManager teleHeapManager; //TODO: make dynamic
     private final TeleObjectFactory teleObjectFactory;
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
@@ -518,7 +518,7 @@ public abstract class TeleVM implements MaxVM {
         this.fields = new TeleFields(this);
         this.methods = new TeleMethods(this);
         this.teleObjectFactory = TeleObjectFactory.make(this);
-        this.teleHeapManager = TeleHeapManager.make(this);
+        this.teleHeapManager = (TeleSemiSpaceHeapManager) TeleSemiSpaceHeapManager.make(this); //TODO: should be dynamic for different GCs
 
         // Provide access to JDWP server
         this.jdwpAccess = new VMAccessImpl();
@@ -742,6 +742,10 @@ public abstract class TeleVM implements MaxVM {
 
     public final boolean containsInDynamicHeap(Address address) {
         return teleHeapManager.dynamicHeapContains(address);
+    }
+
+    public final boolean isInLiveMemory(Address address) {
+        return teleHeapManager.isInLiveMemory(address);
     }
 
     public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
