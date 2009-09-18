@@ -20,8 +20,10 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  *
@@ -43,12 +45,28 @@ public final class TeleSemiSpaceHeapManager extends TeleHeapManager{
 
     @Override
     public boolean isInLiveMemory(Address address) {
+
+        if (teleVM().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
+            return true;
+        }
+
         for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
-                if (teleHeapRegion.description().equals("Heap-From")) {
+                if (teleHeapRegion.description().equals("Heap-From")) { // everything in from-space is dead
                     return false;
                 }
-                return true; //TODO: not true; just for data before allocation mark
+                if (address.greaterEqual(teleHeapRegion.mark())) { // everything in to-space after the global allocation mark is dead
+                    return false;
+                }
+                for (TeleNativeThread teleNativeThread : teleVM().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
+                    TeleThreadLocalValues teleThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
+                    if (!teleThreadLocalValues.getWord("_TLAB_DISABLED").equals(Word.zero())) {
+                        if (address.greaterEqual(teleThreadLocalValues.getWord("_TLAB_MARK").asAddress()) && teleThreadLocalValues.getWord("_TLAB_TOP").asAddress().greaterThan(address)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
             }
         }
         return true;

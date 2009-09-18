@@ -21,7 +21,6 @@
 package com.sun.max.tele.grip;
 
 import com.sun.max.tele.reference.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 

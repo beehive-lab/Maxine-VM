@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.grip;
 
-import com.sun.max.tele.grip.TeleGrip.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -61,7 +60,7 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public Address raw() {
-        if (index == -1) {
+        if (index == -1 || forwardedTeleGrip != null) {
             return lastValidPointer;
         }
         Address tmp = teleGripScheme().getRawGrip(this);

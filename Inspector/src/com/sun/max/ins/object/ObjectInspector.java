@@ -86,6 +86,7 @@ public abstract class ObjectInspector extends Inspector {
         this.factory = factory;
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().getCurrentOrigin();
+        this.title = "";
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
             protected void setShowHeader(boolean showHeader) {
