@@ -85,6 +85,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     @Override
     protected void updateText() {
+        memoryRegion = null;
         if (value() != null && !value().isZero()) {
             address = value().toWord().asAddress();
             memoryRegion = maxVM().memoryRegionContaining(address);
