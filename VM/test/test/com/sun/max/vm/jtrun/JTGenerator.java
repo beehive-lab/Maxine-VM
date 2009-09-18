@@ -90,12 +90,12 @@ public class JTGenerator {
         engine.parseTests(arguments, sortOption.getValue());
         boolean filesUpdated = false;
         try {
-            final String runSchemeFile = fileName("JavaTesterRunScheme");
-            final String testRunsFile = fileName("JavaTesterTests");
+            final String runSchemeFile = fileName("JTConfig");
+            final String testRunsFile = fileName("JTRuns");
 
             final LinkedList<JavaTestCase> cases = extractJavaTests(engine);
 
-            if (generateRunSchemeContent(new File(runSchemeFile), cases)) {
+            if (generateConfigContent(new File(runSchemeFile), cases)) {
                 filesUpdated = true;
                 System.out.println(runSchemeFile + " updated.");
             }
@@ -123,18 +123,18 @@ public class JTGenerator {
         return className(className).replace('.', File.separatorChar) + ".java";
     }
 
-    private static boolean generateRunSchemeContent(final File runSchemeFile, final LinkedList<JavaTestCase> cases) throws IOException {
+    private static boolean generateConfigContent(final File configFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
         final JTGenerator gen = new JTGenerator(writer);
         gen.genClassList(cases);
-        gen.genRunMethod(cases);
         writer.close();
-        return Files.updateGeneratedContent(runSchemeFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
+        return Files.updateGeneratedContent(configFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST CLASS LIST", "// END GENERATED TEST CLASS LIST");
     }
 
     private static boolean generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
         final JTGenerator gen = new JTGenerator(writer);
+        gen.genRunMethod(cases);
         gen.genTestRuns(cases);
         writer.close();
         return Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
@@ -172,66 +172,23 @@ public class JTGenerator {
         writer.println("};");
         writer.outdent();
     }
-    public void genInitMethod(Iterable<JavaExecHarness.JavaTestCase> testCases) {
-        if (loadedOption.getValue()) {
-            writer.indent();
-            writer.println("@Override");
-            writer.println("public void initialize(VM.Phase phase) {");
-            writer.indent();
-            writer.println("_verbose = " + verboseOption.getValue() + ";");
-            writer.println("if (VM.isPrototyping()) {");
-            writer.indent();
-            writer.println("for (Class<?> testClass : classList) {");
-            writer.indent();
-            writer.println("addClassToImage(testClass);");
-            writer.outdent();
-            writer.println("}");
-            writer.outdent();
-            writer.println("}");
-            writer.outdent();
-            writer.println("}");
-            writer.outdent();
-        }
-    }
 
     public void genRunMethod(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
         writer.indent();
-        writer.println("@Override");
-        writer.println("public void runTests() {");
+        writer.println("public static void runTest(int num) {");
         writer.indent();
-        if (restartOption.getValue()) {
-            writer.println("total = testEnd - testStart;");
-            writer.println("testNum = testStart;");
-            writer.println("while (testNum < testEnd) {");
+            writer.println("switch(num) {");
             writer.indent();
-            writer.println("switch(testNum) {");
-            writer.indent();
-        } else {
-            writer.println("total = " + testCases.size() + ";");
-            writer.println("testNum = 0;");
-        }
         int i = 0;
         for (JavaExecHarness.JavaTestCase testCase : testCases) {
-            String spaces = "";
-            if (restartOption.getValue()) {
-                spaces = "    ";
-                if (i > 0) {
-                    writer.println(spaces + "break;");
-                }
-                writer.println("case " + (i++) + ":");
-            }
-            writer.println(spaces + "JavaTesterTests." + getTestCaseName(testCase) + "();");
+            writer.print("case " + (i++) + ": ");
+            writer.print("JavaTesterTests." + getTestCaseName(testCase) + "();");
+            writer.println(" break;");
         }
-        if (restartOption.getValue()) {
-            writer.outdent();
-            writer.println("}");
-            writer.outdent();
-            writer.println("}");
-        }
-        writer.println("reportPassed(passed, total);");
         writer.outdent();
         writer.println("}");
         writer.outdent();
+        writer.println("}");
     }
 
     private void genTestRuns(LinkedList<JavaExecHarness.JavaTestCase> testCases) {

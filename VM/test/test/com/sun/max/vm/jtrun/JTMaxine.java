@@ -23,7 +23,6 @@ package test.com.sun.max.vm.jtrun;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.program.option.Option;
 import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.MethodActor;
@@ -43,9 +42,11 @@ public class JTMaxine {
 
     private static final Option<String> packageOption = options.newStringOption("package", "all",
         "Selects the package which contains the generated tester runs to run.");
-    private static final Option<String> callerOption = options.newStringOption("caller", "opt",
-        "Selects the compiler that will compile the caller of the test methods.");
-    private static final Option<String> calleeOption = options.newStringOption("callee", "opt",
+    private static final Option<String> callerOption = options.newStringOption("caller", "",
+        "Selects the compiler that will compile the caller of the test methods. When left blank," +
+        "the default VM compiler will be used. \"opt\" selects the VM's optimizing compiler, \"jit\" " +
+        "selects the VM's JIT compiler, and otherwise a class name can be specified.");
+    private static final Option<String> calleeOption = options.newStringOption("callee", "",
         "Selects the compiler that will compile the callee test methods.");
     private static final Option<Boolean> nativeTestsOption = options.newBooleanOption("native-tests", false,
         "Causes the testing framework to load the 'javatest' native library, which is needed by " +
@@ -93,36 +94,48 @@ public class JTMaxine {
     private static void compileMethods(JTClasses jtclasses) {
         RuntimeCompilerScheme callerCompiler = getCompiler(callerOption.getValue());
         RuntimeCompilerScheme calleeCompiler = getCompiler(calleeOption.getValue());
+        System.out.println("Caller compiler: " + (callerCompiler == null ? "default" : callerCompiler.getClass()));
+        System.out.println("Callee compiler: " + (calleeCompiler == null ? "default" : calleeCompiler.getClass()));
+        System.out.print("Compiling methods...");
+        System.out.flush();
+
         compileClass(jtclasses.testRunClass, callerCompiler);
         for (Class c : jtclasses.testClasses) {
             compileClass(c, calleeCompiler);
         }
-
+        System.out.println("");
     }
 
     private static void compileClass(Class javaClass, RuntimeCompilerScheme compiler) {
+        if (compiler == null) {
+            return;
+        }
         ClassActor classActor = ClassActor.fromJava(javaClass);
         // compile all static methods
         for (MethodActor methodActor : classActor.localStaticMethodActors()) {
             if (methodActor instanceof ClassMethodActor && !methodActor.isClassInitializer()) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                TargetMethod targetMethod = compiler.compile(classMethodActor);
-                VMConfiguration.target().compilationScheme().installTargetMethod(classMethodActor, targetMethod);
+                VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compiler);
+                System.out.print(".");
+                System.out.flush();
             }
         }
         // compile all instance methods
         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
             if (methodActor instanceof ClassMethodActor) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                TargetMethod targetMethod = compiler.compile(classMethodActor);
-                VMConfiguration.target().compilationScheme().installTargetMethod(classMethodActor, targetMethod);
+                VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compiler);
+                System.out.print(".");
+                System.out.flush();
             }
         }
     }
 
     static RuntimeCompilerScheme getCompiler(String name) {
         VMConfiguration vmConfiguration = VMConfiguration.target();
-        if ("opt".equals(name)) {
+        if ("".equals(name)) {
+            return null;
+        } else if ("opt".equals(name)) {
             return vmConfiguration.compilerScheme();
         } else if ("jit".equals(name)) {
             return vmConfiguration.jitScheme();
