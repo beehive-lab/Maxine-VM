@@ -192,6 +192,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         return synchronousCompileHelper(classMethodActor, null);
     }
 
+    public void installTargetMethod(ClassMethodActor classMethodActor, TargetMethod targetMethod) {
+        synchronized (classMethodActor) {
+            // update the target state of the class method actor
+            classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, classMethodActor.targetState);
+        }
+    }
+
     private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
         synchronized (classMethodActor) {

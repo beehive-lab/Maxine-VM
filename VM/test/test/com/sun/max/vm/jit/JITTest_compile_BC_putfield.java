@@ -43,7 +43,7 @@ public class JITTest_compile_BC_putfield  extends JitCompilerTestCase {
     }
 */
     public void test_compileMethod() {
-        final CPSTargetMethod targetMethod = compileMethod(JavaTesterTests.class, "test_bytecode_BC_athrow");
+        final CPSTargetMethod targetMethod = compileMethod(JTRuns.class, "test_bytecode_BC_athrow");
         traceBundleAndDisassemble(targetMethod);
     }
 

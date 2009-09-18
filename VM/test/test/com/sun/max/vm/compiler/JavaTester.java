@@ -135,12 +135,12 @@ public final class JavaTester {
             options.setValue("restart", String.valueOf(RESTART_IMAGE.getValue()));
             options.setValue("alphabetical", String.valueOf(SORT_OPTION.getValue()));
             options.setValue("package", String.valueOf(RUNSCHEME_PACKAGE.getValue()));
-            filesUpdated = JavaTesterGenerator.generate(options, arguments);
+            filesUpdated = JTGenerator.generate(options, arguments);
         }
         if (GEN_IMAGE.getValue()) {
             // generate an image if necessary
             Trace.line(0, "Generating target image...");
-            final String[] generatorArgs = {"-trace=1", "-run=" + AbstractTester.class.getPackage().getName() + "." + RUNSCHEME_PACKAGE.getValue()};
+            final String[] generatorArgs = {"-trace=1", "-run=" + JTAbstractRunScheme.class.getPackage().getName() + "." + RUNSCHEME_PACKAGE.getValue()};
             final String[] systemProperties = {"sun.misc.ProxyGenerator.saveGeneratedFiles=true", "sun.reflect.noInflation=false", "sun.reflect.inflationThreshold=1000000"};
             final String[] javaArgs = buildJavaArgs(BootImageGenerator.class,
                             appendArgs(systemProperties, GEN_IMAGE_PROPS.getValue()),
