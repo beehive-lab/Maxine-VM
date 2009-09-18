@@ -89,21 +89,15 @@ public abstract class TeleGrip extends Grip {
         return this;
     }
 
-    public State getState() {
-        if (forwardedTeleGrip != null) {
-            TeleGrip forwardedTeleGrip = getForwardedTeleGrip();
-            if (forwardedTeleGrip.toOrigin().equals(Word.zero())) {
-                return State.DEAD;
-            }
-            return State.OBSOLETE;
-        }
-        if (toOrigin().equals(Word.zero())) {
-            return State.DEAD;
-        }
-        return State.LIVE;
-    }
+    public abstract State getState();
 
     public static final TeleGrip ZERO = new TeleGrip() {
+
+        @Override
+        public State getState() {
+            return State.DEAD;
+        }
+
         @Override
         public Reference makeReference(TeleReferenceScheme teleReferenceScheme) {
             return TeleReference.ZERO;

@@ -35,6 +35,11 @@ public class LocalTeleGrip extends TeleGrip {
         return object;
     }
 
+    @Override
+    public State getState() {
+        return State.LIVE;
+    }
+
     private final TeleGripScheme teleGripScheme;
 
     LocalTeleGrip(TeleGripScheme teleGripScheme, Object object) {
