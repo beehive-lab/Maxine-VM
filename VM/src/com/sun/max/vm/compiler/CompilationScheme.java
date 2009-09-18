@@ -85,13 +85,7 @@ public interface CompilationScheme extends VMScheme {
      */
     TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
 
-    /**
-     * Installs the specified target method for the specified class method actor. The target method may be the
-     * result of a compilation from an unknown compiler, hand-written machine code, etc.
-     * @param classMethodActor the method for which to install the target code
-     * @param targetMethod the target code
-     */
-    void installTargetMethod(ClassMethodActor classMethodActor, TargetMethod targetMethod);
+    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler);
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued

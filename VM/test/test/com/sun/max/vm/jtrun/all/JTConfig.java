@@ -30,8 +30,8 @@ import test.com.sun.max.vm.jtrun.JTClasses;
  */
 public class JTConfig {
 
-    private static final Class<?>[] classList = {
 // GENERATED TEST CLASS LIST
+    private static final Class<?>[] classList = {
         jtt.bytecode.BC_aaload.class,
         jtt.bytecode.BC_aaload_1.class,
         jtt.bytecode.BC_aastore.class,
@@ -635,8 +635,8 @@ public class JTConfig {
         jtt.threads.Thread_sleep01.class,
         jtt.threads.Thread_start01.class,
         jtt.threads.Thread_yield01.class
-// END GENERATED TEST CLASS LIST
     };
+// END GENERATED TEST CLASS LIST
 
     public static final JTClasses testClasses = new JTClasses(classList, JTRuns.class);
 
