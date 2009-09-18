@@ -62,7 +62,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     // Flags that can be set on vregs
     public enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
-        CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
         NumVregFlags
     }
@@ -165,7 +164,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 info = stateFor(nc);
             }
         }
-        lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info, LIRPatchCode.PatchNone);
+        lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info);
 
     }
 
@@ -262,7 +261,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIROperand result = newRegister(CiKind.Object);
         LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
-        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOopOffset(), CiKind.Object), result);
+        lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
     }
 
@@ -310,16 +309,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         left.loadItem();
-        if (canInlineAsConstant(right.value())) {
-            right.dontLoadItem();
-        } else {
+        if (!canInlineAsConstant(right.value())) {
             right.loadItem();
         }
 
         LIRItem tVal = new LIRItem(x.trueValue(), this);
         LIRItem fVal = new LIRItem(x.falseValue(), this);
-        tVal.dontLoadItem();
-        fVal.dontLoadItem();
         LIROperand reg = rlockResult(x);
 
         lir.cmp(lirCond(x.condition()), left.result(), right.result());
@@ -516,8 +511,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (isVolatile) {
             volatileFieldLoad(address, reg, info);
         } else {
-            LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
-            lir.load(address, reg, info, patchCode);
+            lir.load(address, reg, info);
         }
 
         if (isVolatile && compilation.runtime.isMP()) {
@@ -542,10 +536,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         array.loadItem();
-        if (index.isConstant() && canInlineAsConstant(x.index())) {
-            // let it be a constant
-            index.dontLoadItem();
-        } else {
+        if (!(index.isConstant() && canInlineAsConstant(x.index()))) {
             index.loadItem();
         }
 
@@ -811,8 +802,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (isVolatile) {
                 volatileFieldStore(value.result(), address, info);
             } else {
-                LIRPatchCode patchCode = LIRPatchCode.PatchNone; //needsPatching ? LIRPatchCode.PatchNormal : LIRPatchCode.PatchNone;
-                lir.store(value.result(), address, info, patchCode);
+                lir.store(value.result(), address, info);
             }
 
             if (isOop) {
@@ -1233,7 +1223,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void visitCurrentThread(Intrinsic x) {
         assert x.numberOfArguments() == 0 : "wrong type";
         LIROperand reg = rlockResult(x);
-        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjOffset(), CiKind.Object), reg);
+        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjectOffset(), CiKind.Object), reg, null);
     }
 
     private void visitFPIntrinsics(Intrinsic x) {
@@ -1257,8 +1247,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore().copyLocks());
         }
-        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffsetInBytes(), CiKind.Object), result, info);
-        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.klassJavaMirrorOffsetInBytes() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
+        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffset(), CiKind.Object), result, info);
+        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.javaClassObjectOffset() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
     }
 
     private void visitNIOCheckIndex(Intrinsic x) {
@@ -1337,10 +1327,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem off = new LIRItem(x.offset(), this);
 
         src.loadItem();
-        if (off.isConstant() && canInlineAsConstant(x.offset())) {
-            // let it be a constant
-            off.dontLoadItem();
-        } else {
+        if (!(off.isConstant() && canInlineAsConstant(x.offset()))) {
             off.loadItem();
         }
 
@@ -1401,7 +1388,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1468,7 +1455,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1536,7 +1523,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case Bytecodes.FSUB:
             case Bytecodes.LSUB:
             case Bytecodes.ISUB:
-                lir.sub(leftOp, rightOp, resultOp);
+                lir.sub(leftOp, rightOp, resultOp, null);
                 break;
 
             case Bytecodes.FDIV:
@@ -1813,7 +1800,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     LIROperand incrementAndReturnCounter(LIRLocation base, int offset, int increment) {
         LIRAddress counter = new LIRAddress(base, offset, CiKind.Int);
         LIROperand result = newRegister(CiKind.Int);
-        lir.load(counter, result);
+        lir.load(counter, result, null);
         lir.add(result, LIROperandFactory.intConst(increment), result);
         lir.store(result, counter, null);
         return result;
@@ -1922,8 +1909,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
+//                if (curVal instanceof Phi) {
+//                    operandForPhi((Phi) curVal);
+//                }
                 LIROperand operand = curVal.operand();
-                if (curVal.operand().isIllegal()) {
+                if (operand == null || operand.isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
                     operand = operandForInstruction(curVal);
                 }

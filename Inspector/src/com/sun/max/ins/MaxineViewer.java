@@ -31,7 +31,7 @@ import com.sun.max.vm.prototype.*;
 /**
  * Interactive, visual tool for browsing the object and memory contents of a Maxine VM boot image.
  *
- * @author Doudg Simon
+ * @author Doug Simon
  */
 public final class MaxineViewer {
 
@@ -46,7 +46,6 @@ public final class MaxineViewer {
         Trace.begin(TRACE_VALUE, tracePrefix + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
 
-        Inspection.initializeSwing();
         final Options options = new Options(true);
         Trace.addTo(options);
         final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
@@ -61,6 +60,7 @@ public final class MaxineViewer {
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
+                    Inspection.initializeSwing();
                     Inspection inspection = new Inspection(maxVM);
                     // Bring up the boot image info inspector as a starting point for browsing
                     BootImageInspector.make(inspection).highlight();

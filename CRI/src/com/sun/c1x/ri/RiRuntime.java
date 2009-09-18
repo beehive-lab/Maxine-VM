@@ -90,25 +90,25 @@ public interface RiRuntime {
      * Byte offset of the field of an object that contains the pointer to the internal class representation of the type of the object.
      * @return the byte offset of the class field
      */
-    int hubOffsetInBytes();
+    int hubOffset();
 
     /**
      * Byte offset of the field of the internal thread representation that contains the pointer to the thread exception object.
      * @return the byte offset of the exception object field
      */
-    int threadExceptionOopOffset();
+    int threadExceptionOffset();
 
     /**
      * Byte offset of the field of the internal thread representation that contains the pointer to the Java thread object.
      * @return the byte offset of the thread object field
      */
-    int threadObjOffset();
+    int threadObjectOffset();
 
     /**
      * Byte offset of the field of the internal class representation that contains the pointer to the Java class object.
      * @return the byte offset of the class object field
      */
-    int klassJavaMirrorOffsetInBytes();
+    int javaClassObjectOffset();
 
     /**
      * Checks whether an explicit null check is needed with the given offset of accessing an object.
@@ -161,92 +161,148 @@ public interface RiRuntime {
      */
     RiType resolveType(String string);
 
-    int firstArrayElementOffsetInBytes(CiKind type);
+    /**
+     * The offset of the first array element of an array of the given type.
+     * 
+     * @param type the type of the array
+     * @return the offset in bytes
+     */
+    int firstArrayElementOffset(CiKind type);
 
+    /**
+     * Offset used for the implementation of an intrinsic.
+     * 
+     * @return the offset in bytes
+     */
     int sunMiscAtomicLongCSImplValueOffset();
 
+    /**
+     * The size of an array header of an array of the given type.
+     * 
+     * @param type the type of the array
+     * @return the size in bytes
+     */
     int arrayHeaderSize(CiKind type);
 
-    int interpreterFrameMonitorSize();
-
-    int basicObjectLockSize();
-
+    /**
+     * Offset of the lock within the lock object.
+     * 
+     * @return the offset in bytes
+     */
     int basicObjectLockOffsetInBytes();
 
-    int initStateOffsetInBytes();
-
-    int instanceKlassFullyInitialized();
-
-    int elementKlassOffsetInBytes();
-
-    int methodDataNullSeenByteConstant();
-
-    int secondarySuperCacheOffsetInBytes();
-
-    int markOffsetInBytes();
-
-    int threadTlabTopOffset();
-
-    int threadTlabEndOffset();
-
-    int threadTlabStartOffset();
-
-    int superCheckOffsetOffsetInBytes();
-
-    int secondarySupersOffsetInBytes();
-
-    int threadTlabSizeOffset();
-
-    int vtableLengthOffset();
-
-    int itableMethodEntryMethodOffset();
-
-    int itableOffsetEntrySize();
-
-    int itableInterfaceOffsetInBytes();
-
-    int itableOffsetOffsetInBytes();
-
-    int biasedLockMaskInPlace();
-
-    int biasedLockPattern();
-
-    int maxArrayAllocationLength();
-
-    int prototypeHeaderOffsetInBytes();
-
-    int markOopDescPrototype();
-
-    int klassPartOffsetInBytes();
-
-    int getMinObjAlignmentInBytesMask();
-
-    int instanceOopDescBaseOffsetInBytes();
-
-    // TODO: why not pass the RiSignature instead?
-    CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing);
-
-    CiLocation[] runtimeCallingConvention(CiKind[] signature);
-
-    CiRegister returnRegister(CiKind object);
-
-    int overflowArgumentsSize(CiKind basicType);
-
-    int getJITStackSlotSize();
-
+    /**
+     * Size of a lock object.
+     * 
+     * @return the size in bytes
+     */
     int sizeofBasicObjectLock();
 
+    /**
+     * Offset of the element hub of an array hub object.
+     * 
+     * @return the offset in bytes
+     */
+    int elementHubOffset();
+
+    /**
+     * @return the maximum length of an array
+     */
+    int maximumArrayLength();
+
+    /**
+     * The initial mark word used for object initialization.
+     * 
+     * @return the initial mark word
+     */
+    int initialMarkWord();
+
+    /**
+     * Calling convention for Java calls.
+     * 
+     * @param signature the basic types of the parameters
+     * @param outgoing if the convention is for incoming or outgoing parameters
+     * @return an array of exactly the same size as the signature parameter that specifies at which location the
+     *         parameters must be stored
+     */
+    CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing);
+
+    /**
+     * Calling convention for outgoing runtime calls.
+     * 
+     * @param signature the basic types of the parameters
+     * @return an array of exactly the same size as the signature parameter that specifies at which location the
+     *         parameters must be stored
+     */
+    CiLocation[] runtimeCallingConvention(CiKind[] signature);
+
+    /**
+     * The return register that is used for the given return type.
+     * 
+     * @param kind the basic type of the return parameter
+     * @return the register
+     */
+    CiRegister returnRegister(CiKind kind);
+
+    /**
+     * The size of a JIT stack slot. Used for implementing the adapter frames.
+     * 
+     * @return the JIT stack slot size in bytes
+     */
+    int getJITStackSlotSize();
+
+    /**
+     * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.
+     * 
+     * @return the code offset in bytes
+     */
     int codeOffset();
 
-    String disassemble(byte[] copyOf);
+    /**
+     * Returns the disassembly of the given code bytes. Used for debugging purposes only.
+     * 
+     * @param code the code bytes that should be disassembled
+     * @return the disassembly as a String object
+     */
+    String disassemble(byte[] code);
 
+    /**
+     * Registers the given global stub and returns an object that can be used to identify it in the relocation
+     * information.
+     * 
+     * @param targetMethod the target method representing the code of the global stub
+     * @param name the name of the stub, used for debugging purposes only
+     * @return the identification object
+     */
     Object registerTargetMethod(CiTargetMethod targetMethod, String name);
 
-    RiType primitiveArrayType(CiKind elemType);
+    /**
+     * Returns the runtime interface type representing the array type of the given kind.
+     * 
+     * @param elementType the primitive type of the array
+     * @return the array type
+     */
+    RiType primitiveArrayType(CiKind elementType);
 
+    /**
+     * Returns the register that stores the thread object.
+     * 
+     * @return the thread register
+     */
     CiRegister threadRegister();
 
+    /**
+     * Returns the runtime interface representation of the given Java class object.
+     * 
+     * @param javaClass the Java class object
+     * @return the runtime interface representation
+     */
     public RiType getRiType(Class<?> javaClass);
 
+    /**
+     * Returns the register used for safepoint polling.
+     * 
+     * @return the safepoint register
+     */
     CiRegister getSafepointRegister();
 }

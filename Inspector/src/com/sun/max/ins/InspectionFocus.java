@@ -177,7 +177,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             } else {
                 // No prior frame selection
                 final TeleTargetBreakpoint breakpoint = this.thread.breakpoint();
-                if (breakpoint != null) {
+                if (breakpoint != null && !breakpoint.isTransient()) {
                     // thread is at a breakpoint; focus on the breakpoint, which should also cause focus on code and frame
                     setBreakpoint(breakpoint);
                 } else {

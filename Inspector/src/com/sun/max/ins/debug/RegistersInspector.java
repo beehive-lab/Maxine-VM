@@ -51,7 +51,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         return registersInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "registersInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "registersInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences viewPreferences;

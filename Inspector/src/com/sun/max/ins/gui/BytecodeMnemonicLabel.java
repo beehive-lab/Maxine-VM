@@ -41,8 +41,6 @@ public class BytecodeMnemonicLabel extends InspectorLabel {
 
     public final void redisplay() {
         setFont(style().bytecodeMnemonicFont());
-        setForeground(style().bytecodeColor());
-        setBackground(style().bytecodeBackgroundColor());
         updateText();
     }
 

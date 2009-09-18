@@ -99,7 +99,7 @@ public class IRInterpreter {
             }
         }
 
-        private Map<Value, Val> instructionTrace = new HashMap<Value, Val>();
+        private Map<Value, Val> instructionValueMap = new HashMap<Value, Val>();
         private Map<Value, ArrayList<PhiMove>> phiMoves = new HashMap<Value, ArrayList<PhiMove>>();
 
         private class ValueMapInitializer implements BlockClosure {
@@ -130,7 +130,7 @@ public class IRInterpreter {
                     }
                 }
                 for (Instruction instr = block; instr != null; instr = instr.next()) {
-                    instructionTrace.put(instr, new Val(-1, null));
+                    instructionValueMap.put(instr, new Val(-1, null));
                 }
             }
 
@@ -179,7 +179,7 @@ public class IRInterpreter {
         public void bind(Value i, CiConstant value, Integer iCounter) {
             Val v = new Val(iCounter, value);
             assert v.counter >= 0;
-            instructionTrace.put(i, new Val(iCounter, value));
+            instructionValueMap.put(i, new Val(iCounter, value));
         }
 
         public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
@@ -207,7 +207,7 @@ public class IRInterpreter {
 
         CiConstant lookup(Value instruction) {
             if (!(instruction instanceof Constant)) {
-                final Val result = instructionTrace.get(instruction);
+                final Val result = instructionValueMap.get(instruction);
                 assert result != null : "Value not defined for instruction: " + instruction;
                 return result.value;
             } else {

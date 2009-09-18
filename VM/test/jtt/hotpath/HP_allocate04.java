@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,18 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package jtt.hotpath;
+/*
+ * @Harness: java
+ * @Runs: 80 = 3120;
+ */
+public class HP_allocate04 {
 
-import javax.swing.*;
+    public static int test(int count) {
+        int [] a = new int[count];
 
-import com.sun.max.ins.*;
+        for (int i = 0; i < a.length; i++) {
+            a[i] = i;
+        }
 
-public class TitleLabel extends JLabel {
+        int i = 0;
+        int iwrap = count - 1;
+        int sum = 0;
 
-    public TitleLabel(Inspection inspection, String text) {
-        super(text);
-        setForeground(inspection.style().textTitleColor());
-        setFont(inspection.style().textTitleFont());
+        while (i < count) {
+            sum += (a[i] + a[iwrap]) / 2;
+            iwrap = i;
+            i++;
+        }
+        return sum;
     }
-
 }

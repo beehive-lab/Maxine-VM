@@ -153,7 +153,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         if (base == CiRegister.Stack) {
             base = this.target.stackRegister;
         } else if (base == CiRegister.CallerStack) {
-            assert targetMethod.frameSize() != -1 : "for caller relative addressing, the frame size must be known in advance and given to the assembler constructor";
             base = this.target.stackRegister;
             disp += targetMethod.frameSize() + target.arch.wordSize;
         }

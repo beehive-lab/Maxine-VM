@@ -75,7 +75,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
      * Executes a given method with a set of arguments on the interpreter. If the method is a constructor, then value in
      * {@code arguments[0]} is updated to reflect the initialized value.
      */
-    public abstract Value execute(Method_Type method, Value... arguments) throws InvocationTargetException;
+    public abstract Value execute(IrMethod method, Value... arguments) throws InvocationTargetException;
 
     /**
      * Loads a value from memory. The first element of {@code arguments} is the base

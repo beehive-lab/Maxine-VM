@@ -47,8 +47,10 @@ public final class IconFactory {
         }
 
         public void paintIcon(Component component, Graphics g, int x, int y) {
-            g.setColor(component.getBackground());
-            g.fillRect(x, y, width, height);
+            if (component.isOpaque()) {
+                g.setColor(component.getBackground());
+                g.fillRect(x, y, width, height);
+            }
         }
     }
 

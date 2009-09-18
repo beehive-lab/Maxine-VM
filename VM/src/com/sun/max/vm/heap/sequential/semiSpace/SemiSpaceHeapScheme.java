@@ -163,6 +163,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
     private int numberOfGarbageCollectionInvocations;
+    private long lastGCTime;
 
     /**
      * A VM option for disabling use of TLABs.
@@ -207,6 +208,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+
+            lastGCTime = System.currentTimeMillis();
 
             // From now on we can allocate
 
@@ -355,6 +358,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
+
+                lastGCTime = System.currentTimeMillis();
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -612,7 +617,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private boolean cannotGrow() {
-        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize());
+        return fromSpace.size().isZero() || fromSpace.size().greaterEqual(Heap.maxSize().dividedBy(2));
     }
 
     /**
@@ -635,7 +640,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             // It is important to know now that we can allocate both spaces of the new size
             // and, if we cannot, to leave things as they are, so that the VM can continue
             // using the safety zone and perhaps then free enough space to continue.
-            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize());
+            final Size size = Size.min(growPolicy.growth(fromSpace.size()), Heap.maxSize().dividedBy(2));
             if (preGc && Heap.verbose()) {
                 Log.print("...new heap size: ");
                 Log.println(size.toLong());
@@ -1142,5 +1147,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }
+    }
+
+    @Override
+    public long maxObjectInspectionAge() {
+        return System.currentTimeMillis() - lastGCTime;
     }
 }

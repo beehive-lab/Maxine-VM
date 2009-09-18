@@ -58,7 +58,7 @@ public final class StringPane extends InspectorScrollPane {
 
     @Override
     public void redisplay() {
-        textArea.setFont(style().defaultTextFont());
+        textArea.setFont(style().defaultFont());
     }
 
     private MaxVMState lastRefreshedState = null;

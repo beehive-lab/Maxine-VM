@@ -131,7 +131,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress emitArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark) {
-        int offsetInBytes = compilation.runtime.firstArrayElementOffsetInBytes(type);
+        int offsetInBytes = compilation.runtime.firstArrayElementOffset(type);
         LIRAddress addr;
         if (indexOpr.isConstant()) {
             LIRConstant constantIndexOpr = (LIRConstant) indexOpr;
@@ -189,7 +189,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             if (Util.isPowerOf2(c + 1)) {
                 lir().move(left, tmp);
                 lir().shiftLeft(left, Util.log2(c + 1), left);
-                lir().sub(left, tmp, result);
+                lir().sub(left, tmp, result, null);
                 return true;
             } else if (Util.isPowerOf2(c - 1)) {
                 lir().move(left, tmp);
@@ -347,8 +347,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
         if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
-        } else {
-            left.dontLoadItem();
         }
 
         assert C1XOptions.SSEVersion >= 2;
@@ -359,8 +357,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.loadItem();
         } else if (right.isRegister()) {
             right.loadItem();
-        } else {
-            right.dontLoadItem();
         }
 
         LIROperand reg;
@@ -549,9 +545,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                         }
                     }
                 }
-                if (useConstant) {
-                    rightArg.dontLoadItem();
-                } else {
+                if (!useConstant) {
                     rightArg.loadItem();
                 }
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
@@ -562,7 +556,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
-                rightArg.dontLoadItem();
                 rlockResult(x);
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
@@ -600,9 +593,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (mustLoadCount) {
             // count for long must be in register
             count.loadItemForce(shiftCountOpr());
-        } else {
-            count.dontLoadItem();
         }
+
         value.loadItem();
         LIROperand reg = rlockResult(x);
 
@@ -1105,13 +1097,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         xin.loadItem();
         if (tag.isLong() && yin.isConstant() && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
-            // inline long zero
-            yin.dontLoadItem();
+            // dont load item
         } else if (tag.isLong() || tag.isFloat() || tag.isDouble()) {
             // longs cannot handle constants at right side
             yin.loadItem();
-        } else {
-            yin.dontLoadItem();
         }
 
         // add safepoint before generating condition code so it can be recomputed
@@ -1165,7 +1154,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(value, spill);
-            lir().volatileMove(spill, tempDouble, CiKind.Long);
+            lir().volatileMove(spill, tempDouble, CiKind.Long, null);
             lir().volatileMove(tempDouble, address, CiKind.Long, info);
         } else {
             lir().store(value, address, info);
@@ -1182,7 +1171,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // SSE2+ mode it can be moved directly.
             LIROperand tempDouble = newRegister(CiKind.Double);
             lir().volatileMove(address, tempDouble, CiKind.Long, info);
-            lir().volatileMove(tempDouble, result, CiKind.Long);
+            lir().volatileMove(tempDouble, result, CiKind.Long, null);
             if (C1XOptions.SSEVersion < 2) {
                 // no spill slot needed in SSE2 mode because xmm.cpu register move is possible
                 setVregFlag(result, VregFlag.MustStartInMemory);
@@ -1197,14 +1186,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (isVolatile && type == CiKind.Long) {
             LIRAddress addr = new LIRAddress(src, offset, CiKind.Double);
             LIROperand tmp = newRegister(CiKind.Double);
-            lir().load(addr, tmp);
+            lir().load(addr, tmp, null);
             LIROperand spill = newRegister(CiKind.Long);
             setVregFlag(spill, VregFlag.MustStartInMemory);
             lir().move(tmp, spill);
             lir().move(spill, dst);
         } else {
             LIRAddress addr = new LIRAddress(src, offset, type);
-            lir().load(addr, dst);
+            lir().load(addr, dst, null);
         }
     }
 

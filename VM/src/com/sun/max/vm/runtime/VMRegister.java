@@ -128,10 +128,10 @@ public final class VMRegister {
             }
         },
 
-            /**
-             * The register holding the address of the call instruction for a frame-less call.
-             * Not all platform defines one.
-             */
+        /**
+         * The register holding the address of the call instruction for a frame-less call.
+         * Not all platform defines one.
+         */
         FRAMELESS_CALL_INSTRUCTION_ADDRESS {
             @Override
             public Kind kind() {

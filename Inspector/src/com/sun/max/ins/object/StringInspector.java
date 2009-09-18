@@ -59,7 +59,7 @@ public final class StringInspector extends ObjectInspector {
 
         tabbedPane = new JTabbedPane();
 
-        fieldsPane = ObjectScrollPane.createFieldsPane(this, teleString);
+        fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleString, instanceViewPreferences);
         tabbedPane.add(name, fieldsPane);
 
         stringPane = StringPane.createStringPane(this, new StringSource() {

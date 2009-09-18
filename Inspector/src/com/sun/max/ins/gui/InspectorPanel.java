@@ -52,8 +52,6 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     public InspectorPanel(Inspection inspection, LayoutManager layoutManager) {
         super(layoutManager);
         this.inspection = inspection;
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {

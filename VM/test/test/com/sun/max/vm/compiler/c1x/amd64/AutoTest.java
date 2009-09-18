@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,27 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.c1x.util.*;
+import junit.framework.*;
 
-/**
- * The <code>NativeMovRegMem</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- */
-public class NativeMovRegMem {
+import com.sun.max.ide.*;
 
-    public static NativeMovRegMem nativeMoveRegMemAt(int i) {
-        return Util.nonFatalUnimplemented(null);
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
     }
 
-    /**
-     * @param fieldOffset
-     */
-    public void setOffset(int fieldOffset) {
-        Util.nonFatalUnimplemented();
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AutoTest.suite());
     }
 
+    public static Test suite() {
+        return new C1XTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+    }
 }

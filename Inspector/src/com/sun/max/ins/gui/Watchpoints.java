@@ -55,23 +55,26 @@ public final class Watchpoints {
 
         /**
          * Sets a watchpoint if none exists at location.
+         *
+         * @return newly created watchpoint; null if failed.
          */
-        public abstract void setWatchpoint();
+        public abstract MaxWatchpoint setWatchpoint();
 
         @Override
         protected void procedure() {
             final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
             if (watchpoints.isEmpty()) {
-                setWatchpoint();
+                final MaxWatchpoint newWatchpoint = setWatchpoint();
+                if (newWatchpoint != null) {
+                    inspection.focus().setWatchpoint(newWatchpoint);
+                }
             } else {
                 if (watchpoints.length() > 1) {
                     if (!inspection.gui().yesNoDialog(Integer.toString(watchpoints.length()) + " watchpoints active here:  DELETE ALL?")) {
                         return;
                     }
                 }
-                for (MaxWatchpoint watchpoint : watchpoints) {
-                    watchpoint.dispose();
-                }
+                inspection.actions().removeWatchpoints(watchpoints, null).perform();
             }
         }
 
@@ -97,15 +100,7 @@ public final class Watchpoints {
             final MaxWatchpoint finalWatchpoint = watchpoint;
             menu.add(inspection.actions().removeWatchpoint(finalWatchpoint, watchpoint.description()));
         }
-        menu.add(new InspectorAction(inspection, "Remove all") {
-
-            @Override
-            protected void procedure() {
-                for (MaxWatchpoint watchpoint : watchpoints) {
-                    watchpoint.dispose();
-                }
-            }
-        });
+        menu.add(inspection.actions().removeWatchpoints(watchpoints, "Remove all"));
         return menu;
     }
 

@@ -31,7 +31,11 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        super();
+
+        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
+       // registerScheme(DynamicCompilerScheme.class, C1XCompilerScheme.class);
+
+        //super();
         registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
     }
 

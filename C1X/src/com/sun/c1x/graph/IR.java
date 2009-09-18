@@ -112,6 +112,13 @@ public class IR {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
         }
+        if (C1XOptions.DoLoopPeeling) {
+            LoopFinder loopFinder = new LoopFinder(numberOfBlocks(), startBlock);
+            for (Loop loop : loopFinder.getLoopList()) {
+                new LoopPeeler(this, loop);
+            }
+            verifyAndPrint("After Loop peeling");
+        }
     }
 
     private void computeLinearScanOrder() {
@@ -144,6 +151,7 @@ public class IR {
             new LivenessMarker(this).removeDeadCode();
             verifyAndPrint("After dead code elimination 2");
         }
+
     }
 
     /**

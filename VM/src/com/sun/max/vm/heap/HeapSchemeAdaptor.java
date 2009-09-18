@@ -82,4 +82,9 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public void zapRegion(MemoryRegion region) {
         Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
+
+    public long maxObjectInspectionAge() {
+        FatalError.unimplemented();
+        return 0;
+    }
 }

@@ -33,7 +33,7 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public class RegisterVerifier {
+final class RegisterVerifier {
 
     LinearScan allocator;
     List<BlockBegin> workList; // all blocks that must be processed
@@ -126,7 +126,7 @@ public class RegisterVerifier {
             TTY.print("    ");
             for (int i = 0; i < stateSize(); i++) {
                 if (inputState.get(i) != null) {
-                    TTY.print(" %4d", inputState.get(i).regNum());
+                    TTY.print(" %4d", inputState.get(i).registerNumber());
                 } else {
                     TTY.print("   __");
                 }
@@ -219,7 +219,7 @@ public class RegisterVerifier {
     boolean checkState(List<Interval> inputState, int reg, Interval interval) {
         if (reg != LinearScan.getAnyreg() && reg < stateSize()) {
             if (inputState.get(reg) != interval) {
-                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.regNum() + " but interval " + inputState.get(reg));
+                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.registerNumber() + " but interval " + inputState.get(reg));
             }
         }
         return true;

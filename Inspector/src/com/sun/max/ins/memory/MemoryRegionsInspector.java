@@ -51,7 +51,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         return memoryRegionsInspector;
     }
 
-    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "memoryRegionsInspector");
+    private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "memoryRegionsInspectorGeometry");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryRegionsViewPreferences viewPreferences;
@@ -64,8 +64,8 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(actions().inspectSelectedMemoryRegionWords());
+        getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
+        getMenu(DEFAULT_INSPECTOR_MENU).add(actions().inspectSelectedMemoryRegionWords());
         Trace.end(1, tracePrefix() + "initializing");
     }
 

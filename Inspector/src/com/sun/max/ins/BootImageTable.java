@@ -21,17 +21,16 @@
 package com.sun.max.ins;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
@@ -44,89 +43,39 @@ import com.sun.max.vm.prototype.*;
  */
 public final class BootImageTable extends InspectorTable {
 
-    private final BootImageTableModel model;
+    private final BootImageTableModel tableModel;
     private BootImageColumnModel columnModel;
-    private final TableColumn[] columns;
 
-    private MaxVMState lastRefreshedState = null;
-
-    public BootImageTable(Inspection inspection, TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
+    public BootImageTable(Inspection inspection, BootImageViewPreferences viewPreferences) {
         super(inspection);
-        model = new BootImageTableModel(inspection);
-        columns = new TableColumn[BootImageColumnKind.VALUES.length()];
+        tableModel = new BootImageTableModel(inspection);
         this.columnModel = new BootImageColumnModel(viewPreferences);
-        configureMemoryTable(model, columnModel);
+        configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }
 
-    public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
-            model.refresh(force);
+
+    /**
+     * A table for displaying configuration parameters for the VM instance.
+     * <br>
+     * This model contains the display labels, contrary to the usual convention.
+     */
+    private final class BootImageColumnModel extends InspectorTableColumnModel<BootImageColumnKind> {
+
+        private BootImageColumnModel(BootImageViewPreferences viewPreferences) {
+            super(BootImageColumnKind.VALUES.length(), viewPreferences);
+            addColumn(BootImageColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumn(BootImageColumnKind.VALUE, new ValueCellRenderer(), null);
+            addColumn(BootImageColumnKind.REGION, new RegionCellRenderer(), null);
         }
     }
 
-    public void redisplay() {
-        for (TableColumn column : columns) {
-            final Prober prober = (Prober) column.getCellRenderer();
-            prober.redisplay();
-        }
-        invalidate();
-        repaint();
-    }
-
-    @Override
-    protected JTableHeader createDefaultTableHeader() {
-        // Custom table header with tooltips that describe the column data.
-        return new JTableHeader(columnModel) {
-            @Override
-            public String getToolTipText(MouseEvent mouseEvent) {
-                final Point p = mouseEvent.getPoint();
-                final int index = columnModel.getColumnIndexAtX(p.x);
-                final int modelIndex = columnModel.getColumn(index).getModelIndex();
-                return BootImageColumnKind.VALUES.get(modelIndex).toolTipText();
-            }
-        };
-    }
-
-    private final class BootImageColumnModel extends DefaultTableColumnModel {
-
-        private final TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences;
-
-        private BootImageColumnModel(TableColumnVisibilityPreferences<BootImageColumnKind> viewPreferences) {
-            this.viewPreferences = viewPreferences;
-            createColumn(BootImageColumnKind.NAME, new NameCellRenderer(inspection()), null);
-            createColumn(BootImageColumnKind.VALUE, new ValueCellRenderer(), null);
-            createColumn(BootImageColumnKind.REGION, new RegionCellRenderer(), null);
-        }
-
-        private void createColumn(BootImageColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
-            final int col = columnKind.ordinal();
-            columns[col] = new TableColumn(col, 0, renderer, editor);
-            columns[col].setHeaderValue(columnKind.label());
-            columns[col].setMinWidth(columnKind.minWidth());
-            if (viewPreferences.isVisible(columnKind)) {
-                addColumn(columns[col]);
-            }
-            columns[col].setIdentifier(columnKind);
-        }
-    }
-
-    private final class BootImageTableModel extends AbstractTableModel {
+    private final class BootImageTableModel extends InspectorTableModel {
 
         private final AppendableIndexedSequence<String> names = new ArrayListSequence<String>(50);
         private final AppendableIndexedSequence<InspectorLabel> valueLabels = new ArrayListSequence<InspectorLabel>(50);
         private final AppendableIndexedSequence<InspectorLabel> regionLabels = new ArrayListSequence<InspectorLabel>(50);
         private final InspectorLabel dummyLabel;
-
-        /**
-         * Adds a row to the table.
-         */
-        private void addRow(String name, InspectorLabel valueLabel, InspectorLabel regionLabel) {
-            names.append(name);
-            valueLabels.append(valueLabel);
-            regionLabels.append(regionLabel != null ? regionLabel : dummyLabel);
-        }
 
         BootImageTableModel(Inspection inspection) {
             final BootImage bootImage = maxVM().bootImage();
@@ -202,17 +151,15 @@ public final class BootImageTable extends InspectorTable {
             addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
             final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
             addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));
-
-
         }
 
-        public void refresh(boolean force) {
-            for (InspectorLabel label : valueLabels) {
-                label.refresh(force);
-            }
-            for (InspectorLabel label : regionLabels) {
-                label.refresh(force);
-            }
+        /**
+         * Adds a row to the table.
+         */
+        private void addRow(String name, InspectorLabel valueLabel, InspectorLabel regionLabel) {
+            names.append(name);
+            valueLabels.append(valueLabel);
+            regionLabels.append(regionLabel != null ? regionLabel : dummyLabel);
         }
 
         public int getColumnCount() {
@@ -247,6 +194,17 @@ public final class BootImageTable extends InspectorTable {
             }
             return null;
         }
+
+        @Override
+        public void refresh() {
+            for (InspectorLabel label : valueLabels) {
+                label.refresh(true);
+            }
+            for (InspectorLabel label : regionLabels) {
+                label.refresh(true);
+            }
+        }
+
     }
 
     private final class NameCellRenderer extends TextLabel implements TableCellRenderer {
@@ -260,7 +218,6 @@ public final class BootImageTable extends InspectorTable {
             setText(name);
             return this;
         }
-
     }
 
     private final class ValueCellRenderer implements TableCellRenderer {

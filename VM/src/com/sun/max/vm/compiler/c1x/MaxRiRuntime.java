@@ -188,18 +188,12 @@ public class MaxRiRuntime implements RiRuntime {
         return false;
     }
 
-    public int klassJavaMirrorOffsetInBytes() {
+    public int javaClassObjectOffset() {
         throw Util.unimplemented();
     }
 
-    public int hubOffsetInBytes() {
+    public int hubOffset() {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
-    }
-
-    public int overflowArgumentsSize(CiKind basicType) {
-        // TODO: Return wordSize
-        // Currently must be a constant!!
-        return 8;
     }
 
     public boolean needsExplicitNullCheck(int offset) {
@@ -207,11 +201,11 @@ public class MaxRiRuntime implements RiRuntime {
         return offset > 0xbad;
     }
 
-    public int threadExceptionOopOffset() {
+    public int threadExceptionOffset() {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
     }
 
-    public int threadObjOffset() {
+    public int threadObjectOffset() {
         throw Util.unimplemented();
     }
 
@@ -229,7 +223,7 @@ public class MaxRiRuntime implements RiRuntime {
         return VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
-    public int firstArrayElementOffsetInBytes(CiKind type) {
+    public int firstArrayElementOffset(CiKind type) {
         return VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
     }
 
@@ -245,83 +239,16 @@ public class MaxRiRuntime implements RiRuntime {
         return Util.nonFatalUnimplemented(0);
     }
 
-    public int basicObjectLockSize() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    public int elementKlassOffsetInBytes() {
+    public int elementHubOffset() {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
-    }
-
-    public int initStateOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int instanceKlassFullyInitialized() {
-        throw Util.unimplemented();
     }
 
     public int interpreterFrameMonitorSize() {
         throw Util.unimplemented();
     }
 
-    public int markOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int methodDataNullSeenByteConstant() {
-        throw Util.unimplemented();
-    }
-
-    public int secondarySuperCacheOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int secondarySupersOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int superCheckOffsetOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabEndOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabSizeOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabStartOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int threadTlabTopOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int biasedLockMaskInPlace() {
-        throw Util.unimplemented();
-    }
-
-    public int biasedLockPattern() {
-        throw Util.unimplemented();
-    }
 
     public boolean dtraceAllocProbes() {
-        throw Util.unimplemented();
-    }
-
-    public int getMinObjAlignmentInBytesMask() {
-        throw Util.unimplemented();
-    }
-
-    public int instanceOopDescBaseOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int itableInterfaceOffsetInBytes() {
         throw Util.unimplemented();
     }
 
@@ -329,31 +256,11 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public int itableOffsetEntrySize() {
+    public int initialMarkWord() {
         throw Util.unimplemented();
     }
 
-    public int itableOffsetOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int klassPartOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int markOopDescPrototype() {
-        throw Util.unimplemented();
-    }
-
-    public int maxArrayAllocationLength() {
-        throw Util.unimplemented();
-    }
-
-    public int prototypeHeaderOffsetInBytes() {
-        throw Util.unimplemented();
-    }
-
-    public int vtableLengthOffset() {
+    public int maximumArrayLength() {
         throw Util.unimplemented();
     }
 

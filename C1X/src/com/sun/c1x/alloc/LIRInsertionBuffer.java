@@ -28,28 +28,24 @@ import com.sun.c1x.lir.*;
  *
  * @author Thomas Wuerthinger
  */
-public class LIRInsertionBuffer {
+public final class LIRInsertionBuffer {
 
-    LIRList lir; // the lir list where ops of this buffer should be inserted later (null when uninitialized)
+    private LIRList lir; // the lir list where ops of this buffer should be inserted later (null when uninitialized)
 
     // list of insertion points. index and count are stored alternately:
     // indexAndCount[i * 2]: the index into lir list where "count" ops should be inserted
     // indexAndCount[i * 2 + 1]: the number of ops to be inserted at index
-    List<Integer> indexAndCount;
+    private final List<Integer> indexAndCount;
 
     // the LIROps to be inserted
-    List<LIRInstruction> ops;
+    private final List<LIRInstruction> ops;
 
-    void appendNew(int index, int count) {
+    private void appendNew(int index, int count) {
         indexAndCount.add(index);
         indexAndCount.add(count);
     }
 
-    void setIndexAt(int i, int value) {
-        indexAndCount.set((i << 1), value);
-    }
-
-    void setCountAt(int i, int value) {
+    private void setCountAt(int i, int value) {
         indexAndCount.set((i << 1) + 1, value);
     }
 
@@ -101,12 +97,12 @@ public class LIRInsertionBuffer {
     }
 
     void move(int index, LIROperand src, LIROperand dst, CodeEmitInfo info) {
-        append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, LIRPatchCode.PatchNone, info));
+        append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
     // Implementation of LIRInsertionBuffer
 
-    void append(int index, LIRInstruction op) {
+    private void append(int index, LIRInstruction op) {
         assert indexAndCount.size() % 2 == 0 : "must have a count for each index";
 
         int i = numberOfInsertionPoints() - 1;
@@ -122,7 +118,7 @@ public class LIRInsertionBuffer {
         assert verify();
     }
 
-    boolean verify() {
+    private boolean verify() {
         int sum = 0;
         int prevIdx = -1;
 
@@ -132,10 +128,5 @@ public class LIRInsertionBuffer {
         }
         assert sum == numberOfOps() : "wrong total sum";
         return true;
-    }
-
-    public void move(int insertIdx, LIROperand fromOpr, LIROperand toOpr) {
-        move(insertIdx, fromOpr, toOpr, null);
-
     }
 }
