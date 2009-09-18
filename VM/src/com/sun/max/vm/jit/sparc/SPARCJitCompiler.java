@@ -109,7 +109,7 @@ public class SPARCJitCompiler extends JitCompiler {
      * @param catcherJitFramePointer the frame pointer for the exception handler
      */
     @NEVER_INLINE
-    private static void unwind(StackUnwindingContext context, Address catchAddress, Pointer catcherStackPointer, Pointer catcherJitFramePointer, Pointer jitLiteralBase) {
+    private static void unwind(StackUnwindingContext context, Address catchAddress, Pointer catcherTopOfStackPointer, Pointer catcherJitFramePointer) {
         // Put the exception where the exception handler expects to find it
         VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(context.throwable));
 
@@ -120,13 +120,22 @@ public class SPARCJitCompiler extends JitCompiler {
             VirtualMemory.protectPage(VmThread.current().guardPage());
         }
 
+        final Pointer literalBase = catcherJitFramePointer.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
+
+        // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
+        // mandatory output register.  We also need to bias it.
+        final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
+
         final Word catcherFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I6);
         final Word catcherCallAddress = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I7);
+
+        // Set the top of stack to null (will be replaced later with the throwable)
+        catcherTopOfStackPointer.writeReference(0, null);
 
         // Patch the JIT frame pointer in the saved register window area of the JIT frame to which we'll unwind:
         SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitFramePointerRegister, catcherJitFramePointer);
         // Patch the literal base register in the saved register window area of the JIT frame to which we'll unwind:
-        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitLiteralBaseRegister, jitLiteralBase);
+        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitLiteralBaseRegister, literalBase);
         // Patch the frame pointer in the saved register window area of the JIT frame to which we'll unwind:
         SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, GPR.I6, catcherFramePointer);
         // Patch the link register value in the saved register window area of the JIT frame to which we'll unwind:
@@ -285,18 +294,11 @@ public class SPARCJitCompiler extends JitCompiler {
                     // frame pointer - (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
                     final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
                     final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
-                    // Set the top of stack to null (will be replaced later with the throwable)
-                    catcherTopOfStackPointer.writeReference(0, null);
-
-                    // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
-                    // mandatory output register.  We also need to bias it.
-                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
-                    final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throwing.raise()
                     Safepoint.enable();
 
-                    unwind(stackUnwindingContext, catchAddress, catcherStackPointer, localVariablesBase, literalBase);
+                    unwind(stackUnwindingContext, catchAddress, catcherTopOfStackPointer, localVariablesBase);
                     // We should never reach here
                 }
                 break;
