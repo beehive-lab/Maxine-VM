@@ -626,6 +626,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleString teleString = (TeleString) teleObject;
             final String s = teleString.getString();
+            if (s == null) {
+                return "unknown";
+            }
             if (s.length() > style().maxStringInlineDisplayLength()) {
                 return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }

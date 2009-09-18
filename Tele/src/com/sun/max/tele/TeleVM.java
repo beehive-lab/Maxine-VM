@@ -888,10 +888,12 @@ public abstract class TeleVM implements MaxVM {
 
             Pointer pointer = getForwardedObject(origin);
             Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(pointer));
+            if (hubWord.equals(Word.zero())) {
+                return false;
+            }
             Word clearedWord = getForwardedObject(hubWord.asPointer());
             if (!hubWord.equals(clearedWord)) {
                 hubWord = clearedWord;
-                //TODO: set status
             }
             for (int i = 0; i < 3; i++) {
                 final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);

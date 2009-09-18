@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.grip;
 
-import com.sun.max.tele.grip.TeleGrip.*;
 import com.sun.max.unsafe.*;
 
 /**

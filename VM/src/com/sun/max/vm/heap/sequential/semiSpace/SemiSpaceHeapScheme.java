@@ -139,11 +139,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      */
     private Address top;
 
-    /**
-     * The global allocation mark.
-     */
-    private final AtomicWord allocationMark = new AtomicWord();
-
     private final ResetTLAB resetTLAB = new ResetTLAB(){
         @Override
         protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
@@ -200,7 +195,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
 
-            allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
             if (MaxineVM.isDebug()) {
@@ -230,7 +224,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     @INLINE
     private Address allocationMark() {
-        return allocationMark.get().asAddress();
+        return toSpace.mark().asAddress();
     }
 
     private static void startTimer(Timer timer) {
@@ -445,7 +439,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         toSpace.setSize(oldFromSpaceSize);
         toSpace.mark.set(toSpace.start());  // for debugging
 
-        allocationMark.set(toSpace.start());
+        //allocationMark.set(toSpace.start());
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
         // as that could cause gcAllocate to fail trying to copying too much live data.
@@ -738,7 +732,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (MaxineVM.isDebug()) {
             cell = cell.plusWords(1);
         }
-        allocationMark.set(cell.plus(size));
+        toSpace.mark.set(cell.plus(size));
         FatalError.check(allocationMark().lessThan(top), "GC allocation overflow");
         return cell;
     }
@@ -885,7 +879,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
                 end = cell.plus(size);
             }
-        } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+        } while (toSpace.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
@@ -1156,8 +1150,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (!pointer.isZero()) {
             Word word = dataAccess.readWord(pointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
             if (word.asPointer().and(1).toLong() == 1) {
+                if (word.asPointer().minus(1).equals(Pointer.zero())) {
+                    return pointer;
+                }
                 return word.asPointer().minus(1);
             }
+        }
+        if (pointer.equals(Pointer.zero())) {
+            return pointer;
         }
         return pointer;
     }
