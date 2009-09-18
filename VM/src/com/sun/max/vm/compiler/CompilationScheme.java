@@ -35,7 +35,6 @@ import com.sun.max.vm.compiler.target.*;
  * @author Ben L. Titzer
  */
 public interface CompilationScheme extends VMScheme {
-
     /**
      * An enum that selects between different runtime behavior of the compilation scheme.
      */
@@ -85,6 +84,14 @@ public interface CompilationScheme extends VMScheme {
      *         denies compilation of the specified method
      */
     TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
+
+    /**
+     * Installs the specified target method for the specified class method actor. The target method may be the
+     * result of a compilation from an unknown compiler, hand-written machine code, etc.
+     * @param classMethodActor the method for which to install the target code
+     * @param targetMethod the target code
+     */
+    void installTargetMethod(ClassMethodActor classMethodActor, TargetMethod targetMethod);
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued

@@ -256,7 +256,7 @@ public final class ClassfileReader {
      * @param majorVersion the version of the class file
      * @throws ClassFormatError if the flags are invalid
      */
-    public static void verifyMethodFlags(String name, int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
+    public static void verifyMethodFlags(int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
 
         // Class and interface initialization methods (3.9) are called
         // implicitly by the Java virtual machine; the value of their
@@ -714,7 +714,7 @@ public final class ClassfileReader {
                     }
                 });
 
-                verifyMethodFlags(name.toString(), flags, isInterface, isInit, isClinit, majorVersion);
+                verifyMethodFlags(flags, isInterface, isInit, isClinit, majorVersion);
                 flags = extraFlags;
 
                 final int descriptorIndex = classfileStream.readUnsigned2();

@@ -22,11 +22,14 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.collect.LinkSequence;
+import com.sun.max.annotate.INLINE;
 
 /**
  * @author Doug Simon
@@ -101,5 +104,15 @@ public final class VmStackFrameWalker extends StackFrameWalker {
 
     @Override
     public void useABI(TargetABI targetABI) {
+    }
+
+    @INLINE
+    public static ClassMethodActor getCallerClassMethodActor() {
+        // TODO: a full stack walk is not necessary here.
+        LinkSequence<StackFrame> frames = new LinkSequence<StackFrame>();
+        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).frames(frames, VMRegister.getInstructionPointer(),
+                                                       VMRegister.getCpuStackPointer(),
+                                                       VMRegister.getCpuFramePointer());
+        return getCallerClassMethodActor(frames, false);
     }
 }
