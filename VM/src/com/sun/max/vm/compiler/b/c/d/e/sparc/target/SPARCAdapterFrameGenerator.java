@@ -261,7 +261,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Amount to retract to the stack: the adapter frame plus the parameters of the call. The following gives exactly that.
             // Note that the adapter does not save the callee frame pointer nor the return address on the stack. Instead, it exploits the
             // pushing of a register window by the callee to save these in local registers:  the frame pointer is already in a local register;
-            // the caller's address is saved in the SAVED_CALLER_ADDRESS register. Note that this is only for calls from JIT.
+            // the caller's address is saved in the SAVED_CALLER_ADDRESS register.  Note that this is only for calls from JIT.
             final int stackAmountInBytes = jitCallerStackOffset - SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
 
             // Return to the JITed caller. The frame adapter saved the call address in local register SAVED_CALLER_ADDRESS.
@@ -315,13 +315,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     break;
                 case STACK_SLOT:
                     final int biasedOptToStackOffset32 = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + parameterLocation.asStackSlot().offset;
-                    if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                        assembler().ldx(optimizedCodeStackPointer, offset32, longScratchRegister);
-                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-                    } else {
-                        assembler().lduw(optimizedCodeStackPointer, offset, intScratchRegister);
-                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-                    }
+                    // SPARC is a 64-bit architecture, so there's no performance advantage to copying fewer than 64 bits.
+                    // So, we move an entire word regardless of the kind.
+                    assembler().ldx(optimizedCodeStackPointer, offset32, longScratchRegister);
+                    assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
                     break;
                 default:
                     ProgramError.unexpected();

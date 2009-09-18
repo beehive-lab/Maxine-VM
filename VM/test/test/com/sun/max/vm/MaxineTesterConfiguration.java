@@ -112,7 +112,6 @@ public class MaxineTesterConfiguration {
         jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
-        jtt(jtt.micro.BigIntParams02.class,               RAND_SPARC);  // Fails:                   @jitopt
 
         dacapo("antlr",              FAIL_SPARC);
         dacapo("bloat",              FAIL_SPARC);
