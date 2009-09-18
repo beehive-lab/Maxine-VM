@@ -94,6 +94,11 @@ void log_print_format(const char *format, ...) {
     va_end(ap);
 }
 
+void log_flush() {
+    FILE* out = fileStream == NULL ? stdout : fileStream;
+    fflush(out);
+}
+
 void log_print_vformat(const char *format, va_list ap) {
 #if !os_GUESTVMXEN
     FILE* out = fileStream == NULL ? stdout : fileStream;

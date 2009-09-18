@@ -32,7 +32,7 @@ import com.sun.max.test.*;
 import com.sun.max.test.JavaExecHarness.*;
 import com.sun.max.util.*;
 
-public class JavaTesterGenerator {
+public class JTGenerator {
 
     private static final OptionSet options = new OptionSet(true);
 
@@ -125,7 +125,7 @@ public class JavaTesterGenerator {
 
     private static boolean generateRunSchemeContent(final File runSchemeFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
-        final JavaTesterGenerator gen = new JavaTesterGenerator(writer);
+        final JTGenerator gen = new JTGenerator(writer);
         gen.genClassList(cases);
         gen.genRunMethod(cases);
         writer.close();
@@ -134,7 +134,7 @@ public class JavaTesterGenerator {
 
     private static boolean generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
         final Writer writer = new StringWriter();
-        final JavaTesterGenerator gen = new JavaTesterGenerator(writer);
+        final JTGenerator gen = new JTGenerator(writer);
         gen.genTestRuns(cases);
         writer.close();
         return Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
@@ -151,7 +151,7 @@ public class JavaTesterGenerator {
         return list;
     }
 
-    public JavaTesterGenerator(Writer w) {
+    public JTGenerator(Writer w) {
         writer = new IndentWriter(w);
     }
 
