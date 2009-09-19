@@ -21,7 +21,7 @@
 package jtt.hotpath;
 /*
  * @Harness: java
- * @Runs: 80 = 3160;
+ * @Runs: 0 = 0; 1 = 0; 2 = 1; 3 = 3; 80 = 3160;
  */
 public class HP_allocate01 {
     public static int test(int count) {

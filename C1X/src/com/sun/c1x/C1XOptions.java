@@ -80,6 +80,7 @@ public class C1XOptions {
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
     public static boolean PrintBlocksDeleted                 = ____;
+    public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = true;
@@ -234,6 +235,7 @@ public class C1XOptions {
         DoNullCheckElimination             = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____;
     }
 
     private static void setOptimizationLevel1() {
@@ -267,6 +269,7 @@ public class C1XOptions {
         DoFlowSensitiveNCE                 = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____;
     }
 
     private static void setOptimizationLevel2() {
@@ -300,6 +303,7 @@ public class C1XOptions {
         DoFlowSensitiveNCE                 = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____; // still need to insert Phi instructions at merge blocks
     }
 
     private static void setOptimizationLevel3() {
