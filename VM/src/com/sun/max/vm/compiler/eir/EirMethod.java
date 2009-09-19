@@ -40,7 +40,7 @@ public class EirMethod extends AbstractIrMethod {
     }
 
     public boolean isTrampoline() {
-        return classMethodActor() instanceof TrampolineMethodActor;
+        return classMethodActor().isTrampoline();
     }
 
     private final EirABI abi;

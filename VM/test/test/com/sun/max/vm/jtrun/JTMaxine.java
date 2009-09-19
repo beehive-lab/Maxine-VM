@@ -24,6 +24,7 @@ import com.sun.max.program.option.OptionSet;
 import com.sun.max.program.option.Option;
 import com.sun.max.vm.compiler.RuntimeCompilerScheme;
 import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.actor.member.ClassMethodActor;
@@ -143,7 +144,9 @@ public class JTMaxine {
         try {
             Class compilerSchemeClass = Class.forName(name);
             Constructor constructor = compilerSchemeClass.getConstructor(VMConfiguration.class);
-            return (RuntimeCompilerScheme) constructor.newInstance(vmConfiguration);
+            RuntimeCompilerScheme compiler = (RuntimeCompilerScheme) constructor.newInstance(vmConfiguration);
+            compiler.initialize(MaxineVM.Phase.PROTOTYPING);
+            return compiler;
         } catch (ClassNotFoundException e) {
             System.out.println("Could not find compiler scheme class: " + name);
             System.exit(-1);
