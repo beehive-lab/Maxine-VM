@@ -178,9 +178,9 @@ public abstract class TeleActor extends TeleTupleObject {
             // 0x08000000
             sb.append("BUILTIN, ");
         }
-        if ((flagsValue & Actor.SURROGATE) != 0) {
+        if ((flagsValue & Actor.LOCAL_SUBSTITUTE) != 0) {
             // 0x10000000
-            sb.append("SURROGATE, ");
+            sb.append("SUBSTITUTE, ");
         }
         if ((flagsValue & Actor.UNSAFE) != 0) {
             // 0x20000000

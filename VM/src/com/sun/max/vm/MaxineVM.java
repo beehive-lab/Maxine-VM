@@ -230,7 +230,7 @@ public final class MaxineVM {
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     private static MaxineVM host_() {
         return host;
     }
@@ -252,7 +252,7 @@ public final class MaxineVM {
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     private static MaxineVM target_() {
         return target;
     }
@@ -357,7 +357,7 @@ public final class MaxineVM {
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @FOLD
     public static boolean isPrototyping_() {
         return false;

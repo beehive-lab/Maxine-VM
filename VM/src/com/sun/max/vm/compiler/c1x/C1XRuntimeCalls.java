@@ -36,6 +36,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.unsafe.Word;
 
 /**
  *
@@ -198,7 +199,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
+        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
     }
 
 
@@ -215,7 +216,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + 8 * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
+        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + Word.size() * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
     }
 
     @INLINE

@@ -64,16 +64,6 @@ public abstract class MemberActor extends Actor {
         return holder().qualifiedName() + "." + name;
     }
 
-    /**
-     * Gets a hash code for this member actor that is derived from both this actor's {@linkplain #name() name} and it's
-     * {@linkplain #descriptor() descriptor}. This hash code is superior to one that is derived only from this actor's
-     * name as member names often clash in a key space that includes members from more than one {@linkplain #holder() class}.
-     */
-    @Override
-    public int hashCode() {
-        return name.hashCode() ^ descriptor.hashCode();
-    }
-
     @CONSTANT
     @INSPECTED
     private int memberIndex;

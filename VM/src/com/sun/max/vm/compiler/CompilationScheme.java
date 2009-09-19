@@ -35,7 +35,6 @@ import com.sun.max.vm.compiler.target.*;
  * @author Ben L. Titzer
  */
 public interface CompilationScheme extends VMScheme {
-
     /**
      * An enum that selects between different runtime behavior of the compilation scheme.
      */
@@ -85,6 +84,8 @@ public interface CompilationScheme extends VMScheme {
      *         denies compilation of the specified method
      */
     TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
+
+    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler);
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued

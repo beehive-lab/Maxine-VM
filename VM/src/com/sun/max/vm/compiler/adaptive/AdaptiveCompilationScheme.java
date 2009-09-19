@@ -109,6 +109,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation, " +
                     "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
+    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:-FailOverCompilation",
+                    "When specified, the compiler will attempt to use a different compiler if compilation fails " +
+                    "with the first compiler."), MaxineVM.Phase.STARTING);
 
     /**
      * The (dynamically selected) compilation mode.
@@ -189,16 +192,20 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
-        return synchronousCompileHelper(classMethodActor, null);
+        return synchronousCompileHelper(classMethodActor, null, null);
     }
 
-    private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme prohibitedCompiler) {
+    public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler) {
+        return synchronousCompileHelper(classMethodActor, compiler, null);
+    }
+
+    private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
         synchronized (classMethodActor) {
             Object targetState = classMethodActor.targetState;
             if (targetState == null) {
                 // this is the first compilation.
-                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, true, prohibitedCompiler);
+                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, true, recommendedCompiler, prohibitedCompiler);
                 compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                 classMethodActor.targetState = compilation;
             } else if (targetState instanceof Compilation) {
@@ -212,7 +219,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
             } else {
                 // this method has already been compiled
-                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, prohibitedCompiler);
+                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler, prohibitedCompiler);
                 TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                 if (targetMethod != null && targetMethod.compilerScheme == compiler) {
                     return targetMethod;
@@ -231,7 +238,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             if (Trace.level() >= 1) {
                 t.printStackTrace();
             }
-            return synchronousCompileHelper(classMethodActor, compilerScheme);
+            if (failoverOption.getValue()) {
+                return synchronousCompileHelper(classMethodActor, null, compilerScheme);
+            } else {
+                t.printStackTrace();
+                throw new Error(t.getMessage());
+            }
         }
     }
 
@@ -271,9 +283,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      *
      * @param classMethodActor the class method actor to compile
      * @param firstCompile {@code true} if this is the first compilation of this method
+     * @param recommendedCompiler the compiler recommended for use
+     * @param prohibitedCompiler the compiler not to use (because it failed)
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme prohibitedCompiler) {
+    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
 
         if (prohibitedCompiler == optimizingCompiler) {
             throw new RuntimeException("Must use the optimizing compiler, if compilation fails!");
@@ -314,6 +328,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         // templates should only be compiled at prototyping time
         assert !classMethodActor.isTemplate();
 
+        if (recommendedCompiler != null) {
+            return recommendedCompiler;
+        }
+
         if (firstCompile) {
             if (classMethodActor.isSynthetic() && !classMethodActor.isNative()) {
                 // we must at first use the JIT for reflective invocation stubs, otherwise meta-evaluation may not
@@ -353,7 +371,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param synchronous a boolean indicating whether the compilation should be performed immediately or queued for
      */
     public void reoptimize(ClassMethodActor classMethodActor, boolean synchronous) {
-        // TODO: reimplement reoptimize()
+        synchronousCompile(classMethodActor, optimizingCompiler);
     }
 
     /**

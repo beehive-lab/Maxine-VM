@@ -94,7 +94,6 @@ public abstract class ObjectInspector extends Inspector {
             }
         };
         instanceViewPreferences.addListener(new TableColumnViewPreferenceListener() {
-            @Override
             public void tableColumnViewPreferencesChanged() {
                 reconstructView();
             }

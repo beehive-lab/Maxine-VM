@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,43 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+package test.com.sun.max.vm.jtrun;
+
+/**
+ * The <code>JavaTesterConfig</code> class contains configuration information about the JavaTester tests,
+ * including the list of the classes and the class that contains the generated test runs.
+ *
+ * @author Ben L. Titzer
  */
-package test.com.sun.max.vm.jtrun.some;
+public class JTClasses {
 
-import test.com.sun.max.vm.jtrun.*;
+    public final Class[] testClasses;
+    public final Class testRunClass;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-
-public class JavaTesterRunScheme extends AbstractTester {
-
-    public JavaTesterRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    public JTClasses(Class[] testClasses, Class testRunClass) {
+        this.testClasses = testClasses;
+        this.testRunClass = testRunClass;
     }
 
-    @PROTOTYPE_ONLY
-    @Override
-    public Class<?>[] getClassList() {
-        return classList;
+    public int getTestCount() {
+        return testClasses.length;
     }
 
-    @PROTOTYPE_ONLY
-// GENERATED TEST RUNS
-    private static final Class<?>[] classList = {
-    };
-    @Override
-    public void runTests() {
-        total = testEnd - testStart;
-        testNum = testStart;
-        while (testNum < testEnd) {
-            switch(testNum) {
-                case 0:
-                    JavaTesterTests.jtt_jasm_Loop00();
-            }
-        }
-        reportPassed(passed, total);
+    public String getTestName(int testNum) {
+        return testClasses[testNum].getName();
     }
-// END GENERATED TEST RUNS
 }

@@ -57,7 +57,6 @@ public class LoopFinder {
         countEdges(startBlock, null);
 
         if (numLoops > 0) {
-
             markLoops();
             clearNonNaturalLoops(startBlock);
             assignLoopDepth(startBlock);
@@ -67,8 +66,6 @@ public class LoopFinder {
         // cleanup flags to avoid assertion errors when computing linear scan ordering
         // XXX: should we remove the assertions from the Linear scan ordering??
         startBlock.iterateAnyOrder(new BlockClosure() {
-
-            @Override
             public void apply(BlockBegin block) {
                 block.setLoopIndex(-1);
                 block.setLoopDepth(0);
@@ -78,10 +75,6 @@ public class LoopFinder {
 
     }
 
-    /**
-     * @param method
-     * @param loopList2
-     */
     private void printLoops(RiMethod method) {
         System.out.println("Compiling " + method);
         for (Loop loop : loopList) {
@@ -99,11 +92,7 @@ public class LoopFinder {
     // * number loop header blocks
     // * create a list with all loop end blocks
     void countEdges(BlockBegin cur, BlockBegin parent) {
-        // Util.traceLinearScan(3, "Enter countEdges for block B%d coming from B%d", cur.blockID, parent != null ?
-        // parent.blockID : -1);
-
         if (isActive(cur)) {
-            // Util.traceLinearScan(3, "backward branch");
             assert isVisited(cur) : "block must be visited when block is active";
             assert parent != null : "must have parent";
 
@@ -117,7 +106,6 @@ public class LoopFinder {
         }
 
         if (isVisited(cur)) {
-            // Util.traceLinearScan(3, "block already visited");
             return;
         }
 
@@ -142,19 +130,12 @@ public class LoopFinder {
         // the loop number after the recursive calls for the successors above
         // have returned.
         if (cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader)) {
-  //          assert cur.loopIndex() == -1 : "cannot set loop-index twice";
-            // Util.traceLinearScan(3, "Block B%d is loop header of loop %d", cur.blockID, numLoops);
-
             cur.setLoopIndex(numLoops);
             numLoops++;
         }
-
-        // Util.traceLinearScan(3, "Finished countEdges for block B%d", cur.blockID);
     }
 
     void markLoops() {
-        // Util.traceLinearScan(3, "----- marking loops");
-
         loopMap = new BitMap2D(numLoops, maxBlockId);
         loopMap.clear();
 
@@ -208,7 +189,6 @@ public class LoopFinder {
             if (isBlockInLoop(i, startBlock)) {
                 // loop i contains the entry block of the method.
                 // this is not a natural loop, so ignore it
-                // Util.traceLinearScan(2, "Loop %d is non-natural, so it is ignored", i);
 
                 for (int blockId = maxBlockId - 1; blockId >= 0; blockId--) {
                     clearBlockInLoop(i, blockId);
@@ -218,7 +198,6 @@ public class LoopFinder {
     }
 
     void assignLoopDepth(BlockBegin startBlock) {
-        // Util.traceLinearScan(3, "----- computing loop-depth and weight");
         initVisited();
 
         assert workList.isEmpty() : "work list must be empty before processing";
@@ -284,7 +263,6 @@ public class LoopFinder {
         activeBlocks.clear(b.blockID);
     }
 
-    // accessors for loopMap
     boolean isBlockInLoop(int loopIdx, BlockBegin b) {
         return loopMap.at(loopIdx, b.blockID);
     }

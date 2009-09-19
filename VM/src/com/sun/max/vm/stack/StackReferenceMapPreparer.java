@@ -722,15 +722,15 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     private void prepareTrampolineFrameForOptimizedCaller(TargetMethod caller, int callerStopIndex, int offsetToFirstParameter) {
         final ClassMethodActor callee;
-        final TrampolineMethodActor trampolineMethodActor = (TrampolineMethodActor) trampolineTargetMethod.classMethodActor();
-        if (trampolineMethodActor.invocation() == TRAMPOLINE.Invocation.STATIC) {
+        final ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
+        if (trampolineMethodActor.isStaticTrampoline()) {
             callee = (ClassMethodActor) caller.directCallees()[callerStopIndex];
         } else {
             final Object receiver = trampolineRefmapPointer.plus(offsetToFirstParameter).getReference().toJava();
             final ClassActor classActor = ObjectAccess.readClassActor(receiver);
             assert trampolineTargetMethod.referenceLiterals().length == 1;
             final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.invocation() == TRAMPOLINE.Invocation.VIRTUAL) {
+            if (trampolineMethodActor.isVirtualTrampoline()) {
                 callee = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex());
             } else {
                 callee = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex());
@@ -789,7 +789,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     public boolean prepareFrameReferenceMap(CPSTargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
 
-        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
+        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrampoline()) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
             // We need to find out what the actual callee is before preparing the trampoline frame reference map.
