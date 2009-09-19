@@ -90,7 +90,7 @@ public abstract class Word {
         return true;
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @UNSAFE
     @FOLD
     public static boolean isBoxed_() {

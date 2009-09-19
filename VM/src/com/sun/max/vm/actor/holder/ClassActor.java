@@ -256,11 +256,6 @@ public abstract class ClassActor extends Actor {
         return false;
     }
 
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
     public boolean isPrimitiveClassActor() {
         return false;
     }

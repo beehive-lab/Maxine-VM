@@ -103,7 +103,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         if (compilee.isTemplate()) {
             return templateABI;
         }
-        if (compilee instanceof TrampolineMethodActor) {
+        if (compilee.isTrampoline()) {
             return trampolineABI;
         }
         return javaABI;

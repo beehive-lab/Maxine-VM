@@ -49,6 +49,7 @@ import com.sun.max.unsafe.UnsafeCast;
 import com.sun.max.program.ProgramError;
 import com.sun.max.lang.Arrays;
 import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.UNSAFE;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -141,6 +142,7 @@ public class MaxXirGenerator extends XirGenerator {
     final int wordSize;
     final int arrayLengthOffset;
 
+    @UNSAFE
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target) {
         this.target = target;
         this.hubOffset = vmConfiguration.layoutScheme().generalLayout.getOffsetFromOrigin(Layout.HeaderField.HUB).toInt();
@@ -1226,6 +1228,7 @@ public class MaxXirGenerator extends XirGenerator {
             return ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard).holder().staticTuple();
         }
 
+        @UNSAFE
         public static Word resolveStaticMethod(ResolutionGuard guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveStaticMethod.resolveStaticMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
@@ -1234,6 +1237,7 @@ public class MaxXirGenerator extends XirGenerator {
             return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex();
         }
 
+        @UNSAFE
         public static Word resolveSpecialMethod(ResolutionGuard guard) {
             return CompilationScheme.Static.compile(ResolutionSnippet.ResolveSpecialMethod.resolveSpecialMethod(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         }
