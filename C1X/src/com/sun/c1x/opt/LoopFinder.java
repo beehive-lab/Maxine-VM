@@ -22,6 +22,7 @@ package com.sun.c1x.opt;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
@@ -60,9 +61,13 @@ public class LoopFinder {
             markLoops();
             clearNonNaturalLoops(startBlock);
             assignLoopDepth(startBlock);
-            printLoops(startBlock.stateBefore().scope().method);
+            if (C1XOptions.PrintLoopList) {
+                printLoops(startBlock.stateBefore().scope().method);
+            }
         }
 
+<<<<<<< local
+=======
         // cleanup flags to avoid assertion errors when computing linear scan ordering
         // XXX: should we remove the assertions from the Linear scan ordering??
         startBlock.iterateAnyOrder(new BlockClosure() {
@@ -70,8 +75,12 @@ public class LoopFinder {
                 block.setLoopIndex(-1);
                 block.setLoopDepth(0);
             }
+>>>>>>> other
 
+<<<<<<< local
+=======
         }, false);
+>>>>>>> other
 
     }
 
@@ -143,7 +152,8 @@ public class LoopFinder {
             BlockBegin loopEnd = loopEndBlocks.get(i);
             BlockBegin loopStart = loopEnd.suxAt(0);
             int loopIdx = loopStart.loopIndex();
-            Loop loop = new Loop(loopStart, loopEnd);
+            ArrayList<BlockBegin> loopBody = new ArrayList<BlockBegin>();
+
 
             // Util.traceLinearScan(3, "Processing loop from B%d to B%d (loop %d):", loopStart.blockID, loopEnd.blockID,
             // loopIdx);
@@ -154,7 +164,7 @@ public class LoopFinder {
 
             // add the end-block of the loop to the working list
             workList.add(loopEnd);
-            loop.addBlock(loopEnd);
+            loopBody.add(loopEnd);
             setBlockInLoop(loopIdx, loopEnd);
             do {
                 BlockBegin cur = workList.remove(workList.size() - 1);
@@ -171,12 +181,13 @@ public class LoopFinder {
                             // this predecessor has not been processed yet, so add it to work list
                             // Util.traceLinearScan(3, "    pushing B%d", pred.blockID);
                             workList.add(pred);
-                            loop.addBlock(pred);
+                            loopBody.add(pred);
                             setBlockInLoop(loopIdx, pred);
                         }
                     }
                 }
             } while (!workList.isEmpty());
+            Loop loop = new Loop(loopStart, loopEnd, loopBody);
             loopList.add(loop);
         }
     }
@@ -274,5 +285,4 @@ public class LoopFinder {
     void clearBlockInLoop(int loopIdx, int blockId) {
         loopMap.clearBit(loopIdx, blockId);
     }
-
 }

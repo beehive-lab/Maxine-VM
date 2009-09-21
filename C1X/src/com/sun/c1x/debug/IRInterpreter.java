@@ -297,7 +297,7 @@ public class IRInterpreter {
                 Object boxedJavaValue;
                 Value object = i.object();
                 if (object != null) {
-                    boxedJavaValue = field.get(environment.lookup(object).asObject());
+                    boxedJavaValue = field.get(environment.lookup(object).boxedValue());
                 } else {
                     assert i.isStatic() : "Field must be static in LoadField";
                     boxedJavaValue = field.get(null);
@@ -801,7 +801,7 @@ public class IRInterpreter {
             final CiConstant object = environment.lookup(i.object());
             assertBasicType(object.basicType, CiKind.Object);
             if (object.isNonNull()) {
-                environment.bind(i, new CiConstant(CiKind.Object, object), instructionCounter);
+                environment.bind(i, new CiConstant(CiKind.Object, object.boxedValue()), instructionCounter);
             } else {
                 unexpected(i, new NullPointerException());
             }

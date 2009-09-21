@@ -46,12 +46,8 @@ public class HIRTestExecutor implements Executor {
     public static final MaxRiRuntime runtime = new MaxRiRuntime();
 
     private static void initialize(boolean loadingPackages) {
-        Iterable<Option<?>> opt = JavaTester.options.getOptions();
-        for (Option x : opt) {
-            if (x.getName().equals("c1x-optlevel")) {
-                C1XOptions.setOptimizationLevel((Integer) x.getDefaultValue());
-            }
-        }
+        C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
+
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
         final CiTarget target = createTarget();
