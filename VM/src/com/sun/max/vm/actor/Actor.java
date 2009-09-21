@@ -105,7 +105,7 @@ public abstract class Actor {
     public static final int JNI_FUNCTION =         0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
-    public static final int LOCAL_SUBSTITUTE =            0x10000000;
+    public static final int LOCAL_SUBSTITUTE =     0x10000000;
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
