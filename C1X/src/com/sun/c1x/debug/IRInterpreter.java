@@ -370,16 +370,16 @@ public class IRInterpreter {
         private Object getCompatibleBoxedValue(Class< ? > type, Value value) {
             CiConstant lookupValue = environment.lookup(value);
             if (type == byte.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return new Byte((byte) lookupValue.asInt());
             } else if (type == short.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return new Short((short) lookupValue.asInt());
             } else if (type == char.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return new Character((char) lookupValue.asInt());
             } else if (type == boolean.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return new Boolean(lookupValue.asInt() == 1 ? true : false);
             } else if (type == double.class) {
                 if (lookupValue.basicType == CiKind.Int) {
@@ -434,7 +434,7 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             assertBasicType(i.type(), xval.basicType);
 
-            switch (i.type().basicType) {
+            switch (i.type()) {
                 case Int:
                     environment.bind(i, CiConstant.forInt(-xval.asInt()), instructionCounter);
                     break;
@@ -459,7 +459,7 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             CiConstant yval = environment.lookup(i.y());
 
-            assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), i.type().basicType.stackType());
+            assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), i.type().stackType());
 
             switch (i.opcode()) {
                 case Bytecodes.IADD:
@@ -928,16 +928,16 @@ public class IRInterpreter {
         }
         private CiConstant getCompatibleCiConstant(Class< ? > arrayType, Value value) {
             if (arrayType == byte.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return CiConstant.forByte((byte) environment.lookup(value).asInt());
             } else if (arrayType == short.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return CiConstant.forShort((short) environment.lookup(value).asInt());
             } else if (arrayType == char.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return CiConstant.forChar((char) environment.lookup(value).asInt());
             } else if (arrayType == boolean.class) {
-                assert value.type().basicType == CiKind.Int : "Types are not compatible";
+                assert value.type() == CiKind.Int : "Types are not compatible";
                 return CiConstant.forBoolean(environment.lookup(value).asInt() == 0 ? false : true);
             } else if (arrayType == double.class) {
                 CiConstant rvalue = environment.lookup(value);
@@ -1431,7 +1431,7 @@ public class IRInterpreter {
 
         @Override
         public void visitTableSwitch(TableSwitch i) {
-            assert i.value().type().basicType == CiKind.Int : "TableSwitch key must be of type int";
+            assert i.value().type() == CiKind.Int : "TableSwitch key must be of type int";
             int index = environment.lookup(i.value()).asInt();
 
             if (index >= i.lowKey() && index < i.highKey()) {
@@ -1444,7 +1444,7 @@ public class IRInterpreter {
 
         @Override
         public void visitLookupSwitch(LookupSwitch i) {
-            assert i.value().type().basicType == CiKind.Int : "LookupSwitch key must be of type int";
+            assert i.value().type() == CiKind.Int : "LookupSwitch key must be of type int";
             int key = environment.lookup(i.value()).asInt();
             int succIndex = -1;
 

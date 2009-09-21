@@ -45,12 +45,12 @@ import com.sun.max.unsafe.Word;
 public class C1XRuntimeCalls {
 
     public static ClassMethodActor getClassMethodActor(CiRuntimeCall call) {
-        final ClassMethodActor result = criticalMethods[call.ordinal()].classMethodActor;
+        final ClassMethodActor result = runtimeCallMethods[call.ordinal()];
         assert result != null;
         return result;
     }
 
-    private static CriticalMethod[] criticalMethods = new CriticalMethod[CiRuntimeCall.values().length];
+    private static ClassMethodActor[] runtimeCallMethods = new ClassMethodActor[CiRuntimeCall.values().length];
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -459,7 +459,11 @@ public class C1XRuntimeCalls {
     }
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
-        assert criticalMethods[call.ordinal()] == null : "method already defined";
-        criticalMethods[call.ordinal()] = new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
+        assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
+        if (MaxineVM.isPrototyping()) {
+            new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
+        }
+
+        runtimeCallMethods[call.ordinal()] = ClassMethodActor.fromJava(selectedMethod);
     }
 }

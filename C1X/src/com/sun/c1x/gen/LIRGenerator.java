@@ -205,7 +205,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert instr instanceof Local;
             Local local = ((Local) instr);
             CiKind t = src.kind.stackType();
-            assert t == local.type().basicType.stackType() : "check";
+            assert t == local.type().stackType() : "check";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.vregNumber(), local);
@@ -409,7 +409,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // setup result register
         LIROperand resultRegister = LIROperandFactory.IllegalLocation;
         if (!x.type().isVoid()) {
-            resultRegister = resultRegisterFor(x.type().basicType);
+            resultRegister = resultRegisterFor(x.type());
         }
 
         CodeEmitInfo info = stateFor(x, x.stateBefore());
@@ -655,7 +655,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.type().isVoid()) {
             lir.returnOp(LIROperandFactory.IllegalLocation);
         } else {
-            LIROperand reg = resultRegisterFor(x.type().basicType);
+            LIROperand reg = resultRegisterFor(x.type());
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(reg);
@@ -1231,7 +1231,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem value = new LIRItem(x.argumentAt(0), this);
         LIROperand reg = rlockResult(x);
         value.loadItem();
-        LIROperand tmp = forceToSpill(value.result(), x.type().basicType);
+        LIROperand tmp = forceToSpill(value.result(), x.type());
         lir.move(tmp, reg);
     }
 
@@ -1671,8 +1671,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand physReg = LIROperandFactory.IllegalLocation;
         LIROperand result = LIROperandFactory.IllegalLocation;
         if (!resultType.isVoid()) {
-            result = newRegister(resultType.basicType);
-            physReg = resultRegisterFor(resultType.basicType);
+            result = newRegister(resultType);
+            physReg = resultRegisterFor(resultType);
         }
 
         List<LIROperand> argumentList = new ArrayList<LIROperand>();

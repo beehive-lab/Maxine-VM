@@ -93,7 +93,7 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(value().type().basicType);
+                newResult = gen.newRegister(value().type());
                 gen.lir().move(result, newResult);
             }
             return newResult;
@@ -177,7 +177,7 @@ public class LIRItem {
             result = value().operand();
         }
         if (!result().isRegister()) {
-            LIROperand reg = gen.newRegister(value().type().basicType);
+            LIROperand reg = gen.newRegister(value().type());
             gen.lir().move(result(), reg);
             if (result().isConstant()) {
                 result = reg;
