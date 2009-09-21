@@ -26,7 +26,7 @@ import java.lang.annotation.*;
  * Indicates that a method, field or class is omitted from the target VM.
  * <p>
  * Typically this is used when the annotated method, field or class is only used by code guarded (directly or
- * indirectly) by a call to {@link MaxineVM#isPrototyping()}. For example:
+ * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isPrototyping()}. For example:
  *
  * <pre>
  * @PROTOTYPE_ONLY
@@ -49,7 +49,7 @@ import java.lang.annotation.*;
  * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecode#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
  * case can be written that calls a method in a class annotated with this annotation.
  * <p>
- * During {@linkplain BootImageGenerator boot image generation}, all such annotated entities are omitted from the
+ * During {@linkplain com.sun.max.vm.prototype.BootImageGenerator boot image generation}, all such annotated entities are omitted from the
  * generated image.
  *
  * @author Doug Simon

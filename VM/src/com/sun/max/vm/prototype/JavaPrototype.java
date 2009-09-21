@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.prototype;
 
-import static com.sun.max.annotate.SURROGATE.Static.*;
+import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -371,7 +371,7 @@ public class JavaPrototype extends Prototype {
                 final SignatureDescriptor descriptor = methodActor.descriptor();
                 final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
                 final ClassLoader classLoader = holder.getClassLoader();
-                final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name.toString()) : methodActor.name.toString();
+                final String name = methodActor.isLocalSubstitute() ? LOCAL_SUBSTITUTION.Static.toSubstituteName(methodActor.name.toString()) : methodActor.name.toString();
                 javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
                 methodActorMap.put(methodActor, javaMethod);
             }
@@ -468,7 +468,7 @@ public class JavaPrototype extends Prototype {
         synchronized (javaMethodMap) {
             MethodActor methodActor = javaMethodMap.get(javaMethod);
             if (methodActor == null) {
-                final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
+                final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(LOCAL_SUBSTITUTION.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
                 final ClassActor holder = ClassActor.fromJava(javaMethod.getDeclaringClass());
                 ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);

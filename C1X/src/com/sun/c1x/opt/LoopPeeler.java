@@ -154,9 +154,7 @@ public class LoopPeeler extends ValueVisitor {
     }
 
     private void bind(Value value, Value newValue) {
-        if (value instanceof Local) {
-            return;
-        } else {
+        if (!(value instanceof Local)) {
             valueMap.put(value, newValue);
         }
     }
@@ -306,8 +304,6 @@ public class LoopPeeler extends ValueVisitor {
      */
     private void updateState(Instruction cloned) {
         cloned.allValuesDo(new ValueClosure() {
-
-            @Override
             public Value apply(Value i) {
                 return lookup(i);
             }

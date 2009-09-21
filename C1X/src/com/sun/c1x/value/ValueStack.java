@@ -699,41 +699,41 @@ public class ValueStack {
 
 
     private static boolean typeMismatch(Value x, Value y) {
-        return y == null || x.type().basicType != y.type().basicType;
+        return y == null || x.type() != y.type();
     }
 
     private static Value assertType(CiKind basicType, Value x) {
-        assert x != null && x.type().basicType == basicType;
+        assert x != null && x.type() == basicType;
         return x;
     }
 
     private static Value assertLong(Value x) {
-        assert x != null && x.type().basicType == CiKind.Long;
+        assert x != null && x.type() == CiKind.Long;
         return x;
     }
 
     private static Value assertJsr(Value x) {
-        assert x != null && x.type().basicType == CiKind.Jsr;
+        assert x != null && x.type() == CiKind.Jsr;
         return x;
     }
 
     private static Value assertInt(Value x) {
-        assert x != null && x.type().basicType == CiKind.Int;
+        assert x != null && x.type() == CiKind.Int;
         return x;
     }
 
     private static Value assertFloat(Value x) {
-        assert x != null && x.type().basicType == CiKind.Float;
+        assert x != null && x.type() == CiKind.Float;
         return x;
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && x.type().basicType == CiKind.Object;
+        assert x != null && x.type() == CiKind.Object;
         return x;
     }
 
     private static Value assertDouble(Value x) {
-        assert x != null && x.type().basicType == CiKind.Double;
+        assert x != null && x.type() == CiKind.Double;
         return x;
     }
 

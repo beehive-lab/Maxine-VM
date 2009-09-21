@@ -219,7 +219,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private final Color codeAlternateBackgroundColor = paleBlue;
     private final Color codeStopBackgroundColor = paleGray;
 
-    @Override
     public Color defaultCodeAlternateBackgroundColor() {
         return codeAlternateBackgroundColor;
     }
@@ -257,19 +256,15 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     private static final Color vmTerminatedBackgroundColor = InspectorStyle.LightCoral;
 
-    @Override
     public Color vmStoppedBackgroundColor() {
         return InspectorStyle.SunBlue3;
     }
-    @Override
     public Color vmStoppedinGCBackgroundColor() {
         return InspectorStyle.SunYellow3;
     }
-    @Override
     public Color vmRunningBackgroundColor() {
         return InspectorStyle.SunGreen3;
     }
-    @Override
     public Color vmTerminatedBackgroundColor() {
         return vmTerminatedBackgroundColor;
     }

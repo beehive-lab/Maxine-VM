@@ -33,12 +33,10 @@ public class TeleC1XTargetMethod extends TeleTargetMethod {
         super(teleVM, ref);
     }
 
-    @Override
     public BytecodeInfo[] bytecodeInfos() {
         return null;
     }
 
-    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         return null;
     }
