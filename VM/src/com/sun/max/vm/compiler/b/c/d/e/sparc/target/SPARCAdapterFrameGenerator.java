@@ -147,7 +147,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     }
 
     public static int optToJitAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer optimizedEntryPoint) {
-        for (int offset = SPARCEirPrologue.sizeOfFrameBuilderInstructions(0) - 4; /*empty*/; offset += 4) {
+        for (int offset = SPARCEirPrologue.sizeOfFrameBuilderInstructions(0, true) - 4; /*empty*/; offset += 4) {
             final int instruction = stackFrameWalker.readInt(optimizedEntryPoint, offset);
             if (isSaveImmInstruction(instruction)) {
                 return -extractSimm13(instruction);
@@ -400,7 +400,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             assert SPARCAssembler.isSimm13(adapterFrameSize);
             assert SPARCAssembler.isSimm13(stackOffset + adapterFrameSize);
 
-            SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister);
+            SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister, true);
             assembler().stx(GPR.I7, optimizedCodeFramePointer, ripSaveAreaOffset);
 
             // emit the parameters in reverse order.

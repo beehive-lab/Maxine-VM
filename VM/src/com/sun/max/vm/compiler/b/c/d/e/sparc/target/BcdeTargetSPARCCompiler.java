@@ -252,8 +252,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         return instructionPointer.greaterEqual(startOfAdapter);
     }
 
-    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize) {
-        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize);
+    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize, boolean isAdapterFrame) {
+        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize, isAdapterFrame);
         return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
     }
 
@@ -291,7 +291,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final Pointer stackPointer;
         // We use lessEqual here because the instruction pointer may be on one of the two nops preceding the optimized entry point if the
         // method doesn't need an adapter frame.
-        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize());
+        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize(), false);
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
