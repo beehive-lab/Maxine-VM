@@ -247,17 +247,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the type of the header field
      */
     public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
-        switch (headerField) {
-            case HUB:
-                return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
-            case MISC:
-                return JavaTypeDescriptor.WORD;
-            case LENGTH:
-                return JavaTypeDescriptor.INT;
-            default:
-                ProgramError.unknownCase();
+        if (headerField == HeaderField.HUB) {
+            return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
+        } else if (headerField == HeaderField.LENGTH) {
+            return JavaTypeDescriptor.INT;
         }
-        return null;
+        return JavaTypeDescriptor.WORD;
     }
 
     /**
@@ -265,16 +260,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the location of the header field relative to object origin
      */
     public final Offset getHeaderOffset(Layout.HeaderField headerField) {
-        switch(headerField) {
-            case HUB:
-            case MISC:
-                return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
-            case LENGTH:
-                return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
-            default:
-                ProgramError.unknownCase();
+        if (headerField != HeaderField.LENGTH) {
+            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+        } else {
+            return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
         }
-        return null;
     }
 
     /**
