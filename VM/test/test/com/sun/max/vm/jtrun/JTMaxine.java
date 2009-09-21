@@ -105,6 +105,10 @@ public class JTMaxine {
             compileClass(c, calleeCompiler);
         }
         System.out.println("");
+        System.out.print("Performing GC...");
+        System.out.flush();
+        System.gc();
+        System.out.println("");
     }
 
     private static void compileClass(Class javaClass, RuntimeCompilerScheme compiler) {
