@@ -814,7 +814,7 @@ public final class ClassfileReader {
 
                 int substituteeIndex = -1;
 
-                if (runtimeVisibleAnnotationsBytes != null && MaxineVM.isMaxineClass(classDescriptor)) {
+                if (runtimeVisibleAnnotationsBytes != null) {
                     // PERF: may need to make the .isMaxineClass() test cheaper
                     final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                     for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {

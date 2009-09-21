@@ -43,6 +43,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.annotate.UNSAFE;
 
 /**
  * The <code>MaxRiRuntime</code> class implements the runtime interface needed by C1X.
@@ -192,6 +193,7 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
+    @UNSAFE
     public int hubOffset() {
         return VMConfiguration.target().layoutScheme().generalLayout.getOffsetFromOrigin(HeaderField.HUB).toInt();
     }
