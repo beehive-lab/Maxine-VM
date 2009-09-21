@@ -18,29 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
+package jtt.loop;
 
 /*
  * @Harness: java
- * @Runs: 0 = false; 1 = true;
+ * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
  */
-public class Loop02 {
-
-    public static boolean test(int arg) {
-        int x = arg;
-
-        for (int i = 0; i < 10; i++) {
-            int y = m();
-            if (x == 1) {
-                return true;
-            }
-            x = y;
+public class Loop05 {
+    public static String test(int arg) {
+        int count = 0;
+        while (--arg > 0) {
+            count++;
+            new Object();
         }
-        return false;
+        return "ok" + count;
     }
-
-    private static int m() {
-        return 2;
-    }
-
 }

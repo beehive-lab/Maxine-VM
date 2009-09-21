@@ -316,7 +316,7 @@ public final class InspectableHeapInfo {
      * @return index
      */
     private static int calculateCardTableIndexInMemoryRegion(int offset) {
-        return offset / cardTableRatio / Word.size();
+        return Unsigned.idiv(offset / cardTableRatio, Word.size());
     }
 
     /**
