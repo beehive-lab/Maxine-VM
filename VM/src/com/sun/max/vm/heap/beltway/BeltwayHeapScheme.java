@@ -295,6 +295,11 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             Log.println("Scan Code");
         }
         Code.visitCells(cellVisitor, false);
+
+        if (Heap.verbose()) {
+            Log.println("Scan Immortal");
+        }
+        ImmortalHeap.visitCells(cellVisitor);
     }
 
     protected Size calculateHeapSize() {
