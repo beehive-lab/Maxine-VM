@@ -66,8 +66,6 @@ public class LoopFinder {
             }
         }
 
-<<<<<<< local
-=======
         // cleanup flags to avoid assertion errors when computing linear scan ordering
         // XXX: should we remove the assertions from the Linear scan ordering??
         startBlock.iterateAnyOrder(new BlockClosure() {
@@ -75,13 +73,7 @@ public class LoopFinder {
                 block.setLoopIndex(-1);
                 block.setLoopDepth(0);
             }
->>>>>>> other
-
-<<<<<<< local
-=======
         }, false);
->>>>>>> other
-
     }
 
     private void printLoops(RiMethod method) {
