@@ -25,6 +25,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -316,11 +317,23 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * @param size
      */
     public void refillTLAB(Pointer enabledVmThreadLocals, Pointer tlab, Size size) {
-        final Pointer tlabTop = tlab.plus(size);
+        final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
         if (!allocationMark.isZero()) {
+            // TEMP DEBUG
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print(": Padding TLAB before refill: [MARK =");
+            Log.print(allocationMark);
+            Log.print(" [TOP=");
+            Log.print(enabledVmThreadLocals.getWord(TLAB_TOP.index));
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+            // END TEMP DEBUG
             // It is a refill, not an initial fill. So invoke handler.
             doBeforeTLABRefill(allocationMark, enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
+        } else {
+            ProgramError.check(enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).isZero(),
+                "Must not refill TLAB when in Immortal allocation");
         }
 
         enabledVmThreadLocals.setWord(TLAB_TOP.index, tlabTop);
@@ -451,7 +464,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @Override
     public void enableImmortalMemoryAllocation() {
-        super.disableImmortalMemoryAllocation();
+        super.enableImmortalMemoryAllocation();
         if (usesTLAB()) {
             final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
