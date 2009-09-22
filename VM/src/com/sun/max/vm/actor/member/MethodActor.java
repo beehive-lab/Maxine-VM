@@ -420,11 +420,6 @@ public abstract class MethodActor extends MemberActor {
             final Object[] arguments = getBoxedJavaValues(Arrays.subArray(argumentValues, 1), parameterTypes);
             return resultKind.asValue(javaMethod.invoke(receiver, arguments));
         }
-        for (Value v : argumentValues) {
-            if (v == null) {
-                throw new Error("null value when calling " + this);
-            }
-        }
         final GeneratedMethodStub stub = UnsafeCast.asGeneratedMethodStub(makeInvocationStub());
         return stub.invoke(argumentValues);
     }
