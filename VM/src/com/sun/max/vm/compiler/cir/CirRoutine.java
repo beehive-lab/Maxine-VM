@@ -23,9 +23,7 @@ package com.sun.max.vm.compiler.cir;
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
-import com.sun.max.util.timer.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.optimize.*;

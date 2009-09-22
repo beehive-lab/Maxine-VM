@@ -177,8 +177,8 @@ public class JTGenerator {
         writer.indent();
         writer.println("public static boolean runTest(int num) {");
         writer.indent();
-            writer.println("switch(num) {");
-            writer.indent();
+        writer.println("switch(num) {");
+        writer.indent();
         int i = 0;
         for (JavaExecHarness.JavaTestCase testCase : testCases) {
             writer.print("case " + (i++) + ": ");

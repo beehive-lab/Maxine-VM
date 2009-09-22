@@ -40,8 +40,7 @@ import test.com.sun.max.vm.jtrun.JTUtil;
  * @author Ben L. Titzer
  */
 @NO_INLINING
-public class
-        JTRuns {
+public class JTRuns {
     public static boolean runTests(int start, int end) {
         JTUtil.reset(start, end);
         while (start < end) {
