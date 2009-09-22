@@ -105,19 +105,17 @@ public class MaxineTesterConfiguration {
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
 
-        dacapo("antlr");
+        dacapo("antlr",  RAND_SPARC);
         dacapo("bloat");
-        dacapo("xalan",              FAIL_SPARC);
-        dacapo("hsqldb",   FAIL_ALL);
+        dacapo("xalan",    FAIL_ALL);
+        dacapo("hsqldb");
         dacapo("luindex");
-        dacapo("lusearch",           FAIL_SPARC);
-        dacapo("jython",             FAIL_SPARC);
+        dacapo("lusearch", FAIL_ALL);
+        dacapo("jython",   FAIL_ALL);
         dacapo("chart",    FAIL_ALL);
         dacapo("eclipse",  FAIL_ALL);
         dacapo("fop");
