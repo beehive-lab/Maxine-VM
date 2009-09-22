@@ -91,7 +91,7 @@ public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
      * @return
      */
     protected static boolean isDynamicTrampoline(MethodActor methodActor) {
-        return methodActor instanceof TrampolineMethodActor && ((TrampolineMethodActor) methodActor).invocation() != TRAMPOLINE.Invocation.STATIC;
+        return methodActor.isVirtualTrampoline() || methodActor.isInterfaceTrampoline();
     }
 
     protected  EirStackSlot.Purpose adapterArgumentPurpose() {

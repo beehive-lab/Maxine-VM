@@ -345,7 +345,7 @@ public abstract class Value {
      * @return {@code true} if the instructions have the same basic type
      */
     public static boolean sameBasicType(Value i, Value other) {
-        return i.type().basicType == other.type().basicType;
+        return i.type() == other.type();
     }
 
     /**

@@ -47,9 +47,9 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
             final int frameSize = eirMethod().frameSize();
             final AMD64Assembler asm = emitter.assembler();
             final AMD64GeneralRegister64 framePointer = emitter.framePointer();
-            if (eirMethod().classMethodActor() instanceof TrampolineMethodActor) {
-                final TrampolineMethodActor trampoline = (TrampolineMethodActor) eirMethod().classMethodActor();
-                if (trampoline.invocation() != TRAMPOLINE.Invocation.STATIC) {
+            if (eirMethod().classMethodActor().isTrampoline()) {
+                final ClassMethodActor trampoline = eirMethod().classMethodActor();
+                if (trampoline.isVirtualTrampoline() || trampoline.isInterfaceTrampoline()) {
                     // This is a trampoline that returns the call entry point of the compiled/resolved method.
                     // The epilogue routes to that entry point by pushing the entry point on top of the stack so it looks like a RIP
                     // and performs a return. This will make the activation record looking like it was called by the trampoline's caller.

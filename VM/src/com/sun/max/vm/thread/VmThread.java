@@ -148,7 +148,7 @@ public class VmThread {
     /**
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
      *
-     * <b>This must only be used when {@linkplain Throw#raise(Object, Pointer, Pointer, Pointer) throwing an exception}
+     * <b>This must only be used when {@linkplain Throw#raise(Throwable, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer)} throwing an exception}
      * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
      * Allocation must not occur in these contexts.</b>
      */

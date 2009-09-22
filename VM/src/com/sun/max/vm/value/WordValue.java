@@ -142,7 +142,7 @@ public final class WordValue extends Value<WordValue> {
         return value;
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     public Object asBoxedJavaValue_() {
         return this;
     }

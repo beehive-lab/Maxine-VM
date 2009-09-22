@@ -137,7 +137,6 @@ public class IR {
             // cleanup flags to avoid assertion errors when computing linear scan ordering
             // XXX: should we remove the assertions from the Linear scan ordering??
             startBlock.iterateAnyOrder(new BlockClosure() {
-                @Override
                 public void apply(BlockBegin block) {
                     block.setLoopIndex(-1);
                     block.setLoopDepth(0);
