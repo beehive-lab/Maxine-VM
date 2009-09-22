@@ -107,8 +107,23 @@ public class BeltwayCollector {
         InspectableHeapInfo.afterGarbageCollection();
     }
 
+
+    /**
+     * Evacuate objects from the "from" belt directly referenced by roots into the "to" belt.
+     * @param from
+     * @param to
+     */
+    protected void scavengeRoots(Belt from, Belt to) {
+        if (Heap.verbose()) {
+            Log.println("Scavenge Roots");
+        }
+        heapScheme.scavengeRoot(from, to);
+    }
+
     /**
      * Evacuate remaining objects of the "from" belt reachable from the "to" belt.
+     * @param from the evacuated belt
+     * @param to the belt where objects are evacuated to
      */
     protected void evacuateFollowers(Belt from, Belt to) {
         if (Heap.verbose()) {
