@@ -18,17 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.hotpath;
-/*
- * @Harness: java
- * @Runs: 0 = 0; 1 = 0; 2 = 1; 3 = 3; 80 = 3160;
+package com.sun.max.vm.jdk;
+
+import sun.misc.GC;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.heap.*;
+
+/**
+ * Implementation of VM-specific native method in @see sun.misc.GC.
+ *
+ * @author Mick Jordan
+ *
  */
-public class HP_allocate01 {
-    public static int test(int count) {
-        int sum = 0;
-        for (int i = 0; i < count; i++) {
-            sum += i;
-        }
-        return sum;
+
+@METHOD_SUBSTITUTIONS(GC.class)
+final class JDK_sun_misc_GC {
+
+    @SUBSTITUTE
+    private static long maxObjectInspectionAge() {
+        return Heap.maxObjectInspectionAge();
     }
 }

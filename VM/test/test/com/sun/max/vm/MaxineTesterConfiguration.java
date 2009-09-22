@@ -105,26 +105,23 @@ public class MaxineTesterConfiguration {
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
         jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
         jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
-        jtt(jtt.micro.BigIntParams02.class,               RAND_SPARC);  // Fails:                   @jitopt
 
-        dacapo("antlr",              FAIL_SPARC);
-        dacapo("bloat",              FAIL_SPARC);
+        dacapo("antlr");
+        dacapo("bloat");
         dacapo("xalan",              FAIL_SPARC);
-        dacapo("hsqldb",   FAIL_ALL, FAIL_SPARC);
-        dacapo("luindex",            FAIL_SPARC);
+        dacapo("hsqldb",   FAIL_ALL);
+        dacapo("luindex");
         dacapo("lusearch",           FAIL_SPARC);
         dacapo("jython",             FAIL_SPARC);
-        dacapo("chart",    FAIL_ALL, FAIL_SPARC);
-        dacapo("eclipse",  FAIL_ALL, FAIL_SPARC);
-        dacapo("fop",                FAIL_SPARC);
-        dacapo("pmd",                FAIL_SPARC);
+        dacapo("chart",    FAIL_ALL);
+        dacapo("eclipse",  FAIL_ALL);
+        dacapo("fop");
+        dacapo("pmd");
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");

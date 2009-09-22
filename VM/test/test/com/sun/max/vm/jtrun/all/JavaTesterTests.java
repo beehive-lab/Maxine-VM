@@ -8917,6 +8917,30 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("jtt.hotpath.HP_allocate01");
         String runString = null;
         try {
+        // (0) == 0
+            runString = "(0)";
+            if (0 != jtt.hotpath.HP_allocate01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (1) == 0
+            runString = "(1)";
+            if (0 != jtt.hotpath.HP_allocate01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (2) == 1
+            runString = "(2)";
+            if (1 != jtt.hotpath.HP_allocate01.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // (3) == 3
+            runString = "(3)";
+            if (3 != jtt.hotpath.HP_allocate01.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
         // (80) == 3160
             runString = "(80)";
             if (3160 != jtt.hotpath.HP_allocate01.test(80)) {

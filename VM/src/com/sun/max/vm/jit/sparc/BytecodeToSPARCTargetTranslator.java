@@ -66,11 +66,6 @@ import com.sun.max.vm.type.*;
 public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator {
 
     /**
-     * Used to disable stack banging in JITed code even when Trap.STACK_BANGING is true.
-     */
-    private static final boolean ENABLE_JIT_STACK_BANGING = false;
-
-    /**
      * Canonicalized Target ABI.
      */
     static final TargetABI<GPR, FPR> TARGET_ABI;
@@ -665,7 +660,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final boolean largeOffset = !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
 
         int numInstructions;
-        if (ENABLE_JIT_STACK_BANGING & Trap.STACK_BANGING) {
+        if (Trap.STACK_BANGING) {
             numInstructions = 5; // includes the stack-banging ldub
             final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
             if (!SPARCAssembler.isSimm13(stackBangOffset)) {
@@ -731,7 +726,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                     asm.or(scratchRegister, SPARCAssembler.lo(jitedCodeFrameSize), scratchRegister);
                     asm.sub(stackPointerRegister, scratchRegister, stackPointerRegister);
                 }
-                if (ENABLE_JIT_STACK_BANGING & Trap.STACK_BANGING) {
+                if (Trap.STACK_BANGING) {
                     final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
                     if (SPARCAssembler.isSimm13(stackBangOffset)) {
                         asm.ldub(stackPointerRegister, stackBangOffset, GPR.G0);

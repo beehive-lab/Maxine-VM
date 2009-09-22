@@ -97,4 +97,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
     }
+
+    public long maxObjectInspectionAge() {
+        FatalError.unimplemented();
+        return 0;
+
+    }
 }

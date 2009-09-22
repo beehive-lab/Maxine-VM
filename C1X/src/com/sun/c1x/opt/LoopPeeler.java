@@ -24,6 +24,8 @@ import java.util.*;
 
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.opt.Loop.*;
+import com.sun.c1x.value.*;
 
 /**
  * The <code>LoopPeeler</code> performs the loop peeling optimization in
@@ -37,52 +39,53 @@ import com.sun.c1x.ir.*;
  *    | |   ---------
  *    | |      |
  *    | |      v
- *    | |  -----------
- *    | |  |  loop   |---
- *    | ---|  body   |  |
- *    |back|         |  |
- *    |    -----------  |
- *    |     |   |       |
- *    | back|   |exit1  |exit2
- *    -------   V       V
+ *    | |   -----------
+ *    | |   |  loop   |---
+ *    | ----|  body   |  |
+ *    |back1|         |  |
+ *    |     -----------  |
+ *    |      |   |       |
+ *    | backi|   |exit1  |exiti
+ *    --------   V       V
  *
  *  After peeling the first iteration
  *
- *           ---------
- *           | LH'    |
- *           --------
- *               |
- *               v
- *           -----------
- *           |  loop   |---------
- *       ----|  body'  |        |
- *       |   |(1st it.)|        |
- *       |   -----------        |
- *   back|    back|    |exit1   |exit2
- *       |        |    |        |
- *       ---      |    |        |
- *          |     |    |        |
- *          V     V    |        |
- *          ---------  |        |
- *    ----> |  LH   |  |        |
- *    | |    --------  |        |
- *    | |       |      |        |
- *    | |       v      |        |
- *    | |  ----------- |        |
- *    | |  |  loop   |-|------  |
- *    | ---|  body   | |exit2|  |
- *    |back|         | |     |  |
- *    |    ----------- |     |  |
- *    | back|  exit1|  |     |  |
- *    -------       |  |     |  |
- *                  |  |     |  |
- *                  V  V     V  V
- *                -------  -------
- *                | Ex1 |  | Ex2 |
- *                -------  -------
+ *            --------
+ *            |  LH' |
+ *            --------
+ *                |
+ *                v
+ *            -----------
+ *            |  loop   |---------
+ *        ----|  body'  |        |
+ *        |   |(1st it.)|        |
+ *        |   -----------        |
+ *   back1|   backi|    |exit1   |exiti
+ *        |        |    |        |
+ *        ---      |    |        |
+ *           |     |    |        |
+ *           V     V    |        |
+ *          ---------   |        |
+ *    ----> |   LH  |   |        |
+ *    | |    --------   |        |
+ *    | |       |       |        |
+ *    | |       v       |        |
+ *    | |   ----------- |        |
+ *    | |   |   loop  |-|------  |
+ *    | --- |   body  | |exiti|  |
+ *    |back1|         | |     |  |
+ *    |     ----------- |     |  |
+ *    |      |       |  |     |  |
+ *    | backi|  exit1|  |     |  |
+ *    -------        |  |     |  |
+ *                   |  |     |  |
+ *                   V  V     V  V
+ *                 -------  -------
+ *                 | Ex1 |  | Ex2 |
+ *                 -------  -------
  *
- * The cloned loop will become the first iteration.
- * Back edges in the cloned loop will point to LH
+ * A cloned copy of the loop(LH', LB') will become the first iteration.
+ * Back edges in the cloned copy will point to LH
  * Phi functions will be removed in LH', if possible
  * new Phi might be added in the merging exit points
  *
@@ -92,9 +95,8 @@ import com.sun.c1x.ir.*;
 public class LoopPeeler extends ValueVisitor {
 
     private Instruction lastInstruction;
-    private BlockBegin currentBlock;
     private Map<Value, Value> valueMap;
-    private boolean removeFirstIterationPhis;
+    private boolean removeHeaderPhis;
     private Loop loop;
     private Loop clonedLoop;
     IR ir;
@@ -113,15 +115,28 @@ public class LoopPeeler extends ValueVisitor {
         if (value instanceof Local) {
             return value;
         } else if (value instanceof Phi) {
-            // resolve only loopHeader phis, if possible
-            if (removeFirstIterationPhis && ((Phi) value).block() == loop.loopHeader) {
-                return ((Phi) value).operandAt(0);
+            Value result = valueMap.get(value);
+            // resolve phi for loopHeader, if possible
+            if (removeHeaderPhis && ((Phi) value).block() == loop.header) {
+                assert result != null : "Phi instructions must have a valid mapping in cloned loopheader";
+                return result;
             } else {
-                // the phi instructions needs to be cloned
-                Value result = valueMap.get(value);
+                // the phi instruction needs to be cloned
                 if (result == null) {
                     Phi phi = (Phi) value;
-                    Phi other = new Phi(phi.type(), currentBlock, phi.isLocal() ? phi.localIndex() : -phi.stackIndex());
+                    Phi other;
+                    BlockBegin newPhiBlock = (BlockBegin) lookup(phi.block());
+                    boolean phiIsLocal = phi.isLocal();
+                    int phiIndex = phiIsLocal ? phi.localIndex() : phi.stackIndex();
+                    ValueStack stateBefore = newPhiBlock.stateBefore();
+
+                    if (phiIsLocal) {
+                        stateBefore.setupPhiForLocal(newPhiBlock, phiIndex);
+                        other = (Phi) stateBefore.localAt(phiIndex);
+                    } else {
+                        stateBefore.setupPhiForStack(newPhiBlock, phiIndex);
+                        other = (Phi) stateBefore.stackAt(phiIndex);
+                    }
                     bind(phi, other);
                     return other;
                 }
@@ -153,7 +168,7 @@ public class LoopPeeler extends ValueVisitor {
      * @return a new block
      */
     public BlockBegin cloneBlock(BlockBegin block) {
-        // clone the block and update newBlock information
+        // clone the block and update some of the clonedBlock information
         BlockBegin clonedBlock = new BlockBegin(block.bci(), ir.nextBlockNumber());
         clonedBlock.copyBlockFlags(block);
         if (block.canTrap()) {
@@ -166,10 +181,7 @@ public class LoopPeeler extends ValueVisitor {
     }
 
     public void cloneInstructions(BlockBegin block) {
-        // A reference for the current block is needed when
-        // cloning a Phi instruction
         BlockBegin clonedBlock = (BlockBegin) lookup(block);
-        currentBlock = clonedBlock;
         new InstructionCloner().apply(block);
         clonedBlock.setEnd((BlockEnd) lookup(block.end()));
     }
@@ -188,7 +200,10 @@ public class LoopPeeler extends ValueVisitor {
     @Override
     public void visitConstant(Constant i) {
         Constant constant = new Constant(i.value);
+        constant.setBCI(i.bci());
         bind(i, constant);
+        updateState(constant);
+        addInstruction(constant);
     }
 
     @Override
@@ -203,7 +218,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitLoadField(LoadField i) {
-        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), i.stateBefore().copy(), i.isLoaded(), i.cpi, i.constantPool);
+        LoadField other = new LoadField(i.object(), i.field(), i.isStatic(), copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -213,9 +228,14 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
+    private ValueStack copyStateBefore(ValueStack stateBefore) {
+        return stateBefore != null ? stateBefore.copy() : null;
+    }
+
     @Override
     public void visitStoreField(StoreField i) {
-        StoreField other = new StoreField(lookup(i.object()), i.field(), lookup(i.value()), i.isStatic(), i.stateBefore().copy(), i.isLoaded(), i.cpi, i.constantPool);
+        StoreField other = new StoreField(lookup(i.object()), i.field(), lookup(i.value()), i.isStatic(),
+                        copyStateBefore(i.stateBefore()), i.isLoaded(), i.cpi, i.constantPool);
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -227,7 +247,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitArrayLength(ArrayLength i) {
-        ArrayLength other = new ArrayLength(lookup(i.array()), i.stateBefore().copy());
+        ArrayLength other = new ArrayLength(lookup(i.array()), copyStateBefore(i.stateBefore()));
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -239,7 +259,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed i) {
-        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementType(), i.stateBefore().copy());
+        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementType(), copyStateBefore(i.stateBefore()));
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -289,10 +309,7 @@ public class LoopPeeler extends ValueVisitor {
 
             @Override
             public Value apply(Value i) {
-                if (i.isLive()) {
-                    return lookup(i);
-                }
-                return i;
+                return lookup(i);
             }
         });
     }
@@ -420,11 +437,9 @@ public class LoopPeeler extends ValueVisitor {
     private Value[] cloneDimmensions(Value[] dimensions) {
         Value [] newDimensions = new Value [dimensions.length];
         int j = 0;
-
         for (Value dimension : dimensions) {
             newDimensions[j] = lookup(dimension);
         }
-
         return newDimensions;
     }
 
@@ -482,15 +497,12 @@ public class LoopPeeler extends ValueVisitor {
     @Override
     public void visitBlockBegin(BlockBegin i) {
         BlockBegin clonedBlock = (BlockBegin) lookup(i);
+        assert clonedBlock != i : "Cloned block must not be equal to the original block";
 
-        for (BlockBegin block : i.predecessors()) {
-            assert clonedBlock != i : "Cloned block must not be equal to the original block";
-            BlockBegin clonedPredecessor = (BlockBegin) lookup(block);
-            if (!clonedBlock.predecessors().contains(clonedPredecessor)) {
-                clonedBlock.addPredecessor(clonedPredecessor);
-            }
-        }
+        // Predecessors nodes will be adjusted by setEnd,
+        // called at cloneInstructions
 
+        updateState(clonedBlock);
         lastInstruction = clonedBlock;
     }
 
@@ -577,7 +589,6 @@ public class LoopPeeler extends ValueVisitor {
     public void visitThrow(Throw i) {
         Throw other = new Throw(lookup(i.exception()), i.stateAfter().copy());
         other.setBCI(i.bci());
-        updateState(other);
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
         updateState(other);
@@ -685,25 +696,56 @@ public class LoopPeeler extends ValueVisitor {
         this.loop = loop;
         this.ir = ir;
         this.valueMap = new HashMap<Value, Value>();
-        removeFirstIterationPhis = true;
+        removeHeaderPhis = true;
         performLoopPeeling();
     }
 
     private void performLoopPeeling() {
         // clone the loop header, loop body, blocks and instructions
         // make the cloned loop the 1st iteration
-        // remove unnecessary phis in loop header.
+        // remove unnecessary phis in loop header, if possible
         clonedLoop = cloneLoop();
-
 
         // make the exit edges of the cloned loop point to the
         // newer loop header
-        connectPeedIteration();
+        connectPeeledIteration();
+
+        // update the stateAfter and stateBefore in the peeled iteration
+        updateStatesPeeledIter();
 
         //
         // add phis for values in blocks at exit points. The exit blocks will
-        // be merge blocks with edges coming from the original loop body, and the cloned loop body.
+        // be merge point of edges coming from the original loop body, and the peeled iteration.
         adjustStateAtExitEdges();
+    }
+
+    private void updateStatesPeeledIter() {
+        // update the value stack of blocks in the 1st iteration
+        // that have edges pointing to loopHeader
+        // all the values that have been computed inside the first iteration
+        // need to be mapped to the newer instructions
+        final List<BlockBegin> peeledIterBlocks = clonedLoop.getLoopBlocks();
+        final List<BlockBegin> headerPredecessors = loop.header.predecessors();
+        for (BlockBegin block : headerPredecessors) {
+            if (peeledIterBlocks.contains(block)) {
+                final int predecessorIdx = headerPredecessors.indexOf(block);
+                block.end().allValuesDo(new ValueClosure() {
+
+                    @Override
+                    public Value apply(Value i) {
+                        if (i instanceof Phi) {
+                            Phi phi = (Phi) i;
+                            if (phi.block() == loop.header) {
+                                // TODO: think about cases were more than one edge flow to loop
+                                // header
+                                return lookup(phi.operandAt(predecessorIdx));
+                            }
+                        }
+                        return lookup(i);
+                    }
+                });
+            }
+        }
     }
 
     /**
@@ -719,35 +761,118 @@ public class LoopPeeler extends ValueVisitor {
      * @param clonedLoop
      */
     private void adjustStateAtExitEdges() {
-        // TODO Auto-generated method stub
+        boolean hasSubstitution = false;
+        final Map <Value, Value> mapValueToPhi = new HashMap<Value, Value>();
+        for (Edge edge : loop.exitEdges) {
+            hasSubstitution = insertPhi(edge, mapValueToPhi);
+        }
+        if (hasSubstitution) {
+            final ValueClosure operandSubstClosure = new ValueClosure() {
+                @Override
+                public Value apply(Value i) {
+                    Value map = mapValueToPhi.get(i);
+
+                    if (map != null) {
+                        return map;
+                    } else {
+                        return i;
+                    }
+
+                }
+            };
+            // TODO: this step may visit the same block several times
+            for (Edge edge : loop.exitEdges) {
+
+                edge.destination.iterateAnyOrder(new BlockClosure() {
+                    @Override
+                    public void apply(BlockBegin block) {
+                        if (!loop.contains(block)) {
+                            Instruction instr = block;
+                            while (instr != null) {
+                                instr.inputValuesDo(operandSubstClosure);
+                                instr = instr.next();
+                            }
+                        }
+                    }
+                }, false);
+            }
+        }
+    }
+
+    private boolean insertPhi(Edge edge, Map <Value, Value> mapValueToPhi) {
+        BlockBegin clonedExit = (BlockBegin) lookup(edge.source);
+        ValueStack exit = edge.source.end().stateAfter();
+        ValueStack other = clonedExit.end().stateAfter();
+        boolean hasSubstitution = false;
+
+        assert exit.stackSize() == other.stackSize();
+        assert exit.localsSize() == other.localsSize();
+        assert exit.locksSize() == other.locksSize();
+
+        ValueStack stateAtDestination = edge.destination.stateBefore();
+        for (int i = 0; i < stateAtDestination.localsSize(); i++) {
+            Value x = exit.localAt(i);
+            Value y = other.localAt(i);
+            if (x != y) {
+                Value previousLocal = stateAtDestination.localAt(i);
+                //stateAtDestination.setupPhiForLocal(edge.destination, i);
+                if (previousLocal != null) {
+                    stateAtDestination.storeLocal(i, new Phi(x.type(), edge.destination, i));
+                    mapValueToPhi.put(previousLocal, stateAtDestination.localAt(i));
+                    hasSubstitution = true;
+                }
+            }
+        }
+
+        for (int i = 0; i < stateAtDestination.stackSize(); i++) {
+            Value x = exit.stackAt(i);
+            Value y = other.stackAt(i);
+            if (x != y) {
+                Value previousSlot = stateAtDestination.stackAt(i);
+                if (previousSlot != null) {
+                    stateAtDestination.setupPhiForStack(edge.destination, i);
+                    mapValueToPhi.put(previousSlot, stateAtDestination.stackAt(i));
+                    hasSubstitution = true;
+                }
+            }
+        }
+        return hasSubstitution;
 
     }
 
     private void adjustIncomingCFGEdges(Loop loop, BlockBegin clonedHeader) {
         // all the incoming edges are redirected to the loop header of clonedLoop
-        List <BlockBegin> predecessors = loop.loopHeader.predecessors();
+        List <BlockBegin> predecessors = loop.header.predecessors();
         ArrayList <BlockBegin> loopPredecessors = new ArrayList<BlockBegin>();
 
         // find all blocks outside the loop that point to loop header
         for (BlockBegin predecessor : predecessors) {
             if (!loop.contains(predecessor)) {
                 loopPredecessors.add(predecessor);
-                loop.loopHeader.predecessors().remove(predecessor);
             }
         }
 
         // if the loop header has more than one edge coming from
         // outside the loop body, the phis cannot be resolved in the peeled iteration
         if (loopPredecessors.size() > 1) {
-            removeFirstIterationPhis = false;
+            removeHeaderPhis = false;
+        } else {
+            // the loop has only one outside predecessor
+            // we resolve all phi instructions in to use the operand coming
+            // from that predecessor
+            int predIdx = predecessors.indexOf(loopPredecessors.get(0));
+            for (Phi phi : loop.header.stateBefore().allPhis(loop.header)) {
+                bind(phi, phi.operandAt(predIdx));
+            }
         }
 
         // make all outside predecessors point to the cloned
         // loop header
         for (BlockBegin block : loopPredecessors) {
+            loop.header.predecessors().remove(block);
             List<BlockBegin> successors = block.end().successors();
-            int index = successors.indexOf(loop.loopHeader);
-            successors.remove(loop.loopHeader);
+            int index = successors.indexOf(loop.header);
+            successors.remove(loop.header);
             successors.add(index, clonedHeader);
             clonedHeader.predecessors().add(block);
         }
@@ -757,23 +882,23 @@ public class LoopPeeler extends ValueVisitor {
      * @param loop
      * @param clonedLoop
      */
-    private void connectPeedIteration() {
+    private void connectPeeledIteration() {
 
         ArrayList <BlockBegin> sourceBackEdge = new ArrayList<BlockBegin>();
         // find all blocks inside the loop that point to loop header
-        for (BlockBegin predecessor : clonedLoop.loopHeader.predecessors()) {
+        for (BlockBegin predecessor : clonedLoop.header.predecessors()) {
             if (clonedLoop.contains(predecessor) && !sourceBackEdge.contains(predecessor)) {
                 sourceBackEdge.add(predecessor);
             }
         }
         int i = 0;
         for (BlockBegin predecessor : sourceBackEdge) {
-            int index = predecessor.end().successorIndex(clonedLoop.loopHeader);
+            int index = predecessor.end().successorIndex(clonedLoop.header);
             assert index != -1 : "CFG graph is not correct";
             predecessor.end().successors().remove(index);
-            predecessor.end().successors().add(index, loop.loopHeader);
-            clonedLoop.loopHeader.removePredecessor(predecessor);
-            loop.loopHeader.predecessors().add(i++, predecessor);
+            predecessor.end().successors().add(index, loop.header);
+            clonedLoop.header.removePredecessor(predecessor);
+            loop.header.predecessors().add(i++, predecessor);
         }
     }
 
@@ -785,19 +910,11 @@ public class LoopPeeler extends ValueVisitor {
      */
     private Loop cloneLoop() {
         // first clone the loop blocks
-        BlockBegin newLoopHeader = cloneBlock(loop.loopHeader);
-
-        // we need to do this in case loop header has more than 2 predecessors
-        // the clonedLoop loopHeader will have its incoming edges adjusted later
-        if (loop.loopHeader.predecessors().size() > 2) {
-            for (int i = 2; i < loop.loopHeader.predecessors().size(); i++) {
-                newLoopHeader.addPredecessor(loop.loopHeader.predAt(i));
-            }
-        }
+        BlockBegin newLoopHeader = cloneBlock(loop.header);
         ArrayList<BlockBegin> newLoopBody = new ArrayList<BlockBegin>();
 
-        // clone the loop body's blocks
-        for (BlockBegin block : loop.loopBody) {
+        // clone blocks in loop body
+        for (BlockBegin block : loop.body) {
             // clone the instructions in the block
             newLoopBody.add(cloneBlock(block));
         }
@@ -813,18 +930,37 @@ public class LoopPeeler extends ValueVisitor {
         // Note that both loop's predecessors/successors nodes will remain
         // the same
         // this step also clone/resolve phi instructions
-        cloneInstructions(loop.loopHeader);
+        cloneInstructions(loop.header);
 
-        for (BlockBegin block : loop.loopBody) {
+        // clone the instructions in the loop body
+        // blocks must be visited in preOrder so that all the
+        // added phi's can be used in subsequent blocks.
+        // Initially, add the successors of loop header to the workList
+        ArrayList <BlockBegin> workList = new ArrayList<BlockBegin>();
+        for (BlockBegin block : loop.header.end().successors()) {
+            if (loop.contains(block)) {
+                workList.add(block);
+            }
+        }
+
+        while (workList.size() > 0) {
+            BlockBegin block = workList.remove(0);
             // clone the instructions in the block
             cloneInstructions(block);
+
+            // add the successors of loop header to the workList
+            for (BlockBegin succ : block.end().successors()) {
+                if (loop.header != succ && loop.contains(succ)) {
+                    workList.add(succ);
+                }
+            }
         }
 
         // at this point, the cloned loop has all internal CFG edges pointing to
         // the cloned blocks and external edges pointing to the same nodes the external
         // edges in original loop body point to.
-        // return a cloned loop.
-        return new Loop(newLoopHeader, (BlockBegin) lookup(loop.loopEnd), newLoopBody);
+        // return the cloned loop.
+        return new Loop(newLoopHeader, (BlockBegin) lookup(loop.end), newLoopBody);
     }
 }
 

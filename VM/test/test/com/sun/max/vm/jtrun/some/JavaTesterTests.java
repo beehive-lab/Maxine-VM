@@ -47,7 +47,7 @@ public class JavaTesterTests {
     static void jtt_jasm_Loop00() {
         JavaTesterRunScheme.begin("jtt.jasm.Loop00");
         String runString = null;
-        JavaTesterRunScheme.end(null, true);
+        JavaTesterRunScheme.end(runString, true);
     }
 // END GENERATED TEST RUNS
 

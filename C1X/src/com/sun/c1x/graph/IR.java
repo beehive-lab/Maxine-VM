@@ -114,10 +114,36 @@ public class IR {
         }
         if (C1XOptions.DoLoopPeeling) {
             LoopFinder loopFinder = new LoopFinder(numberOfBlocks(), startBlock);
+            List<Loop> loopList = loopFinder.getLoopList();
+            ArrayList <Loop> removeLoopList = new ArrayList<Loop>();
+
+            for (int i = 0; i < loopList.size(); i++) {
+                Loop loop = loopList.get(i);
+                if (loop.header().loopDepth() > 0) {
+                    for (Loop loopJ : loopList) {
+                        if (loopJ != loop && loopJ.contains(loop.header())) {
+                            removeLoopList.add(loopJ);
+                        }
+                    }
+                }
+            }
+
+            loopList.removeAll(removeLoopList);
             for (Loop loop : loopFinder.getLoopList()) {
                 new LoopPeeler(this, loop);
             }
             verifyAndPrint("After Loop peeling");
+
+            // cleanup flags to avoid assertion errors when computing linear scan ordering
+            // XXX: should we remove the assertions from the Linear scan ordering??
+            startBlock.iterateAnyOrder(new BlockClosure() {
+                @Override
+                public void apply(BlockBegin block) {
+                    block.setLoopIndex(-1);
+                    block.setLoopDepth(0);
+                }
+
+            }, false);
         }
     }
 
