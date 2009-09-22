@@ -35,7 +35,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     }
 
     @Override
-    public int topFrameInstructionAdjustment() {
+    public int callerInstructionPointerAdjustment() {
         return -1;
     }
 

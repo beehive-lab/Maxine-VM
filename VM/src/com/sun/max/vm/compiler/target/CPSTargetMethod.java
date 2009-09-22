@@ -245,10 +245,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public abstract int registerReferenceMapSize();
 
     /**
-     * Overwrite this method if the top frame instruction pointer must be adjusted for this target method.
-     * @return the value that should be added to the top frame instruction pointer
+     * Overwrite this method if the instruction pointer for a throw must be adjusted when it
+     * is in a frame that has made a call (i.e. not hte top frame).
+     * @return the value that should be added to the instruction pointer
      */
-    public int topFrameInstructionAdjustment() {
+    public int callerInstructionPointerAdjustment() {
         return 0;
     }
 
@@ -256,11 +257,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public final Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         if (catchRangePositions != null) {
 
-
             int throwOffset = throwAddress.minus(codeStart).toInt();
 
-
-            throwOffset += topFrameInstructionAdjustment();
+            if (!isTopFrame) {
+                throwOffset += callerInstructionPointerAdjustment();
+            }
 
             for (int i = catchRangePositions.length - 1; i >= 0; i--) {
                 if (throwOffset >= catchRangePositions[i]) {
