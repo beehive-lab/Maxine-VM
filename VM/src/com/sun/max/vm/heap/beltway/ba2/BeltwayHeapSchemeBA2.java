@@ -90,7 +90,8 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  || inNurserySpace(origin);
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  ||
+            inNurserySpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
