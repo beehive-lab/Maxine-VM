@@ -28,8 +28,11 @@ import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.test.ProgressPrinter;
 
 import java.lang.reflect.*;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * The <code>JTMaxine</code> class implements a main program for running the generated Java tester tests
@@ -52,6 +55,8 @@ public class JTMaxine {
     private static final Option<Boolean> nativeTestsOption = options.newBooleanOption("native-tests", false,
         "Causes the testing framework to load the 'javatest' native library, which is needed by " +
         "JNI tests.");
+    private static final Option<Boolean> gcOption = options.newBooleanOption("gc", true,
+        "Perform a GC after compilation, before running the tests.");
     private static final Option<Integer> startOption = options.newIntegerOption("start", 0,
         "Specifies the number of the first test to run.");
     private static final Option<Integer> endOption = options.newIntegerOption("end", 0,
@@ -79,7 +84,7 @@ public class JTMaxine {
                 System.out.println("failed.");
                 System.exit(-20);
             } else {
-                JTUtil.reportPassed(JTUtil.passed, JTUtil.total);
+                JTUtil.printReport();
             }
         } catch (ClassNotFoundException e) {
             System.out.println("Could not find class: " + configClassName);
@@ -95,43 +100,50 @@ public class JTMaxine {
     private static void compileMethods(JTClasses jtclasses) {
         RuntimeCompilerScheme callerCompiler = getCompiler(callerOption.getValue());
         RuntimeCompilerScheme calleeCompiler = getCompiler(calleeOption.getValue());
-        System.out.println("Caller compiler: " + (callerCompiler == null ? "default" : callerCompiler.getClass()));
-        System.out.println("Callee compiler: " + (calleeCompiler == null ? "default" : calleeCompiler.getClass()));
-        System.out.print("Compiling methods...");
-        System.out.flush();
 
-        compileClass(jtclasses.testRunClass, callerCompiler);
-        for (Class c : jtclasses.testClasses) {
-            compileClass(c, calleeCompiler);
-        }
-        System.out.println("");
-        System.out.print("Performing GC...");
-        System.out.flush();
-        System.gc();
-        System.out.println("");
-    }
-
-    private static void compileClass(Class javaClass, RuntimeCompilerScheme compiler) {
-        if (compiler == null) {
-            return;
-        }
-        ClassActor classActor = ClassActor.fromJava(javaClass);
-        // compile all static methods
-        for (MethodActor methodActor : classActor.localStaticMethodActors()) {
-            if (methodActor instanceof ClassMethodActor && !methodActor.isClassInitializer()) {
-                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compiler);
-                System.out.print(".");
-                System.out.flush();
+        if (callerCompiler != null) {
+            List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
+            addMethods(methods, jtclasses.testRunClass);
+            ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+            System.out.println("Compiling caller methods with " + callerCompiler.getClass() + "...");
+            for (ClassMethodActor method : methods) {
+                VMConfiguration.target().compilationScheme().synchronousCompile(method, callerCompiler);
+                printer.pass();
             }
         }
-        // compile all instance methods
+        if (calleeCompiler != null) {
+            List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
+            for (Class c : jtclasses.testClasses) {
+                addMethods(methods, c);
+            }
+            ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+            System.out.println("Compiling callee methods with " + calleeCompiler.getClass() + "...");
+            for (ClassMethodActor method : methods) {
+                VMConfiguration.target().compilationScheme().synchronousCompile(method, calleeCompiler);
+                printer.pass();
+            }
+        }
+
+        if (gcOption.getValue()) {
+            System.out.print("Performing GC...");
+            System.out.flush();
+            System.gc();
+            System.out.println("");
+        }
+    }
+
+    private static void addMethods(List<ClassMethodActor> list, Class javaClass) {
+        ClassActor classActor = ClassActor.fromJava(javaClass);
+        // add all static methods
+        for (MethodActor methodActor : classActor.localStaticMethodActors()) {
+            if (methodActor instanceof ClassMethodActor && !methodActor.isClassInitializer()) {
+                list.add((ClassMethodActor) methodActor);
+            }
+        }
+        // add all instance methods
         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
             if (methodActor instanceof ClassMethodActor) {
-                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compiler);
-                System.out.print(".");
-                System.out.flush();
+                list.add((ClassMethodActor) methodActor);
             }
         }
     }
@@ -177,10 +189,9 @@ public class JTMaxine {
             if (end == 0) {
                 end = jtclasses.getTestCount();
             }
-            JTUtil.total = end - start;
-            JTUtil.testCount = jtclasses.getTestCount();
             JTUtil.verbose = verboseOption.getValue();
             Method runMethod = jtclasses.testRunClass.getMethod("runTests", int.class, int.class);
+            System.out.println("Running tests " + start + " to " + end + "...");
             return (Boolean) runMethod.invoke(null, start, end);
         } catch (NoSuchMethodException e) {
             System.out.println("Could not find runTests() method in: " + jtclasses.testRunClass);
