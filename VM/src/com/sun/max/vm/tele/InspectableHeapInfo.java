@@ -174,12 +174,12 @@ public final class InspectableHeapInfo {
     }
 
     /**
-     * Calculates the number of slots in the card table.
-     * @param memoryRegion
+     * Calculates the number of slots in the card table for a given memory region.
+     * @param memoryRegion the memory region
      * @return number of card table slots
      */
     private static int calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
-        int nrOfWords = memoryRegion.size().toInt() / Word.size();
+        int nrOfWords = memoryRegion.size().dividedBy(Word.size()).toInt();
         int cardTableEntries = nrOfWords / cardTableRatio;
         if (nrOfWords % cardTableRatio != 0) {
             cardTableEntries++;
@@ -316,7 +316,7 @@ public final class InspectableHeapInfo {
      * @return index
      */
     private static int calculateCardTableIndexInMemoryRegion(int offset) {
-        return offset / cardTableRatio / Word.size();
+        return Unsigned.idiv(offset / cardTableRatio, Word.size());
     }
 
     /**

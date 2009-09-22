@@ -18,28 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.actor.member;
+package jtt.loop;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.type.*;
-
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
  */
-public class TrampolineMethodActor extends StaticMethodActor {
-
-    private final TRAMPOLINE.Invocation invocation;
-
-    public TRAMPOLINE.Invocation invocation() {
-        return invocation;
+public class Loop06 {
+    public static String test(int arg) {
+        int count = 0;
+        while (--arg > 0) {
+            count++;
+            foo();
+        }
+        return "ok" + count;
     }
 
-    public TrampolineMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute,
-                                 TRAMPOLINE.Invocation invocation) {
-        super(name, descriptor, flags, codeAttribute);
-        this.invocation = invocation;
+    static void foo() {
     }
-
 }

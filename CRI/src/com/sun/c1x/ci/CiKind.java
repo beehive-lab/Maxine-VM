@@ -48,8 +48,6 @@ public enum CiKind {
         this.size = size;
     }
 
-    public final CiKind basicType = this;
-
     /**
      * The name of the basic type as a single character.
      */
@@ -158,7 +156,7 @@ public enum CiKind {
 
     /**
      * Gets the basic type of array elements for the array type code that appears
-     * in a {@link com.sun.c1x.bytecode.Bytecodes#NEWARRAY newarray} bytecode.
+     * in a newarray bytecode.
      * @param code the array type code
      * @return the basic type from the array type code
      */

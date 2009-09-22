@@ -31,10 +31,10 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.stack.VmStackFrameWalker;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
@@ -148,13 +148,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle FindClass(Pointer env, Pointer name) throws ClassNotFoundException {
+        String className;
         try {
-            final Class javaClass = findClass(Code.codePointerToTargetMethod(VMRegister.getInstructionPointer()).classMethodActor().holder().classLoader, CString.utf8ToJava(name));
-            MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
-            return JniHandles.createLocalHandle(javaClass);
+            className = CString.utf8ToJava(name);
         } catch (Utf8Exception utf8Exception) {
             throw new ClassNotFoundException();
         }
+        final Class javaClass = findClass(VmStackFrameWalker.getCallerClassMethodActor().holder().classLoader, className);
+        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+        return JniHandles.createLocalHandle(javaClass);
     }
 
     @JNI_FUNCTION
@@ -318,7 +320,7 @@ public final class JniFunctions {
     }
 
     /**
-     * A Call to this method is delegated by the substrate to {@link #newObjectV(Pointer, JniHandle, MethodID, Pointer)}.
+     * A Call to this method is delegated by the substrate to {@link #NewObjectV(Pointer, JniHandle, MethodID, Pointer)}.
      */
     @JNI_FUNCTION
     private static JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) throws NoSuchMethodException, InstantiationException, IllegalAccessException,

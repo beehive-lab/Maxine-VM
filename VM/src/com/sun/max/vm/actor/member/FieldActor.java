@@ -51,6 +51,28 @@ import com.sun.max.vm.value.*;
  */
 public class FieldActor extends MemberActor {
 
+    /**
+     * Flags indicating special annotations applied to methods.
+     */
+    public enum VmFlag {
+        Injected,
+        Constant,
+        ConstantWhenNotZero,
+        Reset;
+
+        public final int mask;
+
+        VmFlag() {
+            assert ordinal() < 16 : "Too many VmFlags to fit into 16 bits";
+            mask = 1 << (ordinal() + 16);
+        }
+
+        @INLINE
+        public boolean check(FieldActor fieldActor) {
+            return (fieldActor.flags() & mask) != 0;
+        }
+    }
+
     public static final FieldActor[] NONE = {};
 
     public final Kind kind;

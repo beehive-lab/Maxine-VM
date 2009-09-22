@@ -18,43 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
- */
-package test.com.sun.max.vm.jtrun.some;
-
-import test.com.sun.max.vm.jtrun.*;
+package test.com.sun.max.vm.jtrun.all;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
-public class JavaTesterRunScheme extends AbstractTester {
+import test.com.sun.max.vm.jtrun.*;
 
-    public JavaTesterRunScheme(VMConfiguration vmConfiguration) {
+public class JTRunScheme extends JTAbstractRunScheme {
+
+    public JTRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    @PROTOTYPE_ONLY
     @Override
+    @PROTOTYPE_ONLY
     public Class<?>[] getClassList() {
-        return classList;
+        return JTConfig.testClasses.testClasses;
     }
 
-    @PROTOTYPE_ONLY
-// GENERATED TEST RUNS
-    private static final Class<?>[] classList = {
-    };
     @Override
     public void runTests() {
-        total = testEnd - testStart;
-        testNum = testStart;
-        while (testNum < testEnd) {
-            switch(testNum) {
-                case 0:
-                    JavaTesterTests.jtt_jasm_Loop00();
-            }
-        }
-        reportPassed(passed, total);
+        JTRuns.runTests(testStart, testEnd);
+        JTUtil.printReport();
     }
-// END GENERATED TEST RUNS
 }

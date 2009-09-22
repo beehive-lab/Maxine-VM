@@ -154,9 +154,7 @@ public class LoopPeeler extends ValueVisitor {
     }
 
     private void bind(Value value, Value newValue) {
-        if (value instanceof Local) {
-            return;
-        } else {
+        if (!(value instanceof Local)) {
             valueMap.put(value, newValue);
         }
     }
@@ -306,8 +304,6 @@ public class LoopPeeler extends ValueVisitor {
      */
     private void updateState(Instruction cloned) {
         cloned.allValuesDo(new ValueClosure() {
-
-            @Override
             public Value apply(Value i) {
                 return lookup(i);
             }
@@ -730,8 +726,6 @@ public class LoopPeeler extends ValueVisitor {
             if (peeledIterBlocks.contains(block)) {
                 final int predecessorIdx = headerPredecessors.indexOf(block);
                 block.end().allValuesDo(new ValueClosure() {
-
-                    @Override
                     public Value apply(Value i) {
                         if (i instanceof Phi) {
                             Phi phi = (Phi) i;
@@ -768,7 +762,6 @@ public class LoopPeeler extends ValueVisitor {
         }
         if (hasSubstitution) {
             final ValueClosure operandSubstClosure = new ValueClosure() {
-                @Override
                 public Value apply(Value i) {
                     Value map = mapValueToPhi.get(i);
 
@@ -782,9 +775,7 @@ public class LoopPeeler extends ValueVisitor {
             };
             // TODO: this step may visit the same block several times
             for (Edge edge : loop.exitEdges) {
-
                 edge.destination.iterateAnyOrder(new BlockClosure() {
-                    @Override
                     public void apply(BlockBegin block) {
                         if (!loop.contains(block)) {
                             Instruction instr = block;
