@@ -632,7 +632,6 @@ public abstract class StackFrameWalker {
     }
 
     public static ClassMethodActor getCallerClassMethodActor(Iterable<StackFrame> stackFrames, boolean invisibleFrames) {
-        final LinkSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
         boolean top = true;
         for (StackFrame stackFrame : stackFrames) {
             if (top) {

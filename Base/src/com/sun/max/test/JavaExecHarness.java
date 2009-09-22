@@ -558,7 +558,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             return Chars.toJavaLiteral((Character) val);
         }
         if (val instanceof String) {
-            return "\"" + val +"\"";
+            return "\"" + val + "\"";
         }
         return String.valueOf(val);
     }

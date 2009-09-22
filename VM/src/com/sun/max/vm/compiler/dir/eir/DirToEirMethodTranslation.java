@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.dir.eir;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;

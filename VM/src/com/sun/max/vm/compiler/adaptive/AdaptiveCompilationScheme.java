@@ -240,10 +240,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
             if (failoverOption.getValue()) {
                 return synchronousCompileHelper(classMethodActor, null, compilerScheme);
-            } else {
-                t.printStackTrace();
-                throw new RuntimeException("Error compiling: " + classMethodActor + ": " + t.getMessage());
             }
+            t.printStackTrace();
+            throw new RuntimeException("Error compiling: " + classMethodActor + ": " + t.getMessage());
         }
     }
 

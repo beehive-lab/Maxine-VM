@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;

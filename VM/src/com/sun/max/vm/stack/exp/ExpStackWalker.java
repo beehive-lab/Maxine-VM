@@ -213,7 +213,7 @@ public abstract class ExpStackWalker {
     /**
      * Internal visitor to perform the appropriate action(s) per frame.
      */
-    static abstract class InternalVisitor {
+    abstract static class InternalVisitor {
         abstract void visit(ExpStackFrameLayout layout, Cursor last, Cursor current);
     }
 
