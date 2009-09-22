@@ -43,45 +43,54 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         super(name);
     }
 
-    private void verifyHeap(String when,  BeltwayHeapSchemeBSS ssHeapScheme, Belt fromSpace) {
+    private void verifyHeap(String when) {
         if (Heap.verbose()) {
             Log.println("Verify Heap");
             Log.println(when);
         }
 
-        ssHeapScheme.bssHeapBoundChecker.reset();
+        ((BeltwayHeapSchemeBSS) heapScheme).bssHeapBoundChecker.reset();
         verifyRoots();
-        verifyBelt(fromSpace);
+        verifyBelt(getFromSpace());
+    }
+
+    private Belt getFromSpace() {
+        return ((BeltwayHeapSchemeBSS) heapScheme).getFromSpace();
+    }
+    private Belt getToSpace() {
+        return ((BeltwayHeapSchemeBSS) heapScheme).getToSpace();
     }
 
     public void run() {
-        final BeltwayHeapSchemeBSS ssHeapScheme = (BeltwayHeapSchemeBSS) heapScheme;
-        final Belt fromSpace = ssHeapScheme.getFromSpace();
-        final Belt toSpace = ssHeapScheme.getToSpace();
+        final Belt fromSpace = getFromSpace();
+        final Belt toSpace = getToSpace();
         prologue();
 
-        if (ssHeapScheme.verifyBeforeGC()) {
-            verifyHeap("Before GC", ssHeapScheme, fromSpace);
+        if (heapScheme.verifyBeforeGC()) {
+            verifyHeap("Before GC");
         }
 
         monitorScheme.beforeGarbageCollection();
         // Start scanning the reachable objects from roots.
-        ssHeapScheme.scavengeRoot(fromSpace, toSpace);
+        scavengeRoots(fromSpace, toSpace);
 
-        // Evacuate all remaining  "from" object reachable from the "to" space in the to space.
+        // Evacuate all remaining  "from" objects reachable from the "to" space in the to space.
         evacuateFollowers(fromSpace, toSpace);
+
+        // Process special references (weak, soft, finalizer, etc.)
+        heapScheme.processDiscoveredSpecialReferences(fromSpace);
 
         monitorScheme.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
-        ssHeapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
-        ssHeapScheme.getToSpace().resetAllocationMark();
+        heapScheme.getBeltManager().swapBelts(fromSpace, toSpace);
+        getToSpace().resetAllocationMark();
 
-        if (ssHeapScheme.verifyAfterGC()) {
+        if (heapScheme.verifyAfterGC()) {
             if (MaxineVM.isDebug()) {
                 heapScheme.zapRegion(toSpace);
             }
-            verifyHeap("After GC", ssHeapScheme, fromSpace);
+            verifyHeap("After GC");
         }
 
         InspectableHeapInfo.afterGarbageCollection();

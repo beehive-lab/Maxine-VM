@@ -102,7 +102,9 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+            return
+            inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) ||
+            inToSpace(origin) || inEdenSpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
@@ -156,9 +158,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             }
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getEdenSpace();
-
             final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
 
             edenGC = (Runnable) collectors[0];
@@ -170,6 +169,11 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getEdenSpace();
     }
 
     @INLINE
