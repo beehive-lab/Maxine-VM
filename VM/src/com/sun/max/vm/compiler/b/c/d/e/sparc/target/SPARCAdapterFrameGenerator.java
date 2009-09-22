@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jit.sparc.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -82,7 +83,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     protected final GPR jitedCodeFramePointer;
     protected final GPR literalBaseRegister;
     protected int jitedCodeFrameSize = 0;
-    protected final GPR jitScratchRegister;
 
     public static SPARCAdapterFrameGenerator jitToOptimizedCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new JitToOptimizedFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);
@@ -167,7 +167,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
         final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
         jitedCodeFramePointer = (GPR) jitABI.framePointer();
-        jitScratchRegister = (GPR) jitABI.scratchRegister();
         literalBaseRegister = (GPR) jitABI.literalBaseRegister();
     }
 
@@ -418,22 +417,12 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // an arbitrary value off the floating point temp area).
             assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
             final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
-            if (largeFrame) {
-                try {
-                    assembler().setuw(jitedCodeFrameSize, jitScratchRegister);
-                } catch (AssemblyException e) {
-                    FatalError.unexpected("AssemblerException emitting setuw.");
-                }
-            }
+
             assembler().call(methodEntryPoint);
-            if (jitedCodeFrameSize > 0) {
-                if (largeFrame) {
-                    assembler().sub(optimizedCodeStackPointer, jitScratchRegister, optimizedCodeStackPointer);
-                } else {
-                    assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
-                }
+            if (largeFrame) {
+                assembler().sethi(SPARCAssembler.hi(jitedCodeFrameSize), BytecodeToSPARCTargetTranslator.PROLOGUE_SCRATCH_REGISTER);
             } else {
-                assembler().nop();  // delay slot
+                assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
             }
 
             // Return from the adapter frame
