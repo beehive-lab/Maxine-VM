@@ -242,7 +242,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 return synchronousCompileHelper(classMethodActor, null, compilerScheme);
             } else {
                 t.printStackTrace();
-                throw new Error(t.getMessage());
+                throw new RuntimeException("Error compiling: " + classMethodActor + ": " + t.getMessage());
             }
         }
     }

@@ -40,6 +40,6 @@ public class JTRunScheme extends JTAbstractRunScheme {
     @Override
     public void runTests() {
         JTRuns.runTests(testStart, testEnd);
-        JTUtil.reportPassed(JTUtil.passed, JTUtil.total);
+        JTUtil.printReport();
     }
 }

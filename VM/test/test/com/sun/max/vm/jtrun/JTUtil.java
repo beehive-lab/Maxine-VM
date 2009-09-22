@@ -29,40 +29,62 @@ import com.sun.max.vm.Log;
  */
 public class JTUtil {
     public static int passed;
+    public static int failed;
     public static int finished;
     public static int total;
     public static int testNum;
     public static int verbose = 2;
     protected static String lastTestName;
-    protected static int testCount;
 
-    public static void reportPassed(int passed, int total) {
+    public static void reset(int start, int end) {
+        testNum = start;
+        total = end - start;
+        passed = 0;
+        failed = 0;
+        finished = 0;
+    }
+
+    public static void printReport() {
         Log.print("Done: ");
         Log.print(passed);
         Log.print(" of ");
-        Log.print(total);
-        Log.println(" passed.");
+        Log.print(finished);
+        Log.print(" passed");
+        if (failed > 0) {
+            Log.print(" (");
+            Log.print(failed);
+            Log.print(" failed)");
+        }
+        Log.println(".");
     }
 
-    public static void end(String run, boolean result) {
-        if (result) {
-            passed++;
-        }
+    public static void pass() {
+        passed++;
+        finished++;
         if (verbose == 2) {
-            verbose(result, ++finished, total);
-        }
-        if (verbose == 3) {
-            if (!result) {
-                printRun(run);
-                Log.println(" failed with incorrect result");
-            }
+            verbose(true, finished, total);
         }
         testNum++;
     }
 
-    public static void end(String run, Throwable t) {
+    public static void fail(String run) {
+        failed++;
+        finished++;
         if (verbose == 2) {
-            verbose(false, ++finished, total);
+            verbose(false, finished, total);
+        }
+        if (verbose == 3) {
+            printRun(run);
+            Log.println(" failed with incorrect result");
+        }
+        testNum++;
+    }
+
+    public static void fail(String run, Throwable t) {
+        failed++;
+        finished++;
+        if (verbose == 2) {
+            verbose(false, finished, total);
         }
         if (verbose == 3) {
             printRun(run);
@@ -109,7 +131,7 @@ public class JTUtil {
             while (i++ < 50) {
                 Log.print(' ');
             }
-            Log.println("  next: '-XX:TesterStart=', end: '-XX:TesterEnd=" + testCount + "'");
+            Log.println("  next: -XX:TesterStart="  + (testNum + 1));
         }
     }
 

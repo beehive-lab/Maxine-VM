@@ -45,6 +45,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
     protected static boolean noTests;
     protected static int testStart;
     protected static int testEnd;
+    protected static int testCount;
 
     private static VMIntOption startOption = register(new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run."), MaxineVM.Phase.STARTING);
@@ -110,9 +111,11 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         if (BootImageGenerator.callerJit) {
             CompiledPrototype.registerJitClass(JTRuns.class);
         }
-        for (Class<?> testClass : getClassList()) {
+        Class[] list = getClassList();
+        for (Class<?> testClass : list) {
             addClassToImage(testClass);
         }
+        testCount = list.length;
     }
 
     @Override
@@ -134,13 +137,11 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
                 if (testStart < 0) {
                     testStart = 0;
                 }
-                final int end = endOption.getValue();
-                if (end == 0) {
+                testEnd = endOption.getValue();
+                if (testEnd < testStart || testEnd > testCount) {
+                    testEnd = testCount;
+                } else if (testEnd == testStart) {
                     testEnd = testStart + 1;
-                } else if (end > 0) {
-                    testEnd = end;
-                } else {
-                    testEnd = JTUtil.testCount;
                 }
                 if (nativeTests) {
                     System.loadLibrary("javatest");
@@ -154,7 +155,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         if (MaxineVM.isPrototyping()) {
             registerClasses();
             nativeTests = BootImageGenerator.nativeTests;
-            JTUtil.testCount = getClassList().length;
             super.initialize(phase);
         }
     }
