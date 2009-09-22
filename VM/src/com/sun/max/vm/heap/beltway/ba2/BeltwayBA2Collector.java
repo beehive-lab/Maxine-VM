@@ -109,6 +109,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
             evacuateFollowers(matureSpaceBeforeAllocation, matureSpaceReserve);
 
+            heapScheme.processDiscoveredSpecialReferences(matureSpaceBeforeAllocation);
+
             if (heapScheme.verifyAfterGC()) {
                 verifyHeap("After full GC");
             }
@@ -144,6 +146,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 evacuateFollowers(matureSpaceReserve, matureSpace);
+                heapScheme.processDiscoveredSpecialReferences(matureSpaceReserve);
 
                 heapScheme.sideTable.restoreAllChunkSlots();
 
@@ -205,6 +208,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.println("Evacuate Followers");
             }
             evacuateFollowers();
+
+            heapScheme.processDiscoveredSpecialReferences(nurserySpace);
 
             heapScheme.sideTable.restoreAllChunkSlots();
 

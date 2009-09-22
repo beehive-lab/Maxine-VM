@@ -320,15 +320,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer tlabTop = tlab.plus(size); // top of the new TLAB
         final Pointer allocationMark = enabledVmThreadLocals.getWord(TLAB_MARK.index).asPointer();
         if (!allocationMark.isZero()) {
-            // TEMP DEBUG
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print(": Padding TLAB before refill: [MARK =");
-            Log.print(allocationMark);
-            Log.print(" [TOP=");
-            Log.print(enabledVmThreadLocals.getWord(TLAB_TOP.index));
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-            // END TEMP DEBUG
             // It is a refill, not an initial fill. So invoke handler.
             doBeforeTLABRefill(allocationMark, enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
         } else {

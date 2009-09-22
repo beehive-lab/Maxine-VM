@@ -77,7 +77,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         @INLINE
         @Override
         public boolean contains(Pointer origin) {
-            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 

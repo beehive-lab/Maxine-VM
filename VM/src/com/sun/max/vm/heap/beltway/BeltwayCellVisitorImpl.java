@@ -63,20 +63,10 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
     }
 
     @INLINE
-    private void visitOriginOffsets(Hub hub, Pointer origin) {
-        final int n = hub.referenceMapStartIndex + hub.referenceMapLength;
-        for (int i = hub.referenceMapStartIndex; i < n; i++) {
-            final int index = hub.getInt(i);
-            pointerVisitorGripUpdater.visit(origin, index);
-        }
-    }
-
-    @INLINE
     private Action action() {
         return pointerVisitorGripUpdater.action;
     }
 
-    @INLINE
     private void scanReferenceArray(Pointer origin) {
         final int length = Layout.readArrayLength(origin);
         for (int index = 0; index < length; index++) {
@@ -103,11 +93,14 @@ public class BeltwayCellVisitorImpl implements BeltCellVisitor {
         final SpecificLayout specificLayout = hub.specificLayout;
 
         if (specificLayout.isTupleLayout()) {
-            visitOriginOffsets(hub, origin);
+            TupleReferenceMap.visitReferences(hub, origin, pointerVisitorGripUpdater);
+            if (hub.isSpecialReference) {
+                SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+            }
             return cell.plus(hub.tupleSize);
         }
         if (specificLayout.isHybridLayout()) {
-            visitOriginOffsets(hub, origin);
+            TupleReferenceMap.visitReferences(hub, origin, pointerVisitorGripUpdater);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(origin);
         }

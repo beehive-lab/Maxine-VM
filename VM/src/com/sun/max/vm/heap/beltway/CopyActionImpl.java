@@ -41,6 +41,7 @@ public class CopyActionImpl implements Action {
 
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayHeapScheme heapScheme;
+    protected HeapBoundChecker heapBound;
 
     protected Belt from;
     protected Belt to;
@@ -52,6 +53,7 @@ public class CopyActionImpl implements Action {
      */
     public void initialize(BeltwayHeapScheme heapScheme) {
         this.heapScheme = heapScheme;
+        heapBound = heapScheme.heapBoundChecker();
     }
 
     /**
@@ -70,7 +72,7 @@ public class CopyActionImpl implements Action {
             return;
         }
         final Pointer fromOrigin = origin.toOrigin();
-        if (!heapScheme.contains(fromOrigin)) {
+        if (!heapBound.contains(fromOrigin)) {
             Log.print("invalid grip: ");
             Log.println(fromOrigin.asAddress());
             FatalError.unexpected("invalid grip");

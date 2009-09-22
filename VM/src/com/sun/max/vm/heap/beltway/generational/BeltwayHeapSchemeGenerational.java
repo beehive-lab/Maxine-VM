@@ -102,7 +102,9 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+            return
+            inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) ||
+            inToSpace(origin) || inEdenSpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
