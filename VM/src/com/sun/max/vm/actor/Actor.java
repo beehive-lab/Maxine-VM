@@ -99,10 +99,10 @@ public abstract class Actor {
     public static final int INTERFACE_TRAMPOLINE = 0x00080000;
     public static final int UNSAFE_CAST =          0x00100000;
     public static final int WRAPPER =              0x00200000;
-    public static final int CLASS_INITIALIZER =    0x00400000;
-    public static final int INSTANCE_INITIALIZER = 0x00800000;
+    public static final int INITIALIZER       =    0x00400000;
+    public static final int JNI_FUNCTION =         0x00800000;
     public static final int C_FUNCTION =           0x01000000;
-    public static final int JNI_FUNCTION =         0x02000000;
+    // see above            TEMPLATE     =         0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
@@ -313,17 +313,17 @@ public abstract class Actor {
 
     @INLINE
     public static boolean isClassInitializer(int flags) {
-        return (flags & CLASS_INITIALIZER) != 0;
+        return (flags & INITIALIZER) != 0 && (flags & ACC_STATIC) != 0;
     }
 
     @INLINE
     public static boolean isInstanceInitializer(int flags) {
-        return (flags & INSTANCE_INITIALIZER) != 0;
+        return (flags & INITIALIZER) != 0 && (flags & ACC_STATIC) == 0;
     }
 
     @INLINE
     public static boolean isInitializer(int flags) {
-        return (flags & (CLASS_INITIALIZER | INSTANCE_INITIALIZER)) != 0;
+        return (flags & INITIALIZER) != 0;
     }
 
     @INLINE

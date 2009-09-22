@@ -311,7 +311,7 @@ public class InvocationStubGenerator<T> {
         return new VirtualMethodActor(
                         SymbolTable.INIT,
                         VOID_NO_ARGS,
-                        Actor.ACC_PUBLIC | Actor.INSTANCE_INITIALIZER | Actor.ACC_SYNTHETIC,
+                        Actor.ACC_PUBLIC | Actor.INITIALIZER | Actor.ACC_SYNTHETIC,
                         codeAttribute);
     }
 

@@ -175,7 +175,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 return new VirtualMethodActor(
                                 SymbolTable.INIT,
                                 SignatureDescriptor.fromJava(Void.TYPE),
-                                Modifier.PUBLIC | Actor.INSTANCE_INITIALIZER,
+                                Modifier.PUBLIC | Actor.INITIALIZER,
                                 codeAttribute);
             } catch (NoSuchMethodException e) {
                 return null;

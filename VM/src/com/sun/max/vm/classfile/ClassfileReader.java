@@ -699,10 +699,10 @@ public final class ClassfileReader {
                 // ACC_STRICT flag.
                 flags &= ACC_STRICT;
                 flags |= ACC_STATIC;
-                extraFlags = CLASS_INITIALIZER | flags;
+                extraFlags = INITIALIZER | flags;
                 isClinit = true;
             } else if (name.equals(SymbolTable.INIT)) {
-                extraFlags |=  INSTANCE_INITIALIZER;
+                extraFlags |= INITIALIZER;
                 isInit = true;
             }
 
