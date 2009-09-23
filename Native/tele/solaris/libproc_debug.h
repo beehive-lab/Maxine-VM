@@ -184,14 +184,10 @@ struct ps_lwphandle {
     int     lwp_statfd; /* /proc/<pid>/lwp/<lwpid>/lwpstatus */
 };
 
-
-void print_lwpstatus(struct lwpstatus *status);
-
-void print_pstatus(pstatus_t *status, char *name);
-
-void print_lwphandle(struct ps_lwphandle *lwp, int i);
-
-void print_ps_prochandle(struct ps_prochandle *ps);
+/**
+ * Logs the complete state of a given process, including the state for each thread in the process.
+ */
+void log_process(struct ps_prochandle *ps);
 
 void statloc_eval(int statloc);
 
