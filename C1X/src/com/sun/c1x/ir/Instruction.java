@@ -23,13 +23,14 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.lir.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Instruction</code> class represents a node in the IR. Each instruction
- * has a <code>next</code> field, which connects it to the next instruction in its
- * basic block. Subclasses of instruction represent arithmetic and object operations,
+ * This class represents an instruction node in the IR, which is a {@link Value} that
+ * can be added to a basic block (whereas other {@link Value} nodes such as {@link Phi} and
+ * {@link Local} cannot be added to basic blocks).
+ *
+ * Subclasses of instruction represent arithmetic and object operations,
  * control flow operators, phi statements, method calls, the start of basic blocks, and
  * the end of basic blocks.
  *
@@ -37,7 +38,7 @@ import com.sun.c1x.value.*;
  */
 public abstract class Instruction extends Value {
 
-    private static final int BCI_NOT_APPENDED = -99;
+    public static final int BCI_NOT_APPENDED = -99;
     public static final int INVOCATION_ENTRY_BCI = -1;
     public static final int SYNCHRONIZATION_ENTRY_BCI = -1;
 
@@ -53,7 +54,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind type) {
         super(type);
         bci = BCI_NOT_APPENDED;
-        lirOperand = LIROperandFactory.IllegalLocation;
+        clearOperand();
     }
 
     /**
@@ -145,7 +146,7 @@ public abstract class Instruction extends Value {
      * Gets the list of exception handlers associated with this instruction.
      * @return the list of exception handlers for this instruction
      */
-    public List<ExceptionHandler> exceptionHandlers() {
+    public final List<ExceptionHandler> exceptionHandlers() {
         return exceptionHandlers;
     }
 
@@ -156,8 +157,6 @@ public abstract class Instruction extends Value {
     public final void setExceptionHandlers(List<ExceptionHandler> exceptionHandlers) {
         this.exceptionHandlers = exceptionHandlers;
     }
-
-    //========================== Value numbering support =================================
 
     /**
      * Compute the value number of this Instruction. Local and global value numbering
@@ -202,7 +201,7 @@ public abstract class Instruction extends Value {
      * input values, state values, and other values.
      * @param closure the closure to apply
      */
-    public void allValuesDo(ValueClosure closure) {
+    public final void allValuesDo(ValueClosure closure) {
         inputValuesDo(closure);
         ValueStack stateBefore = stateBefore();
         if (stateBefore != null) {
@@ -215,29 +214,17 @@ public abstract class Instruction extends Value {
     }
 
     /**
-     * Converts a given instruction to a value string. The representation of an instruction as
-     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#tchar() character} denoting its
-     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id()}. For example,
-     * "i13".
-     *
-     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
-     * @return the instruction representation as a string
-     */
-    public static String valueString(Value value) {
-        return value == null ? "null" : "" + value.type().tchar() + value.id();
-    }
-
-    /**
-     * Gets the lock stack of the instruction if one exists.
-     * @return the lock stack
+     * Gets the state before the instruction, if it is recorded.
+     * @return the state before the instruction
      */
     public ValueStack stateBefore() {
         return null;
     }
 
     /**
-     * Gets the lock stack of the instruction if one exists.
-     * @return the lock stack
+     * Gets the state after the instruction, if it is recorded. Typically only
+     * instances of {@link BlockEnd} have a state after.
+     * @return the state after the instruction
      */
     public ValueStack stateAfter() {
         return null;

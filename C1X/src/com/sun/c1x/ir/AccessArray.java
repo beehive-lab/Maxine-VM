@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>AccessArray</code> class is the base class of all array operations.
+ * This the base class of all array operations.
  *
  * @author Ben L. Titzer
  */
@@ -54,6 +54,10 @@ public abstract class AccessArray extends StateSplit {
         return array;
     }
 
+    /**
+     * Clears the state associated with a null check.
+     * @return {@code true} always
+     */
     @Override
     public boolean internalClearNullCheck() {
         if (!needsNullCheck() && !needsBoundsCheck()) {
@@ -62,6 +66,10 @@ public abstract class AccessArray extends StateSplit {
         return true;
     }
 
+    /**
+     * Checks whether this instruction needs a bounds check.
+     * @return {@code true} if a bounds check is needed
+     */
     public boolean needsBoundsCheck() {
         return !checkFlag(Flag.NoBoundsCheck);
     }

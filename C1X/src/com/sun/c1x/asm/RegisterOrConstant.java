@@ -23,7 +23,8 @@ package com.sun.c1x.asm;
 import com.sun.c1x.ci.*;
 
 /**
- *
+ * This class encapsulates either a register or a constant.
+ * 
  * @author Thomas Wuerthinger
  */
 public class RegisterOrConstant {

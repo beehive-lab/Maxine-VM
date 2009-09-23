@@ -24,18 +24,12 @@ import java.util.*;
 
 
 /**
- * The <code>Label</code> class definition.
+ * This class represents a label within assembly code.
  *
  * @author Marcelo Cintra
  */
 public class Label {
 
-
-    // locator encodes both the binding state (via its sign)
-    // and the binding locator (via its value) of a label.
-    // locator >= 0   bound label, locator() encodes the target (jump) position
-    // locator == -1  unbound label
-    // The locator encodes both offset and section
     private int position = -1;
 
     // References to instructions that jump to this unresolved label.
@@ -44,38 +38,40 @@ public class Label {
     private List<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
-     * Returns the position of the the Label in the code buffer.
-     * The position is a 'locator', which encodes both offset and section.
-     *
-     * @return locator
+     * Returns the position of this label in the code buffer
+     * @return the position
      */
-    public int position() {
-        assert position >= 0 : "Unbounded label is being referenced";
+    public final int position() {
+        assert position >= 0 : "Unbound label is being referenced";
         return position;
     }
 
-    public boolean isBound() {
+    /**
+     * Binds the label to the specified position.
+     * @param pos the position
+     */
+    public final void bind(int pos) {
+        this.position = pos;
+    }
+
+    public final boolean isBound() {
         return position >= 0;
     }
 
-    public boolean isUnbound() {
+    public final boolean isUnbound() {
         return position == -1 && patchPositions.size() > 0;
     }
 
-    public boolean isUnused() {
-        return position == -1 && patchPositions.size() == 0;
+    public final void addPatchAt(int branchLocation) {
+        assert position == -1 : "Label is unbound";
+        patchPositions.add(branchLocation);
     }
 
-    public void addPatchAt(int branchLocator) {
-        assert position == -1 : "Label is unbounded";
-        patchPositions.add(branchLocator);
-    }
-
-    void patchInstructions(AbstractAssembler masm) {
+    public final void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
         int target = position;
-        for (int branchLoc : patchPositions) {
-            masm.patchJumpTarget(branchLoc, target);
+        for (int pos : patchPositions) {
+            masm.patchJumpTarget(pos, target);
         }
     }
 
@@ -84,7 +80,4 @@ public class Label {
         return "label";
     }
 
-    void bindPosition(int codeOffset) {
-        this.position = codeOffset;
-    }
 }

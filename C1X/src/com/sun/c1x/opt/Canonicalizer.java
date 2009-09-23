@@ -212,7 +212,7 @@ public class Canonicalizer extends ValueVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
@@ -537,7 +537,7 @@ public class Canonicalizer extends ValueVisitor {
                 }
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     @Override
@@ -718,7 +718,7 @@ public class Canonicalizer extends ValueVisitor {
             // folding did not work, try recognizing special intrinsics
             reduceIntrinsic(i);
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private void reduceIntrinsic(Intrinsic i) {
@@ -744,7 +744,7 @@ public class Canonicalizer extends ValueVisitor {
                 return;
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private boolean foldIntrinsic(Intrinsic i) {

@@ -23,11 +23,9 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.CiConstant;
 
 /**
- * The <code>RiConstantPool</code> class provides the interface to the constant pool that is
- * used by C1X. The <code>lookup</code> methods look up a constant pool entry without performing
- * resolution, and are used during compilation. The <code>resolve</code> methods are used
- * for resolving constant pool entries at run time, and calls to these methods are inserted
- * by C1X for unresolved entries.
+ * This interface represents the runtime representation of the constant pool that is
+ * used by the compilers when parsing bytecode. The <code>lookup</code> methods look up a constant
+ * pool entry without performing  resolution, and are used during compilation.
  *
  * @author Ben L. Titzer
  */
@@ -211,7 +209,7 @@ public interface RiConstantPool {
 
     /**
      * Constant object that can be used to identify this constant pool when it is referenced from the code.
-     * 
+     *
      * @return a constant object representing this constant pool
      */
     CiConstant encoding();

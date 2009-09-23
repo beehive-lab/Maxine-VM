@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>If</code> instruction represents a branch that can go one of two directions
@@ -55,7 +56,7 @@ public class If extends BlockEnd {
         this.x = x;
         this.y = y;
         condition = cond;
-        assert Value.sameBasicType(x, y);
+        assert Util.equalKinds(x, y);
         initFlag(Flag.UnorderedIsTrue, unorderedIsTrue);
         successors.add(trueSucc);
         successors.add(falseSucc);

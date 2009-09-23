@@ -23,7 +23,8 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>RiMethodProfile</code> class definition.
+ * This interface represents method profiling information from the runtime system, including the
+ * locations for invocation counters, bytecode location counters, etc.
  *
  * @author Ben L. Titzer
  */

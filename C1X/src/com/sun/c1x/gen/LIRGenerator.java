@@ -675,7 +675,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand allocateOperand(XirArgument arg) {
-
         if (arg.runtimeCall != null) {
 
             List<LIROperand> arguments = new ArrayList<LIROperand>();
@@ -696,7 +695,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     void emitXir(XirSnippet snippet) {
-
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
         //final List<LIROperand> tempOperands = new ArrayList<LIROperand>();

@@ -36,7 +36,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- *
+ * The linear scan register allocator from Christian Wimmer.
  * @author Thomas Wuerthinger
  */
 public class LinearScan {
@@ -1082,10 +1082,10 @@ public class LinearScan {
             }
 
             Range r = interval.first();
-            if (r.from() <= defPos) {
+            if (r.from <= defPos) {
                 // Update the starting point (when a range is first created for a use, its
                 // start is the beginning of the current block until a def is encountered.)
-                r.setFrom(defPos);
+                r.from = defPos;
                 interval.addUsePos(defPos, useKind);
 
             } else {
@@ -3017,8 +3017,8 @@ public class LinearScan {
                 assert false;
             }
 
-            for (Range r = i1.first(); r != Range.EndMarker; r = r.next()) {
-                if (r.from() >= r.to()) {
+            for (Range r = i1.first(); r != Range.EndMarker; r = r.next) {
+                if (r.from >= r.to) {
                     TTY.println("Interval %d has zero length range", i1.registerNumber());
                     i1.print(TTY.out, this);
                     TTY.cr();

@@ -24,6 +24,8 @@ import com.sun.c1x.ci.CiConstant;
 import com.sun.c1x.ci.CiRuntimeCall;
 
 /**
+ * This class represents an argument to an {@link XirSnippet}.
+ *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
