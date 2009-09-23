@@ -29,7 +29,7 @@ package test.com.sun.max.vm.jtrun;
 public class JTClasses {
 
     public final Class[] testClasses;
-    public final Class testRunClass;
+    public final Class<?> testRunClass;
 
     public JTClasses(Class[] testClasses, Class testRunClass) {
         this.testClasses = testClasses;
