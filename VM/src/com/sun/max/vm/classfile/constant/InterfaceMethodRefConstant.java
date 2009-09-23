@@ -178,10 +178,12 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             super(classIndex, nameAndTypeIndex, tags);
         }
 
+        @Override
         public Tag tag() {
             return Tag.INTERFACE_METHOD_REF;
         }
 
+        @Override
         public InterfaceMethodRefKey key(final ConstantPool pool) {
             class Key extends RefKey implements InterfaceMethodRefKey {
                 Key() {
@@ -210,6 +212,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
         }
 
+        @Override
         boolean isFieldConstant() {
             return false;
         }

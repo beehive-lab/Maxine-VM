@@ -158,7 +158,7 @@ public class JTMaxine {
             return vmConfiguration.jitScheme();
         }
         try {
-            Class compilerSchemeClass = Class.forName(name);
+            Class<?> compilerSchemeClass = Class.forName(name);
             Constructor constructor = compilerSchemeClass.getConstructor(VMConfiguration.class);
             RuntimeCompilerScheme compiler = (RuntimeCompilerScheme) constructor.newInstance(vmConfiguration);
             compiler.initialize(MaxineVM.Phase.PROTOTYPING);
