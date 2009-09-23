@@ -23,7 +23,7 @@ package com.sun.c1x.ri;
 import java.util.List;
 
 /**
- * The <code>RiMethod</code> interface represents resolved and unresolved methods.
+ * This interface represents resolved and unresolved methods.
  * Methods, like fields and types, are resolved through {@link RiConstantPool constant
  * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
  * to the compiler. Note that some operations are only available on resolved methods.
@@ -203,7 +203,7 @@ public interface RiMethod {
     /**
      * Gets the interface method ID for this method, if this method is an interface method. NOTE THAT THIS OPERATION IS
      * ONLY AVAILABLE ON RESOLVED INTERFACE METHODS. On all other methods the result is -1.
-     * 
+     *
      * @return the interface method id
      */
     int interfaceID();
@@ -211,7 +211,7 @@ public interface RiMethod {
     /**
      * Gets index of the method within its interface. NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED INTERFACE
      * METHODS. On all other methods the result is -1.
-     * 
+     *
      * @return the index of the method within the interface
      */
     int indexInInterface();

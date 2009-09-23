@@ -21,9 +21,10 @@
 package com.sun.c1x.util;
 
 /**
+ * This class implements a two-dimensional bitmap.
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class BitMap2D {
 

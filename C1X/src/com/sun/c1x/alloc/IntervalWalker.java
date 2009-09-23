@@ -31,7 +31,7 @@ import com.sun.c1x.debug.*;
 class IntervalWalker {
 
     protected final C1XCompilation compilation;
-    LinearScan allocator;
+    protected final LinearScan allocator;
 
     Interval[] unhandledFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, not
                                                                                      // life before the current
@@ -45,14 +45,6 @@ class IntervalWalker {
     Interval current; // the current interval coming from unhandled list
     int currentPosition; // the current position (intercept point through the intervals)
     Interval.IntervalKind currentKind; // and whether it is IntervalKind.fixedKind or IntervalKind.anyKind.
-
-    C1XCompilation compilation() {
-        return compilation;
-    }
-
-    LinearScan allocator() {
-        return allocator;
-    }
 
     Interval current() {
         return current;
@@ -100,6 +92,7 @@ class IntervalWalker {
     IntervalWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
         this.compilation = allocator.compilation;
         this.allocator = allocator;
+        
         unhandledFirst[IntervalKind.fixedKind.ordinal()] = unhandledFixedFirst;
         unhandledFirst[IntervalKind.anyKind.ordinal()] = unhandledAnyFirst;
         activeFirst[IntervalKind.fixedKind.ordinal()] = Interval.EndMarker;

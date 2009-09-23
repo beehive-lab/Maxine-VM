@@ -25,7 +25,7 @@ import com.sun.c1x.ci.CiKind;
 
 
 /**
- * The <code>RiType</code> interface represents a resolved or unresolved type in the compiler
+ * This interface represents a resolved or unresolved type in the compiler
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.
  * Types, like fields and methods, are resolved through {@link RiConstantPool constant
  * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}

@@ -29,9 +29,9 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- *
+ * This class implements an assembler that can encode most X86 instructions.
+ * 
  * @author Thomas Wuerthinger
- *
  */
 public abstract class X86Assembler extends AbstractAssembler {
 

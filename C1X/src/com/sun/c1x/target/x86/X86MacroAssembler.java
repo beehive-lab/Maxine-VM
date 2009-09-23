@@ -29,8 +29,9 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * @author Thomas Wuerthinger
+ * This class implements the X86-specific portion of the macro assembler.
  *
+ * @author Thomas Wuerthinger
  */
 public class X86MacroAssembler extends X86Assembler {
 

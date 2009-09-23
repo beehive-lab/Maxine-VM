@@ -162,7 +162,7 @@ public class LoopPeeler extends ValueVisitor {
     /**
      * Clone a basic block and all its instructions.
      * The cloned block has no instructions and no CFG edges.
-     * @param block
+     * @param block the block to clone
      * @return a new block
      */
     public BlockBegin cloneBlock(BlockBegin block) {
@@ -299,9 +299,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * @param stateBefore
-     */
     private void updateState(Instruction cloned) {
         cloned.allValuesDo(new ValueClosure() {
             public Value apply(Value i) {
@@ -373,10 +370,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * @param i
-     * @return
-     */
     private Value[] cloneArguments(Value [] args) {
         Value [] newArgs = new Value [args.length];
         int j = 0;
@@ -426,10 +419,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * @param dimensions
-     * @return
-     */
     private Value[] cloneDimmensions(Value[] dimensions) {
         Value [] newDimensions = new Value [dimensions.length];
         int j = 0;
@@ -540,10 +529,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * @param successors
-     * @return
-     */
     private List<BlockBegin> cloneSuccessors(List<BlockBegin> successors) {
         ArrayList<BlockBegin> clonedSuccessors = new ArrayList<BlockBegin>(successors.size());
         for (BlockBegin block : successors) {
@@ -561,10 +546,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * @param i
-     * @return
-     */
     private int[] getKeys(LookupSwitch i) {
         int [] keys = new int [i.keysLength()];
         for (int j = 0; j < i.keysLength(); j++) {
@@ -684,10 +665,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    /**
-     * Creates a new instance of LoopPeeler.
-     * @param loops the loops to be peeled
-     */
     public LoopPeeler(IR ir, Loop loop) {
         this.loop = loop;
         this.ir = ir;
@@ -742,18 +719,11 @@ public class LoopPeeler extends ValueVisitor {
         }
     }
 
-    /**
-     * @param other
-     */
     private void addInstruction(Instruction other) {
         lastInstruction.setNext(other, other.bci());
         lastInstruction = other;
     }
 
-    /**
-     * @param loop
-     * @param clonedLoop
-     */
     private void adjustStateAtExitEdges() {
         boolean hasSubstitution = false;
         final Map <Value, Value> mapValueToPhi = new HashMap<Value, Value>();
@@ -869,10 +839,6 @@ public class LoopPeeler extends ValueVisitor {
         }
     }
 
-    /**
-     * @param loop
-     * @param clonedLoop
-     */
     private void connectPeeledIteration() {
 
         ArrayList <BlockBegin> sourceBackEdge = new ArrayList<BlockBegin>();
@@ -893,12 +859,6 @@ public class LoopPeeler extends ValueVisitor {
         }
     }
 
-    /**
-     * Clone the blocks and instructions of a loop. All the CFG edges
-     * internal to the cloned loop are updated to point to newer blocks.
-     * @param loop
-     * @return
-     */
     private Loop cloneLoop() {
         // first clone the loop blocks
         BlockBegin newLoopHeader = cloneBlock(loop.header);

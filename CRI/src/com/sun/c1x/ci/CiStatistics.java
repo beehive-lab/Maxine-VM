@@ -21,8 +21,8 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiStatistics</code> class gathers statistics gathered during the compilation of
- * a method.
+ * This class contains statistics gathered during the compilation of a method and reported back
+ * from the compiler as the result of compilation.
  *
  * @author Ben L. Titzer
  */

@@ -2430,10 +2430,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
-        // (tw) TODO: Find out if we need to align calls!
-        //assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset) % wordSize == 0 : "must be aligned";
-
-
         if (method.isLoaded()) {
             masm.call(method, info.oopMap.stackMap());
         } else {
@@ -2446,11 +2442,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void icCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-//        assert !compilation.runtime.isMP() || (masm().codeBuffer.position() + compilation.target.arch.nativeCallDisplacementOffset + compilation.target.arch.nativeMoveConstInstructionSize) % wordSize == 0 : "must be aligned";
-//        masm().movoop(ICKlass, compilation.runtime.universeNonOopWord());
-//        masm().callRuntime(entry, method);
-//        addCallInfo(codeOffset(), info);
-
         throw Util.unimplemented();
     }
 

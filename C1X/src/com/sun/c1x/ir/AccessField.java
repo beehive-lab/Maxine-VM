@@ -25,8 +25,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>AccessField</code> class is the base class of all instructions that access
- * (read or write) fields.
+ * The base class of all instructions that access fields.
  *
  * @author Ben L. Titzer
  */

@@ -26,10 +26,10 @@ import com.sun.c1x.ir.*;
 
 
 /**
- * The <code>Loop</code> class definition.
+ * This class represents a loop, including a header block, an end block, blocks making up the body,
+ * and any blocks that are exitted to from the loop body.
  *
  * @author Marcelo Cintra
- *
  */
 public class Loop {
 
@@ -48,24 +48,20 @@ public class Loop {
                 return false;
             }
             Edge other = (Edge) obj;
-            if (other.destination != destination && other.source != source) {
-                return false;
-            }
-            return true;
+            return other.destination == destination && other.source == source;
         }
     }
 
     BlockBegin header;
-    BlockBegin end;
-    List <BlockBegin> body;   // all the blocks that form the loop, except the loopHeader
-    List <Edge> exitEdges;    // edges that exit the loop
+    final BlockBegin end;
+    final List<BlockBegin> body;   // all the blocks that form the loop, except the loopHeader
+    final List<Edge> exitEdges;    // edges that exit the loop
 
     public Loop(BlockBegin loopStart, BlockBegin loopEnd, List <BlockBegin> loopBody) {
         this.header = loopStart;
         this.end = loopEnd;
         this.body = loopBody;
         body.remove(header);
-        //assert !loopBody.contains(loopStart) : "Loop body must not contain the loop header";
         exitEdges = new ArrayList<Edge>();
         findLoopExitNodes();
     }
@@ -76,30 +72,23 @@ public class Loop {
      * and possibly, from loop header.
      */
     private void findLoopExitNodes() {
-        exitNodesForBlock(header);
+        addExitNodesForBlock(header);
 
         for (BlockBegin block : body) {
-            exitNodesForBlock(block);
+            addExitNodesForBlock(block);
         }
     }
 
     public boolean contains(BlockBegin block) {
         // TODO: use a bitmap for performance reasons
-        if (block == header) {
-            return true;
-        }
-
-        return body.contains(block);
+        return block == header || body.contains(block);
     }
 
     public BlockBegin header() {
         return header;
     }
 
-    /**
-     *
-     */
-    private void exitNodesForBlock(BlockBegin block) {
+    private void addExitNodesForBlock(BlockBegin block) {
         for (int i = 0; i < block.numberOfSux(); i++) {
             BlockBegin successor = block.suxAt(i);
 
@@ -137,7 +126,7 @@ public class Loop {
 
     @Override
     public String toString() {
-        String output = "\nLoop Header: " + blockInfo(header) + "\nLoop End   : " + blockInfo(end);
+        String output = "\nLoop Header: " + blockInfo(header) + "\nLoop End: " + blockInfo(end);
         output += "\nLoopBody:\n";
         for (BlockBegin block : body) {
             output += blockInfo(block) + "\n";

@@ -24,16 +24,9 @@ package com.sun.c1x.stub;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class JITAdapterFrameStub extends CodeStub {
 
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
     public JITAdapterFrameStub() {
         super(null);
     }

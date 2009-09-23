@@ -30,8 +30,10 @@ import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 
 /**
- *
+ * This class implements the compiler interface for C1X.
+ * 
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class C1XCompiler extends CiCompiler {
 

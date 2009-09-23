@@ -27,6 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>IRChecker</code> class walks over the IR graph and checks
@@ -651,7 +652,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertBasicType(i, CiKind.Illegal);
-        if (!Value.sameBasicType(i.x(), i.y())) {
+        if (!Util.equalKinds(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {

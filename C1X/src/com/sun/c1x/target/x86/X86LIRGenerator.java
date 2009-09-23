@@ -37,9 +37,9 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
 /**
- *
+ * This class implements the X86-specific portion of the LIR generator.
+ * 
  * @author Thomas Wuerthinger
- *
  */
 public final class X86LIRGenerator extends LIRGenerator {
     private static final CiKind[] BASIC_TYPES_LONG_LONG = {CiKind.Long, CiKind.Long};

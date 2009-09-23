@@ -37,7 +37,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 
 /**
- * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
+ * This class encapsulates global information about the compilation of a particular method,
  * including a reference to the runtime, statistics about the compiled code, etc.
  *
  * @author Ben L. Titzer

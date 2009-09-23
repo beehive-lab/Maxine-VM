@@ -23,6 +23,8 @@ package com.sun.c1x.util;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ir.Value;
+import com.sun.c1x.ir.Instruction;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
@@ -663,5 +665,47 @@ public class Util {
     public static short safeToShort(int v) {
         assert is16bit(v);
         return (short) v;
+    }
+
+    /**
+     * Utility method to check that two instructions have the same kind.
+     * @param i the first instruction
+     * @param other the second instruction
+     * @return {@code true} if the instructions have the same basic type
+     */
+    public static boolean equalKinds(Value i, Value other) {
+        return i.type() == other.type();
+    }
+
+    /**
+     * Checks that two instructions are equivalent, optionally comparing constants.
+     * @param x the first instruction
+     * @param y the second instruction
+     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
+     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
+     */
+    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
+        if (x == y) {
+            return true;
+        }
+        if (compareConstants && x != null && y != null) {
+            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Converts a given instruction to a value string. The representation of an instruction as
+     * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#typeChar character} denoting its
+     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
+     * "i13".
+     *
+     * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
+     * @return the instruction representation as a string
+     */
+    public static String valueString(Value value) {
+        return value == null ? "null" : "" + value.type().typeChar + value.id;
     }
 }

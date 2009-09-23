@@ -26,7 +26,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>MemoryBuffer</code> is an abstract representation of memory that is used redundant load and
+ * The <code>MemoryMap</code> class is an approximation of memory that is used redundant load and
  * store elimination. In C1, tracking of fields of new objects' fields was precise,
  * while tracking of other fields is managed at the offset granularity (i.e. a write of a field with offset
  * <code>off</code> will "overwrite" all fields with the offset <code>off</code>. However, C1X distinguishes all

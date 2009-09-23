@@ -52,7 +52,7 @@ public abstract class AbstractAssembler {
             Util.guarantee(l.position() == codeBuffer.position(), "attempt to redefine label");
             return;
         }
-        l.bindPosition(codeBuffer.position());
+        l.bind(codeBuffer.position());
         l.patchInstructions(this);
     }
 
@@ -180,7 +180,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -192,7 +191,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -215,7 +213,6 @@ public abstract class AbstractAssembler {
     }
 
     public Address recordDataReferenceInCode(CiConstant data) {
-
         assert data != null;
 
         int pos = codeBuffer.position();

@@ -24,9 +24,9 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiRegister.*;
 
 /**
- *
+ * This class represents the X86 architecture.
+ * 
  * @author Thomas Wuerthinger
- *
  */
 public class X86 extends CiArchitecture {
 

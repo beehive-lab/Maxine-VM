@@ -26,6 +26,9 @@ import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
 
 /**
+ * This class represents the interface through which the compiler requests the XIR for a given
+ * bytecode from the runtime system.
+ * 
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */

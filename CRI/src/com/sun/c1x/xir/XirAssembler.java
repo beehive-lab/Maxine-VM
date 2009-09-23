@@ -29,6 +29,9 @@ import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ri.RiSignature;
 
 /**
+ * This class represents an assembler which allows a client such as the runtime system to
+ * create {@link XirTemplate XIR templates}.
+ *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */

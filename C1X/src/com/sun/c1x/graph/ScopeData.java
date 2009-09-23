@@ -31,6 +31,7 @@ import com.sun.c1x.value.*;
 /**
  * The <code>ScopeData</code> class represents inlining context when parsing the bytecodes
  * of an inlined method.
+ * 
  * @author Ben L. Titzer
 */
 public class ScopeData {

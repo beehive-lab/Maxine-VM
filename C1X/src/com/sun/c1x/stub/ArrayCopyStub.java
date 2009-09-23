@@ -27,15 +27,9 @@ import com.sun.c1x.lir.*;
  * The <code>ArrayCopyStub</code> class represents a code stub for array copy.
  *
  * @author Marcelo Cintra
- *
  */
 public class ArrayCopyStub extends CodeStub {
 
-    /**
-     * Creates a new ArrayCopyStub.
-     *
-     * @param arrayCopy the LIR operation representing the array copy
-     */
     public ArrayCopyStub() {
         super(null);
     }

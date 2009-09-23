@@ -21,8 +21,7 @@
 package com.sun.c1x.ri;
 
 /**
- * The <code>RiExceptionHandler</code> interface represents an exception
- * handler.
+ * This interface represents an exception handler within the bytecode.
  *
  * @author Ben L. Titzer
  */
@@ -60,7 +59,7 @@ public interface RiExceptionHandler {
 
     /**
      * The type of exceptions that are caught by this exception handler.
-     * 
+     *
      * @return the exception type
      */
     RiType catchKlass();

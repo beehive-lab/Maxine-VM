@@ -21,8 +21,7 @@
 package com.sun.c1x;
 
 /**
- * The <code>C1XOptions</code> class encapsulates options that control the behavior of the
- * C1X compiler.
+ * This class encapsulates options that control the behavior of the C1X compiler.
  *
  * @author Ben L. Titzer
  */
@@ -144,6 +143,7 @@ public class C1XOptions {
 
     // backend optimization settings
     public static boolean OptimizeControlFlow                = ____;
+    public static int     ShortLoopSize                      = 5;
     public static boolean OptimizeMoves                      = ____;
 
     // Linear scan settings

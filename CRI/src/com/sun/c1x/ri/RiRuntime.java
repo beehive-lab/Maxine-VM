@@ -26,10 +26,8 @@ import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ci.CiTargetMethod;
 
 /**
- * The <code>RiRuntime</code> class provides the major interface between the compiler and the
- * runtime system, including access to constant pools, OSR frames, inlining requirements,
- * and runtime calls such as checkcast. C1X may insert calls to the
- * implementation of these methods into compiled code, typically as the slow path.
+ * This interface encapsulates the main functionality of the runtime for the compiler, including access
+ * to constant pools, OSR frames, inlining requirements, and runtime calls such as checkcast.
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
@@ -163,7 +161,7 @@ public interface RiRuntime {
 
     /**
      * The offset of the first array element of an array of the given type.
-     * 
+     *
      * @param type the type of the array
      * @return the offset in bytes
      */
@@ -171,14 +169,14 @@ public interface RiRuntime {
 
     /**
      * Offset used for the implementation of an intrinsic.
-     * 
+     *
      * @return the offset in bytes
      */
     int sunMiscAtomicLongCSImplValueOffset();
 
     /**
      * The size of an array header of an array of the given type.
-     * 
+     *
      * @param type the type of the array
      * @return the size in bytes
      */
@@ -186,21 +184,21 @@ public interface RiRuntime {
 
     /**
      * Offset of the lock within the lock object.
-     * 
+     *
      * @return the offset in bytes
      */
     int basicObjectLockOffsetInBytes();
 
     /**
      * Size of a lock object.
-     * 
+     *
      * @return the size in bytes
      */
     int sizeofBasicObjectLock();
 
     /**
      * Offset of the element hub of an array hub object.
-     * 
+     *
      * @return the offset in bytes
      */
     int elementHubOffset();
@@ -212,14 +210,14 @@ public interface RiRuntime {
 
     /**
      * The initial mark word used for object initialization.
-     * 
+     *
      * @return the initial mark word
      */
     int initialMarkWord();
 
     /**
      * Calling convention for Java calls.
-     * 
+     *
      * @param signature the basic types of the parameters
      * @param outgoing if the convention is for incoming or outgoing parameters
      * @return an array of exactly the same size as the signature parameter that specifies at which location the
@@ -229,7 +227,7 @@ public interface RiRuntime {
 
     /**
      * Calling convention for outgoing runtime calls.
-     * 
+     *
      * @param signature the basic types of the parameters
      * @return an array of exactly the same size as the signature parameter that specifies at which location the
      *         parameters must be stored
@@ -238,7 +236,7 @@ public interface RiRuntime {
 
     /**
      * The return register that is used for the given return type.
-     * 
+     *
      * @param kind the basic type of the return parameter
      * @return the register
      */
@@ -246,21 +244,21 @@ public interface RiRuntime {
 
     /**
      * The size of a JIT stack slot. Used for implementing the adapter frames.
-     * 
+     *
      * @return the JIT stack slot size in bytes
      */
     int getJITStackSlotSize();
 
     /**
      * The offset of the normal entry to the code. The compiler inserts NOP instructions to satisfy this constraint.
-     * 
+     *
      * @return the code offset in bytes
      */
     int codeOffset();
 
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
-     * 
+     *
      * @param code the code bytes that should be disassembled
      * @return the disassembly as a String object
      */
@@ -269,7 +267,7 @@ public interface RiRuntime {
     /**
      * Registers the given global stub and returns an object that can be used to identify it in the relocation
      * information.
-     * 
+     *
      * @param targetMethod the target method representing the code of the global stub
      * @param name the name of the stub, used for debugging purposes only
      * @return the identification object
@@ -278,7 +276,7 @@ public interface RiRuntime {
 
     /**
      * Returns the runtime interface type representing the array type of the given kind.
-     * 
+     *
      * @param elementType the primitive type of the array
      * @return the array type
      */
@@ -286,14 +284,14 @@ public interface RiRuntime {
 
     /**
      * Returns the register that stores the thread object.
-     * 
+     *
      * @return the thread register
      */
     CiRegister threadRegister();
 
     /**
      * Returns the runtime interface representation of the given Java class object.
-     * 
+     *
      * @param javaClass the Java class object
      * @return the runtime interface representation
      */
@@ -301,7 +299,7 @@ public interface RiRuntime {
 
     /**
      * Returns the register used for safepoint polling.
-     * 
+     *
      * @return the safepoint register
      */
     CiRegister getSafepointRegister();

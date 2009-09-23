@@ -27,9 +27,12 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 
 /**
+ * This class finds and splits "critical" edges in the control flow graph.
+ * An edge between two blocks {@code A} and {@code B} is "critical" if {@code A}
+ * has more than one successor and {@code B} has more than one predecessor. Such
+ * edges are split by adding a block between the two blocks.
  *
  * @author Thomas Wuerthinger
- *
  */
 public class CriticalEdgeFinder implements BlockClosure {
 
