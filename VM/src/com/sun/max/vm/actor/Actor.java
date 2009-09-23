@@ -98,11 +98,11 @@ public abstract class Actor {
     public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
     public static final int INTERFACE_TRAMPOLINE = 0x00080000;
     public static final int UNSAFE_CAST =          0x00100000;
-    public static final int WRAPPER =              0x00200000;
+    // see above            TEMPLATE     =         0x00200000;
     public static final int INITIALIZER       =    0x00400000;
     public static final int JNI_FUNCTION =         0x00800000;
     public static final int C_FUNCTION =           0x01000000;
-    // see above            TEMPLATE     =         0x02000000;
+    public static final int WRAPPER =              0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
