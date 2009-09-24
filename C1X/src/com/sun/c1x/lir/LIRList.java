@@ -355,10 +355,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
 
-    public void arraycopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int flags, CodeEmitInfo info) {
-        append(new LIRArrayCopy(src, srcPos, dst, dstPos, length, tmp, expectedType, flags, info));
-    }
-
     public void profileCall(RiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, RiType chaKlass) {
         append(new LIRProfileCall(LIROpcode.ProfileCall, method, bci, mdo, recv, t1, chaKlass));
     }

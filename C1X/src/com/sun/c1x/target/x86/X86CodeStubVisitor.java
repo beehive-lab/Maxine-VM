@@ -103,42 +103,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.ret(Util.safeToShort(jitCallArgumentSize));
     }
 
-    public void visitArrayCopyStub(ArrayCopyStub stub) {
-        // ---------------slow case: call to native-----------------
-        masm.bind(stub.entry);
-
-        CallingConvention cc = compilation.frameMap().javaCallingConvention(ARRAY_COPY_SIGNATURE, true);
-
-        // push parameters
-        // (src, srcPos, dest, destPos, length)
-        CiRegister[] r = new CiRegister[5];
-        r[0] = stub.source().asRegister();
-        r[1] = stub.sourcePos().asRegister();
-        r[2] = stub.dest().asRegister();
-        r[3] = stub.destPos().asRegister();
-        r[4] = stub.length().asRegister();
-
-        // next registers will get stored on the stack
-        for (int i = 0; i < 5; i++) {
-            LIROperand r1 = cc.arguments().get(i);
-            if (r1.isStack()) {
-                int stOff = r1.singleStackIx() * compilation.target.arch.wordSize;
-                masm.movptr(new Address(X86.rsp, stOff), r[i]);
-            } else {
-                assert r[i] == r1.asRegister() : "Wrong register for arg ";
-            }
-        }
-
-        ce.alignCall(LIROpcode.StaticCall);
-
-        ce.emitStaticCallStub();
-
-        // TODO: What is meant to be called here?
-        //masm.callGlobalStub(GlobalStub.ResolveStaticCall);
-        ce.addCallInfoHere(stub.info);
-        masm.jmp(stub.continuation);
-    }
-
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
         masm.callGlobalStub(GlobalStub.ThrowArrayStoreException, stub.info);
