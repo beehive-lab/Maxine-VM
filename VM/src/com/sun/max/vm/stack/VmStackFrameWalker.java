@@ -61,11 +61,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
-        return Code.codePointerToRuntimeStub(instructionPointer);
-    }
-
-    @Override
     public byte readByte(Address address, int offset) {
         return address.asPointer().readByte(offset);
     }

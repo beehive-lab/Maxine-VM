@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
@@ -117,18 +116,4 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
         return null;
     }
 
-    /**
-     * Looks up the runtime stub containing a particular address (typically using binary search).
-     *
-     * @param address the address to lookup in this region
-     * @return a reference to the runtime stub containing the specified address, if it exists; {@code null}
-     *         otherwise
-     */
-    public RuntimeStub findRuntimeStub(Address address) {
-        final MemoryRegion memoryRegion = sortedMemoryRegions.find(address);
-        if (memoryRegion instanceof RuntimeStub) {
-            return (RuntimeStub) memoryRegion;
-        }
-        return null;
-    }
 }

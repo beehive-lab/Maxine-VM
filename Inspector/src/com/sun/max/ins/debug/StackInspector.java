@@ -42,7 +42,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -203,11 +202,6 @@ public class StackInspector extends Inspector {
             } else if (stackFrame instanceof TeleStackFrameWalker.ErrorStackFrame) {
                 name = "*a stack walker error occurred*";
                 toolTip = ((TeleStackFrameWalker.ErrorStackFrame) stackFrame).errorMessage();
-            } else if (stackFrame  instanceof RuntimeStubStackFrame) {
-                final RuntimeStubStackFrame runtimeStubStackFrame = (RuntimeStubStackFrame) stackFrame;
-                final RuntimeStub runtimeStub = runtimeStubStackFrame.stub();
-                name = runtimeStub.name();
-                toolTip = name;
             } else {
                 ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.instructionPointer;

@@ -106,7 +106,7 @@ public class MaxineTesterConfiguration {
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitopt, @optopt
         jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitopt, @optopt
 
-        dacapo("antlr",  RAND_SPARC);
+        dacapo("antlr");
         dacapo("bloat");
         dacapo("xalan",    FAIL_ALL);
         dacapo("hsqldb");

@@ -1258,10 +1258,6 @@ public abstract class TeleVM implements MaxVM {
         return TeleTargetMethod.make(this, address);
     }
 
-    public final TeleRuntimeStub makeTeleRuntimeStub(Address address) {
-        return TeleRuntimeStub.make(this, address);
-    }
-
     public final TeleNativeTargetRoutine createTeleNativeTargetRoutine(Address codeStart, Size codeSize, String name) {
         return TeleNativeTargetRoutine.create(this, codeStart, codeSize, name);
     }

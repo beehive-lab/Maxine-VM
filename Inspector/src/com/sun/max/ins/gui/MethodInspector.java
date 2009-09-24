@@ -100,41 +100,36 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
             // Java method
             methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleRuntimeStub teleRuntimeStub = inspection.maxVM().makeTeleRuntimeStub(address);
-            if (teleRuntimeStub != null) {
-                methodInspector = make(inspection, teleRuntimeStub);
-            } else {
-                final TeleTargetRoutine teleTargetRoutine = inspection.maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
-                if (teleTargetRoutine != null) {
-                    // Some other kind of known target code
-                    methodInspector = make(inspection, teleTargetRoutine);
-                } else if (interactive) {
-                    // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
-                    // Give the user a chance to guess at its length so we can register and view it
-                    final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
-                    final String defaultDescription = "Native code @0x" + address.toHexString();
-                    new NativeLocationInputDialog(inspection, "Describe unknown native code", address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
-                        @Override
-                        public void entered(Address nativeAddress, Size codeSize, String enteredDescription) {
-                            try {
-                                String description = enteredDescription;
-                                if (description == null || description.equals("")) {
-                                    description = "Native code @0x" + nativeAddress.toHexString();
-                                }
-                                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
-                                result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
-                                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
-                            } catch (IllegalArgumentException illegalArgumentException) {
-                                inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
+            final TeleTargetRoutine teleTargetRoutine = inspection.maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            if (teleTargetRoutine != null) {
+                // Some other kind of known target code
+                methodInspector = make(inspection, teleTargetRoutine);
+            } else if (interactive) {
+                // Code location is not in a Java method or runtime stub and has not yet been viewed in a native routine.
+                // Give the user a chance to guess at its length so we can register and view it
+                final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
+                final String defaultDescription = "Native code @0x" + address.toHexString();
+                new NativeLocationInputDialog(inspection, "Describe unknown native code", address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH, defaultDescription) {
+                    @Override
+                    public void entered(Address nativeAddress, Size codeSize, String enteredDescription) {
+                        try {
+                            String description = enteredDescription;
+                            if (description == null || description.equals("")) {
+                                description = "Native code @0x" + nativeAddress.toHexString();
                             }
+                            final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
+                            result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
+                            // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
                         }
-                        @Override
-                        public boolean isValidSize(Size size) {
-                            return size.greaterThan(0);
-                        }
-                    };
-                    methodInspector = result.value();
-                }
+                    }
+                    @Override
+                    public boolean isValidSize(Size size) {
+                        return size.greaterThan(0);
+                    }
+                };
+                methodInspector = result.value();
             }
         }
         return methodInspector;
