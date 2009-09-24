@@ -103,11 +103,8 @@ public class MaxineTesterConfiguration {
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
+        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitopt, @optopt
+        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitopt, @optopt
 
         dacapo("antlr",  RAND_SPARC);
         dacapo("bloat");
