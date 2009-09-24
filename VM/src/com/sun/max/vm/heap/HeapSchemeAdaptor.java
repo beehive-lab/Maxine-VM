@@ -86,13 +86,11 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 
-    @Override
     public void disableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
     }
 
-    @Override
     public void enableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
         enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());

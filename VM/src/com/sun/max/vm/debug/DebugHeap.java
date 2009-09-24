@@ -198,7 +198,7 @@ public final class DebugHeap {
     private static Hub checkHub(Pointer origin, MemoryRegion space) {
         final Grip hubGrip = Layout.readHubGrip(origin);
         FatalError.check(!hubGrip.isZero(), "null hub");
-        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt() / Word.size();
+        final int hubIndex = Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB).dividedBy(Word.size()).toInt();
         verifyGripAtIndex(origin, hubIndex, hubGrip, space, null);
         final Hub hub = UnsafeCast.asHub(hubGrip.toJava());
 

@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.classfile;
 
-import static com.sun.max.annotate.SURROGATE.Static.*;
+import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.Actor.*;
 import static com.sun.max.vm.actor.holder.ClassActorFactory.*;
@@ -256,7 +256,7 @@ public final class ClassfileReader {
      * @param majorVersion the version of the class file
      * @throws ClassFormatError if the flags are invalid
      */
-    public static void verifyMethodFlags(String name, int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
+    public static void verifyMethodFlags(int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
 
         // Class and interface initialization methods (3.9) are called
         // implicitly by the Java virtual machine; the value of their
@@ -397,9 +397,9 @@ public final class ClassfileReader {
                             throw classFormatError("Invalid ConstantValue index");
                         }
                     } else if (attributeName.equals("Deprecated")) {
-                        flags += Actor.DEPRECATED;
+                        flags |= Actor.DEPRECATED;
                     } else if (attributeName.equals("Synthetic")) {
-                        flags += Actor.ACC_SYNTHETIC;
+                        flags |= Actor.ACC_SYNTHETIC;
                     } else if (majorVersion >= JAVA_1_5_VERSION) {
                         if (attributeName.equals("Signature")) {
                             genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
@@ -690,6 +690,8 @@ public final class ClassfileReader {
             verifyMethodName(name, true);
 
             int extraFlags = flags;
+            boolean isClinit = false;
+            boolean isInit = false;
             if (name.equals(SymbolTable.CLINIT)) {
                 // Class and interface initialization methods (3.9) are called
                 // implicitly by the Java virtual machine; the value of their
@@ -697,13 +699,13 @@ public final class ClassfileReader {
                 // ACC_STRICT flag.
                 flags &= ACC_STRICT;
                 flags |= ACC_STATIC;
-                extraFlags = CLASS_INITIALIZER | flags;
+                extraFlags = INITIALIZER | flags;
+                isClinit = true;
             } else if (name.equals(SymbolTable.INIT)) {
-                extraFlags |=  INSTANCE_INITIALIZER;
+                extraFlags |= INITIALIZER;
+                isInit = true;
             }
 
-            final boolean isClinit = isClassInitializer(extraFlags);
-            final boolean isInit = isInstanceInitializer(extraFlags);
             final boolean isStatic = isStatic(extraFlags);
 
             try {
@@ -714,7 +716,7 @@ public final class ClassfileReader {
                     }
                 });
 
-                verifyMethodFlags(name.toString(), flags, isInterface, isInit, isClinit, majorVersion);
+                verifyMethodFlags(flags, isInterface, isInit, isClinit, majorVersion);
                 flags = extraFlags;
 
                 final int descriptorIndex = classfileStream.readUnsigned2();
@@ -792,8 +794,6 @@ public final class ClassfileReader {
                     }
                 }
 
-                TRAMPOLINE.Invocation trampolineInvocation = null;
-                int substituteeIndex = -1;
                 if (MaxineVM.isPrototyping()) {
                     if (isClinit) {
                         // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
@@ -803,99 +803,58 @@ public final class ClassfileReader {
                         }
                     }
 
-                    if (runtimeVisibleAnnotationsBytes != null) {
-                        final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
-                            final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                            if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
-                                continue nextMethod;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(C_FUNCTION.class))) {
-                                ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
-                                flags |= C_FUNCTION;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {
-                                flags |= NO_SAFEPOINTS;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
-                                flags |= BUILTIN | UNSAFE;
-                                codeAttribute = null;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(WRAPPER.class))) {
-                                flags |= WRAPPER;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
-                                flags |= TEMPLATE | UNSAFE;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {
-                                flags |= INLINE;
-                                for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                    if (nameElementPair.name().equals("afterSnippetsAreCompiled")) {
-                                        final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
-                                        if (valueElement.value().toBoolean()) {
-                                            flags |= INLINE_AFTER_SNIPPETS_ARE_COMPILED;
-                                        }
-                                    }
-                                }
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(NEVER_INLINE.class))) {
-                                flags |= NEVER_INLINE;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(TRAMPOLINE.class))) {
-                                for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                    if (nameElementPair.name().equals("invocation")) {
-                                        final AnnotationInfo.EnumElement enumElement = (AnnotationInfo.EnumElement) nameElementPair.element();
-                                        trampolineInvocation = Enum.valueOf(TRAMPOLINE.Invocation.class, enumElement.enumConstantName());
-                                    } else {
-                                        ProgramError.unexpected();
-                                    }
-                                }
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
-                                ProgramError.check(genericSignature == null, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a generic method: " + memberString(name, descriptor));
-                                ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method: " + memberString(name, descriptor));
-                                ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
-                                    " to a method with exactly one parameter: " + memberString(name, descriptor));
-                                flags |= UNSAFE_CAST;
-                                codeAttribute = null;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {
-                                ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);
-                                ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method: " + memberString(name, descriptor));
-                                ProgramError.check(!isNative(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to native method: " + memberString(name, descriptor));
-                                ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method: " + memberString(name, descriptor));
-                                flags |= JNI_FUNCTION;
-                                flags |= C_FUNCTION;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
-                                flags |= FOLD;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE.class))) {
-                                flags |= UNSAFE;
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(SURROGATE.class))) {
-                                flags |= SURROGATE;
-                                final Utf8Constant substituteeName = SymbolTable.lookupSymbol(toSubstituteeName(name.toString()));
-                                if (substituteeName != null) {
-                                    for (int j = nextMethodIndex - 1; j >= 0; --j) {
-                                        final MethodActor substituteeActor = methodActors[j];
-                                        if (substituteeActor.name.equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
-                                            ProgramError.check(isStatic == substituteeActor.isStatic());
-                                            Trace.line(1, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
-                                            Trace.line(1, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
-                                            substituteeIndex = j;
-                                            name = substituteeName;
-
-                                            // Copy the access level of the substitutee to the surrogate
-                                            final int accessFlagsMask = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
-                                            flags &= ~accessFlagsMask;
-                                            flags |= substituteeActor.flags() & accessFlagsMask;
-                                            substituteeActor.beUnsafe();
-                                            break;
-                                        }
-                                    }
-                                }
-                                ProgramError.check(substituteeIndex != -1, "Could not find substitutee for surrogate method: " + memberString(name, descriptor));
-                            }
-                        }
-                    }
-
                     if (isStatic) {
                         // The following helps folding down enum switch code for known enums, which should not incur binary compatibility issues:
-                        final String javacPrefix = "$TODO"; // TODO
-                        final String jdtPrefix = "$SWITCH_TABLE";
-                        if (name.toString().startsWith(javacPrefix) || name.toString().startsWith(jdtPrefix)) {
+                        if (name.toString().startsWith("$SWITCH_TABLE")) {
+                            // TODO: check for the switch table name generated by javac
                             flags |= FOLD;
                         }
                     }
+                }
 
+                int substituteeIndex = -1;
+
+                if (runtimeVisibleAnnotationsBytes != null) {
+                    // PERF: may need to make the .isMaxineClass() test cheaper
+                    final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
+                    for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
+                        final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
+                        if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                            continue nextMethod;
+                        }
+                        flags = setVmFlags(name, descriptor, genericSignature, flags, info);
+
+                        if ((flags & (BUILTIN | UNSAFE_CAST)) != 0) {
+                            // don't use the bytecode of builtin and unsafe cast methods
+                            codeAttribute = null;
+                        }
+
+                        if (annotationTypeDescriptor.equals(forJavaClass(LOCAL_SUBSTITUTION.class))) {
+                            // process any class-local substitutions
+                            flags |= LOCAL_SUBSTITUTE;
+                            final Utf8Constant substituteeName = SymbolTable.lookupSymbol(toSubstituteeName(name.toString()));
+                            if (substituteeName != null) {
+                                for (int j = nextMethodIndex - 1; j >= 0; --j) {
+                                    final MethodActor substituteeActor = methodActors[j];
+                                    if (substituteeActor.name.equals(substituteeName) && substituteeActor.descriptor().equals(descriptor)) {
+                                        ProgramError.check(isStatic == substituteeActor.isStatic());
+                                        Trace.line(1, "Substituted " + classDescriptor.toJavaString() + "." + substituteeName + descriptor);
+                                        Trace.line(1, "       with " + classDescriptor.toJavaString() + "." + name + descriptor);
+                                        substituteeIndex = j;
+                                        name = substituteeName;
+
+                                        // Copy the access level of the substitutee to the local substitute
+                                        final int accessFlagsMask = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
+                                        flags &= ~accessFlagsMask;
+                                        flags |= substituteeActor.flags() & accessFlagsMask;
+                                        substituteeActor.beUnsafe();
+                                        break;
+                                    }
+                                }
+                            }
+                            ProgramError.check(substituteeIndex != -1, "Could not find substitutee for local substitute method: " + memberString(name, descriptor));
+                        }
+                    }
                 }
 
                 if (isNative(flags)) {
@@ -915,11 +874,7 @@ public final class ClassfileReader {
                         methodActor = new InterfaceMethodActor(name, descriptor, flags);
                     }
                 } else if (isStatic) {
-                    if (trampolineInvocation != null) {
-                        methodActor = new TrampolineMethodActor(name, descriptor, flags, codeAttribute, trampolineInvocation);
-                    } else {
-                        methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute);
-                    }
+                    methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute);
                 } else {
                     methodActor = new VirtualMethodActor(name, descriptor, flags, codeAttribute);
                 }
@@ -947,6 +902,65 @@ public final class ClassfileReader {
             return Arrays.copyOf(methodActors, nextMethodIndex);
         }
         return methodActors;
+    }
+
+    protected int setVmFlags(Utf8Constant name, SignatureDescriptor descriptor, Utf8Constant genericSignature, int flags, AnnotationInfo info) {
+        final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
+        if (annotationTypeDescriptor.equals(forJavaClass(C_FUNCTION.class))) {
+            ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
+            flags |= C_FUNCTION;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {
+            flags |= NO_SAFEPOINTS;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
+            flags |= BUILTIN | UNSAFE;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(WRAPPER.class))) {
+            flags |= WRAPPER;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
+            flags |= TEMPLATE | UNSAFE;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {
+            flags |= INLINE;
+            for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
+                if (nameElementPair.name().equals("afterSnippetsAreCompiled")) {
+                    final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
+                    if (valueElement.value().toBoolean()) {
+                        flags |= INLINE_AFTER_SNIPPETS_ARE_COMPILED;
+                    }
+                }
+            }
+        } else if (annotationTypeDescriptor.equals(forJavaClass(NEVER_INLINE.class))) {
+            flags |= NEVER_INLINE;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(TRAMPOLINE.class))) {
+            for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
+                if (nameElementPair.name().equals("invocation")) {
+                    final AnnotationInfo.EnumElement enumElement = (AnnotationInfo.EnumElement) nameElementPair.element();
+                    TRAMPOLINE.Invocation invocation = Enum.valueOf(TRAMPOLINE.Invocation.class, enumElement.enumConstantName());
+                    flags |= invocation.flag;
+                } else {
+                    ProgramError.unexpected("unknown element on TRAMPOLINE annotation");
+                }
+            }
+        } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
+            boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
+            ProgramError.check(genericSignature == null, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a generic method: " + memberString(name, descriptor));
+            ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method: " + memberString(name, descriptor));
+            ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
+                " to a method with exactly one parameter: " + memberString(name, descriptor));
+            flags |= UNSAFE_CAST;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {
+            boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
+            ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);
+            ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method: " + memberString(name, descriptor));
+            ProgramError.check(!isNative(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to native method: " + memberString(name, descriptor));
+            ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method: " + memberString(name, descriptor));
+            flags |= JNI_FUNCTION;
+            flags |= C_FUNCTION;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
+            flags |= FOLD;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE.class))) {
+            flags |= UNSAFE;
+        }
+
+        return flags;
     }
 
     protected void readInnerClassesAttribute() {
@@ -1145,9 +1159,9 @@ public final class ClassfileReader {
                 final int sourceFileNameIndex = classfileStream.readUnsigned2();
                 sourceFileName = constantPool.utf8At(sourceFileNameIndex, "source file name").toString();
             } else if (attributeName.equals("Deprecated")) {
-                classFlags += Actor.DEPRECATED;
+                classFlags |= Actor.DEPRECATED;
             } else if (attributeName.equals("Synthetic")) {
-                classFlags += Actor.ACC_SYNTHETIC;
+                classFlags |= Actor.ACC_SYNTHETIC;
             } else if (attributeName.equals("InnerClasses")) {
                 readInnerClassesAttribute();
             } else if (majorVersion >= JAVA_1_5_VERSION) {

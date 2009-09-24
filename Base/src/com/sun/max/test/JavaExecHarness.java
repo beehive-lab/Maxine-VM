@@ -534,7 +534,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             }
             final Object val = run.input[i];
             if (val instanceof Character) {
-                buffer.append(Chars.toJavaLiteral(((Character) val).charValue()));
+                buffer.append(Chars.toJavaLiteral((Character) val));
             } else if (val instanceof String) {
                 buffer.append(asJavaString ? ESCAPED_QUOTE : QUOTE);
                 buffer.append(val);
@@ -555,7 +555,10 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             return "!" + throwable.getName();
         }
         if (val instanceof Character) {
-            return Chars.toJavaLiteral(((Character) val).charValue());
+            return Chars.toJavaLiteral((Character) val);
+        }
+        if (val instanceof String) {
+            return "\"" + val + "\"";
         }
         return String.valueOf(val);
     }

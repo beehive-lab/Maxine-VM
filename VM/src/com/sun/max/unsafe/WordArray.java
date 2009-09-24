@@ -77,7 +77,7 @@ public final class WordArray {
         return array[index];
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @INLINE
     private static Word uncheckedGet_(Word[] array, int index) {
         return ArrayAccess.getWord(array, index);
@@ -91,7 +91,7 @@ public final class WordArray {
         return array[index];
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @INLINE
     private static Word get_(Word[] array, int index) {
         ArrayAccess.checkIndex(array, index);
@@ -103,7 +103,7 @@ public final class WordArray {
         array[index] = value;
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @INLINE
     private static <Word_Type extends Word> void uncheckedSet_(Word_Type[] array, int index, Word_Type value) {
         ArrayAccess.setWord(array, index, value);
@@ -114,7 +114,7 @@ public final class WordArray {
         array[index] = value;
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @INLINE
     private static <Word_Type extends Word> void set_(Word_Type[] array, int index, Word_Type value) {
         ArrayAccess.checkIndex(array, index);

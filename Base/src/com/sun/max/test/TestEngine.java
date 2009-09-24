@@ -142,9 +142,8 @@ public class TestEngine {
     }
 
     private void parseTests(File file, Registry<TestHarness> reg, boolean sort) {
-        // TODO: instead of generating program errors, generate test errors
         if (!file.exists()) {
-            ProgramError.unexpected("file " + file + " not found.");
+            throw new Error("file " + file + " not found.");
         }
         if (file.isDirectory()) {
             for (File dirFile : getFilesFromDirectory(file, sort)) {

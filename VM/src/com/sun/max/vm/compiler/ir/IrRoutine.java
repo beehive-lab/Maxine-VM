@@ -55,7 +55,7 @@ public abstract class IrRoutine {
                 return MethodActor.fromJava(method);
             }
             if (method.getName().equals(methodName) && method.isAnnotationPresent(SNIPPET.class)) {
-                assert !method.isAnnotationPresent(SURROGATE.class);
+                assert !method.isAnnotationPresent(LOCAL_SUBSTITUTION.class);
                 return MethodActor.fromJava(method);
             }
         }
