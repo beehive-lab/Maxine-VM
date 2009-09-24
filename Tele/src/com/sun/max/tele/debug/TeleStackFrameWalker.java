@@ -116,14 +116,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
-        final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM, instructionPointer);
-        if (teleRuntimeStub != null) {
-            return teleRuntimeStub.runtimeStub();
-        }
-        return null;
-    }
-    @Override
     public byte readByte(Address address, int offset) {
         return teleVM.dataAccess().readByte(address, offset);
     }

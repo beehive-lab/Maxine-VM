@@ -23,7 +23,6 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -102,19 +101,6 @@ public final class Code {
     }
 
     /**
-     * Allocates space in this code region for a runtime stub.
-     *
-     * @see CodeManager#allocateRuntimeStub(RuntimeStub)
-     * @param stub an object describing the size of the runtime stub (i.e. the size in bytes to allocate). If
-     *            allocation is successful, the address of the memory chunk allocated (i.e. the address of the first
-     *            element of the internally allocated byte array) will be accessible through the
-     *            {@link MemoryRegion#start()} method of this object.
-     */
-    public static void allocateRuntimeStub(RuntimeStub stub) {
-        codeManager.allocateRuntimeStub(stub);
-    }
-
-    /**
      * Determines whether any code region contains the specified address.
      *
      * @param address the address to check
@@ -136,19 +122,6 @@ public final class Code {
     public static TargetMethod codePointerToTargetMethod(Address codePointer) {
         return codeManager.codePointerToTargetMethod(codePointer);
     }
-
-    /**
-     * Looks up the runtime stub that contains the specified code pointer.
-     *
-     * @param codePointer a pointer to code
-     * @return a reference to the runtime stub that contains the specified code pointer, if one exists; {@code null}
-     *         otherwise
-     */
-    @INSPECTED
-    public static RuntimeStub codePointerToRuntimeStub(Address codePointer) {
-        return codeManager.codePointerToRuntimeStub(codePointer);
-    }
-
 
     /**
      * Performs code update, updating the old target method to the new target method. This typically
