@@ -841,7 +841,6 @@ public abstract class LIRAssembler {
     protected abstract void emitProfileCall(LIRProfileCall lirProfileCall);
 
     protected abstract void emitXir(LIRXirInstruction lirXirInstruction);
-   // public abstract void emitExceptionHandler();
 
     public void emitDeoptHandler() {
         Util.nonFatalUnimplemented();

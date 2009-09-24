@@ -3239,79 +3239,76 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitXir(LIRXirInstruction instruction) {
-
         XirSnippet snippet = instruction.snippet;
         Label[] labels = new Label[snippet.template.labels.length];
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new Label();
         }
 
-        LIROperand[] ops = instruction.getOperands();
-        XirInstruction[] instructions = snippet.template.instructions;
-        for (int i = 0; i < instructions.length; i++) {
+        emitXirInstructions(snippet.template.fastPath, labels, instruction.getOperands());
+    }
 
-            XirInstruction inst = instructions[i];
-
-            switch (inst.operator) {
-
+    private void emitXirInstructions(XirInstruction[] instructions, Label[] labels, LIROperand[] ops) {
+        for (XirInstruction inst : instructions) {
+            switch (inst.op) {
                 case Add:
-                    arithOp(LIROpcode.Add, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    arithOp(LIROpcode.Add, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Sub:
-                    arithOp(LIROpcode.Sub, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    arithOp(LIROpcode.Sub, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Div:
-                    arithOp(LIROpcode.Div, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    arithOp(LIROpcode.Div, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Mul:
-                    arithOp(LIROpcode.Mul, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    arithOp(LIROpcode.Mul, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Mod:
-                    arithOp(LIROpcode.Rem, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    arithOp(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Shl:
-                    shiftOp(LIROpcode.Shl, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    shiftOp(LIROpcode.Shl, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case Shr:
-                    shiftOp(LIROpcode.Shr, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index], null);
+                    shiftOp(LIROpcode.Shr, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
                 case And:
-                    logicOp(LIROpcode.LogicAnd, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    logicOp(LIROpcode.LogicAnd, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index]);
                     break;
 
                 case Or:
-                    logicOp(LIROpcode.LogicOr, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    logicOp(LIROpcode.LogicOr, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index]);
                     break;
 
                 case Xor:
-                    logicOp(LIROpcode.LogicXor, ops[inst.a.index], ops[inst.b.index], ops[inst.result.index]);
+                    logicOp(LIROpcode.LogicXor, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index]);
                     break;
 
                 case PointerLoad: {
                     LIROperand result = ops[inst.result.index];
-                    LIROperand pointer = ops[inst.a.index];
+                    LIROperand pointer = ops[inst.x().index];
                     moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, null, false);
                     break;
                 }
 
                 case PointerStore: {
-                    LIROperand value = ops[inst.b.index];
-                    LIROperand pointer = ops[inst.a.index];
+                    LIROperand value = ops[inst.y().index];
+                    LIROperand pointer = ops[inst.x().index];
                     moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, null, false);
                     break;
                 }
 
                 case PointerLoadDisp: {
                     LIROperand result = ops[inst.result.index];
-                    LIROperand pointer = ops[inst.a.index];
-                    LIROperand displacement = ops[inst.b.index];
+                    LIROperand pointer = ops[inst.x().index];
+                    LIROperand displacement = ops[inst.y().index];
 
                     assert pointer.isRegister();
 
@@ -3328,13 +3325,13 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case PointerStoreDisp: {
-                    LIROperand value = ops[inst.c.index];
-                    LIROperand pointer = ops[inst.a.index];
-                    LIROperand displacement = ops[inst.b.index];
+                    LIROperand value = ops[inst.z().index];
+                    LIROperand pointer = ops[inst.x().index];
+                    LIROperand displacement = ops[inst.y().index];
 
                     assert pointer.isRegister();
 
-                    LIROperand dst = null;
+                    LIROperand dst;
                     if (displacement.isConstant() && displacement.kind == CiKind.Int) {
                         LIRConstant constantDisplacement = (LIRConstant) displacement;
                         dst = new LIRAddress((LIRLocation) pointer, constantDisplacement.asInt(), inst.kind);
@@ -3352,6 +3349,12 @@ public class X86LIRAssembler extends LIRAssembler {
                 case CallJava:
                     break;
 
+                case CallStub:
+                    break;
+
+                case CallRuntime:
+                    break;
+
                 case Jmp:
                     break;
 
@@ -3367,6 +3370,9 @@ public class X86LIRAssembler extends LIRAssembler {
                 case Jgteq:
                     break;
 
+                case Jugteq:
+                    break;
+
                 case Jlt:
                     break;
 
@@ -3374,10 +3380,12 @@ public class X86LIRAssembler extends LIRAssembler {
                     break;
 
                 case Bind:
+                    XirLabel l = (XirLabel) inst.extra;
+                    Label label = labels[l.index];
+                    asm.bind(label);
                     break;
 
             }
         }
-
     }
 }

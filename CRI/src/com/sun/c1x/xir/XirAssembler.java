@@ -57,6 +57,7 @@ public class XirAssembler {
     }
 
     public abstract class XirVariable {
+        private boolean written;
         public final CiKind kind;
         public final int index;
 
@@ -95,6 +96,15 @@ public class XirAssembler {
         }
     }
 
+    public class XirRegister extends XirVariable {
+        public final CiRegister register;
+
+        XirRegister(CiKind kind, CiRegister register, int index) {
+            super(kind, index);
+            this.register = register;
+        }
+    }
+
     public XirAssembler(CiKind kind) {
         nullOperand = createParameter(CiKind.Illegal, true);
         resultOperand = createParameter(kind, false);
@@ -116,44 +126,40 @@ public class XirAssembler {
 
     public class XirInstruction {
         public final CiKind kind;
-        public final OperatorKind operator;
+        public final XirOp op;
         public final XirVariable result;
-        public final XirVariable a;
-        public final XirVariable b;
-        public final XirVariable c;
-        public final XirLabel destination;
+        public final XirVariable[] arguments;
+        public final Object extra;
 
-        public XirInstruction(CiKind kind, OperatorKind operator, XirVariable result, XirVariable... arguments) {
-            this(kind, operator, null, result, arguments);
+        public XirInstruction(CiKind kind, XirOp op, XirVariable result, XirVariable... arguments) {
+            this(kind, null, op, result, arguments);
         }
 
-        public XirInstruction(CiKind kind, OperatorKind operator, XirLabel destination, XirVariable result, XirVariable... arguments) {
-            this.destination = destination;
+        public XirInstruction(CiKind kind, Object extra, XirOp op, XirVariable result, XirVariable... arguments) {
+            this.extra = extra;
             this.kind = kind;
-            this.operator = operator;
+            this.op = op;
             this.result = result;
+            this.arguments = arguments;
+        }
 
-            if (arguments.length > 0) {
-                a = arguments[0];
-            } else {
-                a = null;
-            }
+        public XirVariable x() {
+            assert arguments.length > 0 : "no x operand for this instruction";
+            return arguments[0];
+        }
 
-            if (arguments.length > 1) {
-                b = arguments[1];
-            } else {
-                b = null;
-            }
+        public XirVariable y() {
+            assert arguments.length > 1 : "no y operand for this instruction";
+            return arguments[1];
+        }
 
-            if (arguments.length > 2) {
-                c = arguments[2];
-            } else {
-                c = null;
-            }
+        public XirVariable z() {
+            assert arguments.length > 2 : "no z operand for this instruction";
+            return arguments[2];
         }
     }
 
-    public enum OperatorKind {
+    public enum XirOp {
         Mov,
         Add,
         Sub,
@@ -202,137 +208,133 @@ public class XirAssembler {
     }
 
     public void mov(XirVariable result, XirVariable a) {
-        append(new XirInstruction(result.kind, OperatorKind.Mov, result, a));
+        append(new XirInstruction(result.kind, XirOp.Mov, result, a));
     }
 
     public void add(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Add, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Add, result, a, b));
     }
 
     public void sub(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Sub, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Sub, result, a, b));
     }
 
     public void div(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Div, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Div, result, a, b));
     }
 
     public void mul(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Mul, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Mul, result, a, b));
     }
 
     public void mod(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Mod, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Mod, result, a, b));
     }
 
     public void shl(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Shl, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Shl, result, a, b));
     }
 
     public void shr(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Shr, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Shr, result, a, b));
     }
 
     public void and(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.And, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.And, result, a, b));
     }
 
     public void or(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Or, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Or, result, a, b));
     }
 
     public void xor(XirVariable result, XirVariable a, XirVariable b) {
-        append(new XirInstruction(result.kind, OperatorKind.Xor, result, a, b));
+        append(new XirInstruction(result.kind, XirOp.Xor, result, a, b));
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer) {
-        append(new XirInstruction(kind, OperatorKind.PointerLoad, result, pointer));
+        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer));
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable value) {
-        append(new XirInstruction(kind, OperatorKind.PointerStore, nullOperand, pointer, value));
+        append(new XirInstruction(kind, XirOp.PointerStore, nullOperand, pointer, value));
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp) {
-        append(new XirInstruction(kind, OperatorKind.PointerLoadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value) {
-        append(new XirInstruction(kind, OperatorKind.PointerStoreDisp, nullOperand, pointer, disp, value));
+        append(new XirInstruction(kind, XirOp.PointerStoreDisp, nullOperand, pointer, disp, value));
     }
 
     public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
-        append(new XirInstruction(kind, OperatorKind.PointerLoad, result, pointer, value, expectedValue));
+        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
     }
 
     public void jmp(XirLabel l) {
-        append(new XirInstruction(CiKind.Void, OperatorKind.Jmp, l, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Jmp, nullOperand));
     }
 
     public void jeq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jeq, l, a, b);
+        jcc(XirOp.Jeq, l, a, b);
     }
 
-    private void jcc(OperatorKind op, XirLabel l, XirVariable a, XirVariable b) {
-        append(new XirInstruction(CiKind.Void, op, l, nullOperand, a, b));
+    private void jcc(XirOp op, XirLabel l, XirVariable a, XirVariable b) {
+        append(new XirInstruction(CiKind.Void, l, op, nullOperand, a, b));
     }
 
     public void jneq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jneq, l, a, b);
+        jcc(XirOp.Jneq, l, a, b);
     }
 
     public void jgt(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jgt, l, a, b);
+        jcc(XirOp.Jgt, l, a, b);
     }
 
     public void jgteq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jgteq, l, a, b);
+        jcc(XirOp.Jgteq, l, a, b);
     }
 
     public void jugteq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jgteq, l, a, b);
+        jcc(XirOp.Jgteq, l, a, b);
     }
 
     public void jlt(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jlt, l, a, b);
+        jcc(XirOp.Jlt, l, a, b);
     }
 
     public void jlteq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(OperatorKind.Jlteq, l, a, b);
+        jcc(XirOp.Jlteq, l, a, b);
     }
 
     public void bindInline(XirLabel l) {
         assert l.inline;
-        append(new XirInstruction(CiKind.Void, OperatorKind.Bind, l, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, nullOperand));
     }
 
     public void bindOutOfLine(XirLabel l) {
         assert !l.inline;
-        append(new XirInstruction(CiKind.Void, OperatorKind.Bind, l, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, nullOperand));
     }
 
     public void callJava(XirVariable result, XirVariable destination) {
-        append(new XirInstruction(result.kind, OperatorKind.CallJava, nullOperand, destination));
+        append(new XirInstruction(result.kind, XirOp.CallJava, nullOperand, destination));
     }
 
     public void callStub(XirTemplate stub, XirVariable result, XirVariable... args) {
-        if (args.length < 2) {
-            // TODO: create instructions to store parameters
-        } else {
-            // TODO: create instructions to store parameters
-        }
+        append(new XirInstruction(result.kind, stub, XirOp.CallStub, result, args));
     }
 
     public void callRuntime(Object rt, XirVariable result, XirVariable... args) {
-        // TODO: create instructions to store parameters for runtime
+        append(new XirInstruction(result.kind, rt, XirOp.CallRuntime, result, args));
     }
 
     public void end() {
-        append(new XirInstruction(CiKind.Void, OperatorKind.Ret, nullOperand));
+        append(new XirInstruction(CiKind.Void, XirOp.Ret, nullOperand));
     }
 
     public void ret(CiKind kind, XirVariable result) {
-        append(new XirInstruction(kind, OperatorKind.Ret, result));
+        append(new XirInstruction(kind, XirOp.Ret, result));
     }
 
     public XirParameter createInputParameter(CiKind kind) {
@@ -360,7 +362,7 @@ public class XirAssembler {
     }
 
     public XirVariable createRegister(CiKind kind, CiRegister register) {
-        return null;
+        return new XirRegister(kind, register, temps.size());
     }
 
     public XirCache createCache(CiKind kind, boolean writeMany) {
@@ -390,12 +392,102 @@ public class XirAssembler {
     }
 
     public XirTemplate finishTemplate() {
-        return new XirTemplate(instructions.toArray(new XirInstruction[instructions.size()]), labels.toArray(new XirAssembler.XirLabel[labels.size()]), parameters.toArray(new XirParameter[parameters
-                .size()]));
+        XirInstruction[] xirInstructions = instructions.toArray(new XirInstruction[instructions.size()]);
+        XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
+        XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
+        return new XirTemplate(xirInstructions, xirLabels, xirParameters);
     }
 
     public XirTemplate finishStub() {
-        return new XirTemplate(instructions.toArray(new XirInstruction[instructions.size()]), labels.toArray(new XirAssembler.XirLabel[labels.size()]), parameters.toArray(new XirParameter[parameters
-                .size()]));
+        XirInstruction[] xirInstructions = instructions.toArray(new XirInstruction[instructions.size()]);
+        XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
+        XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
+        return new XirTemplate(xirInstructions, xirLabels, xirParameters);
+    }
+
+    private void preprocess(boolean twoOperandForm) {
+        ArrayList<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
+        ArrayList<XirInstruction> slowPath = new ArrayList<XirInstruction>();
+
+        boolean hasStubCall = false;
+        boolean hasRuntimeCall = false;
+        boolean hasJavaCall = false;
+        boolean hasControlFlow = false;
+
+        ArrayList<XirInstruction> currentList = fastPath;
+
+        for (XirInstruction i : instructions) {
+            boolean appended = false;
+            switch (i.op) {
+                case Mov:
+                    break;
+                case Add:
+                case Sub:
+                case Div:
+                case Mul:
+                case Mod:
+                case Shl:
+                case Shr:
+                case And:
+                case Or:
+                case Xor:
+                    if (twoOperandForm && i.result != i.x()) {
+                        currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
+                        currentList.add(new XirInstruction(i.result.kind, i.op, i.result, i.result, i.y()));
+                        appended = true;
+                    }
+                    break;
+                case PointerLoad:
+                case PointerStore:
+                case PointerLoadDisp:
+                case PointerStoreDisp:
+                case PointerCAS:
+                    break;
+                case CallStub:
+                    hasStubCall = true;
+                    break;
+                case CallRuntime:
+                    hasJavaCall = true;
+                    break;
+                case CallJava:
+                    hasJavaCall = true;
+                    break;
+                case Jmp:
+                    hasControlFlow = true;
+                    break;
+                case Jeq:
+                    hasControlFlow = true;
+                    break;
+                case Jneq:
+                    hasControlFlow = true;
+                    break;
+                case Jgt:
+                    hasControlFlow = true;
+                    break;
+                case Jgteq:
+                    hasControlFlow = true;
+                    break;
+                case Jugteq:
+                    hasControlFlow = true;
+                    break;
+                case Jlt:
+                    hasControlFlow = true;
+                    break;
+                case Jlteq:
+                    hasControlFlow = true;
+                    break;
+                case Bind:
+                    XirLabel label = (XirLabel) i.extra;
+                    currentList = label.inline ? fastPath : slowPath;
+                    break;
+                case Ret:
+            }
+            if (i.result != null) {
+                i.result.written = true;
+            }
+            if (!appended) {
+                currentList.add(i);
+            }
+        }
     }
 }

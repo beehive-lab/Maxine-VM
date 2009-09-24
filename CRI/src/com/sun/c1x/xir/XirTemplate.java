@@ -22,6 +22,7 @@ package com.sun.c1x.xir;
 
 import com.sun.c1x.xir.XirAssembler.XirLabel;
 import com.sun.c1x.xir.XirAssembler.XirParameter;
+import com.sun.c1x.ci.CiRegister;
 
 /**
  * This class represents a completed template of XIR code that has been first assembled by
@@ -29,13 +30,16 @@ import com.sun.c1x.xir.XirAssembler.XirParameter;
  */
 public class XirTemplate {
 
-    public final XirAssembler.XirInstruction[] instructions;
+    public final XirAssembler.XirInstruction[] fastPath;
+    public final XirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
-
+    public XirAssembler.XirTemp[] temps;
+    public int[] tempFlags;
 
     XirTemplate(XirAssembler.XirInstruction[] instructions, XirLabel[] labels, XirParameter[] parameters) {
-        this.instructions = instructions;
+        this.fastPath = instructions;
+        this.slowPath = null;
         this.labels = labels;
         this.parameters = parameters;
     }
@@ -43,4 +47,37 @@ public class XirTemplate {
     public int getResultParameterIndex() {
         return 1;
     }
+
+    public boolean destroysTemp(int index) {
+        return (tempFlags[index] & DESTROY) != 0;
+    }
+
+    public boolean inputTemp(int index) {
+        return (tempFlags[index] & INPUT) != 0;
+    }
+
+    public boolean outputTemp(int index) {
+        return (tempFlags[index] & OUTPUT) != 0;
+    }
+
+    public boolean inputOutputTemp(int index) {
+        return inputTemp(index) && outputTemp(index);
+    }
+
+    public boolean fixedTemp(int index) {
+        return (tempFlags[index] & FIXED) != 0;
+    }
+
+    public CiRegister fixedRegister(int index, CiRegister[] registers) {
+        if ((tempFlags[index] & FIXED) != 0) {
+            int regnum = tempFlags[index] & 0xfff;
+            return registers[regnum];
+        }
+        return null;
+    }
+
+    public static int DESTROY = 0x10000000;
+    public static int INPUT   = 0x20000000;
+    public static int OUTPUT  = 0x40000000;
+    public static int FIXED   = 0x80000000;
 }
