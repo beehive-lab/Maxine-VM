@@ -59,24 +59,19 @@ public class SPARCJitCompiler extends JitCompiler {
     private final SPARCTemplateBasedTargetGenerator targetGenerator;
 
     /**
-     * Unwinds a thread's stack to an exception handler in JITed code.  We have to unwind first to a stub that uses as
-     * its frame the frame of the closest JIT -> OPT frame adapter or JIT -> OPT call.  The exit stub then re-establishes
-     * the stack pointer to that of the JITed frame that catches the exception.
+     * Unwinds a thread's stack to an exception handler in JITed code.
      *
-     * We need this two-step unwinding for the following reason: a JIT-frame may not have a register window on its own.
+     * To enable us to find the SPARC register spill area, the last Opt method we walked through recorded the
+     * SPARC stack pointer in the StackUnwindingContext object.
+     *
+     * Note that a JIT-frame may not have a register window on its own.
      * It is shared with all the JIT frames between an opt->jit and a jit->opt adapter (or jit->runtime call).  The
-     * register window keeps moving with the stack pointer.  If we return directly to the JIT frame, the saved register
-     * window for the JIT frame is lost (the stack pointer of the JIT frame doesn't point to where the register window
-     * was saved) and the first attempt to restore the window will load arbitrary values in the registers (with whatever
-     * is at the top of the stack).  So we have first to return to a frame with a stack pointer that points to a register
-     * window, then set the stack pointer to where the actual top of the stack is for the JIT frame where the exception
-     * is caught.
+     * register window keeps moving with the stack pointer.
      *
      * <p>
      * The critical state of the registers before the RET instruction is:
      * <ul>
-     * <li>%i0 must hold the address of the register window to be restored</li>
-     * <li>%i7 must hold the unwind stub address.</li>
+     * <li>%i7 must hold exception handler address, taking into account the SPARC link register convention.</li>
      * <li>%i6 must hold the stack pointer of the handler</li>
      * </ul>
      *
@@ -120,8 +115,8 @@ public class SPARCJitCompiler extends JitCompiler {
 
         SpecialBuiltin.flushRegisterWindows();
 
-        VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));
-        VMRegister.setAbiFramePointer(catcherStackPointer);
+        VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));  // sets %i7
+        VMRegister.setAbiFramePointer(catcherStackPointer);  // sets %i6
     }
 
     public SPARCJitCompiler(VMConfiguration vmConfiguration) {
