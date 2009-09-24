@@ -38,7 +38,7 @@ import com.sun.c1x.util.*;
 
 /**
  * This class implements the X86-specific portion of the LIR generator.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public final class X86LIRGenerator extends LIRGenerator {
@@ -789,63 +789,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             default:
                 Util.shouldNotReachHere();
         }
-    }
-
-    @Override
-    protected void visitArrayCopy(Intrinsic x) {
-
-        assert x.numberOfArguments() == 5 : "wrong type";
-        LIRItem src = new LIRItem(x.argumentAt(0), this);
-        LIRItem srcPos = new LIRItem(x.argumentAt(1), this);
-        LIRItem dst = new LIRItem(x.argumentAt(2), this);
-        LIRItem dstPos = new LIRItem(x.argumentAt(3), this);
-        LIRItem length = new LIRItem(x.argumentAt(4), this);
-
-        // operands for arraycopy must use fixed registers, otherwise
-        // LinearScan will fail allocation (because arraycopy always needs a
-        // call)
-
-        LIROperand tmp = null;
-        if (compilation.target.arch.is64bit()) {
-            src.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, X86.rcx));
-            srcPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rdx));
-            dst.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, X86.rax));
-            dstPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
-            length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rdi));
-            tmp = (LIROperandFactory.singleLocation(CiKind.Int, X86.rsi));
-        } else {
-
-            // The java calling convention will give us enough registers
-            // so that on the stub side the args will be perfect already.
-            // On the other slow/special case side we call C and the arg
-            // positions are not similar enough to pick one as the best.
-            // Also because the java calling convention is a "shifted" version
-            // of the C convention we can process the java args trivially into C
-            // args without worry of overwriting during the xfer
-
-
-            CiLocation[] locations = compilation.runtime.javaCallingConvention(new CiKind[]{CiKind.Object, CiKind.Int, CiKind.Object, CiKind.Int, CiKind.Int, CiKind.Int}, true);
-            assert locations[0].isSingleRegister() && locations[1].isSingleRegister();
-            assert locations[2].isSingleRegister() && locations[3].isSingleRegister();
-            assert locations[4].isSingleRegister() && locations[5].isSingleRegister();
-            src.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, locations[0].first));
-            srcPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[1].first));
-            dst.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, locations[2].first));
-            dstPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[3].first));
-            length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[4].first));
-
-            tmp = LIROperandFactory.singleLocation(CiKind.Int, locations[5].first);
-        }
-
-        setNoResult(x);
-
-        int[] flags = new int[1];
-        RiType[] expectedType = new RiType[1];
-        arraycopyHelper(x, flags, expectedType);
-
-        CodeEmitInfo info = stateFor(x, x.stateBefore()); // we may want to have stack (deoptimization?)
-        lir().arraycopy(src.result(), srcPos.result(), dst.result(), dstPos.result(), length.result(), tmp, expectedType[0], flags[0], info); // does
-        // addSafepoint
     }
 
     @Override

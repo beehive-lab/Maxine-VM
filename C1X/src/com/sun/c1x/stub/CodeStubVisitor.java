@@ -26,8 +26,6 @@ package com.sun.c1x.stub;
  */
 public interface CodeStubVisitor {
 
-    void visitArrayCopyStub(ArrayCopyStub arrayCopyStub);
-
     void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
 
     void visitDivByZeroStub(DivByZeroStub divByZeroStub);

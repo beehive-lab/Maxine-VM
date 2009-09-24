@@ -99,7 +99,6 @@ public enum LIROpcode {
     , BeginOpJavaCall
         , StaticCall
         , OptVirtualCall
-        , IcVirtualCall
         , InterfaceCall
         , VirtualCall
     , EndOpJavaCall

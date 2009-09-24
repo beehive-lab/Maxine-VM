@@ -447,7 +447,7 @@ public class XirAssembler {
                     hasStubCall = true;
                     break;
                 case CallRuntime:
-                    hasJavaCall = true;
+                    hasRuntimeCall = true;
                     break;
                 case CallJava:
                     hasJavaCall = true;

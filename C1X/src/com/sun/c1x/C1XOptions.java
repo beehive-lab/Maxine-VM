@@ -197,7 +197,6 @@ public class C1XOptions {
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
     public static boolean GenerateAssertionCode              = ____;
-    public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
 

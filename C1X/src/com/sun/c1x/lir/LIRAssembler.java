@@ -420,41 +420,29 @@ public abstract class LIRAssembler {
             //alignCall(op.code());
         }
 
-        // emit the static call stub stuff out of line
-        if (C1XOptions.EmitStaticCallStubs) {
-            emitStaticCallStub();
-        }
-
         switch (op.code) {
             case StaticCall:
-                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
+                directCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case OptVirtualCall:
-                call(op.method(), op.addr, op.info, op.cpi, op.constantPool);
-                break;
-            case IcVirtualCall:
-                icCall(op.method(), op.addr, op.info);
+                directCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case InterfaceCall:
                 interfaceCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             case VirtualCall:
-                vtableCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
+                virtualCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
     }
 
-    protected abstract void call(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
-
-    protected abstract void emitStaticCallStub();
+    protected abstract void directCall(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void interfaceCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void vtableCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
-
-    protected abstract void icCall(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info);
+    protected abstract void virtualCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void alignCall(LIROpcode code);
 
@@ -753,10 +741,10 @@ public abstract class LIRAssembler {
 
             if (dest.isStack()) {
 
-                assert info == null && unaligned == false;
+                assert info == null && !unaligned;
                 mem2stack(src, dest, type);
             } else if (dest.isAddress()) {
-                assert info == null && unaligned == false;
+                assert info == null && !unaligned;
                 mem2mem(src, dest, type);
             } else {
                 mem2reg(src, dest, type, info, unaligned);
@@ -790,29 +778,6 @@ public abstract class LIRAssembler {
     public void verifyOopMap(CodeEmitInfo info) {
         if (C1XOptions.VerifyOopMaps || C1XOptions.VerifyOops) {
             // TODO: verify oops
-// boolean v = C1XOptions.VerifyOops;
-// C1XOptions.VerifyOops = true;
-// OopMapStream s = new OopMapStream(info.oopMap());
-// while (!s.isDone()) {
-// OopMapValue v = s.current();
-// if (v.isOop()) {
-// VMReg r = v.reg();
-// if (!r.isStack()) {
-// stringStream st;
-// st.print("bad oop %s at %d", r.asRegister().name(), masm.offset());
-// if (compilation.target.arch.isSPARC()) {
-// masm.verifyOop(r.asRegister(), strdup(st.asString()), FILE_, LINE_);
-// } else {
-//
-// masm.verifyOop(r.asRegister());
-// }
-// } else {
-// masm.verifyStackOop(r.reg2stack() * VMRegImpl.stackSlotSize);
-// }
-// }
-// s.next();
-// }
-// C1XOptions.VerifyOops = v;
         }
     }
 
@@ -829,8 +794,6 @@ public abstract class LIRAssembler {
     protected abstract void emitAllocArray(LIRAllocArray lirAllocArray);
 
     protected abstract void emitRTCall(LIRRTCall lirrtCall);
-
-    protected abstract void emitArrayCopy(LIRArrayCopy lirArrayCopy);
 
     protected abstract void emitLock(LIRLock lirLock);
 

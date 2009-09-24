@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.asm.Address.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
@@ -85,14 +84,6 @@ public class X86LIRAssembler extends LIRAssembler {
         if (addr.base().isIllegal()) {
             assert addr.index().isIllegal() : "must be illegal too";
             assert false : "(tw) should not occur?";
-//            AddressLiteral laddr = new AddressLiteral(addr.displacement(), RelocInfo.Type.none);
-//            if (!masm().reachable(laddr)) {
-//                masm().movptr(tmp, laddr.addr());
-//                Address res = new Address(tmp, 0);
-//                return res;
-//            } else {
-//                return masm().asAddress(laddr);
-//            }
         }
 
         CiRegister base = addr.base().asPointerRegister(compilation.target.arch);
@@ -2414,9 +2405,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 case OptVirtualCall:
                     offset += compilation.target.arch.machineCodeCallDisplacementOffset;
                     break;
-                case IcVirtualCall:
-                    offset += compilation.target.arch.machineCodeCallDisplacementOffset + compilation.target.arch.machineCodeMoveConstInstructionSize;
-                    break;
                 case VirtualCall:
                     break;
                 default:
@@ -2429,7 +2417,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void call(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    protected void directCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         if (method.isLoaded()) {
             masm.call(method, info.oopMap.stackMap());
         } else {
@@ -2440,16 +2428,11 @@ public class X86LIRAssembler extends LIRAssembler {
         addCallInfoHere(info);
     }
 
-    @Override
-    protected void icCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info) {
-        throw Util.unimplemented();
-    }
-
     /**
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void vtableCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    protected void virtualCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
 
         Address callAddress;
         if (method.vtableIndex() >= 0) {
@@ -2507,16 +2490,10 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitStaticCallStub() {
-        // TODO: Check with what to replace this!
-    }
-
-    @Override
     protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
 
-
-        // exception object is not added to oop map by LinearScan
-        // (LinearScan assumes that no oops are in fixed registers)
+       // exception object is not added to oop map by LinearScan
+       // (LinearScan assumes that no oops are in fixed registers)
        // info.addRegisterOop(exceptionOop);
         CiRuntimeCall unwindId;
 
@@ -2659,180 +2636,6 @@ public class X86LIRAssembler extends LIRAssembler {
         } else {
             throw Util.shouldNotReachHere();
         }
-    }
-
-    @Override
-    protected void emitArrayCopy(LIRArrayCopy op) {
-        RiType defaultType = op.expectedType();
-        CiRegister src = op.src().asRegister();
-        CiRegister dst = op.dst().asRegister();
-        CiRegister srcPos = op.srcPos().asRegister();
-        CiRegister dstPos = op.dstPos().asRegister();
-        CiRegister length = op.length().asRegister();
-        CiRegister tmp = op.tmp().asRegister();
-
-        // TODO: Check if this is correct!
-        final CiLocation[] locations = compilation.runtime.runtimeCallingConvention(new CiKind[]{CiKind.Object, CiKind.Object, CiKind.Int});
-        assert locations[0].isSingleRegister() && locations[1].isSingleRegister() && locations[2].isSingleRegister();
-        CiRegister cRarg0 = locations[0].first;
-        CiRegister cRarg1 = locations[1].first;
-        CiRegister cRarg2 = locations[2].first;
-
-        CodeStub stub = op.stub;
-        int flags = op.flags();
-        CiKind basicType = defaultType != null ? defaultType.componentType().basicType() : CiKind.Illegal;
-
-        // if we don't know anything or it's an object array, just go through the generic arraycopy
-        if (defaultType == null) {
-            Util.unimplemented();
-
-            masm().cmpl(X86.rax, 0);
-            masm().jcc(X86Assembler.Condition.equal, stub.continuation);
-
-            // Reload values from the stack so they are where the stub
-            // expects them.
-            masm().movptr(dst, new Address(X86.rsp, 0 * wordSize));
-            masm().movptr(dstPos, new Address(X86.rsp, 1 * wordSize));
-            masm().movptr(length, new Address(X86.rsp, 2 * wordSize));
-            masm().movptr(srcPos, new Address(X86.rsp, 3 * wordSize));
-            masm().movptr(src, new Address(X86.rsp, 4 * wordSize));
-            masm().jmp(stub.entry);
-
-            masm().bind(stub.continuation);
-            return;
-        }
-
-        assert defaultType.isArrayKlass() && defaultType.isLoaded() : "must be true at this point";
-
-        int elemSize = basicType.elementSizeInBytes(referenceSize, wordSize);
-        int shiftAmount;
-        Address.ScaleFactor scale;
-
-        switch (elemSize) {
-            case 1:
-                shiftAmount = 0;
-                scale = Address.ScaleFactor.times1;
-                break;
-            case 2:
-                shiftAmount = 1;
-                scale = Address.ScaleFactor.times2;
-                break;
-            case 4:
-                shiftAmount = 2;
-                scale = Address.ScaleFactor.times4;
-                break;
-            case 8:
-                shiftAmount = 3;
-                scale = Address.ScaleFactor.times8;
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-
-        Address srcLengthAddr = new Address(src, compilation.runtime.arrayLengthOffsetInBytes());
-        Address dstLengthAddr = new Address(dst, compilation.runtime.arrayLengthOffsetInBytes());
-        Address srcKlassAddr = new Address(src, compilation.runtime.hubOffset());
-        Address dstKlassAddr = new Address(dst, compilation.runtime.hubOffset());
-
-        // length and pos's are all sign extended at this point on 64bit
-
-        // test for null
-        if ((flags & LIRArrayCopy.Flags.SrcNullCheck.mask()) != 0) {
-            masm().testptr(src, src);
-            masm().jcc(X86Assembler.Condition.zero, stub.entry);
-        }
-        if ((flags & LIRArrayCopy.Flags.DstNullCheck.mask()) != 0) {
-            masm().testptr(dst, dst);
-            masm().jcc(X86Assembler.Condition.zero, stub.entry);
-        }
-
-        // check if negative
-        if ((flags & LIRArrayCopy.Flags.SrcPosPositiveCheck.mask()) != 0) {
-            masm().testl(srcPos, srcPos);
-            masm().jcc(X86Assembler.Condition.less, stub.entry);
-        }
-        if ((flags & LIRArrayCopy.Flags.DstPosPositiveCheck.mask()) != 0) {
-            masm().testl(dstPos, dstPos);
-            masm().jcc(X86Assembler.Condition.less, stub.entry);
-        }
-        if ((flags & LIRArrayCopy.Flags.LengthPositiveCheck.mask()) != 0) {
-            masm().testl(length, length);
-            masm().jcc(X86Assembler.Condition.less, stub.entry);
-        }
-
-        if ((flags & LIRArrayCopy.Flags.SrcRangeCheck.mask()) != 0) {
-            masm().lea(tmp, new Address(srcPos, length, ScaleFactor.times1, 0));
-            masm().cmpl(tmp, srcLengthAddr);
-            masm().jcc(X86Assembler.Condition.above, stub.entry);
-        }
-        if ((flags & LIRArrayCopy.Flags.DstRangeCheck.mask()) != 0) {
-            masm().lea(tmp, new Address(dstPos, length, ScaleFactor.times1, 0));
-            masm().cmpl(tmp, dstLengthAddr);
-            masm().jcc(X86Assembler.Condition.above, stub.entry);
-        }
-
-        if ((flags & LIRArrayCopy.Flags.TypeCheck.mask()) != 0) {
-            masm().movptr(tmp, srcKlassAddr);
-            masm().cmpptr(tmp, dstKlassAddr);
-            masm().jcc(X86Assembler.Condition.notEqual, stub.entry);
-        }
-
-        if (C1XOptions.GenerateAssertionCode) {
-            if (basicType != CiKind.Object || (flags & LIRArrayCopy.Flags.TypeCheck.mask()) == 0) {
-                // Sanity check the known type with the incoming class. For the
-                // primitive case the types must match exactly with src.klass and
-                // dst.klass each exactly matching the default type. For the
-                // object array case : if no type check is needed then either the
-                // dst type is exactly the expected type and the src type is a
-                // subtype which we can't check or src is the same array as dst
-                // but not necessarily exactly of type defaultType.
-                Label knownOk = new Label();
-                Label halt = new Label();
-                masm().movoop(tmp, defaultType.getEncoding(RiType.Representation.ObjectHub));
-                if (basicType != CiKind.Object) {
-                    masm().cmpptr(tmp, dstKlassAddr);
-                    masm().jcc(X86Assembler.Condition.notEqual, halt);
-                    masm().cmpptr(tmp, srcKlassAddr);
-                    masm().jcc(X86Assembler.Condition.equal, knownOk);
-                } else {
-                    masm().cmpptr(tmp, dstKlassAddr);
-                    masm().jcc(X86Assembler.Condition.equal, knownOk);
-                    masm().cmpptr(src, dst);
-                    masm().jcc(X86Assembler.Condition.equal, knownOk);
-                }
-                masm().bind(halt);
-                masm().stop("incorrect type information in arraycopy");
-                masm().bind(knownOk);
-            }
-        }
-
-        if (shiftAmount > 0 && basicType != CiKind.Object) {
-            masm().shlptr(length, shiftAmount);
-        }
-
-        if (compilation.target.arch.is64bit()) {
-            assert CiRegister.assertDifferentRegisters(cRarg0, dst, dstPos, length);
-            masm().lea(cRarg0, new Address(src, srcPos, scale, compilation.runtime.firstArrayElementOffset(basicType)));
-            assert CiRegister.assertDifferentRegisters(cRarg1, length);
-            masm().lea(cRarg1, new Address(dst, dstPos, scale, compilation.runtime.firstArrayElementOffset(basicType)));
-            masm().mov(cRarg2, length);
-
-        } else {
-
-            throw Util.unimplemented();
-//            masm().lea(tmp, new Address(src, srcPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-//            storeParameter(tmp, 0);
-//            masm().lea(tmp, new Address(dst, dstPos, scale, compilation.runtime.arrayBaseOffsetInBytes(basicType)));
-//            storeParameter(tmp, 1);
-//            storeParameter(length, 2);
-        }
-        if (basicType == CiKind.Object) {
-            masm().callRuntime(CiRuntimeCall.OopArrayCopy);
-        } else {
-            masm().callRuntime(CiRuntimeCall.PrimitiveArrayCopy);
-        }
-
-        masm().bind(stub.continuation);
     }
 
     @Override
