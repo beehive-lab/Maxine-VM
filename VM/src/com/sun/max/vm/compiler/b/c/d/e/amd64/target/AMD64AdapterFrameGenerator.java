@@ -252,7 +252,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
             // save the caller's RBP
             final int wordSize =  Word.size();
-            // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
+            // Adapter frame includes space for save the JITed-callee's frame pointer (RBP)
             final short adapterFrameSize = (short) optimizedABI().overflowArgumentsSize(parameterLocations);
             // Allocate space on the stack (adapted parameters + caller's frame pointer)
 
