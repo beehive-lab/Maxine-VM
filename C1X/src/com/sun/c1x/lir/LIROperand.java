@@ -74,11 +74,11 @@ public class LIROperand {
         if (isLocation()) {
             //out.append(valueToString());
         } else if (isSingleStack()) {
-            out.append("stack:" + singleStackIx());
+            out.append("stack:").append(singleStackIx());
         } else if (isDoubleStack()) {
-            out.append("dblStack:" + doubleStackIx());
+            out.append("dblStack:").append(doubleStackIx());
         } else if (isVirtual()) {
-            out.append("R" + vregNumber());
+            out.append("R").append(vregNumber());
         } else if (isSingleCpu()) {
             out.append(asRegister().name);
         } else if (isDoubleCpu()) {
@@ -94,12 +94,11 @@ public class LIROperand {
             out.append("Unknown Operand");
         }
         if (!isIllegal()) {
-            out.append(String.format("|%c", this.kind.basicChar));
+            out.append(String.format("|%c", this.kind.typeChar));
         }
         out.append("]");
         return out.toString();
     }
-
 
     public boolean isStack() {
         return false;

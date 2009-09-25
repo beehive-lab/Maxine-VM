@@ -33,20 +33,20 @@ import com.sun.c1x.util.*;
  */
 public class ComputeLinearScanOrder {
 
-    private int maxBlockId; // the highest blockId of a block
+    private final int maxBlockId; // the highest blockId of a block
     private int numBlocks; // total number of blocks (smaller than maxBlockId)
     private int numLoops; // total number of loops
     private boolean iterativeDominators; // method requires iterative computation of dominators
 
     List<BlockBegin> linearScanOrder; // the resulting list of blocks in correct order
 
-    BitMap visitedBlocks; // used for recursive processing of blocks
-    BitMap activeBlocks; // used for recursive processing of blocks
-    BitMap dominatorBlocks; // temproary BitMap used for computation of dominator
-    int[] forwardBranches; // number of incoming forward branches for each block
-    List<BlockBegin> loopEndBlocks; // list of all loop end blocks collected during countEdges
+    final BitMap visitedBlocks; // used for recursive processing of blocks
+    final BitMap activeBlocks; // used for recursive processing of blocks
+    final BitMap dominatorBlocks; // temproary BitMap used for computation of dominator
+    final int[] forwardBranches; // number of incoming forward branches for each block
+    final List<BlockBegin> loopEndBlocks; // list of all loop end blocks collected during countEdges
     BitMap2D loopMap; // two-dimensional bit set: a bit is set if a block is contained in a loop
-    List<BlockBegin> workList; // temporary list (used in markLoops and computeOrder)
+    final List<BlockBegin> workList; // temporary list (used in markLoops and computeOrder)
 
     // accessors for visitedBlocks and activeBlocks
     void initVisited() {
@@ -118,9 +118,7 @@ public class ComputeLinearScanOrder {
         loopEndBlocks = new ArrayList<BlockBegin>(8);
         workList = new ArrayList<BlockBegin>(8);
 
-        // Util.traceLinearScan(2, " splitting critical edges");
         splitCriticalEdges();
-        // Util.traceLinearScan(2, " computing linear-scan block order");
 
         initVisited();
         countEdges(startBlock, null);
@@ -139,7 +137,7 @@ public class ComputeLinearScanOrder {
     }
 
     void splitCriticalEdges() {
-        // TODO: implement critical edge splitting
+        // TODO: move critical edge splitting from IR to here
     }
 
     // Traverse the CFG:

@@ -67,7 +67,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final C1XCompilation compilation;
-    PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
     private Value currentInstruction;
@@ -115,13 +114,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         this.currentBlock = null;
         blockDoEpilog(block);
-    }
-
-    public Value instructionForOpr(LIROperand opr) {
-        if (opr.isVirtual()) {
-            return instructionForVreg(opr.vregNumber());
-        }
-        return null;
     }
 
     public Value instructionForVreg(int regNum) {
@@ -352,30 +344,27 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_Object$init:
                 visitRegisterFinalizer(x);
                 break;
-            case java_lang_Object$getClass:
-                visitGetClass(x);
-                break;
-            case java_lang_Thread$currentThread:
-                visitCurrentThread(x);
-                break;
 
-            case java_lang_Math$log: // fall through
+            case java_lang_Object$getClass:
+                throw Util.unimplemented();
+
+            case java_lang_Thread$currentThread:
+                throw Util.unimplemented();
+
+            case java_lang_Math$log:   // fall through
             case java_lang_Math$log10: // fall through
-            case java_lang_Math$abs: // fall through
-            case java_lang_Math$sqrt: // fall through
-            case java_lang_Math$tan: // fall through
-            case java_lang_Math$sin: // fall through
+            case java_lang_Math$abs:   // fall through
+            case java_lang_Math$sqrt:  // fall through
+            case java_lang_Math$tan:   // fall through
+            case java_lang_Math$sin:   // fall through
             case java_lang_Math$cos:
                 visitMathIntrinsic(x);
                 break;
             case java_lang_System$arraycopy:
-                visitArrayCopy(x);
-                break;
+                throw Util.unimplemented();
 
-            // java.nio.Buffer.checkIndex
             case java_nio_Buffer$checkIndex:
-                visitNIOCheckIndex(x);
-                break;
+                throw Util.unimplemented();
 
             case sun_misc_Unsafe$compareAndSwapObject:
                 visitCompareAndSwap(x, CiKind.Object);
@@ -628,28 +617,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitProfileCall(ProfileCall x) {
-        // Need recv in a temporary register so it interferes with the other temporaries
-        LIROperand recv = LIROperandFactory.IllegalLocation;
-        LIROperand mdo = newRegister(CiKind.Object);
-        LIROperand tmp = newRegister(CiKind.Int);
-        if (x.object() != null) {
-            LIRItem value = new LIRItem(x.object(), this);
-            value.loadItem();
-            recv = newRegister(CiKind.Object);
-            lir.move(value.result(), recv);
-        }
-        lir.profileCall(x.method(), x.bciOfInvoke(), mdo, recv, tmp, x.knownHolder());
-    }
-
-    @Override
-    public void visitProfileCounter(ProfileCounter x) {
-        LIRItem mdo = new LIRItem(x.mdo(), this);
-        mdo.loadItem();
-        incrementCounter(new LIRAddress((LIRLocation) mdo.result(), x.offset(), CiKind.Int), x.increment());
-    }
-
-    @Override
     public void visitReturn(Return x) {
 
         if (x.type().isVoid()) {
@@ -675,7 +642,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand allocateOperand(XirArgument arg) {
-
         if (arg.runtimeCall != null) {
 
             List<LIROperand> arguments = new ArrayList<LIROperand>();
@@ -696,10 +662,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     void emitXir(XirSnippet snippet) {
-
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
-        //final List<LIROperand> tempOperands = new ArrayList<LIROperand>();
         LIROperand outputOperand = LIROperandFactory.IllegalLocation;
         for (int i = 0; i < snippet.arguments.length; i++) {
             XirArgument arg = snippet.arguments[i];
@@ -1220,12 +1184,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return reg;
     }
 
-    private void visitCurrentThread(Intrinsic x) {
-        assert x.numberOfArguments() == 0 : "wrong type";
-        LIROperand reg = rlockResult(x);
-        lir.load(new LIRAddress(getThreadPointer(), compilation.runtime.threadObjectOffset(), CiKind.Object), reg, null);
-    }
-
     private void visitFPIntrinsics(Intrinsic x) {
         assert x.numberOfArguments() == 1 : "wrong type";
         LIRItem value = new LIRItem(x.argumentAt(0), this);
@@ -1233,52 +1191,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         value.loadItem();
         LIROperand tmp = forceToSpill(value.result(), x.type());
         lir.move(tmp, reg);
-    }
-
-    private void visitGetClass(Intrinsic x) {
-        assert x.numberOfArguments() == 1 : "wrong type";
-
-        LIRItem rcvr = new LIRItem(x.argumentAt(0), this);
-        rcvr.loadItem();
-        LIROperand result = rlockResult(x);
-
-        // need to perform the null check on the rcvr
-        CodeEmitInfo info = null;
-        if (x.needsNullCheck()) {
-            info = stateFor(x, x.stateBefore().copyLocks());
-        }
-        lir.move(new LIRAddress((LIRLocation) rcvr.result(), compilation.runtime.hubOffset(), CiKind.Object), result, info);
-        lir.move(new LIRAddress((LIRLocation) result, compilation.runtime.javaClassObjectOffset() + LIRGenerator.klassPartOffsetInBytes(), CiKind.Object), result);
-    }
-
-    private void visitNIOCheckIndex(Intrinsic x) {
-        // NOTE: by the time we are in checkIndex() we are guaranteed that
-        // the buffer is non-null (because checkIndex is package-private and
-        // only called from within other methods in the buffer).
-        assert x.numberOfArguments() == 2 : "wrong type";
-        LIRItem buf = new LIRItem(x.argumentAt(0), this);
-        LIRItem index = new LIRItem(x.argumentAt(1), this);
-        buf.loadItem();
-        index.loadItem();
-
-        LIROperand result = rlockResult(x);
-        LIROperand indexResult = index.result();
-        if (C1XOptions.GenerateBoundsChecks) {
-            CodeEmitInfo info = stateFor(x);
-            CodeStub stub = new RangeCheckStub(info, indexResult, true);
-            if (indexResult.isConstant()) {
-                LIRConstant indexResultConstant = (LIRConstant) indexResult;
-                cmpMemInt(LIRCondition.BelowEqual, (LIRLocation) buf.result(), compilation.runtime.javaNioBufferLimitOffset(), indexResultConstant.asInt(), info);
-                lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub);
-            } else {
-                cmpRegMem(LIRCondition.AboveEqual, (LIRLocation) indexResult, (LIRLocation) buf.result(), compilation.runtime.javaNioBufferLimitOffset(), CiKind.Int, info);
-                lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub);
-            }
-            lir.move(indexResult, result);
-        } else {
-            // Just load the index into the result register
-            lir.move(indexResult, result);
-        }
     }
 
     private void visitRegisterFinalizer(Intrinsic x) {
@@ -1545,114 +1457,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected final void arraycopyHelper(Intrinsic x, int[] flagsp, RiType[] expectedTypep) {
-        Value src = x.argumentAt(0);
-        Value srcPos = x.argumentAt(1);
-        Value dst = x.argumentAt(2);
-        Value dstPos = x.argumentAt(3);
-        Value length = x.argumentAt(4);
-
-        // first try to identify the likely type of the arrays involved
-        RiType expectedType = null;
-        boolean isExact = false;
-
-        RiType srcExactType = src.exactType();
-        RiType srcDeclaredType = src.declaredType();
-        RiType dstExactType = dst.exactType();
-        RiType dstDeclaredType = dst.declaredType();
-
-        // TODO: Check that the types are array classes!
-
-        if (srcExactType != null && srcExactType == dstExactType) {
-            // the types exactly match so the type is fully known
-            isExact = true;
-            expectedType = srcExactType;
-        } else if (dstExactType != null && dstExactType.isTypeArrayClass()) {
-            RiType dstType = dstExactType;
-            RiType srcType = null;
-            if (srcExactType != null && srcExactType.isTypeArrayClass()) {
-                srcType = srcExactType;
-            } else if (srcDeclaredType != null && srcDeclaredType.isTypeArrayClass()) {
-                srcType = srcDeclaredType;
-            }
-            if (srcType != null) {
-                if (srcType.componentType().isSubtypeOf(dstType.componentType())) {
-                    isExact = true;
-                    expectedType = dstType;
-                }
-            }
-        }
-        // at least pass along a good guess
-        if (expectedType == null) {
-            expectedType = dstExactType;
-        }
-        if (expectedType == null) {
-            expectedType = srcDeclaredType;
-        }
-
-        if (expectedType == null) {
-            expectedType = dstDeclaredType;
-        }
-
-        // if a probable array type has been identified, figure out if any
-        // of the required checks for a fast case can be elided.
-        int flags = LIRArrayCopy.Flags.AllFlags.mask();
-        if (expectedType != null) {
-            // try to skip null checks
-            if (src instanceof NewArray) {
-                flags &= ~LIRArrayCopy.Flags.SrcNullCheck.mask();
-            }
-            if (dst instanceof NewArray) {
-                flags &= ~LIRArrayCopy.Flags.DstNullCheck.mask();
-            }
-
-            // check from incoming constant values
-            if (positiveConstant(srcPos)) {
-                flags &= ~LIRArrayCopy.Flags.SrcPosPositiveCheck.mask();
-            }
-            if (positiveConstant(dstPos)) {
-                flags &= ~LIRArrayCopy.Flags.DstPosPositiveCheck.mask();
-            }
-            if (positiveConstant(length)) {
-                flags &= ~LIRArrayCopy.Flags.LengthPositiveCheck.mask();
-            }
-
-            // see if the range check can be elided, which might also imply
-            // that src or dst is non-null.
-            if (length instanceof ArrayLength) {
-                ArrayLength al = (ArrayLength) length;
-                if (al.array() == src) {
-                    // it's the length of the source array
-                    flags &= ~LIRArrayCopy.Flags.LengthPositiveCheck.mask();
-                    flags &= ~LIRArrayCopy.Flags.SrcNullCheck.mask();
-                    if (isConstantZero(srcPos)) {
-                        flags &= ~LIRArrayCopy.Flags.SrcRangeCheck.mask();
-                    }
-                }
-                if (al.array() == dst) {
-                    // it's the length of the destination array
-                    flags &= ~LIRArrayCopy.Flags.LengthPositiveCheck.mask();
-                    flags &= ~LIRArrayCopy.Flags.DstNullCheck.mask();
-                    if (isConstantZero(dstPos)) {
-                        flags &= ~LIRArrayCopy.Flags.DstRangeCheck.mask();
-                    }
-                }
-            }
-            if (isExact) {
-                flags &= ~LIRArrayCopy.Flags.TypeCheck.mask();
-            }
-        }
-
-        if (src == dst) {
-            // moving within a single array so no type checks are needed
-            if ((flags & LIRArrayCopy.Flags.TypeCheck.mask()) != 0) {
-                flags &= ~LIRArrayCopy.Flags.TypeCheck.mask();
-            }
-        }
-        flagsp[0] = flags;
-        expectedTypep[0] = expectedType;
-    }
-
     protected void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
         assert nullCheckInfo != rangeCheckInfo;
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
@@ -1794,16 +1598,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private boolean isUsedForValue(Instruction instr) {
         return instr.checkFlag(Value.Flag.LiveValue);
-    }
-
-    // increment a counter returning the incremented value
-    LIROperand incrementAndReturnCounter(LIRLocation base, int offset, int increment) {
-        LIRAddress counter = new LIRAddress(base, offset, CiKind.Int);
-        LIROperand result = newRegister(CiKind.Int);
-        lir.load(counter, result, null);
-        lir.add(result, LIROperandFactory.intConst(increment), result);
-        lir.store(result, counter, null);
-        return result;
     }
 
     protected void incrementBackedgeCounter(CodeEmitInfo info) {
@@ -2179,14 +1973,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract void getObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
 
-    protected abstract LIRLocation getThreadPointer();
-
-    protected abstract LIROperand getThreadTemp();
-
-    protected abstract void incrementCounter(long address, int step);
-
-    protected abstract void incrementCounter(LIRAddress counter, int step);
-
     protected abstract LIROperand osrBufferPointer();
 
     protected abstract void putObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
@@ -2202,17 +1988,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract LIRLocation rlockByte(CiKind type);
 
-    protected abstract LIROperand rlockCalleeSaved(CiKind type);
-
     protected abstract LIROperand safepointPollRegister();
 
     protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
 
-    protected abstract LIROperand syncTempOpr();
-
     protected abstract void traceBlockEntry(BlockBegin block);
-
-    protected abstract void visitArrayCopy(Intrinsic x);
 
     protected abstract void visitAttemptUpdate(Intrinsic x);
 
@@ -2223,36 +2003,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract void volatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
 
     protected abstract void volatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
-
-    /**
-     * Offset of the klass part (C1 HotSpot specific). Probably this method can be removed later on.
-     * @return the offset of the klass part
-     */
-    private static int klassPartOffsetInBytes() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    private static boolean isConstantZero(Value x) {
-        if (x instanceof Constant) {
-            final Constant c = (Constant) x;
-            // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.asConstant().asInt() == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean positiveConstant(Value x) {
-        if (x instanceof Constant) {
-            final Constant c = (Constant) x;
-            // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.asConstant().asInt() >= 0) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     protected static LIRCondition lirCond(Condition cond) {
         LIRCondition l = null;

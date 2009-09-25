@@ -40,10 +40,6 @@ public class Address {
             this.value = value;
         }
 
-        public static ScaleFactor timesPtr(CiArchitecture arch) {
-            return (arch.is32bit()) ? times8 : times4;
-        }
-
         public static ScaleFactor fromInt(int v) {
             switch (v) {
                 case 1: return times1;
@@ -86,15 +82,6 @@ public class Address {
         this.scale = scale;
         this.disp = displacement;
         assert base != null && index != null && scale != null;
-    }
-
-    public Address(CiRegister base, RegisterOrConstant index, ScaleFactor scale, int displacement) {
-        this(base, index.registerOrNoReg(), scale, displacement);
-        assert !this.index.isValid() == (scale == ScaleFactor.noScale) : "inconsistent Pointer";
-    }
-
-    public Address(CiRegister base, long displacement) {
-        this(base, Util.safeToInt(displacement));
     }
 
     public Address(CiRegister reg) {

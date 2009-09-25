@@ -27,6 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
 
 /**
  * An {@link com.sun.c1x.ir.ValueVisitor} for {@linkplain #printInstruction(Value) printing}
@@ -47,7 +48,7 @@ public class InstructionPrinter extends ValueVisitor {
      */
     public static String stateString(int index, Value value, BlockBegin block) {
         StringBuilder sb = new StringBuilder(30);
-        sb.append(String.format("%2d  %s", index, Instruction.valueString(value)));
+        sb.append(String.format("%2d  %s", index, Util.valueString(value)));
         if (value instanceof Phi) {
             Phi phi = (Phi) value;
             // print phi operands
@@ -57,7 +58,7 @@ public class InstructionPrinter extends ValueVisitor {
                     sb.append(' ');
                     Value operand = phi.operandAt(j);
                     if (operand != null) {
-                        sb.append(Instruction.valueString(operand));
+                        sb.append(Util.valueString(operand));
                     } else {
                         sb.append("NULL");
                     }
@@ -66,7 +67,7 @@ public class InstructionPrinter extends ValueVisitor {
             }
         }
         if (value != null && value != value.subst()) {
-            sb.append("alias ").append(Instruction.valueString(value.subst()));
+            sb.append("alias ").append(Util.valueString(value.subst()));
         }
         return sb.toString();
     }
@@ -87,7 +88,7 @@ public class InstructionPrinter extends ValueVisitor {
         USE(7, "use"),
 
         /**
-         * The instruction as a {@linkplain Instruction#valueString(com.sun.c1x.ir.Value) value}.
+         * The instruction as a {@linkplain com.sun.c1x.util.Util#valueString(com.sun.c1x.ir.Value) value}.
          */
         VALUE(12, "tid"),
 
@@ -493,13 +494,13 @@ public class InstructionPrinter extends ValueVisitor {
              print("._").
              print(i.offset()).
              print(" (").
-             print(i.field().type().basicType().basicChar).
+             print(i.field().type().basicType().typeChar).
              print(")");
     }
 
     @Override
     public void visitLoadIndexed(LoadIndexed load) {
-        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.type().tchar()).print(')');
+        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.type().typeChar).print(')');
     }
 
     @Override
@@ -591,27 +592,11 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitProfileCall(ProfileCall profileCall) {
-        final RiMethod method = profileCall.method();
-        out.print("profile ").print(profileCall.object()).print(method.holder().name()).print('.').print(method.name());
-        if (profileCall.knownHolder() != null) {
-          out.print(", ").print(profileCall.knownHolder().name());
-        }
-        out.print(')');
-    }
-
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        // TODO: Recognize interpreter invocation counter specially
-        out.print("counter [").print(i.mdo()).print(").print(").print(i.offset()).print("] += ").print(i.increment());
-    }
-
-    @Override
     public void visitReturn(Return ret) {
         if (ret.result() == null) {
             out.print("return");
         } else {
-            out.print(ret.type().tchar()).print("return ").print(ret.result());
+            out.print(ret.type().typeChar).print("return ").print(ret.result());
         }
     }
 
@@ -627,12 +612,12 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreField(StoreField store) {
-        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType().basicChar).print(')');
+        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType().typeChar).print(')');
     }
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().tchar()).print(')');
+        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().typeChar).print(')');
     }
 
     @Override

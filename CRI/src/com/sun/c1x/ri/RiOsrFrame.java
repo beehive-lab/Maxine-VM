@@ -21,7 +21,7 @@
 package com.sun.c1x.ri;
 
 /**
- * The <code>RiOsrFrame</code> interface allows the compiler to query the runtime for
+ * This interface allows the compiler to query the runtime for
  * the locations of the state of locals, stacks, and locks when generating code to
  * transition from one frame layout during OSR (on-stack replacement).
  *

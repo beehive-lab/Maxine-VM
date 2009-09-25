@@ -28,15 +28,13 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LoopFinder</code> class definition.
+ * This class walks the control flow graph and identifies loops.
  *
  * @author Marcelo Cintra
- *
  */
 public class LoopFinder {
 
     private int maxBlockId; // the highest blockId of a block
-    private int numBlocks; // total number of blocks (smaller than maxBlockId)
     private int numLoops; // total number of loops
 
     private BitMap visitedBlocks; // used for recursive processing of blocks
@@ -67,7 +65,6 @@ public class LoopFinder {
         }
 
         // cleanup flags to avoid assertion errors when computing linear scan ordering
-        // XXX: should we remove the assertions from the Linear scan ordering??
         startBlock.iterateAnyOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
                 block.setLoopIndex(-1);
@@ -92,7 +89,7 @@ public class LoopFinder {
     // * count all incoming edges and backward incoming edges
     // * number loop header blocks
     // * create a list with all loop end blocks
-    void countEdges(BlockBegin cur, BlockBegin parent) {
+    private void countEdges(BlockBegin cur, BlockBegin parent) {
         if (isActive(cur)) {
             assert isVisited(cur) : "block must be visited when block is active";
             assert parent != null : "must have parent";
@@ -110,7 +107,6 @@ public class LoopFinder {
             return;
         }
 
-        numBlocks++;
         setVisited(cur);
         setActive(cur);
 
@@ -136,7 +132,7 @@ public class LoopFinder {
         }
     }
 
-    void markLoops() {
+    private void markLoops() {
         loopMap = new BitMap2D(numLoops, maxBlockId);
         loopMap.clear();
 
@@ -146,9 +142,6 @@ public class LoopFinder {
             int loopIdx = loopStart.loopIndex();
             ArrayList<BlockBegin> loopBody = new ArrayList<BlockBegin>();
 
-
-            // Util.traceLinearScan(3, "Processing loop from B%d to B%d (loop %d):", loopStart.blockID, loopEnd.blockID,
-            // loopIdx);
             assert loopEnd.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd) : "loop end flag must be set";
             assert loopStart.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) : "loop header flag must be set";
             assert loopIdx >= 0 && loopIdx < numLoops : "loop index not set";
@@ -161,7 +154,6 @@ public class LoopFinder {
             do {
                 BlockBegin cur = workList.remove(workList.size() - 1);
 
-                // Util.traceLinearScan(3, "    processing B%d", cur.blockID);
                 assert isBlockInLoop(loopIdx, cur) : "bit in loop map must be set when block is in work list";
 
                 // recursive processing of all predecessors ends when start block of loop is reached
@@ -187,12 +179,11 @@ public class LoopFinder {
     // check for non-natural loops (loops where the loop header does not dominate
     // all other loop blocks = loops with multiple entries).
     // such loops are ignored
-    void clearNonNaturalLoops(BlockBegin startBlock) {
+    private void clearNonNaturalLoops(BlockBegin startBlock) {
         for (int i = numLoops - 1; i >= 0; i--) {
             if (isBlockInLoop(i, startBlock)) {
                 // loop i contains the entry block of the method.
                 // this is not a natural loop, so ignore it
-
                 for (int blockId = maxBlockId - 1; blockId >= 0; blockId--) {
                     clearBlockInLoop(i, blockId);
                 }
@@ -200,7 +191,7 @@ public class LoopFinder {
         }
     }
 
-    void assignLoopDepth(BlockBegin startBlock) {
+    private void assignLoopDepth(BlockBegin startBlock) {
         initVisited();
 
         assert workList.isEmpty() : "work list must be empty before processing";
@@ -211,10 +202,8 @@ public class LoopFinder {
 
             if (!isVisited(cur)) {
                 setVisited(cur);
-                // Util.traceLinearScan(4, "Computing loop depth for block B%d", cur.blockID);
 
                 // compute loop-depth and loop-index for the block
-                //assert cur.loopDepth() == 0 : "cannot set loop-depth twice";
                 int i;
                 int loopDepth = 0;
                 int minLoopIdx = -1;
@@ -238,43 +227,43 @@ public class LoopFinder {
         } while (!workList.isEmpty());
     }
 
-    void initVisited() {
+    private void initVisited() {
         activeBlocks.clearAll();
         visitedBlocks.clearAll();
     }
 
-    boolean isVisited(BlockBegin b) {
+    private boolean isVisited(BlockBegin b) {
         return visitedBlocks.get(b.blockID);
     }
 
-    boolean isActive(BlockBegin b) {
+    private boolean isActive(BlockBegin b) {
         return activeBlocks.get(b.blockID);
     }
 
-    void setVisited(BlockBegin b) {
+    private void setVisited(BlockBegin b) {
         assert !isVisited(b) : "already set";
         visitedBlocks.set(b.blockID);
     }
 
-    void setActive(BlockBegin b) {
+    private void setActive(BlockBegin b) {
         assert !isActive(b) : "already set";
         activeBlocks.set(b.blockID);
     }
 
-    void clearActive(BlockBegin b) {
+    private void clearActive(BlockBegin b) {
         assert isActive(b) : "not already";
         activeBlocks.clear(b.blockID);
     }
 
-    boolean isBlockInLoop(int loopIdx, BlockBegin b) {
+    private boolean isBlockInLoop(int loopIdx, BlockBegin b) {
         return loopMap.at(loopIdx, b.blockID);
     }
 
-    void setBlockInLoop(int loopIdx, BlockBegin b) {
+    private void setBlockInLoop(int loopIdx, BlockBegin b) {
         loopMap.setBit(loopIdx, b.blockID);
     }
 
-    void clearBlockInLoop(int loopIdx, int blockId) {
+    private void clearBlockInLoop(int loopIdx, int blockId) {
         loopMap.clearBit(loopIdx, blockId);
     }
 }

@@ -136,7 +136,7 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline() || classMethodActor.isUnsafe();
     }
 
     /**
@@ -156,41 +156,17 @@ public class MaxRiRuntime implements RiRuntime {
         throw new MaxRiUnresolved("invalid RiMethod instance: " + method.getClass());
     }
 
-    ClassActor asClassActor(RiType type, String operation) {
-        if (type instanceof MaxRiType) {
-            return ((MaxRiType) type).asClassActor(operation);
-        }
-        throw new MaxRiUnresolved("invalid RiType instance: " + type.getClass());
-    }
-
     public int arrayLengthOffsetInBytes() {
         return VMConfiguration.target().layoutScheme().arrayHeaderLayout.arrayLengthOffset();
-    }
-
-    public boolean dtraceMethodProbes() {
-        // TODO: currently save to return false
-        return false;
-    }
-
-    public int headerSize() {
-        throw Util.unimplemented();
     }
 
     public boolean isMP() {
         return true;
     }
 
-    public int javaNioBufferLimitOffset() {
-        throw Util.unimplemented();
-    }
-
     public boolean jvmtiCanPostExceptions() {
         // TODO: Check what to return here
         return false;
-    }
-
-    public int javaClassObjectOffset() {
-        throw Util.unimplemented();
     }
 
     @UNSAFE
@@ -205,10 +181,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int threadExceptionOffset() {
         return VmThreadLocal.EXCEPTION_OBJECT.offset;
-    }
-
-    public int threadObjectOffset() {
-        throw Util.unimplemented();
     }
 
     public int vtableEntryMethodOffsetInBytes() {
@@ -243,23 +215,6 @@ public class MaxRiRuntime implements RiRuntime {
 
     public int elementHubOffset() {
         return ClassActor.fromJava(Hub.class).findLocalInstanceFieldActor("componentHub").offset();
-    }
-
-    public int interpreterFrameMonitorSize() {
-        throw Util.unimplemented();
-    }
-
-
-    public boolean dtraceAllocProbes() {
-        throw Util.unimplemented();
-    }
-
-    public int itableMethodEntryMethodOffset() {
-        throw Util.unimplemented();
-    }
-
-    public int initialMarkWord() {
-        throw Util.unimplemented();
     }
 
     public int maximumArrayLength() {
@@ -379,8 +334,6 @@ public class MaxRiRuntime implements RiRuntime {
         }
         return X86.rax;
     }
-
-    int memberIndex;
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
         return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);

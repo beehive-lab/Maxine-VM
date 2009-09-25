@@ -22,9 +22,8 @@ package com.sun.c1x.ci;
 
 
 /**
- * The <code>Target</code> class represents the target of a compilation, including
- * the CPU architecture and other configuration information of the machine. Such
- * configuration information includes the size of pointers and references, alignment
+ * This class represents the target machine for a compiler, including
+ * the CPU architecture, the size of pointers and references, alignment
  * of stacks, caches, etc.
  *
  * @author Ben L. Titzer
@@ -40,15 +39,19 @@ public class CiTarget {
     public final CiRegister[] allocatableRegisters;
     public final CiRegister[] registerReferenceMapTemplate;
     public final CiRegister[] callerSavedRegisters;
-    public int firstAvailableSpInFrame;
     public int pageSize;
     public boolean isMP;
     public final CiRegister stackRegister;
     public final CiRegister scratchRegister;
 
-    public CiTarget(CiArchitecture arch, CiRegister stackRegister, CiRegister scratchRegister, CiRegister[] allocatableRegisters, CiRegister[] callerSavedRegisters,
-            CiRegister[] registerReferenceMapTemplate, int pageSize,
-            boolean isMP) {
+    public CiTarget(CiArchitecture arch,
+                    CiRegister stackRegister,
+                    CiRegister scratchRegister,
+                    CiRegister[] allocatableRegisters,
+                    CiRegister[] callerSavedRegisters,
+                    CiRegister[] registerReferenceMapTemplate,
+                    int pageSize,
+                    boolean isMP) {
 
         this.arch = arch;
         referenceSize = arch.wordSize;
@@ -88,15 +91,6 @@ public class CiTarget {
      */
     public boolean requiresStackAlignment() {
         return stackAlignment > arch.wordSize;
-    }
-
-    /**
-     * Checks whether this target has compressed oops (i.e. 32-bit references
-     * on a 64-bit machine).
-     * @return <code>true</code> if this target has compressed oops
-     */
-    public boolean hasCompressedOops() {
-        return referenceSize < arch.wordSize;
     }
 
     /**

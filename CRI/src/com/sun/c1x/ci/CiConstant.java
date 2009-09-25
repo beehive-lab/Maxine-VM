@@ -22,10 +22,8 @@ package com.sun.c1x.ci;
 
 
 /**
- * The <code>ConstType</code> class represents a value type for a constant on the stack
- * or in a local variable. This class implements the functionality provided by the
- * IntConstant, LongConstant, FloatConstant, etc classes in the C++ C1 compiler. This class
- * can represent either reference constants or primitive constants by boxing them.
+ * This class represents a boxed value, such as integer, floating point number, or object reference,
+ * within the compiler and across the compiler/runtime barrier.
  *
  * @author Ben L. Titzer
  */
@@ -51,7 +49,7 @@ public final class CiConstant extends CiValue {
     public final CiKind basicType;
 
     /**
-     * Create a new constant type represented by the specified object reference or boxed
+     * Create a new constant represented by the specified object reference or boxed
      * primitive.
      * @param type the type of this constant
      * @param value the value of this constant
@@ -70,7 +68,7 @@ public final class CiConstant extends CiValue {
     }
 
     /**
-     * Converts this value type to a string.
+     * Converts this constant to a string.
      */
     @Override
     public String toString() {
@@ -135,7 +133,7 @@ public final class CiConstant extends CiValue {
                 return (Boolean) value ? 1 : 0; // note that we allow Boolean values to be used as ints
             }
         }
-        throw new Error("Invalid constant");
+        throw new Error("Constant is not int: " + this);
     }
 
     /**
@@ -163,7 +161,7 @@ public final class CiConstant extends CiValue {
                 return (Boolean) value ? 1 : 0; // note that we allow Boolean values to be used as ints
             }
         }
-        throw new Error("Invalid constant");
+        throw new Error("Constant is not long: " + this);
     }
 
     /**
@@ -176,7 +174,7 @@ public final class CiConstant extends CiValue {
                 return (Float) value;
             }
         }
-        throw new Error("Invalid constant");
+        throw new Error("Constant is not float: " + this);
     }
 
     /**
@@ -192,7 +190,7 @@ public final class CiConstant extends CiValue {
                 return (Float) value;
             }
         }
-        throw new Error("Invalid constant");
+        throw new Error("Constant is not double: " + this);
     }
 
     /**
@@ -203,7 +201,7 @@ public final class CiConstant extends CiValue {
         if (basicType == CiKind.Object) {
             return value;
         }
-        throw new Error("Invalid constant");
+        throw new Error("Constant is not object: " + this);
     }
 
     /**
@@ -334,7 +332,7 @@ public final class CiConstant extends CiValue {
         if (i instanceof Integer || i instanceof Long) {
             return new CiConstant(CiKind.Word, i); // only Integer and Long are allowed
         }
-        throw new IllegalArgumentException("cannot create word ConstType for object of type " + i.getClass());
+        throw new IllegalArgumentException("cannot create word constant for object of type " + i.getClass());
     }
 
     /**
@@ -349,46 +347,4 @@ public final class CiConstant extends CiValue {
         return new CiConstant(CiKind.Object, o);
     }
 
-    /**
-     * @param object
-     * @return
-     */
-    public static CiConstant fromBoxedJavaValue(Object boxedJavaValue) {
-        if (boxedJavaValue == null) {
-            return CiConstant.NULL_OBJECT;
-        }
-        if (boxedJavaValue instanceof Byte) {
-            final Byte box = (Byte) boxedJavaValue;
-            return CiConstant.forByte(box.byteValue());
-        }
-        if (boxedJavaValue instanceof Boolean) {
-            final Boolean box = (Boolean) boxedJavaValue;
-            return CiConstant.forBoolean(box.booleanValue());
-        }
-        if (boxedJavaValue instanceof Short) {
-            final Short box = (Short) boxedJavaValue;
-            return CiConstant.forShort(box.shortValue());
-        }
-        if (boxedJavaValue instanceof Character) {
-            final Character box = (Character) boxedJavaValue;
-            return CiConstant.forChar(box.charValue());
-        }
-        if (boxedJavaValue instanceof Integer) {
-            final Integer box = (Integer) boxedJavaValue;
-            return CiConstant.forInt(box.intValue());
-        }
-        if (boxedJavaValue instanceof Float) {
-            final Float box = (Float) boxedJavaValue;
-            return CiConstant.forFloat(box.floatValue());
-        }
-        if (boxedJavaValue instanceof Long) {
-            final Long box = (Long) boxedJavaValue;
-            return CiConstant.forLong(box.longValue());
-        }
-        if (boxedJavaValue instanceof Double) {
-            final Double box = (Double) boxedJavaValue;
-            return CiConstant.forDouble(box.doubleValue());
-        }
-        return CiConstant.forObject(boxedJavaValue);
-    }
 }

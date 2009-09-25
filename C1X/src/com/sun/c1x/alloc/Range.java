@@ -23,6 +23,7 @@ package com.sun.c1x.alloc;
 import com.sun.c1x.debug.*;
 
 /**
+ * Represents a range of integers from a start (inclusive) to an end (exclusive.
  *
  * @author Thomas Wuerthinger
  */
@@ -30,37 +31,24 @@ final class Range {
 
     static final Range EndMarker = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE, null);
 
-    private int from; // from (inclusive)
-    private int to; // to (exclusive)
-    private Range next; // linear list of Ranges
+    /**
+     * The start of the range, inclusive.
+     */
+    public int from;
+
+    /**
+     * The end of the range, exclusive.
+     */
+    public int to;
+
+    /**
+     * A link to allow the range to be put into a singly linked list.
+     */
+    public Range next;
 
     // used only by class Interval, so hide them
     boolean intersects(Range r) {
         return intersectsAt(r) != -1;
-    }
-
-    int from() {
-        return from;
-    }
-
-    int to() {
-        return to;
-    }
-
-    Range next() {
-        return next;
-    }
-
-    void setFrom(int from) {
-        this.from = from;
-    }
-
-    void setTo(int to) {
-        this.to = to;
-    }
-
-    void setNext(Range next) {
-        this.next = next;
     }
 
     // * Implementation of Range *
@@ -78,37 +66,41 @@ final class Range {
         assert r1 != EndMarker && r2 != EndMarker : "empty ranges not allowed";
 
         do {
-            if (r1.from() < r2.from()) {
-                if (r1.to() <= r2.from()) {
-                    r1 = r1.next();
+            if (r1.from < r2.from) {
+                if (r1.to <= r2.from) {
+                    r1 = r1.next;
                     if (r1 == EndMarker) {
                         return -1;
                     }
                 } else {
-                    return r2.from();
+                    return r2.from;
                 }
-            } else if (r2.from() < r1.from()) {
-                if (r2.to() <= r1.from()) {
-                    r2 = r2.next();
-                    if (r2 == EndMarker) {
-                        return -1;
+            } else {
+                if (r2.from < r1.from) {
+                    if (r2.to <= r1.from) {
+                        r2 = r2.next;
+                        if (r2 == EndMarker) {
+                            return -1;
+                        }
+                    } else {
+                        return r1.from;
                     }
-                } else {
-                    return r1.from();
-                }
-            } else { // r1.from() == r2.from()
-                if (r1.from() == r1.to()) {
-                    r1 = r1.next();
-                    if (r1 == EndMarker) {
-                        return -1;
+                } else { // r1.from() == r2.from()
+                    if (r1.from == r1.to) {
+                        r1 = r1.next;
+                        if (r1 == EndMarker) {
+                            return -1;
+                        }
+                    } else {
+                        if (r2.from == r2.to) {
+                            r2 = r2.next;
+                            if (r2 == EndMarker) {
+                                return -1;
+                            }
+                        } else {
+                            return r1.from;
+                        }
                     }
-                } else if (r2.from() == r2.to()) {
-                    r2 = r2.next();
-                    if (r2 == EndMarker) {
-                        return -1;
-                    }
-                } else {
-                    return r1.from();
                 }
             }
         } while (true);

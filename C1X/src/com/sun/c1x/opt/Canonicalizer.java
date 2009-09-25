@@ -43,16 +43,14 @@ public class Canonicalizer extends ValueVisitor {
 
     final RiRuntime runtime;
     Value canonical;
-    int bci;
     List<Instruction> extra;
 
     public Canonicalizer(RiRuntime runtime) {
         this.runtime = runtime;
     }
 
-    public Value canonicalize(Instruction original, int bci) {
+    public Value canonicalize(Instruction original) {
         this.canonical = original;
-        this.bci = bci;
         this.extra = null;
         original.accept(this);
         return this.canonical;
@@ -212,7 +210,7 @@ public class Canonicalizer extends ValueVisitor {
                 // floating point operations need to be extra careful
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private Value reduceIntOp2(Op2 original, Value x, int y) {
@@ -537,7 +535,7 @@ public class Canonicalizer extends ValueVisitor {
                 }
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     @Override
@@ -718,7 +716,7 @@ public class Canonicalizer extends ValueVisitor {
             // folding did not work, try recognizing special intrinsics
             reduceIntrinsic(i);
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private void reduceIntrinsic(Intrinsic i) {
@@ -744,7 +742,7 @@ public class Canonicalizer extends ValueVisitor {
                 return;
             }
         }
-        assert Value.sameBasicType(i, canonical);
+        assert Util.equalKinds(i, canonical);
     }
 
     private boolean foldIntrinsic(Intrinsic i) {

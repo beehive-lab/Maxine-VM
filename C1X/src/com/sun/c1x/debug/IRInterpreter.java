@@ -36,15 +36,13 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>IRInterpreter</code> class definition.
+ * This class implements an interpreter for C1X HIR graphs.
  *
  * @author Marcelo Cintra
- *
  */
 public class IRInterpreter {
-
     /**
-     * The <code>IRCheckException</code> class is thrown when the IRChecker detects a problem with the IR.
+     * This class is thrown when the IRInterpreter detects a problem with the IR.
      */
     public static class IRInterpreterException extends RuntimeException {
 
@@ -67,7 +65,6 @@ public class IRInterpreter {
     }
 
     private static class Val {
-
         int counter;
         CiConstant value;
 
@@ -193,9 +190,9 @@ public class IRInterpreter {
                 // parsed as integers
                 Value local = valueStack.localAt(index);
                 if (local.type() == CiKind.Float && value.basicType == CiKind.Int) {
-                    obj = new Float(value.asInt());
+                    obj = (float) value.asInt();
                 } else if ((local.type() == CiKind.Double && value.basicType == CiKind.Int)) {
-                    obj = new Double(value.asInt());
+                    obj = (double) value.asInt();
                 } else {
                     obj = value.boxedValue();
                 }
@@ -302,7 +299,7 @@ public class IRInterpreter {
                     assert i.isStatic() : "Field must be static in LoadField";
                     boxedJavaValue = field.get(null);
                 }
-                environment.bind(i, CiConstant.fromBoxedJavaValue(boxedJavaValue), instructionCounter);
+                environment.bind(i, fromBoxedJavaValue(boxedJavaValue), instructionCounter);
             } catch (Throwable e) {
                 unexpected(i, e);
             }
@@ -354,7 +351,7 @@ public class IRInterpreter {
                     return;
                 }
                 Object result = Array.get(array, arrayIndex);
-                environment.bind(i, CiConstant.fromBoxedJavaValue(result), instructionCounter);
+                environment.bind(i, fromBoxedJavaValue(result), instructionCounter);
             } catch (NullPointerException e) {
                 unexpected(i, e);
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -371,39 +368,33 @@ public class IRInterpreter {
             CiConstant lookupValue = environment.lookup(value);
             if (type == byte.class) {
                 assert value.type() == CiKind.Int : "Types are not compatible";
-                return new Byte((byte) lookupValue.asInt());
+                return (byte) lookupValue.asInt();
             } else if (type == short.class) {
                 assert value.type() == CiKind.Int : "Types are not compatible";
-                return new Short((short) lookupValue.asInt());
+                return (short) lookupValue.asInt();
             } else if (type == char.class) {
                 assert value.type() == CiKind.Int : "Types are not compatible";
-                return new Character((char) lookupValue.asInt());
+                return (char) lookupValue.asInt();
             } else if (type == boolean.class) {
                 assert value.type() == CiKind.Int : "Types are not compatible";
-                return new Boolean(lookupValue.asInt() == 1 ? true : false);
+                return lookupValue.asInt() == 1;
             } else if (type == double.class) {
                 if (lookupValue.basicType == CiKind.Int) {
-                    return new Double(lookupValue.asInt());
+                    return (double) lookupValue.asInt();
                 } else {
                     return lookupValue.boxedValue();
                 }
             } else if (type == float.class) {
-                CiConstant rvalue = lookupValue;
-                if (rvalue.basicType == CiKind.Int) {
-                    return new Float(rvalue.asInt());
+                if (lookupValue.basicType == CiKind.Int) {
+                    return (float) lookupValue.asInt();
                 } else {
-                    return rvalue.boxedValue();
+                    return lookupValue.boxedValue();
                 }
             } else {
                 return lookupValue.boxedValue();
             }
         }
 
-
-
-        /**
-         * @param i
-         */
         @Override
         public void visitStoreIndexed(StoreIndexed i) {
             Object array = environment.lookup(i.array()).asObject();
@@ -706,13 +697,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        /**
-         * @param i
-         * @param tval
-         * @param fval
-         * @param x
-         * @param y
-         */
         private void bindIfOp(IfOp i, boolean condition, final CiConstant tval, final CiConstant fval) {
             if (condition) {
                 environment.bind(i, tval, instructionCounter);
@@ -816,7 +800,7 @@ public class IRInterpreter {
             }
             RiMethod targetMethod = i.target();
             String methodName = targetMethod.name();
-            if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+            if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                 Object res = callInitMethod(i);
                 environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
                 jumpNextInstruction();
@@ -840,7 +824,7 @@ public class IRInterpreter {
             }
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
-            if (targetMethod.isNative() || methodName.equals("newInstance") || methodName.equals("newInstance0") ||
+            if (targetMethod.isNative() || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
@@ -850,9 +834,9 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.INVOKEINTERFACE: {
-                    RiType type = null;
+                    RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).boxedValue().getClass();
+                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -863,9 +847,9 @@ public class IRInterpreter {
                 }
 
                 case Bytecodes.INVOKEVIRTUAL: {
-                    RiType type = null;
+                    RiType type;
                     try {
-                        Class< ? > objClass = environment.lookup(i.arguments()[0]).boxedValue().getClass();
+                        Class< ? > objClass = environment.lookup(i.arguments()[0]).asObject().getClass();
                         type = runtime.getRiType(objClass);
                     } catch (NullPointerException ne) {
                         unexpected(i, ne);
@@ -886,12 +870,12 @@ public class IRInterpreter {
             try {
                 IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString());
                 if (methodHir == null) {
-                    C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, null, targetMethod);
+                    C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
                     methodHir = compilation.emitHIR();
                     compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString(), methodHir);
                 }
                 result = interpreter.execute(methodHir, arguments(i));
-                environment.bind(i, CiConstant.fromBoxedJavaValue(result.boxedValue()), instructionCounter);
+                environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
             } catch (InvocationTargetException e) {
                 unexpected(i, e.getTargetException());
             } catch (CiBailout e) {
@@ -938,7 +922,7 @@ public class IRInterpreter {
                 return CiConstant.forChar((char) environment.lookup(value).asInt());
             } else if (arrayType == boolean.class) {
                 assert value.type() == CiKind.Int : "Types are not compatible";
-                return CiConstant.forBoolean(environment.lookup(value).asInt() == 0 ? false : true);
+                return CiConstant.forBoolean(environment.lookup(value).asInt() != 0);
             } else if (arrayType == double.class) {
                 CiConstant rvalue = environment.lookup(value);
                 if (rvalue.basicType == CiKind.Int) {
@@ -994,14 +978,14 @@ public class IRInterpreter {
 
             } else {
                 // Call init methods
-                if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+                if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                     Object res = callInitMethod(i);
                     environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
                     jumpNextInstruction();
                     return;
                 }
                 Object objref = environment.lookup((i.arguments()[0])).boxedValue();
-                Class< ? > methodClass = null;
+                Class< ? > methodClass;
                 try {
                     methodClass = objref.getClass();
                 } catch (NullPointerException ne) {
@@ -1027,7 +1011,7 @@ public class IRInterpreter {
 
                 Object res = null;
                 try {
-                    if (objref instanceof Class< ? > && (methodName.equals("newInstance") || methodName.equals("newInstance0"))) {
+                    if (objref instanceof Class< ? > && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
@@ -1048,12 +1032,7 @@ public class IRInterpreter {
         private Object[] argumentList(Invoke i, RiSignature signature) {
             int nargs = signature.argumentCount(false);
             Object[] arglist = new Object[nargs];
-            int index = 0;
-            if (i.isStatic()) {
-                index = 0;
-            } else {
-                index = 1;
-            }
+            int index = i.isStatic() ? 0 : 1;
             for (int j = 0; j < nargs; j++) {
                 CiKind argumentType = signature.argumentTypeAt(j).basicType();
                 arglist[j] = getCompatibleBoxedValue(toJavaClass(signature.argumentTypeAt(j)), (i.arguments()[index]));
@@ -1063,10 +1042,10 @@ public class IRInterpreter {
         }
 
         private Object callInitMethod(Invoke i) {
-            Object objectRef = environment.lookup(i.arguments()[0]).boxedValue();
+            Object receiver = environment.lookup(i.arguments()[0]).asObject();
             // at this point, objectRef can represent a class, or a new uninitialized object produced by a NewInstance instruction
             // in both cases, a new object will be allocated and initialized.
-            Class< ? > javaClass = (objectRef instanceof Class<?>) ? (Class <?>) objectRef : objectRef.getClass();
+            Class< ? > javaClass = (receiver instanceof Class<?>) ? (Class <?>) receiver : receiver.getClass();
             Object newReference = null;
             int nargs = i.target().signatureType().argumentCount(false);
             Object[] arglist = new Object[nargs];
@@ -1233,10 +1212,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        /**
-         * @param i
-         * @return
-         */
         private Class<?> elementTypeNewArray(NewMultiArray i) {
             Class<?> elementType = toJavaClass(i.elementType());
             while (elementType.isArray()) {
@@ -1379,8 +1354,6 @@ public class IRInterpreter {
                         jump(i.successor(false));
                     }
                     break;
-                default:
-                    Util.shouldNotReachHere();
             }
             environment.performPhiMove(i);
         }
@@ -1556,7 +1529,7 @@ public class IRInterpreter {
             CiConstant value = environment.lookup(i.value());
             switch (i.basicType()) {
                 case Boolean:
-                    unsafe.putBoolean(address, index, value.asInt() == 0 ? false : true);
+                    unsafe.putBoolean(address, index, value.asInt() != 0);
                     break;
                 case Byte:
                     unsafe.putByte(address, index, (byte) value.asInt());
@@ -1637,7 +1610,7 @@ public class IRInterpreter {
 
             switch (i.basicType()) {
                 case Boolean:
-                    unsafe.putBoolean(object, offset, value.asInt() == 0 ? false : true);
+                    unsafe.putBoolean(object, offset, value.asInt() != 0);
                     break;
                 case Byte:
                     unsafe.putByte(object, offset, (byte) value.asInt());
@@ -1679,19 +1652,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        @Override
-        public void visitProfileCall(ProfileCall i) {
-            jumpNextInstruction();
-        }
-
-        @Override
-        public void visitProfileCounter(ProfileCounter i) {
-            jumpNextInstruction();
-        }
-
-        /**
-         * @return
-         */
         public CiConstant run() throws InvocationTargetException {
             if (C1XOptions.PrintStateInInterpreter) {
                 System.out.println("\n********** Running " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");
@@ -1751,9 +1711,9 @@ public class IRInterpreter {
 
         private void printInstructionState(Instruction instruction, boolean stateAfter) {
             if (stateAfter) {
-                System.out.println("instruction: " + instruction.name() + "   ID: " + instruction.id() + "   BCI: " + instruction.bci());
+                System.out.println("instruction: " + instruction.name() + "   ID: " + instruction.id + "   BCI: " + instruction.bci());
             } else {
-                System.out.println("State at " + instruction.name() + "   ID: " + instruction.id());
+                System.out.println("State at " + instruction.name() + "   ID: " + instruction.id);
             }
             if (stateAfter) {
                 printState(instruction.stateAfter());
@@ -1885,6 +1845,7 @@ public class IRInterpreter {
                 field.setAccessible(true);
                 return field;
             } catch (NoSuchFieldException noSuchFieldException) {
+                // do nothing
             }
             c = c.getSuperclass();
         }
@@ -1905,4 +1866,44 @@ public class IRInterpreter {
     private static void accessError(String field) {
         throw new Error("could not access field " + field);
     }
+
+    public static CiConstant fromBoxedJavaValue(Object boxedJavaValue) {
+        if (boxedJavaValue == null) {
+            return CiConstant.NULL_OBJECT;
+        }
+        if (boxedJavaValue instanceof Byte) {
+            final Byte box = (Byte) boxedJavaValue;
+            return CiConstant.forByte(box);
+        }
+        if (boxedJavaValue instanceof Boolean) {
+            final Boolean box = (Boolean) boxedJavaValue;
+            return CiConstant.forBoolean(box);
+        }
+        if (boxedJavaValue instanceof Short) {
+            final Short box = (Short) boxedJavaValue;
+            return CiConstant.forShort(box);
+        }
+        if (boxedJavaValue instanceof Character) {
+            final Character box = (Character) boxedJavaValue;
+            return CiConstant.forChar(box);
+        }
+        if (boxedJavaValue instanceof Integer) {
+            final Integer box = (Integer) boxedJavaValue;
+            return CiConstant.forInt(box);
+        }
+        if (boxedJavaValue instanceof Float) {
+            final Float box = (Float) boxedJavaValue;
+            return CiConstant.forFloat(box);
+        }
+        if (boxedJavaValue instanceof Long) {
+            final Long box = (Long) boxedJavaValue;
+            return CiConstant.forLong(box);
+        }
+        if (boxedJavaValue instanceof Double) {
+            final Double box = (Double) boxedJavaValue;
+            return CiConstant.forDouble(box);
+        }
+        return CiConstant.forObject(boxedJavaValue);
+    }
+
 }

@@ -25,8 +25,6 @@ import com.sun.c1x.xir.*;
 
 public class LIRXirInstruction extends LIRInstruction {
 
-
-
     public final LIROperand[] originalOperands;
     public final XirSnippet snippet;
 
@@ -46,7 +44,6 @@ public class LIRXirInstruction extends LIRInstruction {
             } else {
                 if (snippet.arguments[i] != null) {
                     if (snippet.arguments[i].constant == null) {
-
                         result[i] = operand(inputParameterIndex++);
                     } else {
                         result[i] = originalOperands[i];

@@ -30,8 +30,10 @@ import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 
 /**
+ * This class implements the compiler interface for C1X.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class C1XCompiler extends CiCompiler {
 
@@ -71,7 +73,7 @@ public class C1XCompiler extends CiCompiler {
 
     @Override
     public CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator) {
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirGenerator, method, osrBCI);
+        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
         return compilation.compile();
     }
 

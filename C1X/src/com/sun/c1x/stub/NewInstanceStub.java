@@ -30,13 +30,11 @@ import com.sun.c1x.ri.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class NewInstanceStub extends CodeStub {
 
     public final RiType klass;
     public final GlobalStub stubId;
-
 
     /**
      * @param klass

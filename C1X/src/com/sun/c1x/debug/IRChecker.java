@@ -27,6 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>IRChecker</code> class walks over the IR graph and checks
@@ -464,6 +465,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitConstant(Constant i) {
+        // do nothing.
     }
 
     /**
@@ -520,32 +522,6 @@ public class IRChecker extends ValueVisitor {
         }
         for (int j = 0; j < i.operandCount(); j++) {
             assertBasicType(i.operandAt(j), i.type());
-        }
-    }
-
-    /**
-     * Typechecks a ProfileCall instruction.
-     * @param i the ProfileCall instruction to be verified
-     */
-    @Override
-    public void visitProfileCall(ProfileCall i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.method(), "Method being profiled must not be null");
-        if (i.bci() < 0) {
-            fail("Illegal bci in ProfileCall instruction");
-        }
-    }
-
-    /**
-     * Typechecks a ProfileCounter instruction.
-     * @param i the ProfileCounter instruction to be verified
-     */
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.mdo(), "Value that produces the method data object must not be null");
-        if (i.increment() > 0) {
-            fail("Increment must be greater than zero");
         }
     }
 
@@ -651,7 +627,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertBasicType(i, CiKind.Illegal);
-        if (!Value.sameBasicType(i.x(), i.y())) {
+        if (!Util.equalKinds(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {

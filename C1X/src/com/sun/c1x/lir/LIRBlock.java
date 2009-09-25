@@ -38,8 +38,6 @@ public class LIRBlock {
     public BitMap liveGen;
     public BitMap liveKill;
 
-    public BitMap fpuRegisterUsage;
-    public int[] fpuStackState;
     public int firstLirInstructionID;
     public int lastLirInstructionID;
     public int exceptionHandlerPCO;

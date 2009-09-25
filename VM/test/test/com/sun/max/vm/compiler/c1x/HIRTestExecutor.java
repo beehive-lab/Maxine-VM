@@ -73,7 +73,7 @@ public class HIRTestExecutor implements Executor {
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
         final CiConstant[] args = new CiConstant[vals.length];
         for (int i = 0; i < args.length; i++) {
-            args[i] = CiConstant.fromBoxedJavaValue(vals[i]);
+            args[i] = IRInterpreter.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
@@ -104,7 +104,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, null, classMethodActor);
+            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
             return compilation.emitHIR();
         }
     }

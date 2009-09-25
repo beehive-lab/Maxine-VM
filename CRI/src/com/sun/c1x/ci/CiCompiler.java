@@ -24,8 +24,8 @@ import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.xir.XirGenerator;
 
 /**
- * The <code>CiCompiler</code> class represents a compiler instance which has been
- * configured for a particular runtime system and target machine.
+ * This class represents a compiler instance which has been configured for a particular runtime system and
+ * target machine and is capable of compiling methods.
  *
  * @author Ben L. Titzer
  */

@@ -21,8 +21,7 @@
 package com.sun.c1x;
 
 /**
- * The <code>C1XOptions</code> class encapsulates options that control the behavior of the
- * C1X compiler.
+ * This class encapsulates options that control the behavior of the C1X compiler.
  *
  * @author Ben L. Titzer
  */
@@ -65,7 +64,6 @@ public class C1XOptions {
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
-    public static boolean PrintInitialBlockList              = ____;
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
@@ -79,7 +77,6 @@ public class C1XOptions {
     public static boolean PrintAssembly                      = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
-    public static boolean PrintBlocksDeleted                 = ____;
     public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings
@@ -101,15 +98,9 @@ public class C1XOptions {
     public static boolean EliminateFieldAccess               = ____;
     public static boolean AlwaysCSEArrayLength               = ____;
 
-    // profiling settings
-    public static boolean Profile                            = ____;
     public static boolean ProfileBranches                    = ____;
-    public static boolean ProfileCalls                       = ____;
     public static boolean ProfileCheckcasts                  = ____;
     public static boolean ProfileInlinedCalls                = ____;
-    public static boolean OptimizeVirtualCallProfiling       = ____;
-    public static boolean ProfileVirtualCalls                = ____;
-    public static int     ProfileTypeWidth                   = 0;
 
     // optimistic optimization settings
     public static boolean UseCHA                             = ____;
@@ -127,7 +118,6 @@ public class C1XOptions {
     // miscellaneous settings
     public static boolean SupportObjectConstants             = true;
     public static boolean SupportWordTypes                   = ____;
-    public static boolean UseInlineCaches                    = ____;
     public static boolean RegisterFinalizersAtInit           = true;
 
     // global optimization settings
@@ -144,6 +134,7 @@ public class C1XOptions {
 
     // backend optimization settings
     public static boolean OptimizeControlFlow                = ____;
+    public static int     ShortLoopSize                      = 5;
     public static boolean OptimizeMoves                      = ____;
 
     // Linear scan settings
@@ -152,7 +143,6 @@ public class C1XOptions {
     // LIR settings
     public static boolean GenerateLIR                        = true;
     public static boolean PrintIRWithLIR                     = ____;
-    public static boolean LIRFillDelaySlots                  = ____;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target
     public static boolean GenerateSynchronizationCode        = true;
@@ -166,16 +156,12 @@ public class C1XOptions {
 
     public static boolean PrintLIR                           = ____;
     public static boolean Verbose                            = ____;
-    public static boolean LIRTracePeephole                   = ____;
-
-    public static boolean TestCompressedStreamEnabled        = ____;
 
     // Runtime settings
     public static boolean UseBiasedLocking                   = ____;
     public static boolean UseImplicitDiv0Checks              = ____;
     public static boolean UseTLAB                            = ____;
     public static int     ReadPrefetchInstr                  = 0;
-    public static int     AllocatePrefetchInstr              = 0;
     public static boolean UseFastLocking                     = ____;
     public static boolean UseFastNewInstance                 = ____;
     public static boolean UseSlowPath                        = ____;
@@ -197,7 +183,6 @@ public class C1XOptions {
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
     public static boolean GenerateAssertionCode              = ____;
-    public static boolean EmitStaticCallStubs                = ____;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
 
