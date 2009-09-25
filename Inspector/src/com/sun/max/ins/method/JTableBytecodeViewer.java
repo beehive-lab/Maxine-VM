@@ -397,21 +397,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
 
     /**
-     * @return a special color use for all text labels on the row, when either at an IP or Call Return; null otherwise.
-     */
-    private Color getSpecialRowTextColor(int row) {
-        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
-    }
-
-    /**
      * @return the default color to be used for all text labels on the row
      */
     private Color getRowTextColor(int row) {
-        final Color specialColor = getSpecialRowTextColor(row);
-        if (specialColor != null) {
-            return specialColor;
-        }
-        return style().bytecodeColor();
+        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
     }
 
     /**
@@ -463,8 +452,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     setForeground(style().debugCallReturnTagColor());
                 }
             } else {
-                setIcon(style().debugDefaultTagIcon());
-                setForeground(style().debugDefaultTagColor());
+                setIcon(null);
+                setForeground(null);
             }
             setText(rowToTagText(row));
             final TeleBytecodeBreakpoint teleBytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
@@ -490,7 +479,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());
                 }
             } else {
-                setBorder(style().debugDefaultTagBorder());
+                setBorder(null);
             }
             setToolTipText(toolTipText.toString());
             setBackgroundForRow(this, row);
@@ -568,19 +557,19 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (tableValue instanceof JComponent) {
                 // BytecodePrinter returns a label component for simple values
                 renderer = (JComponent) tableValue;
+                renderer.setForeground(getRowTextColor(row));
             } else if (tableValue instanceof Integer) {
                 // BytecodePrinter returns index of a constant pool entry, when that's the operand
                 final int index = ((Integer) tableValue).intValue();
                 renderer =  PoolConstantLabel.make(inspection(), index, localConstantPool(), teleConstantPool(), instanceViewPreferences.operandDisplayMode());
+                if (renderer.getForeground() == null) {
+                    setForeground(getRowTextColor(row));
+                }
                 setFont(style().bytecodeOperandFont());
             } else {
                 ProgramError.unexpected("unrecognized table value at row=" + row + ", col=" + col);
             }
             setBackgroundForRow(renderer, row);
-            final Color specialForegroundColor = getSpecialRowTextColor(row);
-            if (specialForegroundColor != null) {
-                renderer.setForeground(specialForegroundColor);
-            }
             return renderer;
         }
 

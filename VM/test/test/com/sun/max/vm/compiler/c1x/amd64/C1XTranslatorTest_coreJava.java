@@ -18,25 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-/*
- * @Harness: java
- * @Runs: 10 = 7077;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+/**
+ * Translates and optimizes almost all packages in the project to test the optimizer.
+ *
+ * @author Bernd Mathiske
  */
-public class Loop03 {
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public class C1XTranslatorTest_coreJava extends CompilerTest_coreJava {
 
-    public static int test(int count) {
-        int i1 = 1;
-        int i2 = 2;
-        int i4 = 4;
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(C1XTranslatorTest_coreJava.suite());
+    }
 
-        for (int i = 0; i < count; i++) {
-            i1 = i2;
-            i2 = 7;
-            i4 = i1;
-        }
-        return i1 + i2 * 10 + i4 * 1000;
+    public static Test suite() {
+        return new C1XTranslatorTestSetup(new TestSuite(C1XTranslatorTest_coreJava.class));
+    }
+
+    public C1XTranslatorTest_coreJava(String name) {
+        super(name);
     }
 
 }

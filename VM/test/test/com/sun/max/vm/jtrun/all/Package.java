@@ -35,7 +35,7 @@ import com.sun.max.vm.run.*;
 public class Package extends VMPackage {
     public Package() {
         super();
-        registerScheme(RunScheme.class, JavaTesterRunScheme.class);
+        registerScheme(RunScheme.class, JTRunScheme.class);
     }
 
     @Override

@@ -18,29 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-/*
- * @Harness: java
- * @Runs: 0 = false; 1 = true;
+import com.sun.max.*;
+
+/**
+ * @see MaxPackage
+ *
+ * @author Marcelo Cintra
  */
-public class Loop02 {
-
-    public static boolean test(int arg) {
-        int x = arg;
-
-        for (int i = 0; i < 10; i++) {
-            int y = m();
-            if (x == 1) {
-                return true;
-            }
-            x = y;
-        }
-        return false;
+public class Package extends MaxPackage {
+    public Package() {
+        super();
     }
-
-    private static int m() {
-        return 2;
-    }
-
 }

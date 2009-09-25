@@ -99,10 +99,10 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected boolean canInlineAsConstant(Value v) {
-        if (v.type().basicType == CiKind.Long) {
+        if (v.type() == CiKind.Long) {
             return false;
         }
-        return v.type().basicType != CiKind.Object || (v.isConstant() && v.asConstant().asObject() == null);
+        return v.type() != CiKind.Object || (v.isConstant() && v.asConstant().asObject() == null);
     }
 
     @Override
@@ -347,8 +347,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         boolean mustLoadBoth = (x.opcode() == Bytecodes.FREM || x.opcode() == Bytecodes.DREM);
         if (left.isRegister() || x.x().isConstant() || mustLoadBoth) {
             left.loadItem();
-        } else {
-            left.dontLoadItem();
         }
 
         assert C1XOptions.SSEVersion >= 2;
@@ -359,8 +357,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.loadItem();
         } else if (right.isRegister()) {
             right.loadItem();
-        } else {
-            right.dontLoadItem();
         }
 
         LIROperand reg;
@@ -408,7 +404,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 info = stateFor(x);
             }
 
-            LIROperand resultReg = resultRegisterFor(x.type().basicType);
+            LIROperand resultReg = resultRegisterFor(x.type());
             left.loadItemForce(cc.at(0));
             right.loadItem();
 
@@ -549,9 +545,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                         }
                     }
                 }
-                if (useConstant) {
-                    rightArg.dontLoadItem();
-                } else {
+                if (!useConstant) {
                     rightArg.loadItem();
                 }
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
@@ -562,7 +556,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
-                rightArg.dontLoadItem();
                 rlockResult(x);
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
                 arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
@@ -574,8 +567,8 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
 
-        assert x.x().type().basicType == x.type().basicType && x.y().type().basicType == x.type().basicType : "wrong parameters";
-        switch (x.type().basicType) {
+        assert x.x().type() == x.type() && x.y().type() == x.type() : "wrong parameters";
+        switch (x.type()) {
             case Float:
             case Double:
                 visitArithmeticOpFPU(x);
@@ -596,13 +589,12 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         LIRItem count = new LIRItem(x.y(), this);
 
-        boolean mustLoadCount = !count.isConstant() || x.type().basicType == CiKind.Long;
+        boolean mustLoadCount = !count.isConstant() || x.type() == CiKind.Long;
         if (mustLoadCount) {
             // count for long must be in register
             count.loadItemForce(shiftCountOpr());
-        } else {
-            count.dontLoadItem();
         }
+
         value.loadItem();
         LIROperand reg = rlockResult(x);
 
@@ -712,8 +704,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         // In 64bit the type can be long, sparc doesn't have this assert // assert(offset.type().tag() == intTag,
         // "invalid type");
 
-        assert cmp.value().type().basicType == type.basicType : "invalid type";
-        assert val.value().type().basicType == type.basicType : "invalid type";
+        assert cmp.value().type() == type : "invalid type";
+        assert val.value().type() == type : "invalid type";
 
         // get address of field
         obj.loadItem();
@@ -876,7 +868,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitNewInstance(NewInstance x) {
 
         CodeEmitInfo info = stateFor(x, x.stateBefore());
-        LIROperand reg = resultRegisterFor(x.type().basicType);
+        LIROperand reg = resultRegisterFor(x.type());
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
 
 
@@ -914,7 +906,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         CodeEmitInfo info = stateFor(x, x.stateBefore());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
-        LIROperand reg = emitNewTypeArray(x.type().basicType, x.elementType(), length.result(), info);
+        LIROperand reg = emitNewTypeArray(x.type(), x.elementType(), length.result(), info);
         LIROperand result = rlockResult(x);
         lir().move(reg, result);
     }
@@ -949,7 +941,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         CodeEmitInfo info = stateFor(x, x.stateBefore());
 
-        LIROperand reg = resultRegisterFor(x.type().basicType);
+        LIROperand reg = resultRegisterFor(x.type());
         LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
         LIROperand tmp2 = LIROperandFactory.singleLocation(CiKind.Object, X86.rsi);
         LIROperand tmp3 = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
@@ -1019,7 +1011,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // Create a new code emit info as they must not be shared!
         CodeEmitInfo info2 = stateFor(x, x.stateBefore());
-        LIROperand reg = resultRegisterFor(x.type().basicType);
+        LIROperand reg = resultRegisterFor(x.type());
         lir().callRuntimeCalleeSaved(CiRuntimeCall.NewMultiArray, reg, arguments, info2);
 
         // Save result
@@ -1105,13 +1097,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         xin.loadItem();
         if (tag.isLong() && yin.isConstant() && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
-            // inline long zero
-            yin.dontLoadItem();
+            // dont load item
         } else if (tag.isLong() || tag.isFloat() || tag.isDouble()) {
             // longs cannot handle constants at right side
             yin.loadItem();
-        } else {
-            yin.dontLoadItem();
         }
 
         // add safepoint before generating condition code so it can be recomputed

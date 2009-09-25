@@ -62,9 +62,6 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
      */
     private static final DynamicTrampoline DYNAMIC_TRAMPOLINE = new ITableTrampoline(0, null);
 
-    private static void restoreReceiver(Object receiver) {
-    }
-
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.INTERFACE)
     private static Address templateBasedITableTrampoline(Object receiver) throws Throwable {

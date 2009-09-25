@@ -51,7 +51,6 @@ public final class BytecodeOperandLabel extends InspectorLabel {
 
     public void redisplay() {
         setFont(style().bytecodeOperandFont());
-        setForeground(style().bytecodeColor());
     }
 
 }

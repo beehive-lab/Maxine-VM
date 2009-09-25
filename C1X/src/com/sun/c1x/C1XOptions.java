@@ -74,12 +74,13 @@ public class C1XOptions {
     public static boolean PrintExceptionHandlers             = ____;
     public static boolean PrintNotLoaded                     = ____;
     public static boolean FatalUnimplemented                 = ____;
-    public static boolean InterpretInvokedMethods            = true;
+    public static boolean InterpretInvokedMethods            = ____;
     public static boolean PrintStateInInterpreter            = ____;
     public static boolean PrintAssembly                      = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
     public static boolean PrintBlocksDeleted                 = ____;
+    public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings
     public static boolean CanonicalizeInstructions           = true;
@@ -139,6 +140,7 @@ public class C1XOptions {
     public static boolean DoFlowSensitiveNCE                 = ____;
     public static boolean DoDeadCodeElimination1             = ____;
     public static boolean DoDeadCodeElimination2             = ____;
+    public static boolean DoLoopPeeling                      = ____;
 
     // backend optimization settings
     public static boolean OptimizeControlFlow                = ____;
@@ -233,6 +235,7 @@ public class C1XOptions {
         DoNullCheckElimination             = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____;
     }
 
     private static void setOptimizationLevel1() {
@@ -266,6 +269,7 @@ public class C1XOptions {
         DoFlowSensitiveNCE                 = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____;
     }
 
     private static void setOptimizationLevel2() {
@@ -299,6 +303,7 @@ public class C1XOptions {
         DoFlowSensitiveNCE                 = ____;
         DoDeadCodeElimination1             = ____;
         DoDeadCodeElimination2             = ____;
+        DoLoopPeeling                      = ____; // still need to insert Phi instructions at merge blocks
     }
 
     private static void setOptimizationLevel3() {
@@ -333,5 +338,6 @@ public class C1XOptions {
         DoFlowSensitiveNCE                 = true;
         DoDeadCodeElimination1             = true;
         DoDeadCodeElimination2             = true;
+        DoLoopPeeling                      = ____; // still need to insert Phi instructions at merge blocks
     }
 }

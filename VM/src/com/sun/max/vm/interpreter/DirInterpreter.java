@@ -30,6 +30,7 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.transform.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
@@ -300,7 +301,8 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
     }
 
     @Override
-    public Value execute(DirMethod dirMethod, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
+        DirMethod dirMethod = (DirMethod) method;
         if (dirMethod.isNative()) {
             // JNI stubs cannot be interpreted at the DIR level so the DIR interpreter simply
             // invokes the native method via reflection:

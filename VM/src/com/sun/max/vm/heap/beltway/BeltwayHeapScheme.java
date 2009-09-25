@@ -30,7 +30,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -87,6 +89,36 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
      */
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayCellVisitorImpl cellVisitor;
+
+    // Grip forwarder to process discovered reference in a specific belt.
+    private final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+        private Belt evacuatedBelt;
+
+        public void initialize(Belt evacuatedBelt) {
+            this.evacuatedBelt = evacuatedBelt;
+        }
+
+        public boolean isReachable(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (evacuatedBelt.contains(origin)) {
+                final Grip forwardGrip = Layout.readForwardGrip(origin);
+                if (forwardGrip.isZero()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (evacuatedBelt.contains(origin)) {
+                return Layout.readForwardGrip(origin);
+            }
+            return grip;
+        }
+    }
+
+    private final GripForwarder gripForwarder = new GripForwarder();
 
     public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
 
@@ -166,6 +198,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected abstract int [] beltHeapPercentage();
     protected abstract String [] beltDescriptions();
     protected abstract HeapBoundChecker heapBoundChecker();
+    protected abstract void initializeTlabAllocationBelt();
 
     public Size getMaxHeapSize() {
         return dynamicHeapMaxSize;
@@ -217,6 +250,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts(this);
+            initializeTlabAllocationBelt(); // enable tlab allocation -- needed for InspectableHeapInfo.
+
             InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
@@ -292,6 +327,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             Log.println("Scan Code");
         }
         Code.visitCells(cellVisitor, false);
+
+        if (Heap.verbose()) {
+            Log.println("Scan Immortal");
+        }
+        ImmortalHeap.visitCells(cellVisitor);
+    }
+
+    public void processDiscoveredSpecialReferences(Belt evacuatedBelt) {
+        gripForwarder.initialize(evacuatedBelt);
+        SpecialReferenceManager.processDiscoveredSpecialReferences(gripForwarder);
     }
 
     protected Size calculateHeapSize() {

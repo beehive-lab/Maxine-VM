@@ -89,7 +89,7 @@ public @interface METHOD_SUBSTITUTIONS {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
                     }
                     originalMethodActor.beUnsafe();
-                    MaxineVM.registerImageMethod(originalMethodActor); // TODO: losen this requirement
+                    MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
                     if (substituteMethod.getAnnotation(INLINE.class) == null &&

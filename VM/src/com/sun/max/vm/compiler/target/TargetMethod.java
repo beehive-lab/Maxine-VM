@@ -32,6 +32,9 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.prototype.*;
@@ -47,7 +50,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion {
+public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
 
     /**
      * The compiler scheme that produced this target method.
@@ -476,5 +479,37 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     protected final void setABI(TargetABI abi) {
         this.abi = abi;
+    }
+
+
+    public void cleanup() {
+    }
+
+    public boolean contains(Builtin builtin, boolean defaultResult) {
+        return false;
+    }
+
+    public int count(Builtin builtin, int defaultResult) {
+        return 0;
+    }
+
+    public Class<? extends IrTraceObserver> irTraceObserverType() {
+        return null;
+    }
+
+    public boolean isGenerated() {
+        return false;
+    }
+
+    public boolean isNative() {
+        return false;
+    }
+
+    public String name() {
+        return description();
+    }
+
+    public String traceToString() {
+        return description();
     }
 }

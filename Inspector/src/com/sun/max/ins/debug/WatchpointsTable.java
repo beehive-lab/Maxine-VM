@@ -259,7 +259,7 @@ public final class WatchpointsTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
-        return style().defaultTextColor();
+        return null;
     }
 
 
@@ -301,7 +301,7 @@ public final class WatchpointsTable extends InspectorTable {
                 label.setForeground(inspection().style().debugIPTagColor());
             } else {
                 label.setIcon(null);
-                label.setForeground(inspection().style().defaultTextColor());
+                label.setForeground(null);
             }
             label.setText(labelText);
             label.setToolTipText(toolTipText);

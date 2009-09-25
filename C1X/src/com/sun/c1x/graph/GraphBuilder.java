@@ -619,7 +619,7 @@ public class GraphBuilder {
 
     void genConvert(int opcode, CiKind from, CiKind to) {
         CiKind tt = to.stackType();
-        push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
+        push(tt, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
     void genIncrement() {
@@ -1019,7 +1019,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type().basicType, x);
+                curState.push(x.type(), x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -1033,7 +1033,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type().basicType, x);
+                curState.push(x.type(), x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1749,7 +1749,7 @@ public class GraphBuilder {
                     get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
                     Value oc = appendConstant(CiConstant.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.type(), e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

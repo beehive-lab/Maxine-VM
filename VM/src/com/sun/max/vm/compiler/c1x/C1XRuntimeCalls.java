@@ -36,6 +36,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.unsafe.Word;
 
 /**
  *
@@ -44,12 +45,12 @@ import com.sun.max.vm.type.*;
 public class C1XRuntimeCalls {
 
     public static ClassMethodActor getClassMethodActor(CiRuntimeCall call) {
-        final ClassMethodActor result = criticalMethods[call.ordinal()].classMethodActor;
+        final ClassMethodActor result = runtimeCallMethods[call.ordinal()];
         assert result != null;
         return result;
     }
 
-    private static CriticalMethod[] criticalMethods = new CriticalMethod[CiRuntimeCall.values().length];
+    private static ClassMethodActor[] runtimeCallMethods = new ClassMethodActor[CiRuntimeCall.values().length];
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -198,7 +199,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
+        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
     }
 
 
@@ -215,7 +216,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * 8 + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + 8 * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
+        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + Word.size() * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
     }
 
     @INLINE
@@ -458,7 +459,11 @@ public class C1XRuntimeCalls {
     }
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
-        assert criticalMethods[call.ordinal()] == null : "method already defined";
-        criticalMethods[call.ordinal()] = new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
+        assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
+        if (MaxineVM.isPrototyping()) {
+            new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
+        }
+
+        runtimeCallMethods[call.ordinal()] = ClassMethodActor.fromJava(selectedMethod);
     }
 }

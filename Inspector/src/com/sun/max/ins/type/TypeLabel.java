@@ -113,15 +113,14 @@ public class TypeLabel extends InspectorLabel {
     }
 
     public void redisplay() {
-        setFont(style().javaClassNameFont());
         updateText();
+        setFont(style().defaultFont());
     }
 
     private void updateText() {
         if (typeDescriptor == null) {
             setText("");
             setToolTipText("");
-            setForeground(style().javaNameColor());
         } else {
             final Class javaType = typeDescriptor.resolveType(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
             setText(javaType.getSimpleName());
@@ -129,7 +128,6 @@ public class TypeLabel extends InspectorLabel {
                 setForeground(style().javaUnresolvedNameColor());
                 setToolTipText("<unloaded>" +  javaType.getName());
             } else {
-                setForeground(style().javaNameColor());
                 setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
             }
         }

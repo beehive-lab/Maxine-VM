@@ -50,7 +50,6 @@ public abstract class DataLabel extends InspectorLabel {
     public void redisplay() {
         // Default styles
         setFont(style().primitiveDataFont());
-        setForeground(style().primitiveDataColor());
     }
 
     /**
@@ -74,7 +73,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -89,7 +87,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
     }
 
@@ -109,7 +106,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -149,7 +145,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -191,7 +186,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -227,7 +221,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -244,7 +237,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().charDataFont());
-            setForeground(style().charDataColor());
         }
     }
 
@@ -260,7 +252,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -280,7 +271,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
 
         protected void setValue(int n) {
@@ -310,7 +300,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         protected void setValue(int n) {
@@ -337,9 +326,8 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color for floats
+            // TODO: define a font for floats
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         protected void updateText() {
@@ -364,7 +352,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -379,7 +366,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
     }
 
@@ -395,9 +381,8 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color, for doubles
+            // TODO: define a font for doubles
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         private void updateText() {
@@ -463,7 +448,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -552,7 +536,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
             updateText();
         }
 

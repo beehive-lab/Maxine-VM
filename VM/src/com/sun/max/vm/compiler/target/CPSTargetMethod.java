@@ -79,6 +79,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super(classMethodActor, compilerScheme, null);
     }
 
+    @Override
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return defaultResult;
     }
@@ -97,10 +98,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return description();
     }
 
+    @Override
     public int count(Builtin builtin, int defaultResult) {
         return defaultResult;
     }
 
+    @Override
     public Class<? extends IrTraceObserver> irTraceObserverType() {
         return IrTraceObserver.class;
     }
@@ -245,10 +248,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public abstract int registerReferenceMapSize();
 
     /**
-     * Overwrite this method if the top frame instruction pointer must be adjusted for this target method.
-     * @return the value that should be added to the top frame instruction pointer
+     * Overwrite this method if the instruction pointer for a throw must be adjusted when it
+     * is in a frame that has made a call (i.e. not hte top frame).
+     * @return the value that should be added to the instruction pointer
      */
-    public int topFrameInstructionAdjustment() {
+    public int callerInstructionPointerAdjustment() {
         return 0;
     }
 
@@ -256,11 +260,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public final Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         if (catchRangePositions != null) {
 
-
             int throwOffset = throwAddress.minus(codeStart).toInt();
 
-
-            throwOffset += topFrameInstructionAdjustment();
+            if (!isTopFrame) {
+                throwOffset += callerInstructionPointerAdjustment();
+            }
 
             for (int i = catchRangePositions.length - 1; i >= 0; i--) {
                 if (throwOffset >= catchRangePositions[i]) {
@@ -433,10 +437,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
     }
 
+    @Override
     public final boolean isGenerated() {
         return code != null;
     }
 
+    @Override
     public final String traceToString() {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));

@@ -68,7 +68,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final OperandsRenderer operandsRenderer;
     private final SourceLineRenderer sourceLineRenderer;
     private final Color defaultBackgroundColor;
-    private final Color alternateBackgroundColor;
     private final Color stopBackgroundColor;
 
     public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
@@ -90,7 +89,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         final TargetCodeTableColumnModel tableColumnModel = new TargetCodeTableColumnModel(instanceViewPreferences);
         this.table = new TargetCodeTable(inspection, tableModel, tableColumnModel);
         defaultBackgroundColor = this.table.getBackground();
-        alternateBackgroundColor = style().darken1(defaultBackgroundColor);
         stopBackgroundColor = style().darken2(defaultBackgroundColor);
         createView();
     }
@@ -423,7 +421,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      * @return the color to be used
      */
     private Color getRowTextColor(int row) {
-        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : style().defaultCodeColor());
+        return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
+    }
+
+    private void setBorderForRow(JComponent component, int row) {
+        if (isBoundaryRow[row]) {
+            component.setBorder(style().defaultPaneTopBorder());
+        } else {
+            component.setBorder(null);
+        }
     }
 
     /**
@@ -432,17 +438,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      * Makes the renderer transparent if there is no special background needed.
      */
     private void setBackgroundForRow(JComponent component, int row) {
+
         if (isSearchMatchRow(row)) {
             component.setOpaque(true);
             component.setBackground(style().searchMatchedBackground());
         } else if (isStopRow[row]) {
             component.setOpaque(true);
             component.setBackground(stopBackgroundColor);
-        } else if (isAlternateRow[row]) {
-            component.setOpaque(true);
-            component.setBackground(alternateBackgroundColor);
         } else {
             component.setOpaque(false);
+            //component.setBackground(getBackground());
         }
     }
 
@@ -469,7 +474,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             } else {
                 setIcon(null);
-                setForeground(style().debugDefaultTagColor());
+                setForeground(null);
             }
             setText(rowToTagText(row));
             final TeleTargetBreakpoint teleTargetBreakpoint = getTargetBreakpointAtRow(row);
@@ -480,8 +485,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 } else {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());
                 }
+            } else if (isBoundaryRow[row]) {
+                setBorder(style().defaultPaneTopBorder());
             } else {
-                setBorder(style().debugDefaultTagBorder());
+                setBorder(null);
             }
             setToolTipText(toolTipText.toString());
             setBackgroundForRow(this, row);
@@ -510,6 +517,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setToolTipText("Instruction no. " + row + "in method");
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -528,6 +536,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setValue(address.minus(entryAddress).toInt());
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -548,6 +557,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -574,6 +584,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             } else {
                 setForeground(null);
             }
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -589,7 +600,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             final String string = value.toString();
-            setText(string);
+            setValue(string, null);
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -706,6 +718,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 setToolTipText(stackTrace.append("</table>").toString());
             }
             lastBytecodeLocation = bytecodeLocation;
+            setBorderForRow(this, row);
             return this;
         }
     }
@@ -733,38 +746,39 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            InspectorLabel inspectorLabel = inspectorLabels[row];
-            if (inspectorLabel == null) {
+            InspectorLabel renderer = inspectorLabels[row];
+            if (renderer == null) {
                 final TargetCodeInstruction targetCodeInstruction = tableModel.rowToInstruction(row);
                 final String text = targetCodeInstruction.operands;
                 if (targetCodeInstruction.targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction.targetAddress)) {
-                    inspectorLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
-                    inspectorLabels[row] = inspectorLabel;
+                    renderer = new WordValueLabel(inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction.targetAddress, table);
+                    inspectorLabels[row] = renderer;
                 } else if (targetCodeInstruction.literalSourceAddress != null) {
                     final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
-                    inspectorLabel = literalRenderer.render(inspection, text, literalAddress);
-                    inspectorLabels[row] = inspectorLabel;
+                    renderer = literalRenderer.render(inspection, text, literalAddress);
+                    inspectorLabels[row] = renderer;
                 } else if (rowToCalleeIndex(row) >= 0) {
                     final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
-                    inspectorLabel = poolConstantLabel;
-                    inspectorLabel.setForeground(getRowTextColor(row));
+                    renderer = poolConstantLabel;
+                    renderer.setForeground(getRowTextColor(row));
                 } else {
                     final StopPositions stopPositions = teleTargetRoutine().getStopPositions();
                     if (stopPositions != null && stopPositions.isNativeFunctionCallPosition(targetCodeInstruction.position)) {
                         final TextLabel textLabel = new TextLabel(inspection, "<native function>", text);
-                        inspectorLabel = textLabel;
-                        inspectorLabel.setForeground(getRowTextColor(row));
+                        renderer = textLabel;
+                        renderer.setForeground(getRowTextColor(row));
                     } else {
-                        inspectorLabel = targetCodeLabel;
-                        inspectorLabel.setText(text);
-                        inspectorLabel.setToolTipText(null);
-                        inspectorLabel.setForeground(getRowTextColor(row));
+                        renderer = targetCodeLabel;
+                        renderer.setText(text);
+                        renderer.setToolTipText(null);
+                        renderer.setForeground(getRowTextColor(row));
                     }
                 }
             }
-            setBackgroundForRow(inspectorLabel, row);
-            return inspectorLabel;
+            setBackgroundForRow(renderer, row);
+            setBorderForRow(renderer, row);
+            return renderer;
         }
 
     }
@@ -778,6 +792,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));
             setValue((byte[]) value);
+            setBorderForRow(this, row);
             return this;
         }
     }

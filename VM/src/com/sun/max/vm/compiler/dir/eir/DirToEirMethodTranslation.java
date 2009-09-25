@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.dir.eir;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -78,7 +77,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         eirBlock.appendInstruction(eirEpilogue);
         if (!isTemplate()) {
             if (eirMethod.isTrampoline()) {
-                final boolean isStaticTrampoline = ((TrampolineMethodActor) eirMethod.classMethodActor()).invocation() == TRAMPOLINE.Invocation.STATIC;
+                final boolean isStaticTrampoline = eirMethod.classMethodActor().isStaticTrampoline();
                 eirBlock.appendInstruction(createTrampolineExit(eirBlock, isStaticTrampoline));
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 eirBlock.appendInstruction(createTrapStubExit(eirBlock));

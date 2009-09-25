@@ -62,7 +62,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     // Flags that can be set on vregs
     public enum VregFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
-        CalleeSaved, // must be in a callee saved register
         ByteReg, // must be in a byte register
         NumVregFlags
     }
@@ -206,7 +205,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert instr instanceof Local;
             Local local = ((Local) instr);
             CiKind t = src.kind.stackType();
-            assert t == local.type().basicType.stackType() : "check";
+            assert t == local.type().stackType() : "check";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.vregNumber(), local);
@@ -310,16 +309,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         left.loadItem();
-        if (canInlineAsConstant(right.value())) {
-            right.dontLoadItem();
-        } else {
+        if (!canInlineAsConstant(right.value())) {
             right.loadItem();
         }
 
         LIRItem tVal = new LIRItem(x.trueValue(), this);
         LIRItem fVal = new LIRItem(x.falseValue(), this);
-        tVal.dontLoadItem();
-        fVal.dontLoadItem();
         LIROperand reg = rlockResult(x);
 
         lir.cmp(lirCond(x.condition()), left.result(), right.result());
@@ -414,7 +409,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // setup result register
         LIROperand resultRegister = LIROperandFactory.IllegalLocation;
         if (!x.type().isVoid()) {
-            resultRegister = resultRegisterFor(x.type().basicType);
+            resultRegister = resultRegisterFor(x.type());
         }
 
         CodeEmitInfo info = stateFor(x, x.stateBefore());
@@ -541,10 +536,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         array.loadItem();
-        if (index.isConstant() && canInlineAsConstant(x.index())) {
-            // let it be a constant
-            index.dontLoadItem();
-        } else {
+        if (!(index.isConstant() && canInlineAsConstant(x.index()))) {
             index.loadItem();
         }
 
@@ -663,7 +655,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.type().isVoid()) {
             lir.returnOp(LIROperandFactory.IllegalLocation);
         } else {
-            LIROperand reg = resultRegisterFor(x.type().basicType);
+            LIROperand reg = resultRegisterFor(x.type());
             LIRItem result = new LIRItem(x.result(), this);
 
             result.loadItemForce(reg);
@@ -1239,7 +1231,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem value = new LIRItem(x.argumentAt(0), this);
         LIROperand reg = rlockResult(x);
         value.loadItem();
-        LIROperand tmp = forceToSpill(value.result(), x.type().basicType);
+        LIROperand tmp = forceToSpill(value.result(), x.type());
         lir.move(tmp, reg);
     }
 
@@ -1335,10 +1327,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem off = new LIRItem(x.offset(), this);
 
         src.loadItem();
-        if (off.isConstant() && canInlineAsConstant(x.offset())) {
-            // let it be a constant
-            off.dontLoadItem();
-        } else {
+        if (!(off.isConstant() && canInlineAsConstant(x.offset()))) {
             off.loadItem();
         }
 
@@ -1682,8 +1671,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand physReg = LIROperandFactory.IllegalLocation;
         LIROperand result = LIROperandFactory.IllegalLocation;
         if (!resultType.isVoid()) {
-            result = newRegister(resultType.basicType);
-            physReg = resultRegisterFor(resultType.basicType);
+            result = newRegister(resultType);
+            physReg = resultRegisterFor(resultType);
         }
 
         List<LIROperand> argumentList = new ArrayList<LIROperand>();
@@ -1920,8 +1909,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
+//                if (curVal instanceof Phi) {
+//                    operandForPhi((Phi) curVal);
+//                }
                 LIROperand operand = curVal.operand();
-                if (curVal.operand().isIllegal()) {
+                if (operand == null || operand.isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
                     operand = operandForInstruction(curVal);
                 }

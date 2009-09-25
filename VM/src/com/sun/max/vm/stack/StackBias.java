@@ -82,7 +82,7 @@ public enum StackBias {
     }
 
     public Pointer bias(Pointer unbiasedPointer) {
-        return  unbiasedPointer.minus(stackBias());
+        return unbiasedPointer.minus(stackBias());
     }
 
     public int stackBias() {

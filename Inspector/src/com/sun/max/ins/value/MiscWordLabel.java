@@ -87,7 +87,6 @@ public final class MiscWordLabel extends ValueLabel {
 
     public void redisplay() {
         setFont(style().hexDataFont());
-        setForeground(style().hexDataColor());
         updateText();
     }
 

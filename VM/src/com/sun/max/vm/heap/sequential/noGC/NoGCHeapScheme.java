@@ -341,12 +341,13 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         // do nothing.
     }
 
+    @Override
     public void disableImmortalMemoryAllocation() {
         FatalError.unexpected("Non implemented");
     }
 
+    @Override
     public void enableImmortalMemoryAllocation() {
         FatalError.unexpected("Non implemented");
     }
-
 }

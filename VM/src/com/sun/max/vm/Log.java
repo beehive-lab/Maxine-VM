@@ -80,6 +80,9 @@ public final class Log {
     @C_FUNCTION
     private static native void log_unlock();
 
+    @C_FUNCTION
+    private static native void log_flush();
+
     /**
      * The singleton VM log output stream.
      *
@@ -111,7 +114,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#print(String...)} on {@link #out}.
+     * Equivalent to calling {@link com.sun.max.vm.Log.LogPrintStream#printf(String, Object[])} on {@link #out}.
      */
     public static void print(String... arr) {
         for (String s : arr) {
@@ -138,6 +141,10 @@ public final class Log {
      */
     public static void print(Object object) {
         out.print(object);
+    }
+
+    public static void flush() {
+        out.flush();
     }
 
     /**
@@ -418,6 +425,15 @@ public final class Log {
          */
         private LogPrintStream(OutputStream output) {
             super(output);
+        }
+
+        @Override
+        public void flush() {
+            if (MaxineVM.isPrototyping()) {
+                super.flush();
+            } else {
+                log_flush();
+            }
         }
 
         public void print(String s, boolean withNewline) {
@@ -864,6 +880,7 @@ public final class Log {
 
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
+        new CriticalNativeMethod(Log.class, "log_flush");
 
         new CriticalNativeMethod(Log.class, "log_print_buffer");
         new CriticalNativeMethod(Log.class, "log_print_boolean");

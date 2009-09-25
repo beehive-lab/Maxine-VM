@@ -49,11 +49,16 @@ public class Catch_StackOverflowError_03 {
             String lastMethodName = elements[0].getMethodName();
             for (int i = 1; i < elements.length; ++i) {
                 String methodName = elements[i].getMethodName();
-                if (lastMethodName.equals(methodName) || lastMethodName.startsWith("recurse") && !(methodName.startsWith("recurse") || methodName.equals("test"))) {
-                    for (int j = 0; j < elements.length && j < i + EXTRA_DEPTH_PRINT; ++j) {
-                        System.err.println(elements[j]);
-                    }
-                    System.err.println("....");
+                if (methodName.equals("test")) {
+                    break;
+                }
+                if (lastMethodName.equals(methodName) || !methodName.startsWith("recurse")) {
+// JTT tests are not allowed to print anything
+//                  for (int j = 0; j < elements.length && j < i + EXTRA_DEPTH_PRINT; ++j) {
+//                      System.err.println(elements[j]);
+//                  }
+//                  System.err.println("....");
+//
                     return 1;
                 }
                 lastMethodName = methodName;

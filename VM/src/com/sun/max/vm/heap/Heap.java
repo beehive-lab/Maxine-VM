@@ -429,6 +429,10 @@ public final class Heap {
         return heapScheme().reportUsedSpace();
     }
 
+    public static long maxObjectInspectionAge() {
+        return heapScheme().maxObjectInspectionAge();
+    }
+
     public static void runFinalization() {
         heapScheme().runFinalization();
     }

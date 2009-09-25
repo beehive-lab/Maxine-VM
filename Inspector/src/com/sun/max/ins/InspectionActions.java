@@ -2977,9 +2977,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Field \"" + headerField.name() + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
-                final MaxWatchpoint watchpoint
-                    = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, prefs.read(), prefs.write(), prefs.exec(), prefs.enableDuringGC());
+                final String description = "Field \"" + headerField.name + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, true, prefs.read(), prefs.write(), prefs.exec(), prefs.enableDuringGC());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
