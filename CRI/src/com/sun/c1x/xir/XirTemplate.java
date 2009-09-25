@@ -41,6 +41,7 @@ public class XirTemplate {
     public static int HAS_CONTROL_FLOW = 0x008;
     public static int GLOBAL_STUB = 0x010;
 
+    public final String name;
     public final XirAssembler.XirInstruction[] fastPath;
     public final XirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
@@ -49,7 +50,8 @@ public class XirTemplate {
     public int[] tempFlags;
     public int flags;
 
-    XirTemplate(XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, int flags) {
+    XirTemplate(String name, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, int flags) {
+        this.name = name;
         this.fastPath = fastPath;
         this.slowPath = slowPath;
         this.labels = labels;

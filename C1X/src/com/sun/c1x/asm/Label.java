@@ -38,7 +38,7 @@ public class Label {
     private List<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
-     * Returns the position of this label in the code buffer
+     * Returns the position of this label in the code buffer.
      * @return the position
      */
     public final int position() {

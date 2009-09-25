@@ -393,7 +393,7 @@ public class Canonicalizer extends ValueVisitor {
             // writing the value to a field that is packed
             Value v = i.value();
             if (v instanceof Convert) {
-                Value nv = eliminateNarrowing(i.field().basicType(), (Convert) v);
+                Value nv = eliminateNarrowing(i.field().kind(), (Convert) v);
                 // limit this optimization to the current basic block
                 // XXX: why is this limited to the current block?
                 if (nv != null && inCurrentBlock(v)) {
@@ -571,7 +571,7 @@ public class Canonicalizer extends ValueVisitor {
         CiKind type = CiKind.Illegal;
         if (v instanceof LoadField) {
             // remove redundant conversions from field loads of the correct type
-            type = ((LoadField) v).field().basicType();
+            type = ((LoadField) v).field().kind();
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
             type = ((LoadIndexed) v).elementType();

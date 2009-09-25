@@ -22,16 +22,19 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.debug.*;
 import com.sun.c1x.xir.*;
+import com.sun.c1x.ri.RiMethod;
 
 public class LIRXirInstruction extends LIRInstruction {
 
     public final LIROperand[] originalOperands;
     public final XirSnippet snippet;
+    public final RiMethod javaMethod;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands) {
+    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, RiMethod javaMethod) {
         super(LIROpcode.Xir, outputOperand, null, false, null, inputTempCount, tempCount, operands);
         this.snippet = snippet;
         this.originalOperands = originalOperands;
+        this.javaMethod = javaMethod;
     }
 
     public LIROperand[] getOperands() {

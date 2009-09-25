@@ -319,7 +319,7 @@ public class XirAssembler {
 
     public void callJava(XirVariable result, XirVariable destination) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
-        append(new XirInstruction(resultKind, XirOp.CallJava, nullOperand, destination));
+        append(new XirInstruction(resultKind, XirOp.CallJava, result, destination));
     }
 
     public void callStub(XirTemplate stub, XirVariable result, XirVariable... args) {
@@ -394,15 +394,15 @@ public class XirAssembler {
         return resultOperand;
     }
 
-    public XirTemplate finishTemplate() {
-        return buildTemplate(false, false);
+    public XirTemplate finishTemplate(String name) {
+        return buildTemplate(name, false, false);
     }
 
-    public XirTemplate finishStub() {
-        return buildTemplate(false, true);
+    public XirTemplate finishStub(String name) {
+        return buildTemplate(name, false, true);
     }
 
-    private XirTemplate buildTemplate(boolean isStub, boolean twoOperandForm) {
+    private XirTemplate buildTemplate(String name, boolean isStub, boolean twoOperandForm) {
         ArrayList<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
         ArrayList<XirInstruction> slowPath = new ArrayList<XirInstruction>();
 
@@ -491,6 +491,6 @@ public class XirAssembler {
         XirInstruction[] sp = slowPath.size() > 0 ? slowPath.toArray(new XirInstruction[slowPath.size()]) : null;
         XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
-        return new XirTemplate(fp, sp, xirLabels, xirParameters, flags);
+        return new XirTemplate(name, fp, sp, xirLabels, xirParameters, flags);
     }
 }

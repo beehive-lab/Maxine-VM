@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
@@ -781,9 +780,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand result = newRegister(x.type());
 
         // arguments of lirConvert
-        LIROperand convInput = input;
-
-        lir().convert(x.opcode(), convInput, result);
+        lir().convert(x.opcode(), input, result);
         assert result.isVirtual() : "result must be virtual register";
         setResult(x, result);
     }
@@ -796,9 +793,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
 
 
-        if (!x.instanceClass().isLoaded() && C1XOptions.PrintNotLoaded) {
-            TTY.println(String.format("   ###class not loaded at new bci %d", x.bci()));
-        }
         RiType klass = x.instanceClass();
 
         if (x.instanceClass().isLoaded()) {

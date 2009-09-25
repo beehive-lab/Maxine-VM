@@ -469,7 +469,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic i) {
-        Intrinsic other = new Intrinsic(i.type(), i.intrinsic(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore().copy(), i.preservesState(), i.canTrap());
+        Intrinsic other = new Intrinsic(i.type(), i.intrinsic(), i.target(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore().copy(), i.preservesState(), i.canTrap());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());

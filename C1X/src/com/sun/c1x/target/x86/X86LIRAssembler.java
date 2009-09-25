@@ -58,11 +58,7 @@ public class X86LIRAssembler extends LIRAssembler {
         masm = (X86MacroAssembler) compilation.masm();
 
         wordSize = compilation.target.arch.wordSize;
-        int referenceSize= compilation.target.referenceSize;
         rscratch1 = compilation.target.scratchRegister;
-        if (compilation.target.arch.is64bit()) {
-        } else {
-        }
     }
 
     private X86MacroAssembler masm() {
@@ -2926,10 +2922,10 @@ public class X86LIRAssembler extends LIRAssembler {
             labels[i] = new Label();
         }
 
-        emitXirInstructions(snippet.template.fastPath, labels, instruction.getOperands());
+        emitXirInstructions(instruction, snippet.template.fastPath, labels, instruction.getOperands());
     }
 
-    private void emitXirInstructions(XirInstruction[] instructions, Label[] labels, LIROperand[] ops) {
+    private void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, LIROperand[] ops) {
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
                 case Add:
@@ -3027,8 +3023,17 @@ public class X86LIRAssembler extends LIRAssembler {
                 case PointerCAS:
                     break;
 
-                case CallJava:
+                case CallJava: {
+                    LIROperand dest = ops[inst.x().index];
+                    if (dest.isConstant()) {
+                        masm.call(xir.javaMethod, xir.info.oopMap.stackMap());
+                    } else if (dest.isAddress()) {
+                        masm.call(asAddress((LIRAddress) dest), xir.javaMethod, xir.info.oopMap.stackMap());
+                    } else if (dest.isRegister()) {
+                        masm.call(dest.asRegister(), xir.javaMethod, xir.info.oopMap.stackMap());
+                    }
                     break;
+                }
 
                 case CallStub:
                     break;
@@ -3036,29 +3041,51 @@ public class X86LIRAssembler extends LIRAssembler {
                 case CallRuntime:
                     break;
 
-                case Jmp:
+                case Jmp: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    masm.jmp(label);
                     break;
+                }
+                case Jeq: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.Equal, Condition.equal, ops, label);
+                    break;
+                }
+                case Jneq: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.NotEqual, Condition.notEqual, ops, label);
+                    break;
+                }
 
-                case Jeq:
+                case Jgt: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.Greater, Condition.greater, ops, label);
                     break;
+                }
 
-                case Jneq:
+                case Jgteq: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.GreaterEqual, Condition.greaterEqual, ops, label);
                     break;
+                }
 
-                case Jgt:
+                case Jugteq: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.GreaterEqual, Condition.greaterEqual, ops, label);
                     break;
+                }
 
-                case Jgteq:
+                case Jlt: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.Less, Condition.less, ops, label);
                     break;
+                }
 
-                case Jugteq:
+                case Jlteq: {
+                    Label label = labels[((XirLabel) inst.extra).index];
+                    emitXirCompare(inst, LIRCondition.LessEqual, Condition.lessEqual, ops, label);
                     break;
-
-                case Jlt:
-                    break;
-
-                case Jlteq:
-                    break;
+                }
 
                 case Bind:
                     XirLabel l = (XirLabel) inst.extra;
@@ -3068,5 +3095,12 @@ public class X86LIRAssembler extends LIRAssembler {
 
             }
         }
+    }
+
+    private void emitXirCompare(XirInstruction inst, LIRCondition lirCondition, Condition condition, LIROperand[] ops, Label label) {
+        LIROperand x = ops[inst.x().index];
+        LIROperand y = ops[inst.x().index];
+        compOp(lirCondition, x, y, null);
+        masm.jcc(condition, label);
     }
 }

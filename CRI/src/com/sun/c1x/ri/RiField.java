@@ -46,10 +46,10 @@ public interface RiField {
     RiType type();
 
     /**
-     * Gets the basic type of this field.
+     * Gets the kind of this field.
      * @return the basic type
      */
-    CiKind basicType();
+    CiKind kind();
 
     /**
      * Gets the holder of this field as a compiler interface type.
