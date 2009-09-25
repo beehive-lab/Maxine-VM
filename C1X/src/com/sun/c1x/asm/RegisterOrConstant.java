@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 
 /**
  * This class encapsulates either a register or a constant.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public class RegisterOrConstant {
@@ -63,10 +63,6 @@ public class RegisterOrConstant {
         return register;
     }
 
-    public int constantOrZero() {
-        return constant;
-    }
-
     public boolean isRegister() {
         return register != CiRegister.None;
     }
@@ -74,10 +70,6 @@ public class RegisterOrConstant {
     public int asConstant() {
         assert isConstant();
         return constant;
-    }
-
-    public CiRegister registerOrNoReg() {
-        return register;
     }
 
     public Object asOop() {

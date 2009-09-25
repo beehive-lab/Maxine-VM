@@ -104,7 +104,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, null, classMethodActor);
+            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
             return compilation.emitHIR();
         }
     }

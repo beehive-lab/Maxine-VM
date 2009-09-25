@@ -70,14 +70,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         return LIROperandFactory.singleLocation(CiKind.Int, X86.rcx);
     }
 
-    @Override
-    protected LIROperand syncTempOpr() {
+    private LIROperand syncTempOpr() {
         return LIROperandFactory.singleLocation(CiKind.Int, X86.rax);
-    }
-
-    @Override
-    protected LIROperand getThreadTemp() {
-        return LIROperandFactory.IllegalLocation;
     }
 
     @Override
@@ -158,19 +152,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else {
             return addr;
         }
-    }
-
-    @Override
-    protected void incrementCounter(long counter, int step) {
-        LIRLocation pointer = newPointerRegister();
-        lir().move(LIROperandFactory.intPtrConst(counter), pointer);
-        LIRAddress addr = new LIRAddress(pointer, 0, CiKind.Int);
-        incrementCounter(addr, step);
-    }
-
-    @Override
-    protected void incrementCounter(LIRAddress addr, int step) {
-        lir().add(addr, LIROperandFactory.intConst(step), addr);
     }
 
     @Override
@@ -995,10 +976,6 @@ public final class X86LIRGenerator extends LIRGenerator {
                         x.profiledBCI());
     }
 
-    protected LIROperand[] runtimeArguments(CiKind... arguments) {
-        return compilation.frameMap().runtimeCallingConvention(arguments).arguments().toArray(new LIROperand[0]);
-    }
-
     @Override
     public void visitInstanceOf(InstanceOf x) {
         LIRItem obj = new LIRItem(x.object(), this);
@@ -1067,17 +1044,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         assert x.defaultSuccessor() == x.falseSuccessor() : "wrong destination above";
         lir().jump(x.defaultSuccessor());
-    }
-
-    @Override
-    protected LIRLocation getThreadPointer() {
-        if (compilation.target.arch.is64bit()) {
-            return LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
-        } else {
-            LIRLocation result = newRegister(CiKind.Int);
-            lir().getThread(result);
-            return result;
-        }
     }
 
     @Override
@@ -1168,11 +1134,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand osrBufferPointer() {
-        return Util.nonFatalUnimplemented(null);
-    }
-
-    @Override
-    protected LIROperand rlockCalleeSaved(CiKind type) {
         return Util.nonFatalUnimplemented(null);
     }
 

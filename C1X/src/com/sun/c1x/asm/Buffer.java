@@ -77,12 +77,6 @@ public final class Buffer {
         return oldPos;
     }
 
-    public int emitLongLong(long high, long low) {
-        int oldPos = position;
-        position = emitLongLong(high, low, position);
-        return oldPos;
-    }
-
     private boolean isByte(int b) {
         return b == (b & 0xFF);
     }
@@ -162,18 +156,6 @@ public final class Buffer {
             data[pos++] = (byte) ((b >> 40) & 0xFF);
             data[pos++] = (byte) ((b >> 48) & 0xFF);
             data[pos++] = (byte) ((b >> 56) & 0xFF);
-        }
-        return pos;
-    }
-
-    public int emitLongLong(long high, long low, int pos) {
-        assert data != null : "must not use buffer after calling finished!";
-        if (bitOrdering == BitOrdering.BigEndian) {
-            emitLong(high);
-            emitLong(low);
-        } else {
-            emitLong(low);
-            emitLong(high);
         }
         return pos;
     }

@@ -79,12 +79,6 @@ public interface RiRuntime {
     int arrayLengthOffsetInBytes();
 
     /**
-     * The header size of an object in words.
-     * @return the header size in words
-     */
-    int headerSize();
-
-    /**
      * Byte offset of the field of an object that contains the pointer to the internal class representation of the type of the object.
      * @return the byte offset of the class field
      */
@@ -95,18 +89,6 @@ public interface RiRuntime {
      * @return the byte offset of the exception object field
      */
     int threadExceptionOffset();
-
-    /**
-     * Byte offset of the field of the internal thread representation that contains the pointer to the Java thread object.
-     * @return the byte offset of the thread object field
-     */
-    int threadObjectOffset();
-
-    /**
-     * Byte offset of the field of the internal class representation that contains the pointer to the Java class object.
-     * @return the byte offset of the class object field
-     */
-    int javaClassObjectOffset();
 
     /**
      * Checks whether an explicit null check is needed with the given offset of accessing an object.
@@ -121,12 +103,6 @@ public interface RiRuntime {
      * @return true if we are on a multiprocessor system, false otherwise
      */
     boolean isMP();
-
-    /**
-     * Byte offset of the limit field of java.nio.Buffer.
-     * @return the byte offset of the limit field
-     */
-    int javaNioBufferLimitOffset();
 
     /**
      * Checks whether jvmti can post exceptions.
@@ -207,13 +183,6 @@ public interface RiRuntime {
      * @return the maximum length of an array
      */
     int maximumArrayLength();
-
-    /**
-     * The initial mark word used for object initialization.
-     *
-     * @return the initial mark word
-     */
-    int initialMarkWord();
 
     /**
      * Calling convention for Java calls.

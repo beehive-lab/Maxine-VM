@@ -43,16 +43,14 @@ public class Canonicalizer extends ValueVisitor {
 
     final RiRuntime runtime;
     Value canonical;
-    int bci;
     List<Instruction> extra;
 
     public Canonicalizer(RiRuntime runtime) {
         this.runtime = runtime;
     }
 
-    public Value canonicalize(Instruction original, int bci) {
+    public Value canonicalize(Instruction original) {
         this.canonical = original;
-        this.bci = bci;
         this.extra = null;
         original.accept(this);
         return this.canonical;

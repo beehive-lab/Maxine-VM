@@ -50,14 +50,6 @@ public class Return extends BlockEnd {
     }
 
     /**
-     * Checks whether this return returns a result.
-     * @return <code>true</code> if this instruction returns a result
-     */
-    public boolean hasResult() {
-        return result != null;
-    }
-
-    /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */

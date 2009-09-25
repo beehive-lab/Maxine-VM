@@ -107,10 +107,6 @@ public class LIRList {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, null, arguments, info, cpi, constantPool));
     }
 
-    public void getThread(LIROperand result) {
-        append(new LIROp0(LIROpcode.GetThread, result));
-    }
-
     public void membar() {
         append(new LIROp0(LIROpcode.Membar));
     }

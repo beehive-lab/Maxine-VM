@@ -25,7 +25,7 @@ import com.sun.c1x.ci.CiRegister.*;
 
 /**
  * This class represents the X86 architecture.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public class X86 extends CiArchitecture {
@@ -50,7 +50,7 @@ public class X86 extends CiArchitecture {
     public static final CiRegister r13 = new CiRegister(14, 13, "r13", RegisterFlag.CPU);
     public static final CiRegister r14 = new CiRegister(15, 14, "r14", RegisterFlag.CPU);
     public static final CiRegister r15 = new CiRegister(16, 15, "r15", RegisterFlag.CPU);
-    public static final CiRegister[] cpuRegisters64 = {X86.rax, X86.rcx, X86.rdx, X86.rbx, X86.rsp, X86.rbp, X86.rsi, X86.rdi, r8, r9, r10, r11, r12, r13, r14, r15};
+    public static final CiRegister[] cpuRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
 
     // XMM registers
     public static final CiRegister xmm0 = new CiRegister(17, 0, "xmm0", RegisterFlag.XMM);

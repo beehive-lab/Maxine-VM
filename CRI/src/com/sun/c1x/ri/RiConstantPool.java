@@ -32,34 +32,6 @@ import com.sun.c1x.ci.CiConstant;
 public interface RiConstantPool {
 
     /**
-     * Resolves a reference to a field for a GETFIELD operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolveGetField(char cpi);
-
-    /**
-     * Resolves a reference to a field for a PUTFIELD operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolvePutField(char cpi);
-
-    /**
-     * Resolves a reference to a field for a GETSTATIC operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolveGetStatic(char cpi);
-
-    /**
-     * Resolves a reference to a field for a PUTSTATIC operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolvePutStatic(char cpi);
-
-    /**
      * Resolves a reference to a method for an INVOKEVIRTUAL operation at runtime.
      * @param cpi the constant pool index
      * @return a reference to the compiler interface method
@@ -174,21 +146,6 @@ public interface RiConstantPool {
      * @return a reference to the compiler interface type
      */
     RiType lookupType(char cpi);
-
-    /**
-     * Resolves a reference to a constant string at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the string object
-     */
-    String resolveString(char cpi);
-
-    /**
-     * Resolves a reference to a Java class at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the Java class
-     */
-    Class<?> resolveClass(char cpi);
-
 
     /**
      * Looks up a constant at the specified index.

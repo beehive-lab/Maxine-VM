@@ -466,16 +466,11 @@ public abstract class LIRInstruction {
     }
 
     public boolean hasOperands() {
-
         if (info != null || hasCall || stub != null) {
             return true;
         }
 
-        if (this.operands.size() > 0) {
-            return true;
-        }
-
-        return false;
+        return this.operands.size() > 0;
     }
 
     public boolean hasCall() {

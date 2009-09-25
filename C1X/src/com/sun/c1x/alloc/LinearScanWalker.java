@@ -528,9 +528,7 @@ final class LinearScanWalker extends IntervalWalker {
 
     void splitWhenPartialRegisterAvailable(Interval it, int registerAvailableUntil) {
         int minSplitPos = Math.max(it.previousUsage(IntervalUseKind.shouldHaveRegister, registerAvailableUntil), it.from() + 1);
-        int maxSplitPos = registerAvailableUntil;
-
-        splitBeforeUsage(it, minSplitPos, maxSplitPos);
+        splitBeforeUsage(it, minSplitPos, registerAvailableUntil);
     }
 
     void splitAndSpillInterval(Interval it) {

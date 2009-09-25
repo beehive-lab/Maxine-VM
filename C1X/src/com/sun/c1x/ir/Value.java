@@ -52,7 +52,6 @@ public abstract class Value {
         PreservesState,     // intrinsic preserves state
         UnorderedIsTrue,
         NeedsPatching,
-        ThrowIncompatibleClassChangeError,
         LiveValue,          // live because value is used
         LiveDeopt,          // live for deoptimization
         LiveControl,        // live for control dependencies

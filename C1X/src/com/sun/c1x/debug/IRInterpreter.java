@@ -800,7 +800,7 @@ public class IRInterpreter {
             }
             RiMethod targetMethod = i.target();
             String methodName = targetMethod.name();
-            if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+            if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                 Object res = callInitMethod(i);
                 environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
                 jumpNextInstruction();
@@ -824,7 +824,7 @@ public class IRInterpreter {
             }
             // native methods are invoked using reflection.
             // some special methods/classes are also always called using reflection
-            if (targetMethod.isNative() || methodName.equals("newInstance") || methodName.equals("newInstance0") ||
+            if (targetMethod.isNative() || "newInstance".equals(methodName) || "newInstance0".equals(methodName) ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Unsafe")                     ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.Reflection")                 ||
                 targetMethod.holder().javaClass().getName().startsWith("sun.reflect.FieldAccessor")) {
@@ -870,7 +870,7 @@ public class IRInterpreter {
             try {
                 IR methodHir = compiledMethods.get(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString());
                 if (methodHir == null) {
-                    C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, null, targetMethod);
+                    C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, runtime, targetMethod);
                     methodHir = compilation.emitHIR();
                     compiledMethods.put(targetMethod.holder().javaClass().getName() + methodName + targetMethod.signatureType().toString(), methodHir);
                 }
@@ -978,7 +978,7 @@ public class IRInterpreter {
 
             } else {
                 // Call init methods
-                if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+                if ("<init>".equals(methodName) || "<clinit>".equals(methodName)) {
                     Object res = callInitMethod(i);
                     environment.bind(i.arguments()[0], new CiConstant(CiKind.Object, res), instructionCounter);
                     jumpNextInstruction();
@@ -1011,7 +1011,7 @@ public class IRInterpreter {
 
                 Object res = null;
                 try {
-                    if (objref instanceof Class< ? > && (methodName.equals("newInstance") || methodName.equals("newInstance0"))) {
+                    if (objref instanceof Class< ? > && ("newInstance".equals(methodName) || "newInstance0".equals(methodName))) {
                         res = callInitMethod(i);
                     } else if (m != null) {
                         m.setAccessible(true);
@@ -1354,8 +1354,6 @@ public class IRInterpreter {
                         jump(i.successor(false));
                     }
                     break;
-                default:
-                    Util.shouldNotReachHere();
             }
             environment.performPhiMove(i);
         }

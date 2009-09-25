@@ -75,11 +75,6 @@ public abstract class CiArchitecture {
      */
     public final int machineCodeCallDisplacementOffset;
 
-    /**
-     * Size in bytes of a move instruction.
-     */
-    public final int machineCodeMoveConstInstructionSize;
-
     private final String name;
 
     /**
@@ -112,7 +107,6 @@ public abstract class CiArchitecture {
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
-        this.machineCodeMoveConstInstructionSize = nativeMoveConstInstructionSize;
         switch (bitOrdering) {
             case LittleEndian:
                 lowWordOffset = 0;
