@@ -23,6 +23,7 @@ package com.sun.max.vm.monitor.modal.modehandlers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
+import com.sun.max.vm.*;
 
 /**
  * Abstracts bit field access to a 64-bit modal lock word.
@@ -32,7 +33,7 @@ import com.sun.max.unsafe.box.*;
  *
  * @author Simon Wilkinson
  */
-public abstract class ModalLockWord64 extends Word {
+public abstract class ModalLockword64 extends Word {
 
     /*
      * Field layout:
@@ -51,18 +52,30 @@ public abstract class ModalLockWord64 extends Word {
     protected static final int SHAPE_BIT_INDEX = 0;
     protected static final int MISC_BIT_INDEX = 1;
 
-    protected ModalLockWord64() {
+    protected ModalLockword64() {
     }
 
     /**
-     * Boxing-safe cast of a <code>Word</code> to a <code>ModalLockWord64</code>.
+     * Prints the monitor state encoded in a {@code ModalLockword64} to the {@linkplain Log log} stream.
+     */
+    public static void log(ModalLockword64 lockword) {
+        Log.print("ModalLockword64: ");
+        if (lockword.isInflated()) {
+            Log.print("inflated=true");
+        } else {
+            Log.print("inflated=false");
+        }
+    }
+
+    /**
+     * Boxing-safe cast of a {@code Word} to a {@code ModalLockword64}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @UNSAFE_CAST
-    public static ModalLockWord64 from(Word word) {
-        return new BoxedModalLockWord64(word);
+    public static ModalLockword64 from(Word word) {
+        return new BoxedModalLockword64(word);
     }
 
     /**

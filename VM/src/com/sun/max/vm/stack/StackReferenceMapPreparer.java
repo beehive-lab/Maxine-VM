@@ -356,7 +356,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
             Log.print("Preparing stack reference map for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
             Log.print(highestStackSlot);
@@ -374,7 +374,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print(referenceMapBitIndex(lowestStackSlot));
             Log.println("]");
             Log.print("  Current thread is ");
-            Log.printVmThread(VmThread.current(), true);
+            Log.printCurrentThread(true);
         }
 
         // prepare references for each of the vm thread locals copies
@@ -429,7 +429,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
             Log.print("Completing preparation of stack reference map for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
             Log.print(highestSlot);
@@ -447,7 +447,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print(referenceMapBitIndex(lowestStackSlot));
             Log.println("]");
             Log.print("  Current thread is ");
-            Log.printVmThread(VmThread.current(), true);
+            Log.printCurrentThread(true);
         }
 
         // walk the stack and prepare references for each stack frame
@@ -540,7 +540,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             if (targetMethod instanceof JitTargetMethod) {
                 Log.print("JitTargetMethod ");
             }
-            Log.printMethodActor(targetMethod.classMethodActor(), false);
+            Log.printMethod(targetMethod.classMethodActor(), false);
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));
             Log.print("    Stop index: ");
@@ -742,7 +742,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             printSlot(referenceMapBitIndex(trampolineRefmapPointer), Pointer.zero());
             Log.println();
             Log.print("    Callee: ");
-            Log.printMethodActor(callee, true);
+            Log.printMethod(callee, true);
         }
 
         final int framePointerSlotIndex = referenceMapBitIndex(trampolineRefmapPointer.plus(offsetToFirstParameter));
@@ -805,7 +805,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 Log.print("Could not find stop postion for instruction at position ");
                 Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print(" in ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod.classMethodActor(), true);
                 throw FatalError.unexpected("Could not find stop position in target method");
             }
 
@@ -814,7 +814,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                     Log.print("  Preparing reference map for trampoline frame called by ");
                     Log.print((targetMethod instanceof JitTargetMethod) ? "JIT'ed" : "optimized");
                     Log.print(" caller ");
-                    Log.printMethodActor(targetMethod.classMethodActor(), true);
+                    Log.printMethod(targetMethod.classMethodActor(), true);
                 }
                 if (targetMethod instanceof JitTargetMethod) {
                     // This is a call from a JIT target method to a trampoline.

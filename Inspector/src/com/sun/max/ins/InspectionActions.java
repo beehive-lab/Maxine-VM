@@ -63,46 +63,46 @@ import com.sun.max.vm.value.*;
  *
  * <li><b>Create an action class:</b>
  * <ul>
- * <li> <code>final class DoSometingAction extends {@link InspectorAction}</code></li>
+ * <li> {@code final class DoSometingAction extends InspectorAction}</li>
  * <li> The Action classes are in package scope so that they can be used by {@link InspectorKeyBindings}.</li>
- * <li> Add a title:  <code>private static final DEFAULT_NAME = "do something"</code>.</li>
+ * <li> Add a title:  {@code private static final DEFAULT_NAME = "do something"}.</li>
  * <li> If the
  * action is interactive, for example if it produces a dialog, then the name should conclude with "...".
  * Capitalize the first word of the title but not the others, except for distinguished names such as
  * "Inspector" and acronyms.</li>
- * <li> For singletons, add a package scope constructor with one argument:  <code>String title</code></li>
+ * <li> For singletons, add a package scope constructor with one argument:  {@code String title}</li>
  * <li> For non-singletons, package scope constructor contains additional arguments that
  * customize the action, for example that specify to what "something" is to be done.</li>
- * <li> In the constructor: <code>super(inspection(), title == null ? DEFAULT_TITLE : title);</code>
+ * <li> In the constructor: {@code super(inspection(), title == null ? DEFAULT_TITLE : title);}
  * (being able to override isn't used in many cases, but it adds flexibility).</li>
  * <li> If a singleton and if it contains state, for example enabled/disabled, that might change
  * depending on external circumstances, then register for general notification:
- * <code>_refreshableActions.append(this);</code> in the constructor.</li>
+ * {@code _refreshableActions.append(this);} in the constructor.</li>
  * <li> Alternately, if state updates depend on a more specific kind of event, register
  * in the constructor explicitly for that event with a listener, for example
- * <code>focus().addListener(new InspectionFocusAdapter() { .... });</code>
- * The body of the listener should call <code>refresh</code>.</li>
- * <li>Override <code>protected void procedure()</code> with a method that does what
+ * {@code focus().addListener(new InspectionFocusAdapter() { .... });}
+ * The body of the listener should call {@code refresh}.</li>
+ * <li>Override {@code protected void procedure()} with a method that does what
  * needs to be done.</li>
  * <li>If a singleton and if it contains state that might be changed depending on
- * external circumstances, override <code>public void refresh(boolean force)</code>
+ * external circumstances, override {@code public void refresh(boolean force)}
  * with a method that updates the state.</li>
  * </ul></li>
  *
  *<li><b>Create a singleton variable if needed</b>:
  *<ul>
  * <li>If the command is a singleton, create an initialized variable, static if possible.</li>
- * <li><code>private static InspectorAction _doSomething = new DoSomethingAction(null);</code></li>
+ * <li>{@code private static InspectorAction _doSomething = new DoSomethingAction(null);}</li>
  * </ul></li>
  *
  * <li><b>Create an accessor:</b>
  * <ul>
- * <li>Singleton: <code>public InspectorAction doSomething()</code>.</li>
+ * <li>Singleton: {@code public InspectorAction doSomething()}.</li>
  * <li> Singleton accessor returns the singleton variable.</li>
  * <li>Non-singletons have additional arguments that customize the action, e.g. specifying to what "something"
- * is to be done; they also take a <code>String title</code> argument that permits customization of the
+ * is to be done; they also take a {@code String title} argument that permits customization of the
  * action's name, for example when it appears in menus.</li>
- * <li> Non-singletons return <code>new DoSomethignAction(args, String title)</code>.</li>
+ * <li> Non-singletons return {@code new DoSomethignAction(args, String title)}.</li>
  * <li>Add a descriptive Javadoc comment:  "@return an Action that does something".</li>
  * </ul></li>
  *

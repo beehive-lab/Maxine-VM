@@ -33,11 +33,11 @@ import com.sun.max.vm.*;
 import com.sun.max.lang.Function;
 
 /**
- * The <code>MaxRiType</code> class represents a compiler interface type,
+ * The {@code MaxRiType} class represents a compiler interface type,
  * either resolved or unresolved. A resolved compiler interface type refers
- * to the <code>ClassActor</code>, and instances are unique with respect
- * to a <code>MaxRiRuntime</code> instance. Unresolved compiler interface
- * types refer to <code>TypeDescriptors</code>. In either case, both
+ * to the {@code ClassActor}, and instances are unique with respect
+ * to a {@code MaxRiRuntime} instance. Unresolved compiler interface
+ * types refer to {@code TypeDescriptors}. In either case, both
  * refer to the constant pool from which they were referenced.
  *
  * @author Ben L. Titzer
@@ -118,7 +118,7 @@ public class MaxRiType implements RiType {
     /**
      * Checks whether this compiler interface type has any subclasses in the current
      * runtime environment.
-     * @return <code>true</code> if this class has any subclasses
+     * @return {@code true} if this class has any subclasses
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasSubclass() {
@@ -127,7 +127,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type has a finalizer method.
-     * @return <code>true</code> if this class has a finalizer method
+     * @return {@code true} if this class has a finalizer method
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasFinalizer() {
@@ -136,7 +136,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type has any subclasses that have finalizers.
-     * @return <code>true</code> if this class has any subclasses with finalizers
+     * @return {@code true} if this class has any subclasses with finalizers
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean hasFinalizableSubclass() {
@@ -145,7 +145,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is an interface.
-     * @return <code>true</code> if this class is an interface
+     * @return {@code true} if this class is an interface
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInterface() {
@@ -154,7 +154,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is an array class.
-     * @return <code>true</code> if this class is an interface
+     * @return {@code true} if this class is an interface
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isArrayKlass() {
@@ -163,7 +163,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is an instance class.
-     * @return <code>true</code> if this class is an instance class
+     * @return {@code true} if this class is an instance class
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstanceClass() {
@@ -173,7 +173,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is an array.
-     * @return <code>true</code> if this class is an array.
+     * @return {@code true} if this class is an array.
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isTypeArrayClass() {
@@ -183,7 +183,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is final.
-     * @return <code>true</code> if this class is final
+     * @return {@code true} if this class is final
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isFinal() {
@@ -192,7 +192,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is loaded (i.e. resolved).
-     * @return <code>true</code> if the type is loaded
+     * @return {@code true} if the type is loaded
      */
     public boolean isLoaded() {
         return classActor != null;
@@ -200,7 +200,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is initialized.
-     * @return <code>true</code> if this class is initialized
+     * @return {@code true} if this class is initialized
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInitialized() {
@@ -209,7 +209,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether this compiler interface type is a subtype of another type.
-     * @return <code>true</code> if this class is a subtype of the other type
+     * @return {@code true} if this class is a subtype of the other type
      * @throws MaxRiUnresolved if either class is not resolved
      */
     public boolean isSubtypeOf(RiType other) {
@@ -219,7 +219,7 @@ public class MaxRiType implements RiType {
 
     /**
      * Checks whether the specified object is an instance of this compiler interface type.
-     * @return <code>true</code> if this object is an instance of this type
+     * @return {@code true} if this object is an instance of this type
      * @throws MaxRiUnresolved if the class is not resolved
      */
     public boolean isInstance(Object obj) {
@@ -247,9 +247,9 @@ public class MaxRiType implements RiType {
 
     /**
      * Gets the exact type of this compiler interface type. If the class is final or a primitive,
-     * or an array of final classes or primitives, this method will return <code>this</code>.
+     * or an array of final classes or primitives, this method will return {@code this}.
      * Otherwise, or if the type is unresolved, this method will return null.
-     * @return the exact type of this type, if it is known; <code>null</code> otherwise
+     * @return the exact type of this type, if it is known; {@code null} otherwise
      */
     public RiType exactType() {
         if (classActor != null) {
@@ -390,7 +390,7 @@ public class MaxRiType implements RiType {
      * to the same class actor. Otherwise they are equivalent if they
      * reference the same compiler interface type object.
      * @param o the object to check
-     * @return <code>true</code> if this object is equal to the other
+     * @return {@code true} if this object is equal to the other
      */
     @Override
     public boolean equals(Object o) {

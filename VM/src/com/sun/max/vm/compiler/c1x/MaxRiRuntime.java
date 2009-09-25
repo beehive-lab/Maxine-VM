@@ -46,7 +46,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.annotate.UNSAFE;
 
 /**
- * The <code>MaxRiRuntime</code> class implements the runtime interface needed by C1X.
+ * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
  * This includes access to runtime features such as class and method representations,
  * constant pools, as well as some compiler tuning.
  *
@@ -100,7 +100,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Gets the <code>RiMethod</code> for a given method actor.
+     * Gets the {@code RiMethod} for a given method actor.
      * @param methodActor the method actor
      * @return the canonical compiler interface method for the method actor
      */
@@ -121,7 +121,7 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Checks whether the runtime requires inlining of the specified method.
      * @param method the method to inline
-     * @return <code>true</code> if the method must be inlined; <code>false</code>
+     * @return {@code true} if the method must be inlined; {@code false}
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
@@ -131,8 +131,8 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Checks whether the runtime forbids inlining of the specified method.
      * @param method the method to inline
-     * @return <code>true</code> if the runtime forbids inlining of the specified method;
-     * <code>false</code> to allow the compiler to use its own heuristics
+     * @return {@code true} if the runtime forbids inlining of the specified method;
+     * {@code false} to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
@@ -142,8 +142,8 @@ public class MaxRiRuntime implements RiRuntime {
     /**
      * Checks whether the runtime forbids compilation of the specified method.
      * @param method the method to compile
-     * @return <code>true</code> if the runtime forbids compilation of the specified method;
-     * <code>false</code> to allow the compiler to compile the method
+     * @return {@code true} if the runtime forbids compilation of the specified method;
+     * {@code false} to allow the compiler to compile the method
      */
     public boolean mustNotCompile(RiMethod method) {
         return false;
@@ -403,9 +403,9 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Canonicalizes resolved <code>MaxRiMethod</code> instances (per runtime), so
-     * that the same <code>MaxRiMethod</code> instance is always returned for the
-     * same <code>MethodActor</code>.
+     * Canonicalizes resolved {@code MaxRiMethod} instances (per runtime), so
+     * that the same {@code MaxRiMethod} instance is always returned for the
+     * same {@code MethodActor}.
      * @param methodActor the mehtod actor for which to get the canonical type
      * @param maxRiConstantPool
      * @return the canonical compiler interface method for the method actor
@@ -423,9 +423,9 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Canonicalizes resolved <code>MaxRiFielde</code> instances (per runtime), so
-     * that the same <code>MaxRiField</code> instance is always returned for the
-     * same <code>FieldActor</code>.
+     * Canonicalizes resolved {@code MaxRiFielde} instances (per runtime), so
+     * that the same {@code MaxRiField} instance is always returned for the
+     * same {@code FieldActor}.
      * @param fieldActor the field actor for which to get the canonical type
      * @param maxRiConstantPool
      * @return the canonical compiler interface field for the field actor
@@ -443,9 +443,9 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     /**
-     * Canonicalizes resolved <code>MaxRiType</code> instances (per runtime), so
-     * that the same <code>MaxRiType</code> instance is always returned for the
-     * same <code>ClassActor</code>.
+     * Canonicalizes resolved {@code MaxRiType} instances (per runtime), so
+     * that the same {@code MaxRiType} instance is always returned for the
+     * same {@code ClassActor}.
      * @param classActor the class actor for which to get the canonical type
      * @param maxRiConstantPool
      * @return the canonical compiler interface type for the class actor

@@ -23,7 +23,7 @@ package com.sun.max.ide.intellij;
 import com.sun.max.MaxPackage;
 
 /**
- * The <code>Package</code> class allows IntelliJ to be recognized as the current IDE.
+ * The {@code Package} class allows IntelliJ to be recognized as the current IDE.
  *
  * @author Ben L. Titzer
  */

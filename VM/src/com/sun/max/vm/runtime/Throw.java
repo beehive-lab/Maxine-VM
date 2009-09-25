@@ -211,7 +211,7 @@ public final class Throw {
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (instructionPointer.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");
-            Log.printVmThread(vmThread, true);
+            Log.printThread(vmThread, true);
         } else {
             final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
             final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
@@ -277,7 +277,14 @@ public final class Throw {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
                 Log.print("        -> ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod.classMethodActor(), false);
+                final Pointer codeStart = targetMethod.codeStart();
+                Log.print(" [");
+                Log.print(codeStart);
+                Log.print("+");
+                Log.print(pointer.minus(codeStart).toInt());
+                Log.println("]");
+
             }
             pointer = pointer.plus(Word.size());
         }

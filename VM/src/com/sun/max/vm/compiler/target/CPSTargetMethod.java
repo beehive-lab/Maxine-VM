@@ -419,7 +419,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             Log.print("Could not find safepoint index for instruction at position ");
             Log.print(instructionPointer.minus(codeStart()).toInt());
             Log.print(" in ");
-            Log.printMethodActor(classMethodActor(), true);
+            Log.printMethod(classMethodActor(), true);
             FatalError.unexpected("Could not find safepoint index");
         }
 

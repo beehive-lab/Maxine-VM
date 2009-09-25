@@ -199,7 +199,7 @@ public final class JniNativeInterface {
                 Log.print("The offset of stack variable ");
                 Log.print(stackVariable);
                 Log.print(" in ");
-                Log.printMethodActor(jniFunction.classMethodActor, false);
+                Log.printMethod(jniFunction.classMethodActor, false);
                 Log.println(" has not been recorded.");
                 FatalError.unexpected("The offset for a stack variable has not been recorded");
             }

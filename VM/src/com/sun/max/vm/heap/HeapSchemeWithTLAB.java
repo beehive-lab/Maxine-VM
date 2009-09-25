@@ -175,7 +175,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             if (Heap.traceAllocation()) {
                 final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
                 final boolean lockDisabledSafepoints = Log.lock();
-                Log.printVmThread(vmThread, false);
+                Log.printThread(vmThread, false);
                 Log.print(": Resetting TLAB [TOP=");
                 Log.print(tlabTop);
                 Log.print(", MARK=");
@@ -332,7 +332,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (Heap.traceAllocation() || Heap.traceGC()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.print(": Refill TLAB with ");
             Log.print(tlab);
             Log.print(" [TOP=");
@@ -407,7 +407,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Log.print("Trying to allocate ");
             Log.print(size.toLong());
             Log.print(" bytes on thread ");
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println(" while allocation is disabled");
             FatalError.unexpected("Trying to allocate while allocation is disabled");
         }

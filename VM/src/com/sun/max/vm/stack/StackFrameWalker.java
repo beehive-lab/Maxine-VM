@@ -166,7 +166,7 @@ public abstract class StackFrameWalker {
                     if (targetMethod.classMethodActor() == null) {
                         Log.print(targetMethod.description());
                     } else {
-                        Log.printMethodActor(targetMethod.classMethodActor(), false);
+                        Log.printMethod(targetMethod.classMethodActor(), false);
                     }
                     Log.print(" [IP=");
                     Log.print(this.instructionPointer);
@@ -392,7 +392,7 @@ public abstract class StackFrameWalker {
                 Log.print(instructionPointer.minus(nativeStubTargetMethod.codeStart()).toLong());
                 Log.print(" in ");
                 if (nativeStubTargetMethod.classMethodActor() != null) {
-                    Log.printMethodActor(nativeStubTargetMethod.classMethodActor(), true);
+                    Log.printMethod(nativeStubTargetMethod.classMethodActor(), true);
                 } else {
                     Log.println("<no method actor>");
                 }

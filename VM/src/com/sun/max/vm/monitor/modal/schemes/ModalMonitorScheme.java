@@ -89,26 +89,26 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
      *
      * @author Simon Wilkinson
      */
-    public interface ModalLockWordDecoder {
+    public interface ModalLockwordDecoder {
         /**
          * Tests if the lockword is in the given mode.
          *
-         * @param modalLockWord the lock word to test
+         * @param modalLockword the lock word to test
          * @param mode the mode to test
          * @return true if the lockword is in the given mode; false otherwise
          */
-        boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode);
+        boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode);
     }
 
     /**
-     * Returns a new <code>ModalLockWordDecoder</code> that can decode
-     * lock words created by this <code>ModalMonitorScheme</code>.
+     * Returns a new {@code ModalLockwordDecoder} that can decode
+     * lock words created by this {@code ModalMonitorScheme}.
      *
      * This should only be used for Inspector support.
      *
      * @return
      */
-    public abstract ModalLockWordDecoder getModalLockWordDecoder();
+    public abstract ModalLockwordDecoder getModalLockwordDecoder();
 
     @INLINE
     public final Word createMisc(Object object) {

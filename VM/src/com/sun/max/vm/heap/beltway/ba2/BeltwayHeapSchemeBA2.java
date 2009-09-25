@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
@@ -97,14 +98,14 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     final BA2HeapBoundChecker ba2HeapBoundChecker;
 
-    Runnable minorGCCollector;
-    Runnable fullGCCollector;
+    Collector minorGCCollector;
+    Collector fullGCCollector;
 
-    public Runnable getMinorGC() {
+    public Collector getMinorGC() {
         return minorGCCollector;
     }
 
-    public Runnable getMajorGC() {
+    public Collector getMajorGC() {
         return fullGCCollector;
     }
 
@@ -146,8 +147,8 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             getMatureSpace().setExpandable(true);
 
             final BeltwayBA2Collector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
-            minorGCCollector =  (Runnable) collectors[0];
-            fullGCCollector =  (Runnable) collectors[1];
+            minorGCCollector = collectors[0];
+            fullGCCollector = collectors[1];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {

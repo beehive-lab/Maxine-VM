@@ -288,38 +288,45 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printFieldActor(FieldActor, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printField(FieldActor, boolean)} on {@link #out}.
      */
     public static void printFieldActor(FieldActor fieldActor, boolean withNewline) {
-        out.printFieldActor(fieldActor, withNewline);
+        out.printField(fieldActor, withNewline);
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printMethodActor(MethodActor, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printMethod(MethodActor, boolean)} on {@link #out}.
      */
-    public static void printMethodActor(MethodActor methodActor, boolean withNewline) {
+    public static void printMethod(MethodActor methodActor, boolean withNewline) {
         if (methodActor == null) {
             out.print("<no method actor>");
             if (withNewline) {
                 out.println();
             }
         } else {
-            out.printMethodActor(methodActor, withNewline);
+            out.printMethod(methodActor, withNewline);
         }
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printVmThread(VmThread, boolean)} on {@link #out}.
+     * Prints the current VM thread via a call to {@link LogPrintStream#printThread(VmThread, boolean)} on {@link #out}.
      */
-    public static void printVmThread(VmThread vmThread, boolean withNewline) {
-        out.printVmThread(vmThread, withNewline);
+    public static void printCurrentThread(boolean withNewline) {
+        out.printThread(VmThread.current(), withNewline);
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printVmThreadLocals(Pointer, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printThread(VmThread, boolean)} on {@link #out}.
      */
-    public static void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
-        out.printVmThreadLocals(vmThreadLocals, all);
+    public static void printThread(VmThread vmThread, boolean withNewline) {
+        out.printThread(vmThread, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printThreadLocals(Pointer, boolean)} on {@link #out}.
+     */
+    public static void printThreadLocals(Pointer vmThreadLocals, boolean all) {
+        out.printThreadLocals(vmThreadLocals, all);
     }
 
     private static final class LogOutputStream extends OutputStream {
@@ -700,7 +707,7 @@ public final class Log {
          * @param fieldActor the field actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the field actor
          */
-        public void printFieldActor(FieldActor fieldActor, boolean withNewline) {
+        public void printField(FieldActor fieldActor, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
@@ -730,7 +737,7 @@ public final class Log {
          * @param methodActor the method actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the method actor
          */
-        public void printMethodActor(MethodActor methodActor, boolean withNewline) {
+        public void printMethod(MethodActor methodActor, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
@@ -759,7 +766,7 @@ public final class Log {
          * @param vmThread the thread to print
          * @param withNewline specifies if a newline should be appended to the stream after the thread
          */
-        public void printVmThread(VmThread vmThread, boolean withNewline) {
+        public void printThread(VmThread vmThread, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();
@@ -783,7 +790,7 @@ public final class Log {
          * @param vmThreadLocals a pointer to VM thread locals
          * @param all specifies if all 3 {@linkplain VmThreadLocal TLS} areas are to be printed
          */
-        public void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
+        public void printThreadLocals(Pointer vmThreadLocals, boolean all) {
             boolean lockDisabledSafepoints = false;
             if (!MaxineVM.isPrototyping()) {
                 lockDisabledSafepoints = lock();

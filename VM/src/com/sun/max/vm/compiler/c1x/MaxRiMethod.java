@@ -32,11 +32,11 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.collect.Sequence;
 
 /**
- * The <code>MaxRiMethod</code> implements a compiler interface method. A method can
+ * The {@code MaxRiMethod} implements a compiler interface method. A method can
  * be either resolved or unresolved. A resolved method has a reference to its
- * associated <code>MethodActor</code> and unresolved method has a reference
- * to its <code>MethodRefConstant</code> some method calls are only appropriate
- * for resolved methods and will result in a <code>MaxCiUnresolved</code>
+ * associated {@code MethodActor} and unresolved method has a reference
+ * to its {@code MethodRefConstant} some method calls are only appropriate
+ * for resolved methods and will result in a {@code MaxCiUnresolved}
  * exception if called on an unresolved method.
  *
  * @author Ben L. Titzer
@@ -152,7 +152,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method has balanced monitor operations.
-     * @return <code>true</code> if the monitor operations are balanced correctly
+     * @return {@code true} if the monitor operations are balanced correctly
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasBalancedMonitors() {
@@ -162,7 +162,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method has any exception handlers.
-     * @return <code>true</code> if this method has any exception handlers
+     * @return {@code true} if this method has any exception handlers
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
@@ -176,7 +176,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this compiler interface method is loaded (i.e. resolved).
-     * @return <code>true</code> if this method is loaded
+     * @return {@code true} if this method is loaded
      */
     public boolean isLoaded() {
         return methodActor != null;
@@ -184,7 +184,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is abstract.
-     * @return <code>true</code> if this method is abstract
+     * @return {@code true} if this method is abstract
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isAbstract() {
@@ -193,7 +193,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is native.
-     * @return <code>true</code> if this method is native
+     * @return {@code true} if this method is native
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isNative() {
@@ -202,7 +202,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is final.
-     * @return <code>true</code> if this method is final
+     * @return {@code true} if this method is final
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isFinalMethod() {
@@ -211,7 +211,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is synchronized.
-     * @return <code>true</code> if this method is synchronized
+     * @return {@code true} if this method is synchronized
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isSynchronized() {
@@ -221,7 +221,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is strict-fp.
-     * @return <code>true</code> if this method is strict-fp
+     * @return {@code true} if this method is strict-fp
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isStrictFP() {
@@ -230,7 +230,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method is static.
-     * @return <code>true</code> if this method is static
+     * @return {@code true} if this method is static
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isStatic() {
@@ -239,7 +239,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method has been overridden in the current runtime environment.
-     * @return <code>true</code> if this method has been overridden
+     * @return {@code true} if this method has been overridden
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean isOverridden() {
@@ -262,7 +262,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Gets the method instrumentation for this method.
-     * @return the method instruction for this method; <code>null</code> if no instrumentation
+     * @return the method instruction for this method; {@code null} if no instrumentation
      * is available
      */
     public RiMethodProfile methodData() {
@@ -272,7 +272,7 @@ public class MaxRiMethod implements RiMethod {
     /**
      * Gets the liveness information for local variables at a particular bytecode index.
      * @param bci the bytecode index
-     * @return a bitmap representing which locals are live; <code>null</code> if no liveness
+     * @return a bitmap representing which locals are live; {@code null} if no liveness
      * information is available
      */
     public BitMap liveness(int bci) {
@@ -281,7 +281,7 @@ public class MaxRiMethod implements RiMethod {
 
     /**
      * Checks whether this method can be statically bound (i.e. it is final or private).
-     * @return <code>true</code> if this method can be statically bound; <code>false</code>
+     * @return {@code true} if this method can be statically bound; {@code false}
      * if the field is unresolved or cannot be statically bound
      */
     public boolean canBeStaticallyBound() {
@@ -388,7 +388,7 @@ public class MaxRiMethod implements RiMethod {
      * to the same method actor. Otherwise they are equivalent if they
      * reference the same compiler interface method object.
      * @param o the object to check
-     * @return <code>true</code> if this object is equal to the other
+     * @return {@code true} if this object is equal to the other
      */
     @Override
     public boolean equals(Object o) {

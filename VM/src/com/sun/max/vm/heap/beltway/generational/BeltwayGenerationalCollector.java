@@ -31,7 +31,7 @@ import com.sun.max.vm.heap.beltway.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayGenerationalCollector extends BeltwayCollector {
+public abstract class BeltwayGenerationalCollector extends BeltwayCollector {
 
     public BeltwayGenerationalCollector(String name) {
         super(name);
@@ -78,7 +78,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             printBeltInfo("Mature Space", matureSpace);
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
             final Belt matureSpace = genHeapScheme.getMatureSpace();
             final Belt toSpace = genHeapScheme.getToSpace();
@@ -152,7 +153,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
         ToSpaceCollector() {
             super("To");
         }
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
             final Belt matureSpace = genHeapScheme.getMatureSpace();
             final Belt toSpace = genHeapScheme.getToSpace();
@@ -202,7 +204,8 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
             super("Eden");
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             final BeltwayHeapSchemeGenerational genHeapScheme = (BeltwayHeapSchemeGenerational) heapScheme;
             final Belt matureSpace = genHeapScheme.getMatureSpace();
             final Belt toSpace = genHeapScheme.getToSpace();

@@ -85,7 +85,7 @@ public abstract class Safepoint {
      * </dd>
      * </dl>
      *
-     * TODO: Make the choice for this value based on the mechanism proven to runs best of the target platform.
+     * TODO: Make the choice for this value based on the mechanism proven to runs best on each platform.
      */
     public static final boolean UseCASBasedGCMutatorSynchronization = false;
 

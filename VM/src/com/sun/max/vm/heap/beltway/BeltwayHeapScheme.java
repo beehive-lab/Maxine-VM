@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -158,9 +157,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected boolean verifyAfterGC = false;
 
     /**
-     * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
+     * The thread running the collector, and coordinating the GC threads when the GC supports parallel collection.
      */
-    protected BlockingServerDaemon collectorThread;
+    protected StopTheWorldGCDaemon collectorThread;
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
@@ -266,7 +265,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                 Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread =  parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
+            //collectorThread = parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
+            collectorThread = new StopTheWorldGCDaemon("GC");
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (parallelScavenging) {
@@ -506,7 +506,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");

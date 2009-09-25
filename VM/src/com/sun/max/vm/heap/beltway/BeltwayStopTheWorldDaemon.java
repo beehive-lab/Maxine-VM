@@ -193,7 +193,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     };
 
     public void execute() {
-        execute(gcRequest);
+        service(gcRequest);
     }
 
     public BeltTLAB getScavengeTLAB() {
