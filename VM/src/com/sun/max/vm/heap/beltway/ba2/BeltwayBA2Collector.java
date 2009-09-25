@@ -35,7 +35,7 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayBA2Collector extends BeltwayCollector {
+public abstract class BeltwayBA2Collector extends BeltwayCollector {
     @CONSTANT_WHEN_NOT_ZERO
     protected Belt nurserySpace;
     @CONSTANT_WHEN_NOT_ZERO
@@ -66,7 +66,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         verifyBelt(matureSpace);
     }
 
-    static class FullGCCollector extends BeltwayBA2Collector implements Runnable {
+    static class FullGCCollector extends BeltwayBA2Collector {
         /**
          * A temporary virtual belt used to represent the mature space's reserve.
          */
@@ -78,7 +78,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             matureSpaceReserve.resetAllocationMark();
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             prologue();
             if (heapScheme.verifyBeforeGC()) {
                 verifyHeap("Before full GC");
@@ -179,7 +180,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             prologue();
             matureSpace.setAllocationMarkSnapshot();
 

@@ -23,6 +23,7 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
@@ -30,7 +31,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.*;
  *
  * @author Simon Wilkinson
  */
-public abstract class LightweightLockWord64 extends HashableLockWord64 {
+public abstract class LightweightLockword64 extends HashableLockword64 {
 
     /*
      * Field layout:
@@ -56,18 +57,38 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
 
     protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
 
-    protected LightweightLockWord64() {
+    protected LightweightLockword64() {
     }
 
     /**
-     * Boxing-safe cast of a <code>Word</code> to a <code>LightweightLockWord64</code>.
+     * Prints the monitor state encoded in a {@code LightweightLockword64} to the {@linkplain Log log} stream.
+     */
+    public static void log(LightweightLockword64 lockword) {
+        Log.print("LightweightLockword64: ");
+        if (lockword.isInflated()) {
+            Log.print("inflated=true");
+        } else {
+            Log.print("inflated=false");
+            Log.print(" recursion=");
+            Log.print(lockword.getRecursionCount());
+            Log.print(" util=");
+            Log.print(lockword.getUtil());
+            Log.print(" threadID=");
+            Log.print(lockword.getThreadID());
+            Log.print(" hash=");
+            Log.print(lockword.getHashcode());
+        }
+    }
+
+    /**
+     * Boxing-safe cast of a {@code Word} to a {@code LightweightLockword64}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @UNSAFE_CAST
-    public static LightweightLockWord64 from(Word word) {
-        return new BoxedLightweightLockWord64(word);
+    public static LightweightLockword64 from(Word word) {
+        return new BoxedLightweightLockword64(word);
     }
 
     /**
@@ -117,10 +138,10 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
      * @return a copy lock word with incremented recursion count
      */
     @INLINE
-    public final LightweightLockWord64 incrementCount() {
+    public final LightweightLockword64 incrementCount() {
         // So long as the rcount field is within a byte boundary, we can just use addition
         // without any endian issues.
-        return LightweightLockWord64.from(asAddress().plus(RCOUNT_INC_WORD));
+        return LightweightLockword64.from(asAddress().plus(RCOUNT_INC_WORD));
     }
 
     /**
@@ -129,8 +150,8 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
      * @return a copy lock word with decremented recursion count
      */
     @INLINE
-    public final LightweightLockWord64 decrementCount() {
-        return LightweightLockWord64.from(asAddress().minus(RCOUNT_INC_WORD));
+    public final LightweightLockword64 decrementCount() {
+        return LightweightLockword64.from(asAddress().minus(RCOUNT_INC_WORD));
     }
 
     /**

@@ -35,6 +35,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -162,12 +163,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private int numberOfGarbageCollectionInvocations;
-
     /**
-     * A VM option for disabling use of TLABs.
+     * A VM option for triggering a GC before every allocation.
      */
-    private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
+    private static final VMBooleanXXOption GCBeforeAllocationOption = register(new VMBooleanXXOption("-XX:-GCBeforeAllocation",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
@@ -292,15 +291,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     /**
      * Routine that performs the actual garbage collection.
      */
-    private final class Collect implements Runnable {
-        public void run() {
+    final class Collect extends Collector {
+        @Override
+        public void collect(int invocationCount) {
             try {
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
 
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                ++numberOfGarbageCollectionInvocations;
                 InspectableHeapInfo.beforeGarbageCollection();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
@@ -368,7 +367,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                     Log.print("Timings (");
                     Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                     Log.print(") for GC ");
-                    Log.print(numberOfGarbageCollectionInvocations);
+                    Log.print(invocationCount);
                     Log.print(": clear & initialize=");
                     Log.print(clearTimer.getLastElapsedTime());
                     Log.print(", root scan=");
@@ -666,7 +665,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         return true;
     }
 
-    @INLINE
     private void executeCollectorThread() {
         if (!Heap.gcDisabled()) {
             collectorThread.execute();
@@ -763,7 +761,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         refillTLAB(enabledVmThreadLocals, tlab, tlabSize);
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
@@ -852,7 +850,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         Pointer cell;
         Address end;
         do {
-            if (excessiveGCOption.getValue()) {
+            if (GCBeforeAllocationOption.getValue()) {
                 Heap.collectGarbage(size);
             }
             oldAllocationMark = allocationMark().asPointer();
@@ -901,7 +899,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);
             Log.print(" [words=");

@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.tele.*;
 
@@ -33,7 +34,7 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayCollector {
+public abstract class BeltwayCollector extends Collector {
 
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayHeapScheme heapScheme;

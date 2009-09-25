@@ -267,10 +267,10 @@ public abstract class Trap {
 
         if (traceTrap.getValue() || dumpStackOnTrap.getValue()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             if (targetMethod != null) {
                 Log.print(": Trapped in ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod.classMethodActor(), true);
             } else {
                 Log.println(": Trapped in <unknown>");
             }

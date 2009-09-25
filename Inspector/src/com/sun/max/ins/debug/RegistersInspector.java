@@ -79,10 +79,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         thread = inspection().focus().thread();
         if (thread == null) {
             table = null;
+            frame().setContentPane(new InspectorPanel(inspection(), new BorderLayout()));
         } else {
             table = new RegistersTable(inspection(), thread, viewPreferences);
+            frame().setContentPane(new InspectorScrollPane(inspection(), table));
         }
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
         updateFrameTitle();
     }
 

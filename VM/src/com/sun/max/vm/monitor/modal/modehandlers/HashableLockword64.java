@@ -23,15 +23,16 @@ package com.sun.max.vm.monitor.modal.modehandlers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
+import com.sun.max.vm.*;
 
 /**
  * Abstracts access to a lock word's hashcode bit field.
  *
- * @see ModalLockWord64
+ * @see ModalLockword64
  *
  * @author Simon Wilkinson
  */
-public abstract class HashableLockWord64 extends ModalLockWord64 {
+public abstract class HashableLockword64 extends ModalLockword64 {
 
     /*
      * Field layout:
@@ -46,18 +47,32 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
     protected static final int HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
     protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
-    protected HashableLockWord64() {
+    protected HashableLockword64() {
     }
 
     /**
-     * Boxing-safe cast of a <code>Word</code> to a <code>HashableLockWord64</code>.
+     * Prints the monitor state encoded in a {@code HashableLockword64} to the {@linkplain Log log} stream.
+     */
+    public static void log(HashableLockword64 lockword) {
+        Log.print("HashableLockword64: ");
+        if (lockword.isInflated()) {
+            Log.print("inflated=true");
+        } else {
+            Log.print("inflated=false");
+            Log.print(" hash=");
+            Log.print(lockword.getHashcode());
+        }
+    }
+
+    /**
+     * Boxing-safe cast of a {@code Word} to a {@code HashableLockword64}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @UNSAFE_CAST
-    public static HashableLockWord64 from(Word word) {
-        return new BoxedHashableLockWord64(word);
+    public static HashableLockword64 from(Word word) {
+        return new BoxedHashableLockword64(word);
     }
 
     /**
@@ -71,16 +86,16 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
     }
 
     /**
-     * Installs the given hashcode into a <i>copy</i> of this <code>HashableLockWord64</code>. The copied
+     * Installs the given hashcode into a <i>copy</i> of this {@code HashableLockword64}. The copied
      * lock word is returned.
      *
      * Note: It is assumed that this lock word does not contain an existing hashcode.
      *
      * @param hashcode the hashcode to install
-     * @return a copy of this <code>HashableLockWord64</code> with the installed hashcode
+     * @return a copy of this {@code HashableLockword64} with the installed hashcode
      */
     @INLINE
-    public final HashableLockWord64 setHashcode(int hashcode) {
-        return HashableLockWord64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
+    public final HashableLockword64 setHashcode(int hashcode) {
+        return HashableLockword64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

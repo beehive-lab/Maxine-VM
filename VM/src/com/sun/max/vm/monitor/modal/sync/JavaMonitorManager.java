@@ -34,10 +34,10 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Manages a pool of {@linkplain JavaMonitor JavaMonitors} and their binding and unbinding to objects.
+ * Manages a pool of {@linkplain JavaMonitor monitors} and their binding and unbinding to objects.
  * <p>
  * Binding can be performed at prototyping or runtime. If binding is performed at prototyping time then either a default
- * or specialized JavaMonitor can be used. If binding is performed at runtime then an unbound JavaMonitor is taken from
+ * or specialized monitor can be used. If binding is performed at runtime then an unbound monitor is taken from
  * a free list.
  * <p>
  * Unbinding is performed at global safepoints. All unowned, unbindable, bound monitors are unbound. Writing of unbound
@@ -46,11 +46,11 @@ import com.sun.max.vm.thread.*;
  * <p>
  * GC considerations:
  * <p>
- * 1) As all JavaMonitors are GC reachable, so are their bound objects (as this is just a field in the JavaMonitor)
- * {@link #beforeGarbageCollection()} must be called prior to GC, to unbind dead objects.
+ * 1) As all monitors are GC reachable, so are their bound objects (as this is just a field in the monitor).
+ * As such, {@link #beforeGarbageCollection()} must be called prior to GC, to unbind dead objects.
  * <p>
- * 2) If the GC moves a bound JavaMonitor, then the bound object's misc word must be updated to point to the moved
- * JavaMonitor. Therefore a post-GC call is required to {@link #afterGarbageCollection()}.
+ * 2) If the GC moves a bound monitor, then the bound object's misc word must be updated to point to the moved
+ * monitor. Therefore a post-GC call is required to {@link #afterGarbageCollection()}.
  * <p>
  * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
  * are not consistent and in places, misleading.
@@ -272,10 +272,10 @@ public class JavaMonitorManager {
     }
 
     /**
-     * Binds a JavaMonitor to the given object.
+     * Binds a monitor to the given object.
      * <p>
-     * Important: the binding is not two-way at this stage; the JavaMonitor
-     * points to the object, but the object does not know anything about the JavaMonitor.
+     * Important: the binding is not two-way at this stage; the monitor
+     * points to the object, but the object does not know anything about the monitor.
      * <p>
      * TODO: 'bindMonitor' is a missing leading name. Refactor.
      *
@@ -310,7 +310,7 @@ public class JavaMonitorManager {
     }
 
     /**
-     * Places the given JavaMonitor back into the free list.
+     * Places the given monitor back into the free list.
      * <p>
      * Important: This should only be called for monitors that have
      * failed to be two-way bound to an object.
@@ -364,10 +364,10 @@ public class JavaMonitorManager {
     }
 
     /**
-     * Notifies the JavaMonitorManager that the current thread is in-flight to
-     * perform an operation on the given JavaMonitor. The JavaMonitor will
+     * Notifies this JavaMonitorManager that the current thread is in-flight to
+     * perform an operation on the given monitor. The monitor will
      * not be unbound until the current thread calls this method with a different
-     * JavaMonitor, or the the thread terminates.
+     * monitor, or the the thread terminates.
      *
      * @param monitor the monitor whose binding to protect
      */
@@ -430,6 +430,13 @@ public class JavaMonitorManager {
                 monitor.setBindingProtection(BindingProtection.UNPROTECTED);
             }
             if (monitor.bindingProtection() == BindingProtection.UNPROTECTED) {
+                if (Monitor.traceMonitors()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Unbinding monitor: ");
+                    monitor.dump();
+                    Log.println();
+                    Log.unlock(lockDisabledSafepoints);
+                }
                 // Write the object's new misc word
                 unboundMiscWordWriter.writeUnboundMiscWord(monitor.boundObject(), monitor.displacedMisc());
                 monitor.reset();
@@ -459,7 +466,7 @@ public class JavaMonitorManager {
     }
 
     /**
-     * Extends the JavaMonitor interface to allow a pool of JavaMonitors to be managed by JavaMonitorManager.
+     * Extends the JavaMonitor interface to allow a pool of monitors to be managed by JavaMonitorManager.
      * <p>
      * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
      * are not consistent and in places, misleading.
@@ -469,7 +476,7 @@ public class JavaMonitorManager {
     interface ManagedMonitor extends JavaMonitor {
 
         /**
-         * Defines the binding status of a JavaMonitor.
+         * Defines the binding status of a monitor.
          *
          * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
          * are not consistent and in places, misleading.
@@ -478,81 +485,83 @@ public class JavaMonitorManager {
          */
         enum BindingProtection {
             /**
-             * The JavaMonitor is in the free-list, or it is one-way bound to an object.
+             * The monitor is in the free-list, or it is one-way bound to an object.
              */
             PRE_ACQUIRE,
+
             /**
-             * The JavaMonitor is two-way bound to an object (hard-bound), but can be safely unbound.
+             * The monitor is two-way bound to an object (hard-bound), but can be safely unbound as it is no longer owned by a thread.
              */
             UNPROTECTED,
+
             /**
-             * The JavaMonitor is two-way bound to an object (hard-bound), but cannot be unbound.
+             * The monitor is two-way bound to an object (hard-bound), but cannot be unbound as it is owned by a thread.
              */
             PROTECTED
         }
 
         /**
-         * Performs any native allocations necessary for this JavaMonitor.
+         * Performs any native allocations necessary for this monitor.
          */
         void allocate();
 
         /**
-         * Returns this JavaMonitor's bound object.
+         * Returns this monitor's bound object.
          *
          * @return the bound object
          */
         Object boundObject();
 
         /**
-         * Refreshes the two-way binding of this JavaMonitor.
+         * Refreshes the two-way binding of this monitor.
          */
         void refreshBoundObject();
 
         /**
-         * Sets this JavaMonitor's bound object. The binding is one-way, i.e.
-         * the JavaMonitor points to the object, but the object does not know anything about the JavaMonitor.
+         * Sets this monitor's bound object. The binding is one-way, i.e.
+         * the monitor points to the object, but the object does not know anything about the monitor.
          *
          * @param object the object to bind
          */
         void setBoundObject(Object object);
 
         /**
-         * Tests if this JavaMonitor is one-way bound, i.e. the JavaMonitor points to the object.
+         * Tests if this monitor is one-way bound, i.e. the monitor points to the object.
          *
-         * @return true if this JavaMonitor is one-way bound; false otherwise
+         * @return true if this monitor is one-way bound; false otherwise
          */
         boolean isBound();
 
         /**
-         * Tests if this JavaMonitor is two-way bound, i.e. the JavaMonitor points to the object.
+         * Tests if this monitor is two-way bound, i.e. the monitor points to the object.
          *
-         * @return true if this JavaMonitor is two-way bound; false otherwise
+         * @return true if this monitor is two-way bound; false otherwise
          */
         boolean isHardBound();
 
         /**
-         * Tests if this JavaMonitor was two-way (hard) bound prior to GC.
+         * Tests if this monitor was two-way (hard) bound prior to GC.
          *
-         * @return true if this JavaMonitor was two-way (hard) bound prior to GC
+         * @return true if this monitor was two-way (hard) bound prior to GC
          */
         boolean requiresPostGCRefresh();
 
         /**
-         * Returns the BindingProtection for this JavaMonitor.
+         * Returns the BindingProtection for this monitor.
          *
          * @return the BindingProtection
          */
         BindingProtection bindingProtection();
 
         /**
-         * Sets the BindingProtection for this JavaMonitor.
+         * Sets the BindingProtection for this monitor.
          *
          * @param protection the BindingProtection to set
          */
         void setBindingProtection(BindingProtection protection);
 
         /**
-         * Sets this JavaMonitor to its default state.
+         * Sets this monitor to its default state.
          */
         void reset();
 

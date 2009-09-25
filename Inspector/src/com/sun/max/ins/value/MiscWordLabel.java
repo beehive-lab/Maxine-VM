@@ -91,7 +91,7 @@ public final class MiscWordLabel extends ValueLabel {
         updateText();
     }
 
-    private static ModalLockWordDecoder modalLockWordDecoder;
+    private static ModalLockwordDecoder modalLockwordDecoder;
 
     @Override
     public void updateText() {
@@ -100,54 +100,54 @@ public final class MiscWordLabel extends ValueLabel {
         final MonitorScheme monitorScheme = maxVM().bootImage().vmConfiguration.monitorScheme();
         if (monitorScheme instanceof ModalMonitorScheme) {
             teleJavaMonitor = null;
-            if (modalLockWordDecoder == null) {
+            if (modalLockwordDecoder == null) {
                 final ModalMonitorScheme modalMonitorScheme = (ModalMonitorScheme) monitorScheme;
-                modalLockWordDecoder = modalMonitorScheme.getModalLockWordDecoder();
+                modalLockwordDecoder = modalMonitorScheme.getModalLockwordDecoder();
             }
-            final ModalLockWord64 modalLockWord = ModalLockWord64.from(miscWord);
-            if (modalLockWordDecoder.isLockWordInMode(modalLockWord, BiasedLockWord64.class)) {
-                final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(modalLockWord);
-                final int hashcode = biasedLockWord.getHashcode();
-                final int recursion = biasedLockWord.getRecursionCount();
-                final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockWord);
+            final ModalLockword64 modalLockword = ModalLockword64.from(miscWord);
+            if (modalLockwordDecoder.isLockwordInMode(modalLockword, BiasedLockword64.class)) {
+                final BiasedLockword64 biasedLockword = BiasedLockword64.from(modalLockword);
+                final int hashcode = biasedLockword.getHashcode();
+                final int recursion = biasedLockword.getRecursionCount();
+                final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockword);
                 final MaxThread thread = maxVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final int biasEpoch = biasedLockWord.getEpoch().toInt();
+                final int biasEpoch = biasedLockword.getEpoch().toInt();
                 setText("BiasedLock(" + recursion + "): " + hexString);
-                setToolTipText("BiasedLockWord64:  recursion=" + recursion +   ";  thread=" +
+                setToolTipText("BiasedLockword64:  recursion=" + recursion +   ";  thread=" +
                                 threadName + ";  biasEpoch=" + biasEpoch  + "; hashcode=" + hashcode);
-            } else if (modalLockWordDecoder.isLockWordInMode(modalLockWord, ThinLockWord64.class)) {
-                final ThinLockWord64 thinLockWord = ThinLockWord64.from(modalLockWord);
-                final int hashcode = thinLockWord.getHashcode();
-                final int recursionCount = thinLockWord.getRecursionCount();
-                final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockWord);
+            } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, ThinLockword64.class)) {
+                final ThinLockword64 thinLockword = ThinLockword64.from(modalLockword);
+                final int hashcode = thinLockword.getHashcode();
+                final int recursionCount = thinLockword.getRecursionCount();
+                final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockword);
                 final MaxThread thread = maxVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 setText("ThinLock(" + recursionCount + "): " + hexString);
-                setToolTipText("ThinLockWord64:  recursion=" + recursionCount +   ";  thread=" +
+                setToolTipText("ThinLockword64:  recursion=" + recursionCount +   ";  thread=" +
                                 threadName  + "; hashcode=" + hashcode);
-            } else if (modalLockWordDecoder.isLockWordInMode(modalLockWord, InflatedMonitorLockWord64.class)) {
+            } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, InflatedMonitorLockword64.class)) {
                 setText("InflatedMonitorLock: " + hexString);
-                final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.from(modalLockWord);
-                final boolean isBound = inflatedLockWord.isBound();
+                final InflatedMonitorLockword64 inflatedLockword = InflatedMonitorLockword64.from(modalLockword);
+                final boolean isBound = inflatedLockword.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    final Reference javaMonitorReference = maxVM().wordToReference(inflatedLockWord.getBoundMonitorReferenceAsWord());
+                    final Reference javaMonitorReference = maxVM().wordToReference(inflatedLockword.getBoundMonitorReferenceAsWord());
                     if (javaMonitorReference.isZero()) {
-                        setToolTipText("InflatedMonitorLockWord64:  bound, monitor=null");
+                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=null");
                     } else {
                         teleJavaMonitor = maxVM().makeTeleObject(javaMonitorReference);
                         final String name = teleJavaMonitor.classActorForType().qualifiedName();
-                        setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
+                        setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
                     }
                 } else {
                     // Field access
-                    final int hashcode = inflatedLockWord.getHashcode();
-                    setToolTipText("InflatedMonitorLockWord64:  unbound, hashcode=" + hashcode);
+                    final int hashcode = inflatedLockword.getHashcode();
+                    setToolTipText("InflatedMonitorLockword64:  unbound, hashcode=" + hashcode);
                 }
             } else {
                 setText(hexString);
-                setToolTipText("Non-decodable ModalLockWord64");
+                setToolTipText("Non-decodable ModalLockword64");
             }
         } else {
             setText(hexString);

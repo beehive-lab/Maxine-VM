@@ -21,16 +21,16 @@
 package com.sun.max.unsafe.box;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
+import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class BoxedInflatedMonitorLockWord64 extends InflatedMonitorLockWord64 implements UnsafeBox {
+public final class BoxedModalLockword64 extends ModalLockword64 implements UnsafeBox {
 
     protected long nativeWord;
 
-    public BoxedInflatedMonitorLockWord64(Word word) {
+    public BoxedModalLockword64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         nativeWord = unsafeBox.nativeWord();
     }

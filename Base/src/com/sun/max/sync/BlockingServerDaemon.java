@@ -33,13 +33,15 @@ import com.sun.max.program.*;
  * Only one thread at a time can interact with the server thread.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public class BlockingServerDaemon extends Thread {
 
     /**
      * The lock object used to synchronize client/server interaction.
      */
-    protected final Object token = new Object();
+    static class Lock {}
+    protected final Object token = new Lock();
 
     public BlockingServerDaemon(String name) {
         super(name);
@@ -62,6 +64,18 @@ public class BlockingServerDaemon extends Thread {
     private Runnable request;
 
     /**
+     * The amount of time in milliseconds the server should wait before servicing
+     * a registered request. A value of {@code 0} indicates that the daemon should
+     * wait until a client explicitly notifies the daemon of a newly registered
+     * request.
+     *
+     * @return
+     */
+    protected long serverWaitTimeout() {
+        return 0L;
+    }
+
+    /**
      * The server loop that will run any {@linkplain #execute(Runnable) scheduled} request.
      */
     @Override
@@ -72,11 +86,13 @@ public class BlockingServerDaemon extends Thread {
             synchronized (token) {
                 token.notify();
                 try {
-                    token.wait();
+                    token.wait(serverWaitTimeout());
                 } catch (InterruptedException interruptedException) {
-                    ProgramError.unexpected();
+                    throw ProgramError.unexpected();
                 }
-                request.run();
+                if (request != null) {
+                    request.run();
+                }
             }
         }
     }
@@ -87,7 +103,7 @@ public class BlockingServerDaemon extends Thread {
      *
      * @param request a procedure to be executed on the server thread
      */
-    public void execute(Runnable request) {
+    public final void service(Runnable request) {
         synchronized (token) {
             this.request = request;
 

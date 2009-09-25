@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -70,8 +71,9 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
 
     private int numberOfGarbageCollectionInvocations = 0;
 
-    private final Runnable collect = new Runnable() {
-        public void run() {
+    private final Collector collect = new Collector() {
+        @Override
+        public void collect(int invocationCount) {
             if (Heap.verbose()) {
                 Log.print("-- no GC--   size: ");
                 Log.println(allocationMark().minus(space.start()).toInt());

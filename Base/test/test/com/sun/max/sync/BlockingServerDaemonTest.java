@@ -70,7 +70,7 @@ public class BlockingServerDaemonTest extends TestCase {
                         }
                         Trace.line(3, "BEGIN counter: " + counter.value() + " thread: " + threadIndex);
                         final int value = counter.value();
-                        server.execute(procedure);
+                        server.service(procedure);
                         if (counter.value() == value) {
                             fail();
                         }

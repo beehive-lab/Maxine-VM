@@ -161,7 +161,7 @@ public class VmThreadLocal {
             final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
             if (vmThread != null) {
                 out.print(' ');
-                out.printVmThread(vmThread, false);
+                out.printThread(vmThread, false);
             }
         }
     };
@@ -675,7 +675,7 @@ public class VmThreadLocal {
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (!vmThread.isGCThread() && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
             Log.print("The stack for thread \"");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.print("\" has slots between ");
             Log.print(lastJavaCallerStackPointer);
             Log.print(" and ");
@@ -693,7 +693,7 @@ public class VmThreadLocal {
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
             Log.print("Scanning stack reference map for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
             Log.println(highestSlot);
