@@ -18,49 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ci;
+package com.sun.c1x.asm;
+
+import java.util.*;
+
+import com.sun.c1x.ir.*;
 
 /**
- * The <code>CiStatistics</code> class gathers statistics gathered during the compilation of
- * a method.
  *
- * @author Ben L. Titzer
+ * @author Thomas Wuerthinger
  */
-public class CiStatistics {
+public class ExceptionInfo {
 
-    /**
-     * The total number of bytes of bytecode parsed during this compilation, including any inlined methods.
-     */
-    public int byteCount;
+    public final int codeOffset;
+    public final List<ExceptionHandler> exceptionHandlers;
 
-    /**
-     * The number of internal graph nodes created during this compilation.
-     */
-    public int nodeCount;
-
-    /**
-     * The number of basic blocks created during this compilation.
-     */
-    public int blockCount;
-
-    /**
-     * The number of loops in the compiled method.
-     */
-    public int loopCount;
-
-    /**
-     * The number of methods inlined.
-     */
-    public int inlineCount;
-
-    /**
-     * The number of methods folded (i.e. evaluated).
-     */
-    public int foldCount;
-
-    /**
-     * The number of intrinsics inlined in this compilation.
-     */
-    public int intrinsicCount;
-
+    public ExceptionInfo(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
+        this.codeOffset = pcOffset;
+        this.exceptionHandlers = exceptionHandlers;
+    }
 }

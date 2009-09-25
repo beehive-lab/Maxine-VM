@@ -22,9 +22,10 @@ package com.sun.c1x.ci;
 
 
 /**
+ * This class represents either a register or a stack slot and is used when communicating the
+ * locations of parameters for calling conventions across the compiler/runtime interface.
  *
  * @author Thomas Wuerthinger
- *
  */
 public final class CiLocation extends CiValue {
 
@@ -42,7 +43,7 @@ public final class CiLocation extends CiValue {
 
     /**
      * Location representing a single register.
-     * 
+     *
      * @param kind
      *            the kind of the new location
      * @param register

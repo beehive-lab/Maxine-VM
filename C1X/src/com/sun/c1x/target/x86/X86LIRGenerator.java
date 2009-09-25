@@ -37,9 +37,9 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
 /**
+ * This class implements the X86-specific portion of the LIR generator.
  *
  * @author Thomas Wuerthinger
- *
  */
 public final class X86LIRGenerator extends LIRGenerator {
     private static final CiKind[] BASIC_TYPES_LONG_LONG = {CiKind.Long, CiKind.Long};
@@ -70,14 +70,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         return LIROperandFactory.singleLocation(CiKind.Int, X86.rcx);
     }
 
-    @Override
-    protected LIROperand syncTempOpr() {
+    private LIROperand syncTempOpr() {
         return LIROperandFactory.singleLocation(CiKind.Int, X86.rax);
-    }
-
-    @Override
-    protected LIROperand getThreadTemp() {
-        return LIROperandFactory.IllegalLocation;
     }
 
     @Override
@@ -158,19 +152,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else {
             return addr;
         }
-    }
-
-    @Override
-    protected void incrementCounter(long counter, int step) {
-        LIRLocation pointer = newPointerRegister();
-        lir().move(LIROperandFactory.intPtrConst(counter), pointer);
-        LIRAddress addr = new LIRAddress(pointer, 0, CiKind.Int);
-        incrementCounter(addr, step);
-    }
-
-    @Override
-    protected void incrementCounter(LIRAddress addr, int step) {
-        lir().add(addr, LIROperandFactory.intConst(step), addr);
     }
 
     @Override
@@ -792,63 +773,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void visitArrayCopy(Intrinsic x) {
-
-        assert x.numberOfArguments() == 5 : "wrong type";
-        LIRItem src = new LIRItem(x.argumentAt(0), this);
-        LIRItem srcPos = new LIRItem(x.argumentAt(1), this);
-        LIRItem dst = new LIRItem(x.argumentAt(2), this);
-        LIRItem dstPos = new LIRItem(x.argumentAt(3), this);
-        LIRItem length = new LIRItem(x.argumentAt(4), this);
-
-        // operands for arraycopy must use fixed registers, otherwise
-        // LinearScan will fail allocation (because arraycopy always needs a
-        // call)
-
-        LIROperand tmp = null;
-        if (compilation.target.arch.is64bit()) {
-            src.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, X86.rcx));
-            srcPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rdx));
-            dst.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, X86.rax));
-            dstPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
-            length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rdi));
-            tmp = (LIROperandFactory.singleLocation(CiKind.Int, X86.rsi));
-        } else {
-
-            // The java calling convention will give us enough registers
-            // so that on the stub side the args will be perfect already.
-            // On the other slow/special case side we call C and the arg
-            // positions are not similar enough to pick one as the best.
-            // Also because the java calling convention is a "shifted" version
-            // of the C convention we can process the java args trivially into C
-            // args without worry of overwriting during the xfer
-
-
-            CiLocation[] locations = compilation.runtime.javaCallingConvention(new CiKind[]{CiKind.Object, CiKind.Int, CiKind.Object, CiKind.Int, CiKind.Int, CiKind.Int}, true);
-            assert locations[0].isSingleRegister() && locations[1].isSingleRegister();
-            assert locations[2].isSingleRegister() && locations[3].isSingleRegister();
-            assert locations[4].isSingleRegister() && locations[5].isSingleRegister();
-            src.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, locations[0].first));
-            srcPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[1].first));
-            dst.loadItemForce(LIROperandFactory.singleLocation(CiKind.Object, locations[2].first));
-            dstPos.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[3].first));
-            length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, locations[4].first));
-
-            tmp = LIROperandFactory.singleLocation(CiKind.Int, locations[5].first);
-        }
-
-        setNoResult(x);
-
-        int[] flags = new int[1];
-        RiType[] expectedType = new RiType[1];
-        arraycopyHelper(x, flags, expectedType);
-
-        CodeEmitInfo info = stateFor(x, x.stateBefore()); // we may want to have stack (deoptimization?)
-        lir().arraycopy(src.result(), srcPos.result(), dst.result(), dstPos.result(), length.result(), tmp, expectedType[0], flags[0], info); // does
-        // addSafepoint
-    }
-
-    @Override
     public void visitConvert(Convert x) {
         assert C1XOptions.SSEVersion >= 2 : "no fpu stack";
         LIRItem value = new LIRItem(x.value(), this);
@@ -1052,10 +976,6 @@ public final class X86LIRGenerator extends LIRGenerator {
                         x.profiledBCI());
     }
 
-    protected LIROperand[] runtimeArguments(CiKind... arguments) {
-        return compilation.frameMap().runtimeCallingConvention(arguments).arguments().toArray(new LIROperand[0]);
-    }
-
     @Override
     public void visitInstanceOf(InstanceOf x) {
         LIRItem obj = new LIRItem(x.object(), this);
@@ -1124,17 +1044,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         assert x.defaultSuccessor() == x.falseSuccessor() : "wrong destination above";
         lir().jump(x.defaultSuccessor());
-    }
-
-    @Override
-    protected LIRLocation getThreadPointer() {
-        if (compilation.target.arch.is64bit()) {
-            return LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
-        } else {
-            LIRLocation result = newRegister(CiKind.Int);
-            lir().getThread(result);
-            return result;
-        }
     }
 
     @Override
@@ -1225,11 +1134,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand osrBufferPointer() {
-        return Util.nonFatalUnimplemented(null);
-    }
-
-    @Override
-    protected LIROperand rlockCalleeSaved(CiKind type) {
         return Util.nonFatalUnimplemented(null);
     }
 

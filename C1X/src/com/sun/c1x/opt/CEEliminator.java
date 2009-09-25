@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
 
 /**
  * This class implements conditional-expression elimination, which replaces some
- * branching constructs with conditional moves.
+ * simple branching constructs with conditional moves.
  *
  * @author Ben L. Titzer
  */

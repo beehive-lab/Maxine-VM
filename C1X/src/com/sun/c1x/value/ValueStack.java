@@ -99,12 +99,6 @@ public class ValueStack {
         return copy(true, true, true);
     }
 
-    public boolean isSame(ValueStack other) {
-        assert scope() == other.scope();
-        assert localsSize() == other.localsSize();
-        return isSameAcrossScopes(other);
-    }
-
     public boolean isSameAcrossScopes(ValueStack other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
@@ -133,15 +127,6 @@ public class ValueStack {
      */
     public final IRScope scope() {
         return scope;
-    }
-
-    /**
-     * Returns whether this value stack is locked (i.e. is for an exception site).
-     *
-     * @return <code>true</code> if this stack is locked
-     */
-    public final boolean isLockStack() {
-        return lockStack;
     }
 
     /**

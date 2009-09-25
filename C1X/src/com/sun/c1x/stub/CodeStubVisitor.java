@@ -23,11 +23,8 @@ package com.sun.c1x.stub;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public interface CodeStubVisitor {
-
-    void visitArrayCopyStub(ArrayCopyStub arrayCopyStub);
 
     void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
 

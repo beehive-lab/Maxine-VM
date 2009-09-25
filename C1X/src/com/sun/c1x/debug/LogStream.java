@@ -365,7 +365,7 @@ public class LogStream {
     }
 
     /**
-     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Value) value} to this stream.
+     * Writes an instruction formatted as a {@linkplain com.sun.c1x.util.Util#valueString(com.sun.c1x.ir.Value) value} to this stream.
      *
      * @param value the instruction to print
      * @return this {@code LogStream} instance
@@ -375,13 +375,13 @@ public class LogStream {
         if (value == null) {
             lineBuffer.append("null");
         } else {
-            lineBuffer.append(value.type().tchar()).append(value.id());
+            lineBuffer.append(value.type().typeChar).append(value.id);
         }
         return this;
     }
 
     /**
-     * Writes an instruction formatted as a {@linkplain Instruction#valueString(Value) value} to this stream
+     * Writes an instruction formatted as a {@linkplain com.sun.c1x.util.Util#valueString(com.sun.c1x.ir.Value) value} to this stream
      * followed by a {@linkplain #LINE_SEPARATOR line separator}.
      *
      * @param value the instruction to print

@@ -65,50 +65,6 @@ public class MaxRiConstantPool implements RiConstantPool {
      // TODO: check for incompatible class changes in all resolution and lookup methods
 
     /**
-     * Resolves a field reference for a getfield operation at runtime, and makes the
-     * necessary runtime checks for getfield on the specified field.
-     * (a call to this method is inserted into compiled code by the compiler)
-     * @param cpi the constant pool index of the field reference
-     * @return the compiler interface field resolved at that index
-     */
-    public RiField resolveGetField(char cpi) {
-        return resolveField(cpi);
-    }
-
-    /**
-     * Resolves a field reference for a putfield operation at runtime, and makes the
-     * necessary runtime checks for putfield on the specified field.
-     * (a call to this method is inserted into compiled code by the compiler)
-     * @param cpi the constant pool index of the field reference
-     * @return the compiler interface field resolved at that index
-     */
-    public RiField resolvePutField(char cpi) {
-        return resolveField(cpi);
-    }
-
-    /**
-     * Resolves a field reference for a getstatic operation at runtime, and makes the
-     * necessary runtime checks for getstatic on the specified field.
-     * (a call to this method is inserted into compiled code by the compiler)
-     * @param cpi the constant pool index of the field reference
-     * @return the compiler interface field resolved at that index
-     */
-    public RiField resolveGetStatic(char cpi) {
-        return resolveField(cpi);
-    }
-
-    /**
-     * Resolves a field reference for a putstatic operation at runtime, and makes the
-     * necessary runtime checks for putstatic on the specified field.
-     * (a call to this method is inserted into compiled code by the compiler)
-     * @param cpi the constant pool index of the field reference
-     * @return the compiler interface field resolved at that index
-     */
-    public RiField resolvePutStatic(char cpi) {
-        return resolveField(cpi);
-    }
-
-    /**
      * Resolves a method reference for an invokevirtual at runtime, and makes the
      * necessary runtime checks for invokevirtual on the specified method.
      * (a call to this method is inserted into compiled code by the compiler)
@@ -239,24 +195,6 @@ public class MaxRiConstantPool implements RiConstantPool {
      */
     public RiType resolveType(char cpi) {
         return runtime.canonicalRiType(constantPool.classAt(cpi).resolve(constantPool, cpi), this);
-    }
-
-    /**
-     * Resolves a string constant at runtime.
-     * @param cpi the constant pool index of the string constant
-     * @return the string object resolved at that index
-     */
-    public String resolveString(char cpi) {
-        return constantPool.stringAt(cpi);
-    }
-
-    /**
-     * Resolves a class constant at runtime and makes the necessary access checks.
-     * @param cpi the constant pool index
-     * @return the class object for the class at that index
-     */
-    public Class<?> resolveClass(char cpi) {
-        return constantPool.classAt(cpi).resolve(constantPool, cpi).mirror();
     }
 
     /**

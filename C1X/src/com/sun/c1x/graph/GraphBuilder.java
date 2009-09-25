@@ -188,32 +188,6 @@ public class GraphBuilder {
         curBlock = start;
     }
 
-    BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
-        assert entry.checkBlockFlag(f);
-        // create header block
-        BlockBegin h = new BlockBegin(entry.bci(), ir.nextBlockNumber());
-        h.setDepthFirstNumber(0);
-
-        Instruction l = h;
-        RiMethodProfile methodProfile = method().methodData();
-        if (C1XOptions.ProfileBranches && methodProfile != null) {
-            // increment the invocation counter;
-            // note that the normal append() won't work, so we do this manually
-            Instruction m = new Constant(methodProfile.encoding());
-            h.setNext(m, 0);
-            Instruction p = new ProfileCounter(m, methodProfile.invocationCountOffset(), 1);
-            m.setNext(p, 0);
-            l = p;
-        }
-
-        BlockEnd g = new Goto(entry, null, false);
-        l.setNext(g, entry.bci());
-        h.setEnd(g);
-        h.setBlockFlag(f);
-        g.setStateAfter(state.immutableCopy());
-        return h;
-    }
-
     public boolean hasHandler() {
         return scopeData.hasHandler();
     }
@@ -631,7 +605,6 @@ public class GraphBuilder {
     }
 
     void genGoto(int fromBCI, int toBCI) {
-        profileBCI(fromBCI);
         append(new Goto(blockAt(toBCI), null, toBCI <= fromBCI)); // backwards branch => safepoint
     }
 
@@ -815,7 +788,6 @@ public class GraphBuilder {
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null, stateBefore)) {
-                profileInvocation(target);
                 appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
         }
@@ -826,7 +798,6 @@ public class GraphBuilder {
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
-            profileCall(args[0], null);
             appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool, stateBefore);
         }
     }
@@ -867,7 +838,6 @@ public class GraphBuilder {
                 }
             }
             // devirtualization failed, produce an actual invokevirtual
-            profileCall(args[0], null);
             appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
@@ -886,8 +856,6 @@ public class GraphBuilder {
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder, stateBefore)) {
                 // could not optimize or inline the method call
-                profileInvocation(target);
-                profileCall(args[0], target.holder());
                 appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
             }
         }
@@ -938,14 +906,6 @@ public class GraphBuilder {
             }
         }
         return null;
-    }
-
-    Value getReceiver(RiMethod target) {
-        return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
-    }
-
-    Value[] popArguments(RiMethod target) {
-        return curState.popArguments(target.signatureType().argumentSlots(false));
     }
 
     void callRegisterFinalizer() {
@@ -1157,40 +1117,6 @@ public class GraphBuilder {
         return false;
     }
 
-    private void profileCall(Value receiver, RiType knownHolder) {
-        if (C1XOptions.ProfileCalls) {
-            append(new ProfileCall(method(), bci(), receiver, knownHolder));
-        }
-    }
-
-    private void profileInvocation(RiMethod callee) {
-        if (C1XOptions.ProfileCalls) {
-            RiMethodProfile mdo = callee.methodData();
-            if (mdo != null) {
-                int offset = mdo.invocationCountOffset();
-                if (offset >= 0) {
-                    // if the method data object exists and it has an entry for the invocation count
-                    Value m = append(new Constant(mdo.encoding()));
-                    append(new ProfileCounter(m, offset, 1));
-                }
-            }
-        }
-    }
-
-    private void profileBCI(int bci) {
-        if (C1XOptions.ProfileBranches) {
-            RiMethodProfile mdo = method().methodData();
-            if (mdo != null) {
-                int offset = mdo.bciCountOffset(bci);
-                if (offset >= 0) {
-                    // if the method data object exists and it has an entry for the bytecode index
-                    Value m = append(new Constant(mdo.encoding()));
-                    append(new ProfileCounter(m, offset, 1));
-                }
-            }
-        }
-    }
-
     private Value appendConstant(CiConstant type) {
         return appendWithBCI(new Constant(type), bci(), false);
     }
@@ -1207,7 +1133,7 @@ public class GraphBuilder {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
             // Canonicalizer canon = new Canonicalizer(x, bci);
-            canonicalizer.canonicalize(x, bci);
+            canonicalizer.canonicalize(x);
             List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this
@@ -1491,10 +1417,7 @@ public class GraphBuilder {
         }
 
         if (C1XOptions.ProfileInlinedCalls) {
-            profileCall(receiver, knownHolder);
         }
-
-        profileInvocation(target);
 
         // Introduce a new callee continuation point. If the target has
         // more than one return instruction or the return does not allow

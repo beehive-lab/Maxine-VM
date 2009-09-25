@@ -95,14 +95,12 @@ public class FrameMap {
 
     int spOffsetForSpill(int index) {
         assert index >= 0 && index < spillSlotCount : "out of range";
-        int offset = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SpillSlotSize;
-        return offset;
+        return Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SpillSlotSize;
     }
 
     int spOffsetForMonitorBase(int index) {
         int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SpillSlotSize;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-        return offset;
+        return Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
     }
 
     int spOffsetForMonitorLock(int index)  {

@@ -52,7 +52,7 @@ public abstract class AbstractAssembler {
             Util.guarantee(l.position() == codeBuffer.position(), "attempt to redefine label");
             return;
         }
-        l.bindPosition(codeBuffer.position());
+        l.bind(codeBuffer.position());
         l.patchInstructions(this);
     }
 
@@ -144,11 +144,9 @@ public abstract class AbstractAssembler {
     }
 
     private void verifyReferenceMap() {
-
     }
 
     protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-
         assert pos >= 0 && globalStubCall != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -180,7 +178,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -192,7 +189,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -215,7 +211,6 @@ public abstract class AbstractAssembler {
     }
 
     public Address recordDataReferenceInCode(CiConstant data) {
-
         assert data != null;
 
         int pos = codeBuffer.position();
@@ -262,8 +257,6 @@ public abstract class AbstractAssembler {
     public abstract void buildFrame(int initialFrameSizeInBytes);
 
     public abstract void align(int codeEntryAlignment);
-
-    public abstract void makeOffset(int offset);
 
     public abstract void patchJumpTarget(int branch, int target);
 }

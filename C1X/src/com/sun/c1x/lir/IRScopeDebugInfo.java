@@ -75,15 +75,7 @@ public class IRScopeDebugInfo {
         return caller;
     }
 
-     // TODO : Need to define the implementation of DebugInformationRecorder
-     public  void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-      /*    if (caller() != null) {
-            // Order is significant:  Must record caller first.
-            caller().recordDebugInfo(recorder, pcOffset);
-          }
-          long locvals = recorder.createScopeValues(locals());
-          long expvals = recorder.createScopeValues(expressions());
-          long monvals = recorder.createMonitorValues(monitors());
-          recorder.describeScope(pcOffset, scope.method, bci(), locvals, expvals, monvals);*/
-        }
+    public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
+        // TODO : Need to define the implementation of DebugInformationRecorder
+    }
 }

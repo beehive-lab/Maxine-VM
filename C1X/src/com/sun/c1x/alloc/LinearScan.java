@@ -36,7 +36,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- *
+ * The linear scan register allocator from Christian Wimmer.
  * @author Thomas Wuerthinger
  */
 public class LinearScan {
@@ -45,22 +45,22 @@ public class LinearScan {
     private boolean[] allocatableRegister;
     int nofRegs;
 
-    C1XCompilation compilation;
-    IR ir;
-    LIRGenerator gen;
-    FrameMap frameMap;
+    final C1XCompilation compilation;
+    final IR ir;
+    final LIRGenerator gen;
+    final FrameMap frameMap;
 
-    List<BlockBegin> cachedBlocks; // cached list with all blocks in linear-scan order (only correct if original list
+    final List<BlockBegin> cachedBlocks; // cached list with all blocks in linear-scan order (only correct if original list
     // keeps
     // unchanged)
-    int numVirtualRegs; // number of virtual registers (without new registers introduced because of splitting intervals)
+    final int numVirtualRegs; // number of virtual registers (without new registers introduced because of splitting intervals)
     // necessary)
     int numCalls; // total number of calls in this method
     int maxSpills; // number of stack slots used for intervals allocated to memory
     int unusedSpillSlot; // unused spill slot for a single-word value because of alignment of a double-word value
 
     List<Interval> intervals; // mapping from register number to interval
-    List<Interval> newIntervalsFromAllocation; // list with all intervals created during allocation when an existing
+    final List<Interval> newIntervalsFromAllocation; // list with all intervals created during allocation when an existing
     // interval is split
     Interval[] sortedIntervals; // intervals sorted by Interval.from()
 
@@ -206,21 +206,21 @@ public class LinearScan {
         return i.registerNumber() < nofRegs;
     }
 
-    IntervalClosure isPrecoloredInterval = new IntervalClosure() {
+    final IntervalClosure isPrecoloredInterval = new IntervalClosure() {
 
         public boolean apply(Interval i) {
             return isCpu(i.registerNumber()) || isXmm(i.registerNumber());
         }
     };
 
-    IntervalClosure isVirtualInterval = new IntervalClosure() {
+    final IntervalClosure isVirtualInterval = new IntervalClosure() {
 
         public boolean apply(Interval i) {
             return i.registerNumber() >= CiRegister.FirstVirtualRegisterNumber;
         }
     };
 
-    IntervalClosure isOopInterval = new IntervalClosure() {
+    final IntervalClosure isOopInterval = new IntervalClosure() {
 
         public boolean apply(Interval i) {
             // fixed intervals never contain oops
@@ -1082,10 +1082,10 @@ public class LinearScan {
             }
 
             Range r = interval.first();
-            if (r.from() <= defPos) {
+            if (r.from <= defPos) {
                 // Update the starting point (when a range is first created for a use, its
                 // start is the beginning of the current block until a def is encountered.)
-                r.setFrom(defPos);
+                r.from = defPos;
                 interval.addUsePos(defPos, useKind);
 
             } else {
@@ -2714,6 +2714,7 @@ public class LinearScan {
                 appendScopeValue(opId, expression, expressions);
 
                 assert expressions.size() + stackBegin == pos : "must match";
+                pos++;
             }
         }
 
@@ -3017,8 +3018,8 @@ public class LinearScan {
                 assert false;
             }
 
-            for (Range r = i1.first(); r != Range.EndMarker; r = r.next()) {
-                if (r.from() >= r.to()) {
+            for (Range r = i1.first(); r != Range.EndMarker; r = r.next) {
+                if (r.from >= r.to) {
                     TTY.println("Interval %d has zero length range", i1.registerNumber());
                     i1.print(TTY.out, this);
                     TTY.cr();

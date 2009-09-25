@@ -26,7 +26,6 @@ import com.sun.c1x.target.x86.*;
 /**
  *
  * @author Thomas Wuerthinger
- *
  */
 public class AMD64 extends X86 {
 

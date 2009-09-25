@@ -30,7 +30,7 @@ import com.sun.c1x.target.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,
- * i.e. {@link com.sun.c1x.ci.CiArchitecture#AMD64} and {@link com.sun.c1x.ci.CiArchitecture#IA32}.
+ * i.e. {@link AMD64}.
  *
  * @author Ben L. Titzer
  */

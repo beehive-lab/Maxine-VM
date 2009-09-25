@@ -21,8 +21,8 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>BasicType</code> enum represents the basic kinds of types in C1X,
- * including the primitive types, objects, {@code void}, and bytecode addresses used in JSR.
+ * This enum represents the basic kinds of types in C1X, including the primitive types, objects, words,
+ * {@code void}, and bytecode addresses used in JSR bytecodes.
  *
  * @author Ben L. Titzer
  */
@@ -42,7 +42,7 @@ public enum CiKind {
     Illegal(' ', "illegal", null, -1);
 
     CiKind(char ch, String name, String jniName, int size) {
-        this.basicChar = ch;
+        this.typeChar = ch;
         this.javaName = name;
         this.jniName = jniName;
         this.size = size;
@@ -51,7 +51,7 @@ public enum CiKind {
     /**
      * The name of the basic type as a single character.
      */
-    public final char basicChar;
+    public final char typeChar;
 
     /**
      * The name of this basic type which will also be it Java programming language name if
@@ -72,7 +72,7 @@ public enum CiKind {
 
     /**
      * Checks whether this basic type is valid as the type of a field.
-     * @return <code>true</code> if this basic type is valid as the type of a Java field
+     * @return {@code true} if this basic type is valid as the type of a Java field
      */
     public boolean isValidFieldType() {
         return ordinal() <= Object.ordinal();
@@ -80,7 +80,7 @@ public enum CiKind {
 
     /**
      * Checks whether this basic type is valid as the return type of a method.
-     * @return <code>true</code> if this basic type is valid as the return type of a Java method
+     * @return {@code true} if this basic type is valid as the return type of a Java method
      */
     public boolean isValidReturnType() {
         return ordinal() <= Void.ordinal();
@@ -88,7 +88,7 @@ public enum CiKind {
 
     /**
      * Checks whether this type is valid as an <code>int</code> on the Java operand stack.
-     * @return <code>true</code> if this type is represented by an <code>int</code> on the operand stack
+     * @return {@code true} if this type is represented by an <code>int</code> on the operand stack
      */
     public boolean isInt() {
         return ordinal() <= Int.ordinal();
@@ -213,10 +213,9 @@ public enum CiKind {
         throw new IllegalArgumentException("not a primitive basic type");
     }
 
-
     /**
      * Checks whether this value type is void.
-     * @return <code>true</code> if this type is void
+     * @return {@code true} if this type is void
      */
     public final boolean isVoid() {
         return this == CiKind.Void;
@@ -224,7 +223,7 @@ public enum CiKind {
 
     /**
      * Checks whether this value type is long.
-     * @return <code>true</code> if this type is long
+     * @return {@code true} if this type is long
      */
     public final boolean isLong() {
         return this == CiKind.Long;
@@ -232,7 +231,7 @@ public enum CiKind {
 
     /**
      * Checks whether this value type is float.
-     * @return <code>true</code> if this type is float
+     * @return {@code true} if this type is float
      */
     public final boolean isFloat() {
         return this == CiKind.Float;
@@ -240,7 +239,7 @@ public enum CiKind {
 
     /**
      * Checks whether this value type is double.
-     * @return <code>true</code> if this type is double
+     * @return {@code true} if this type is double
      */
     public final boolean isDouble() {
         return this == CiKind.Double;
@@ -248,7 +247,7 @@ public enum CiKind {
 
     /**
      * Checks whether this value type is an object type.
-     * @return <code>true</code> if this type is an object
+     * @return {@code true} if this type is an object
      */
     public final boolean isObject() {
         return this == CiKind.Object;
@@ -256,7 +255,7 @@ public enum CiKind {
 
     /**
      * Checks whether this value type is an address type.
-     * @return <code>true</code> if this type is an address
+     * @return {@code true} if this type is an address
      */
     public boolean isJsr() {
         return this == CiKind.Jsr;
@@ -272,18 +271,10 @@ public enum CiKind {
 
     /**
      * Checks whether this type is represented by a double word (two words).
-     * @return <code>true</code> if this type is represented by two words
+     * @return {@code true} if this type is represented by two words
      */
     public boolean isDoubleWord() {
         return sizeInSlots() == 2;
-    }
-
-    /**
-     * Returns a single character for this type, e.g. int = 'i'.
-     * @return the type character for this type
-     */
-    public char tchar() {
-        return basicChar;
     }
 
     /**

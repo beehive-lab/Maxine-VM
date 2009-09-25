@@ -21,7 +21,8 @@
 package com.sun.c1x.util;
 
 /**
- * The <code>Bytes</code> class definition.
+ * This class implements a number of utilities for dealing with bytes,
+ * particularly in byte arrays.
  *
  * @author Ben L. Titzer
  */

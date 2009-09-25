@@ -29,14 +29,16 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * @author Thomas Wuerthinger
+ * This class implements the X86-specific portion of the macro assembler.
  *
+ * @author Thomas Wuerthinger
  */
 public class X86MacroAssembler extends X86Assembler {
 
     private CiRegister rscratch1;
     private final int wordSize;
     private final C1XCompiler compiler;
+    public static final int LONG_SIZE = 8;
 
     public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
         super(target, frameSize);
@@ -45,16 +47,6 @@ public class X86MacroAssembler extends X86Assembler {
 
         rscratch1 = compiler.target.scratchRegister;
         wordSize = this.target.arch.wordSize;
-    }
-
-    int biasedLockingEnter(CiRegister lockReg, CiRegister objReg, CiRegister swapReg, CiRegister tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, Object counters) {
-        if (target.arch.is64bit()) {
-            return biasedLockingEnter64(lockReg, objReg, swapReg, tmpReg, swapRegContainsMark, done, slowCase, counters);
-        } else if (target.arch.is32bit()) {
-            return biasedLockingEnter64(lockReg, objReg, swapReg, tmpReg, swapRegContainsMark, done, slowCase, counters);
-        } else {
-            throw Util.shouldNotReachHere();
-        }
     }
 
     public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
@@ -144,217 +136,6 @@ public class X86MacroAssembler extends X86Assembler {
         assert o.basicType == CiKind.Object;
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
         movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
-    }
-
-    int biasedLockingEnter32(CiRegister lockReg, CiRegister objReg, CiRegister swapReg, CiRegister tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, Object counters) {
-
-        // TODO: Check what to do with biased locking!
-        throw Util.unimplemented();
-
-//
-// assert C1XOptions.UseBiasedLocking : "why call this otherwise?";
-// assert swapReg == X86Register.rax : "swapReg must be X86Register.rax : for cmpxchg";
-// assert Register.assertDifferentRegisters(lockReg, objReg, swapReg);
-//
-// if (C1XOptions.PrintBiasedLockingStatistics && counters == null)
-// counters = BiasedLocking.counters();
-//
-// boolean needTmpReg = false;
-// if (tmpReg == X86Register.noreg) {
-// needTmpReg = true;
-// tmpReg = lockReg;
-// } else {
-// assert Register.assertDifferentRegisters(lockReg, objReg, swapReg, tmpReg);
-// }
-// assert markOopDesc.ageShift == markOopDesc.lockBits + markOopDesc.biasedLockBits :
-        // "biased locking makes assumptions about bit layout";
-// Address markAddr = new Address(objReg, oopDesc.markOffsetInBytes());
-// Address klassAddr = new Address (objReg, oopDesc.klassOffsetInBytes());
-// Address savedMarkAddr = new Address(lockReg, 0);
-//
-// // Biased locking
-// // See whether the lock is currently biased toward our thread and
-// // whether the epoch is still valid
-// // Note that the runtime guarantees sufficient alignment of JavaThread
-// // pointers to allow age to be placed into low bits
-// // First check to see whether biasing is even enabled for this object
-// Label casLabel = new Label();
-// int nullCheckOffset = -1;
-// if (!swapRegContainsMark) {
-// nullCheckOffset = offset();
-// movl(swapReg, markAddr);
-// }
-// if (needTmpReg) {
-// push(tmpReg);
-// }
-// movl(tmpReg, swapReg);
-// andl(tmpReg, markOopDesc.biasedLockMaskInPlace);
-// cmpl(tmpReg, markOopDesc.biasedLockPattern);
-// if (needTmpReg) {
-// pop(tmpReg);
-// }
-// jcc(notEqual, casLabel);
-// // The bias pattern is present in the object's header. Need to check
-// // whether the bias owner and the epoch are both still current.
-// // Note that because there is no current thread register on x86 we
-// // need to store off the mark word we read out of the object to
-// // avoid reloading it and needing to recheck invariants below. This
-// // store is unfortunate but it makes the overall code shorter and
-// // simpler.
-// movl(savedMarkAddr, swapReg);
-// if (needTmpReg) {
-// push(tmpReg);
-// }
-// getThread(tmpReg);
-// xorl(swapReg, tmpReg);
-// if (swapRegContainsMark) {
-// nullCheckOffset = offset();
-// }
-// movl(tmpReg, klassAddr);
-// xorl(swapReg, new Address(tmpReg, Klass.prototypeHeaderOffsetInBytes() + klassOopDesc.klassPartOffsetInBytes()));
-// andl(swapReg, ~((int) markOopDesc.ageMaskInPlace));
-// if (needTmpReg) {
-// pop(tmpReg);
-// }
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address)counters.biasedLockEntryCountAddr()));
-// }
-// jcc(equal, done);
-//
-// Label tryRevokeBias = new Label();
-// Label tryRebias = new Label();
-//
-// // At this point we know that the header has the bias pattern and
-// // that we are not the bias owner in the current epoch. We need to
-// // figure out more details about the state of the header in order to
-// // know what operations can be legally performed on the object's
-// // header.
-//
-// // If the low three bits in the xor result aren't clear : that means
-// // the prototype header is no longer biased and we have to revoke
-// // the bias on this object.
-// testl(swapReg, markOopDesc.biasedLockMaskInPlace);
-// jcc(notZero, tryRevokeBias);
-//
-// // Biasing is still enabled for this data type. See whether the
-// // epoch of the current bias is still valid : meaning that the epoch
-// // bits of the mark word are equal to the epoch bits of the
-// // prototype header. (Note that the prototype header's epoch bits
-// // only change at a safepoint.) If not : attempt to rebias the object
-// // toward the current thread. Note that we must be absolutely sure
-// // that the current epoch is invalid in order to do this because
-// // otherwise the manipulations it performs on the mark word are
-// // illegal.
-// testl(swapReg, markOopDesc.epochMaskInPlace);
-// jcc(notZero, tryRebias);
-//
-// // The epoch of the current bias is still valid but we know nothing
-// // about the owner; it might be set or it might be clear. Try to
-// // acquire the bias of the object using an atomic operation. If this
-// // fails we will go in to the runtime to revoke the object's bias.
-// // Note that we first construct the presumed unbiased header so we
-// // don't accidentally blow away another thread's valid bias.
-// movl(swapReg, savedMarkAddr);
-// andl(swapReg,
-// markOopDesc.biasedLockMaskInPlace | markOopDesc.ageMaskInPlace | markOopDesc.epochMaskInPlace);
-// if (needTmpReg) {
-// push(tmpReg);
-// }
-// getThread(tmpReg);
-// orl(tmpReg, swapReg);
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgptr(tmpReg, new Address(objReg, 0));
-// if (needTmpReg) {
-// pop(tmpReg);
-// }
-// // If the biasing toward our thread failed : this means that
-// // another thread succeeded in biasing it toward itself and we
-// // need to revoke that bias. The revocation will occur in the
-// // interpreter runtime in the slow case.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address)counters.anonymouslyBiasedLockEntryCountAddr()));
-// }
-// if (slowCase != null) {
-// jcc(notZero, slowCase);
-// }
-// jmp(done);
-//
-// bind(tryRebias);
-// // At this point we know the epoch has expired : meaning that the
-// // current "bias owner" : if any : is actually invalid. Under these
-// // circumstances only_ : we are allowed to use the current header's
-// // value as the comparison value when doing the cas to acquire the
-// // bias in the current epoch. In other words : we allow transfer of
-// // the bias from one thread to another directly in this situation.
-// //
-// // FIXME: due to a lack of registers we currently blow away the age
-// // bits in this situation. Should attempt to preserve them.
-// if (needTmpReg) {
-// push(tmpReg);
-// }
-// getThread(tmpReg);
-// movl(swapReg, klassAddr);
-// orl(tmpReg, new Address(swapReg, Klass.prototypeHeaderOffsetInBytes() + klassOopDesc.klassPartOffsetInBytes()));
-// movl(swapReg, savedMarkAddr);
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgptr(tmpReg, new Address(objReg, 0));
-// if (needTmpReg) {
-// pop(tmpReg);
-// }
-// // If the biasing toward our thread failed : then another thread
-// // succeeded in biasing it toward itself and we need to revoke that
-// // bias. The revocation will occur in the runtime in the slow case.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address)counters.rebiasedLockEntryCountAddr()));
-// }
-// if (slowCase != null) {
-// jcc(notZero, slowCase);
-// }
-// jmp(done);
-//
-// bind(tryRevokeBias);
-// // The prototype mark in the klass doesn't have the bias bit set any
-// // more : indicating that objects of this data type are not supposed
-// // to be biased any more. We are going to try to reset the mark of
-// // this object to the prototype value and fall through to the
-// // CAS-based locking scheme. Note that if our CAS fails : it means
-// // that another thread raced us for the privilege of revoking the
-// // bias of this particular object : so it's okay to continue in the
-// // normal locking code.
-// //
-// // FIXME: due to a lack of registers we currently blow away the age
-// // bits in this situation. Should attempt to preserve them.
-// movl(swapReg, savedMarkAddr);
-// if (needTmpReg) {
-// push(tmpReg);
-// }
-// movl(tmpReg, klassAddr);
-// movl(tmpReg, new Address(tmpReg, Klass.prototypeHeaderOffsetInBytes() + klassOopDesc.klassPartOffsetInBytes()));
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgptr(tmpReg, new Address(objReg, 0));
-// if (needTmpReg) {
-// pop(tmpReg);
-// }
-// // Fall through to the normal CAS-based lock : because no matter what
-// // the result of the above CAS : some thread must have succeeded in
-// // removing the bias bit from the object's header.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address)counters.revokedLockEntryCountAddr()));
-// }
-//
-// bind(casLabel);
-//
-// return nullCheckOffset;
     }
 
     void inlineCacheCheck(CiRegister receiver, CiRegister iCache) {
@@ -629,164 +410,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     // 64 bit versions
 
-    int biasedLockingEnter64(CiRegister lockReg, CiRegister objReg, CiRegister swapReg, CiRegister tmpReg, boolean swapRegContainsMark, Label done, Label slowCase, Object counters) {
-
-        assert target.arch.is64bit();
-        // TODO: Check what to do with biased locking!
-        throw Util.unimplemented();
-//
-// assert UseBiasedLocking : "why call this otherwise?";
-// assert swapReg == X86Register.rax : "swapReg must be X86Register.rax for cmpxchgq";
-// assert tmpReg != X86Register.noreg : "tmpReg must be supplied";
-// assert ifferentRegisters(lockReg, objReg, swapReg, tmpReg);
-// assert markOopDesc.ageShift == markOopDesc.lockBits + markOopDesc.biasedLockBits :
-        // "biased locking makes assumptions about bit layout";
-// Address markAddr = new Address(objReg, oopDesc.markOffsetInBytes());
-// Address savedMarkAddr= new Address(lockReg, 0);
-//
-// if (PrintBiasedLockingStatistics && counters == null)
-// counters = BiasedLocking.counters();
-//
-// // Biased locking
-// // See whether the lock is currently biased toward our thread and
-// // whether the epoch is still valid
-// // Note that the runtime guarantees sufficient alignment of JavaThread
-// // pointers to allow age to be placed into low bits
-// // First check to see whether biasing is even enabled for this object
-// Label casLabel = new Label();
-// int nullCheckOffset = -1;
-// if (!swapRegContainsMark) {
-// nullCheckOffset = offset();
-// movq(swapReg, markAddr);
-// }
-// movq(tmpReg, swapReg);
-// andq(tmpReg, markOopDesc.biasedLockMaskInPlace);
-// cmpq(tmpReg, markOopDesc.biasedLockPattern);
-// jcc(notEqual, casLabel);
-// // The bias pattern is present in the object's header. Need to check
-// // whether the bias owner and the epoch are both still current.
-// loadPrototypeHeader(tmpReg, objReg);
-// orq(tmpReg, r15Thread);
-// xorq(tmpReg, swapReg);
-// andq(tmpReg, ~((int) markOopDesc.ageMaskInPlace));
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address) counters.anonymouslyBiasedLockEntryCountAddr()));
-// }
-// jcc(equal, done);
-//
-// Label tryRevokeBias = new Label();
-// Label tryRebias = new Label();
-//
-// // At this point we know that the header has the bias pattern and
-// // that we are not the bias owner in the current epoch. We need to
-// // figure out more details about the state of the header in order to
-// // know what operations can be legally performed on the object's
-// // header.
-//
-// // If the low three bits in the xor result aren't clear : that means
-// // the prototype header is no longer biased and we have to revoke
-// // the bias on this object.
-// testq(tmpReg, markOopDesc.biasedLockMaskInPlace);
-// jcc(notZero, tryRevokeBias);
-//
-// // Biasing is still enabled for this data type. See whether the
-// // epoch of the current bias is still valid : meaning that the epoch
-// // bits of the mark word are equal to the epoch bits of the
-// // prototype header. (Note that the prototype header's epoch bits
-// // only change at a safepoint.) If not : attempt to rebias the object
-// // toward the current thread. Note that we must be absolutely sure
-// // that the current epoch is invalid in order to do this because
-// // otherwise the manipulations it performs on the mark word are
-// // illegal.
-// testq(tmpReg, markOopDesc.epochMaskInPlace);
-// jcc(notZero, tryRebias);
-//
-// // The epoch of the current bias is still valid but we know nothing
-// // about the owner; it might be set or it might be clear. Try to
-// // acquire the bias of the object using an atomic operation. If this
-// // fails we will go in to the runtime to revoke the object's bias.
-// // Note that we first construct the presumed unbiased header so we
-// // don't accidentally blow away another thread's valid bias.
-// andq(swapReg,
-// markOopDesc.biasedLockMaskInPlace | markOopDesc.ageMaskInPlace | markOopDesc.epochMaskInPlace);
-// movq(tmpReg, swapReg);
-// orq(tmpReg, r15Thread);
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgq(tmpReg, new Address(objReg, 0));
-// // If the biasing toward our thread failed : this means that
-// // another thread succeeded in biasing it toward itself and we
-// // need to revoke that bias. The revocation will occur in the
-// // interpreter runtime in the slow case.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address) counters.anonymouslyBiasedLockEntryCountAddr()));
-// }
-// if (slowCase != null) {
-// jcc(notZero, *slowCase);
-// }
-// jmp(done);
-//
-// bind(tryRebias);
-// // At this point we know the epoch has expired : meaning that the
-// // current "bias owner" : if any : is actually invalid. Under these
-// // circumstances only_ : we are allowed to use the current header's
-// // value as the comparison value when doing the cas to acquire the
-// // bias in the current epoch. In other words : we allow transfer of
-// // the bias from one thread to another directly in this situation.
-// //
-// // FIXME: due to a lack of registers we currently blow away the age
-// // bits in this situation. Should attempt to preserve them.
-// loadPrototypeHeader(tmpReg, objReg);
-// orq(tmpReg, r15Thread);
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgq(tmpReg, new Address(objReg, 0));
-// // If the biasing toward our thread failed : then another thread
-// // succeeded in biasing it toward itself and we need to revoke that
-// // bias. The revocation will occur in the runtime in the slow case.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address) counters.rebiasedLockEntryCountAddr()));
-// }
-// if (slowCase != null) {
-// jcc(notZero, slowCase);
-// }
-// jmp(done);
-//
-// bind(tryRevokeBias);
-// // The prototype mark in the klass doesn't have the bias bit set any
-// // more : indicating that objects of this data type are not supposed
-// // to be biased any more. We are going to try to reset the mark of
-// // this object to the prototype value and fall through to the
-// // CAS-based locking scheme. Note that if our CAS fails : it means
-// // that another thread raced us for the privilege of revoking the
-// // bias of this particular object : so it's okay to continue in the
-// // normal locking code.
-// //
-// // FIXME: due to a lack of registers we currently blow away the age
-// // bits in this situation. Should attempt to preserve them.
-// loadPrototypeHeader(tmpReg, objReg);
-// if (compilation.runtime.isMP()) {
-// lock();
-// }
-// cmpxchgq(tmpReg, new Address(objReg, 0));
-// // Fall through to the normal CAS-based lock : because no matter what
-// // the result of the above CAS : some thread must have succeeded in
-// // removing the bias bit from the object's header.
-// if (counters != null) {
-// condInc32(zero,
-// new ExternalAddress((Address) counters.revokedLockEntryCountAddr()));
-// }
-//
-// bind(casLabel);
-//
-// return nullCheckOffset;
-    }
-
     int correctedIdivq(CiRegister reg) {
         assert target.arch.is64bit();
         // Full implementation of Java ldiv and lrem; checks for special
@@ -861,10 +484,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             incq(reg);
-            return;
         } else {
             addq(reg, value);
-            return;
         }
     }
 
@@ -877,50 +498,6 @@ public class X86MacroAssembler extends X86Assembler {
     void movptr(CiRegister dst, long src) {
         assert target.arch.is64bit();
         mov64(dst, src);
-    }
-
-    void resetLastJavaFrame(boolean clearFp, boolean clearPc) {
-        assert target.arch.is64bit();
-
-        // TODO: Reset last Java frame!
-        throw Util.unimplemented();
-// // we must set sp to zero to clear frame
-// movptr(new Address(X86FrameMap.r15thread, JavaThread.lastJavaSpOffset()), NULLWORD);
-// // must clear fp : so that compiled frames are not confused; it is
-// // possible that we need it only for debugging
-// if (clearFp) {
-// movptr(new Address(X86FrameMap.r15thread, JavaThread.lastJavaFpOffset()), NULLWORD);
-// }
-//
-// if (clearPc) {
-// movptr(new Address(X86FrameMap.r15thread, JavaThread.lastJavaPcOffset()), NULLWORD);
-// }
-    }
-
-    void setLastJavaFrame(CiRegister lastJavaSp, CiRegister lastJavaFp, Address lastJavaPc) {
-        assert target.arch.is64bit();
-
-        // TODO: Set last Java frame!
-        throw Util.unimplemented();
-// // determine lastJavaSp register
-// if (!lastJavaSp.isValid()) {
-// lastJavaSp = X86Register.rsp;
-// }
-//
-// // lastJavaFp is optional
-// if (lastJavaFp.isValid()) {
-// movptr(new Address(X86FrameMap.r15thread, JavaThread.lastJavaFpOffset()), lastJavaFp);
-// }
-//
-// // lastJavaPc is optional
-// if (lastJavaPc != null) {
-// Address javaPc = new Address(X86FrameMap.r15thread, JavaThread.frameAnchorOffset() +
-        // JavaFrameAnchor.lastJavaPcOffset());
-// lea(rscratch1, new InternalAddress(lastJavaPc));
-// movptr(javaPc, rscratch1);
-// }
-//
-// movptr(Address = new Address(X86FrameMap.r15thread, JavaThread.lastJavaSpOffset()), lastJavaSp);
     }
 
     void stop(String msg) {
@@ -954,7 +531,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Address dst, CiRegister src) {
-
         if (target.arch.is64bit()) {
             addq(dst, src);
         } else {
@@ -969,7 +545,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    @Override
     public void makeOffset(int length) {
         nop(length);
     }
@@ -980,23 +555,6 @@ public class X86MacroAssembler extends X86Assembler {
         } else {
             andl(dst, imm32);
         }
-    }
-
-    void biasedLockingExit(RiRuntime runtime, CiRegister objReg, CiRegister tempReg, Label done) {
-        assert C1XOptions.UseBiasedLocking;
-
-        Util.unimplemented();
-
-        // Check for biased locking unlock case : which is a no-op
-        // Note: we do not have to check the thread ID for two reasons.
-        // First : the interpreter checks for IllegalMonitorStateException at
-        // a higher level. Second : if the bias was revoked while we held the
-        // lock : the object could not be rebiased toward another thread : so
-        // the bias bit would be clear.
-//        movptr(tempReg, new Address(objReg, runtime.markOffsetInBytes()));
-//        andptr(tempReg, runtime.biasedLockMaskInPlace());
-//        cmpptr(tempReg, runtime.biasedLockPattern());
-//        jcc(X86Assembler.Condition.equal, done);
     }
 
     void c2bool(CiRegister x) {
@@ -1156,10 +714,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             decl(reg);
-            return;
         } else {
             subl(reg, value);
-            return;
         }
     }
 
@@ -1177,61 +733,14 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             decl(dst);
-            return;
         } else {
             subl(dst, value);
-            return;
         }
-    }
-
-    void divisionWithShift(CiRegister reg, int shiftValue) {
-        assert shiftValue > 0 : "illegal shift value";
-        Label isPositive = new Label();
-        testl(reg, reg);
-        jcc(Condition.positive, isPositive);
-        int offset = (1 << shiftValue) - 1;
-
-        if (offset == 1) {
-            incrementl(reg, 1);
-        } else {
-            addl(reg, offset);
-        }
-
-        bind(isPositive);
-        sarl(reg, shiftValue);
     }
 
     // Defines obj : preserves varSizeInBytes
     void edenAllocate(CiRegister obj, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, Label slowCase) {
-
-        // TODO: Implement eden allocate!
         throw Util.unimplemented();
-// assert obj == X86Register.rax : "obj must be in X86Register.rax, for cmpxchg";
-// assert Register.assertDifferentRegisters(obj, varSizeInBytes, t1);
-// if (C1XOptions.CMSIncrementalMode || !compilation.runtime.universeSupportsInlineContigAlloc()) {
-// jmp(slowCase);
-// } else {
-// Register end = t1;
-// Label retry = new Label();
-// bind(retry);
-// ExternalAddress heapTop = new ExternalAddress((Address) Universe.heap().topAddr());
-// movptr(obj, heapTop);
-// if (varSizeInBytes == X86Register.noreg) {
-// lea(end, new Address(obj, conSizeInBytes));
-// } else {
-// lea(end, new Address(obj, varSizeInBytes, Address.times1));
-// }
-// // if end < obj then we wrapped around => object too long => slow case
-// cmpptr(end, obj);
-// jcc(below, slowCase);
-// cmpptr(end, new ExternalAddress((Address) Universe.heap().endAddr()));
-// jcc(above, slowCase);
-// // Compare obj with the top addr : and if still equal : store the new top addr in
-// // end at the Address of the top addr pointer. Sets ZF if was equal : and clears
-// // it otherwise. Use lock prefix for atomicity on MPs.
-// lockedCmpxchgptr(end, heapTop);
-// jcc(notEqual, retry);
-// }
     }
 
     void incrementl(CiRegister reg, int value) {
@@ -1248,10 +757,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             incl(reg);
-            return;
         } else {
             addl(reg, value);
-            return;
         }
     }
 
@@ -1269,10 +776,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
         if (value == 1 && C1XOptions.UseIncDec) {
             incl(dst);
-            return;
         } else {
             addl(dst, value);
-            return;
         }
     }
 
@@ -1340,42 +845,6 @@ public class X86MacroAssembler extends X86Assembler {
         return off;
     }
 
-    void loadSizedValue(CiRegister dst, Address src, int sizeInBytes, boolean isSigned) {
-
-        int value = sizeInBytes ^ (isSigned ? -1 : 0);
-
-        switch (value) {
-            // For case 8, caller is responsible for manually loading
-            // the second word into another X86Register.
-            case ~8: // fall through:
-            case 8:
-                if (target.arch.is64bit()) {
-                    movq(dst, src);
-                } else {
-                    movl(dst, src);
-                }
-                break;
-            case ~4: // fall through:
-            case 4:
-                movl(dst, src);
-                break;
-            case ~2:
-                loadSignedShort(dst, src);
-                break;
-            case 2:
-                loadUnsignedShort(dst, src);
-                break;
-            case ~1:
-                loadSignedByte(dst, src);
-                break;
-            case 1:
-                loadUnsignedByte(dst, src);
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
-    }
-
     void movptr(CiRegister dst, CiRegister src) {
 
         if (target.arch.is64bit()) {
@@ -1431,84 +900,6 @@ public class X86MacroAssembler extends X86Assembler {
         // testl needs to be implemented first)
     }
 
-    void resetLastJavaFrame(CiRegister javaThread, boolean clearFp, boolean clearPc) {
-        // TODO: Reset last Java frame!
-        throw Util.unimplemented();
-
-// // determine javaThread register
-// if (!javaThread.isValid()) {
-// javaThread = X86Register.rdi;
-// getThread(javaThread);
-// }
-// // we must set sp to zero to clear frame
-// movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), NULLWORD);
-// if (clearFp) {
-// movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), NULLWORD);
-// }
-//
-// if (clearPc)
-// movptr(new Address(javaThread, JavaThread.lastJavaPcOffset()), NULLWORD);
-
-    }
-
-    void restoreRax(CiRegister tmp) {
-        if (tmp == CiRegister.None) {
-            pop(X86.rax);
-        } else if (tmp != X86.rax) {
-            mov(X86.rax, tmp);
-        }
-    }
-
-    void roundTo(CiRegister reg, int modulus) {
-        addptr(reg, modulus - 1);
-        andptr(reg, -modulus);
-    }
-
-    void saveRax(CiRegister tmp) {
-        if (tmp == CiRegister.None) {
-            push(X86.rax);
-        } else if (tmp != X86.rax) {
-            mov(tmp, X86.rax);
-        }
-    }
-
-
-    // Calls to C land
-    //
-    // When entering C land, the X86Register.rbp, & X86Register.rsp of the last Java frame have to be recorded
-    // in the (thread-local) JavaThread object. When leaving C land, the last Java fp
-    // has to be reset to 0. This is required to allow proper stack traversal.
-    void setLastJavaFrame(CiRegister javaThread, CiRegister lastJavaSp, CiRegister lastJavaFp, Address lastJavaPc) {
-
-        // TODO: Set last Java frame!
-        throw Util.unimplemented();
-//
-// // determine javaThread register
-// if (!javaThread.isValid()) {
-// javaThread = X86Register.rdi;
-// getThread(javaThread);
-// }
-// // determine lastJavaSp register
-// if (!lastJavaSp.isValid()) {
-// lastJavaSp = X86Register.rsp;
-// }
-//
-// // lastJavaFp is optional
-//
-// if (lastJavaFp.isValid()) {
-// movptr(new Address(javaThread, JavaThread.lastJavaFpOffset()), lastJavaFp);
-// }
-//
-// // lastJavaPc is optional
-//
-// if (lastJavaPc != null) {
-// lea(new Address(javaThread, JavaThread.frameAnchorOffset() + JavaFrameAnchor.lastJavaPcOffset()),
-        // InternalAddress(lastJavaPc));
-//
-// }
-// movptr(new Address(javaThread, JavaThread.lastJavaSpOffset()), lastJavaSp);
-    }
-
     void getThread(CiRegister javaThread) {
         // Platform-specific! Solaris / Windows / Linux
         Util.nonFatalUnimplemented();
@@ -1546,61 +937,6 @@ public class X86MacroAssembler extends X86Assembler {
             shll(reg, 16);
             sarl(reg, 16);
         }
-    }
-
-    void storeCheck(CiRegister obj) {
-        // Does a store check for the oop in register obj. The content of
-        // register obj is destroyed afterwards.
-        storeCheckPart1(obj);
-        storeCheckPart2(obj);
-    }
-
-    void storeCheck(CiRegister obj, Address dst) {
-        storeCheck(obj);
-    }
-
-    // split the store check operation so that other instructions can be scheduled inbetween
-    void storeCheckPart1(CiRegister obj) {
-        // TODO: Store check
-        throw Util.unimplemented();
-//
-// BarrierSet bs = Universe.heap().barrierSet();
-// assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
-// shrptr(obj, CardTableModRefBS.cardShift);
-    }
-
-    void storeCheckPart2(CiRegister obj) {
-        // TODO: Store check
-//
-// BarrierSet bs = Universe.heap().barrierSet();
-// assert bs.kind() == BarrierSet.CardTableModRef : "Wrong barrier set kind";
-// CardTableModRefBS ct = (CardTableModRefBS) bs;
-// assert sizeof(ct.byteMapBase) == sizeof(jbyte) : "adjust this code";
-//
-// // The calculation for byteMapBase is as follows:
-// // byteMapBase = byteMap - (uintptrT(lowBound) >> cardShift);
-// // So this essentially converts an Address to a displacement and
-// // it will never need to be relocated. On 64bit however the value may be too
-// // large for a 32bit displacement
-//
-// intptrT disp = (intptrT) ct.byteMapBase;
-// if (isSimm32(disp)) {
-// Address cardtable = new Address(X86Register.noreg, obj, Address.times1, disp);
-// movb(cardtable, 0);
-// } else {
-// // By doing it as an ExternalAddress disp could be converted to a rip-relative
-// // displacement and done in a single instruction given favorable mapping and
-// // a smarter version of asAddress. Worst case it is two instructions which
-// // is no worse off then loading disp into a register and doing as a simple
-// // Address() as above.
-// // We can't do as ExternalAddress as the only style since if disp == 0 we'll
-// // assert since null isn't acceptable in a reloci (see 6644928). In any case
-// // in some cases we'll get a single instruction version.
-//
-// ExternalAddress cardtable = new ExternalAddress((Address) disp);
-// Address index = new Address(X86Register.noreg, obj, Address.times1);
-// movb(asAddress(new ArrayAddress(cardtable, index)), 0);
-// }
     }
 
     void subptr(CiRegister dst, int imm32) {
@@ -1663,452 +999,6 @@ public class X86MacroAssembler extends X86Assembler {
 //        verifyTlab(runtime);
     }
 
-    // Preserves X86Register.rbx : and X86Register.rdx.
-    void tlabRefill(Label retry, Label tryEden, Label slowCase) {
-
-        // TODO: Tlab refill
-        throw Util.unimplemented();
-//
-// Register top = X86Register.rax;
-// Register t1 = X86Register.rcx;
-// Register t2 = X86Register.rsi;
-// Register threadReg = (target.arch.is64bit()) ? X86FrameMap.r15thread : X86Register.rdi;
-// assert Register.assertDifferentRegisters(top, threadReg, t1, t2, /* preserve: */X86Register.rbx, X86Register.rdx);
-// Label doRefill = new Label();
-// Label discardTlab = new Label();
-//
-// if (C1XOptions.CMSIncrementalMode || !compilation.runtime.universeSupportsInlineContigAlloc()) {
-// // No allocation in the shared eden.
-// jmp(slowCase);
-// }
-//
-// if (!target.arch.is64bit()) {
-// getThread(threadReg);
-// }
-//
-// movptr(top, new Address(threadReg, compilation.runtime.threadTlabTopOffset()));
-// movptr(t1, new Address(threadReg, compilation.runtime.threadTlabEndOffset()));
-//
-// // calculate amount of free space
-// subptr(t1, top);
-// shrptr(t1, Util.log2(wordSize));
-//
-// // Retain tlab and allocate object in shared space if
-// // the amount free in the tlab is too large to discard.
-// cmpptr(t1, new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())));
-// jcc(X86Assembler.Condition.lessEqual, discardTlab);
-//
-// // Retain
-// // %%% yuck as movptr...
-// movptr(t2, (int) ThreadLocalAllocBuffer.refillWasteLimitIncrement());
-// addptr(new Address(threadReg, inBytes(JavaThread.tlabRefillWasteLimitOffset())), t2);
-// if (C1XOptions.TLABStats) {
-// // increment number of slowAllocations
-// addl(new Address(threadReg, inBytes(JavaThread.tlabSlowAllocationsOffset())), 1);
-// }
-// jmp(tryEden);
-//
-// bind(discardTlab);
-// if (C1XOptions.TLABStats) {
-// // increment number of refills
-// addl(new Address(threadReg, inBytes(JavaThread.tlabNumberOfRefillsOffset())), 1);
-// // accumulate wastage -- t1 is amount free in tlab
-// addl(new Address(threadReg, inBytes(JavaThread.tlabFastRefillWasteOffset())), t1);
-// }
-//
-// // if tlab is currently allocated (top or end != null) then
-// // fill [top : end + alignmentReserve with array object
-// testptr(top, top);
-// jcc(X86Assembler.Condition.zero, doRefill);
-//
-// // set up the mark word
-// movptr(new Address(top, oopDesc.markOffsetInBytes()), (intptrT) markOopDesc.prototype().copySetHash(0x2));
-// // set the length to the remaining space
-// subptr(t1, typeArrayOopDesc.headerSize(BasicType.Int));
-// addptr(t1, (int) ThreadLocalAllocBuffer.alignmentReserve());
-// shlptr(t1, log2Intptr(wordSize / Util.sizeofInt()));
-// movptr(new Address(top, compilation.runtime.arrayLengthOffsetInBytes()), t1);
-// // set klass to intArrayKlass
-// // dubious reloc why not an oop reloc?
-// movptr(t1, new ExternalAddress((Address) Universe.intArrayKlassObjAddr()));
-// // store klass last. concurrent gcs assumes klass length is valid if
-// // klass field is not null.
-// storeKlass(top, t1);
-//
-// // refill the tlab with an eden allocation
-// bind(doRefill);
-// movptr(t1, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
-// shlptr(t1, Util.log2(wordSize));
-// // add objectSize ??
-// edenAllocate(top, t1, 0, t2, slowCase);
-//
-// // Check that t1 was preserved in edenAllocate.
-// boolean assertEnabled = false;
-// assert assertEnabled = true;
-// if (assertEnabled && C1XOptions.UseTLAB) {
-// Label ok = new Label();
-// Register tsize = X86Register.rsi;
-// assert Register.assertDifferentRegisters(tsize, threadReg, t1);
-// push(tsize);
-// movptr(tsize, new Address(threadReg, compilation.runtime.threadTlabSizeOffset()));
-// shlptr(tsize, Util.log2(wordSize));
-// cmpptr(t1, tsize);
-// jcc(X86Assembler.Condition.equal, ok);
-// stop("assert(t1 != tlab size)");
-// Util.shouldNotReachHere();
-//
-// bind(ok);
-// pop(tsize);
-// }
-// movptr(new Address(threadReg, compilation.runtime.threadTlabStartOffset()), top);
-// movptr(new Address(threadReg, compilation.runtime.threadTlabTopOffset()), top);
-// addptr(top, t1);
-// subptr(top, (int) ThreadLocalAllocBuffer.alignmentReserveInBytes();
-// movptr(new Address(threadReg, compilation.runtime.threadTlabEndOffset()), top);
-// verifyTlab();
-// jmp(retry);
-    }
-
-    // Look up the method for a megamorphic invokeinterface call.
-    // The target method is determined by <intfKlass : itableIndex>.
-    // The receiver klass is in recvKlass.
-    // On success : the result will be in methodResult : and execution falls through.
-    // On failure : execution transfers to the given label.
-    void lookupInterfaceMethod(RiRuntime runtime, CiRegister recvKlass, CiRegister intfKlass, RegisterOrConstant itableIndex, CiRegister methodResult, CiRegister scanTemp, Label lNoSuchInterface) {
-
-
-        Util.unimplemented();
-
-        //        assert CiRegister.assertDifferentRegisters(recvKlass, intfKlass, methodResult, scanTemp);
-//        assert itableIndex.isConstant() || itableIndex.asRegister() == methodResult : "caller must use same register for non-constant itable index as for method";
-//
-//        Util.unimplemented();
-//        int itableOffsetEntrySize = 0xbadbabe; // runtime.itableOffsetEntrySize()
-//
-//        // Compute start of first itableOffsetEntry (which is at the end of the vtable)
-//        int vtableBase = runtime.vtableStartOffset() * wordSize;
-//        int itentryOff = runtime.itableMethodEntryMethodOffset();
-//        int scanStep = itableOffsetEntrySize * wordSize;
-//        int vteSize = runtime.vtableEntrySize() * wordSize;
-//        Address.ScaleFactor timesVteScale = Address.ScaleFactor.timesPtr(target.arch);
-//        assert vteSize == wordSize : "else adjust timesVteScale";
-//
-//        movl(scanTemp, new Address(recvKlass, runtime.vtableLengthOffset() * wordSize));
-//
-//        // %%% Could store the aligned : prescaled offset in the klassoop.
-//        lea(scanTemp, new Address(recvKlass, scanTemp, timesVteScale, vtableBase));
-//        if (heapWordsPerLong() > 1) {
-//            // Round up to alignObjectOffset boundary
-//            // see code for instanceKlass.startOfItable!
-//            roundTo(scanTemp, sizeofLong());
-//        }
-//
-//        // Adjust recvKlass by scaled itableIndex : so we can free itableIndex.
-//        assert itableOffsetEntrySize * wordSize == wordSize : "adjust the scaling in the code below";
-//        lea(recvKlass, new Address(recvKlass, itableIndex, Address.ScaleFactor.timesPtr(target.arch), itentryOff));
-//
-//        // for (scan = klass.itable(); scan.interface() != null; scan += scanStep) {
-//        // if (scan.interface() == intf) {
-//        // result = (klass + scan.offset() + itableIndex);
-//        // }
-//        // }
-//        Label search = new Label();
-//        Label foundMethod = new Label();
-//
-//        Util.unimplemented();
-//        int itableInterfaceOffsetInBytes = 0xbadbabe; // runtime.itableInterfaceOffsetInBytes()
-//
-//        for (int peel = 1; peel >= 0; peel--) {
-//            movptr(methodResult, new Address(scanTemp, itableInterfaceOffsetInBytes));
-//            cmpptr(intfKlass, methodResult);
-//
-//            if (peel != 0) {
-//                jccb(X86Assembler.Condition.equal, foundMethod);
-//            } else {
-//                jccb(X86Assembler.Condition.notEqual, search);
-//                // (invert the test to fall through to foundMethod...)
-//            }
-//
-//            if (peel == 0) {
-//                break;
-//            }
-//
-//            bind(search);
-//
-//            // Check that the previous entry is non-null. A null entry means that
-//            // the receiver class doesn't implement the interface : and wasn't the
-//            // same as when the caller was compiled.
-//            testptr(methodResult, methodResult);
-//            jcc(X86Assembler.Condition.zero, lNoSuchInterface);
-//            addptr(scanTemp, scanStep);
-//        }
-//
-//        bind(foundMethod);
-//
-//        Util.unimplemented();
-//        int itableOffsetOffsetInBytes = 0xbadbabe; // runtime.itableOffsetOffsetInBytes())
-//
-//        // Got a hit.
-//        movl(scanTemp, new Address(scanTemp, itableOffsetOffsetInBytes));
-//        movptr(methodResult, new Address(recvKlass, scanTemp, Address.ScaleFactor.times1));
-    }
-
-    void checkKlassSubtype(RiRuntime runtime, CiRegister subKlass, CiRegister superKlass, CiRegister tempReg, Label lSuccess) {
-        // TODO: Also use the fast path!
-        //Label lFailure = new Label();
-        //checkKlassSubtypeFastPath(subKlass, superKlass, tempReg, lSuccess, lFailure, null, new RegisterOrConstant(-1));
-        checkKlassSubtypeSlowPath(runtime, subKlass, superKlass, tempReg, CiRegister.None, lSuccess, null, false);
-        //bind(lFailure);
-    }
-
-    void checkKlassSubtypeFastPath(RiRuntime runtime, CiRegister subKlass, CiRegister superKlass, CiRegister tempReg, Label lSuccess, Label lFailure, Label lSlowPath, RegisterOrConstant superCheckOffset) {
-        // TODO: Model the fast path!
-        Util.unimplemented();
-
-//        assert CiRegister.assertDifferentRegisters(subKlass, superKlass, tempReg);
-//        boolean mustLoadSco = (superCheckOffset.constantOrZero() == -1);
-//        if (superCheckOffset.isRegister()) {
-//            assert CiRegister.assertDifferentRegisters(subKlass, superKlass, superCheckOffset.asRegister());
-//        } else if (mustLoadSco) {
-//            assert tempReg != CiRegister.None : "supply either a temp or a register offset";
-//        }
-//
-//        Label lFallthrough = new Label();
-//        int labelNulls = 0;
-//        if (lSuccess == null) {
-//            lSuccess = lFallthrough;
-//            labelNulls++;
-//        }
-//        if (lFailure == null) {
-//            lFailure = lFallthrough;
-//            labelNulls++;
-//        }
-//        if (lSlowPath == null) {
-//            lSlowPath = lFallthrough;
-//            labelNulls++;
-//        }
-//        assert labelNulls <= 1 : "at most one null in the batch";
-//
-//        int scOffset = (runtime.headerSize() * wordSize + runtime.secondarySuperCacheOffsetInBytes());
-//        int scoOffset = (runtime.headerSize() * wordSize + runtime.superCheckOffsetOffsetInBytes());
-//        Address superCheckOffsetAddr = new Address(superKlass, scoOffset);
-//
-//        // If the pointers are equal : we are done (e.g., String[] elements).
-//        // This self-check enables sharing of secondary supertype arrays among
-//        // non-primary types such as array-of-interface. Otherwise : each such
-//        // type would need its own customized SSA.
-//        // We move this check to the front of the fast path because many
-//        // type checks are in fact trivially successful in this manner :
-//        // so we get a nicely predicted branch right at the start of the check.
-//        cmpptr(subKlass, superKlass);
-//
-//        if (lSuccess == lFallthrough) {
-//            jccb(Condition.equal, lSuccess);
-//        } else {
-//            jcc(Condition.equal, lSuccess);
-//        }
-//
-//        // Check the supertype display:
-//        if (mustLoadSco) {
-//            // Positive movl does right thing on LP64.
-//            movl(tempReg, superCheckOffsetAddr);
-//            superCheckOffset = new RegisterOrConstant(tempReg);
-//        }
-//        Address superCheckAddr = new Address(subKlass, superCheckOffset, Address.ScaleFactor.times1, 0);
-//        cmpptr(superKlass, superCheckAddr); // load displayed supertype
-//
-//        // This check has worked decisively for primary supers.
-//        // Secondary supers are sought in the superCache ('superCacheAddr').
-//        // (Secondary supers are interfaces and very deeply nested subtypes.)
-//        // This works in the same check above because of a tricky aliasing
-//        // between the superCache and the primary super display elements.
-//        // (The 'superCheckAddr' can Address either, as the case requires.)
-//        // Note that the cache is updated below if it does not help us find
-//        // what we need immediately.
-//        // So if it was a primary super : we can just fail immediately.
-//        // Otherwise : it's the slow path for us (no success at this point).
-//
-//        if (superCheckOffset.isRegister()) {
-//
-//            // local jcc
-//            if (lSuccess.equals(lFallthrough)) {
-//                jccb(X86Assembler.Condition.equal, lSuccess);
-//            } else {
-//                jcc(X86Assembler.Condition.equal, lSuccess);
-//            }
-//
-//            cmpl(superCheckOffset.asRegister(), scOffset);
-//            if (lFailure == lFallthrough) {
-//
-//                // local jcc
-//                if (lSlowPath.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.equal, lSlowPath);
-//                } else {
-//                    jcc(X86Assembler.Condition.equal, lSlowPath);
-//                }
-//            } else {
-//                // local jcc
-//                if (lFailure.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.notEqual, lFailure);
-//                } else {
-//                    jcc(X86Assembler.Condition.notEqual, lFailure);
-//                }
-//                if (!lSlowPath.equals(lFallthrough)) {
-//                    jmp(lSlowPath);
-//                }
-//            }
-//        } else if (superCheckOffset.asConstant() == scOffset) {
-//            // Need a slow path; fast failure is impossible.
-//            if (lSlowPath.equals(lFallthrough)) {
-//
-//                // local jcc
-//                if (lSuccess.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.equal, lSuccess);
-//                } else {
-//                    jcc(X86Assembler.Condition.equal, lSuccess);
-//                }
-//            } else {
-//                // local jcc
-//                if (lSlowPath.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.notEqual, lSlowPath);
-//                } else {
-//                    jcc(X86Assembler.Condition.notEqual, lSlowPath);
-//                }
-//                if (!lSuccess.equals(lFallthrough)) {
-//                    jmp(lSuccess);
-//                }
-//            }
-//        } else {
-//            // No slow path; it's a fast decision.
-//            if (lFailure.equals(lFallthrough)) {
-//
-//                // local jcc
-//                if (lSuccess.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.equal, lSuccess);
-//                } else {
-//                    jcc(X86Assembler.Condition.equal, lSuccess);
-//                }
-//
-//            } else {
-//                // local jcc
-//                if (lFailure.equals(lFallthrough)) {
-//                    jccb(X86Assembler.Condition.equal, lFailure);
-//                } else {
-//                    jcc(X86Assembler.Condition.notEqual, lFailure);
-//                }
-//                if (!lSuccess.equals(lFallthrough)) {
-//                    jmp(lSuccess);
-//                }
-//            }
-//        }
-//
-//        bind(lFallthrough);
-    }
-
-    void checkKlassSubtypeSlowPath(RiRuntime runtime, CiRegister subKlass, CiRegister superKlass, CiRegister tempReg, CiRegister temp2Reg, Label lSuccess, Label lFailure, boolean setCondCodes) {
-        assert CiRegister.assertDifferentRegisters(subKlass, superKlass, tempReg);
-
-        Util.unimplemented();
-
-//
-//        if (temp2Reg != CiRegister.None) {
-//            assert CiRegister.assertDifferentRegisters(subKlass, superKlass, tempReg, temp2Reg);
-//        }
-//
-//        Label lFallthrough = new Label();
-//        int labelNulls = 0;
-//        if (lSuccess == null) {
-//            lSuccess = lFallthrough;
-//            labelNulls++;
-//        }
-//        if (lFailure == null) {
-//            lFailure = lFallthrough;
-//            labelNulls++;
-//        }
-//        assert labelNulls <= 1 : "at most one null in the batch";
-//
-//        // a couple of useful fields in subKlass:
-//        int ssOffset = (runtime.headerSize() * wordSize + runtime.secondarySupersOffsetInBytes());
-//        int scOffset = (runtime.headerSize() * wordSize + runtime.secondarySuperCacheOffsetInBytes());
-//        Address secondarySupersAddr = new Address(subKlass, ssOffset);
-//        Address superCacheAddr = new Address(subKlass, scOffset);
-//
-//        // Do a linear scan of the secondary super-klass chain.
-//        // This code is rarely used : so simplicity is a virtue here.
-//        // The repneScan instruction uses fixed registers : which we must spill.
-//        // Don't worry too much about pre-existing connections with the input regs.
-//
-//        assert subKlass != X86.rax : "killed reg"; // killed by mov(X86Register.rax, super)
-//        assert subKlass != X86.rcx : "killed reg"; // killed by lea(X86Register.rcx, &pstCounter)
-//
-//        // Get superKlass value into X86Register.rax (even if it was in X86Register.rdi or X86Register.rcx).
-//        boolean pushedRax = false;
-//        boolean pushedRcx = false;
-//        boolean pushedRdi = false;
-//        if (superKlass != X86.rax) {
-//            if (X86.rax != tempReg && X86.rax != temp2Reg) {
-//                push(X86.rax);
-//                pushedRax = true;
-//            }
-//            mov(X86.rax, superKlass);
-//        }
-//        if (X86.rcx != tempReg && X86.rcx != temp2Reg) {
-//            push(X86.rcx);
-//            pushedRcx = true;
-//        }
-//        if (X86.rdi != tempReg && X86.rdi != temp2Reg) {
-//            push(X86.rdi);
-//            pushedRdi = true;
-//        }
-//
-//        // We will consult the secondary-super array.
-//        movptr(X86.rdi, secondarySupersAddr);
-//        // Load the array length. (Positive movl does right thing on LP64.)
-//        movl(X86.rcx, new Address(X86.rdi, runtime.arrayLengthOffsetInBytes()));
-//        // Skip to start of data.
-//        addptr(X86.rdi, runtime.firstArrayElementOffset(CiKind.Object));
-//
-//        // Scan RCX words at [RDI] for an occurrence of RAX.
-//        // Set NZ/Z based on last compare.
-//        // This part is tricky : as values in supers array could be 32 or 64 bit wide
-//        // and we store values in objArrays always encoded : thus we need to encode
-//        // the value of X86Register.rax before repne. Note that X86Register.rax is dead after the repne.
-//
-//        repneScan();
-//
-//        // Unspill the temp. registers:
-//        if (pushedRdi) {
-//            pop(X86.rdi);
-//        }
-//        if (pushedRcx) {
-//            pop(X86.rcx);
-//        }
-//        if (pushedRax) {
-//            pop(X86.rax);
-//        }
-//
-//        if (setCondCodes) {
-//            // Special hack for the AD files: X86Register.rdi is guaranteed non-zero.
-//            assert !pushedRdi : "X86Register.rdi must be left non-null";
-//            // Also : the condition codes are properly set Z/NZ on succeed/failure.
-//        }
-//
-//        if (lFailure == lFallthrough) {
-//            jccb(X86Assembler.Condition.notEqual, lFailure);
-//        } else {
-//            jcc(X86Assembler.Condition.notEqual, lFailure);
-//        }
-//
-//        // Success. Cache the super we found and proceed in triumph.
-//        movptr(superCacheAddr, superKlass);
-//
-//        if (lSuccess.equals(lFallthrough)) {
-//            jmp(lSuccess);
-//        }
-//
-//        bind(lFallthrough);
-    }
-
     boolean verifyOop(CiRegister reg) {
         if (!C1XOptions.VerifyOops) {
             return true;
@@ -2118,106 +1008,13 @@ public class X86MacroAssembler extends X86Assembler {
         throw Util.unimplemented();
     }
 
-    // registers on entry:
-    // - X86Register.rax ('check' register): required MethodType
-    // - X86Register.rcx: method handle
-    // - X86Register.rdx : X86Register.rsi : or ?: killable temp
-    void checkMethodHandleType(CiRegister mtypeReg, CiRegister mhReg, CiRegister tempReg, Label wrongMethodType) {
-        // TODO: What to do with method handles?
-        throw Util.unimplemented();
-// // compare method type against that of the receiver
-// cmpptr(mtypeReg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
-// jcc(X86Assembler.Condition.notEqual, wrongMethodType);
-    }
-
-    // A method handle has a "vmslots" field which gives the size of its
-    // argument list in JVM stack slots. This field is either located directly
-    // in every method handle : or else is indirectly accessed through the
-    // method handle's MethodType. This macro hides the distinction.
-    void loadMethodHandleVmslots(CiRegister vmslotsReg, CiRegister mhReg, CiRegister tempReg) {
-        // TODO: What to do with method handles?
-        throw Util.unimplemented();
-// // load mh.type.form.vmslots
-// if (javaDynMethodHandle.vmslotsOffsetInBytes() != 0) {
-// // hoist vmslots into every mh to avoid dependent load chain
-// movl(vmslotsReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmslotsOffsetInBytes, tempReg)));
-// } else {
-// Register temp2Reg = vmslotsReg;
-// movptr(temp2Reg, new Address(mhReg, delayedValue(javaDynMethodHandle.typeOffsetInBytes, tempReg)));
-// movptr(temp2Reg, new Address(temp2Reg, delayedValue(javaDynMethodType.formOffsetInBytes, tempReg)));
-// movl(vmslotsReg, new Address(temp2Reg, delayedValue(javaDynMethodTypeForm.vmslotsOffsetInBytes, tempReg)));
-// }
-    }
-
-    // registers on entry:
-    // - X86Register.rcx: method handle
-    // - X86Register.rdx: killable temp (interpreted only)
-    // - X86Register.rax: killable temp (compiled only)
-    void jumpToMethodHandleEntry(CiRegister mhReg, CiRegister tempReg) {
-        // TODO: What to do with method handles?
-        throw Util.unimplemented();
-// assert mhReg == X86Register.rcx : "caller must put MH object in X86Register.rcx";
-// assert Register.assertDifferentRegisters(mhReg, tempReg);
-//
-// // pick out the interpreted side of the handler
-// movptr(tempReg, new Address(mhReg, delayedValue(javaDynMethodHandle.vmentryOffsetInBytes, tempReg)));
-//
-// // off we go...
-// jmp(new Address(tempReg, MethodHandleEntry.fromInterpretedEntryOffsetInBytes()));
-//
-// // for the various stubs which take control at this point :
-// // see MethodHandles.generateMethodHandleStub
-    }
-
-    boolean verifyTlab(RiRuntime runtime) {
-        if (C1XOptions.UseTLAB && C1XOptions.VerifyOops) {
-
-            Util.unimplemented();
-
-//
-//            Label next = new Label();
-//            Label ok = new Label();
-//            CiRegister t1 = X86.rsi;
-//            CiRegister threadReg = (target.arch.is64bit()) ? runtime.threadRegister() : X86.rbx;
-//
-//            push(t1);
-//
-//            if (!target.arch.is64bit()) {
-//                push(threadReg);
-//                getThread(threadReg);
-//            }
-//
-//            movptr(t1, new Address(threadReg, runtime.threadTlabTopOffset()));
-//            cmpptr(t1, new Address(threadReg, runtime.threadTlabStartOffset()));
-//            jcc(X86Assembler.Condition.aboveEqual, next);
-//            stop("assert(top >= start)");
-//            Util.shouldNotReachHere();
-//
-//            bind(next);
-//            movptr(t1, new Address(threadReg, runtime.threadTlabEndOffset()));
-//            cmpptr(t1, new Address(threadReg, runtime.threadTlabTopOffset()));
-//            jcc(X86Assembler.Condition.aboveEqual, ok);
-//            stop("assert(top <= end)");
-//            Util.shouldNotReachHere();
-//
-//            bind(ok);
-//            if (!target.arch.is64bit()) {
-//                pop(threadReg);
-//            }
-//            pop(t1);
-        }
-        return true;
-    }
-
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
         assert dst.isXMM() && src.isXMM();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
-            return;
         } else {
             movss(dst, src);
-            return;
         }
     }
 
@@ -2235,10 +1032,8 @@ public class X86MacroAssembler extends X86Assembler {
         assert dst.isXMM() && src.isXMM();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
-            return;
         } else {
             movsd(dst, src);
-            return;
         }
     }
 
@@ -2246,10 +1041,8 @@ public class X86MacroAssembler extends X86Assembler {
         assert dst.isXMM();
         if (C1XOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
-            return;
         } else {
             movlpd(dst, src);
-            return;
         }
     }
 
@@ -2283,106 +1076,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     int lockObject(RiRuntime runtime, CiRegister hdr, CiRegister obj, CiRegister dispHdr, CiRegister scratch, Label slowCase) {
-
-        /*int alignedMask = wordSize - 1;
-        int hdrOffset = runtime.markOffsetInBytes();
-        assert hdr == X86.rax : "hdr must be X86Register.rax :  for the cmpxchg instruction";
-        assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
-        Label done = new Label();
-        int nullCheckOffset = -1;
-
-        verifyOop(obj);
-
-        // save object being locked into the BasicObjectLock
-        movptr(new Address(dispHdr, runtime.basicObjectLockOffsetInBytes()), obj);
-
-        if (C1XOptions.UseBiasedLocking) {
-            assert scratch != Register.noreg : "should have scratch register at this point";
-            nullCheckOffset = biasedLockingEnter(dispHdr, obj, hdr, scratch, false, done, slowCase, null);
-        } else {
-            nullCheckOffset = codeBuffer.position();
-        }
-
-        // Load object header
-        movptr(hdr, new Address(obj, hdrOffset));
-        // and mark it as unlocked
-        orptr(hdr, runtime.unlockedValue());
-        // save unlocked object header into the displaced header location on the stack
-        movptr(new Address(dispHdr, 0), hdr);
-        // test if object header is still the same (i.e. unlocked), and if so, store the
-        // displaced header Pointer in the object header - if it is not the same, get the
-        // object header instead
-        if (runtime.isMP()) {
-            lock(); // must be immediately before cmpxchg!
-        }
-        cmpxchgptr(dispHdr, new Address(obj, hdrOffset));
-        jcc(X86Assembler.Condition.equal, done);
-        // if the object header was not the same, it is now in the hdr register
-        // => test if it is a stack pointer into the same stack (recursive locking), i.e.:
-        //
-        // 1) (hdr & alignedMask) == 0
-        // 2) X86Register.rsp <= hdr
-        // 3) hdr <= X86Register.rsp + pageSize
-        //
-        // these 3 tests can be done by evaluating the following expression:
-        //
-        // (hdr - X86Register.rsp) & (alignedMask - pageSize)
-        //
-        // assuming both the stack pointer and pageSize have their least
-        // significant 2 bits cleared and pageSize is a power of 2
-        subptr(hdr, X86.rsp);
-        andptr(hdr, alignedMask - runtime.vmPageSize());
-        // for recursive locking, the result is zero => save it in the displaced header
-        // location (null in the displaced hdr location indicates recursive locking)
-        movptr(new Address(dispHdr, 0), hdr);
-        // otherwise we don't care about the result and handle locking via runtime call
-        jcc(X86Assembler.Condition.notZero, slowCase);*/
-
-        // TODO: Implement fast path
         jmp(slowCase);
-        // done
-        //bind(done);
-        //return nullCheckOffset;
         return 0;
     }
 
     public void unlockObject(RiRuntime runtime, CiRegister hdr, CiRegister obj, CiRegister dispHdr, Label slowCase) {
-        /*int hdrOffset = runtime.markOffsetInBytes();
-        assert dispHdr == X86.rax : "dispHdr must be X86Register.rax :  for the cmpxchg instruction";
-        assert hdr != obj && hdr != dispHdr && obj != dispHdr : "registers must be different";
-        Label done = new Label();
-
-        if (C1XOptions.UseBiasedLocking) {
-            // load object
-            movptr(obj, new Address(dispHdr, runtime.basicObjectObjOffsetInBytes()));
-            biasedLockingExit(runtime, obj, hdr, done);
-        }
-
-        // load displaced header
-        movptr(hdr, new Address(dispHdr, 0));
-        // if the loaded hdr is null we had recursive locking
-        testptr(hdr, hdr);
-        // if we had recursive locking, we are done
-        jcc(X86Assembler.Condition.zero, done);
-        if (!C1XOptions.UseBiasedLocking) {
-            // load object
-            movptr(obj, new Address(dispHdr, runtime.basicObjectObjOffsetInBytes()));
-        }
-        verifyOop(obj);
-        // test if object header is pointing to the displaced header, and if so, restore
-        // the displaced header in the object - if the object header is not pointing to
-        // the displaced header, get the object header instead
-        if (runtime.isMP()) {
-            lock(); // must be immediately before cmpxchg!
-        }
-        cmpxchgptr(hdr, new Address(obj, hdrOffset));
-        // if the object header was not pointing to the displaced header,
-        // we do unlocking via runtime call
-        jcc(X86Assembler.Condition.notEqual, slowCase);
-        // done
-        bind(done);*/
-
-        // TODO: Implement fast path!
         jmp(slowCase);
     }
 
@@ -2469,22 +1167,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void initializeHeader(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister len, CiRegister t1, CiRegister t2) {
-        assert CiRegister.assertDifferentRegisters(obj, klass, len);
-        if (C1XOptions.UseBiasedLocking && !len.isValid()) {
-            Util.unimplemented();
-            //assert CiRegister.assertDifferentRegisters(obj, klass, len, t1, t2);
-            //movptr(t1, new Address(klass, runtime.prototypeHeaderOffsetInBytes()));
-            //movptr(new Address(obj, runtime.markOffsetInBytes()), t1);
-        } else {
-            Util.unimplemented();
-            // This assumes that all prototype bits fit in an int
-            //movptr(new Address(obj, runtime.markOffsetInBytes()), runtime.initialMarkWord());
-        }
-
-        movptr(new Address(obj, runtime.hubOffset()), klass);
-        if (len.isValid()) {
-            movl(new Address(obj, runtime.arrayLengthOffsetInBytes()), len);
-        }
+        Util.unimplemented();
     }
 
     // preserves obj, destroys lenInBytes
@@ -2697,18 +1380,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     public void shouldNotReachHere() {
         stop("should not reach here");
-    }
-
-    public static int sizeofDouble() {
-        return 8;
-    }
-
-    public static int sizeofLong() {
-        return 8; // TODO: move this method
-    }
-
-    public int heapWordsPerLong() {
-        return 8 / target.arch.wordSize;
     }
 
     public void safepoint(CodeEmitInfo info) {

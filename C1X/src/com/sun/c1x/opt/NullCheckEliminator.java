@@ -87,8 +87,6 @@ public class NullCheckEliminator extends ValueVisitor {
     HashSet<Value> currentNonNulls;
     List<Value> currentUses;
 
-    boolean secondPass;
-
     /**
      * Creates a new null check eliminator for the specified IR and performs the optimization.
      * @param ir the IR

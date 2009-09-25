@@ -21,18 +21,9 @@
 package com.sun.c1x.gen;
 
 /**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
- *
  * This package contains the port of the LIRGenerator which translates
  * HIR instructions to LIR instructions for the backend.
  *
- * List of ported files:
- *
- * c1_LIRGenerator.hpp
- * SwitchRange -> SwitchRange (Status: Ported)
- * ResolveNode -> ResolveNode (Status: Ported)
- * PhiResolverState -> PhiResolver.PhiResolverState (Status: Ported)
- * LIRGenerator -> LIRGenerator (Status: Ported)
- *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  */

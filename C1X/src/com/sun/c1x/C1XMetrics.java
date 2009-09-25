@@ -21,8 +21,8 @@
 package com.sun.c1x;
 
 /**
- * The <code>C1XMetrics</code> class contains a number of fields that collect metrics about
- * compilation.
+ * This class contains a number of fields that collect metrics about compilation, particularly
+ * the number of times certain optimizations are performed.
  *
  * @author Ben L. Titzer
  */

@@ -23,9 +23,9 @@ package com.sun.c1x.target.sparc;
 import com.sun.c1x.ci.*;
 
 /**
- *
+ * This class represents the SPARC architecture.
+ * 
  * @author Thomas Wuerthinger
- *
  */
 public class SPARC extends CiArchitecture {
 

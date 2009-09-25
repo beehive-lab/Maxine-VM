@@ -40,7 +40,6 @@ public class LIRRTCall extends LIRCall {
      * Creates a new LIRRTCall instruction.
      *
      * @param entry
-     * @param tmp
      * @param result
      * @param arguments
      * @param info
@@ -53,8 +52,7 @@ public class LIRRTCall extends LIRCall {
 
     /**
      * Prints this instruction.
-     *
-     * @param out the outputstream.
+     * @param out the outputstream
      */
     @Override
     public void printInstruction(LogStream out) {
@@ -64,7 +62,6 @@ public class LIRRTCall extends LIRCall {
 
     /**
      * Emits target assembly code for this instruction.
-     *
      * @param masm the target assembler
      */
     @Override
