@@ -1536,51 +1536,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  displays in the {@MethodInspector} the method whose target code contains
-     * an interactively specified address.
-     */
-    final class ViewRuntimeStubByAddressAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "View runtime stub code containing target code address...";
-
-        public ViewRuntimeStubByAddressAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-        }
-
-        @Override
-        protected void procedure() {
-            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
-
-                @Override
-                public String validateInput(Address address) {
-                    if (maxVM().makeTeleRuntimeStub(address) != null) {
-                        return null;
-                    }
-                    return "There is no runtime stub containing the address " + address.toHexString();
-                }
-
-                @Override
-                public void entered(Address address) {
-                    focus().setCodeLocation(maxVM().createCodeLocation(address), false);
-                }
-            };
-        }
-
-    }
-
-    private final InspectorAction viewRuntimeStubByAddress = new ViewRuntimeStubByAddressAction(null);
-
-    /**
-     * @return an interactive action that displays in the {@link MethodInspector} the method whose
-     * target code contains the specified address in the VM.
-     */
-    public final InspectorAction viewRuntimeStubByAddress() {
-        return viewRuntimeStubByAddress;
-    }
-
-
-
-    /**
      * Action:  displays in the {@MethodInspector} the method code containing the current code selection.
      */
     final class ViewMethodCodeAtSelectionAction extends InspectorAction {

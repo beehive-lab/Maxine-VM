@@ -291,12 +291,6 @@ public abstract class Trap {
             return targetMethod;
         }
 
-        // check to see if this fault originated in a runtime stub
-        final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
-        if (runtimeStub != null) {
-            return runtimeStub;
-        }
-
         // this fault occurred in native code
         return null;
     }

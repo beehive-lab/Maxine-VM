@@ -579,26 +579,18 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleRuntimeStub teleRuntimeStub = maxVM().makeTeleRuntimeStub(address);
-                if (teleRuntimeStub != null) {
-                    codeStart = teleRuntimeStub.runtimeStub().start();
-                    location = address.minus(codeStart).toInt();
-                    shortName = "runtime stub[0x" + codeStart + "]";
-                    longName = shortName;
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
+                if (teleNativeTargetRoutine != null) {
+                    codeStart = teleNativeTargetRoutine.getCodeStart();
+                    location = address.minus(codeStart.asAddress()).toInt();
+                    shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                    longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
                 } else {
-                    final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
-                    if (teleNativeTargetRoutine != null) {
-                        codeStart = teleNativeTargetRoutine.getCodeStart();
-                        location = address.minus(codeStart.asAddress()).toInt();
-                        shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                        longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
-                    } else {
-                        // Must be an address in an unknown area of native code
-                        shortName = "0x" + address.toHexString();
-                        longName = "unknown native code at 0x" + address.toHexString();
-                        codeStart = address;
-                        location = 0;
-                    }
+                    // Must be an address in an unknown area of native code
+                    shortName = "0x" + address.toHexString();
+                    longName = "unknown native code at 0x" + address.toHexString();
+                    codeStart = address;
+                    location = 0;
                 }
             }
         }
