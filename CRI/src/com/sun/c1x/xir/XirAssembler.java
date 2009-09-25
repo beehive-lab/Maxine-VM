@@ -392,27 +392,22 @@ public class XirAssembler {
     }
 
     public XirTemplate finishTemplate() {
-        XirInstruction[] xirInstructions = instructions.toArray(new XirInstruction[instructions.size()]);
-        XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
-        XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
-        return new XirTemplate(xirInstructions, xirLabels, xirParameters);
+        return buildTemplate(false, false);
     }
 
     public XirTemplate finishStub() {
-        XirInstruction[] xirInstructions = instructions.toArray(new XirInstruction[instructions.size()]);
-        XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
-        XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
-        return new XirTemplate(xirInstructions, xirLabels, xirParameters);
+        return buildTemplate(false, true);
     }
 
-    private void preprocess(boolean twoOperandForm) {
+    private XirTemplate buildTemplate(boolean isStub, boolean twoOperandForm) {
         ArrayList<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
         ArrayList<XirInstruction> slowPath = new ArrayList<XirInstruction>();
 
-        boolean hasStubCall = false;
-        boolean hasRuntimeCall = false;
-        boolean hasJavaCall = false;
-        boolean hasControlFlow = false;
+        int flags = 0;
+
+        if (isStub) {
+            flags |= XirTemplate.GLOBAL_STUB;
+        }
 
         ArrayList<XirInstruction> currentList = fastPath;
 
@@ -444,37 +439,37 @@ public class XirAssembler {
                 case PointerCAS:
                     break;
                 case CallStub:
-                    hasStubCall = true;
+                    flags |= XirTemplate.HAS_STUB_CALL;
                     break;
                 case CallRuntime:
-                    hasRuntimeCall = true;
+                    flags |= XirTemplate.HAS_RUNTIME_CALL;
                     break;
                 case CallJava:
-                    hasJavaCall = true;
+                    flags |= XirTemplate.HAS_JAVA_CALL;
                     break;
                 case Jmp:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jeq:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jneq:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jgt:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jgteq:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jugteq:
-                    hasControlFlow = true;
-                    break;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                   break;
                 case Jlt:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Jlteq:
-                    hasControlFlow = true;
+                    flags |= XirTemplate.HAS_CONTROL_FLOW;
                     break;
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;
@@ -489,5 +484,10 @@ public class XirAssembler {
                 currentList.add(i);
             }
         }
+        XirInstruction[] fp = fastPath.toArray(new XirInstruction[fastPath.size()]);
+        XirInstruction[] sp = slowPath.size() > 0 ? slowPath.toArray(new XirInstruction[slowPath.size()]) : null;
+        XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
+        XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
+        return new XirTemplate(fp, sp, xirLabels, xirParameters, flags);
     }
 }

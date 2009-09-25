@@ -1654,16 +1654,6 @@ public class IRInterpreter {
             jumpNextInstruction();
         }
 
-        @Override
-        public void visitProfileCall(ProfileCall i) {
-            jumpNextInstruction();
-        }
-
-        @Override
-        public void visitProfileCounter(ProfileCounter i) {
-            jumpNextInstruction();
-        }
-
         public CiConstant run() throws InvocationTargetException {
             if (C1XOptions.PrintStateInInterpreter) {
                 System.out.println("\n********** Running " + Util.toJavaName(method.holder()) + ":" + method.name() + method.signatureType().toString() + " **********\n");

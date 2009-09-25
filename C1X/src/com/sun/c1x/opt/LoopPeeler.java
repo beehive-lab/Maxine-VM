@@ -649,22 +649,6 @@ public class LoopPeeler extends ValueVisitor {
         addInstruction(other);
     }
 
-    @Override
-    public void visitProfileCall(ProfileCall i) {
-        ProfileCall other = new ProfileCall(i.method(), i.bci(), lookup(i.object()), i.knownHolder());
-        other.setBCI(i.bci());
-        bind(i, other);
-        addInstruction(other);
-    }
-
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        ProfileCounter other = new ProfileCounter(lookup(i.mdo()), i.offset(), i.increment());
-        other.setBCI(i.bci());
-        bind(i, other);
-        addInstruction(other);
-    }
-
     public LoopPeeler(IR ir, Loop loop) {
         this.loop = loop;
         this.ir = ir;
