@@ -29,7 +29,7 @@ package com.sun.c1x.util;
 public class BitMap2D {
 
     private BitMap map;
-    private int bitsPerSlot;
+    private final int bitsPerSlot;
 
     private int bitIndex(int slotIndex, int bitWithinSlotIndex)  {
       return slotIndex * bitsPerSlot + bitWithinSlotIndex;

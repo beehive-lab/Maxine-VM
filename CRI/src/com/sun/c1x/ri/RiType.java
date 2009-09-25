@@ -130,12 +130,6 @@ public interface RiType {
     boolean isArrayKlass();
 
     /**
-     * Checks whether this type is an array of non-primitive elements.
-     * @return {@code true} if this type is an array of non-primitive elements
-     */
-    boolean isTypeArrayClass();
-
-    /**
      * Checks whether this type is final.
      * NOTE THIS OPERATION IS ONLY AVAILABLE ON RESOLVED TYPES.
      * @return {@code true} if this type is final

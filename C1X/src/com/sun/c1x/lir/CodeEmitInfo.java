@@ -37,11 +37,11 @@ import com.sun.c1x.value.*;
 public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
-    private IRScope scope;
+    private final IRScope scope;
     private List<ExceptionHandler> exceptionHandlers;
     public OopMap oopMap;
-    private ValueStack stack; // used by deoptimization (contains also monitors
-    private int bci;
+    private final ValueStack stack; // used by deoptimization (contains also monitors
+    private final int bci;
 
     // use scope from ValueStack
     public CodeEmitInfo(int bci, ValueStack stack, List<ExceptionHandler> exceptionHandlers) {
@@ -51,7 +51,6 @@ public class CodeEmitInfo {
         this.oopMap = null;
         this.stack = stack;
         this.exceptionHandlers = exceptionHandlers;
-        assert this.stack != null : "must be non null";
     }
 
     // make a copy
@@ -100,10 +99,6 @@ public class CodeEmitInfo {
 
     public IRScope scope() {
         return scope;
-    }
-
-    public RiMethod method() {
-        return scope.method;
     }
 
     public List<ExceptionHandler> exceptionHandlers() {

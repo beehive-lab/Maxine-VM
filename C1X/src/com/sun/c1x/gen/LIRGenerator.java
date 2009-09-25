@@ -67,7 +67,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final C1XCompilation compilation;
-    PhiResolver.PhiResolverState resolverState;
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
     private Value currentInstruction;
@@ -115,13 +114,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         this.currentBlock = null;
         blockDoEpilog(block);
-    }
-
-    public Value instructionForOpr(LIROperand opr) {
-        if (opr.isVirtual()) {
-            return instructionForVreg(opr.vregNumber());
-        }
-        return null;
     }
 
     public Value instructionForVreg(int regNum) {
@@ -1608,16 +1600,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         return instr.checkFlag(Value.Flag.LiveValue);
     }
 
-    // increment a counter returning the incremented value
-    LIROperand incrementAndReturnCounter(LIRLocation base, int offset, int increment) {
-        LIRAddress counter = new LIRAddress(base, offset, CiKind.Int);
-        LIROperand result = newRegister(CiKind.Int);
-        lir.load(counter, result, null);
-        lir.add(result, LIROperandFactory.intConst(increment), result);
-        lir.store(result, counter, null);
-        return result;
-    }
-
     protected void incrementBackedgeCounter(CodeEmitInfo info) {
         incrementInvocationCounter(info, true);
     }
@@ -1991,14 +1973,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract void getObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
 
-    protected abstract LIRLocation getThreadPointer();
-
-    protected abstract LIROperand getThreadTemp();
-
-    protected abstract void incrementCounter(long address, int step);
-
-    protected abstract void incrementCounter(LIRAddress counter, int step);
-
     protected abstract LIROperand osrBufferPointer();
 
     protected abstract void putObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
@@ -2014,13 +1988,9 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract LIRLocation rlockByte(CiKind type);
 
-    protected abstract LIROperand rlockCalleeSaved(CiKind type);
-
     protected abstract LIROperand safepointPollRegister();
 
     protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
-
-    protected abstract LIROperand syncTempOpr();
 
     protected abstract void traceBlockEntry(BlockBegin block);
 
@@ -2033,36 +2003,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract void volatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
 
     protected abstract void volatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
-
-    /**
-     * Offset of the klass part (C1 HotSpot specific). Probably this method can be removed later on.
-     * @return the offset of the klass part
-     */
-    private static int klassPartOffsetInBytes() {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    private static boolean isConstantZero(Value x) {
-        if (x instanceof Constant) {
-            final Constant c = (Constant) x;
-            // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.asConstant().asInt() == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean positiveConstant(Value x) {
-        if (x instanceof Constant) {
-            final Constant c = (Constant) x;
-            // XXX: what about byte, short, char, long?
-            if (c.type().isInt() && c.asConstant().asInt() >= 0) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     protected static LIRCondition lirCond(Condition cond) {
         LIRCondition l = null;

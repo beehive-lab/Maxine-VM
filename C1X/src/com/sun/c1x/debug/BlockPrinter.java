@@ -35,10 +35,8 @@ public class BlockPrinter implements BlockClosure {
     private final InstructionPrinter ip;
     private final boolean cfgOnly;
     private final boolean liveOnly;
-    final IR ir;
 
     public BlockPrinter(IR ir, InstructionPrinter ip, boolean cfgOnly, boolean liveOnly) {
-        this.ir = ir;
         this.ip = ip;
         this.cfgOnly = cfgOnly;
         this.liveOnly = liveOnly;

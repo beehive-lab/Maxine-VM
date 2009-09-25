@@ -156,9 +156,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 case dneg:
                     emitDNEG();
                     break;
-
-                default:
-                    throw Util.shouldNotReachHere();
             }
         }
 

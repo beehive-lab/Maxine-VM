@@ -141,15 +141,6 @@ public class Util {
     }
 
     /**
-     * Gets a word with the left-most n bits set.
-     * @param n the number of right-most bits to set
-     * @return an integer value with the right-most n bits set
-     */
-    public static int leftNBits(int n) {
-        return (rightNBits(n) << (n >= Integer.SIZE ? 0 : (Integer.SIZE - n)));
-    }
-
-    /**
      * Statically cast an object to an arbitrary Object type. Dynamically checked.
      */
     @SuppressWarnings("unchecked")
@@ -321,80 +312,6 @@ public class Util {
     }
 
     /**
-     * Gets a string for a given field formatted according to a given format specification. A format specification is
-     * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
-     * the field that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
-     * accepted specifiers and the field attribute they denote are described below:
-     *
-     * <pre>
-     *     Specifier | Description                                          | Example(s)
-     *     ----------+------------------------------------------------------------------------------------------
-     *     'T'       | Qualified field type                                 | "int" "java.lang.String"
-     *     't'       | Unqualified field type                               | "int" "String"
-     *     'H'       | Qualified holder                                     | "java.util.Map.Entry"
-     *     'h'       | Unqualified holder                                   | "Entry"
-     *     'n'       | Field name                                           | "amount"
-     *     'f'       | Indicator if field is unresolved, static or instance | "unresolved" "static" "instance"
-     *     '%'       | A '%' character                                      | "%"
-     * </pre>
-     *
-     * @param format a format specification
-     * @param field the field to be formatted
-     * @param basicTypes if {@code true} then the field's type is printed in the {@linkplain CiKind#jniName JNI} form
-     *            of its {@linkplain CiKind basic type}
-     * @return the result of formatting this field according to {@code format}
-     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
-     */
-    public static String format(String format, RiField field, boolean basicTypes) throws IllegalFormatException {
-        final StringBuilder sb = new StringBuilder();
-        int index = 0;
-        while (index < format.length()) {
-            final char ch = format.charAt(index++);
-            if (ch == '%') {
-                if (index >= format.length()) {
-                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a field format specification");
-                }
-                final char specifier = format.charAt(index++);
-                boolean qualified = false;
-                switch (specifier) {
-                    case 'T':
-                        qualified = true;
-                        // fall through
-                    case 't': {
-                        sb.append(basicTypes ? field.basicType().jniName : toJavaName(field.type(), qualified));
-                        break;
-                    }
-                    case 'H':
-                        qualified = true;
-                        // fall through
-                    case 'h': {
-                        sb.append(toJavaName(field.holder(), qualified));
-                        break;
-                    }
-                    case 'n': {
-                        sb.append(field.name());
-                        break;
-                    }
-                    case 'f': {
-                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
-                        break;
-                    }
-                    case '%': {
-                        sb.append('%');
-                        break;
-                    }
-                    default: {
-                        throw new UnknownFormatConversionException(String.valueOf(specifier));
-                    }
-                }
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
      * Converts a Java source-language class name into the internal form.
      *
      * @param className the class name
@@ -517,10 +434,6 @@ public class Util {
         }
     }
 
-    public static int sizeofInt() {
-        return 4;
-    }
-
     public static boolean is8bit(long l) {
         return l < 128 && l >= -128;
     }
@@ -531,14 +444,6 @@ public class Util {
     public static int safeToInt(long l) {
         assert (int) l == l;
         return (int) l;
-    }
-
-    public static int sizeofOopDesc() {
-        return nonFatalUnimplemented(0);
-    }
-
-    public static long stringToAddress(String b) {
-        return nonFatalUnimplemented(0);
     }
 
     public static boolean traceLinearScan(int level, String string, Object...objects) {
@@ -560,12 +465,6 @@ public class Util {
 
     public static void printBytes(String name, byte[] array, int bytesPerLine) {
         printBytes(name, array, array.length, bytesPerLine);
-    }
-
-    public static void printSeperator() {
-        for (int i = 0; i < PRINTING_LINE_WIDTH; i++) {
-            TTY.print(SEPERATOR_CHARACTER);
-        }
     }
 
     public static void printSection(String name, char sectionCharacter) {

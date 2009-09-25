@@ -33,7 +33,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     private final X86LIRAssembler ce;
     private final X86MacroAssembler masm;
     private final C1XCompilation compilation;
-    private static final CiKind[] ARRAY_COPY_SIGNATURE = {CiKind.Object, CiKind.Int, CiKind.Object, CiKind.Int, CiKind.Int};
 
     public X86CodeStubVisitor(X86LIRAssembler lirAssembler) {
         this.ce = lirAssembler;

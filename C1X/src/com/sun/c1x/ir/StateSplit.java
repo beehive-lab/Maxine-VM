@@ -58,13 +58,4 @@ public abstract class StateSplit extends Instruction {
     public ValueStack stateBefore() {
         return stateBefore;
     }
-
-    /**
-     * Gets the IR scope for this instruction.
-     * @return the IR scope
-     */
-    public IRScope scope() {
-        return stateBefore.scope();
-    }
-
 }

@@ -235,15 +235,6 @@ public class BlockBegin extends Instruction {
     }
 
     /**
-     * Checks whether this block is an entrypoint, either as a standard entrypoint,
-     * subroutine entrypoint, or an exception handler.
-     * @return <code>true</code> if this block is an entrypoint
-     */
-    public boolean isEntryBlock() {
-        return (blockFlags & entryFlags) != 0;
-    }
-
-    /**
      * Set a flag on this block.
      * @param flag the flag to set
      */

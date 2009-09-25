@@ -59,14 +59,6 @@ public abstract class LIRAssembler {
         return frameMap;
     }
 
-    void setCurrentBlock(BlockBegin b) {
-        currentBlock = b;
-    }
-
-    BlockBegin currentBlock() {
-        return currentBlock;
-    }
-
     // non-safepoint debug info management
     void flushDebugInfo(int beforePcOffset) {
         if (pendingNonSafepoint != null) {
@@ -126,10 +118,6 @@ public abstract class LIRAssembler {
     }
 
     protected int codeOffset() {
-        return asm.codeBuffer.position();
-    }
-
-    protected int pc() {
         return asm.codeBuffer.position();
     }
 
@@ -393,10 +381,6 @@ public abstract class LIRAssembler {
         //ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
         //emitCodeStub(stub);
         addCallInfo(pcOffset, cinfo);
-    }
-
-    void addDebugInfoForDiv0here(CodeEmitInfo info) {
-        addDebugInfoForDiv0(codeOffset(), info);
     }
 
     protected void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {

@@ -188,20 +188,6 @@ public class GraphBuilder {
         curBlock = start;
     }
 
-    BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
-        assert entry.checkBlockFlag(f);
-        // create header block
-        BlockBegin h = new BlockBegin(entry.bci(), ir.nextBlockNumber());
-        h.setDepthFirstNumber(0);
-
-        BlockEnd g = new Goto(entry, null, false);
-        h.setNext(g, entry.bci());
-        h.setEnd(g);
-        h.setBlockFlag(f);
-        g.setStateAfter(state.immutableCopy());
-        return h;
-    }
-
     public boolean hasHandler() {
         return scopeData.hasHandler();
     }
@@ -922,14 +908,6 @@ public class GraphBuilder {
         return null;
     }
 
-    Value getReceiver(RiMethod target) {
-        return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
-    }
-
-    Value[] popArguments(RiMethod target) {
-        return curState.popArguments(target.signatureType().argumentSlots(false));
-    }
-
     void callRegisterFinalizer() {
         Value receiver = curState.loadLocal(0);
         RiType declaredType = receiver.declaredType();
@@ -1155,7 +1133,7 @@ public class GraphBuilder {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
             // Canonicalizer canon = new Canonicalizer(x, bci);
-            canonicalizer.canonicalize(x, bci);
+            canonicalizer.canonicalize(x);
             List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this

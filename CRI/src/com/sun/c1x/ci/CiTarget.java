@@ -39,7 +39,6 @@ public class CiTarget {
     public final CiRegister[] allocatableRegisters;
     public final CiRegister[] registerReferenceMapTemplate;
     public final CiRegister[] callerSavedRegisters;
-    public int firstAvailableSpInFrame;
     public int pageSize;
     public boolean isMP;
     public final CiRegister stackRegister;
@@ -92,15 +91,6 @@ public class CiTarget {
      */
     public boolean requiresStackAlignment() {
         return stackAlignment > arch.wordSize;
-    }
-
-    /**
-     * Checks whether this target has compressed oops (i.e. 32-bit references
-     * on a 64-bit machine).
-     * @return <code>true</code> if this target has compressed oops
-     */
-    public boolean hasCompressedOops() {
-        return referenceSize < arch.wordSize;
     }
 
     /**

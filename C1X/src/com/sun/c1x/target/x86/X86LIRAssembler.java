@@ -48,10 +48,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     X86MacroAssembler masm;
 
-    final int callStubSize;
-    final int deoptHandlerSize;
     private final int wordSize;
-    private final int referenceSize;
     private final CiRegister rscratch1;
 
     public X86LIRAssembler(C1XCompilation compilation) {
@@ -61,14 +58,10 @@ public class X86LIRAssembler extends LIRAssembler {
         masm = (X86MacroAssembler) compilation.masm();
 
         wordSize = compilation.target.arch.wordSize;
-        referenceSize = compilation.target.referenceSize;
+        int referenceSize= compilation.target.referenceSize;
         rscratch1 = compilation.target.scratchRegister;
         if (compilation.target.arch.is64bit()) {
-            callStubSize = 28;
-            deoptHandlerSize = 17;
         } else {
-            callStubSize = 15;
-            deoptHandlerSize = 10;
         }
     }
 
@@ -999,33 +992,6 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-    // TODO: Who uses this?
-    public void prefetchw(LIROperand src) {
-        LIRAddress addr = (LIRAddress) src;
-        Address fromAddr = asAddress(addr);
-
-        if (compilation.target.supportsSSE()) {
-            switch (C1XOptions.AllocatePrefetchInstr) {
-                case 0:
-                    masm().prefetchnta(fromAddr);
-                    break;
-                case 1:
-                    masm().prefetcht0(fromAddr);
-                    break;
-                case 2:
-                    masm().prefetcht2(fromAddr);
-                    break;
-                case 3:
-                    masm().prefetchw(fromAddr);
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-        } else if (compilation.target.supports3DNOW()) {
-            masm().prefetchw(fromAddr);
-        }
-    }
-
     @Override
     protected void emitOp3(LIROp3 op) {
         switch (op.code) {
@@ -1060,7 +1026,7 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             masm().jmp(op.label());
         } else {
-            X86Assembler.Condition acond = X86Assembler.Condition.zero;
+            Condition acond = X86Assembler.Condition.zero;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.ublock() != null : "must have unordered successor";
                 masm().jcc(X86Assembler.Condition.parity, op.ublock().label());
@@ -1595,8 +1561,8 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void cmove(LIRCondition condition, LIROperand opr1, LIROperand opr2, LIROperand result) {
-        X86Assembler.Condition acond;
-        X86Assembler.Condition ncond;
+        Condition acond;
+        Condition ncond;
         switch (condition) {
             case Equal:
                 acond = X86Assembler.Condition.equal;

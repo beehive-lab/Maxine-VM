@@ -465,6 +465,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitConstant(Constant i) {
+        // do nothing.
     }
 
     /**

@@ -32,7 +32,7 @@ public class LIROp1 extends LIRInstruction {
 
 
     public enum LIRMoveKind {
-        Normal, Volatile, Unaligned, MaxFlag
+        Normal, Volatile, Unaligned
     }
 
     protected CiKind type;              // the operand type

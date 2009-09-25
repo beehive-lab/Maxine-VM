@@ -40,14 +40,6 @@ public class LogicOp extends Op2 {
     }
 
     /**
-     * Checks whether this operation is commutative.
-     * @return <code>true</code> if this operation is commutative
-     */
-    public boolean isCommutative() {
-        return Bytecodes.isCommutative(opcode);
-    }
-
-    /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept
      */

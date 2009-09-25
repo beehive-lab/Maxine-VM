@@ -48,7 +48,6 @@ public class MaxRiType implements RiType {
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
     final CiKind basicType;
-    final ClassConstant classRef;
     final int cpi;
 
     /**
@@ -61,7 +60,6 @@ public class MaxRiType implements RiType {
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
-        this.classRef = null;
         this.cpi = 0;
     }
 
@@ -74,7 +72,6 @@ public class MaxRiType implements RiType {
     public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
-        this.classRef = classRef;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
     }
@@ -92,7 +89,6 @@ public class MaxRiType implements RiType {
             this.classActor = ClassActor.fromJava(atom.javaClass);
         }
 
-        this.classRef = null;
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
@@ -169,16 +165,6 @@ public class MaxRiType implements RiType {
     public boolean isInstanceClass() {
         final ClassActor classActor = asClassActor("isInstanceClass()");
         return classActor.isTupleClassActor() || classActor.isHybridClassActor();
-    }
-
-    /**
-     * Checks whether this compiler interface type is an array.
-     * @return <code>true</code> if this class is an array.
-     * @throws MaxRiUnresolved if the class is not resolved
-     */
-    public boolean isTypeArrayClass() {
-        // TODO: should this check whether this is a primitive array?
-        return asClassActor("isTypeArrayClass()").isArrayClassActor();
     }
 
     /**
@@ -324,10 +310,6 @@ public class MaxRiType implements RiType {
         throw unresolved(operation);
     }
 
-    ArrayClassActor asArrayClassActor(String operation) {
-        return (ArrayClassActor) asClassActor(operation);
-    }
-
     private MaxRiUnresolved unresolved(String operation) {
         throw new MaxRiUnresolved(operation + " not defined for unresolved class " + typeDescriptor.toString());
     }
@@ -409,10 +391,6 @@ public class MaxRiType implements RiType {
             return classActor.toString();
         }
         return typeDescriptor.toString() + " [unresolved]";
-    }
-
-    public int superCheckOffset() {
-        throw Util.unimplemented();
     }
 
     public CiConstant getEncoding(RiType.Representation r) {

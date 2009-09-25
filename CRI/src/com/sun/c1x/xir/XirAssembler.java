@@ -318,15 +318,18 @@ public class XirAssembler {
     }
 
     public void callJava(XirVariable result, XirVariable destination) {
-        append(new XirInstruction(result.kind, XirOp.CallJava, nullOperand, destination));
+        CiKind resultKind = result == null ? CiKind.Void : result.kind;
+        append(new XirInstruction(resultKind, XirOp.CallJava, nullOperand, destination));
     }
 
     public void callStub(XirTemplate stub, XirVariable result, XirVariable... args) {
-        append(new XirInstruction(result.kind, stub, XirOp.CallStub, result, args));
+        CiKind resultKind = result == null ? CiKind.Void : result.kind;
+        append(new XirInstruction(resultKind, stub, XirOp.CallStub, result, args));
     }
 
     public void callRuntime(Object rt, XirVariable result, XirVariable... args) {
-        append(new XirInstruction(result.kind, rt, XirOp.CallRuntime, result, args));
+        CiKind resultKind = result == null ? CiKind.Void : result.kind;
+        append(new XirInstruction(resultKind, rt, XirOp.CallRuntime, result, args));
     }
 
     public void end() {

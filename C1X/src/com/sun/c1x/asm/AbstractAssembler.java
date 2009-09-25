@@ -144,11 +144,9 @@ public abstract class AbstractAssembler {
     }
 
     private void verifyReferenceMap() {
-
     }
 
     protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-
         assert pos >= 0 && globalStubCall != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -259,8 +257,6 @@ public abstract class AbstractAssembler {
     public abstract void buildFrame(int initialFrameSizeInBytes);
 
     public abstract void align(int codeEntryAlignment);
-
-    public abstract void makeOffset(int offset);
 
     public abstract void patchJumpTarget(int branch, int target);
 }

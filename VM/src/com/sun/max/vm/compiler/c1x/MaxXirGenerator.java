@@ -82,7 +82,7 @@ public class MaxXirGenerator extends XirGenerator {
 
         XirPair(XirTemplate r, XirTemplate u) {
             resolved = r;
-            unresolved = r;
+            unresolved = u;
         }
     }
 
