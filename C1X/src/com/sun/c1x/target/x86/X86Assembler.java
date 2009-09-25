@@ -495,13 +495,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(0);
 
     }
-    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
 
+    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
         recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         prefix(adr);
         emitByte(0xFF);
         emitOperand(X86.rdx, adr);
-
     }
 
     protected final void emitGlobalStubCall(Object globalStubID, CodeEmitInfo info) {

@@ -712,14 +712,14 @@ public class GraphBuilder {
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded, cpi, constantPool());
-        appendOptimizedLoadField(field.basicType(), load);
+        appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutField(char cpi) {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        Value value = pop(field.basicType().stackType());
+        Value value = pop(field.kind().stackType());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
@@ -730,7 +730,7 @@ public class GraphBuilder {
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
-        appendOptimizedLoadField(field.basicType(), load);
+        appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutStatic(char cpi) {
@@ -739,7 +739,7 @@ public class GraphBuilder {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
-        Value value = pop(field.basicType().stackType());
+        Value value = pop(field.kind().stackType());
         StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedStoreField(store);
     }
@@ -944,7 +944,7 @@ public class GraphBuilder {
             // append a call to the registration intrinsic
             loadLocal(0, CiKind.Object);
             append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), false, curState.immutableCopy(), true, true));
+                                 null, curState.popArguments(1), false, curState.immutableCopy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1326,7 +1326,7 @@ public class GraphBuilder {
         CiKind resultType = returnBasicType(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
@@ -1414,9 +1414,6 @@ public class GraphBuilder {
                 args[0] = check;
                 append(check);
             }
-        }
-
-        if (C1XOptions.ProfileInlinedCalls) {
         }
 
         // Introduce a new callee continuation point. If the target has

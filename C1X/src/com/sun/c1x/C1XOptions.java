@@ -142,6 +142,8 @@ public class C1XOptions {
 
     // LIR settings
     public static boolean GenerateLIR                        = true;
+    public static boolean GenerateLIRXIR                     = ____;
+    public static boolean GenerateUnresolvedLIRXIR           = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRTraceExecution                  = ____;
     public static boolean TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target

@@ -78,6 +78,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private List<LIRConstant> constants;
     private List<LIROperand> regForConstants;
+    protected XirGenerator xir;
     protected LIRList lir;
     protected final IR ir;
 
@@ -143,6 +144,15 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitArrayLength(ArrayLength x) {
+        if (useXir()) {
+            XirArgument array = toXirArgument(x.array());
+            XirSnippet snippet = xir.genArrayLength(array);
+            if (snippet != null) {
+                emitXir(snippet, x.needsNullCheck() ? stateFor(x) : null);
+                return;
+            }
+        }
+
         LIRItem array = new LIRItem(x.array(), this);
         array.loadItem();
         LIROperand reg = rlockResult(x);
@@ -208,6 +218,15 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
+        if (useXir() && i.portion == RiType.Representation.JavaClass) {
+            // Xir support for LDC of a class constant
+            XirSnippet snippet = xir.genResolveClassObject(i.type);
+            if (snippet != null) {
+                emitXir(snippet, stateFor(i));
+                return;
+            }
+        }
+
         assert i.stateBefore() != null;
         LIROperand result = rlockResult(i);
         if (i.portion == RiType.Representation.ObjectHub) {
@@ -315,6 +334,19 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic x) {
+        if (useXir()) {
+            // Xir support for intrinsic methods
+            Value[] vals = x.arguments();
+            XirArgument[] args = new XirArgument[vals.length];
+            for (int i = 0; i < vals.length; i++) {
+                args[i] = toXirArgument(vals[i]);
+            }
+            XirSnippet snippet = xir.genIntrinsic(args, null);
+            if (snippet != null) {
+                emitXir(snippet, x.stateBefore() == null ? null : stateFor(x));
+                return;
+            }
+        }
 
         switch (x.intrinsic()) {
             case java_lang_Float$intBitsToFloat:
@@ -454,24 +486,29 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadField(LoadField x) {
+        RiField field = x.field();
         boolean needsPatching = x.needsPatching();
         boolean isVolatile = x.isVolatile();
-        CiKind fieldType = x.field().basicType();
+        CiKind fieldType = field.kind();
 
         CodeEmitInfo info = null;
-        if (needsPatching) {
+        if (needsPatching || x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore());
-        } else if (x.needsNullCheck()) {
-            info = stateFor(x, x.stateBefore());
+        }
+
+        if (useXir(needsPatching)) {
+            // XIR support for GETSTATIC and GETFIELD
+            XirArgument receiver = toXirArgument(x.object());
+            XirSnippet snippet = x.isStatic() ? xir.genGetStatic(field) : xir.genGetField(receiver, field);
+            if (snippet != null) {
+                emitXir(snippet, info);
+                return;
+            }
         }
 
         LIRItem object = new LIRItem(x.object(), this);
 
         object.loadItem();
-
-        if (C1XOptions.PrintNotLoaded && needsPatching) {
-            TTY.println(String.format("   ###class not loaded at load_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
-        }
 
         if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
             // emit an explicit null check because the offset is too large
@@ -481,8 +518,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand reg = rlockResult(x, fieldType);
         LIRAddress address;
         if (info != null && needsPatching) {
-
-
             LIRLocation tempResult = this.newRegister(CiKind.Int);
             lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
@@ -510,6 +545,18 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed x) {
+        if (useXir()) {
+            // XIR support for xALOAD
+            XirArgument array = toXirArgument(x.array());
+            XirArgument index = toXirArgument(x.index());
+            XirArgument length = toXirArgument(x.length());
+            XirSnippet snippet = xir.genArrayLoad(array, index, length, x.elementType(), null);
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+
         boolean useLength = x.length() != null;
         LIRItem array = new LIRItem(x.array(), this);
         LIRItem index = new LIRItem(x.index(), this);
@@ -661,7 +708,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    void emitXir(XirSnippet snippet) {
+    void emitXir(XirSnippet snippet, CodeEmitInfo info) {
         final LIROperand[] operands = new LIROperand[snippet.arguments.length];
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
         LIROperand outputOperand = LIROperandFactory.IllegalLocation;
@@ -685,98 +732,95 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStoreField(StoreField x) {
+        RiField field = x.field();
+        boolean needsPatching = x.needsPatching();
+        boolean isVolatile = x.isVolatile();
+        CiKind fieldType = field.kind();
 
+        CodeEmitInfo info = null;
+        if (needsPatching || x.needsNullCheck()) {
+            info = stateFor(x, x.stateBefore());
+        }
 
-        //XirGenerator xirGenerator = compilation.xirGenerator;
-
-        //final XirSnippet snippet = xirGenerator.genPutField(toXirArgument(x.object()), toXirArgument(x.value()), x.field(), x.cpi, x.constantPool);
-        //if (snippet != null) {
-        //    emitXir(snippet);
-        //} else {
-
-            boolean needsPatching = x.needsPatching();
-            boolean isVolatile = x.isLoaded() && x.isVolatile();
-            CiKind fieldType = x.field().basicType();
-            boolean isOop = (fieldType == CiKind.Object);
-
-            CodeEmitInfo info = null;
-            if (needsPatching) {
-                info = stateFor(x, x.stateBefore());
-            } else if (x.needsNullCheck()) {
-                info = stateFor(x, x.stateBefore());
+        if (useXir(needsPatching)) {
+            // XIR support for PUTSTATIC and PUTFIELD
+            XirArgument receiver = toXirArgument(x.object());
+            XirArgument value = toXirArgument(x.value());
+            XirSnippet snippet = x.isStatic() ? xir.genPutStatic(value, field) : xir.genPutField(receiver, field, value);
+            if (snippet != null) {
+                emitXir(snippet, info);
+                return;
             }
+        }
 
-            LIRItem object = new LIRItem(x.object(), this);
-            LIRItem value = new LIRItem(x.value(), this);
+        boolean isOop = (fieldType == CiKind.Object);
 
-            object.loadItem();
+        LIRItem object = new LIRItem(x.object(), this);
+        LIRItem value = new LIRItem(x.value(), this);
 
-            if (isVolatile || needsPatching) {
-                // load item if field is volatile (fewer special cases for volatiles)
-                // load item if field not initialized
-                // load item if field not constant
-                // because of code patching we cannot inline constants
-                if (fieldType == CiKind.Byte || fieldType == CiKind.Boolean) {
-                    value.loadByteItem();
-                } else {
-                    value.loadItem();
-                }
+        object.loadItem();
+
+        if (isVolatile || needsPatching) {
+            // load item if field is volatile (fewer special cases for volatiles)
+            // load item if field not initialized
+            // load item if field not constant
+            // because of code patching we cannot inline constants
+            if (fieldType == CiKind.Byte || fieldType == CiKind.Boolean) {
+                value.loadByteItem();
             } else {
-                value.loadForStore(fieldType);
+                value.loadItem();
             }
+        } else {
+            value.loadForStore(fieldType);
+        }
 
-            setNoResult(x);
+        setNoResult(x);
 
-            if (C1XOptions.PrintNotLoaded && needsPatching) {
-                TTY.println(String.format("   ###class not loaded at store_%s bci %d", x.isStatic() ? "static" : "field", x.bci()));
-            }
+        if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
+            // emit an explicit null check because the offset is too large
+            lir.nullCheck(object.result(), info.copy());
+        }
 
-            if (info != null && x.needsNullCheck() && (needsPatching || compilation.runtime.needsExplicitNullCheck(x.offset()))) {
-                // emit an explicit null check because the offset is too large
-                lir.nullCheck(object.result(), info.copy());
-            }
-
-            LIRAddress address;
-            if (info != null && needsPatching) {
-
-
-                LIRLocation tempResult = this.newRegister(CiKind.Int);
-                lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
-                address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
+        LIRAddress address;
+        if (info != null && needsPatching) {
 
 
-                // we need to patch the offset in the instruction so don't allow
-                // generateAddress to try to be smart about emitting the -1.
-                // Otherwise the patching code won't know how to find the
-                // instruction to patch.
-                //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
-            } else {
-                address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
-            }
+            LIRLocation tempResult = this.newRegister(CiKind.Int);
+            lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
+            address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
-            if (isVolatile && compilation.runtime.isMP()) {
-                lir.membarRelease();
-            }
 
-            if (isOop) {
-                // Do the pre-write barrier, if any.
-                preBarrier(address, needsPatching, (info != null ? info.copy() : null));
-            }
+            // we need to patch the offset in the instruction so don't allow
+            // generateAddress to try to be smart about emitting the -1.
+            // Otherwise the patching code won't know how to find the
+            // instruction to patch.
+            //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
+        } else {
+            address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
+        }
 
-            if (isVolatile) {
-                volatileFieldStore(value.result(), address, info);
-            } else {
-                lir.store(value.result(), address, info);
-            }
+        if (isVolatile && compilation.runtime.isMP()) {
+            lir.membarRelease();
+        }
 
-            if (isOop) {
-                postBarrier(object.result(), value.result());
-            }
+        if (isOop) {
+            // Do the pre-write barrier, if any.
+            preBarrier(address, needsPatching, (info != null ? info.copy() : null));
+        }
 
-            if (isVolatile && compilation.runtime.isMP()) {
-                lir.membar();
-            }
-       // }
+        if (isVolatile) {
+            volatileFieldStore(value.result(), address, info);
+        } else {
+            lir.store(value.result(), address, info);
+        }
+
+        if (isOop) {
+            postBarrier(object.result(), value.result());
+        }
+
+        if (isVolatile && compilation.runtime.isMP()) {
+            lir.membar();
+        }
     }
 
     @Override
@@ -2045,5 +2089,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
+    private boolean useXir(boolean unresolved) {
+        return C1XOptions.GenerateLIRXIR && (C1XOptions.GenerateUnresolvedLIRXIR || !unresolved);
+    }
 
+    private boolean useXir() {
+        return C1XOptions.GenerateLIRXIR;
+    }
 }

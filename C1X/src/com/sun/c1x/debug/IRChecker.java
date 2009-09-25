@@ -392,7 +392,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitLoadField(LoadField i) {
-        assertBasicType(i, i.field().basicType().stackType());
+        assertBasicType(i, i.field().kind().stackType());
         Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);
@@ -409,7 +409,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitStoreField(StoreField i) {
-        assertBasicType(i.value(), i.field().basicType().stackType());
+        assertBasicType(i.value(), i.field().kind().stackType());
         Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);

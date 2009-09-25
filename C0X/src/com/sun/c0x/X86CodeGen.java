@@ -139,7 +139,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genPutField(RiField field, Location object, Location value) {
-        CiKind basicType = field.basicType();
+        CiKind basicType = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
         CiRegister valReg = allocSrc(value, basicType);
         if (field.isLoaded()) {
@@ -155,7 +155,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genGetField(RiField field, Location object) {
-        CiKind basicType = field.basicType();
+        CiKind basicType = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
         if (field.isLoaded()) {
             // the field is loaded, emit a single load instruction
@@ -171,7 +171,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void getPutStatic(RiField field, Location value) {
-        CiKind basicType = field.basicType();
+        CiKind basicType = field.kind();
         CiRegister valReg = allocSrc(value, basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
@@ -187,7 +187,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genGetStatic(RiField field) {
-        CiKind basicType = field.basicType();
+        CiKind basicType = field.kind();
         CiRegister valReg = allocDst(basicType);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object

@@ -20,15 +20,15 @@
  */
 package com.sun.c1x.xir;
 
-import com.sun.c1x.ri.RiConstantPool;
 import com.sun.c1x.ri.RiField;
 import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
+import com.sun.c1x.ci.CiKind;
 
 /**
  * This class represents the interface through which the compiler requests the XIR for a given
  * bytecode from the runtime system.
- * 
+ *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
@@ -66,11 +66,11 @@ public abstract class XirGenerator {
         return null;
     }
 
-    public XirSnippet genGetField(XirArgument receiver, RiField field, char cpi, RiConstantPool constantPool) {
+    public XirSnippet genGetField(XirArgument receiver, RiField field) {
         return null;
     }
 
-    public XirSnippet genPutField(XirArgument receiver, XirArgument value, RiField field, char cpi, RiConstantPool constantPool) {
+    public XirSnippet genPutField(XirArgument receiver, RiField field, XirArgument value) {
         return null;
     }
 
@@ -102,11 +102,15 @@ public abstract class XirGenerator {
         return null;
     }
 
-    public XirSnippet genArrayLoad(XirArgument array, XirArgument index, XirArgument length, RiType elementType) {
+    public XirSnippet genArrayLoad(XirArgument array, XirArgument index, XirArgument length, CiKind elementKind, RiType elementType) {
         return null;
     }
 
-    public XirSnippet genArrayStore(XirArgument array, XirArgument index, XirArgument length, XirArgument value, RiType elementType) {
+    public XirSnippet genArrayStore(XirArgument array, XirArgument index, XirArgument length, XirArgument value, CiKind elementKind, RiType elementType) {
+        return null;
+    }
+
+    public XirSnippet genArrayLength(XirArgument array) {
         return null;
     }
 }
