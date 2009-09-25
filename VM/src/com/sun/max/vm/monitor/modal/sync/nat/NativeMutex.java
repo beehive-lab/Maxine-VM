@@ -86,7 +86,7 @@ public final class NativeMutex extends Mutex {
     }
 
     /**
-     * Performs native allocation for this <code>Mutex</code>.
+     * Performs native allocation for this {@code Mutex}.
      */
     @Override
     public Mutex init() {

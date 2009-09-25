@@ -34,7 +34,6 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Target machine code cache management.
@@ -150,7 +149,7 @@ public abstract class CodeManager {
 
     private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Code arrays: code=[");
         Log.print(codeCell);
         Log.print(" - ");
@@ -221,10 +220,10 @@ public abstract class CodeManager {
     private void traceChunkAllocation(Object purpose, Size size, Pointer cell) {
         if (!cell.isZero() && purpose != null) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated chunk in CodeManager for ");
             if (purpose instanceof MethodActor) {
-                Log.printMethodActor((MethodActor) purpose, false);
+                Log.printMethod((MethodActor) purpose, false);
             } else {
                 Log.print(purpose);
             }

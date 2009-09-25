@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -95,9 +96,16 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             synchronized (VmThreadMap.ACTIVE) {
                 // Stops this thread until GC is done.
             }
+
             if (!enabledVmThreadLocals.getWord(LOWEST_ACTIVE_STACK_SLOT_ADDRESS.index).isZero()) {
                 FatalError.unexpected("Stack reference map preparer should be cleared after GC");
             }
+
+            if (Heap.traceGCPhases()) {
+                Log.printCurrentThread(false);
+                Log.println(": Restarting after GC");
+            }
+
             Heap.enableAllocationForCurrentThread();
         }
         @Override
@@ -139,6 +147,17 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     private final StopMutator stopMutator = new StopMutator();
 
     /**
+     * A VM option for triggering a GC at fixed intervals.
+     */
+    static final VMIntOption excessiveGCFrequency = register(new VMIntOption("-XX:ExcessiveGCFrequency=", 0,
+        "Run a garbage collection every <n> milliseconds. A value of 0 disables this mechanism."), MaxineVM.Phase.STARTING);
+
+    @Override
+    protected long serverWaitTimeout() {
+        return excessiveGCFrequency.getValue();
+    }
+
+    /**
      * The procedure that is run on the GC thread to reset the GC relevant state of a mutator thread
      * once GC is complete.
      */
@@ -148,7 +167,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             if (Heap.traceGCPhases()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("GCDaemon: Resetting mutator thread ");
-                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
                 Log.unlock(lockDisabledSafepoints);
             }
 
@@ -197,7 +216,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
             if (Heap.traceGCPhases()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("GCDaemon: Stopped mutator thread ");
-                Log.printVmThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
+                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), false);
                 if (threadWasInNative) {
                     Log.println(" which was in native");
                 } else {
@@ -241,7 +260,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
          * A procedure supplied by the {@link HeapScheme} that implements a GC algorithm the request will execute.
          * This may be set to a different routine at every GC request.
          */
-        private Runnable collector;
+        private Collector collector;
 
         public void run() {
             // The lock for the special reference manager must be held before starting GC
@@ -340,18 +359,19 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
     /**
      * Set the daemon with initial GC logic. The GC logic can be subsequently changes on every request using the
-     * execute method.
+     * {@link #execute(Runnable)} method.
+     *
      * @param name name of the daemon
      * @param collector initial GC logic
      */
-    public StopTheWorldGCDaemon(String name, Runnable collector) {
+    public StopTheWorldGCDaemon(String name, Collector collector) {
         super(name);
         gcRequest.collector = collector;
     }
 
     /**
-     * Set the daemon without initial GC logic. First request must be executed using the
-     * execute method.
+     * Set the daemon without initial GC logic. First request must be executed using the {@link #execute(Runnable)} method.
+     *
      * @param name name of the daemon
      * @param collector initial GC logic
      */
@@ -366,18 +386,46 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
     }
 
     /**
-     * Execute gc request with previously set GC logic.
+     * Execute GC request with previously configured GC logic.
      */
     public void execute() {
-        super.execute(gcRequest);
+        super.service(gcRequest);
     }
 
     /**
-     * Execute gc request with a new GC logic.
+     * The garbage collection algorithm.
      */
-    @Override
-    public void execute(Runnable collector) {
+    public abstract static class Collector implements Runnable {
+        private int invocationCount;
+
+        public final void run() {
+            if (Heap.verbose()) {
+                Log.print("--Start GC ");
+                Log.print(invocationCount);
+                Log.println("--");
+            }
+            collect(invocationCount);
+            if (Heap.verbose()) {
+                Log.print("--End GC ");
+                Log.print(invocationCount);
+                Log.println("--");
+            }
+            invocationCount++;
+        }
+
+        /**
+         * Executes a single garbage collection.
+         *
+         * @param invocationCount the number of previous executions
+         */
+        protected abstract void collect(int invocationCount);
+    }
+
+    /**
+     * Executes GC request with some given GC algorithm.
+     */
+    public void execute(Collector collector) {
         gcRequest.collector = collector;
-        super.execute(gcRequest);
+        super.service(gcRequest);
     }
 }

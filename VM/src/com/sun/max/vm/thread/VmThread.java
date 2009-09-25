@@ -548,7 +548,7 @@ public class VmThread {
             if (stackBase.lessThan(triggeredVmThreadLocals)) {
                 lastRegionStart = traceStackRegion("Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
-            Log.printVmThreadLocals(vmThreadLocals, true);
+            Log.printThreadLocals(vmThreadLocals, true);
             Log.unlock(lockDisabledSafepoints);
         }
     }

@@ -55,6 +55,11 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
     private final Safepoint.State safepointState;
 
     /**
+     * Sentinel object to indicate a non-value for a given thread local.
+     */
+    private static final Long INVALID = new Long(0);
+
+    /**
      * @param teleNativeThread the thread in the VM with which these {@linkplain VmThreadLocal thread local variables} are associated.
      * @param safepointState the particular state with which these {@linkplain VmThreadLocal thread local variables} are associated.
      * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
@@ -64,7 +69,7 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
         this.teleNativeThread = teleNativeThread;
         assert !start.isZero();
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
-            values.put(threadLocal.name, null);
+            values.put(threadLocal.name, INVALID);
         }
         this.safepointState = safepointState;
     }
@@ -80,7 +85,8 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
                     final Word value = dataAccess.readWord(start(), offset);
                     values.put(threadLocal.name, value.asAddress().toLong());
                 } catch (DataIOError dataIOError) {
-                    ProgramError.unexpected("Could not read value of " + threadLocal + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    ProgramWarning.message("Could not read value of " + threadLocal + " from safepoints-" + safepointState.name().toLowerCase() + " VM thread locals");
+                    values.put(threadLocal.name, INVALID);
                 }
             }
             offset += Word.size();
@@ -171,7 +177,7 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
      */
     public boolean isValid(String name) {
         assert values.containsKey(name) : "Unknown VM thread local: " + name;
-        return values.get(name) != null;
+        return values.get(name) != INVALID;
     }
 
     /**

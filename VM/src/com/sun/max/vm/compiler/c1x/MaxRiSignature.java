@@ -25,7 +25,7 @@ import com.sun.c1x.ri.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The <code>MaxRiSignature</code> class implements a method signature for the
+ * The {@code MaxRiSignature} class implements a method signature for the
  * compiler interface.
  *
  * @author Ben L. Titzer
@@ -129,7 +129,7 @@ public class MaxRiSignature implements RiSignature {
 
     /**
      * Gets the size (in terms of Java slots) of the arguments, with or without a receiver object.
-     * @param withReceiver <code>true</code> if a receiver argument should be added; <code>false</code> otherwise
+     * @param withReceiver {@code true} if a receiver argument should be added; {@code false} otherwise
      * @return the size in slots of the arguments to this signature
      */
     public int argumentSlots(boolean withReceiver) {

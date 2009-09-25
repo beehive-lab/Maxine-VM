@@ -28,11 +28,11 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.value.*;
 
 /**
- * The <code>MaxRiField</code> implements a compiler interface field. A field can
+ * The {@code MaxRiField} implements a compiler interface field. A field can
  * be either resolved or unresolved. A resolved field has a reference to its
- * associated <code>FieldActor</code> and unresolved field has a reference
- * to its <code>FieldRefConstant</code> some method calls are only appropriate
- * for resolved fields and will result in a <code>MaxCiUnresolved</code>
+ * associated {@code FieldActor} and unresolved field has a reference
+ * to its {@code FieldRefConstant} some method calls are only appropriate
+ * for resolved fields and will result in a {@code MaxCiUnresolved}
  * exception if called on an unresolved field.
  *
  * @author Ben L. Titzer
@@ -116,7 +116,7 @@ public class MaxRiField implements RiField {
 
     /**
      * Checks whether this compiler interface field is loaded (i.e. resolved).
-     * @return <code>true</code> if this field is loaded
+     * @return {@code true} if this field is loaded
      */
     public boolean isLoaded() {
         return fieldActor != null;
@@ -124,7 +124,7 @@ public class MaxRiField implements RiField {
 
     /**
      * Checks whether this field is static.
-     * @return <code>true</code> if this field is static
+     * @return {@code true} if this field is static
      * @throws MaxRiUnresolved if the field is unresolved
      */
     public boolean isStatic() {
@@ -136,7 +136,7 @@ public class MaxRiField implements RiField {
 
     /**
      * Checks whether this field is volatile.
-     * @return <code>true</code> if the field is volatile
+     * @return {@code true} if the field is volatile
      * @throws MaxRiUnresolved if the field is unresolved
      */
     public boolean isVolatile() {
@@ -148,7 +148,7 @@ public class MaxRiField implements RiField {
 
     /**
      * Checks whether this field is a constant.
-     * @return <code>true</code> if the field is resolved and is a constant
+     * @return {@code true} if the field is resolved and is a constant
      */
     public boolean isConstant()  {
         return fieldActor != null && fieldActor.isConstant();
@@ -202,7 +202,7 @@ public class MaxRiField implements RiField {
      * to the same field actor. Otherwise they are equivalent if they
      * reference the same compiler interface field object.
      * @param o the object to check
-     * @return <code>true</code> if this object is equal to the other
+     * @return {@code true} if this object is equal to the other
      */
     @Override
     public boolean equals(Object o) {

@@ -31,7 +31,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
  *
  * @author Simon Wilkinson
  */
-public abstract class BiasedLockWord64 extends LightweightLockWord64 {
+public abstract class BiasedLockword64 extends LightweightLockword64 {
 
     /*
      * bit [63............................................. 1  0]     Shape         Mode            Lock-state
@@ -58,18 +58,18 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
     static final int EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
     static final int EPOCH_SHIFT = UTIL_SHIFT;
 
-    protected BiasedLockWord64() {
+    protected BiasedLockword64() {
     }
 
     /**
-     * Boxing-safe cast of a <code>Word</code> to a <code>BiasedLockWord64</code>.
+     * Boxing-safe cast of a {@code Word} to a {@code BiasedLockword64}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @UNSAFE_CAST
-    public static BiasedLockWord64 from(Word word) {
-        return new BoxedBiasedLockWord64(word);
+    public static BiasedLockword64 from(Word word) {
+        return new BoxedBiasedLockword64(word);
     }
 
     /**
@@ -78,98 +78,98 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asAnonBiased() {
-        return BiasedLockWord64.from(asAddress().and(HASHCODE_MASK));
+    public final BiasedLockword64 asAnonBiased() {
+        return BiasedLockword64.from(asAddress().and(HASHCODE_MASK));
     }
 
     /**
      * Returns a copy of this lock word in a locked state, where the lock / bias owner is
-     * installed as <code>lockwordThreadID</code>, and the recursion count is 1.
+     * installed as {@code lockwordThreadID}, and the recursion count is 1.
      *
      * @param lockwordThreadID the lock and bias owner
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asBiasedAndLockedOnceBy(int lockwordThreadID) {
-        return BiasedLockWord64.from(asBiasedTo(lockwordThreadID).asAddress().or(RCOUNT_INC_WORD));
+    public final BiasedLockword64 asBiasedAndLockedOnceBy(int lockwordThreadID) {
+        return BiasedLockword64.from(asBiasedTo(lockwordThreadID).asAddress().or(RCOUNT_INC_WORD));
     }
 
     /**
      * Returns a copy of this lock word in a locked state, where the lock / bias owner is
-     * installed as <code>lockwordThreadID</code>, the bias epoch is set to <code>epoch</code>, and the recursion count is 1.
+     * installed as {@code lockwordThreadID}, the bias epoch is set to {@code epoch}, and the recursion count is 1.
      *
      * @param lockwordThreadID the lock and bias owner
      * @param epoch the bias epoch
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asBiasedAndLockedOnceBy(int lockwordThreadID, BiasedLockEpoch epoch) {
-        return BiasedLockWord64.from(asBiasedTo(lockwordThreadID, epoch).asAddress().or(RCOUNT_INC_WORD));
+    public final BiasedLockword64 asBiasedAndLockedOnceBy(int lockwordThreadID, BiasedLockEpoch epoch) {
+        return BiasedLockword64.from(asBiasedTo(lockwordThreadID, epoch).asAddress().or(RCOUNT_INC_WORD));
     }
 
     /**
      * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is
-     * installed as <code>lockwordThreadID</code>.
+     * installed as {@code lockwordThreadID}.
      *
      * @param lockwordThreadID the bias owner
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asBiasedTo(int lockwordThreadID) {
-        return BiasedLockWord64.from(asAnonBiased().asAddress().or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+    public final BiasedLockword64 asBiasedTo(int lockwordThreadID) {
+        return BiasedLockword64.from(asAnonBiased().asAddress().or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     /**
      * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is
-     * installed as <code>lockwordThreadID</code>, and the bias epoch is set to <code>epoch</code>.
+     * installed as {@code lockwordThreadID}, and the bias epoch is set to {@code epoch}.
      *
      * @param lockwordThreadID the bias owner
      * @param epoch the bias epoch
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch epoch) {
-        return BiasedLockWord64.from(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+    public final BiasedLockword64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch epoch) {
+        return BiasedLockword64.from(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     /**
-     * Tests if the given lock word is a <code>BiasedLockWord64</code>.
+     * Tests if the given lock word is a {@code BiasedLockword64}.
      *
-     * @param lockWord the lock word to test
-     * @return true if <code>lockWord</code> is a <code>BiasedLockWord64</code>; false otherwise
+     * @param lockword the lock word to test
+     * @return true if {@code lockword} is a {@code BiasedLockword64}; false otherwise
      */
     @INLINE
-    public static final boolean isBiasedLockWord(ModalLockWord64 lockword) {
+    public static final boolean isBiasedLockword(ModalLockword64 lockword) {
         return !lockword.asAddress().and(EPOCH_MASK).equals(BiasedLockEpoch.REVOKED) && lockword.isLightweight();
     }
 
     /**
-     * Tests if the given lock word is a <code>BiasedLockWord64</code>, and if so, if the value of the lock word's
+     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's
      * bias owner field equals the given thread ID.
      *
      * @param lockword the lock word to test
      * @param lockwordThreadID the thread ID to test against the lock word's bias owner
-     * @return true if <code>lockWord</code> is a <code>BiasedLockWord64</code> and
-     *         <code>lockwordThreadID</code> is the bias owner; false otherwise
+     * @return true if {@code lockword} is a {@code BiasedLockword64} and
+     *         {@code lockwordThreadID} is the bias owner; false otherwise
      */
     @INLINE
-    public static final boolean isBiasedLockAndBiasedTo(ModalLockWord64 lockword, int lockwordThreadID) { // Quicker to use individual tests
-        return BiasedLockWord64.from(lockword).asBiasedTo(lockwordThreadID).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
+    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, int lockwordThreadID) { // Quicker to use individual tests
+        return BiasedLockword64.from(lockword).asBiasedTo(lockwordThreadID).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
     }
 
     /**
-     * Tests if the given lock word is a <code>BiasedLockWord64</code>, and if so, if the value of the lock word's
+     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's
      * bias owner field equals the given thread ID and the lock word's bias epoch equals the given epoch.
      *
      * @param lockword the lock word to test
      * @param epoch the epoch to test against the lock word's bias epoch
      * @param lockwordThreadID the thread ID to test against the lock word's bias owner
-     * @return true if <code>lockWord</code> is a <code>BiasedLockWord64</code> and
-     *         <code>lockwordThreadID</code> is the bias owner; false otherwise
+     * @return true if {@code lockword} is a {@code BiasedLockword64} and
+     *         {@code lockwordThreadID} is the bias owner; false otherwise
      */
     @INLINE
-    public static final boolean isBiasedLockAndBiasedTo(ModalLockWord64 lockword, BiasedLockEpoch epoch, int lockwordThreadID) {
-        return BiasedLockWord64.from(lockword).asBiasedTo(lockwordThreadID, epoch).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
+    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, BiasedLockEpoch epoch, int lockwordThreadID) {
+        return BiasedLockword64.from(lockword).asBiasedTo(lockwordThreadID, epoch).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
     }
 
     /**
@@ -178,7 +178,7 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asUnbiasable() {
+    public final BiasedLockword64 asUnbiasable() {
         return asWithEpoch(BiasedLockEpoch.REVOKED);
     }
 
@@ -193,14 +193,14 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
     }
 
     /**
-     * Returns a copy of this lock word with the bias epoch set to <code>epoch</code>.
+     * Returns a copy of this lock word with the bias epoch set to {@code epoch}.
      *
      * @param epoch the bias epoch
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockWord64 asWithEpoch(BiasedLockEpoch epoch) {
-        return BiasedLockWord64.from(asAddress().and(NON_EPOCH_MASK).or(epoch.asAddress()));
+    public final BiasedLockword64 asWithEpoch(BiasedLockEpoch epoch) {
+        return BiasedLockword64.from(asAddress().and(NON_EPOCH_MASK).or(epoch.asAddress()));
     }
 
     /**
@@ -214,14 +214,14 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
     }
 
     /**
-     * (Image build support) Returns a new, unlocked, unbiased <code>BiasedLockWord64</code> with the given
+     * (Image build support) Returns a new, unlocked, unbiased {@code BiasedLockword64} with the given
      * hashcode installed into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word
      */
     @INLINE
-    public static final BiasedLockWord64 anonBiasedFromHashcode(int hashcode) {
-        return BiasedLockWord64.from(HashableLockWord64.from(Address.zero()).setHashcode(hashcode));
+    public static final BiasedLockword64 anonBiasedFromHashcode(int hashcode) {
+        return BiasedLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
     }
 }

@@ -468,7 +468,7 @@ public class MaxineTesterConfiguration {
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
      * These tests are omitted by the MaxineTester unless the
      * @param testCase the test case
-     * @return <code>true</code> if the test is probably slow
+     * @return {@code true} if the test is probably slow
      */
     public static boolean isSlowAutoTestCase(TestCase testCase) {
         for (Class<?> c : slowAutoTestClasses) {

@@ -31,17 +31,17 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The <code>MaxRiConstantPool</code> class implements a constant pool for
+ * The {@code MaxRiConstantPool} class implements a constant pool for
  * the compiler interface, including support for looking up constants during
  * compilation, as well as runtime support for resolving constants in
  * the compiled code.
  * <p>
- * Note that all methods that begin with "<code>resolve</code>" are runtime calls
+ * Note that all methods that begin with "{@code resolve}" are runtime calls
  * that actually perform resolution, and therefore have side effects. Calls to
  * these methods are inserted into the compiled code for unresolved constant
  * pool constants by the compiler.
  * <p>
- * All methods that begin with "<code>lookup</code>" are side-effect free. They
+ * All methods that begin with "{@code lookup}" are side-effect free. They
  * will only look up constant pool constants that are already resolved. They
  * are used by the compiler in looking up constants during compilation.
  *

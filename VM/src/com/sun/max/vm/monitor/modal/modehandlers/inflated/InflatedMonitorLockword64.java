@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  *
  * @author Simon Wilkinson
  */
-public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
+public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
 
     /*
      * Field layout:
@@ -47,33 +47,33 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
 
     private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
 
-    protected InflatedMonitorLockWord64() {
+    protected InflatedMonitorLockword64() {
     }
 
     /**
-     * Boxing-safe cast of a <code>Word</code> to a <code>InflatedMonitorLockWord64</code>.
+     * Boxing-safe cast of a {@code Word} to a {@code InflatedMonitorLockword64}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @UNSAFE_CAST
-    public static final InflatedMonitorLockWord64 from(Word word) {
-        return new BoxedInflatedMonitorLockWord64(word);
+    public static final InflatedMonitorLockword64 from(Word word) {
+        return new BoxedInflatedMonitorLockword64(word);
     }
 
     /**
-     * Tests if the given lock word is an <code>InflatedMonitorLockWord64</code>.
+     * Tests if the given lock word is an {@code InflatedMonitorLockword64}.
      *
-     * @param lockWord the lock word to test
-     * @return true if <code>lockWord</code> is an <code>InflatedMonitorLockWord64</code>; false otherwise
+     * @param lockword the lock word to test
+     * @return true if {@code lockword} is an {@code InflatedMonitorLockword64}; false otherwise
      */
     @INLINE
-    public static final boolean isInflatedMonitorLockWord(ModalLockWord64 lockWord) {
-        return InflatedMonitorLockWord64.from(lockWord).isInflated();
+    public static final boolean isInflatedMonitorLockword(ModalLockword64 lockword) {
+        return InflatedMonitorLockword64.from(lockword).isInflated();
     }
 
     /**
-     * Tests if this <code>InflatedMonitorLockWord64</code> is bound to a <code>JavaMonitor</code>.
+     * Tests if this {@code InflatedMonitorLockword64} is bound to a {@code JavaMonitor}.
      *
      * @return true if bound, false otherwise
      */
@@ -83,17 +83,17 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
     }
 
     /**
-     * Returns a new <code>InflatedMonitorLockWord64</code> which is bound to the given
-     * <code>JavaMonitor</code> object.
+     * Returns a new {@code InflatedMonitorLockword64} which is bound to the given
+     * {@code JavaMonitor} object.
      *
      * Note: The binding is only created one-way, i.e. the lock word points to the inflated
      * monitor, but not the other way-around.
      *
-     * @param monitor the monitor to which the <code>InflatedMonitorLockWord64</code> should be bound
-     * @return a new <code>InflatedMonitorLockWord64</code> which is bound to <code>monitor</code>
+     * @param monitor the monitor to which the {@code InflatedMonitorLockword64} should be bound
+     * @return a new {@code InflatedMonitorLockword64} which is bound to {@code monitor}
      */
     @INLINE
-    public static final InflatedMonitorLockWord64 boundFromMonitor(JavaMonitor monitor) {
+    public static final InflatedMonitorLockword64 boundFromMonitor(JavaMonitor monitor) {
         return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
@@ -117,14 +117,14 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
     }
 
     /**
-     * (Image build support) Returns a new, unbound <code>InflatedMonitorLockWord64</code> with the given
+     * (Image build support) Returns a new, unbound {@code InflatedMonitorLockword64} with the given
      * hashcode installed into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word
      */
     @INLINE
-    public static final InflatedMonitorLockWord64 unboundFromHashcode(int hashcode) {
-        return InflatedMonitorLockWord64.from(HashableLockWord64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+    public static final InflatedMonitorLockword64 unboundFromHashcode(int hashcode) {
+        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
     }
 }

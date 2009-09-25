@@ -116,12 +116,12 @@ public final class Ints {
     }
 
     /**
-     * Calculates an unsigned integer which is greater than or equal to <code>value</code> and
-     * is a multiple of <code>by</code>.  Results are undefined if <code>by</code> is not
+     * Calculates an unsigned integer which is greater than or equal to {@code value} and
+     * is a multiple of {@code by}.  Results are undefined if {@code by} is not
      * a power of two.
      * @param value the unsigned integer which is to be rounded upwards.
      * @param by a positive power of two.
-     * @return the unsigned integer calculated by rounding upwards to a multiple of <code>by</code>.
+     * @return the unsigned integer calculated by rounding upwards to a multiple of {@code by}.
      */
     @INLINE
     public static int roundUnsignedUpByPowerOfTwo(int value, int by) {

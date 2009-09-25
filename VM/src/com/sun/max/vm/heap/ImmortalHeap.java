@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Immortal Heap management.
@@ -108,7 +107,7 @@ public final class ImmortalHeap {
     private static void traceAllocation(Size size, Pointer cell) {
         if (!cell.isZero()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated chunk in immortal memory at ");
             Log.print(cell);
             Log.print(" [size ");

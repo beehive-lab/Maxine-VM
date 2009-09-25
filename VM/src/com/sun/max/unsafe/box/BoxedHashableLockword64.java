@@ -21,16 +21,16 @@
 package com.sun.max.unsafe.box;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
+import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class BoxedBiasedLockWord64 extends BiasedLockWord64 implements UnsafeBox {
+public final class BoxedHashableLockword64 extends HashableLockword64 implements UnsafeBox {
 
     protected long nativeWord;
 
-    public BoxedBiasedLockWord64(Word word) {
+    public BoxedHashableLockword64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         nativeWord = unsafeBox.nativeWord();
     }

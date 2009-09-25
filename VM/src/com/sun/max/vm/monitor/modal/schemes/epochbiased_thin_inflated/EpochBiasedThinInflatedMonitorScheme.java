@@ -40,15 +40,15 @@ public class EpochBiasedThinInflatedMonitorScheme extends ModalMonitorScheme {
     }
 
     @Override
-    public ModalLockWordDecoder getModalLockWordDecoder() {
-        return new ModalLockWordDecoder() {
-            public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
-                if (mode == BiasedLockWord64.class) {
-                    return BiasedLockWord64.isBiasedLockWord(modalLockWord);
-                } else if (mode == ThinLockWord64.class) {
-                    return ThinLockWord64.isThinLockWord(modalLockWord);
-                } else if (mode == InflatedMonitorLockWord64.class) {
-                    return InflatedMonitorLockWord64.isInflatedMonitorLockWord(modalLockWord);
+    public ModalLockwordDecoder getModalLockwordDecoder() {
+        return new ModalLockwordDecoder() {
+            public boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode) {
+                if (mode == BiasedLockword64.class) {
+                    return BiasedLockword64.isBiasedLockword(modalLockword);
+                } else if (mode == ThinLockword64.class) {
+                    return ThinLockword64.isThinLockword(modalLockword);
+                } else if (mode == InflatedMonitorLockword64.class) {
+                    return InflatedMonitorLockword64.isInflatedMonitorLockword(modalLockword);
                 }
                 return false;
             }
