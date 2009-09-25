@@ -26,6 +26,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.reference.Reference;
 
 /**
  * The {@code MaxRiField} implements a compiler interface field. A field can
@@ -172,7 +174,12 @@ public class MaxRiField implements RiField {
      */
     public CiConstant constantValue() {
         if (fieldActor != null && fieldActor.isConstant()) {
-            Value v = HostTupleAccess.readValue(null, fieldActor);
+            Value v;
+            if (MaxineVM.isPrototyping()) {
+                v = HostTupleAccess.readValue(null, fieldActor);
+            } else {
+                v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
+            }
             return new CiConstant(MaxRiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
         }
         return null;

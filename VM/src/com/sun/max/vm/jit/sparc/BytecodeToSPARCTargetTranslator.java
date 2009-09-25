@@ -66,16 +66,13 @@ import com.sun.max.vm.type.*;
 public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator {
 
     /**
-     * Used to disable stack banging in JITed code even when Trap.STACK_BANGING is true.
-     */
-    private static final boolean ENABLE_JIT_STACK_BANGING = false;
-
-    /**
      * Canonicalized Target ABI.
      */
-    static final TargetABI<GPR, FPR> TARGET_ABI;
+    private static final TargetABI<GPR, FPR> TARGET_ABI;
 
     private static final GPR CPU_FRAME_POINTER;
+
+    public static final GPR PROLOGUE_SCRATCH_REGISTER;
 
     /**
      * Bytes for the instruction performing safepoint. Used to fill delay slot of backward branches.
@@ -158,6 +155,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final Class<TargetABI<GPR, FPR>> type = null;
         TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
         CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
+        PROLOGUE_SCRATCH_REGISTER = TARGET_ABI.scratchRegister();
+
         SAFEPOINT_TEMPLATE = VMConfiguration.target().safepoint.code;
         assert SAFEPOINT_TEMPLATE.length == InstructionSet.SPARC.instructionWidth;
         final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
@@ -665,7 +664,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final boolean largeOffset = !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
 
         int numInstructions;
-        if (ENABLE_JIT_STACK_BANGING & Trap.STACK_BANGING) {
+        if (Trap.STACK_BANGING) {
             numInstructions = 5; // includes the stack-banging ldub
             final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
             if (!SPARCAssembler.isSimm13(stackBangOffset)) {
@@ -689,7 +688,6 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             final GPR stackPointerRegister = TARGET_ABI.stackPointer();
             final GPR framePointerRegister = TARGET_ABI.framePointer();
             final GPR linkRegister = GPR.O7;
-            final GPR scratchRegister = TARGET_ABI.scratchRegister();
             final Label jitEntryPoint = new Label();
 
             // |<-------------------- JIT frame size ----------------------->|
@@ -715,7 +713,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 // Skip over the frame adapter for calls from jit code
                 asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, jitEntryPoint);
                 if (largeFrame) {
-                    asm.sethi(SPARCAssembler.hi(jitedCodeFrameSize), scratchRegister);
+                    asm.sethi(SPARCAssembler.hi(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
                 } else {
                     asm.sub(stackPointerRegister, jitedCodeFrameSize, stackPointerRegister);
                 }
@@ -728,16 +726,16 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 assert jitEntryPoint.state().equals(Label.State.BOUND);
 
                 if (largeFrame) {
-                    asm.or(scratchRegister, SPARCAssembler.lo(jitedCodeFrameSize), scratchRegister);
-                    asm.sub(stackPointerRegister, scratchRegister, stackPointerRegister);
+                    asm.or(PROLOGUE_SCRATCH_REGISTER, SPARCAssembler.lo(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
+                    asm.sub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, stackPointerRegister);
                 }
-                if (ENABLE_JIT_STACK_BANGING & Trap.STACK_BANGING) {
+                if (Trap.STACK_BANGING) {
                     final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
                     if (SPARCAssembler.isSimm13(stackBangOffset)) {
                         asm.ldub(stackPointerRegister, stackBangOffset, GPR.G0);
                     } else {
-                        asm.setsw(stackBangOffset & ~0x3FF, scratchRegister); // Note: stackBangOffset is rounded off
-                        asm.ldub(stackPointerRegister, scratchRegister, GPR.G0);
+                        asm.setsw(stackBangOffset & ~0x3FF, PROLOGUE_SCRATCH_REGISTER); // Note: stackBangOffset is rounded off
+                        asm.ldub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, GPR.G0);
                     }
                 }
 
@@ -747,7 +745,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                     assert SPARCAssembler.isSimm13(offsetToCallSaveAreaFromFP);
                     // Offsets from stack pointer too large to be used as immediate.
                     // Instead, we compute the new frame pointer into a temporary that we use as a base.
-                    final GPR newFramePointerRegister = scratchRegister;
+                    final GPR newFramePointerRegister = PROLOGUE_SCRATCH_REGISTER;
                     asm.setsw(offsetToSpillSlots, newFramePointerRegister);
                     asm.add(stackPointerRegister, newFramePointerRegister, newFramePointerRegister);
                     asm.stx(linkRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP + STACK_SLOT_SIZE);

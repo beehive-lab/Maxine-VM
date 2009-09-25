@@ -52,7 +52,7 @@ import com.sun.max.vm.type.*;
  * <li>{@link C_FUNCTION}</li>
  * <li>{@link JNI_FUNCTION}</li>
  * <li>{@link SUBSTITUTE}: the substitutee is unsafe</li>
- * <li>{@link SURROGATE}: the substitutee is unsafe</li>
+ * <li>{@link LOCAL_SUBSTITUTION}: the substitutee is unsafe</li>
  * </ul>
  * <p>
  * However, some must be pointed out manually with this annotation.
@@ -172,7 +172,7 @@ public @interface UNSAFE {
                                 isUnsafe.setValue(true);
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
-                            // much likely a reference to a @PROTOTYPE_ONLY method - do nothing
+                            // probably a reference to a @PROTOTYPE_ONLY method - do nothing
                         }
                     }
                 }

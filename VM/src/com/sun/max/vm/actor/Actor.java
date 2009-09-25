@@ -35,9 +35,8 @@ import com.sun.max.vm.type.*;
  * Internal representations of Java entities. These "actors" provide runtime support for classes, fields, methods, etc.
  * They "act" for them by carrying out underlying actions of Java instructions.
  * <p>
- * Actors uses identity for {@linkplain #equals(Object) equality testing}. The hash code for
- * {@linkplain ClassActor#hashCode() classes} and {@linkplain MemberActor#hashCode()} are specialized to minimize
- * conflicts. In any case, actors are safe to use as keys in {@linkplain Map maps}.
+ * Actors uses identity for {@linkplain #equals(Object) equality testing} and use the system identity
+ * hash codes.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -95,16 +94,18 @@ public abstract class Actor {
     public static final int NO_SAFEPOINTS =        0x00004000;
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
-    public static final int UNSAFE_CAST =          0x00020000;
-    public static final int WRAPPER =              0x00100000;
-    // see above            TEMPLATE =             0x00200000;
-    public static final int CLASS_INITIALIZER =    0x00400000;
-    public static final int INSTANCE_INITIALIZER = 0x00800000;
+    public static final int STATIC_TRAMPOLINE =    0x00020000;
+    public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
+    public static final int INTERFACE_TRAMPOLINE = 0x00080000;
+    public static final int UNSAFE_CAST =          0x00100000;
+    // see above            TEMPLATE     =         0x00200000;
+    public static final int INITIALIZER       =    0x00400000;
+    public static final int JNI_FUNCTION =         0x00800000;
     public static final int C_FUNCTION =           0x01000000;
-    public static final int JNI_FUNCTION =         0x02000000;
+    public static final int WRAPPER =              0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
-    public static final int SURROGATE =            0x10000000;
+    public static final int LOCAL_SUBSTITUTE =     0x10000000;
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
@@ -169,17 +170,6 @@ public abstract class Actor {
         this.flags = flags;
         this.name = name;
     }
-
-    @Override
-    public final boolean equals(Object object) {
-        return object == this;
-    }
-
-    /**
-     * Subclasses must define their own hash code, obeying the normal rules about the relationship between {@link #equals(Object)} and {@link #hashCode()}.
-     */
-    @Override
-    public abstract int hashCode();
 
     @INLINE
     public final int flags() {
@@ -323,17 +313,17 @@ public abstract class Actor {
 
     @INLINE
     public static boolean isClassInitializer(int flags) {
-        return (flags & CLASS_INITIALIZER) != 0;
+        return (flags & INITIALIZER) != 0 && (flags & ACC_STATIC) != 0;
     }
 
     @INLINE
     public static boolean isInstanceInitializer(int flags) {
-        return (flags & INSTANCE_INITIALIZER) != 0;
+        return (flags & INITIALIZER) != 0 && (flags & ACC_STATIC) == 0;
     }
 
     @INLINE
     public static boolean isInitializer(int flags) {
-        return (flags & (CLASS_INITIALIZER | INSTANCE_INITIALIZER)) != 0;
+        return (flags & INITIALIZER) != 0;
     }
 
     @INLINE
@@ -397,8 +387,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isSurrogate(int flags) {
-        return (flags & SURROGATE) != 0;
+    public static boolean isLocalSubstitute(int flags) {
+        return (flags & LOCAL_SUBSTITUTE) != 0;
     }
 
     @INLINE
@@ -429,6 +419,26 @@ public abstract class Actor {
     @INLINE
     public static boolean isNeverInline(int flags) {
         return (flags & NEVER_INLINE) != 0;
+    }
+
+    @INLINE
+    public static boolean isTrampoline(int flags) {
+        return (flags & (STATIC_TRAMPOLINE | VIRTUAL_TRAMPOLINE | INTERFACE_TRAMPOLINE)) != 0;
+    }
+
+    @INLINE
+    public static boolean isStaticTrampoline(int flags) {
+        return (flags & STATIC_TRAMPOLINE) != 0;
+    }
+
+    @INLINE
+    public static boolean isVirtualTrampoline(int flags) {
+        return (flags & VIRTUAL_TRAMPOLINE) != 0;
+    }
+
+    @INLINE
+    public static boolean isInterfaceTrampoline(int flags) {
+        return (flags & INTERFACE_TRAMPOLINE) != 0;
     }
 
     @INLINE
@@ -534,7 +544,7 @@ public abstract class Actor {
         appendFlag(sb, isJniFunction(flags), "jni_function ");
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
         appendFlag(sb, isBuiltin(flags), "builtin ");
-        appendFlag(sb, isSurrogate(flags), "surrogate ");
+        appendFlag(sb, isLocalSubstitute(flags), "substitute ");
         appendFlag(sb, isWrapper(flags), "wrapper ");
         appendFlag(sb, isReset(flags), "reset ");
 

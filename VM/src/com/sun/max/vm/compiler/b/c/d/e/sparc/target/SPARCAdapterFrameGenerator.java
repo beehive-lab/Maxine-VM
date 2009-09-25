@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jit.sparc.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -82,7 +83,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     protected final GPR jitedCodeFramePointer;
     protected final GPR literalBaseRegister;
     protected int jitedCodeFrameSize = 0;
-    protected final GPR jitScratchRegister;
 
     public static SPARCAdapterFrameGenerator jitToOptimizedCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new JitToOptimizedFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);
@@ -147,7 +147,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     }
 
     public static int optToJitAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer optimizedEntryPoint) {
-        for (int offset = SPARCEirPrologue.sizeOfFrameBuilderInstructions(0) - 4; /*empty*/; offset += 4) {
+        for (int offset = SPARCEirPrologue.sizeOfFrameBuilderInstructions(0, true) - 4; /*empty*/; offset += 4) {
             final int instruction = stackFrameWalker.readInt(optimizedEntryPoint, offset);
             if (isSaveImmInstruction(instruction)) {
                 return -extractSimm13(instruction);
@@ -167,7 +167,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
         final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
         jitedCodeFramePointer = (GPR) jitABI.framePointer();
-        jitScratchRegister = (GPR) jitABI.scratchRegister();
         literalBaseRegister = (GPR) jitABI.literalBaseRegister();
     }
 
@@ -261,7 +260,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // Amount to retract to the stack: the adapter frame plus the parameters of the call. The following gives exactly that.
             // Note that the adapter does not save the callee frame pointer nor the return address on the stack. Instead, it exploits the
             // pushing of a register window by the callee to save these in local registers:  the frame pointer is already in a local register;
-            // the caller's address is saved in the SAVED_CALLER_ADDRESS register. Note that this is only for calls from JIT.
+            // the caller's address is saved in the SAVED_CALLER_ADDRESS register.  Note that this is only for calls from JIT.
             final int stackAmountInBytes = jitCallerStackOffset - SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
 
             // Return to the JITed caller. The frame adapter saved the call address in local register SAVED_CALLER_ADDRESS.
@@ -315,13 +314,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     break;
                 case STACK_SLOT:
                     final int biasedOptToStackOffset32 = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + parameterLocation.asStackSlot().offset;
-                    if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
-                        assembler().ldx(optimizedCodeStackPointer, offset32, longScratchRegister);
-                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-                    } else {
-                        assembler().lduw(optimizedCodeStackPointer, offset, intScratchRegister);
-                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
-                    }
+                    // SPARC is a 64-bit architecture, so there's no performance advantage to copying fewer than 64 bits.
+                    // So, we move an entire word regardless of the kind.
+                    assembler().ldx(optimizedCodeStackPointer, offset32, longScratchRegister);
+                    assembler().stx(longScratchRegister, optimizedCodeStackPointer, biasedOptToStackOffset32);
                     break;
                 default:
                     ProgramError.unexpected();
@@ -403,7 +399,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             assert SPARCAssembler.isSimm13(adapterFrameSize);
             assert SPARCAssembler.isSimm13(stackOffset + adapterFrameSize);
 
-            SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister);
+            SPARCEirPrologue.emitFrameBuilder(assembler(), adapterFrameSize, optimizedCodeStackPointer, intScratchRegister, true);
             assembler().stx(GPR.I7, optimizedCodeFramePointer, ripSaveAreaOffset);
 
             // emit the parameters in reverse order.
@@ -421,27 +417,17 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // an arbitrary value off the floating point temp area).
             assembler().add(optimizedCodeFramePointer, StackBias.SPARC_V9.stackBias(), jitedCodeFramePointer);
             final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
-            if (largeFrame) {
-                try {
-                    assembler().setuw(jitedCodeFrameSize, jitScratchRegister);
-                } catch (AssemblyException e) {
-                    FatalError.unexpected("AssemblerException emitting setuw.");
-                }
-            }
+
             assembler().call(methodEntryPoint);
-            if (jitedCodeFrameSize > 0) {
-                if (largeFrame) {
-                    assembler().sub(optimizedCodeStackPointer, jitScratchRegister, optimizedCodeStackPointer);
-                } else {
-                    assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
-                }
+            if (largeFrame) {
+                assembler().sethi(SPARCAssembler.hi(jitedCodeFrameSize), BytecodeToSPARCTargetTranslator.PROLOGUE_SCRATCH_REGISTER);
             } else {
-                assembler().nop();  // delay slot
+                assembler().sub(optimizedCodeStackPointer, jitedCodeFrameSize, optimizedCodeStackPointer);
             }
 
             // Return from the adapter frame
             assembler().bindLabel(adapterReturnPoint);
-            // The registers %i7 and %i6 were untouched by JIT-ed code and still represent, respectively, the caller's PC and stack pointer.
+            // The registers %i7 and %i6 were untouched by JITed code and still represent, respectively, the caller's PC and stack pointer.
             // Results by the JITed code follow the JIT calling convention and are stored in %o0 and %f0.
             // We need to move %o0 to the %o0 of the caller's window.
             assembler().ret();
@@ -453,56 +439,33 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         }
 
         private void adaptParameter(Kind kind, EirLocation parameterLocation, int offset32) {
-            final int offset = offset32 + JitStackFrameLayout.offsetWithinWord(kind);
             switch (parameterLocation.category()) {
                 case INTEGER_REGISTER:
                     assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
                     GPR gprParameterRegister = ((SPARCEirRegister.GeneralPurpose) parameterLocation).as();
-                    switch (kind.asEnum) {
-                        case BYTE:
-                        case BOOLEAN:
-                            assembler().stb(gprParameterRegister, optimizedCodeStackPointer, offset);
-                            break;
-                        case SHORT:
-                        case CHAR:
-                            assembler().sth(gprParameterRegister, optimizedCodeStackPointer, offset);
-                            break;
-                        case INT:
-                            assembler().stw(gprParameterRegister, optimizedCodeStackPointer, offset);
-                            break;
-                        case LONG:
-                        case WORD:
-                        case REFERENCE:
-                            assembler().stx(gprParameterRegister, optimizedCodeStackPointer, offset);
-                            break;
-                        default: {
-                            ProgramError.unexpected();
-                        }
+                    if (kind == Kind.LONG || kind == Kind.WORD || kind == Kind.REFERENCE) {
+                        assembler().stx(gprParameterRegister, optimizedCodeStackPointer, offset32);
+                    } else {
+                        assembler().stw(gprParameterRegister, optimizedCodeStackPointer, offset32 + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD);
                     }
                     break;
                 case FLOATING_POINT_REGISTER:
                     assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
                     FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
-                    switch (kind.asEnum) {
-                        case FLOAT:
-                            assembler().st(fpParameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset);
-                            break;
-                        case DOUBLE:
-                            assembler().std(fpParameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset);
-                            break;
-                        default: {
-                            ProgramError.unexpected();
-                        }
+                    if (kind == Kind.FLOAT) {
+                        assembler().st(fpParameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset32 + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD);
+                    } else {  // Kind.DOUBLE
+                        assembler().std(fpParameterRegister.asDoublePrecision(), optimizedCodeStackPointer, offset32);
                     }
                     break;
                 case STACK_SLOT:
                     final int slotOffsetFromCallerFP = SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT + parameterLocation.asStackSlot().offset;
                     if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
                         assembler().ldx(optimizedCodeFramePointer, slotOffsetFromCallerFP, longScratchRegister);
-                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, offset);
+                        assembler().stx(longScratchRegister, optimizedCodeStackPointer, offset32);
                     } else {
-                        assembler().lduw(optimizedCodeFramePointer, slotOffsetFromCallerFP + JitStackFrameLayout.offsetWithinWord(kind), intScratchRegister);
-                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, offset);
+                        assembler().lduw(optimizedCodeFramePointer, slotOffsetFromCallerFP + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD, intScratchRegister);
+                        assembler().stw(intScratchRegister, optimizedCodeStackPointer, offset32 + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD);
                     }
                     break;
                 default:

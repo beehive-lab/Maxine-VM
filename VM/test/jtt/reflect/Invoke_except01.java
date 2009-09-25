@@ -18,22 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
+package jtt.reflect;
+
+import java.lang.reflect.*;
 
 /*
- * @Harness: java
- * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
- */
-public class Loop06 {
-    public static String test(int arg) {
-        int count = 0;
-        while (--arg > 0) {
-            count++;
-            foo();
+* @Harness: java
+* @Runs: 0=0; 1=3; 2=!java.lang.reflect.InvocationTargetException; 3=!java.lang.IllegalArgumentException; 4=!java.lang.IllegalArgumentException
+*/
+public class Invoke_except01 {
+
+    public static int test(int arg) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Object[] args;
+        if (arg == 0) {
+            args = new Object[] {new int[0]};
+        } else if (arg == 1) {
+            args = new Object[] {new int[3]};
+        } else if (arg == 2) {
+            args = new Object[] {null};
+        } else if (arg == 3) {
+            args = new Object[] {new char[3]};
+        } else {
+            args = null;
         }
-        return "ok" + count;
+        for (Method m : Invoke_except01.class.getDeclaredMethods()) {
+            if ("method".equals(m.getName())) {
+                return (Integer) m.invoke(null, args);
+            }
+        }
+        return 42;
     }
 
-    static void foo() {
+    public static int method(int[] arg) {
+        return arg.length;
     }
 }

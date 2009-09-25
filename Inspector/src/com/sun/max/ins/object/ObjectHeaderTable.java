@@ -246,7 +246,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
-        return style().defaultTextColor();
+        return null;
     }
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
@@ -333,51 +333,48 @@ public final class ObjectHeaderTable extends InspectorTable {
             for (int row = 0; row < headerFields.length; row++) {
                 // Create a label suitable for the kind of header field
                 InspectorLabel label = null;
-                switch(headerFields[row]) {
-                    case HUB:
-                        label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
+                HeaderField headerField = headerFields[row];
+                if (headerField == HeaderField.HUB) {
+                    label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ObjectHeaderTable.this) {
 
-                            @Override
-                            public Value fetchValue() {
-                                final TeleHub teleHub = tableModel.teleHub();
-                                return teleHub == null ? WordValue.ZERO : WordValue.from(teleHub.getCurrentOrigin());
-                            }
-                        };
-                        break;
-                    case MISC:
-                        label = new MiscWordLabel(inspection, teleObject);
-                        break;
-                    case LENGTH:
-                        switch (teleObject.getObjectKind()) {
-                            case ARRAY:
-                                final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-                                label = new PrimitiveValueLabel(inspection, Kind.INT) {
-
-                                    @Override
-                                    public Value fetchValue() {
-                                        return IntValue.from(teleArrayObject.getLength());
-                                    }
-                                };
-                                break;
-                            case HYBRID:
-                                final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-                                label = new PrimitiveValueLabel(inspection, Kind.INT) {
-
-                                    @Override
-                                    public Value fetchValue() {
-                                        return IntValue.from(teleHybridObject.readArrayLength());
-                                    }
-                                };
-                                break;
-                            case TUPLE:
-                                // No length header field
-                                break;
-                            default:
-                                ProgramError.unknownCase();
+                        @Override
+                        public Value fetchValue() {
+                            final TeleHub teleHub = tableModel.teleHub();
+                            return teleHub == null ? WordValue.ZERO : WordValue.from(teleHub.getCurrentOrigin());
                         }
-                        break;
-                    default:
-                        ProgramError.unknownCase();
+                    };
+                } else if (headerField == HeaderField.MISC) {
+                    label = new MiscWordLabel(inspection, teleObject);
+                } else if (headerField == HeaderField.LENGTH) {
+                    switch (teleObject.getObjectKind()) {
+                        case ARRAY:
+                            final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+                            label = new PrimitiveValueLabel(inspection, Kind.INT) {
+
+                                @Override
+                                public Value fetchValue() {
+                                    return IntValue.from(teleArrayObject.getLength());
+                                }
+                            };
+                            break;
+                        case HYBRID:
+                            final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
+                            label = new PrimitiveValueLabel(inspection, Kind.INT) {
+
+                                @Override
+                                public Value fetchValue() {
+                                    return IntValue.from(teleHybridObject.readArrayLength());
+                                }
+                            };
+                            break;
+                        case TUPLE:
+                            // No length header field
+                            break;
+                        default:
+                            ProgramError.unknownCase();
+                    }
+                } else {
+                    ProgramError.unknownCase();
                 }
                 label.setOpaque(true);
                 labels[row] = label;

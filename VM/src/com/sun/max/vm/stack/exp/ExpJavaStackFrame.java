@@ -18,19 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
+package com.sun.max.vm.stack.exp;
 
-/*
- * @Harness: java
- * @Runs: 0 = "ok0"; 10 = "ok9"; 25 = "ok24";
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.value.*;
+
+/**
+ *
+ *
+ * @author Thomas Wuerthinger
  */
-public class Loop05 {
-    public static String test(int arg) {
-        int count = 0;
-        while (--arg > 0) {
-            count++;
-            new Object();
-        }
-        return "ok" + count;
-    }
+public interface ExpJavaStackFrame {
+    ClassMethodActor classMethodActor();
+    BytecodeLocation bytecodeLocation();
+    Value[] getLocals();
+    Value[] getExpressionStack();
+    Value[] getMonitors();
 }

@@ -19,6 +19,8 @@
  * Company, Ltd.
  */
 package com.sun.max.annotate;
+import com.sun.max.vm.actor.Actor;
+
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -28,7 +30,7 @@ import java.lang.annotation.*;
  * Marks methods which patch another method into a given call site and transfer control to it.
  * If the ABI in use generally uses caller-save,
  * then the trampoline must apply callee-save to ALL potential parameter registers.
- * 
+ *
  * A trampoline method itself must be static.
  *
  * @author Bernd Mathiske
@@ -36,11 +38,19 @@ import java.lang.annotation.*;
 public @interface TRAMPOLINE {
 
     public enum Invocation {
-        STATIC, VIRTUAL, INTERFACE;
+        STATIC(Actor.STATIC_TRAMPOLINE),
+        VIRTUAL(Actor.VIRTUAL_TRAMPOLINE),
+        INTERFACE(Actor.INTERFACE_TRAMPOLINE);
+
+        public final int flag;
+
+        Invocation(int flag) {
+            this.flag = flag;
+        }
     }
 
     /**
-     * The kind of invocation mechanism this trampoline supports.
+     * @return the kind of invocation mechanism this trampoline supports.
      */
     Invocation invocation();
 }

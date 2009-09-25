@@ -91,8 +91,19 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     private Pointer lastValidPointer;
 
     /**
+     * A "surrogate" object that encapsulates information about an object in the VM.
+     * <br>
+     * This is not the same thing as a Proxy, although it can be used that way.  Specific subclasses
+     * encapsulate design information about the structure of the VM that enable useful access
+     * methods beyond simple field or element access.  Most important are the subclasses for
+     * {@link Actor}s, objects in the VM that encapsulate meta-information about the language and
+     * object representation.
+     * <br>
      * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
-     * @param specificLayout TODO
+     *
+     * @param teleVM the VM in which the object resides
+     * @param reference the location of the object in the VM (whose absolute address can change via GC)
+     * @param specificLayout information about the layout of information in the object
      */
     protected TeleObject(TeleVM teleVM, Reference reference, SpecificLayout specificLayout) {
         super(teleVM);
@@ -104,13 +115,20 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         lastValidPointer = Pointer.zero();
     }
 
+    /**
+     * The status of the object in the VM.  A new object is by definition "live", but
+     * once it has been freed by the VM's garbage collector, it is no longer a legitimate
+     * object.
+     * <br>
+     * Once an object is dead the memory most recently allocated to it might be
+     * reused by the VM.  For debugging purposes, however, a {@link TeleObject}
+     * continues to refer to the abandoned memory as if it were an object.
+     *
+     * @return whether the object in the VM is still live
+     */
     public boolean isLive() {
         getCurrentOrigin();
         return live;
-    }
-
-    public Pointer getLastValidPointer() {
-        return lastValidPointer;
     }
 
     protected void refresh(long processEpoch) {
@@ -187,8 +205,17 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     protected abstract Size objectSize();
 
     /**
-     * @return current absolute location of the object's origin (not necessarily beginning of memory)
-     *  in the {@link TeleVM}, subject to relocation by GC
+     * The current location of the object in VM memory, which
+     * may change through GC as long as the object remains live.
+     * When the object is no longer live, the last live location is
+     * returned.
+     * <br>
+     * Note that the origin is not necessarily beginning of the object's
+     * memory allocation, depending on the particular object layout
+     * used.
+     * @return current absolute location of the object's origin
+     * @see GeneralLayout
+     *
      */
     public Pointer getCurrentOrigin() {
         Pointer pointer = reference.toOrigin();
@@ -220,17 +247,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the type of the header field
      */
     public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
-        switch (headerField) {
-            case HUB:
-                return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
-            case MISC:
-                return JavaTypeDescriptor.WORD;
-            case LENGTH:
-                return JavaTypeDescriptor.INT;
-            default:
-                ProgramError.unknownCase();
+        if (headerField == HeaderField.HUB) {
+            return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
+        } else if (headerField == HeaderField.LENGTH) {
+            return JavaTypeDescriptor.INT;
         }
-        return null;
+        return JavaTypeDescriptor.WORD;
     }
 
     /**
@@ -238,16 +260,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the location of the header field relative to object origin
      */
     public final Offset getHeaderOffset(Layout.HeaderField headerField) {
-        switch(headerField) {
-            case HUB:
-            case MISC:
-                return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
-            case LENGTH:
-                return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
-            default:
-                ProgramError.unknownCase();
+        if (headerField != HeaderField.LENGTH) {
+            return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
+        } else {
+            return layoutScheme.arrayHeaderLayout.getOffsetFromOrigin(headerField);
         }
-        return null;
     }
 
     /**

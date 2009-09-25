@@ -182,7 +182,7 @@ public class CEEliminator implements BlockClosure {
             assert gotoState != null : "states do not match up";
         }
         gotoState = gotoState.copy();
-        gotoState.push(result.type().basicType, result);
+        gotoState.push(result.type(), result);
         assert gotoState.isSameAcrossScopes(suxState) : "states must match now";
         newGoto.setStateAfter(gotoState);
 

@@ -28,36 +28,36 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Indicates that the annotated method is a surrogate for another method (the <i>substitutee</i>) in the same class.
- * The substitutee must have exactly the same signature as the surrogate and the name of the surrogate must be the name
+ * Indicates that the annotated method is a substitute for another method (the <i>substitutee</i>) in the same class.
+ * The substitutee must have exactly the same signature as the local substitute and the name of the local substitute must be the name
  * of the substitutee concatenated with the suffix "_". Any execution (or compilation) of the substitutee will be
- * replaced with an execution (or compilation) of the surrogate in the {@linkplain MaxineVM#target() target}.
+ * replaced with an execution (or compilation) of the local substitute in the {@linkplain MaxineVM#target() target}.
  * <p>
- * The {@link ClassfileReader} will make the substitution and assumes that the the substitutee precedes the surrogate in
+ * The {@link ClassfileReader} will make the substitution and assumes that the the substitutee precedes the local substitute in
  * the class file. This ordering requirement will have to be removed if the MaxineVM source code is compiled with a Java
  * source compiler that does not preserve source file ordering of methods in its generated class files.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface SURROGATE {
+public @interface LOCAL_SUBSTITUTION {
 
     public static final class Static {
 
         private Static() {
         }
 
-        public static String toSurrogateName(String substituteeName) {
+        public static String toSubstituteName(String substituteeName) {
             return substituteeName + "_";
         }
 
-        public static String toSubstituteeName(String surrogateName) {
-            if (!surrogateName.endsWith("_")) {
-                classFormatError("Name of surrogate method must end with '_': " + surrogateName);
+        public static String toSubstituteeName(String localSubstituteName) {
+            if (!localSubstituteName.endsWith("_")) {
+                classFormatError("Name of local substitute method must end with '_': " + localSubstituteName);
             }
-            return surrogateName.substring(0, surrogateName.length() - 1);
+            return localSubstituteName.substring(0, localSubstituteName.length() - 1);
         }
     }
 }

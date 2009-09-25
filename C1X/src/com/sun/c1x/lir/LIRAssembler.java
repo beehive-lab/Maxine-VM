@@ -466,48 +466,48 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Move:
                 if (op.moveKind() == LIROp1.LIRMoveKind.Volatile) {
-                    volatileMoveOp(op.inOpr(), op.result(), op.type(), op.info);
+                    volatileMoveOp(op.operand(), op.result(), op.type(), op.info);
                 } else {
-                    moveOp(op.inOpr(), op.result(), op.type(), op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
+                    moveOp(op.operand(), op.result(), op.type(), op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
                 }
                 break;
 
             case Prefetchr:
-                prefetchr(op.inOpr());
+                prefetchr(op.operand());
                 break;
 
             case Prefetchw:
-                prefetchr(op.inOpr());
+                prefetchr(op.operand());
                 break;
 
             case Return:
-                returnOp(op.inOpr());
+                returnOp(op.operand());
                 break;
 
             case Safepoint:
                 if (compilation.debugInfoRecorder().lastPcOffset() == codeOffset()) {
                     asm.nop();
                 }
-                safepointPoll(op.inOpr(), op.info);
+                safepointPoll(op.operand(), op.info);
                 break;
 
             case Branch:
                 break;
 
             case Neg:
-                negate(op.inOpr(), op.resultOpr());
+                negate(op.operand(), op.result());
                 break;
 
             case Leal:
-                leal(op.inOpr(), op.resultOpr());
+                leal(((LIRAddress) op.operand()), ((LIRLocation) op.result()));
                 break;
 
             case NullCheck:
                 if (C1XOptions.GenerateCompilerNullChecks) {
                     addDebugInfoForNullCheckHere(op.info);
 
-                    if (op.inOpr().isSingleCpu()) {
-                        asm.nullCheck(op.inOpr().asRegister());
+                    if (op.operand().isSingleCpu()) {
+                        asm.nullCheck(op.operand().asRegister());
                     } else {
                         throw Util.shouldNotReachHere();
                     }
@@ -515,7 +515,7 @@ public abstract class LIRAssembler {
                 break;
 
             case Monaddr:
-                monitorAddress(((LIRConstant) op.inOpr()).asInt(), op.result());
+                monitorAddress(((LIRConstant) op.operand()).asInt(), op.result());
                 break;
 
             default:
@@ -526,7 +526,7 @@ public abstract class LIRAssembler {
     // TODO:
     // BarrierSet bs;
 
-    protected abstract void leal(LIROperand inOpr, LIROperand resultOpr);
+    protected abstract void leal(LIRAddress inOpr, LIRLocation resultOpr);
 
     protected abstract void negate(LIROperand inOpr, LIROperand resultOpr);
 

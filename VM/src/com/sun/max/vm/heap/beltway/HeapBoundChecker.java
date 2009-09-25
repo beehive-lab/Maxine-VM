@@ -51,6 +51,6 @@ public class HeapBoundChecker {
      */
     @INLINE(override = true)
     public boolean contains(Pointer origin) {
-        return Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+        return Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
     }
 }

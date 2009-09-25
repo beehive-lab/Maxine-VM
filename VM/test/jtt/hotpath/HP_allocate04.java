@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.hotpath;
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+ * @Harness: java
+ * @Runs: 80 = 3120;
  */
-package test.com.sun.max.vm.jtrun.some;
+public class HP_allocate04 {
 
-import test.com.sun.max.vm.jtrun.*;
+    public static int test(int count) {
+        int [] a = new int[count];
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-
-public class JavaTesterRunScheme extends AbstractTester {
-
-    public JavaTesterRunScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
-
-    @PROTOTYPE_ONLY
-    @Override
-    public Class<?>[] getClassList() {
-        return classList;
-    }
-
-    @PROTOTYPE_ONLY
-// GENERATED TEST RUNS
-    private static final Class<?>[] classList = {
-        jtt.jasm.Loop00.class
-    };
-    @Override
-    public void runTests() {
-        total = testEnd - testStart;
-        testNum = testStart;
-        while (testNum < testEnd) {
-            switch(testNum) {
-                case 0:
-                    JavaTesterTests.jtt_jasm_Loop00();
-            }
+        for (int i = 0; i < a.length; i++) {
+            a[i] = i;
         }
-        reportPassed(passed, total);
+
+        int i = 0;
+        int iwrap = count - 1;
+        int sum = 0;
+
+        while (i < count) {
+            sum += (a[i] + a[iwrap]) / 2;
+            iwrap = i;
+            i++;
+        }
+        return sum;
     }
-// END GENERATED TEST RUNS
 }

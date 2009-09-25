@@ -29,6 +29,7 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 
 
 /**
@@ -125,6 +126,19 @@ public final class ThreadsTable extends InspectorTable {
 
     }
 
+
+    /**
+     * @return color the text specially in the row where the thread is at a triggered watchpoint or breakpoint
+     */
+    private Color getRowTextColor(int row) {
+        final MaxThread thread = (MaxThread) tableModel.getValueAt(row, 0);
+        final ThreadState threadState = thread.state();
+        if (threadState == ThreadState.BREAKPOINT || threadState == ThreadState.WATCHPOINT) {
+            return style().debugIPTagColor();
+        }
+        return null;
+    }
+
     private final class IDCellRenderer extends PlainLabel implements TableCellRenderer {
 
         IDCellRenderer(Inspection inspection) {
@@ -143,6 +157,7 @@ public final class ThreadsTable extends InspectorTable {
                 setText(threadIdText);
                 setToolTipText("VM thread ID:  " + threadIdText);
             }
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -160,6 +175,7 @@ public final class ThreadsTable extends InspectorTable {
             final String handleString = Long.toString(thread.handle());
             setText(handleString);
             setToolTipText("Native thread handle:  " + handleString);
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -187,6 +203,7 @@ public final class ThreadsTable extends InspectorTable {
             }
             setText(kind);
             setToolTipText("Kind:  " + kind);
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -202,6 +219,7 @@ public final class ThreadsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
             setValue(inspection().nameDisplay().shortName(thread), "Name:  " + inspection().nameDisplay().longName(thread));
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -219,6 +237,7 @@ public final class ThreadsTable extends InspectorTable {
             final String status = thread.state().toString();
             setText(status);
             setToolTipText("Status:  " + status);
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }

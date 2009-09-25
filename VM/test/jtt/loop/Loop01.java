@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,27 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.asm;
+package jtt.loop;
 
-import com.sun.c1x.util.*;
-
-/**
- * The <code>NativeMovRegMem</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: 0 = true;
  */
-public class NativeMovRegMem {
+public class Loop01 {
 
-    public static NativeMovRegMem nativeMoveRegMemAt(int i) {
-        return Util.nonFatalUnimplemented(null);
+    public static boolean test(int arg) {
+        int x = 1;
+
+        for (int i = 0; i < 10; i++) {
+            int y = m();
+            if (x == 1) {
+                return true;
+            }
+            x = y;
+        }
+        return false;
     }
 
-    /**
-     * @param fieldOffset
-     */
-    public void setOffset(int fieldOffset) {
-        Util.nonFatalUnimplemented();
+    private static int m() {
+        return 2;
     }
 
 }

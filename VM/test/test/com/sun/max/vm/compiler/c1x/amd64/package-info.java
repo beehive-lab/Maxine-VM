@@ -18,29 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.micro;
-
-/*
- * @Harness: java
- * @Runs: 0 = true;
+/**
+ * Tests for the AMD64 compiler
+ *
+ * @author Bernd Mathiske
  */
-public class Loop01 {
-
-    public static boolean test(int arg) {
-        int x = 1;
-
-        for (int i = 0; i < 10; i++) {
-            int y = m();
-            if (x == 1) {
-                return true;
-            }
-            x = y;
-        }
-        return false;
-    }
-
-    private static int m() {
-        return 2;
-    }
-
-}
+package test.com.sun.max.vm.compiler.c1x.amd64;

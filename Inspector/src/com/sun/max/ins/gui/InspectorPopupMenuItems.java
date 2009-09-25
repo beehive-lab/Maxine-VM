@@ -39,7 +39,6 @@ public class InspectorPopupMenuItems implements Iterable<Object>{
 
     private final LinkSequence<Object> items = new LinkSequence<Object>();
 
-    @Override
     public Iterator<Object> iterator() {
         return items.iterator();
     }

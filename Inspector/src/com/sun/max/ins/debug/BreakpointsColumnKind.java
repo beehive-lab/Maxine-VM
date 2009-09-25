@@ -29,7 +29,12 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  */
 public enum BreakpointsColumnKind implements ColumnKind {
-    TAG ("Kind", "[T]arget, [B]ytecode, [S]ource", true, 20),
+    TAG ("Tag", "[T]arget, [B]ytecode, [S]ource", true, 20) {
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
     ENABLED("En", "Enabled?", true, 5),
     DESCRIPTION("Description", "How/where the breakpoint was created", true, -1) {
         @Override

@@ -458,7 +458,7 @@ public abstract class StackFrameWalker {
      * Walks a thread's stack for the purpose of raising an exception.
      */
     public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable));
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, throwable));
     }
 
     /**
@@ -561,7 +561,8 @@ public abstract class StackFrameWalker {
     /**
      * Collects a sequence of stack frames, beginning a stack walk at the specified instruction pointer, stack pointer,
      * and frame pointer. This method will return all stack frames, including native frames, adapter frames, and
-     * non-application visible stack frames. This method accepts an appendable sequence of stack frames
+     * non-application visible stack frames. This method accepts an appendable sequence of stack frames in
+     * which to store the result.
      *
      * @param stackFrames an appendable sequence of stack frames to collect the results; if {@code null}, this method
      * will create a new appendable sequence for collecting the result
@@ -592,9 +593,8 @@ public abstract class StackFrameWalker {
      * @param topFrame true if this method should include the ClassMethodActor of the top frame
      * @param adapterFrames true if adapter frames should be reported
      * @param invisibleFrames true if application invisible frames should be reported
-     * @param ignoreUntilNativeFrame TODO
      * @param ignoreUntilNativeFrame true if all frames before the first native frame are to be ignored
-     * @return
+     * @return a sequence of class method actors representing the call stack
      */
     public static Sequence<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
         final LinkSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
@@ -629,6 +629,30 @@ public abstract class StackFrameWalker {
             }
         }
         return result;
+    }
+
+    public static ClassMethodActor getCallerClassMethodActor(Iterable<StackFrame> stackFrames, boolean invisibleFrames) {
+        boolean top = true;
+        for (StackFrame stackFrame : stackFrames) {
+            if (top) {
+                top = false;
+                continue;
+            }
+            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
+            if (targetMethod == null) {
+                // ignore native frame
+                continue;
+            }
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
+            if (bytecodeLocations == null) {
+                if (targetMethod.classMethodActor() != null) {
+                    return targetMethod.classMethodActor();
+                }
+            } else {
+                return bytecodeLocations.next().classMethodActor();
+            }
+        }
+        return null;
     }
 
     private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<? extends BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
@@ -677,4 +701,5 @@ public abstract class StackFrameWalker {
      * @param targetABI
      */
     public abstract void useABI(TargetABI targetABI);
+
 }

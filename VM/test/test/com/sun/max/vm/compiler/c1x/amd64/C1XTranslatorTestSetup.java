@@ -18,28 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.actor.member;
+package test.com.sun.max.vm.compiler.c1x.amd64;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.type.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+import com.sun.max.asm.*;
+import com.sun.max.platform.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
- * @author Bernd Mathiske
+ * @author
  */
-public class TrampolineMethodActor extends StaticMethodActor {
+public class C1XTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
-    private final TRAMPOLINE.Invocation invocation;
-
-    public TRAMPOLINE.Invocation invocation() {
-        return invocation;
+    public C1XTranslatorTestSetup(Test test) {
+        super(test);
     }
 
-    public TrampolineMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute,
-                                 TRAMPOLINE.Invocation invocation) {
-        super(name, descriptor, flags, codeAttribute);
-        this.invocation = invocation;
+    @Override
+    public TargetMethod translate(ClassMethodActor classMethodActor) {
+        return  javaPrototype().vmConfiguration().jitScheme().compile(classMethodActor);
     }
 
+    private boolean isCompilable(MethodActor method) {
+        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isUnsafeCast();
+    }
+    @Override
+    protected VMConfiguration createVMConfiguration() {
+        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64), new com.sun.max.vm.compiler.c1x.Package());
+    }
 }

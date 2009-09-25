@@ -60,7 +60,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
     }
 
     @Override
-    public Value execute(ActorIrMethod method, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
         return run(method.classMethodActor(), arguments);
     }
 
