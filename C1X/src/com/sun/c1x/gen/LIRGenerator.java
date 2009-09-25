@@ -625,28 +625,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitProfileCall(ProfileCall x) {
-        // Need recv in a temporary register so it interferes with the other temporaries
-        LIROperand recv = LIROperandFactory.IllegalLocation;
-        LIROperand mdo = newRegister(CiKind.Object);
-        LIROperand tmp = newRegister(CiKind.Int);
-        if (x.object() != null) {
-            LIRItem value = new LIRItem(x.object(), this);
-            value.loadItem();
-            recv = newRegister(CiKind.Object);
-            lir.move(value.result(), recv);
-        }
-        lir.profileCall(x.method(), x.bciOfInvoke(), mdo, recv, tmp, x.knownHolder());
-    }
-
-    @Override
-    public void visitProfileCounter(ProfileCounter x) {
-        LIRItem mdo = new LIRItem(x.mdo(), this);
-        mdo.loadItem();
-        incrementCounter(new LIRAddress((LIRLocation) mdo.result(), x.offset(), CiKind.Int), x.increment());
-    }
-
-    @Override
     public void visitReturn(Return x) {
 
         if (x.type().isVoid()) {

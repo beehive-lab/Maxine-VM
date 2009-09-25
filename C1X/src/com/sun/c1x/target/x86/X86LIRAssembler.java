@@ -2461,7 +2461,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     /**
-     * (tw) Tentative implementation of an interface call (C1 does always do a resolving runtime call).
+     * (tw) Tentative implementation of an interface call.
      */
     @Override
     protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
@@ -2662,94 +2662,6 @@ public class X86LIRAssembler extends LIRAssembler {
             throw Util.shouldNotReachHere();
         }
         masm().bind(op.stub().continuation);
-    }
-
-    @Override
-    protected void emitProfileCall(LIRProfileCall op) {
-        RiMethod method = op.profiledMethod();
-        int bci = op.profiledBci();
-
-        // Update counter for all call types
-        RiMethodProfile md = method.methodData();
-        if (md == null) {
-            throw new CiBailout("out of memory building methodDataOop");
-        }
-        assert op.mdo().isSingleCpu() : "mdo must be allocated";
-        CiRegister mdo = op.mdo().asRegister();
-        masm().movoop(mdo, md.encoding());
-        Address counterAddr = new Address(mdo, md.countOffset(bci));
-        masm().addl(counterAddr, 1);
-        // TODO: use the bytecode from the invoke instruction
-        int bc = method.javaCodeAtBci(bci);
-        // Perform additional virtual call profiling for invokevirtual and
-        // invokeinterface bytecodes
-        if ((bc == Bytecodes.INVOKEVIRTUAL || bc == Bytecodes.INVOKEINTERFACE) && C1XOptions.ProfileVirtualCalls) {
-            assert op.recv().isSingleCpu() : "recv must be allocated";
-            CiRegister recv = op.recv().asRegister();
-            assert CiRegister.assertDifferentRegisters(mdo, recv);
-            RiType knownKlass = op.knownHolder();
-            if (C1XOptions.OptimizeVirtualCallProfiling && knownKlass != null) {
-                // We know the type that will be seen at this call site; we can
-                // statically update the methodDataOop rather than needing to do
-                // dynamic tests on the receiver type
-
-                // NOTE: we should probably put a lock around this search to
-                // avoid collisions by concurrent compilations
-                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    RiType receiver = md.receiver(bci, i);
-                    if (knownKlass.equals(receiver)) {
-                        Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
-                        masm().addl(dataAddr, 1);
-                        return;
-                    }
-                }
-
-                // Receiver type not found in profile data; select an empty slot
-
-                // Note that this is less efficient than it should be because it
-                // always does a write to the receiver part of the
-                // VirtualCallData rather than just the first time
-                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    RiType receiver = md.receiver(bci, i);
-                    if (receiver == null) {
-                        Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                        masm().movoop(recvAddr, knownKlass.getEncoding(RiType.Representation.ObjectHub));
-                        Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
-                        masm().addl(dataAddr, 1);
-                        return;
-                    }
-                }
-            } else {
-                masm().movptr(recv, new Address(recv, compilation.runtime.hubOffset()));
-                Label updateDone = new Label();
-                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    Label nextTest = new Label();
-                    // See if the receiver is receiver[n].
-                    masm().cmpptr(recv, new Address(mdo, md.receiverOffset(bci, i)));
-                    masm().jcc(X86Assembler.Condition.notEqual, nextTest);
-                    Address dataAddr = new Address(mdo, md.receiverCountOffset(bci, i));
-                    masm().addl(dataAddr, 1);
-                    masm().jmp(updateDone);
-                    masm().bind(nextTest);
-                }
-
-                // Didn't find receiver; find next empty slot and fill it in
-                for (int i = 0; i < C1XOptions.ProfileTypeWidth; i++) {
-                    Label nextTest = new Label();
-                    Address recvAddr = new Address(mdo, md.receiverOffset(bci, i));
-                    masm().cmpptr(recvAddr, (int) NULLWORD);
-                    masm().jcc(X86Assembler.Condition.notEqual, nextTest);
-                    masm().movptr(recvAddr, recv);
-                    masm().movl(new Address(mdo, md.receiverCountOffset(bci, i)), 1);
-                    if (i < (C1XOptions.ProfileTypeWidth - 1)) {
-                        masm().jmp(updateDone);
-                    }
-                    masm().bind(nextTest);
-                }
-
-                masm().bind(updateDone);
-            }
-        }
     }
 
     @Override

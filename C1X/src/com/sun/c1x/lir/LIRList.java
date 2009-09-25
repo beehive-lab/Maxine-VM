@@ -355,10 +355,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
 
-    public void profileCall(RiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, RiType chaKlass) {
-        append(new LIRProfileCall(LIROpcode.ProfileCall, method, bci, mdo, recv, t1, chaKlass));
-    }
-
     public void prefetch(LIRAddress addr, boolean isStore) {
         append(new LIROp1(isStore ? LIROpcode.Prefetchw : LIROpcode.Prefetchr, addr));
     }

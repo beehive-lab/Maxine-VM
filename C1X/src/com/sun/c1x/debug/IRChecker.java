@@ -525,32 +525,6 @@ public class IRChecker extends ValueVisitor {
     }
 
     /**
-     * Typechecks a ProfileCall instruction.
-     * @param i the ProfileCall instruction to be verified
-     */
-    @Override
-    public void visitProfileCall(ProfileCall i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.method(), "Method being profiled must not be null");
-        if (i.bci() < 0) {
-            fail("Illegal bci in ProfileCall instruction");
-        }
-    }
-
-    /**
-     * Typechecks a ProfileCounter instruction.
-     * @param i the ProfileCounter instruction to be verified
-     */
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.mdo(), "Value that produces the method data object must not be null");
-        if (i.increment() > 0) {
-            fail("Increment must be greater than zero");
-        }
-    }
-
-    /**
      * Typechecks a RoundFP instruction.
      * @param i the RoundFP instruction to be verified
      */

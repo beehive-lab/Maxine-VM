@@ -30,18 +30,31 @@ import com.sun.c1x.ci.CiRegister;
  */
 public class XirTemplate {
 
+    public static int DESTROY = 0x10000000;
+    public static int INPUT   = 0x20000000;
+    public static int OUTPUT  = 0x40000000;
+    public static int FIXED   = 0x80000000;
+
+    public static int HAS_JAVA_CALL = 0x001;
+    public static int HAS_STUB_CALL = 0x002;
+    public static int HAS_RUNTIME_CALL = 0x004;
+    public static int HAS_CONTROL_FLOW = 0x008;
+    public static int GLOBAL_STUB = 0x010;
+
     public final XirAssembler.XirInstruction[] fastPath;
     public final XirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
     public XirAssembler.XirTemp[] temps;
     public int[] tempFlags;
+    public int flags;
 
-    XirTemplate(XirAssembler.XirInstruction[] instructions, XirLabel[] labels, XirParameter[] parameters) {
-        this.fastPath = instructions;
-        this.slowPath = null;
+    XirTemplate(XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, int flags) {
+        this.fastPath = fastPath;
+        this.slowPath = slowPath;
         this.labels = labels;
         this.parameters = parameters;
+        this.flags = flags;
     }
 
     public int getResultParameterIndex() {
@@ -76,8 +89,4 @@ public class XirTemplate {
         return null;
     }
 
-    public static int DESTROY = 0x10000000;
-    public static int INPUT   = 0x20000000;
-    public static int OUTPUT  = 0x40000000;
-    public static int FIXED   = 0x80000000;
 }

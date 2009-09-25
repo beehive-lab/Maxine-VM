@@ -592,22 +592,6 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitProfileCall(ProfileCall profileCall) {
-        final RiMethod method = profileCall.method();
-        out.print("profile ").print(profileCall.object()).print(method.holder().name()).print('.').print(method.name());
-        if (profileCall.knownHolder() != null) {
-          out.print(", ").print(profileCall.knownHolder().name());
-        }
-        out.print(')');
-    }
-
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        // TODO: Recognize interpreter invocation counter specially
-        out.print("counter [").print(i.mdo()).print(").print(").print(i.offset()).print("] += ").print(i.increment());
-    }
-
-    @Override
     public void visitReturn(Return ret) {
         if (ret.result() == null) {
             out.print("return");
