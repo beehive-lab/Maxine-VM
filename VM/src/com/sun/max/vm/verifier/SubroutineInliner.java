@@ -317,10 +317,21 @@ public class SubroutineInliner {
 
     private void checkOffset(int offset, Range allowableOffsetRange) {
         if (!allowableOffsetRange.contains(offset)) {
-            throw ErrorContext.classFormatError("Subroutine inlining expansion caused an offset to grow beyond what a branch instruction can encode");
+            throw verifier.verifyError("Subroutine inlining expansion caused an offset to grow beyond what a branch instruction can encode");
         }
     }
 
+    /**
+     * Computes the offset for a branch or goto instruction where either it or its target has been inlined
+     * (and thus resides at a new position).
+     *
+     * @param fromPosition the (possibly new) position of a branch or goto instruction
+     * @param fromSubroutine the subroutine in which the branch or goto instruction resides
+     * @param oldToPosition the old target position prior to subroutine inlining
+     * @param allowableOffsetRange the valid value range for the adjusted offset
+     * @return the computed offset
+     * @throws VerifyError if the new offset could not be computed
+     */
     private int calculateNewOffset(int fromPosition, SubroutineCall fromSubroutine, int oldToPosition, Range allowableOffsetRange) {
         for (InstructionHandle target = instructionMap[oldToPosition]; target != null; target = target.next) {
             if (fromSubroutine.canGoto(target.subroutineCall)) {
@@ -329,7 +340,7 @@ public class SubroutineInliner {
                 return offset;
             }
         }
-        throw verifier.verifyError("Cannot find updated target position");
+        throw verifier.verifyError("Cannot find new position for instruction that used to be at " + oldToPosition);
     }
 
     private Sequence<ExceptionHandlerEntry> fixupExceptionHandlers(byte[] newCode) {
