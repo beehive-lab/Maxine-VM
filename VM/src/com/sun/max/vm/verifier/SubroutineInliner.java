@@ -24,10 +24,10 @@ import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 import static com.sun.max.vm.verifier.InstructionHandle.Flag.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
@@ -47,7 +47,7 @@ public class SubroutineInliner {
 
     private final TypeInferencingMethodVerifier verifier;
     private final boolean verbose;
-    private final AppendableIndexedSequence<InstructionHandle> instructionHandles;
+    private final List<InstructionHandle> instructionHandles;
 
     /**
      * Map from each original instruction position to the handles representing the copies of the instruction in the
@@ -58,7 +58,7 @@ public class SubroutineInliner {
     public SubroutineInliner(TypeInferencingMethodVerifier verifier, boolean verbose) {
         this.verifier = verifier;
         this.verbose = verbose;
-        this.instructionHandles = new ArrayListSequence<InstructionHandle>();
+        this.instructionHandles = new ArrayList<InstructionHandle>();
         this.instructionMap = new InstructionHandle[verifier.codeAttribute().code().length];
     }
 
@@ -101,7 +101,7 @@ public class SubroutineInliner {
                     if (subroutineCall.matches(typeState.subroutineFrame())) {
                         instructionHandle = new InstructionHandle(instruction, subroutineCall, instructionMap[position]);
                         instructionMap[position] = instructionHandle;
-                        instructionHandles.append(instructionHandle);
+                        instructionHandles.add(instructionHandle);
                         ++count;
 
                         if (count == 1 && depth > 0) {
@@ -161,7 +161,7 @@ public class SubroutineInliner {
             }
         }
 
-        final int nextHandleIndex = instructionHandles.length();
+        final int nextHandleIndex = instructionHandles.size();
         if (depth > 0) {
             subroutineCall.setNextInstuctionHandleIndex(nextHandleIndex);
             if (retHandle != null) {
@@ -311,7 +311,7 @@ public class SubroutineInliner {
             dataStream.close();
             return newCodeStream.toByteArray();
         } catch (IOException ioe) {
-            throw ProgramError.unexpected(ioe);
+            throw verifier.verifyError("IO error while fixing up code: " + ioe);
         }
     }
 
@@ -329,7 +329,7 @@ public class SubroutineInliner {
                 return offset;
             }
         }
-        throw ProgramError.unexpected("cannot find updated target position");
+        throw verifier.verifyError("Cannot find updated target position");
     }
 
     private Sequence<ExceptionHandlerEntry> fixupExceptionHandlers(byte[] newCode) {
