@@ -535,6 +535,34 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitInvoke(Invoke x) {
+        RiMethod target = x.target();
+        if (useXir(!target.isLoaded())) {
+            XirSnippet snippet = null;
+            XirArgument receiver;
+            switch (x.opcode()) {
+                case Bytecodes.INVOKESTATIC:
+                    snippet = xir.genInvokeStatic(target);
+                    break;
+                case Bytecodes.INVOKESPECIAL:
+                    receiver = toXirArgument(x.receiver());
+                    snippet = xir.genInvokeSpecial(receiver, target);
+                    break;
+                case Bytecodes.INVOKEVIRTUAL:
+                    receiver = toXirArgument(x.receiver());
+                    snippet = xir.genInvokeVirtual(receiver, target);
+                    break;
+                case Bytecodes.INVOKEINTERFACE:
+                    receiver = toXirArgument(x.receiver());
+                    snippet = xir.genInvokeInterface(receiver, target);
+                    break;
+            }
+            if (snippet != null) {
+                // TODO: visit and load the arguments to the call
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
 
         List<LIROperand> argList = cc.arguments();
@@ -557,33 +585,30 @@ public abstract class LIRGenerator extends ValueVisitor {
             receiver = args.get(0).result();
         }
 
-
         // emit invoke code
-        boolean optimized = x.target().isLoaded() && x.target().isFinalMethod();
+        boolean optimized = target.isLoaded() && target.isFinalMethod();
         assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
 
-                lir.callStatic(x.target(), resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
+                lir.callStatic(target, resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
                 break;
             case Bytecodes.INVOKESPECIAL:
             case Bytecodes.INVOKEVIRTUAL:
             case Bytecodes.INVOKEINTERFACE:
-                // for final target we still produce an inline cache, in order
-                // to be able to call mixed mode
                 if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                     if (x.needsNullCheck()) {
                         assert x.hasReceiver();
                         lir.nullCheck(receiver, info.copy());
                     }
-                    lir.callOptVirtual(x.target(), receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
+                    lir.callOptVirtual(target, receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                 } else {
 
                     if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
-                        lir.callInterface(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                        lir.callInterface(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     } else {
-                        lir.callVirtual(x.target(), receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                        lir.callVirtual(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                     }
                 }
                 break;
