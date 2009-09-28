@@ -165,7 +165,7 @@ public class LinearScan {
     // Returns -1 for hi word if opr is a single word operand.
     //
     // Note: the inverse operation (calculating an operand for register numbers)
-// is done in calcOperandForInterval()
+    // is done in calcOperandForInterval()
 
     int regNum(LIROperand opr) {
         assert opr.isRegister() : "should not call this otherwise";
@@ -1774,7 +1774,6 @@ public class LinearScan {
         Interval result = interval.splitChildAtOpId(opId, mode, this);
 
         if (result != null) {
-
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println("Split child at pos " + opId + " of interval " + interval.toString() + " is " + result.toString());
             }
@@ -2893,8 +2892,7 @@ public class LinearScan {
         if (C1XOptions.OptimizeControlFlow) {
             ControlFlowOptimizer.optimize(ir());
         }
-        // check that cfg is still correct after optimizations
-        ir().verifyAndPrint("After LIR optimization");
+
         printLir(1, "Before Code Generation", false);
     }
 
