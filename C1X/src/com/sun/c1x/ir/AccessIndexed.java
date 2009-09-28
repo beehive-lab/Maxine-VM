@@ -70,7 +70,7 @@ public abstract class AccessIndexed extends AccessArray {
      * Gets the element type of the array.
      * @return the element type
      */
-    public CiKind elementType() {
+    public CiKind elementKind() {
         return elementType;
     }
 
