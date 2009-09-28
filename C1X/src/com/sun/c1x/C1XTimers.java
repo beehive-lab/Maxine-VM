@@ -3,8 +3,10 @@ package com.sun.c1x;
 import com.sun.c1x.debug.*;
 
 /**
- * @author Christian Wimmer
+ * This class contains timers that record the amount of time spent in various
+ * parts of the compiler.
  *
+ * @author Christian Wimmer
  */
 public enum C1XTimers {
     HIR_CREATE("Create HIR"),
@@ -30,6 +32,12 @@ public enum C1XTimers {
 
     public void stop() {
         total += System.nanoTime() - start;
+    }
+
+    public static void reset() {
+        for (C1XTimers t : values()) {
+            t.total = 0;
+        }
     }
 
     public static void print() {

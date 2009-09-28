@@ -91,8 +91,6 @@ public class C1XTest {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
 
-
-
     static {
         C1XCompilerScheme.addOptions(options);
     }
@@ -197,6 +195,7 @@ public class C1XTest {
     }
 
     private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
+        C1XTimers.reset();
         long start = System.nanoTime();
         totalBytes = 0;
         totalInlinedBytes = 0;

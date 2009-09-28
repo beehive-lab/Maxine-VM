@@ -189,9 +189,9 @@ public class C1XRuntimeCalls {
         return createArray(arrayClassActor, length);
     }
 
+    @UNSAFE
     @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
     public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
-
         if (receiver == null) {
             return 0;
         }
@@ -203,9 +203,9 @@ public class C1XRuntimeCalls {
     }
 
 
+    @UNSAFE
     @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveInterfaceIndex)
     public static int resolveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
-
         if (receiver == null) {
             return 0;
         }
@@ -219,6 +219,7 @@ public class C1XRuntimeCalls {
         return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + Word.size() * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
     }
 
+    @UNSAFE
     @INLINE
     private static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
         if (MaxineVM.isPrototyping()) {
