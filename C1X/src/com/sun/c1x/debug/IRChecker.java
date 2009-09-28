@@ -428,7 +428,7 @@ public class IRChecker extends ValueVisitor {
     public void visitLoadIndexed(LoadIndexed i) {
         assertBasicType(i.array(), CiKind.Object);
         assertBasicType(i.index(), CiKind.Int);
-        assertBasicType(i, i.elementType().stackType());
+        assertBasicType(i, i.elementKind().stackType());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -441,8 +441,8 @@ public class IRChecker extends ValueVisitor {
     public void visitStoreIndexed(StoreIndexed i) {
         assertBasicType(i.array(), CiKind.Object);
         assertBasicType(i.index(), CiKind.Int);
-        assertBasicType(i.value(), i.elementType().stackType());
-        assertBasicType(i, i.elementType().stackType());
+        assertBasicType(i.value(), i.elementKind().stackType());
+        assertBasicType(i, i.elementKind().stackType());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -839,7 +839,7 @@ public class IRChecker extends ValueVisitor {
     public void visitNewTypeArray(NewTypeArray i) {
         assertBasicType(i, CiKind.Object);
         assertBasicType(i.length(), CiKind.Int);
-        assertPrimitive(i.elementType());
+        assertPrimitive(i.elementKind());
     }
 
     /**

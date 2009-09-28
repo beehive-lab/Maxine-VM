@@ -78,7 +78,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             c1xRuntime = MaxRiRuntime.globalRuntime;
             CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
             xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
         }
     }
 

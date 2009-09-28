@@ -152,7 +152,7 @@ public class C1XTest {
         final XirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target) : new C0XCompiler(runtime, target);
+        final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target, xirGenerator) : new C0XCompiler(runtime, target);
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {

@@ -51,14 +51,20 @@ public class C1XCompiler extends CiCompiler {
     public final RiRuntime runtime;
 
     /**
+     * The XIR generator that lowers Java operations to machine operations.
+     */
+    public final XirGenerator xir;
+
+    /**
      * The backend that this compiler has been configured for.
      */
     public final Backend backend;
 
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target) {
+    public C1XCompiler(RiRuntime runtime, CiTarget target, XirGenerator xirGen) {
         this.runtime = runtime;
         this.target = target;
+        this.xir = xirGen;
 
         // TODO: Remove this fixed wiring to X86
         assert target.arch instanceof AMD64;
