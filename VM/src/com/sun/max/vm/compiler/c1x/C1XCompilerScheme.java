@@ -160,7 +160,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public final TargetMethod compile(ClassMethodActor classMethodActor) {
-        // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {

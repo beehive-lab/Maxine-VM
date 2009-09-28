@@ -294,10 +294,18 @@ public class C1XCompilation {
 
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.LIR_CREATE.start();
+            }
+
             frameMap = this.compiler.backend.newFrameMap(method, hir.topScope.numberOfLocks());
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.doBlock(begin);
+            }
+
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.LIR_CREATE.stop();
             }
 
             new LinearScan(this, hir, lirGenerator, frameMap()).allocate();
@@ -323,7 +331,16 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            return assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+
+            if (C1XOptions.PrintCFGToFile) {
+                cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
+            }
+
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.CODE_CREATE.stop();
+            }
+            return targetMethod;
         }
 
         return null;
