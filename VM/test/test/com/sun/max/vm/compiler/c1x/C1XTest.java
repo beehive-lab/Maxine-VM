@@ -207,6 +207,10 @@ public class C1XTest {
         }
         lastRunNs = System.nanoTime() - start;
         reportAverage();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.print();
+        }
     }
 
     private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
@@ -443,6 +447,10 @@ public class C1XTest {
     }
 
     private static void reportTimings() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.print();
+        }
+
         if (timingOption.getValue() > 0 && !averageOption.getValue()) {
             long longerThan = longerThanOption.getValue();
             long slowerThan = slowerThanOption.getValue();
