@@ -20,17 +20,16 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.C1XOptions;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.*;
-import com.sun.max.lang.Function;
 
 /**
  * The {@code MaxRiType} class represents a compiler interface type,
