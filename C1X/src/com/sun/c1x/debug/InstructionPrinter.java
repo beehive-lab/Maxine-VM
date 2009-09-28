@@ -560,7 +560,7 @@ public class InstructionPrinter extends ValueVisitor {
           }
           out.print(dimensions[i]);
         }
-        out.print("] ").print(newMultiArray.elementType.name());
+        out.print("] ").print(newMultiArray.elementKind.name());
     }
 
     @Override
@@ -570,7 +570,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitNewTypeArray(NewTypeArray newTypeArray) {
-        out.print("new ").print(newTypeArray.elementType().name()).print(" array [").print(newTypeArray.length()).print(']');
+        out.print("new ").print(newTypeArray.elementKind().name()).print(" array [").print(newTypeArray.length()).print(']');
     }
 
     @Override

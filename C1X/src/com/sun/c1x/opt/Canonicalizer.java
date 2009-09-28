@@ -445,9 +445,9 @@ public class Canonicalizer extends ValueVisitor {
             // writing the value to an array (which is packed)
             Value v = i.value();
             if (v instanceof Convert) {
-                Value nv = eliminateNarrowing(i.elementType(), (Convert) v);
+                Value nv = eliminateNarrowing(i.elementKind(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementType(), nv, i.stateBefore()));
+                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
                 }
             }
         }
@@ -574,7 +574,7 @@ public class Canonicalizer extends ValueVisitor {
             type = ((LoadField) v).field().kind();
         } else if (v instanceof LoadIndexed) {
             // remove redundant conversions from array loads of the correct type
-            type = ((LoadIndexed) v).elementType();
+            type = ((LoadIndexed) v).elementKind();
         } else if (v instanceof Convert) {
             // remove chained redundant conversions
             Convert c = (Convert) v;

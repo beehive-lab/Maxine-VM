@@ -86,7 +86,7 @@ public abstract class XirGenerator {
         return null;
     }
 
-    public XirSnippet genNewArray(XirArgument length, RiType elementType) {
+    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType arrayType) {
         return null;
     }
 

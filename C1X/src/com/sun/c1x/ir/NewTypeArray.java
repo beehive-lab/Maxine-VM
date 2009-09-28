@@ -37,7 +37,7 @@ public class NewTypeArray extends NewArray {
         this.elementType = elementType;
     }
 
-    public CiKind elementType() {
+    public CiKind elementKind() {
         return elementType;
     }
 

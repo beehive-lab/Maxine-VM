@@ -242,6 +242,120 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitCheckCast(CheckCast x) {
+        if (useXir()) {
+            // TODO: XIR
+        }
+        genCheckCast(x);
+    }
+
+    @Override
+    public void visitInstanceOf(InstanceOf x) {
+        if (useXir(!x.targetClass().isLoaded())) {
+            XirArgument obj = toXirArgument(x.object());
+            XirSnippet snippet = xir.genCheckCast(obj, x.targetClass());
+            if (snippet != null) {
+                emitXir(snippet, maybeStateFor(x));
+                return;
+            }
+        }
+        genInstanceOf(x);
+    }
+
+    @Override
+    public void visitMonitorEnter(MonitorEnter x) {
+        if (useXir()) {
+            XirArgument obj = toXirArgument(x.object());
+            XirSnippet snippet = xir.genMonitorEnter(obj);
+            if (snippet != null) {
+                emitXir(snippet, maybeStateFor(x));
+                return;
+            }
+        }
+        genMonitorEnter(x);
+    }
+
+    @Override
+    public void visitMonitorExit(MonitorExit x) {
+        if (useXir()) {
+            XirArgument obj = toXirArgument(x.object());
+            XirSnippet snippet = xir.genMonitorExit(obj);
+            if (snippet != null) {
+                emitXir(snippet, maybeStateFor(x));
+                return;
+            }
+        }
+        genMonitorExit(x);
+    }
+
+    @Override
+    public void visitStoreIndexed(StoreIndexed x) {
+        if (useXir()) {
+            XirArgument array = toXirArgument(x.array());
+            XirArgument length = x.length() == null ? null : toXirArgument(x.length());
+            XirArgument index = toXirArgument(x.index());
+            XirArgument value = toXirArgument(x.value());
+            XirSnippet snippet = xir.genArrayStore(array, index, length, value, x.elementKind(), null);
+            if (snippet != null) {
+                emitXir(snippet, maybeStateFor(x));
+                return;
+            }
+        }
+        genStoreIndexed(x);
+    }
+
+    @Override
+    public void visitNewInstance(NewInstance x) {
+        if (useXir(!x.instanceClass().isLoaded())) {
+            XirSnippet snippet = xir.genNewInstance(x.instanceClass());
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+        genNewInstance(x);
+    }
+
+    @Override
+    public void visitNewTypeArray(NewTypeArray x) {
+        if (useXir()) {
+            XirArgument length = toXirArgument(x.length());
+            XirSnippet snippet = xir.genNewArray(length, x.elementKind(), null);
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+        genNewTypeArray(x);
+    }
+
+    @Override
+    public void visitNewObjectArray(NewObjectArray x) {
+        if (useXir()) {
+            XirArgument length = toXirArgument(x.length());
+            XirSnippet snippet = xir.genNewArray(length, CiKind.Object, x.declaredType());
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+        genNewObjectArray(x);
+    }
+
+    @Override
+    public void visitNewMultiArray(NewMultiArray x) {
+        if (useXir()) {
+            XirArgument[] dims = new XirArgument[x.dimensions().length];
+            XirSnippet snippet = xir.genNewMultiArray(dims, x.elementKind);
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
+        }
+        genNewMultiArray(x);
+    }
+
+    @Override
     public void visitConstant(Constant x) {
         if (canInlineAsConstant(x)) {
             setResult(x, loadConstant(x));
@@ -390,7 +504,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_Math$tan:   // fall through
             case java_lang_Math$sin:   // fall through
             case java_lang_Math$cos:
-                visitMathIntrinsic(x);
+                genMathIntrinsic(x);
                 break;
             case java_lang_System$arraycopy:
                 throw Util.unimplemented();
@@ -399,18 +513,18 @@ public abstract class LIRGenerator extends ValueVisitor {
                 throw Util.unimplemented();
 
             case sun_misc_Unsafe$compareAndSwapObject:
-                visitCompareAndSwap(x, CiKind.Object);
+                genCompareAndSwap(x, CiKind.Object);
                 break;
             case sun_misc_Unsafe$compareAndSwapInt:
-                visitCompareAndSwap(x, CiKind.Int);
+                genCompareAndSwap(x, CiKind.Int);
                 break;
             case sun_misc_Unsafe$compareAndSwapLong:
-                visitCompareAndSwap(x, CiKind.Long);
+                genCompareAndSwap(x, CiKind.Long);
                 break;
 
             // sun.misc.AtomicLongCSImpl.attemptUpdate
             case sun_misc_AtomicLongCSImpl$attemptUpdate:
-                visitAttemptUpdate(x);
+                genAttemptUpdate(x);
                 break;
 
             default:
@@ -529,11 +643,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             // instruction to patch.
             //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
-            address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
+            address = genAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
         }
 
         if (isVolatile) {
-            volatileFieldLoad(address, reg, info);
+            genVolatileFieldLoad(address, reg, info);
         } else {
             lir.load(address, reg, info);
         }
@@ -550,7 +664,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument array = toXirArgument(x.array());
             XirArgument index = toXirArgument(x.index());
             XirArgument length = toXirArgument(x.length());
-            XirSnippet snippet = xir.genArrayLoad(array, index, length, x.elementType(), null);
+            XirSnippet snippet = xir.genArrayLoad(array, index, length, x.elementKind(), null);
             if (snippet != null) {
                 emitXir(snippet, stateFor(x));
                 return;
@@ -584,12 +698,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = emitArrayAddress((LIRLocation) array.result(), index.result(), x.elementType(), false);
+        LIRAddress arrayAddr = genArrayAddress((LIRLocation) array.result(), index.result(), x.elementKind(), false);
 
         if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
             if (useLength) {
-                // TODO: use a (modified) version of arrayRangeCheck that does not require a
-                // constant length to be loaded to a register
+                // TODO: use a (modified) version of arrayRangeCheck that does not require a constant length to be loaded to a register
                 lir.cmp(LIRCondition.BelowEqual, length.result(), index.result());
                 lir.branch(LIRCondition.BelowEqual, CiKind.Int, new RangeCheckStub(rangeCheckInfo, index.result()));
             } else {
@@ -599,7 +712,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        lir.move(arrayAddr, rlockResult(x, x.elementType()), nullCheckInfo);
+        lir.move(arrayAddr, rlockResult(x, x.elementKind()), nullCheckInfo);
     }
 
     @Override
@@ -796,7 +909,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // instruction to patch.
             //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
-            address = generateAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
+            address = genAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
         }
 
         if (isVolatile && compilation.runtime.isMP()) {
@@ -809,7 +922,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (isVolatile) {
-            volatileFieldStore(value.result(), address, info);
+            genVolatileFieldStore(value.result(), address, info);
         } else {
             lir.store(value.result(), address, info);
         }
@@ -919,7 +1032,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
         }
-        getObjectUnsafe(reg, (LIRLocation) src.result(), (LIRLocation) off.result(), type, x.isVolatile());
+        genGetObjectUnsafe(reg, (LIRLocation) src.result(), (LIRLocation) off.result(), type, x.isVolatile());
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membar();
         }
@@ -1022,7 +1135,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarRelease();
         }
-        putObjectUnsafe((LIRLocation) src.result(), (LIRLocation) off.result(), data.result(), type, x.isVolatile());
+        genPutObjectUnsafe((LIRLocation) src.result(), (LIRLocation) off.result(), data.result(), type, x.isVolatile());
     }
 
     @Override
@@ -1103,7 +1216,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         if (C1XOptions.LIRTraceExecution && !block.isExceptionEntry()) {
             assert block.lir().instructionsList().size() == 1 : "should come right after brDst";
-            traceBlockEntry(block);
+            genTraceBlockEntry(block);
         }
     }
 
@@ -1289,7 +1402,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         setNoResult(x);
 
-        LIRAddress addr = generateAddress((LIRLocation) src.result(), off.result(), 0, 0, CiKind.Byte);
+        LIRAddress addr = genAddress((LIRLocation) src.result(), off.result(), 0, 0, CiKind.Byte);
         lir.prefetch(addr, isStore);
 
     }
@@ -1506,10 +1619,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
             LIRConstant indexConstant = (LIRConstant) index;
-            cmpMemInt(LIRCondition.BelowEqual, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
+            genCmpMemInt(LIRCondition.BelowEqual, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
             lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub); // forward branch
         } else {
-            cmpRegMem(LIRCondition.AboveEqual, (LIRLocation) index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
+            genCmpRegMem(LIRCondition.AboveEqual, (LIRLocation) index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
             lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub); // forward branch
         }
     }
@@ -1944,6 +2057,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
+    protected CodeEmitInfo maybeStateFor(Instruction x) {
+        return stateFor(x, x.stateBefore());
+    }
+
     protected CodeEmitInfo stateFor(Instruction x) {
         return stateFor(x, x.stateBefore());
     }
@@ -1988,39 +2105,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected abstract boolean canInlineAsConstant(Value i);
-
-    protected abstract boolean canInlineAsConstant(LIRConstant c);
-
-    protected abstract boolean canStoreAsConstant(Value i, CiKind type);
-
-    protected abstract void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, CodeEmitInfo info);
-
-    protected abstract void cmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, CodeEmitInfo info);
-
-    protected abstract LIRAddress emitArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
-
-    protected abstract LIROperand exceptionPcOpr();
-
-    /**
-     * Returns a LIRAddress for an array location. This method may also emit some code
-     * as part of the address calculation.  If
-     *
-     * @param base the base address
-     * @param index the array index
-     * @param shift the shift amount
-     * @param disp the displacement from the base of the array
-     * @param type the basic type of the elements of the array
-     * @return the LIRAddress representing the array element's location
-     */
-    protected abstract LIRAddress generateAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type);
-
-    protected abstract void getObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
-
-    protected abstract LIROperand osrBufferPointer();
-
-    protected abstract void putObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
-
     protected LIRLocation resultRegisterFor(CiKind type) {
         CiRegister returnRegister = compilation.runtime.returnRegister(type);
         assert compilation.target.arch.is64bit();
@@ -2029,24 +2113,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
         return LIROperandFactory.singleLocation(type, returnRegister);
     }
-
-    protected abstract LIRLocation rlockByte(CiKind type);
-
-    protected abstract LIROperand safepointPollRegister();
-
-    protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
-
-    protected abstract void traceBlockEntry(BlockBegin block);
-
-    protected abstract void visitAttemptUpdate(Intrinsic x);
-
-    protected abstract void visitCompareAndSwap(Intrinsic x, CiKind type);
-
-    protected abstract void visitMathIntrinsic(Intrinsic x);
-
-    protected abstract void volatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
-
-    protected abstract void volatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
 
     protected static LIRCondition lirCond(Condition cond) {
         LIRCondition l = null;
@@ -2096,4 +2162,63 @@ public abstract class LIRGenerator extends ValueVisitor {
     private boolean useXir() {
         return C1XOptions.GenerateLIRXIR;
     }
+
+    protected abstract boolean canInlineAsConstant(Value i);
+
+    protected abstract boolean canInlineAsConstant(LIRConstant c);
+
+    protected abstract boolean canStoreAsConstant(Value i, CiKind type);
+
+    protected abstract LIROperand exceptionPcOpr();
+
+    protected abstract LIROperand osrBufferPointer();
+
+    protected abstract LIRLocation rlockByte(CiKind type);
+
+    protected abstract LIROperand safepointPollRegister();
+
+    protected abstract boolean strengthReduceMultiply(LIROperand left, int constant, LIROperand result, LIROperand tmp);
+
+    protected abstract LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type);
+
+    protected abstract void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, CodeEmitInfo info);
+
+    protected abstract void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, CodeEmitInfo info);
+
+    protected abstract LIRAddress genArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
+
+    protected abstract void genGetObjectUnsafe(LIRLocation dest, LIRLocation src, LIRLocation offset, CiKind type, boolean isVolatile);
+
+    protected abstract void genPutObjectUnsafe(LIRLocation src, LIRLocation offset, LIROperand data, CiKind type, boolean isVolatile);
+
+    protected abstract void genTraceBlockEntry(BlockBegin block);
+
+    protected abstract void genAttemptUpdate(Intrinsic x);
+
+    protected abstract void genCompareAndSwap(Intrinsic x, CiKind type);
+
+    protected abstract void genMathIntrinsic(Intrinsic x);
+
+    protected abstract void genVolatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
+
+    protected abstract void genVolatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
+
+    protected abstract void genMonitorEnter(MonitorEnter x);
+
+    protected abstract void genMonitorExit(MonitorExit x);
+
+    protected abstract void genStoreIndexed(StoreIndexed x);
+
+    protected abstract void genCheckCast(CheckCast x);
+
+    protected abstract void genInstanceOf(InstanceOf x);
+
+    protected abstract void genNewInstance(NewInstance x);
+
+    protected abstract void genNewTypeArray(NewTypeArray x);
+
+    protected abstract void genNewObjectArray(NewObjectArray x);
+
+    protected abstract void genNewMultiArray(NewMultiArray x);
+
 }
