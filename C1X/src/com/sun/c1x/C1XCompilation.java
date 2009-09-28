@@ -43,6 +43,7 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
+    public final C1XCompiler compiler;
     public final CiTarget target;
     public final RiRuntime runtime;
     public final RiMethod method;
@@ -60,7 +61,6 @@ public class C1XCompilation {
     private CFGPrinter cfgPrinter;
 
     private List<ExceptionInfo> exceptionInfoList;
-    public final C1XCompiler compiler;
 
     /**
      * Creates a new compilation for the specified method and runtime.

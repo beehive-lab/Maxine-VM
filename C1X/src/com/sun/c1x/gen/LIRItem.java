@@ -68,9 +68,9 @@ public class LIRItem {
             if (r.kind != reg.kind) {
                 // moves between different types need an intervening spill slot
                 LIROperand tmp = gen.forceToSpill(r, reg.kind);
-                gen.lir().move(tmp, reg);
+                gen.lir.move(tmp, reg);
             } else {
-                gen.lir().move(r, reg);
+                gen.lir.move(r, reg);
             }
             result = reg;
         }
@@ -94,7 +94,7 @@ public class LIRItem {
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
                 newResult = gen.newRegister(value().type());
-                gen.lir().move(result, newResult);
+                gen.lir.move(result, newResult);
             }
             return newResult;
         } else {
@@ -127,7 +127,7 @@ public class LIRItem {
                 // make sure that it is a byte register
                 assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
-                gen.lir().move(res, reg);
+                gen.lir.move(res, reg);
                 result = reg;
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
@@ -178,7 +178,7 @@ public class LIRItem {
         }
         if (!result().isRegister()) {
             LIROperand reg = gen.newRegister(value().type());
-            gen.lir().move(result(), reg);
+            gen.lir.move(result(), reg);
             if (result().isConstant()) {
                 result = reg;
             } else {
