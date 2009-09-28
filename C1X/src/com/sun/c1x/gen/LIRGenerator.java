@@ -67,6 +67,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final C1XCompilation compilation;
+    protected final XirGenerator xir;
+
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
     private Value currentInstruction;
@@ -78,7 +80,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private List<LIRConstant> constants;
     private List<LIROperand> regForConstants;
-    protected XirGenerator xir;
     protected LIRList lir;
     protected final IR ir;
 
@@ -87,19 +88,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.virtualRegisterNumber = CiRegister.FirstVirtualRegisterNumber;
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         this.ir = compilation.hir();
+        this.xir = C1XOptions.GenerateLIRXIR ? compilation.compiler.xir : null;
 
         instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<LIRConstant>();
         regForConstants = new ArrayList<LIROperand>();
         init();
-    }
-
-    protected LIRList lir() {
-        return lir;
-    }
-
-    public boolean isRoot(Instruction x) {
-        return x.isLive();
     }
 
     public void doBlock(BlockBegin block) {
@@ -145,6 +139,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitArrayLength(ArrayLength x) {
         if (useXir()) {
+            // XIR support for ARRAYLENGTH
             XirArgument array = toXirArgument(x.array());
             XirSnippet snippet = xir.genArrayLength(array);
             if (snippet != null) {
@@ -169,12 +164,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.load(new LIRAddress((LIRLocation) array.result(), compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int), reg, info);
 
     }
-
-    // Block local constant handling. This code is useful for keeping
-    // unpinned constants and constants which aren't exposed in the IR in
-    // registers. Unpinned Constant instructions have their operands
-    // cleared when the block is finished so that other blocks can't end
-    // up referring to their registers.
 
     @Override
     public void visitBase(Base x) {
@@ -244,7 +233,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitCheckCast(CheckCast x) {
         if (useXir()) {
-            // TODO: XIR
+            // XIR support for CHECKCAST
+            XirArgument obj = toXirArgument(x.object());
+            XirSnippet snippet = xir.genCheckCast(obj, x.targetClass());
+            if (snippet != null) {
+                emitXir(snippet, stateFor(x));
+                return;
+            }
         }
         genCheckCast(x);
     }
@@ -252,8 +247,9 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInstanceOf(InstanceOf x) {
         if (useXir(!x.targetClass().isLoaded())) {
+            // XIR support for INSTANCEOF
             XirArgument obj = toXirArgument(x.object());
-            XirSnippet snippet = xir.genCheckCast(obj, x.targetClass());
+            XirSnippet snippet = xir.genInstanceOf(obj, x.targetClass());
             if (snippet != null) {
                 emitXir(snippet, maybeStateFor(x));
                 return;
@@ -265,6 +261,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitMonitorEnter(MonitorEnter x) {
         if (useXir()) {
+            // XIR support for MONITORENTER
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genMonitorEnter(obj);
             if (snippet != null) {
@@ -278,6 +275,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitMonitorExit(MonitorExit x) {
         if (useXir()) {
+            // XIR support for MONITOREXIT
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genMonitorExit(obj);
             if (snippet != null) {
@@ -291,6 +289,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitStoreIndexed(StoreIndexed x) {
         if (useXir()) {
+            // XIR support for xASTORE
             XirArgument array = toXirArgument(x.array());
             XirArgument length = x.length() == null ? null : toXirArgument(x.length());
             XirArgument index = toXirArgument(x.index());
@@ -307,6 +306,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitNewInstance(NewInstance x) {
         if (useXir(!x.instanceClass().isLoaded())) {
+            // XIR support for NEW
             XirSnippet snippet = xir.genNewInstance(x.instanceClass());
             if (snippet != null) {
                 emitXir(snippet, stateFor(x));
@@ -319,6 +319,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitNewTypeArray(NewTypeArray x) {
         if (useXir()) {
+            // XIR support for NEWARRAY
             XirArgument length = toXirArgument(x.length());
             XirSnippet snippet = xir.genNewArray(length, x.elementKind(), null);
             if (snippet != null) {
@@ -332,6 +333,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitNewObjectArray(NewObjectArray x) {
         if (useXir()) {
+            // XIR support for ANEWARRAY
             XirArgument length = toXirArgument(x.length());
             XirSnippet snippet = xir.genNewArray(length, CiKind.Object, x.declaredType());
             if (snippet != null) {
@@ -345,6 +347,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitNewMultiArray(NewMultiArray x) {
         if (useXir()) {
+            // XIR support for NEWMULTIARRAY
             XirArgument[] dims = new XirArgument[x.dimensions().length];
             XirSnippet snippet = xir.genNewMultiArray(dims, x.elementKind);
             if (snippet != null) {
@@ -537,6 +540,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitInvoke(Invoke x) {
         RiMethod target = x.target();
         if (useXir(!target.isLoaded())) {
+            // XIR support for INVOKE bytecodes
             XirSnippet snippet = null;
             XirArgument receiver;
             switch (x.opcode()) {
@@ -591,7 +595,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         switch (x.opcode()) {
             case Bytecodes.INVOKESTATIC:
-
                 lir.callStatic(target, resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
                 break;
             case Bytecodes.INVOKESPECIAL:
@@ -2087,6 +2090,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CodeEmitInfo stateFor(Instruction x) {
+        assert x.stateBefore() != null : "must have state before instruction for " + x;
         return stateFor(x, x.stateBefore());
     }
 
@@ -2181,11 +2185,11 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private boolean useXir(boolean unresolved) {
-        return C1XOptions.GenerateLIRXIR && (C1XOptions.GenerateUnresolvedLIRXIR || !unresolved);
+        return xir != null && (C1XOptions.GenerateUnresolvedLIRXIR || !unresolved);
     }
 
     private boolean useXir() {
-        return C1XOptions.GenerateLIRXIR;
+        return xir != null;
     }
 
     protected abstract boolean canInlineAsConstant(Value i);

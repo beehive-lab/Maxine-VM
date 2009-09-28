@@ -101,6 +101,38 @@ public class LoopPeeler extends ValueVisitor {
     private Loop clonedLoop;
     IR ir;
 
+    public static void peelLoops(IR ir) {
+        LoopFinder loopFinder = new LoopFinder(ir.numberOfBlocks(), ir.startBlock);
+        List<Loop> loopList = loopFinder.getLoopList();
+        ArrayList<Loop> removeLoopList = new ArrayList<Loop>();
+
+        for (int i = 0; i < loopList.size(); i++) {
+            Loop loop = loopList.get(i);
+            if (loop.header().loopDepth() > 0) {
+                for (Loop loopJ : loopList) {
+                    if (loopJ != loop && loopJ.contains(loop.header())) {
+                        removeLoopList.add(loopJ);
+                    }
+                }
+            }
+        }
+
+        loopList.removeAll(removeLoopList);
+        for (Loop loop : loopFinder.getLoopList()) {
+            new LoopPeeler(ir, loop);
+        }
+
+        // cleanup flags to avoid assertion errors when computing linear scan ordering
+        // XXX: should we remove the assertions from the Linear scan ordering??
+        ir.startBlock.iterateAnyOrder(new BlockClosure() {
+            public void apply(BlockBegin block) {
+                block.setLoopIndex(-1);
+                block.setLoopDepth(0);
+            }
+
+        }, false);
+    }
+
     private class InstructionCloner implements BlockClosure {
         public void apply(BlockBegin block) {
             Instruction instr = block;
