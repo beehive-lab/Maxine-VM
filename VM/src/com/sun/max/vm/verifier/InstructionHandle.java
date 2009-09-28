@@ -65,7 +65,12 @@ final class InstructionHandle {
     }
 
     public final Instruction instruction;
+
+    /**
+     * The subroutine frame in which this instruction was located.
+     */
     public final SubroutineCall subroutineCall;
+
     public int position;
 
     /**

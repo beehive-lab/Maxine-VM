@@ -530,6 +530,11 @@ public final class ClassfileReader {
             throw classFormatError("Invalid exception handler code range");
         }
 
+        // Check the index and type of the catch type
+        if (catchClassIndex != 0) {
+            constantPool.classAt(catchClassIndex, "catch type in exception table");
+        }
+
         return new ExceptionHandlerEntry(startAddress, endAddress, handlerAddress, catchClassIndex);
     }
 

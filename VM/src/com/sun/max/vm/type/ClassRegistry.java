@@ -116,6 +116,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     private static TupleClassActor javaLangObjectActor;
     private static TupleClassActor javaLangClassActor;
+    private static TupleClassActor javaLangThrowableActor;
     private static InterfaceActor javaLangCloneableActor;
     private static InterfaceActor javaIoSerializableActor;
 
@@ -132,6 +133,9 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             }
             if (javaLangClassActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLASS)) {
                 javaLangClassActor = (TupleClassActor) classActor;
+            }
+            if (javaLangThrowableActor == null && typeDescriptor.equals(JavaTypeDescriptor.THROWABLE)) {
+                javaLangThrowableActor = (TupleClassActor) classActor;
             }
             if (javaLangCloneableActor == null && typeDescriptor.equals(JavaTypeDescriptor.CLONEABLE)) {
                 javaLangCloneableActor = (InterfaceActor) classActor;
@@ -195,6 +199,11 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static TupleClassActor javaLangClassActor() {
         assert javaLangClassActor != null;
         return javaLangClassActor;
+    }
+
+    public static TupleClassActor javaLangThrowableActor() {
+        assert javaLangThrowableActor != null;
+        return javaLangThrowableActor;
     }
 
     public static InterfaceActor javaLangCloneableActor() {
