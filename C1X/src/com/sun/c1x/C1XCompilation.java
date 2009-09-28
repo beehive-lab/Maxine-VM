@@ -34,7 +34,6 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,

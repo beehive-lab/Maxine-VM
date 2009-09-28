@@ -28,7 +28,6 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.X86Assembler.*;
-import com.sun.c1x.util.*;
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
