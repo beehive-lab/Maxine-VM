@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
 
 /**
  * The <code>LogicOp</code> class definition.

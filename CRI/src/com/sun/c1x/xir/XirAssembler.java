@@ -23,8 +23,8 @@ package com.sun.c1x.xir;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ri.RiSignature;
 
@@ -57,7 +57,7 @@ public class XirAssembler {
     }
 
     public abstract class XirVariable {
-        private boolean written;
+        boolean written;
         public final CiKind kind;
         public final int index;
 
