@@ -190,10 +190,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
-                Log.print("Could not allocate object heap of size ");
+                Log.println("Error occurred during initialization of VM");
+                Log.print("Could not reserve ");
                 Log.print(size.toLong());
-                Log.println();
-                FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
+                Log.println(" bytes of memory for object heap");
+                MaxineVM.native_exit(1);
             }
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
