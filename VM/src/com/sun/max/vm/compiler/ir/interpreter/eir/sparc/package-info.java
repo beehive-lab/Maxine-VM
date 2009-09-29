@@ -21,4 +21,4 @@
 /**
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.interpreter.eir.sparc;
+package com.sun.max.vm.compiler.ir.interpreter.eir.sparc;

@@ -33,10 +33,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
