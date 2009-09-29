@@ -179,8 +179,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     }
 
     @Override
-    public void dump() {
-        super.dump();
+    public void log() {
+        super.log();
         Log.print(" ownerAcquired=");
         Log.print(ownerAcquired);
         Log.print(" proxyMutex=");
