@@ -328,6 +328,10 @@ public class AMD64EirInstructionAdapter extends EirInstructionAdapter implements
         visitBinaryOperation(instruction);
     }
 
+    public void visit(STACK_ALLOCATE instruction) {
+        visitUnaryOperation(instruction);
+    }
+
     public void visit(LFENCE instruction) {
         visitOperation(instruction);
     }

@@ -310,4 +310,5 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         rearrangeBlocks();
         notifyAfterTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
     }
+
 }

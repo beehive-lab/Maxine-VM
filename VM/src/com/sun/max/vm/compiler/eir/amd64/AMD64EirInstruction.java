@@ -34,6 +34,7 @@ import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirTargetEmitter.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -2059,6 +2060,35 @@ public interface AMD64EirInstruction {
             final Label label = new Label();
             emitter.assembler().bindLabel(label);
             emitter.assembler().rip_lea(operandGeneralRegister().as64(), label);
+        }
+
+        @Override
+        public void acceptVisitor(AMD64EirInstructionVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
+    public static class STACK_ALLOCATE extends AMD64EirUnaryOperation {
+        private final int stackAllocationOffset;
+
+        public STACK_ALLOCATE(EirBlock block, EirValue operand, int offset) {
+            super(block, operand, EirOperand.Effect.DEFINITION, G);
+            stackAllocationOffset = offset;
+        }
+
+        @Override
+        public void emit(AMD64EirTargetEmitter emitter) {
+            final AMD64GeneralRegister64 destination = operandGeneralRegister().as64();
+            int offset = emitter.frameSize() - stackAllocationOffset;
+            EirStackSlot stackSlot = new EirStackSlot(Purpose.LOCAL, offset);
+            final StackAddress source = emitter.stackAddress(stackSlot);
+            if (source.isOffsetZero()) {
+                emitter.assembler().lea(destination, source.base());
+            } else if (source.isOffset8Bit()) {
+                emitter.assembler().lea(destination, source.offset8(), source.base());
+            } else {
+                emitter.assembler().lea(destination, source.offset32(), source.base());
+            }
         }
 
         @Override

@@ -675,6 +675,10 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         cpu.write(instruction.destinationOperand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
     }
 
+    public void visit(STACK_ALLOCATE instruction) {
+        FatalError.unimplemented();
+    }
+
     public void visit(LFENCE instruction) {
     }
 

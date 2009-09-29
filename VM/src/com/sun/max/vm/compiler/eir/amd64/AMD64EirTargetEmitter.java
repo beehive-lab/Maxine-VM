@@ -43,7 +43,7 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
             // well as the return address that is pushed to the stack by a call instruction.
             return new StackAddress(slot.offset + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
         }
-        return new StackAddress(slot.offset,  framePointer.indirect());
+        return new StackAddress(slot.offset, framePointer.indirect());
     }
 
     /**
@@ -78,7 +78,7 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         }
 
         public WordWidth offsetWidth() {
-            return isOffset8Bit()  ? WordWidth.BITS_8 : WordWidth.BITS_32;
+            return isOffset8Bit() ? WordWidth.BITS_8 : WordWidth.BITS_32;
         }
 
         public boolean isOffset8Bit() {
