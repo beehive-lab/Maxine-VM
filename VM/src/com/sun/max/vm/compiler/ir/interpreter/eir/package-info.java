@@ -19,15 +19,6 @@
  * Company, Ltd.
  */
 /**
- * Interpreters for intermediate representations.
- * Used for testing.
- * 
- * General rule:
- * 
- * For every IR, there should be an interpreter.
- * 
- * Thus we can test translation at each stage.
- * 
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.interpreter;
+package com.sun.max.vm.compiler.ir.interpreter.eir;

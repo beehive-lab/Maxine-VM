@@ -21,4 +21,4 @@
 /**
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.interpreter.eir;
+package com.sun.max.vm.compiler.ir.interpreter.eir.amd64;

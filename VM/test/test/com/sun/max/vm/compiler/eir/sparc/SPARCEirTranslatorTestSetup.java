@@ -30,8 +30,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
-import com.sun.max.vm.interpreter.eir.*;
-import com.sun.max.vm.interpreter.eir.sparc.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.sparc.*;
 import com.sun.max.vm.prototype.*;
 
 /**
