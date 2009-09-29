@@ -18,49 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.amd64;
+package com.sun.max.vm.compiler.builtin;
 
-import com.sun.max.collect.*;
-import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.ir.*;
 
 /**
- * @author Bernd Mathiske
+ * A mechanism for allocating a block of memory within an activation frame for the lifetime of the frame.
+ *
+ * @author Doug Simon
+ * @author Paul Caprioli
  */
-public abstract class AMD64EirUnaryOperation extends AMD64EirOperation {
+public final class StackAllocate extends SpecialBuiltin {
 
-    private final EirOperand operand;
-
-    protected AMD64EirUnaryOperation(EirBlock block, EirValue operand, EirOperand.Effect effect, PoolSet<EirLocationCategory> locationCategories) {
-        super(block);
-        this.operand = new EirOperand(this, effect, locationCategories);
-        this.operand.setEirValue(operand);
-    }
-
-    public EirOperand operand() {
-        return operand;
-    }
-
-    public EirValue operandValue() {
-        return operand.eirValue();
-    }
-
-    public EirLocation operandLocation() {
-        return operand.location();
-    }
-
-    public AMD64EirRegister.General operandGeneralRegister() {
-        return (AMD64EirRegister.General) operandLocation();
+    private StackAllocate() {
+        super(null);
     }
 
     @Override
-    public void visitOperands(EirOperand.Procedure visitor) {
-        if (operand != null) {
-            visitor.run(operand);
-        }
+    public boolean isFoldable(IrValue[] arguments) {
+        return false;
     }
 
     @Override
-    public String toString() {
-        return getClass().getSimpleName() + "  " + operand;
+    public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+        visitor.visitStackAllocate(this, result, arguments);
     }
+
+    public static final StackAllocate BUILTIN = new StackAllocate();
+
+    /**
+     * Allocates a requested block of memory within the current activation frame.
+     * The allocated memory is reclaimed when the method returns.
+     *
+     * @param size bytes to allocate
+     * @return the address of the allocated block
+     */
+    @BUILTIN(builtinClass = StackAllocate.class)
+    public static native Address stackAllocate(int size);
+
 }

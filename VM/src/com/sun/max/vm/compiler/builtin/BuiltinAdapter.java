@@ -645,6 +645,10 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
+    public void visitStackAllocate(StackAllocate builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
     public void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
