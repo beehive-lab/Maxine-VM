@@ -46,6 +46,7 @@ import com.sun.max.vm.actor.holder.DynamicHub;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.unsafe.Word;
 import com.sun.max.unsafe.UnsafeCast;
+import com.sun.max.unsafe.WordArray;
 import com.sun.max.program.ProgramError;
 import com.sun.max.lang.Arrays;
 import com.sun.max.annotate.INLINE;
@@ -120,6 +121,8 @@ public class MaxXirGenerator extends XirGenerator {
     final XirTemplate[] arrayLoadTemplates;
     final XirTemplate[] arrayStoreTemplates;
 
+    final DynamicHub[] arrayHubs;
+
     final XirPair[] multiNewArrayTemplate;
 
     final XirTemplate safepointTemplate;
@@ -169,6 +172,19 @@ public class MaxXirGenerator extends XirGenerator {
         newArrayTemplates = new XirPair[kinds.length];
         arrayLoadTemplates = new XirTemplate[kinds.length];
         arrayStoreTemplates = new XirTemplate[kinds.length];
+
+        arrayHubs = new DynamicHub[kinds.length];
+
+        arrayHubs[CiKind.Boolean.ordinal()] = ClassActor.fromJava(boolean[].class).dynamicHub();
+        arrayHubs[CiKind.Byte.ordinal()] = ClassActor.fromJava(byte[].class).dynamicHub();
+        arrayHubs[CiKind.Short.ordinal()] = ClassActor.fromJava(short[].class).dynamicHub();
+        arrayHubs[CiKind.Char.ordinal()] = ClassActor.fromJava(char[].class).dynamicHub();
+        arrayHubs[CiKind.Int.ordinal()] = ClassActor.fromJava(int[].class).dynamicHub();
+        arrayHubs[CiKind.Float.ordinal()] = ClassActor.fromJava(float[].class).dynamicHub();
+        arrayHubs[CiKind.Double.ordinal()] = ClassActor.fromJava(double[].class).dynamicHub();
+        arrayHubs[CiKind.Long.ordinal()] = ClassActor.fromJava(long[].class).dynamicHub();
+        arrayHubs[CiKind.Object.ordinal()] = ClassActor.fromJava(Object[].class).dynamicHub();
+        arrayHubs[CiKind.Word.ordinal()] = ClassActor.fromJava(WordArray.class).dynamicHub();
 
         for (CiKind kind : kinds) {
             int index = kind.ordinal();
@@ -329,13 +345,16 @@ public class MaxXirGenerator extends XirGenerator {
     }
 
     @Override
-    public XirSnippet genNewArray(XirArgument length, RiType elementType) {
-        XirPair pair = newArrayTemplates[elementType.basicType().ordinal()];
-        if (elementType.isLoaded()) {
-            Object hub = hubFor(elementType.arrayOf());
+    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType arrayType) {
+        XirPair pair = newArrayTemplates[elementKind.ordinal()];
+        Object hub = arrayHubs[elementKind.ordinal()];
+        if (elementKind == CiKind.Object && arrayType.isLoaded()) {
+            hub = hubFor(arrayType);
+        }
+        if (hub != null) {
             return new XirSnippet(pair.resolved, XirArgument.forObject(hub));
         }
-        XirArgument guard = XirArgument.forObject(guardFor(elementType));
+        XirArgument guard = XirArgument.forObject(guardFor(arrayType));
         return new XirSnippet(pair.unresolved, guard);
     }
 

@@ -74,10 +74,24 @@ public class IR {
      * Builds the graph, optimizes it, and computes the linear scan block order.
      */
     public void build() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.start();
+        }
+
         buildGraph();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.stop();
+            C1XTimers.HIR_OPTIMIZE.start();
+        }
+
         optimize1();
         computeLinearScanOrder();
         optimize2();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_OPTIMIZE.stop();
+        }
     }
 
     private void buildGraph() {
@@ -96,6 +110,10 @@ public class IR {
             new PhiSimplifier(startBlock);
             verifyAndPrint("After phi simplification");
         }
+        if (C1XOptions.DoLoopPeeling) {
+            LoopPeeler.peelLoops(this);
+            verifyAndPrint("After Loop peeling");
+        }
         if (C1XOptions.DoNullCheckElimination) {
             new NullCheckEliminator(this);
             verifyAndPrint("After null check elimination");
@@ -111,38 +129,6 @@ public class IR {
         if (C1XOptions.DoBlockMerging) {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
-        }
-        if (C1XOptions.DoLoopPeeling) {
-            LoopFinder loopFinder = new LoopFinder(numberOfBlocks(), startBlock);
-            List<Loop> loopList = loopFinder.getLoopList();
-            ArrayList <Loop> removeLoopList = new ArrayList<Loop>();
-
-            for (int i = 0; i < loopList.size(); i++) {
-                Loop loop = loopList.get(i);
-                if (loop.header().loopDepth() > 0) {
-                    for (Loop loopJ : loopList) {
-                        if (loopJ != loop && loopJ.contains(loop.header())) {
-                            removeLoopList.add(loopJ);
-                        }
-                    }
-                }
-            }
-
-            loopList.removeAll(removeLoopList);
-            for (Loop loop : loopFinder.getLoopList()) {
-                new LoopPeeler(this, loop);
-            }
-            verifyAndPrint("After Loop peeling");
-
-            // cleanup flags to avoid assertion errors when computing linear scan ordering
-            // XXX: should we remove the assertions from the Linear scan ordering??
-            startBlock.iterateAnyOrder(new BlockClosure() {
-                public void apply(BlockBegin block) {
-                    block.setLoopIndex(-1);
-                    block.setLoopDepth(0);
-                }
-
-            }, false);
         }
     }
 

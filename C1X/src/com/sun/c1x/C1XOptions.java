@@ -67,6 +67,7 @@ public class C1XOptions {
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
+    public static boolean PrintTimers                        = ____;
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;

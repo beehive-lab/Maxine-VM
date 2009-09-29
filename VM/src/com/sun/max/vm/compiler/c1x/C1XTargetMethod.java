@@ -78,6 +78,10 @@ public class C1XTargetMethod extends TargetMethod {
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
+
+        if (!MaxineVM.isPrototyping()) {
+            linkDirectCalls();
+        }
     }
 
     private int neededBytes(int value) {
@@ -391,6 +395,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
+    @UNSAFE
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
 
@@ -460,7 +465,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
-
         if (method != null) {
             final MaxRiMethod maxMethod = (MaxRiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");

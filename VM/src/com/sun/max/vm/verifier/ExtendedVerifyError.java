@@ -70,7 +70,7 @@ public class ExtendedVerifyError extends VerifyError {
     }
 
     public void printCode(PrintStream out) {
-        CodeAttributePrinter.print(out, classMethodActor.codeAttribute());
+        CodeAttributePrinter.print(out, codeAttribute);
     }
 
     @Override

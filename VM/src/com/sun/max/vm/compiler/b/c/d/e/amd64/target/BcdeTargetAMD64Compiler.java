@@ -238,7 +238,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
 
-                assert targetMethod instanceof CPSTargetMethod;
                 final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;

@@ -200,8 +200,8 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void dump() {
-        super.dump();
+    public void log() {
+        super.log();
         Log.print(" mutex=");
         Log.print(Address.fromLong(mutex.logId()));
         Log.print(" waiters={");

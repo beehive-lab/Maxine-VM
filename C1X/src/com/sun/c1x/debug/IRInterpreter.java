@@ -1139,7 +1139,7 @@ public class IRInterpreter {
 
         @Override
         public void visitNewTypeArray(NewTypeArray i) {
-            assertPrimitive(i.elementType());
+            assertPrimitive(i.elementKind());
             assertBasicType(i.length().type(), CiKind.Int);
             int length = environment.lookup(i.length()).asInt();
             if (length < 0) {
@@ -1147,7 +1147,7 @@ public class IRInterpreter {
                 return;
             }
             Object newObjectArray = null;
-            switch (i.elementType()) {
+            switch (i.elementKind()) {
                 case Boolean:
                     newObjectArray = new boolean[length];
                     break;

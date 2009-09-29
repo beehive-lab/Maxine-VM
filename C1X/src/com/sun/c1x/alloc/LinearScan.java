@@ -165,7 +165,7 @@ public class LinearScan {
     // Returns -1 for hi word if opr is a single word operand.
     //
     // Note: the inverse operation (calculating an operand for register numbers)
-// is done in calcOperandForInterval()
+    // is done in calcOperandForInterval()
 
     int regNum(LIROperand opr) {
         assert opr.isRegister() : "should not call this otherwise";
@@ -1774,7 +1774,6 @@ public class LinearScan {
         Interval result = interval.splitChildAtOpId(opId, mode, this);
 
         if (result != null) {
-
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 TTY.println("Split child at pos " + opId + " of interval " + interval.toString() + " is " + result.toString());
             }
@@ -2852,6 +2851,9 @@ public class LinearScan {
     }
 
     public void allocate() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LIFETIME_ANALYSIS.start();
+        }
 
         numberInstructions();
 
@@ -2863,15 +2865,30 @@ public class LinearScan {
         buildIntervals();
         sortIntervalsBeforeAllocation();
 
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LIFETIME_ANALYSIS.stop();
+            C1XTimers.LINEAR_SCAN.start();
+        }
+
         printIntervals("Before X86Register Allocation");
         // TODO: Compute stats
         // LinearScanStatistic.compute(this, statBeforeAlloc);
 
         allocateRegisters();
 
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LINEAR_SCAN.stop();
+            C1XTimers.RESOLUTION.start();
+        }
+
         resolveDataFlow();
         if (compilation().hasExceptionHandlers()) {
             resolveExceptionHandlers();
+        }
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.RESOLUTION.stop();
+            C1XTimers.DEBUG_INFO.start();
         }
 
         // fill in number of spill slots into frameMap
@@ -2887,14 +2904,18 @@ public class LinearScan {
         eliminateSpillMoves();
         assignRegNum();
 
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.DEBUG_INFO.stop();
+            C1XTimers.CODE_CREATE.start();
+        }
+
         printLir(1, "LIR after assignment of register numbers:", true);
 
         EdgeMoveOptimizer.optimize(ir().linearScanOrder());
         if (C1XOptions.OptimizeControlFlow) {
             ControlFlowOptimizer.optimize(ir());
         }
-        // check that cfg is still correct after optimizations
-        ir().verifyAndPrint("After LIR optimization");
+
         printLir(1, "Before Code Generation", false);
     }
 

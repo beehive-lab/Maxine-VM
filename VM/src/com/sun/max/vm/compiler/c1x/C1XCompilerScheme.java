@@ -78,7 +78,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             c1xRuntime = MaxRiRuntime.globalRuntime;
             CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
             xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
         }
     }
 
@@ -160,7 +160,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public final TargetMethod compile(ClassMethodActor classMethodActor) {
-        // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {

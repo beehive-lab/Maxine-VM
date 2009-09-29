@@ -21,6 +21,7 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -107,4 +108,9 @@ public interface JavaMonitor {
      * and cannot be acquired by any other thread.
      */
     void monitorPrivateRelease();
+
+    /**
+     * Prints the details of this monitor to the {@linkplain Log VM log stream}.
+     */
+    void log();
 }

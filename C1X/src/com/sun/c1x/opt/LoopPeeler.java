@@ -101,6 +101,38 @@ public class LoopPeeler extends ValueVisitor {
     private Loop clonedLoop;
     IR ir;
 
+    public static void peelLoops(IR ir) {
+        LoopFinder loopFinder = new LoopFinder(ir.numberOfBlocks(), ir.startBlock);
+        List<Loop> loopList = loopFinder.getLoopList();
+        ArrayList<Loop> removeLoopList = new ArrayList<Loop>();
+
+        for (int i = 0; i < loopList.size(); i++) {
+            Loop loop = loopList.get(i);
+            if (loop.header().loopDepth() > 0) {
+                for (Loop loopJ : loopList) {
+                    if (loopJ != loop && loopJ.contains(loop.header())) {
+                        removeLoopList.add(loopJ);
+                    }
+                }
+            }
+        }
+
+        loopList.removeAll(removeLoopList);
+        for (Loop loop : loopFinder.getLoopList()) {
+            new LoopPeeler(ir, loop);
+        }
+
+        // cleanup flags to avoid assertion errors when computing linear scan ordering
+        // XXX: should we remove the assertions from the Linear scan ordering??
+        ir.startBlock.iterateAnyOrder(new BlockClosure() {
+            public void apply(BlockBegin block) {
+                block.setLoopIndex(-1);
+                block.setLoopDepth(0);
+            }
+
+        }, false);
+    }
+
     private class InstructionCloner implements BlockClosure {
         public void apply(BlockBegin block) {
             Instruction instr = block;
@@ -257,7 +289,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed i) {
-        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementType(), copyStateBefore(i.stateBefore()));
+        LoadIndexed other = new LoadIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), copyStateBefore(i.stateBefore()));
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -269,7 +301,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
-        StoreIndexed other = new StoreIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementType(), lookup(i.value()), i.stateBefore().copy());
+        StoreIndexed other = new StoreIndexed(lookup(i.array()), lookup(i.index()), lookup(i.length()), i.elementKind(), lookup(i.value()), i.stateBefore().copy());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -391,7 +423,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitNewTypeArray(NewTypeArray i) {
-        NewTypeArray other = new NewTypeArray(lookup(i.length()), i.elementType(), i.stateBefore().copy());
+        NewTypeArray other = new NewTypeArray(lookup(i.length()), i.elementKind(), i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);

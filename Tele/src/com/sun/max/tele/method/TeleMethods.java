@@ -54,7 +54,6 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // Checkstyle: stop field name check
 
     // START GENERATED CONTENT
-    public final TeleStaticMethodAccess Code_codePointerToRuntimeStub = new TeleStaticMethodAccess(teleVM(), Code.class, "codePointerToRuntimeStub", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/runtime/RuntimeStub;"));
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(teleVM(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/compiler/target/TargetMethod;"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(teleVM(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
     // END GENERATED CONTENT
