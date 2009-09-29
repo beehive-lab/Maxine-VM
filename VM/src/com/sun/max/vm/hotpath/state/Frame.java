@@ -51,9 +51,9 @@ public class Frame {
     }
 
     public Frame(BytecodeLocation location, int sp) {
-        this.method = location.classMethodActor();
+        this.method = location.classMethodActor;
         this.sp = sp;
-        this.pc = location.bytecodePosition();
+        this.pc = location.bytecodePosition;
     }
 
     public ClassMethodActor method() {

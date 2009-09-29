@@ -62,6 +62,9 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class ClassActor extends Actor {
 
+    public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
+    public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
+
     public static final char NO_MAJOR_VERSION = (char) -1;
     public static final char NO_MINOR_VERSION = (char) -1;
     public static final SpecificLayout NO_SPECIFIC_LAYOUT = null;
@@ -79,6 +82,58 @@ public abstract class ClassActor extends Actor {
     public static final VirtualMethodActor[] NO_VIRTUAL_METHODS = new VirtualMethodActor[0];
     public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
     public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static FieldActor mirrorFieldActor;
+
+    /**
+     * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
+     */
+    @INSPECTED
+    public final int id;
+
+    @INSPECTED
+    public final ClassLoader classLoader;
+
+    @INSPECTED
+    public final TypeDescriptor typeDescriptor;
+
+    @INSPECTED
+    @CONSTANT_WHEN_NOT_ZERO
+    private Class mirror;
+
+    public final ClassActor superClassActor;
+
+    public final char majorVersion;
+
+    public final char minorVersion;
+
+    private final InterfaceActor[] localInterfaceActors;
+
+    @INSPECTED
+    private final FieldActor[] localInstanceFieldActors;
+
+    @CONSTANT
+    @INSPECTED
+    private Object staticTuple;
+
+    @INSPECTED
+    private final FieldActor[] localStaticFieldActors;
+
+    private int[] arrayClassIDs;
+
+    @INSPECTED
+    private final ClassActor componentClassActor;
+
+    public Object[] signers;
+
+    private ProtectionDomain protectionDomain;
+
+    private InitializationState initializationState;
+
+    private Thread initializingThread;
+
+    public final Kind kind;
 
     protected ClassActor(Kind kind,
                          final SpecificLayout specificLayout,
@@ -299,9 +354,6 @@ public abstract class ClassActor extends Actor {
         return hasFinalizer(flags());
     }
 
-    @INSPECTED
-    private final ClassActor componentClassActor;
-
     /**
      * Gets the component type of the array type represented by this actor. If this actor does not represent an array,
      * then {@code null} is returned.
@@ -362,8 +414,6 @@ public abstract class ClassActor extends Actor {
         return componentClassActor().numberOfDimensions() + 1;
     }
 
-    private int[] arrayClassIDs;
-
     protected final synchronized int makeID(int numberOfDimensions) {
         if (numberOfDimensions <= 0) {
             return ClassID.create();
@@ -385,21 +435,6 @@ public abstract class ClassActor extends Actor {
         return arrayClassIDs[numberOfDimensions - 1];
     }
 
-    /**
-     * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
-     */
-    @INSPECTED
-    public final int id;
-
-    @INSPECTED
-    public final ClassLoader classLoader;
-
-    @INSPECTED
-    public final TypeDescriptor typeDescriptor;
-
-    @INSPECTED
-    @CONSTANT_WHEN_NOT_ZERO
-    private Class mirror;
 
     @Override
     public Utf8Constant genericSignature() {
@@ -411,29 +446,14 @@ public abstract class ClassActor extends Actor {
         return classRegistry().get(RUNTIME_VISIBLE_ANNOTATION_BYTES, this);
     }
 
-    public final ClassActor superClassActor;
-
-    public final char majorVersion;
-
-    public final char minorVersion;
-
-    private final InterfaceActor[] localInterfaceActors;
-
     public final InterfaceActor[] localInterfaceActors() {
         return localInterfaceActors;
     }
-
-    @CONSTANT
-    @INSPECTED
-    private Object staticTuple;
 
     @INLINE
     public final Object staticTuple() {
         return staticTuple;
     }
-
-    @INSPECTED
-    private final FieldActor[] localStaticFieldActors;
 
     public final FieldActor[] localStaticFieldActors() {
         return localStaticFieldActors;
@@ -547,9 +567,6 @@ public abstract class ClassActor extends Actor {
         } while (holder != null);
         return null;
     }
-
-    @INSPECTED
-    private final FieldActor[] localInstanceFieldActors;
 
     public final FieldActor[] localInstanceFieldActors() {
         return localInstanceFieldActors;
@@ -1162,9 +1179,6 @@ public abstract class ClassActor extends Actor {
         return classRegistry().get(ENCLOSING_METHOD_INFO, this);
     }
 
-    public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
-    public static final Deferrable.Queue DEFERRABLE_QUEUE_2 = Deferrable.createDeferred();
-
     protected Size layoutFields(SpecificLayout specificLayout) {
         return Size.zero();
     }
@@ -1275,9 +1289,6 @@ public abstract class ClassActor extends Actor {
     }
 
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static FieldActor mirrorFieldActor;
-
     private static FieldActor mirrorFieldActor() {
         if (mirrorFieldActor == null) {
             mirrorFieldActor = ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("mirror"));
@@ -1328,8 +1339,6 @@ public abstract class ClassActor extends Actor {
     public String qualifiedName() {
         return javaSignature(true);
     }
-
-    public final Kind kind;
 
     @PROTOTYPE_ONLY
     private static final Map<Class, ClassActor> classToClassActorMap = new HashMap<Class, ClassActor>();
@@ -1405,9 +1414,6 @@ public abstract class ClassActor extends Actor {
          */
         public static final InitializationState INITIALIZED = null;
     }
-
-    private InitializationState initializationState;
-    private Thread initializingThread;
 
     /**
      * Determines if this class actor has a parameterless static method named "<clinit>".
@@ -1508,10 +1514,6 @@ public abstract class ClassActor extends Actor {
             }
         }
     }
-
-    public Object[] signers;
-
-    private ProtectionDomain protectionDomain;
 
     public ProtectionDomain protectionDomain() {
         return protectionDomain;

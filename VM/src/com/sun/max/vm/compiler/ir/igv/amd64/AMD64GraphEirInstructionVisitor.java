@@ -113,7 +113,7 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
         super.visit(safepoint);
         this.node.getProperties().setProperty("name", "safepoint");
         this.node.getProperties().setProperty("dump_spec", safepoint.toString());
-        this.node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodePosition()));
+        this.node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodePosition));
 
     }
 }

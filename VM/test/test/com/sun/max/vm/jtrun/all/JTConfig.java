@@ -428,6 +428,8 @@ public class JTConfig {
         jtt.loop.Loop05.class,
         jtt.loop.Loop06.class,
         jtt.loop.LoopSwitch01.class,
+        jtt.max.Hub_Subtype01.class,
+        jtt.max.Hub_Subtype02.class,
         jtt.max.ImmortalHeap_allocation.class,
         jtt.max.ImmortalHeap_gc.class,
         jtt.max.ImmortalHeap_switching.class,

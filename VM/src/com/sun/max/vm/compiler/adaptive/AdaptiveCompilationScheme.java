@@ -74,7 +74,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The compiler that is used as the default at prototyping time.
      */
     @PROTOTYPE_ONLY
-    protected final BootstrapCompilerScheme prototypeCompiler;
+    protected final BootstrapCompilerScheme bootstrapCompiler;
 
     /**
      * The baseline (JIT) compiler.
@@ -138,8 +138,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        prototypeCompiler = vmConfiguration.compilerScheme();
-        optimizingCompiler = prototypeCompiler;
+        bootstrapCompiler = vmConfiguration.compilerScheme();
+        optimizingCompiler = bootstrapCompiler;
         jitCompiler = vmConfiguration.jitScheme();
     }
 
@@ -314,14 +314,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
 
             if (classMethodActor.isSynthetic() || classMethodActor.holder().packageName().startsWith(new com.sun.max.unsafe.Package().name()) || classMethodActor.holder().packageName().startsWith("com.sun.max")) {
-                return prototypeCompiler;
+                return bootstrapCompiler;
             }
 
             if (mode == Mode.PROTOTYPE_JIT) {
                 return jitCompiler;
             }
 
-            return prototypeCompiler;
+            return bootstrapCompiler;
         }
 
         // templates should only be compiled at prototyping time
