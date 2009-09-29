@@ -38,7 +38,6 @@ import com.sun.c1x.ri.RiSignature;
 public class XirAssembler {
 
     private final XirParameter resultOperand;
-    private final XirVariable nullOperand;
 
     private final List<XirInstruction> instructions = new ArrayList<XirInstruction>();
     private final List<XirLabel> labels = new ArrayList<XirLabel>();
@@ -47,12 +46,19 @@ public class XirAssembler {
     private final List<XirCache> caches = new ArrayList<XirCache>();
 
     public class XirLabel {
+    	public final String name;
         public final int index;
         public final boolean inline;
 
-        private XirLabel(int index, boolean inline) {
+        private XirLabel(String name, int index, boolean inline) {
+        	this.name = name;
             this.index = index;
             this.inline = inline;
+        }
+        
+        @Override
+        public String toString() {
+        	return name;
         }
     }
 
@@ -70,20 +76,55 @@ public class XirAssembler {
     public class XirParameter extends XirVariable {
         public final boolean unknownConstant;
         public final CiConstant value;
+        public final String name;
 
-        XirParameter(CiKind kind, boolean unknownConstant, CiConstant value, int index) {
+        XirParameter(String name, CiKind kind, boolean unknownConstant, CiConstant value, int index) {
             super(kind, index);
             this.unknownConstant = unknownConstant;
             this.value = value;
+            this.name = name;
+        }
+        
+        @Override
+        public String toString() {
+        	return name;
+        }
+        
+        public String detailedToString() {
+        	
+        	StringBuffer sb = new StringBuffer();
+        	
+        	sb.append(name);
+        	sb.append('$');
+        	sb.append(super.kind.typeChar);
+        	if (unknownConstant) {
+        		sb.append("$const");
+        	}
+        	return sb.toString();
         }
     }
 
     public class XirTemp extends XirVariable {
         public final CiConstant value;
+        public final String name;
 
-        XirTemp(CiKind kind, CiConstant value, int index) {
+        XirTemp(String name, CiKind kind, CiConstant value, int index) {
             super(kind, index);
+            this.name = name;
             this.value = value;
+        }
+        
+        @Override
+        public String toString() {
+        	return name;
+        }
+        
+        public String detailedToString() {
+        	StringBuffer sb = new StringBuffer();
+        	sb.append(name);
+        	sb.append('$');
+        	sb.append(super.kind.typeChar);
+        	return sb.toString();
         }
     }
 
@@ -93,6 +134,11 @@ public class XirAssembler {
         XirCache(CiKind kind, int index, boolean writeMany) {
             super(kind, index);
             this.writeMany = writeMany;
+        }
+        
+        @Override
+        public String toString() {
+        	return "cache" + index;
         }
     }
 
@@ -106,20 +152,18 @@ public class XirAssembler {
     }
 
     public XirAssembler(CiKind kind) {
-        nullOperand = createParameter(CiKind.Illegal, true);
-        resultOperand = createParameter(kind, false);
+        resultOperand = createParameter("result", kind, false);
     }
 
     public XirAssembler(RiSignature signature) {
-        nullOperand = createParameter(CiKind.Illegal, true);
-        resultOperand = createParameter(signature.returnBasicType(), false);
+        resultOperand = createParameter("result", signature.returnBasicType(), false);
         for (int i = 0; i < signature.argumentCount(false); i++) {
-            createInputParameter(signature.argumentBasicTypeAt(i));
+            createInputParameter("arg" + i, signature.argumentBasicTypeAt(i));
         }
     }
 
-    private XirParameter createParameter(CiKind kind, boolean isConstant) {
-        final XirParameter result = new XirParameter(kind, isConstant, null, parameters.size());
+    private XirParameter createParameter(String name, CiKind kind, boolean isConstant) {
+        final XirParameter result = new XirParameter(name, kind, isConstant, null, parameters.size());
         parameters.add(result);
         return result;
     }
@@ -156,6 +200,43 @@ public class XirAssembler {
         public XirVariable z() {
             assert arguments.length > 2 : "no z operand for this instruction";
             return arguments[2];
+        }
+        
+        @Override
+        public String toString() {
+        	StringBuffer sb = new StringBuffer();
+        	
+        	if (result != null) {
+        		sb.append(result.toString());
+        		sb.append(" = ");
+        	}
+        	
+        	sb.append(op.name());
+        	
+        	if (kind != CiKind.Void) {
+        		sb.append('$');
+        		sb.append(kind.typeChar);
+        	}
+
+        	if (arguments != null && arguments.length > 0) {
+				sb.append("(");
+
+				for (int i = 0; i < arguments.length; i++) {
+					if (i != 0) {
+						sb.append(", ");
+					}
+					sb.append(arguments[i]);
+				}
+				
+	        	sb.append(")");
+			}
+        	
+        	if (extra != null) {
+        		sb.append(" ");
+        		sb.append(extra);
+        	}
+        	
+        	return sb.toString();
         }
     }
 
@@ -195,14 +276,14 @@ public class XirAssembler {
         instructions.add(xirInstruction);
     }
 
-    public XirLabel createInlineLabel() {
-        final XirLabel result = new XirLabel(this.labels.size(), true);
+    public XirLabel createInlineLabel(String name) {
+        final XirLabel result = new XirLabel(name, this.labels.size(), true);
         labels.add(result);
         return result;
     }
 
-    public XirLabel createOutOfLineLabel() {
-        final XirLabel result = new XirLabel(this.labels.size(), false);
+    public XirLabel createOutOfLineLabel(String name) {
+        final XirLabel result = new XirLabel(name, this.labels.size(), false);
         labels.add(result);
         return result;
     }
@@ -256,7 +337,7 @@ public class XirAssembler {
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable value) {
-        append(new XirInstruction(kind, XirOp.PointerStore, nullOperand, pointer, value));
+        append(new XirInstruction(kind, XirOp.PointerStore, (XirVariable) null, pointer, value));
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp) {
@@ -264,7 +345,7 @@ public class XirAssembler {
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value) {
-        append(new XirInstruction(kind, XirOp.PointerStoreDisp, nullOperand, pointer, disp, value));
+        append(new XirInstruction(kind, XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
     }
 
     public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
@@ -272,7 +353,7 @@ public class XirAssembler {
     }
 
     public void jmp(XirLabel l) {
-        append(new XirInstruction(CiKind.Void, l, XirOp.Jmp, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Jmp, null));
     }
 
     public void jeq(XirLabel l, XirVariable a, XirVariable b) {
@@ -280,7 +361,7 @@ public class XirAssembler {
     }
 
     private void jcc(XirOp op, XirLabel l, XirVariable a, XirVariable b) {
-        append(new XirInstruction(CiKind.Void, l, op, nullOperand, a, b));
+        append(new XirInstruction(CiKind.Void, l, op, null, a, b));
     }
 
     public void jneq(XirLabel l, XirVariable a, XirVariable b) {
@@ -309,12 +390,12 @@ public class XirAssembler {
 
     public void bindInline(XirLabel l) {
         assert l.inline;
-        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, null));
     }
 
     public void bindOutOfLine(XirLabel l) {
         assert !l.inline;
-        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, nullOperand));
+        append(new XirInstruction(CiKind.Void, l, XirOp.Bind, null));
     }
 
     public void callJava(XirVariable result, XirVariable destination) {
@@ -333,33 +414,33 @@ public class XirAssembler {
     }
 
     public void end() {
-        append(new XirInstruction(CiKind.Void, XirOp.Ret, nullOperand));
+        append(new XirInstruction(CiKind.Void, XirOp.Ret, null));
     }
 
     public void ret(CiKind kind, XirVariable result) {
         append(new XirInstruction(kind, XirOp.Ret, result));
     }
 
-    public XirParameter createInputParameter(CiKind kind) {
-        XirParameter param = new XirParameter(kind, false, null, parameters.size());
+    public XirParameter createInputParameter(String name, CiKind kind) {
+        XirParameter param = new XirParameter(name, kind, false, null, parameters.size());
         parameters.add(param);
         return param;
     }
 
-    public XirParameter createConstantInputParameter(CiKind kind) {
-        XirParameter param = new XirParameter(kind, true, null, parameters.size());
+    public XirParameter createConstantInputParameter(String name, CiKind kind) {
+        XirParameter param = new XirParameter(name, kind, true, null, parameters.size());
         parameters.add(param);
         return param;
     }
 
     public XirTemp createConstantTemp(CiConstant constant) {
-        XirTemp temp = new XirTemp(constant.basicType, constant, parameters.size());
+        XirTemp temp = new XirTemp(constant.valueString(), constant.basicType, constant, parameters.size());
         temps.add(temp);
         return temp;
     }
 
-    public XirTemp createTemp(CiKind kind) {
-        XirTemp temp = new XirTemp(kind, null, temps.size());
+    public XirTemp createTemp(String name, CiKind kind) {
+        XirTemp temp = new XirTemp(name, kind, null, temps.size());
         temps.add(temp);
         return temp;
     }
@@ -409,7 +490,7 @@ public class XirAssembler {
         int flags = 0;
 
         if (isStub) {
-            flags |= XirTemplate.GLOBAL_STUB;
+            flags |= XirTemplate.GlobalFlags.GLOBAL_STUB.mask();
         }
 
         ArrayList<XirInstruction> currentList = fastPath;
@@ -442,37 +523,37 @@ public class XirAssembler {
                 case PointerCAS:
                     break;
                 case CallStub:
-                    flags |= XirTemplate.HAS_STUB_CALL;
+                    flags |= XirTemplate.GlobalFlags.HAS_STUB_CALL.mask();
                     break;
                 case CallRuntime:
-                    flags |= XirTemplate.HAS_RUNTIME_CALL;
+                    flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask();
                     break;
                 case CallJava:
-                    flags |= XirTemplate.HAS_JAVA_CALL;
+                    flags |= XirTemplate.GlobalFlags.HAS_JAVA_CALL.mask();
                     break;
                 case Jmp:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jeq:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jneq:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jgt:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jgteq:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jugteq:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                    break;
                 case Jlt:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Jlteq:
-                    flags |= XirTemplate.HAS_CONTROL_FLOW;
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
                     break;
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;
@@ -491,6 +572,8 @@ public class XirAssembler {
         XirInstruction[] sp = slowPath.size() > 0 ? slowPath.toArray(new XirInstruction[slowPath.size()]) : null;
         XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
-        return new XirTemplate(name, fp, sp, xirLabels, xirParameters, flags);
+        XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
+        final XirTemplate result = new XirTemplate(name, fp, sp, xirLabels, xirParameters, temporaryOperands, flags);
+        return result;
     }
 }
