@@ -61,7 +61,7 @@ public class X86Backend extends Backend {
 
     @Override
     public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
-        return new FrameMap(compiler, method, numberOfLocks);
+        return new FrameMap(compiler, method, numberOfLocks, compiler.target.arch.wordSize);
     }
     @Override
     public AbstractAssembler newAssembler(int frameSize) {
