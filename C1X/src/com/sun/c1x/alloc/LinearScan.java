@@ -2851,6 +2851,9 @@ public class LinearScan {
     }
 
     public void allocate() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LIFETIME_ANALYSIS.start();
+        }
 
         numberInstructions();
 
@@ -2862,15 +2865,30 @@ public class LinearScan {
         buildIntervals();
         sortIntervalsBeforeAllocation();
 
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LIFETIME_ANALYSIS.stop();
+            C1XTimers.LINEAR_SCAN.start();
+        }
+
         printIntervals("Before X86Register Allocation");
         // TODO: Compute stats
         // LinearScanStatistic.compute(this, statBeforeAlloc);
 
         allocateRegisters();
 
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.LINEAR_SCAN.stop();
+            C1XTimers.RESOLUTION.start();
+        }
+
         resolveDataFlow();
         if (compilation().hasExceptionHandlers()) {
             resolveExceptionHandlers();
+        }
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.RESOLUTION.stop();
+            C1XTimers.DEBUG_INFO.start();
         }
 
         // fill in number of spill slots into frameMap
@@ -2885,6 +2903,11 @@ public class LinearScan {
 
         eliminateSpillMoves();
         assignRegNum();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.DEBUG_INFO.stop();
+            C1XTimers.CODE_CREATE.start();
+        }
 
         printLir(1, "LIR after assignment of register numbers:", true);
 
