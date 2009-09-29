@@ -18,16 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter;
+package com.sun.max.vm.compiler.ir.interpreter;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.ir.interpreter.BirInterpreter.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 import com.sun.max.vm.hotpath.state.*;
-import com.sun.max.vm.interpreter.BirInterpreter.*;
 import com.sun.max.vm.value.*;
 import com.sun.max.vm.profile.TreeAnchor;
 

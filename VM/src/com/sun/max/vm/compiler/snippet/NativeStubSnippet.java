@@ -30,7 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;

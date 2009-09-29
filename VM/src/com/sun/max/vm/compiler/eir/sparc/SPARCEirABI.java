@@ -50,8 +50,9 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     @Override
-    public int frameSize(int numLocalStackSlots) {
-        return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize() + SPARCStackFrameLayout.SAVE_AREA_SIZE + SPARCStackFrameLayout.ARGUMENT_SLOTS_SIZE);
+    public int frameSize(int numLocalStackSlots, int extraBytes) {
+        return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize() + extraBytes
+            + SPARCStackFrameLayout.SAVE_AREA_SIZE + SPARCStackFrameLayout.ARGUMENT_SLOTS_SIZE);
     }
 
     @Override

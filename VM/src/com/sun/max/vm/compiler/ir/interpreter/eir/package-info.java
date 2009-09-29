@@ -18,31 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cir.generate;
-
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.cir.*;
-
-import com.sun.max.platform.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.b.c.*;
-import com.sun.max.vm.compiler.ir.interpreter.*;
-
-public class CirTranslatorTestSetup extends CirCompilerTestSetup {
-
-    public CirTranslatorTestSetup(Test test) {
-        super(test);
-    }
-
-    @Override
-    protected CirInterpreter createInterpreter() {
-        return new CirInterpreter(cirGenerator());
-    }
-
-    @Override
-    protected VMConfiguration createVMConfiguration() {
-        BcCompiler.disableOptimizing();
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-                                   new com.sun.max.vm.compiler.b.c.Package());
-    }
-}
+/**
+ * @author Bernd Mathiske
+ */
+package com.sun.max.vm.compiler.ir.interpreter.eir;

@@ -18,10 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter.eir.amd64;
+package com.sun.max.vm.compiler.ir.interpreter.eir.amd64;
 
 import static com.sun.max.vm.compiler.eir.amd64.AMD64EirRegister.General.*;
-import static com.sun.max.vm.interpreter.eir.amd64.AMD64EirCPU.ConditionFlag.*;
+import static com.sun.max.vm.compiler.ir.interpreter.eir.amd64.AMD64EirCPU.ConditionFlag.*;
 
 import java.lang.reflect.*;
 import java.math.*;
@@ -33,8 +33,8 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirInstruction.*;
-import com.sun.max.vm.interpreter.*;
-import com.sun.max.vm.interpreter.eir.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -673,6 +673,10 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     public void visit(LEA_STACK_ADDRESS instruction) {
         final int sourceOffset = cpu.offset(instruction.sourceOperand().location().asStackSlot());
         cpu.write(instruction.destinationOperand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
+    }
+
+    public void visit(STACK_ALLOCATE instruction) {
+        FatalError.unimplemented();
     }
 
     public void visit(LFENCE instruction) {

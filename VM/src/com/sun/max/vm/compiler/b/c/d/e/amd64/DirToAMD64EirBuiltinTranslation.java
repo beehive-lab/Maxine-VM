@@ -1385,6 +1385,16 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
+    public void visitStackAllocate(StackAllocate builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1;
+        assert dirArguments[0] instanceof DirConstant;
+        final int size = ((DirConstant) dirArguments[0]).value().asInt();
+        final int offset = methodTranslation().addStackAllocation(size);
+        final EirVariable result = (EirVariable) dirToEirValue(dirResult);
+        addInstruction(new STACK_ALLOCATE(eirBlock(), result, offset));
+    }
+
+    @Override
     public void visitIntToFloat(IntToFloat builtin, DirValue dirResult, DirValue[] dirArguments) {
         addInstruction(new MOVD_F32_I32(eirBlock(), dirToEirValue(dirResult), dirToEirValue(dirArguments[0])));
     }

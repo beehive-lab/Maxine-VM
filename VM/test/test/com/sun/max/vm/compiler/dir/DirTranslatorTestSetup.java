@@ -27,7 +27,7 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.dir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 
 /**
  * @author Bernd Mathiske
