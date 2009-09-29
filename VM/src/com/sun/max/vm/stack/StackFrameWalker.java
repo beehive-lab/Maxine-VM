@@ -627,7 +627,7 @@ public abstract class StackFrameWalker {
                     return targetMethod.classMethodActor();
                 }
             } else {
-                return bytecodeLocations.next().classMethodActor();
+                return bytecodeLocations.next().classMethodActor;
             }
         }
         return null;
@@ -638,7 +638,7 @@ public abstract class StackFrameWalker {
         if (bytecodeLocations.hasNext()) {
             final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
             appendCallers(result, bytecodeLocations, invisibleFrames);
-            appendClassMethodActor(result, bytecodeLocation.classMethodActor(), invisibleFrames);
+            appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
         }
     }
 

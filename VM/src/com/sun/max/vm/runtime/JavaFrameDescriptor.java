@@ -144,8 +144,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
         if (getClass().isInstance(other)) {
             final Class<JavaFrameDescriptor<Slot_Type>> type = null;
             final JavaFrameDescriptor<Slot_Type> descriptor = StaticLoophole.cast(type, other);
-            if (classMethodActor().equals(descriptor.classMethodActor()) &&
-                            bytecodePosition() == descriptor.bytecodePosition() &&
+            if (classMethodActor.equals(descriptor.classMethodActor) &&
+                            bytecodePosition == descriptor.bytecodePosition &&
                             slotsEqual(locals, descriptor.locals) &&
                             slotsEqual(stackSlots, descriptor.stackSlots)) {
                 if (parent == null) {
@@ -164,8 +164,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             if (!s.isEmpty()) {
                 s += "\n  ---parent---\n";
             }
-            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
-            final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
+            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor;
+            final int bytecodePosition = javaFrameDescriptor.bytecodePosition;
             s += " where: " + classMethodActor.toStackTraceElement(bytecodePosition) + "@" + bytecodePosition;
             s += "\nlocals:";
             for (int i = 0; i < javaFrameDescriptor.locals.length; i++) {
@@ -187,8 +187,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
         JavaFrameDescriptor javaFrameDescriptor = this;
 
         do {
-            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
-            final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
+            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor;
+            final int bytecodePosition = javaFrameDescriptor.bytecodePosition;
             s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n(%s)", bytecodePosition),
                             bytecodePosition,
                             com.sun.max.lang.Arrays.toString(javaFrameDescriptor.locals, ", "),

@@ -64,7 +64,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         for (TargetJavaFrameDescriptor descriptor : javaFrameDescriptors) {
             if (descriptor != null) {
                 gatherParents(descriptor.parent(), parents);
-                methods.add(descriptor.classMethodActor());
+                methods.add(descriptor.classMethodActor);
                 maxSlots = Math.max(maxSlots, descriptor.maxSlots());
             }
         }
@@ -72,7 +72,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         final GrowableMapping<JavaFrameDescriptor, Integer> descriptorToSerial = HashMapping.createIdentityMapping();
         int parentSerial = FIRST_SERIAL;
         for (TargetJavaFrameDescriptor parent : parents) {
-            methods.add(parent.classMethodActor());
+            methods.add(parent.classMethodActor);
             maxSlots = Math.max(maxSlots, parent.maxSlots());
             descriptorToSerial.put(parent, parentSerial);
             parentSerial++;
@@ -326,9 +326,9 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 writeSerial(descriptorToSerial.get(descriptor.parent()));
             }
 
-            final int methodSerial = methodToSerial.get(descriptor.classMethodActor());
+            final int methodSerial = methodToSerial.get(descriptor.classMethodActor);
             writeSerial(methodSerial);
-            stream.writeShort(descriptor.bytecodePosition());
+            stream.writeShort(descriptor.bytecodePosition);
             writeTargetLocations(stream, descriptor.locals);
             writeTargetLocations(stream, descriptor.stackSlots);
         }

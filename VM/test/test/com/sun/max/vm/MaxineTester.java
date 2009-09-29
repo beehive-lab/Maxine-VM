@@ -98,7 +98,7 @@ public class MaxineTester {
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
-    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "optopt",
+    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "cpscps",
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +

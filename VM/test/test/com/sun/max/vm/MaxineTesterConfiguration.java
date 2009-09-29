@@ -103,8 +103,8 @@ public class MaxineTesterConfiguration {
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitopt, @optopt
-        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitopt, @optopt
+        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
+        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
 
         dacapo("antlr");
         dacapo("bloat");
@@ -185,11 +185,11 @@ public class MaxineTesterConfiguration {
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
         auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
-        imageConfig("optopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
+        imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
         imageConfig("java", "-run=com.sun.max.vm.run.java");
 
         maxvmConfig("std");
@@ -258,13 +258,12 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
         if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
-            return "optopt,optjit,jitopt,jitjit";
+            return "cpscps,cpsjit,jitcps,jitjit";
         }
-        return "optc1x,optopt,jitopt,optjit,jitjit";
+        return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
     }
 
     public static boolean isSupported(String config) {
-
         Expectation[] expect = configResultMap.get(config);
         if (expect != null) {
             final Platform platform = Platform.host();

@@ -41,8 +41,8 @@ public class HotpathProfiler implements Profiler {
     private boolean isTracing = false;
 
     public void jump(BytecodeLocation fromlocation, BytecodeLocation toLocation, BirState state) {
-        assert fromlocation.classMethodActor() == toLocation.classMethodActor();
-        if (toLocation.bytecodePosition() < fromlocation.bytecodePosition()) {
+        assert fromlocation.classMethodActor == toLocation.classMethodActor;
+        if (toLocation.bytecodePosition < fromlocation.bytecodePosition) {
             backwardJump(fromlocation, toLocation, state);
         }
     }

@@ -214,12 +214,12 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
             public void visitCall(CirCall call) {
                 final BytecodeLocation location = call.javaFrameDescriptor();
                 if (location != null) {
-                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor(), directCalls, virtualCalls, interfaceCalls);
+                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
                     try {
-                        final byte[] bytecode = location.classMethodActor().codeAttribute().code();
-                        if (bytecode != null && location.bytecodePosition() < bytecode.length) {
-                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition());
+                        final byte[] bytecode = location.classMethodActor.codeAttribute().code();
+                        if (bytecode != null && location.bytecodePosition < bytecode.length) {
+                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
                         }
                     } catch (Throwable throwable) {
                         ProgramError.unexpected("could not scan byte code in " + targetMethod.classMethodActor().holder().name + "." + targetMethod.classMethodActor().name, throwable);
