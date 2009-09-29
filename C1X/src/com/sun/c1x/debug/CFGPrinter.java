@@ -362,4 +362,14 @@ public class CFGPrinter {
 
         end("intervals");
     }
+
+    public void printMachineCode(String code) {
+        if (code.length() == 0) {
+            return;
+        }
+        begin("nmethod");
+        out.print(code);
+        out.println(" <|@");
+        end("nmethod");
+    }
 }

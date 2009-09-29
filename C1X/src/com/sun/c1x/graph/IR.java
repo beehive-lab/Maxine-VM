@@ -74,10 +74,24 @@ public class IR {
      * Builds the graph, optimizes it, and computes the linear scan block order.
      */
     public void build() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.start();
+        }
+
         buildGraph();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.stop();
+            C1XTimers.HIR_OPTIMIZE.start();
+        }
+
         optimize1();
         computeLinearScanOrder();
         optimize2();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_OPTIMIZE.stop();
+        }
     }
 
     private void buildGraph() {
