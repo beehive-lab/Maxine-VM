@@ -1072,7 +1072,7 @@ public class Canonicalizer extends ValueVisitor {
             return;
         }
         int max = i.numberOfCases();
-        if (max == 1) {
+        if (max == 0) {
             // replace switch with Goto
             if (v instanceof Instruction) {
                 addInstr((Instruction) v); // the value expression may produce side effects
@@ -1080,7 +1080,7 @@ public class Canonicalizer extends ValueVisitor {
             setCanonical(new Goto(i.defaultSuccessor(), i.stateAfter(), i.isSafepoint()));
             return;
         }
-        if (max == 2) {
+        if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
             If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());

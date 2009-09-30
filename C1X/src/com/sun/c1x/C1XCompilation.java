@@ -334,7 +334,7 @@ public class C1XCompilation {
             CiTargetMethod targetMethod = assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
 
             if (C1XOptions.PrintCFGToFile) {
-                cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
+                cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
             }
 
             if (C1XOptions.PrintTimers) {

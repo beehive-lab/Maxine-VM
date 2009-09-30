@@ -250,8 +250,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final BytecodeTableModel model = (BytecodeTableModel) getModel();
             if (teleCodeLocation.hasBytecodeLocation()) {
                 final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
-                if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition());
+                if (bytecodeLocation.classMethodActor == teleClassMethodActor().classMethodActor()) {
+                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition);
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);

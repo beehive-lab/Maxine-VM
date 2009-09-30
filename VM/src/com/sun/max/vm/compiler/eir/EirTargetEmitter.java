@@ -182,8 +182,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         TargetJavaFrameDescriptor targetJavaFrameDescriptor = eirToTargetJavaFrameDescriptor.get(eirJavaFrameDescriptor);
         if (targetJavaFrameDescriptor == null) {
             targetJavaFrameDescriptor = new TargetJavaFrameDescriptor(eirToTargetJavaFrameDescriptor(eirJavaFrameDescriptor.parent()),
-                                                                      eirJavaFrameDescriptor.classMethodActor(),
-                                                                      eirJavaFrameDescriptor.bytecodePosition(),
+                                                                      eirJavaFrameDescriptor.classMethodActor,
+                                                                      eirJavaFrameDescriptor.bytecodePosition,
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.locals),
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.stackSlots));
             eirToTargetJavaFrameDescriptor.put(eirJavaFrameDescriptor, targetJavaFrameDescriptor);

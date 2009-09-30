@@ -20,8 +20,12 @@
  */
 package com.sun.c1x.xir;
 
+import java.io.PrintStream;
+
+import com.sun.c1x.xir.XirAssembler.XirInstruction;
 import com.sun.c1x.xir.XirAssembler.XirLabel;
 import com.sun.c1x.xir.XirAssembler.XirParameter;
+import com.sun.c1x.xir.XirAssembler.XirTemp;
 import com.sun.c1x.ci.CiRegister;
 
 /**
@@ -35,28 +39,40 @@ public class XirTemplate {
     public static int OUTPUT  = 0x40000000;
     public static int FIXED   = 0x80000000;
 
-    public static int HAS_JAVA_CALL = 0x001;
-    public static int HAS_STUB_CALL = 0x002;
-    public static int HAS_RUNTIME_CALL = 0x004;
-    public static int HAS_CONTROL_FLOW = 0x008;
-    public static int GLOBAL_STUB = 0x010;
+    enum GlobalFlags {
+    	HAS_JAVA_CALL,
+    	HAS_STUB_CALL,
+    	HAS_RUNTIME_CALL,
+    	HAS_CONTROL_FLOW,
+    	GLOBAL_STUB;
+    	
+    	public int mask() {
+    		return 1 << ordinal();
+    	}
+    }
 
     public final String name;
     public final XirAssembler.XirInstruction[] fastPath;
     public final XirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
-    public XirAssembler.XirTemp[] temps;
+    public final XirAssembler.XirTemp[] temps;
+    
     public int[] tempFlags;
     public int flags;
 
-    XirTemplate(String name, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, int flags) {
+    XirTemplate(String name, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, int flags) {
         this.name = name;
         this.fastPath = fastPath;
         this.slowPath = slowPath;
         this.labels = labels;
         this.parameters = parameters;
         this.flags = flags;
+        this.temps = temps;
+        
+        assert fastPath != null;
+        assert labels != null;
+        assert parameters != null;
     }
 
     public int getResultParameterIndex() {
@@ -89,6 +105,56 @@ public class XirTemplate {
             return registers[regnum];
         }
         return null;
+    }
+    
+    @Override
+    public String toString() {
+    	return name;
+    }
+    
+    public void print(PrintStream p) {
+
+    	final String indent = "   ";
+    	
+    	p.println();
+    	p.println("Template " + name);
+    	
+    	
+    	p.print("Param:");
+    	for (XirParameter param : parameters) {
+        	p.print(" " + param.detailedToString());
+    	}
+    	p.println();
+    	
+    	if (temps.length > 0) {
+	    	p.print("Temps:");
+	    	for (XirTemp temp : temps) {
+	    		p.print(" " + temp.detailedToString());
+	    	}
+	    	p.println();
+    	}
+
+    	if (flags != 0) {
+	    	p.print("Flags:");
+	    	for (XirTemplate.GlobalFlags flag : XirTemplate.GlobalFlags.values()) {
+	    		if ((this.flags & flag.mask()) != 0) {
+	    			p.print(" " + flag.name());
+	    		}
+	    	}
+	    	p.println();
+    	}
+    	
+    	p.println("Fast path:");
+    	for (XirInstruction i : fastPath) {
+    		p.println(indent + i.toString());
+    	}
+    	
+    	if (slowPath != null) {
+    		p.println("Slow path:");
+    		for (XirInstruction i : slowPath) {
+    			p.println(indent + i.toString());
+    		}
+    	}
     }
 
 }

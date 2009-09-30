@@ -120,7 +120,7 @@ public final class Disassemble {
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {
-                            final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                            final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
                             string += " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                         }
                     }

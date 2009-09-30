@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,21 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package jtt.max;
 
-import java.lang.annotation.*;
+import com.sun.max.vm.actor.holder.ClassActor;
 
-
-/**
- * Every thus annotated method is never to be inlined by the compiler.
- *
- * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
- * for semantic reasons. Typically, this is to ensure that a separate activation frame is
- * always used for a call to the method.
- *
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=false
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface NEVER_INLINE {
+public class Hub_Subtype01 {
+    public static boolean test(int arg) {
+        Object obj = null;
+        if (arg == 0) {
+            obj = Hub_Subtype01.class;
+        } else if (arg == 1) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class);
+        } else if (arg == 2) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).dynamicHub();
+        } else if (arg == 3) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).staticHub();
+        } else if (arg == 4) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).staticTuple();
+        }
+        return obj instanceof Object;
+    }
 }

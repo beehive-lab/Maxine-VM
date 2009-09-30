@@ -224,8 +224,8 @@ public class CirBytecodeWriter extends CirVisitor {
         } else {
             writeUnsignedInt(jfd.depth());
             do {
-                writeConstant(jfd.classMethodActor());
-                writeUnsignedInt(jfd.bytecodePosition());
+                writeConstant(jfd.classMethodActor);
+                writeUnsignedInt(jfd.bytecodePosition);
                 writeUnsignedInt(jfd.locals.length);
                 writeUnsignedInt(jfd.stackSlots.length);
                 jfd = jfd.parent();
