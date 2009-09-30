@@ -75,11 +75,6 @@ import com.sun.max.vm.type.*;
  */
 public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
-    private static VMBooleanXXOption useProfileGuidedInlining = register(new VMBooleanXXOption("-XX:-PGI",
-                    "Enable profile-guided inlining, which collects receiver method profiles to feed into " +
-                    "inlining decisions during recompilation."),
-                    Phase.STARTING);
-
     private final StopsBuilder stops;
 
     protected boolean emitBackwardEdgeSafepointAtTarget;
@@ -269,7 +264,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     private boolean shouldProfileMethodCall(MethodActor methodActor) {
-        if (methodProfileBuilder != null && useProfileGuidedInlining.getValue()) {
+        if (methodProfileBuilder != null && false) {
+            // TODO: profiling of receivers is disabled for now
             if (methodActor instanceof InterfaceMethodActor) {
                 return true;
             } else if (methodActor instanceof VirtualMethodActor) {
@@ -482,7 +478,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * contains a position smaller than the throw position is found. The last entry of the catch table always contains
      * the position to the instructions following the last instruction of the last catch range.
      *
-     * @see TargetMethod#throwAddressToCatchAddress(com.sun.max.unsafe.Address)
+     * @see TargetMethod#throwAddressToCatchAddress(boolean, com.sun.max.unsafe.Address, Class) 
      */
     public void buildExceptionHandlingInfo() {
         final Sequence<ExceptionHandlerEntry> exceptionHandlers = classMethodActor.codeAttribute().exceptionHandlerTable();

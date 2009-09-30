@@ -61,8 +61,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     /**
      * A VM option for specifying amount of memory to be reserved for allocating and raising an
-     * OutOfMemoryError when insufficient memory is available to satisfy an {@linkplain #allocate(Size)
-     * allocation} request.
+     * OutOfMemoryError when insufficient memory is available to satisfy an allocation request.
      *
      * @see #safetyZoneSize
      */
@@ -125,7 +124,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
-     * memory is available to satisfy an {@linkplain #allocate(Size) allocation} request.
+     * memory is available to satisfy an allocation request.
      *
      * @see #safetyZoneSizeOption
      */

@@ -114,7 +114,7 @@ public class VmThread {
 
     private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
-    private static final Size DEFAULT_STACK_SIZE = Size.M;
+    private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
 
     private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 
