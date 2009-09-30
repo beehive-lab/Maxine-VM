@@ -39,7 +39,7 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
     public boolean requiresClassInitialization() {
         return true;
     }
-    
+
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);
