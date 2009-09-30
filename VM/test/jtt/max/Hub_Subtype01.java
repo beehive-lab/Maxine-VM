@@ -40,6 +40,7 @@ public class Hub_Subtype01 {
         } else if (arg == 4) {
             obj = ClassActor.fromJava(Hub_Subtype01.class).staticTuple();
         }
+        // do an explicit checkcast for each of these Maxine implementation objects
         return obj instanceof Object;
     }
 }
