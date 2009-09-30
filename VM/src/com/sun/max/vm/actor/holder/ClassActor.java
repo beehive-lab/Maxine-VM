@@ -235,7 +235,7 @@ public abstract class ClassActor extends Actor {
                 final Size staticTupleSize = Layout.tupleLayout().layoutFields(NO_SUPER_CLASS_ACTOR, localStaticFieldActors);
                 final TupleReferenceMap staticReferenceMap = new TupleReferenceMap(localStaticFieldActors);
                 final StaticHub sHub = new StaticHub(staticTupleSize, ClassActor.this, staticReferenceMap);
-                ClassActor.this.staticHub = sHub.expand(staticReferenceMap);
+                ClassActor.this.staticHub = sHub.expand(staticReferenceMap, getRootClassActorId());
                 ClassActor.this.staticTuple = StaticTuple.create(ClassActor.this);
 
                 final IdentityHashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
@@ -273,20 +273,12 @@ public abstract class ClassActor extends Actor {
         }
     }
 
-    private StaticMethodActor[] filterStaticMethodActors(MethodActor[] methodActors) {
-        if (methodActors == null) {
-            return NO_STATIC_METHODS;
+    private int getRootClassActorId() {
+        ClassActor root = this;
+        while (root.superClassActor != null) {
+            root = root.superClassActor;
         }
-        List<StaticMethodActor> list = null;
-        for (MethodActor m : methodActors) {
-            if (m instanceof StaticMethodActor) {
-                if (list == null) {
-                    list = new ArrayList<StaticMethodActor>();
-                }
-                list.add((StaticMethodActor) m);
-            }
-        }
-        return list == null ? NO_STATIC_METHODS : list.toArray(new StaticMethodActor[list.size()]);
+        return root.id;
     }
 
     private static int computeMaxVTableSize(ClassActor superClassActor, VirtualMethodActor[] localVirtualMethodActors) {
