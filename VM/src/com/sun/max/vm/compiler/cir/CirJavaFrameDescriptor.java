@@ -55,7 +55,7 @@ public final class CirJavaFrameDescriptor extends JavaFrameDescriptor<CirValue> 
      */
     public CirJavaFrameDescriptor copy() {
         final CirJavaFrameDescriptor p = (parent() == null) ? null : parent().copy();
-        return new CirJavaFrameDescriptor(p, classMethodActor(), bytecodePosition(), locals.clone(), stackSlots.clone());
+        return new CirJavaFrameDescriptor(p, classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
     }
 
     /**
@@ -66,9 +66,9 @@ public final class CirJavaFrameDescriptor extends JavaFrameDescriptor<CirValue> 
      */
     private CirJavaFrameDescriptor extended(CirJavaFrameDescriptor extension) {
         if (parent() == null) {
-            return new CirJavaFrameDescriptor(extension.copy(), classMethodActor(), bytecodePosition(), locals.clone(), stackSlots.clone());
+            return new CirJavaFrameDescriptor(extension.copy(), classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
         }
-        return new CirJavaFrameDescriptor(parent().extended(extension), classMethodActor(), bytecodePosition(), locals.clone(), stackSlots.clone());
+        return new CirJavaFrameDescriptor(parent().extended(extension), classMethodActor, bytecodePosition, locals.clone(), stackSlots.clone());
     }
 
     private void propagateValue(CirValue value, CirBlock block, CirScopedBlockUpdating scopedBlockUpdating) {

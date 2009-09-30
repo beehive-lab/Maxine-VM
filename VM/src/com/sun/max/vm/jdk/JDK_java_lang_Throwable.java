@@ -129,7 +129,7 @@ public final class JDK_java_lang_Throwable {
         } else {
             while (bytecodeLocations.hasNext()) {
                 final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
-                final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
+                final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
                 if (classMethodActor.isApplicationVisible()) {
                     addStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
                 }

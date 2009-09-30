@@ -25,10 +25,10 @@ import java.lang.annotation.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Informs the optimizing compiler to assume the receiver type given by 'value()'
+ * Informs the CPS compiler to assume the receiver type given by 'value()'
  * when disambiguating an interface method call with an Accessor receiver.
  * This holds for all transitively inlined calls in the annotated method.
- * 
+ *
  * @author Bernd Mathiske
  */
 @Retention(RetentionPolicy.RUNTIME)

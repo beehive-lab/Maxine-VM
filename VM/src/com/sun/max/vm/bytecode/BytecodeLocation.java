@@ -30,39 +30,32 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class BytecodeLocation {
 
-    private final ClassMethodActor classMethodActor;
-    private final int bytecodePosition;
+    public final ClassMethodActor classMethodActor;
+    public final int bytecodePosition;
 
     public BytecodeLocation(ClassMethodActor classMethodActor, int bytecodePosition) {
+        assert classMethodActor != null : "cannot create bytecode location for null ClassMethodActor";
         this.classMethodActor = classMethodActor;
         this.bytecodePosition = bytecodePosition;
-    }
-
-    public final ClassMethodActor classMethodActor() {
-        return classMethodActor;
-    }
-
-    public final int bytecodePosition() {
-        return bytecodePosition;
     }
 
     @Override
     public boolean equals(Object other) {
         if (other instanceof BytecodeLocation) {
             final BytecodeLocation bytecodeLocation = (BytecodeLocation) other;
-            return classMethodActor().equals(bytecodeLocation.classMethodActor()) && bytecodePosition() == bytecodeLocation.bytecodePosition();
+            return classMethodActor.equals(bytecodeLocation.classMethodActor) && bytecodePosition == bytecodeLocation.bytecodePosition;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return classMethodActor().hashCode() ^ bytecodePosition();
+        return classMethodActor.hashCode() ^ bytecodePosition;
     }
 
     @Override
     public String toString() {
-        return classMethodActor().qualifiedName() + "@" + bytecodePosition();
+        return classMethodActor.qualifiedName() + "@" + bytecodePosition;
     }
 
     /**
@@ -71,7 +64,7 @@ public class BytecodeLocation {
      * @return -1 if a source line number is not available
      */
     public int sourceLineNumber() {
-        return classMethodActor().sourceLineNumber(bytecodePosition());
+        return classMethodActor.sourceLineNumber(bytecodePosition);
     }
 
     /**
@@ -80,15 +73,15 @@ public class BytecodeLocation {
      * @return {@code null} if a source file name is not available
      */
     public String sourceFileName() {
-        return classMethodActor().holder().sourceFileName;
+        return classMethodActor.holder().sourceFileName;
     }
 
     /**
-     * Gets the opcode of the instruction at the {@linkplain #bytecodePosition() bytecode position} denoted by this
+     * Gets the opcode of the instruction at the bytecode position denoted by this
      * frame descriptor.
      */
     public Bytecode getBytecode() {
-        final byte[] code = classMethodActor().codeAttribute().code();
+        final byte[] code = classMethodActor.codeAttribute().code();
         return Bytecode.from(code[bytecodePosition]);
     }
 
@@ -105,11 +98,11 @@ public class BytecodeLocation {
      * Gets a {@link StackTraceElement} object derived from this frame descriptor describing the corresponding source code location.
      */
     public StackTraceElement toStackTraceElement() {
-        return classMethodActor().toStackTraceElement(bytecodePosition());
+        return classMethodActor.toStackTraceElement(bytecodePosition);
     }
 
     class MethodRefFinder extends BytecodeAdapter {
-        final ConstantPool constantPool = classMethodActor().holder().constantPool();
+        final ConstantPool constantPool = classMethodActor.holder().constantPool();
         int methodRefIndex = -1;
 
         @Override
@@ -150,14 +143,14 @@ public class BytecodeLocation {
     public MethodActor getCalleeMethodActor() {
         final MethodRefFinder methodRefFinder = new MethodRefFinder();
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefFinder);
-        bytecodeScanner.scanInstruction(classMethodActor().codeAttribute().code(), bytecodePosition());
+        bytecodeScanner.scanInstruction(classMethodActor.codeAttribute().code(), bytecodePosition);
         return methodRefFinder.methodActor();
     }
 
     public MethodRefConstant getCalleeMethodRef() {
         final MethodRefFinder methodRefFinder = new MethodRefFinder();
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefFinder);
-        bytecodeScanner.scanInstruction(classMethodActor().codeAttribute().code(), bytecodePosition());
+        bytecodeScanner.scanInstruction(classMethodActor.codeAttribute().code(), bytecodePosition);
         return methodRefFinder.methodRef();
     }
 }

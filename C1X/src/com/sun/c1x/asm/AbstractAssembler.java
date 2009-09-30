@@ -65,7 +65,7 @@ public abstract class AbstractAssembler {
         C1XMetrics.TargetMethods++;
 
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.finished());
+        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if existant
@@ -81,7 +81,7 @@ public abstract class AbstractAssembler {
         }
 
         if (C1XOptions.PrintMetrics) {
-            C1XMetrics.CodeBytesEmitted += targetMethod.targetCode().length;
+            C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize();
             C1XMetrics.SafepointsEmitted += targetMethod.safepoints.size();
             C1XMetrics.DirectCallSitesEmitted += targetMethod.directCalls.size();
             C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCalls.size();
@@ -96,10 +96,10 @@ public abstract class AbstractAssembler {
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCode().length, C1XOptions.PrintAssemblyBytesPerLine);
+            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
+            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
