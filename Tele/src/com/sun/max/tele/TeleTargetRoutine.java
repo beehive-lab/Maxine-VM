@@ -26,7 +26,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -88,10 +87,6 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     TeleClassMethodActor getTeleClassMethodActor();
 
     StopPositions getStopPositions();
-
-    int[] bytecodeToTargetCodePositionMap();
-
-    BytecodeInfo[] bytecodeInfos();
 
     /**
      * Gets the index of the stop corresponding to a given address that possibly denotes a position within this tele

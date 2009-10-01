@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,37 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
-
 /**
- * @author Thomas Wuerthinger
+ * A bytecode interpreter.
+ *
+ * @author Paul Caprioli
  */
-public class TeleC1XTargetMethod extends TeleTargetMethod {
-
-    TeleC1XTargetMethod(TeleVM teleVM, Reference ref) {
-        super(teleVM, ref);
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-
-    @Override
-    public int[] getCatchRangePositions() {
-        return null;
-    }
-
-    @Override
-    public int[] getCatchBlockPositions() {
-        return null;
-    }
-}
+package com.sun.max.vm.interpreter;

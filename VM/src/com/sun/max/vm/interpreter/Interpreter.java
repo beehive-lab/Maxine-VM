@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package com.sun.max.vm.interpreter;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.BytecodeInfo;
-import com.sun.max.vm.reference.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
-/**
- * Canonical surrogate for a DTI stub in the {@link TeleVM}.
- *
- * @author Simon Wilkinson
- */
-public class TeleInterpretedTargetMethod extends TeleTargetMethod {
 
-    TeleInterpretedTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
-        super(teleVM, targetMethodReference);
+public class Interpreter {
+
+    public static final CriticalMethod Interpreter_interpret = new CriticalMethod(Interpreter.class, "interpret", SignatureDescriptor.fromJava(Void.TYPE));
+
+    //@INTERPRETER
+    static void interpret() {
+        Log.print("About to interpret ");
+        Log.printMethod(UnsafeCast.asClassMethodActor(VmThreadLocal.INTERPRETED_METHOD.getConstantReference().toJava()), true);
+        FatalError.unimplemented();
     }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
 }

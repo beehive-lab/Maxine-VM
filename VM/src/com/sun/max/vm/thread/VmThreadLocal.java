@@ -274,19 +274,13 @@ public class VmThreadLocal {
     public static final VmThreadLocal STACK_REFERENCE_MAP
         = new VmThreadLocal("STACK_REFERENCE_MAP", false, "points to stack reference map");
 
-    public static final VmThreadLocal IMMORTAL_ALLOCATION = new VmThreadLocal("GLOBAL_IMMORTAL_ALLOCATION", false, "Non-zero if thread is allocation on its immortal heap");
+    public static final VmThreadLocal IMMORTAL_ALLOCATION_ENABLED
+        = new VmThreadLocal("IMMORTAL_ALLOCATION_ENABLED", false, "Non-zero if thread is allocating on the immortal heap");
 
     /**
-     * This is address of the object before it got relocated by the GC.
+     * Used to pass a method from an {@link InterpreterStub} to the interpreter.
      */
-    public static final VmThreadLocal OLD_OBJECT_ADDRESS
-        = new VmThreadLocal("OLD_OBJECT_ADDRESS", false, "Old address of an object, before compaction");
-
-    /**
-     * This is the new address of the object after relocation.
-     */
-    public static final VmThreadLocal NEW_OBJECT_ADDRESS
-        = new VmThreadLocal("NEW_OBJECT_ADDRESS", false, "New address of an object, after compaction");
+    public static final VmThreadLocal INTERPRETED_METHOD = new VmThreadLocal("INTERPRETED_METHOD", true, "ClassMethodActor being interpreted");
 
     /**
      * Records the size of the native call stack.

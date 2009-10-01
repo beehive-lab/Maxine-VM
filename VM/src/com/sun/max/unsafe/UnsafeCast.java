@@ -58,6 +58,7 @@ public final class UnsafeCast {
     @UNSAFE_CAST public static ArrayClassActor          asArrayClassActor(Object object) { return (ArrayClassActor) object; }
     @UNSAFE_CAST public static ClassActor               asClassActor(Object object) { return (ClassActor) object; }
     @UNSAFE_CAST public static FieldActor               asFieldActor(Object object) { return (FieldActor) object; }
+    @UNSAFE_CAST public static MethodActor              asClassMethodActor(Object object) { return (ClassMethodActor) object; }
     @UNSAFE_CAST public static StaticMethodActor        asStaticMethodActor(Object object) { return (StaticMethodActor) object; }
     @UNSAFE_CAST public static VirtualMethodActor       asVirtualMethodActor(Object object) { return (VirtualMethodActor) object; }
     @UNSAFE_CAST public static AccessControlContext     asAccessControlContext(Object object) { return (AccessControlContext) object; }
