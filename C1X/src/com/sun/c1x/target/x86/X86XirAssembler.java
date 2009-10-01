@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.c1x.target.x86;
 
 import java.util.*;
@@ -16,7 +36,7 @@ public class X86XirAssembler extends XirAssembler {
         int flags = 0;
 
         if (isStub) {
-            flags |= XirTemplate.GlobalFlags.GLOBAL_STUB.mask();
+            flags |= XirTemplate.GlobalFlags.GLOBAL_STUB.mask;
         }
 
         ArrayList<XirInstruction> currentList = fastPath;
@@ -39,10 +59,8 @@ public class X86XirAssembler extends XirAssembler {
                 case And:
                 case Or:
                 case Xor:
-
                     // Two operand form
                     XirVariable xOp = i.x();
-
 
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
 
@@ -90,38 +108,38 @@ public class X86XirAssembler extends XirAssembler {
                 case PointerCAS:
                     break;
                 case CallStub:
-                    flags |= XirTemplate.GlobalFlags.HAS_STUB_CALL.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_STUB_CALL.mask;
                     break;
                 case CallRuntime:
-                    flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask;
                     break;
                 case CallJava:
                     assert false : "Java calls must be tail calls and not expressed in XIR";
                     // TODO (tw): Assert the properties and conditions around calls
                     break;
                 case Jmp:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jeq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jneq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jgt:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jgteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jugteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                    break;
                 case Jlt:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Jlteq:
-                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask();
+                    flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;
                     break;
                 case Bind:
                     XirLabel label = (XirLabel) i.extra;
@@ -142,8 +160,7 @@ public class X86XirAssembler extends XirAssembler {
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
         XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
-        final XirTemplate result = new XirTemplate(name, this.variableCount, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
-        return result;
+        return new XirTemplate(name, this.variableCount, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
     }
 
     @Override

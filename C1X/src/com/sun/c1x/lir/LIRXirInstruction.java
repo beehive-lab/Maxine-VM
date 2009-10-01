@@ -48,7 +48,7 @@ public class LIRXirInstruction extends LIRInstruction {
     }
 
     public LIROperand[] getOperands() {
-        for (int i=0; i<operandIndices.length; i++) {
+        for (int i = 0; i < operandIndices.length; i++) {
             originalOperands[operandIndices[i]] = operand(i);
         }
         if (outputOperandIndex != -1) {

@@ -831,7 +831,7 @@ public class MaxXirGenerator extends XirGenerator {
                 addWriteBarrier(asm, object, value);
             }
             asm.end();
-            unresolved = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier +">-unresolved");
+            unresolved = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -1052,7 +1052,7 @@ public class MaxXirGenerator extends XirGenerator {
             asm.bindInline(fail);
             asm.mov(result, asm.b(false));
             asm.end();
-            resolved = finishTemplate(asm, "instanceof-leaf<"+nonnull+">");
+            resolved = finishTemplate(asm, "instanceof-leaf<" + nonnull + ">");
         }
         {
             // unresolved instanceof
@@ -1095,7 +1095,7 @@ public class MaxXirGenerator extends XirGenerator {
             asm.bindInline(fail);
             asm.mov(result, asm.b(false));
             asm.end();
-            resolved = finishTemplate(asm, "instanceof-interface<"+nonnull+">");
+            resolved = finishTemplate(asm, "instanceof-interface<" + nonnull + ">");
         }
         {
             // unresolved instanceof
@@ -1124,7 +1124,7 @@ public class MaxXirGenerator extends XirGenerator {
             asm.end();
         }
         asm.end();
-        unresolved = finishTemplate(asm, "instanceof-unresolved<"+nonnull+">");
+        unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
         return unresolved;
     }
 

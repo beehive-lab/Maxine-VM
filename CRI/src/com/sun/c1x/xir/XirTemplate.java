@@ -41,10 +41,9 @@ public class XirTemplate {
     	HAS_RUNTIME_CALL,
     	HAS_CONTROL_FLOW,
     	GLOBAL_STUB;
-    	
-    	public int mask() {
-    		return 1 << ordinal();
-    	}
+
+    	public final int mask = 1 << ordinal();
+
     }
 
     public final String name;
@@ -57,7 +56,7 @@ public class XirTemplate {
     public final XirAssembler.XirTemp[] temps;
     public final XirAssembler.XirConstant[] constants;
     public final int variableCount;
-    
+
     public int flags;
 
     public XirTemplate(String name, int variableCount, XirVariable resultOperand, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
@@ -71,11 +70,11 @@ public class XirTemplate {
         this.flags = flags;
         this.temps = temps;
         this.constants = constants;
-        
+
         assert fastPath != null;
         assert labels != null;
         assert parameters != null;
-        
+
         parameterDestroyed = new boolean[parameters.length];
         for (int i=0; i<parameters.length; i++) {
         	for (XirInstruction ins : fastPath) {
@@ -84,7 +83,7 @@ public class XirTemplate {
         			break;
         		}
         	}
-        	
+
         	if (slowPath != null && !parameterDestroyed[i]) {
         		for (XirInstruction ins : slowPath) {
             		if (ins.result == parameters[i]) {
@@ -94,30 +93,30 @@ public class XirTemplate {
         	}
         }
     }
-    
+
     public boolean isParameterDestroyed(int index) {
     	return parameterDestroyed[index];
     }
-    
+
     @Override
     public String toString() {
     	return name;
     }
-    
+
     public void print(PrintStream p) {
 
     	final String indent = "   ";
-    	
+
     	p.println();
     	p.println("Template " + name);
-    	
-    	
+
+
     	p.print("Param:");
     	for (XirParameter param : parameters) {
         	p.print(" " + param.detailedToString());
     	}
     	p.println();
-    	
+
     	if (temps.length > 0) {
 	    	p.print("Temps:");
 	    	for (XirTemp temp : temps) {
@@ -137,18 +136,18 @@ public class XirTemplate {
     	if (flags != 0) {
 	    	p.print("Flags:");
 	    	for (XirTemplate.GlobalFlags flag : XirTemplate.GlobalFlags.values()) {
-	    		if ((this.flags & flag.mask()) != 0) {
+	    		if ((this.flags & flag.mask) != 0) {
 	    			p.print(" " + flag.name());
 	    		}
 	    	}
 	    	p.println();
     	}
-    	
+
     	p.println("Fast path:");
     	for (XirInstruction i : fastPath) {
     		p.println(indent + i.toString());
     	}
-    	
+
     	if (slowPath != null) {
     		p.println("Slow path:");
     		for (XirInstruction i : slowPath) {
