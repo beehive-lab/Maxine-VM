@@ -21,41 +21,34 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.debug.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
-import com.sun.c1x.ri.RiMethod;
 
 public class LIRXirInstruction extends LIRInstruction {
 
     public final LIROperand[] originalOperands;
+    public final int outputOperandIndex;
+    public final int[] operandIndices;
     public final XirSnippet snippet;
-    public final RiMethod javaMethod;
+    public final RiMethod method;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, RiMethod javaMethod) {
-        super(LIROpcode.Xir, outputOperand, null, false, null, inputTempCount, tempCount, operands);
+    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, CodeEmitInfo info, RiMethod method) {
+        super(LIROpcode.Xir, outputOperand, info, false, null, inputTempCount, tempCount, operands);
+        this.method = method;
         this.snippet = snippet;
+        this.operandIndices = operandIndices;
+        this.outputOperandIndex = outputOperandIndex;
         this.originalOperands = originalOperands;
-        this.javaMethod = javaMethod;
     }
 
     public LIROperand[] getOperands() {
-        final LIROperand[] result = new LIROperand[snippet.template.parameters.length];
-
-        int inputParameterIndex = 0;
-        for (int i = 0; i < result.length; i++) {
-            if (i == snippet.template.getResultParameterIndex()) {
-                result[i] = this.result();
-            } else {
-                if (snippet.arguments[i] != null) {
-                    if (snippet.arguments[i].constant == null) {
-                        result[i] = operand(inputParameterIndex++);
-                    } else {
-                        result[i] = originalOperands[i];
-                    }
-                }
-            }
+        for (int i=0; i<operandIndices.length; i++) {
+            originalOperands[operandIndices[i]] = operand(i);
         }
-
-        return result;
+        if (outputOperandIndex != -1) {
+            originalOperands[outputOperandIndex] = result();
+        }
+        return originalOperands;
     }
 
     /**

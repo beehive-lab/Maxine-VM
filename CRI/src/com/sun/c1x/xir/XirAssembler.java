@@ -25,6 +25,7 @@ import java.util.List;
 
 import com.sun.c1x.ci.CiConstant;
 import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiLocation;
 import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ri.RiSignature;
 
@@ -37,13 +38,15 @@ import com.sun.c1x.ri.RiSignature;
  */
 public class XirAssembler {
 
-    private final XirParameter resultOperand;
+    private final XirResult resultOperand;
 
     private final List<XirInstruction> instructions = new ArrayList<XirInstruction>();
     private final List<XirLabel> labels = new ArrayList<XirLabel>();
     private final List<XirParameter> parameters = new ArrayList<XirParameter>();
     private final List<XirTemp> temps = new ArrayList<XirTemp>();
-    private final List<XirCache> caches = new ArrayList<XirCache>();
+    private final List<XirConstant> constants = new ArrayList<XirConstant>();
+    
+    private int variableCount;
 
     public class XirLabel {
     	public final String name;
@@ -67,19 +70,32 @@ public class XirAssembler {
         public final CiKind kind;
         public final int index;
 
-        public XirVariable(CiKind kind, int index) {
+        public XirVariable(CiKind kind) {
             this.kind = kind;
-            this.index = index;
+            this.index = variableCount++;
         }
+    }
+    
+    final class XirResult extends XirVariable {
+    
+    	public XirResult(CiKind kind, int index) {
+    		super(kind);
+    	}
+    	
+    	public String toString() {
+    		return "result";
+    	}
     }
 
     public class XirParameter extends XirVariable {
         public final boolean unknownConstant;
         public final CiConstant value;
         public final String name;
+        public final int parameterIndex;
 
-        XirParameter(String name, CiKind kind, boolean unknownConstant, CiConstant value, int index) {
-            super(kind, index);
+        XirParameter(String name, CiKind kind, boolean unknownConstant, CiConstant value, int parameterIndex) {
+            super(kind);
+            this.parameterIndex = parameterIndex;
             this.unknownConstant = unknownConstant;
             this.value = value;
             this.name = name;
@@ -103,15 +119,35 @@ public class XirAssembler {
         	return sb.toString();
         }
     }
+    
+    public class XirConstant extends XirVariable {
+        public final CiConstant value;
+    	
+        XirConstant(CiConstant value) {
+        	super(value.basicType);
+        	this.value = value;
+        }
+        
+        @Override
+        public String toString() {
+        	return value.valueString();
+        }
+
+        public String detailedToString() {
+        	StringBuffer sb = new StringBuffer();
+        	sb.append(value.valueString());
+        	sb.append('$');
+        	sb.append(super.kind.typeChar);
+        	return sb.toString();
+        }
+    }
 
     public class XirTemp extends XirVariable {
-        public final CiConstant value;
         public final String name;
 
-        XirTemp(String name, CiKind kind, CiConstant value, int index) {
-            super(kind, index);
+        XirTemp(String name, CiKind kind) {
+            super(kind);
             this.name = name;
-            this.value = value;
         }
         
         @Override
@@ -128,46 +164,26 @@ public class XirAssembler {
         }
     }
 
-    public class XirCache extends XirVariable {
-        public final boolean writeMany;
-
-        XirCache(CiKind kind, int index, boolean writeMany) {
-            super(kind, index);
-            this.writeMany = writeMany;
-        }
+    public class XirFixed extends XirTemp {
+        public final CiLocation location;
         
-        @Override
-        public String toString() {
-        	return "cache" + index;
-        }
-    }
-
-    public class XirRegister extends XirVariable {
-        public final CiRegister register;
-
-        XirRegister(CiKind kind, CiRegister register, int index) {
-            super(kind, index);
-            this.register = register;
+        XirFixed(String name, CiLocation location) {
+            super(name, location.kind);
+            this.location = location;
         }
     }
 
     public XirAssembler(CiKind kind) {
-        resultOperand = createParameter("result", kind, false);
+        resultOperand = new XirResult(kind, 0);
     }
 
     public XirAssembler(RiSignature signature) {
-        resultOperand = createParameter("result", signature.returnBasicType(), false);
+        resultOperand = new XirResult(signature.returnBasicType(), 0);
         for (int i = 0; i < signature.argumentCount(false); i++) {
             createInputParameter("arg" + i, signature.argumentBasicTypeAt(i));
         }
     }
-
-    private XirParameter createParameter(String name, CiKind kind, boolean isConstant) {
-        final XirParameter result = new XirParameter(name, kind, isConstant, null, parameters.size());
-        parameters.add(result);
-        return result;
-    }
-
+   
     public class XirInstruction {
         public final CiKind kind;
         public final XirOp op;
@@ -433,57 +449,53 @@ public class XirAssembler {
         return param;
     }
 
-    public XirTemp createConstantTemp(CiConstant constant) {
-        XirTemp temp = new XirTemp(constant.valueString(), constant.basicType, constant, parameters.size());
+    public XirConstant createConstant(CiConstant constant) {
+    	XirConstant temp = new XirConstant(constant);
+        constants.add(temp);
+        return temp;
+    }
+
+    public XirVariable createTemp(String name, CiKind kind) {
+        XirTemp temp = new XirTemp(name, kind);
         temps.add(temp);
         return temp;
     }
 
-    public XirTemp createTemp(String name, CiKind kind) {
-        XirTemp temp = new XirTemp(name, kind, null, temps.size());
-        temps.add(temp);
-        return temp;
+    public XirVariable createRegister(String name, CiKind kind, CiRegister register) {
+        XirFixed fixed = new XirFixed(name, new CiLocation(kind, register));
+        temps.add(fixed);
+        return fixed;
     }
 
-    public XirVariable createRegister(CiKind kind, CiRegister register) {
-        return new XirRegister(kind, register, temps.size());
+    public XirVariable i(int b) {
+        return createConstant(CiConstant.forInt(b));
     }
 
-    public XirCache createCache(CiKind kind, boolean writeMany) {
-        XirCache cache = new XirCache(kind, caches.size(), writeMany);
-        caches.add(cache);
-        return cache;
+    public XirVariable b(boolean t) {
+        return createConstant(CiConstant.forBoolean(t));
     }
 
-    public XirTemp i(int b) {
-        return createConstantTemp(CiConstant.forInt(b));
+    public XirVariable w(long b) {
+        return createConstant(CiConstant.forWord(b));
     }
 
-    public XirTemp b(boolean t) {
-        return createConstantTemp(CiConstant.forBoolean(t));
+    public XirVariable o(Object obj) {
+        return createConstant(CiConstant.forObject(obj));
     }
 
-    public XirTemp w(long b) {
-        return createConstantTemp(CiConstant.forWord(b));
-    }
-
-    public XirTemp o(Object obj) {
-        return createConstantTemp(CiConstant.forObject(obj));
-    }
-
-    public XirParameter getResultOperand() {
+    public XirVariable getResultOperand() {
         return resultOperand;
     }
 
-    public XirTemplate finishTemplate(String name) {
-        return buildTemplate(name, false, false);
+    public XirTemplate finishTemplate(String name, CiRegister fixedShiftCountLocation) {
+        return buildTemplate(name, false, true, fixedShiftCountLocation);
     }
 
-    public XirTemplate finishStub(String name) {
-        return buildTemplate(name, false, true);
+    public XirTemplate finishStub(String name, CiRegister fixedShiftCountLocation) {
+        return buildTemplate(name, false, true, fixedShiftCountLocation);
     }
 
-    private XirTemplate buildTemplate(String name, boolean isStub, boolean twoOperandForm) {
+    private XirTemplate buildTemplate(String name, boolean isStub, boolean twoOperandForm, CiRegister fixedShiftCountLocation) {
         ArrayList<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
         ArrayList<XirInstruction> slowPath = new ArrayList<XirInstruction>();
 
@@ -510,11 +522,25 @@ public class XirAssembler {
                 case And:
                 case Or:
                 case Xor:
-                    if (twoOperandForm && i.result != i.x()) {
+                    
+                	XirVariable xOp = i.x();
+                	if (twoOperandForm && i.result != i.x()) {
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
-                        currentList.add(new XirInstruction(i.result.kind, i.op, i.result, i.result, i.y()));
-                        appended = true;
-                    }
+                        xOp = i.result;
+                	}
+
+                	XirVariable yOp = i.y();
+                	if (fixedShiftCountLocation != null && (i.op == XirOp.Shl || i.op == XirOp.Shr)) {
+                		XirVariable fixedLocation = createRegister("fixedShiftCount", i.y().kind, fixedShiftCountLocation);
+                        currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedLocation, i.y()));
+                        yOp = fixedLocation;
+                	}
+                    
+                	if (xOp != i.x() || yOp != i.y()) {
+	                    currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
+	                    appended = true;
+                	}
+                	
                     break;
                 case PointerLoad:
                 case PointerStore:
@@ -573,7 +599,8 @@ public class XirAssembler {
         XirLabel[] xirLabels = labels.toArray(new XirLabel[labels.size()]);
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
         XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
-        final XirTemplate result = new XirTemplate(name, fp, sp, xirLabels, xirParameters, temporaryOperands, flags);
+        XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
+        final XirTemplate result = new XirTemplate(name, this.variableCount, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
         return result;
     }
 }

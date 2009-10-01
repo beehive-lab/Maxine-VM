@@ -22,10 +22,12 @@ package com.sun.c1x.xir;
 
 import java.io.PrintStream;
 
+import com.sun.c1x.xir.XirAssembler.XirConstant;
 import com.sun.c1x.xir.XirAssembler.XirInstruction;
 import com.sun.c1x.xir.XirAssembler.XirLabel;
 import com.sun.c1x.xir.XirAssembler.XirParameter;
 import com.sun.c1x.xir.XirAssembler.XirTemp;
+import com.sun.c1x.xir.XirAssembler.XirVariable;
 import com.sun.c1x.ci.CiRegister;
 
 /**
@@ -52,31 +54,33 @@ public class XirTemplate {
     }
 
     public final String name;
+    public final XirVariable resultOperand;
     public final XirAssembler.XirInstruction[] fastPath;
     public final XirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
     public final XirAssembler.XirTemp[] temps;
+    public final XirAssembler.XirConstant[] constants;
+    public final int variableCount;
     
     public int[] tempFlags;
     public int flags;
 
-    XirTemplate(String name, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, int flags) {
-        this.name = name;
+    XirTemplate(String name, int variableCount, XirVariable resultOperand, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
+    	this.name = name;
+    	this.variableCount = variableCount;
+    	this.resultOperand = resultOperand;
         this.fastPath = fastPath;
         this.slowPath = slowPath;
         this.labels = labels;
         this.parameters = parameters;
         this.flags = flags;
         this.temps = temps;
+        this.constants = constants;
         
         assert fastPath != null;
         assert labels != null;
         assert parameters != null;
-    }
-
-    public int getResultParameterIndex() {
-        return 1;
     }
 
     public boolean destroysTemp(int index) {
@@ -130,6 +134,14 @@ public class XirTemplate {
 	    	p.print("Temps:");
 	    	for (XirTemp temp : temps) {
 	    		p.print(" " + temp.detailedToString());
+	    	}
+	    	p.println();
+    	}
+
+    	if (constants.length > 0) {
+	    	p.print("Constants:");
+	    	for (XirConstant c : constants) {
+	    		p.print(" " + c.detailedToString());
 	    	}
 	    	p.println();
     	}

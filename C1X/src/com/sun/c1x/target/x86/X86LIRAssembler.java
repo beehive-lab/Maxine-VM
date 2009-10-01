@@ -879,6 +879,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().movl2ptr(dest.asRegister(), fromAddr);
                 break;
 
+            case Word:
             case Long: {
                 CiRegister toLo = dest.asRegisterLo();
                 CiRegister toHi = dest.asRegisterHi();
@@ -2117,7 +2118,7 @@ public class X86LIRAssembler extends LIRAssembler {
             assert divisor > 0 && Util.isPowerOf2(divisor) : "must be";
             if (code == LIROpcode.Idiv) {
                 assert lreg == X86.rax : "must be rax : ";
-                assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
+                //assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
                 masm().cdql(); // sign extend into rdx:rax
                 if (divisor == 2) {
                     masm().subl(lreg, X86.rdx);
@@ -2143,7 +2144,7 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister rreg = right.asRegister();
             assert lreg == X86.rax : "left register must be rax : ";
             assert rreg != X86.rdx : "right register must not be rdx";
-            assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
+            //assert temp.asRegister() == X86.rdx : "tmp register must be rdx";
 
             moveRegs(lreg, X86.rax);
 
@@ -2945,15 +2946,19 @@ public class X86LIRAssembler extends LIRAssembler {
                     break;
 
                 case Mod:
-                    arithOp(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
+                    if (inst.kind == CiKind.Int) {
+                        arithmeticIdiv(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], LIROperandFactory.IllegalLocation,  ops[inst.result.index], null);
+                    } else {
+                        arithOp(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
+                    }
                     break;
 
                 case Shl:
-                    shiftOp(LIROpcode.Shl, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
+                    shiftOp(LIROpcode.Shl, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], LIROperandFactory.IllegalLocation);
                     break;
 
                 case Shr:
-                    shiftOp(LIROpcode.Shr, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
+                    shiftOp(LIROpcode.Shr, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], LIROperandFactory.IllegalLocation);
                     break;
 
                 case And:
@@ -2971,6 +2976,8 @@ public class X86LIRAssembler extends LIRAssembler {
                 case PointerLoad: {
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
+                    pointer = assureInRegister(pointer);
+                    assert pointer.isRegister();
                     moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, null, false);
                     break;
                 }
@@ -2978,6 +2985,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 case PointerStore: {
                     LIROperand value = ops[inst.y().index];
                     LIROperand pointer = ops[inst.x().index];
+                    assert pointer.isRegister();
                     moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, null, false);
                     break;
                 }
@@ -2987,6 +2995,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     LIROperand pointer = ops[inst.x().index];
                     LIROperand displacement = ops[inst.y().index];
 
+                    pointer = assureInRegister(pointer);
                     assert pointer.isRegister();
 
                     LIROperand src = null;
@@ -3006,6 +3015,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     LIROperand pointer = ops[inst.x().index];
                     LIROperand displacement = ops[inst.y().index];
 
+                    pointer = assureInRegister(pointer);
                     assert pointer.isRegister();
 
                     LIROperand dst;
@@ -3026,11 +3036,12 @@ public class X86LIRAssembler extends LIRAssembler {
                 case CallJava: {
                     LIROperand dest = ops[inst.x().index];
                     if (dest.isConstant()) {
-                        masm.call(xir.javaMethod, xir.info.oopMap.stackMap());
+                        assert xir.method != null;
+                        masm.call(xir.method, xir.info.oopMap.stackMap());
                     } else if (dest.isAddress()) {
-                        masm.call(asAddress((LIRAddress) dest), xir.javaMethod, xir.info.oopMap.stackMap());
+                        masm.call(asAddress((LIRAddress) dest), (RiMethod) inst.extra, xir.info.oopMap.stackMap());
                     } else if (dest.isRegister()) {
-                        masm.call(dest.asRegister(), xir.javaMethod, xir.info.oopMap.stackMap());
+                        masm.call(dest.asRegister(), (RiMethod) inst.extra, xir.info.oopMap.stackMap());
                     }
                     break;
                 }
@@ -3095,6 +3106,18 @@ public class X86LIRAssembler extends LIRAssembler {
 
             }
         }
+    }
+
+    private LIROperand assureInRegister(LIROperand pointer) {
+
+        if (pointer.isConstant()) {
+            LIROperand newPointerOperand = LIROperandFactory.scratch(pointer.kind, compilation.target);
+            moveOp(pointer, newPointerOperand, pointer.kind, null, false);
+            return newPointerOperand;
+        }
+
+        assert pointer.isRegister();
+        return pointer;
     }
 
     private void emitXirCompare(XirInstruction inst, LIRCondition lirCondition, Condition condition, LIROperand[] ops, Label label) {
