@@ -94,6 +94,6 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                                         incomingIntegerparameterregisters(),
                                         outgoingIntegerParameterRegisters(),
                                         null, false, false),
-                                        jitABI, optimizedJavaABI, null);
+                                        jitABI, optimizedJavaABI);
     }
 }
