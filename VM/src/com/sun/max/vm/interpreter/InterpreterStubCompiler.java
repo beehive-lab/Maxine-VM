@@ -43,12 +43,12 @@ public abstract class InterpreterStubCompiler extends AbstractVMScheme implement
     public static InterpreterStubCompiler create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
-            final Class<?> safepointClass = Class.forName(MaxPackage.fromClass(InterpreterStubCompiler.class).subPackage(isa.toLowerCase()).name() + "." + isa + InterpreterStubCompiler.class.getSimpleName());
-            final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
+            final Class<?> interpreterStubCompilerClass = Class.forName(MaxPackage.fromClass(InterpreterStubCompiler.class).subPackage(isa.toLowerCase()).name() + "." + isa + InterpreterStubCompiler.class.getSimpleName());
+            final Constructor<?> constructor = interpreterStubCompilerClass.getConstructor(VMConfiguration.class);
             return (InterpreterStubCompiler) constructor.newInstance(vmConfiguration);
         } catch (Exception exception) {
             exception.printStackTrace();
-            throw ProgramError.unexpected("could not create safepoint: " + exception);
+            throw ProgramError.unexpected("Could not create InterpreterStubCompiler: " + exception);
         }
     }
 }

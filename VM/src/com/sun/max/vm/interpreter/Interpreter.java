@@ -29,7 +29,7 @@ import com.sun.max.vm.type.*;
 
 public class Interpreter {
 
-    public static final CriticalMethod Interpreter_interpret = new CriticalMethod(Interpreter.class, "interpret", SignatureDescriptor.fromJava(Void.TYPE));
+    public static final CriticalMethod INTERPRETER_INTERPRET = new CriticalMethod(Interpreter.class, "interpret", SignatureDescriptor.fromJava(Void.TYPE));
 
     //@INTERPRETER
     static void interpret() {
