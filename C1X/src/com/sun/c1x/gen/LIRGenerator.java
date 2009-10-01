@@ -351,7 +351,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XIR support for NEWMULTIARRAY
             XirArgument[] dims = new XirArgument[x.dimensions().length];
 
-            for (int i=0; i<dims.length; i++) {
+            for (int i = 0; i < dims.length; i++) {
                 dims[i] = toXirArgument(x.dimensions()[i]);
             }
 
@@ -944,30 +944,33 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIROperand[] operandArray = new LIROperand[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
         int[] operandIndicesArray = new int[inputOperands.size() + inputTempOperands.size() + tempOperands.size()];
-        for (int i=0; i<inputOperands.size(); i++) {
+        for (int i = 0; i < inputOperands.size(); i++) {
             operandArray[i] = inputOperands.get(i);
             operandIndicesArray[i] = inputOperandsIndices.get(i);
         }
 
-        for (int i=0; i<inputTempOperands.size(); i++) {
+        for (int i = 0; i < inputTempOperands.size(); i++) {
             operandArray[i + inputOperands.size()] = inputTempOperands.get(i);
             operandIndicesArray[i + inputOperands.size()] = inputTempOperandsIndices.get(i);
         }
 
-        for (int i=0; i<tempOperands.size(); i++) {
+        for (int i = 0; i < tempOperands.size(); i++) {
             operandArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperands.get(i);
             operandIndicesArray[i + inputOperands.size() + inputTempOperands.size()] = tempOperandsIndices.get(i);
         }
 
-        for (int i=0; i<operands.length; i++) {
-            assert operands[i] != null;
+        for (LIROperand operand : operands) {
+            assert operand != null;
         }
 
         LIROperand allocatedResultOperand = operands[resultOperand.index];
         if (!allocatedResultOperand.isRegister()) {
             allocatedResultOperand = LIROperandFactory.IllegalLocation;
         }
-        lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(), operandArray, operandIndicesArray, (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index, info, method);
+        lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
+                operandArray, operandIndicesArray,
+                (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
+                info, method);
         return operands[resultOperand.index];
     }
 
