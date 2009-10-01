@@ -2173,6 +2173,7 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
+                case Word:
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";

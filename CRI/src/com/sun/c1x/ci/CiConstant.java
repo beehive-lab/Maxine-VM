@@ -137,6 +137,18 @@ public final class CiConstant extends CiValue {
     }
 
     /**
+     * Converts this constant to a primitive boolean.
+     * @return the boolean value of this constant
+     */
+    public boolean asBoolean() {
+    	if (basicType == CiKind.Boolean) {
+    		return (Boolean) value;
+    	}
+
+        throw new Error("Constant is not boolean: " + this);
+    }
+
+    /**
      * Converts this constant to a primitive long.
      * @return the long value of this constant
      */
