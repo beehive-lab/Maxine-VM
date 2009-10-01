@@ -27,7 +27,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
-
+/**
+ *
+ * @author Paul Caprioli
+ */
 public abstract class InterpreterStub extends TargetMethod {
 
     public InterpreterStub(ClassMethodActor classMethodActor, InterpreterStubCompiler compilerScheme, TargetABI abi) {

@@ -117,7 +117,7 @@ public class AMD64InterpreterStub extends InterpreterStub {
         setData(null, referenceLiterals, code);
 
         try {
-            AMD64TargetMethod.patchJump32Site(this, callToInterpreter.position(), Interpreter.Interpreter_interpret.address());
+            AMD64TargetMethod.patchJump32Site(this, callToInterpreter.position(), Interpreter.INTERPRETER_INTERPRET.address());
         } catch (AssemblyException e) {
             FatalError.unexpected("Error patching call-to-interpreter", e);
         }
