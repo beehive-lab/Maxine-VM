@@ -50,7 +50,7 @@ public class CallingConvention {
         }
     }
 
-    private static LIROperand locationToOperand(CiLocation location) {
+    public static LIROperand locationToOperand(CiLocation location) {
         if (location.isStackOffset()) {
             int stackOffset = location.stackOffset;
             if (location.callerStack) {

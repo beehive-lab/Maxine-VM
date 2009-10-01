@@ -21,7 +21,6 @@
 package com.sun.c1x.xir;
 
 import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiRuntimeCall;
 
 /**
  * This class represents an argument to an {@link XirSnippet}.
@@ -33,27 +32,17 @@ public class XirArgument {
 
     public final CiConstant constant;
     public final Object object;
-    public final CiRuntimeCall runtimeCall;
     public final XirArgument[] arguments;
-
-    private XirArgument(CiRuntimeCall runtimeCall, XirArgument... arguments) {
-        this.constant = null;
-        this.object = null;
-        this.runtimeCall = runtimeCall;
-        this.arguments = arguments;
-    }
 
     private XirArgument(CiConstant value) {
         this.constant = value;
         this.object = null;
-        this.runtimeCall = null;
         this.arguments = null;
     }
 
     private XirArgument(Object o) {
         this.constant = null;
         this.object = o;
-        this.runtimeCall = null;
         this.arguments = null;
     }
 
@@ -71,9 +60,5 @@ public class XirArgument {
 
     public static XirArgument forObject(Object o) {
         return new XirArgument(CiConstant.forObject(o));
-    }
-
-    public static XirArgument forRuntimeCall(CiRuntimeCall runtimeCall, XirArgument... arguments) {
-        return new XirArgument(runtimeCall, arguments);
     }
 }
