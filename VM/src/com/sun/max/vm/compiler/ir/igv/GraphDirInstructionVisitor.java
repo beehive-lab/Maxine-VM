@@ -196,6 +196,6 @@ class GraphDirInstructionVisitor extends DirAdapter {
         final GraphWriter.Node node = graph.getNode(dirSafepoint.serial());
         node.getProperties().setProperty("name", "safepoint");
         node.getProperties().setProperty("dump_spec", dirSafepoint.toString());
-        node.getProperties().setProperty("bci", Integer.toString(dirSafepoint.javaFrameDescriptor().bytecodePosition()));
+        node.getProperties().setProperty("bci", Integer.toString(dirSafepoint.javaFrameDescriptor().bytecodePosition));
     }
 }

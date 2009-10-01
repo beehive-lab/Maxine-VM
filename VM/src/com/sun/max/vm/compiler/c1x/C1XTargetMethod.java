@@ -139,7 +139,7 @@ public class C1XTargetMethod extends TargetMethod {
         Object[] referenceLiterals = objectReferences.toArray();
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCode().length);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
         Code.allocate(targetBundleLayout, this);
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 

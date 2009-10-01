@@ -209,7 +209,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
             final DirValue[] locals = useMany(state.getLocalSlots());
             final DirValue[] stack = useMany(state.getStackSlots());
             final BytecodeLocation location = state.last().location();
-            frameDescriptor = new DirJavaFrameDescriptor(null, location.classMethodActor(), location.bytecodePosition(), locals, stack);
+            frameDescriptor = new DirJavaFrameDescriptor(null, location.classMethodActor, location.bytecodePosition, locals, stack);
         } else {
             frameDescriptor = null;
         }

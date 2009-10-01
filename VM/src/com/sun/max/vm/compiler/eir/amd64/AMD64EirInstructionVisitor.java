@@ -122,6 +122,7 @@ public interface AMD64EirInstructionVisitor extends EirInstructionVisitor {
     void visit(SFENCE instruction);
     void visit(SHR_I32 instruction);
     void visit(SHR_I64 instruction);
+    void visit(STACK_ALLOCATE instruction);
     void visit(SUB_I32 instruction);
     void visit(SUB_I64 instruction);
     void visit(SUBSD instruction);

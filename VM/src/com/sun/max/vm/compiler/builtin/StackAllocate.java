@@ -18,42 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter.eir;
+package com.sun.max.vm.compiler.builtin;
 
-import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.ir.*;
 
 /**
- * A frame encapsulates the interpreter context of a single method.
+ * A mechanism for allocating a block of memory within an activation frame for the lifetime of the frame.
+ *
+ * @author Doug Simon
+ * @author Paul Caprioli
  */
-public class EirFrame {
-    private final EirFrame caller;
-    private final EirMethod method;
+public final class StackAllocate extends SpecialBuiltin {
 
-    public EirFrame(EirFrame caller, EirMethod method) {
-        this.caller = caller;
-        this.method = method;
+    private StackAllocate() {
+        super(null);
     }
 
-    public EirFrame caller() {
-        return caller;
+    @Override
+    public boolean isFoldable(IrValue[] arguments) {
+        return false;
     }
 
-    public EirMethod method() {
-        return method;
+    @Override
+    public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+        visitor.visitStackAllocate(this, result, arguments);
     }
 
-    public EirABI abi() {
-        return method.abi();
-    }
+    public static final StackAllocate BUILTIN = new StackAllocate();
 
-    private EirBlock catchBlock;
-
-    public EirBlock catchBlock() {
-        return catchBlock;
-    }
-
-    public void setCatchBlock(EirBlock catchBlock) {
-        this.catchBlock = catchBlock;
-    }
+    /**
+     * Allocates a requested block of memory within the current activation frame.
+     * The allocated memory is reclaimed when the method returns.
+     *
+     * @param size bytes to allocate
+     * @return the address of the allocated block
+     */
+    @BUILTIN(builtinClass = StackAllocate.class)
+    public static native Address stackAllocate(int size);
 
 }

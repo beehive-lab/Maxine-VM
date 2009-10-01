@@ -174,7 +174,7 @@ public class JavaMonitorManager {
                     Log.print("  ");
                     Log.print(i);
                     Log.print(": ");
-                    monitor.dump();
+                    monitor.log();
                     Log.println();
                 }
                 Log.unlock(lockDisabledSafepoints);
@@ -302,7 +302,7 @@ public class JavaMonitorManager {
         if (Monitor.traceMonitors()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Bound monitor: ");
-            monitor.dump();
+            monitor.log();
             Log.println();
             Log.unlock(lockDisabledSafepoints);
         }
@@ -367,7 +367,7 @@ public class JavaMonitorManager {
      * Notifies this JavaMonitorManager that the current thread is in-flight to
      * perform an operation on the given monitor. The monitor will
      * not be unbound until the current thread calls this method with a different
-     * monitor, or the the thread terminates.
+     * monitor, or the thread terminates.
      *
      * @param monitor the monitor whose binding to protect
      */
@@ -433,7 +433,7 @@ public class JavaMonitorManager {
                 if (Monitor.traceMonitors()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Unbinding monitor: ");
-                    monitor.dump();
+                    monitor.log();
                     Log.println();
                     Log.unlock(lockDisabledSafepoints);
                 }
@@ -584,7 +584,7 @@ public class JavaMonitorManager {
          */
         void setNext(ManagedMonitor monitor);
 
-        void dump();
+        void log();
     }
 
 }

@@ -33,6 +33,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.actor.member.ClassMethodActor;
 
 /**
  * Base class for views of disassembled target code for a single method in the VM.
@@ -107,7 +108,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final String[] tagTextForRow;
 
     /**
-     * Map:  index into the sequence of target code instructions -> bytecode that compiled into code starting at this instruction, if known; else null.
+     * Map: index into the sequence of target code instructions -> bytecode that compiled into code starting at this instruction, if known; else null.
      * The bytecode location may be in a different method that was inlined.
      */
     private final BytecodeLocation[] rowToBytecodeLocation;
@@ -126,7 +127,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
             bytecodes = teleCodeAttribute.readBytecodes();
             teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-            localConstantPool = teleClassMethodActor.classMethodActor().codeAttribute().constantPool();
+            ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+            localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool();
         } else {  // native method
             bytecodes = null;
             teleConstantPool = null;
@@ -154,7 +156,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         }
 
-        if (bytecodeInfos != null) { // JIT method
+        if (bytecodeInfos != null && teleClassMethodActor != null && teleClassMethodActor.classMethodActor() != null) {
+            // JIT method with infos
             final int[] bytecodeToTargetCodePositionMap = teleTargetRoutine.bytecodeToTargetCodePositionMap();
             boolean alternate = false;
             int bytecodeIndex = 0; // position in the original bytecode stream.
@@ -202,8 +205,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
                             final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
                             rowToBytecodeLocation[row] = bytecodeLocation;
                             // TODO (mlvdv) only works for non-inlined calls
-                            if (bytecodeLocation.classMethodActor().equals(teleTargetMethod.classMethodActor())) {
-                                rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition());
+                            if (bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                                rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                             }
                         }
                     }

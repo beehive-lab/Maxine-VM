@@ -135,7 +135,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         assert arguments.length >= 2;
         for (int i = 0; i != arguments.length - 2; ++i) {
             final CirValue argument = arguments[i];
-            if (!argument.isConstant()) {
+            if (!(argument instanceof CirConstant)) {
                 return false;
             }
         }

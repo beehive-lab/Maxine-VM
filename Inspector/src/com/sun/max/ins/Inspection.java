@@ -610,9 +610,9 @@ public final class Inspection {
         if (preferences.externalViewerType() == ExternalViewerType.NONE) {
             return false;
         }
-        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
+        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition());
+        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition);
         if (lineNumber == -1) {
             return false;
         }

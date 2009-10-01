@@ -27,7 +27,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 

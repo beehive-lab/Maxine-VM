@@ -18,21 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package com.sun.max.vm.compiler.ir.interpreter;
 
-import java.lang.annotation.*;
-
+import com.sun.max.*;
 
 /**
- * Every thus annotated method is never to be inlined by the compiler.
- *
- * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
- * for semantic reasons. Typically, this is to ensure that a separate activation frame is
- * always used for a call to the method.
- *
- * @author Doug Simon
+ * @see MaxPackage
+ * 
+ * @author Bernd Mathiske
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface NEVER_INLINE {
+public class Package extends MaxPackage {
+    public Package() {
+        super();
+    }
 }

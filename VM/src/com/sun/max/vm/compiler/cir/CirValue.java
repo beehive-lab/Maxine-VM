@@ -97,8 +97,9 @@ public abstract class CirValue extends CirNode implements IrValue {
     public boolean isResolvedFieldConstant() {
         return false;
     }
+
     public Value value() {
-        throw new IllegalArgumentException();
+        throw new RuntimeException(this + " is not a value, but a " + getClass());
     }
 
     public static final class Undefined extends CirValue {
