@@ -65,4 +65,21 @@ public class XirSnippet {
 
     public final XirArgument[] arguments;
     public final XirTemplate template;
+    
+    @Override
+    public String toString() {
+    	
+    	StringBuffer sb = new StringBuffer();
+    	
+    	sb.append(template.toString());
+    	sb.append("(");
+    	for (XirArgument a : arguments) {
+    		sb.append(" ");
+    		sb.append(a.toString());
+    	}
+    	
+    	sb.append(" )");
+    	
+    	return sb.toString();
+    }
 }
