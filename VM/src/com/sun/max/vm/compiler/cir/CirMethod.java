@@ -24,6 +24,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.value.Value;
+import com.sun.max.vm.value.ReferenceValue;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -93,6 +95,11 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return name();
     }
 
+    @Override
+    public Value value() {
+        return ReferenceValue.from(classMethodActor);
+    }
+
     private CirCall foldUnsafeCast(CirValue[] arguments) {
         assert arguments.length == 3;
         final CirValue result = arguments[0];
@@ -133,11 +140,13 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }
         // Ignore the continuation parameters
         assert arguments.length >= 2;
-        for (int i = 0; i != arguments.length - 2; ++i) {
+        int max = arguments.length - 2;
+        for (int i = 0; i < max; i++) {
             final CirValue argument = arguments[i];
-            if (!(argument instanceof CirConstant)) {
-                return false;
+            if (argument instanceof CirConstant || argument instanceof CirMethod) {
+                continue;
             }
+            return false;
         }
         return true;
     }
