@@ -34,7 +34,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
 
-
 /**
  * Provides the menu items related to a {@link TeleTargetMethod}.
  *
@@ -84,7 +83,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
                         if (bytecodeLocation != null) {
                             final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                             if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
                                 return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                             }
                         }

@@ -48,7 +48,7 @@ public class JTMaxine {
         "Selects the package which contains the generated tester runs to run.");
     private static final Option<String> callerOption = options.newStringOption("caller", "",
         "Selects the compiler that will compile the caller of the test methods. When left blank," +
-        "the default VM compiler will be used. \"opt\" selects the VM's optimizing compiler, \"jit\" " +
+        "the default VM compiler will be used. \"cps\" selects the VM's CPS compiler, \"jit\" " +
         "selects the VM's JIT compiler, and otherwise a class name can be specified.");
     private static final Option<String> calleeOption = options.newStringOption("callee", "",
         "Selects the compiler that will compile the callee test methods.");
@@ -152,7 +152,7 @@ public class JTMaxine {
         VMConfiguration vmConfiguration = VMConfiguration.target();
         if ("".equals(name)) {
             return null;
-        } else if ("opt".equals(name)) {
+        } else if ("cps".equals(name)) {
             return vmConfiguration.compilerScheme();
         } else if ("jit".equals(name)) {
             return vmConfiguration.jitScheme();
@@ -192,7 +192,7 @@ public class JTMaxine {
             JTUtil.verbose = verboseOption.getValue();
             Method runMethod = jtclasses.testRunClass.getMethod("runTests", int.class, int.class);
             System.out.println("Running tests " + start + " to " + end + "...");
-            return (Boolean) runMethod.invoke(null, start, end);
+            return invokeRunMethod(runMethod, start, end);
         } catch (NoSuchMethodException e) {
             System.out.println("Could not find runTests() method in: " + jtclasses.testRunClass);
             e.printStackTrace();
@@ -206,5 +206,9 @@ public class JTMaxine {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private static boolean invokeRunMethod(Method runMethod, int start, int end) throws IllegalAccessException, InvocationTargetException {
+        return (Boolean) runMethod.invoke(null, start, end);
     }
 }

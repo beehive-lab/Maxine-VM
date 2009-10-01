@@ -18,17 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter.eir.amd64;
+package com.sun.max.vm.compiler.ir.interpreter.eir;
 
-import com.sun.max.*;
+import com.sun.max.vm.compiler.eir.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * A frame encapsulates the interpreter context of a single method.
  */
-public class Package extends MaxPackage {
-    public Package() {
-        super();
+public class EirFrame {
+    private final EirFrame caller;
+    private final EirMethod method;
+
+    public EirFrame(EirFrame caller, EirMethod method) {
+        this.caller = caller;
+        this.method = method;
     }
+
+    public EirFrame caller() {
+        return caller;
+    }
+
+    public EirMethod method() {
+        return method;
+    }
+
+    public EirABI abi() {
+        return method.abi();
+    }
+
+    private EirBlock catchBlock;
+
+    public EirBlock catchBlock() {
+        return catchBlock;
+    }
+
+    public void setCatchBlock(EirBlock catchBlock) {
+        this.catchBlock = catchBlock;
+    }
+
 }

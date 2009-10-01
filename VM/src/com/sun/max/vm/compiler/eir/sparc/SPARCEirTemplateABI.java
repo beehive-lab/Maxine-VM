@@ -56,7 +56,7 @@ public class SPARCEirTemplateABI extends SPARCEirJavaABI {
 
 
     @Override
-    public int frameSize(int numLocalStackSlots) {
-        return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize());
+    public int frameSize(int numLocalStackSlots, int extraBytes) {
+        return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize() + extraBytes);
     }
 }

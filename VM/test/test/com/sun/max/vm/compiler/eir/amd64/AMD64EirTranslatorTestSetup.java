@@ -29,8 +29,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
-import com.sun.max.vm.interpreter.eir.*;
-import com.sun.max.vm.interpreter.eir.amd64.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.amd64.*;
 
 /**
  * @author Bernd Mathiske

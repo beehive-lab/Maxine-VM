@@ -18,17 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter;
-
-import com.sun.max.*;
-
 /**
- * @see MaxPackage
+ * Interpreters for intermediate representations.
+ * Used for testing.
+ * 
+ * General rule:
+ * 
+ * For every IR, there should be an interpreter.
+ * 
+ * Thus we can test translation at each stage.
  * 
  * @author Bernd Mathiske
  */
-public class Package extends MaxPackage {
-    public Package() {
-        super();
-    }
-}
+package com.sun.max.vm.compiler.ir.interpreter;

@@ -157,6 +157,7 @@ public class MaxXirGenerator extends XirGenerator {
         this.wordSize = vmConfiguration.platform.wordWidth().numberOfBytes;
         assert wordSize == target.arch.wordSize : "word size mismatch";
         this.arrayLengthOffset = Layout.arrayHeaderLayout().arrayLengthOffset();
+        this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
 
         CiKind[] kinds = CiKind.values();
 
@@ -233,7 +234,6 @@ public class MaxXirGenerator extends XirGenerator {
         instanceofForClassTemplate = buildInstanceofForInterface(false); // XXX: more efficient template for class checks
         instanceofForInterfaceTemplate = buildInstanceofForInterface(false);
 
-        offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
     @Override

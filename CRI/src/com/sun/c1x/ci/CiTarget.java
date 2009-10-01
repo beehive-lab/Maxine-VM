@@ -84,16 +84,6 @@ public class CiTarget {
     }
 
     /**
-     * Checks whether this target requires special stack alignment, which may entail
-     * padding stack frames and inserting alignment code.
-     * @return <code>true</code> if this target requires special stack alignment
-     * (i.e. {@link #stackAlignment} is greater than {@link #arch} the word size.
-     */
-    public boolean requiresStackAlignment() {
-        return stackAlignment > arch.wordSize;
-    }
-
-    /**
      * Gets the size in bytes of the specified basic type for this target.
      * @param basicType the basic type for which to get the size
      * @return the size in bytes of the basic type

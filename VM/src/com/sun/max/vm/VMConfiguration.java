@@ -109,9 +109,6 @@ public final class VMConfiguration {
         this.safepoint = Safepoint.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
         // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-        // It is useful for now to build a VM with a single compiler, where the JIT and optimizing compiler are the same.
-        // The CallEntryPoint enum gets the value of the call entry point offset from offsetToCallEntryPoints()
-        // Ideally, we would want to get it from adapterFrameScheme().offsetToCallEntryPoints()
         if (this.jitPackage == null || this.jitPackage.equals(this.compilerPackage)) {
             // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
             this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,7 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Bernd Mathiske
+package jtt.max;
+
+import com.sun.max.vm.actor.holder.ClassActor;
+
+/*
+ * @Harness: java
+ * @Runs: 0=true; 1=true; 2=true; 3=true; 4=true; 5=false
  */
-package com.sun.max.vm.interpreter.eir.sparc;
+public class Hub_Subtype01 {
+    public static boolean test(int arg) {
+        Object obj = null;
+        if (arg == 0) {
+            obj = Hub_Subtype01.class;
+        } else if (arg == 1) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class);
+        } else if (arg == 2) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).dynamicHub();
+        } else if (arg == 3) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).staticHub();
+        } else if (arg == 4) {
+            obj = ClassActor.fromJava(Hub_Subtype01.class).staticTuple();
+        }
+        // do an explicit checkcast for each of these Maxine implementation objects
+        return obj instanceof Object;
+    }
+}

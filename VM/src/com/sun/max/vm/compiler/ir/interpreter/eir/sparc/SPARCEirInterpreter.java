@@ -18,9 +18,8 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter.eir.sparc;
-import static com.sun.max.vm.interpreter.eir.sparc.SPARCEirCPU.FCCValue;
-import static com.sun.max.vm.interpreter.eir.sparc.SPARCEirCPU.IntegerConditionFlag.*;
+package com.sun.max.vm.compiler.ir.interpreter.eir.sparc;
+import static com.sun.max.vm.compiler.ir.interpreter.eir.sparc.SPARCEirCPU.IntegerConditionFlag.*;
 
 import com.sun.max.asm.sparc.*;
 import com.sun.max.program.*;
@@ -28,8 +27,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirInstruction.*;
-import com.sun.max.vm.interpreter.eir.*;
-import com.sun.max.vm.interpreter.eir.EirCPU.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.EirCPU.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.sparc.SPARCEirCPU.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;

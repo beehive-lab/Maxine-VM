@@ -150,7 +150,7 @@ public final class CirReplication {
             return null;
         }
         final CirJavaFrameDescriptor parentReplica = replicateJavaFrameDescriptor(javaFrameDescriptor.parent(), toDo);
-        final CirJavaFrameDescriptor replica = new CirJavaFrameDescriptor(parentReplica, javaFrameDescriptor.classMethodActor(), javaFrameDescriptor.bytecodePosition(),
+        final CirJavaFrameDescriptor replica = new CirJavaFrameDescriptor(parentReplica, javaFrameDescriptor.classMethodActor, javaFrameDescriptor.bytecodePosition,
                                                                                  replicateValues(javaFrameDescriptor.locals, toDo),
                                                                                  replicateValues(javaFrameDescriptor.stackSlots, toDo));
         return replica;

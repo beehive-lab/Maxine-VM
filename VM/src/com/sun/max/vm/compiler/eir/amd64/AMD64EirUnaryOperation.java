@@ -30,9 +30,9 @@ public abstract class AMD64EirUnaryOperation extends AMD64EirOperation {
 
     private final EirOperand operand;
 
-    protected AMD64EirUnaryOperation(EirBlock block, EirValue operand, EirOperand.Effect event, PoolSet<EirLocationCategory> locationCategories) {
+    protected AMD64EirUnaryOperation(EirBlock block, EirValue operand, EirOperand.Effect effect, PoolSet<EirLocationCategory> locationCategories) {
         super(block);
-        this.operand = new EirOperand(this, event, locationCategories);
+        this.operand = new EirOperand(this, effect, locationCategories);
         this.operand.setEirValue(operand);
     }
 

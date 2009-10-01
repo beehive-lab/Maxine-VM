@@ -26,7 +26,7 @@ import test.com.sun.max.vm.compiler.cir.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 
 public class CirOptimizerTestSetup extends CirCompilerTestSetup {
 

@@ -25,6 +25,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.EirAssignment.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -45,6 +46,11 @@ public abstract class EirMethodGeneration {
      * Specifies if the generated code uses one shared epilogue for all return points.
      */
     public final boolean usesSharedEpilogue;
+
+    /**
+     * The amount of memory to add to the frame size as a result of calls to the {@link StackAllocate#stackAllocate(int)}.
+     */
+    private int stackAllocated;
 
     protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
 
@@ -170,7 +176,7 @@ public abstract class EirMethodGeneration {
      * Gets the size of the stack frame currently allocated used for local variables.
      */
     public int frameSize() {
-        return abi.frameSize(localStackSlots.length());
+        return abi.frameSize(localStackSlots.length(), stackAllocated);
     }
 
     public EirStackSlot localStackSlotFromIndex(int index) {
@@ -336,6 +342,12 @@ public abstract class EirMethodGeneration {
     public void addEpilogueStackSlotUse(EirValue useValue) {
         makeEpilogue();
         eirEpilogue.addStackSlotUse(useValue);
+    }
+
+    public int addStackAllocation(int size) {
+        int offset = stackAllocated;
+        stackAllocated += size;
+        return offset;
     }
 
     protected abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);

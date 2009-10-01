@@ -18,7 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.compiler.ir.interpreter.eir;
+
+import com.sun.max.*;
+
 /**
+ * @see MaxPackage
+ * 
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.interpreter.eir;
+public class Package extends MaxPackage {
+    public Package() {
+        super();
+    }
+}

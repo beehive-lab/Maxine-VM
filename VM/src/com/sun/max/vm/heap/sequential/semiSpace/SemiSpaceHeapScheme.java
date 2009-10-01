@@ -163,6 +163,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
+    private long lastGCTime;
+
     /**
      * A VM option for triggering a GC before every allocation.
      */
@@ -190,10 +192,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
-                Log.print("Could not allocate object heap of size ");
+                Log.println("Error occurred during initialization of VM");
+                Log.print("Could not reserve ");
                 Log.print(size.toLong());
-                Log.println();
-                FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
+                Log.println(" bytes of memory for object heap");
+                MaxineVM.native_exit(1);
             }
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
@@ -206,6 +209,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+
+            lastGCTime = System.currentTimeMillis();
 
             // From now on we can allocate
 
@@ -354,6 +359,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
+
+                lastGCTime = System.currentTimeMillis();
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -1140,5 +1147,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }
+    }
+
+    @Override
+    public long maxObjectInspectionAge() {
+        return System.currentTimeMillis() - lastGCTime;
     }
 }
