@@ -54,7 +54,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
     protected CirCall foldBuiltin(CirBuiltin cirBuiltin, CirValue[] cirArguments) {
         final Builtin builtin = cirBuiltin.builtin();
         if (builtin instanceof PointerBuiltin) {
-            final Value[] arguments = CirRoutine.Static.cirArgumentsToValues(cirArguments);
+            final Value[] arguments = CirRoutine.Static.cirArgumentsToValues(cirArguments, null);
             final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
             try {
                 if (builtin instanceof PointerLoadBuiltin) {

@@ -84,7 +84,7 @@ public abstract class Snippet extends IrRoutine {
      * Ensures that the class in which a given static method or field is declared is initialized, performing class
      * initialization if necessary.
      */
-    public static final class MakeHolderInitialized extends Snippet {
+    public static final class MakeHolderInitialized extends NonFoldableSnippet {
         @SNIPPET
         @INLINE
         public static void makeHolderInitialized(MemberActor memberActor) {
@@ -96,7 +96,7 @@ public abstract class Snippet extends IrRoutine {
     /**
      * Ensures that a given class is initialized, performing class initialization if necessary.
      */
-    public static final class MakeClassInitialized extends Snippet {
+    public static final class MakeClassInitialized extends NonFoldableSnippet {
         @SNIPPET
         @INLINE
         public static void makeClassInitialized(ClassActor classActor) {
