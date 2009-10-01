@@ -342,11 +342,15 @@ public class X86LIRAssembler extends LIRAssembler {
         LIRConstant c = (LIRConstant) src;
 
         switch (c.kind) {
+            case Boolean:
+            case Byte:
+            case Char:
             case Int: {
-                masm().movl(dest.asRegister(), c.asInt());
+                masm().movl(dest.asRegister(), c.value.asInt());
                 break;
             }
 
+            case Word:
             case Long: {
                 if (compilation.target.arch.is64bit()) {
                     masm().movptr(dest.asRegisterLo(), c.asLong());
@@ -2380,6 +2384,18 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void xirIndirectCall(RiMethod method, CodeEmitInfo info) {
+        masm().call(compilation.target.scratchRegister, method, info.oopMap.stackMap());
+        addCallInfoHere(info);
+    }
+
+    @Override
+    protected void xirDirectCall(RiMethod method, CodeEmitInfo info) {
+        masm.call(method, info.oopMap.stackMap());
+        addCallInfoHere(info);
+    }
+
+    @Override
     protected void directCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
         if (method.isLoaded()) {
             masm.call(method, info.oopMap.stackMap());
@@ -2938,6 +2954,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     break;
 
                 case Div:
+                    if (inst.kind == CiKind.Int) {
+                        arithmeticIdiv(LIROpcode.Idiv, ops[inst.x().index], ops[inst.y().index], LIROperandFactory.IllegalLocation, ops[inst.result.index], null);
+                    }
                     arithOp(LIROpcode.Div, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     break;
 
@@ -2947,7 +2966,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 case Mod:
                     if (inst.kind == CiKind.Int) {
-                        arithmeticIdiv(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], LIROperandFactory.IllegalLocation,  ops[inst.result.index], null);
+                        arithmeticIdiv(LIROpcode.Irem, ops[inst.x().index], ops[inst.y().index], LIROperandFactory.IllegalLocation,  ops[inst.result.index], null);
                     } else {
                         arithOp(LIROpcode.Rem, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index], null);
                     }
@@ -2972,6 +2991,13 @@ public class X86LIRAssembler extends LIRAssembler {
                 case Xor:
                     logicOp(LIROpcode.LogicXor, ops[inst.x().index], ops[inst.y().index], ops[inst.result.index]);
                     break;
+
+                case Mov: {
+                    LIROperand result = ops[inst.result.index];
+                    LIROperand source = ops[inst.x().index];
+                    moveOp(source, result, result.kind, null, false);
+                    break;
+                }
 
                 case PointerLoad: {
                     LIROperand result = ops[inst.result.index];
@@ -3035,13 +3061,13 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 case CallJava: {
                     LIROperand dest = ops[inst.x().index];
+                    assert xir.method != null;
                     if (dest.isConstant()) {
-                        assert xir.method != null;
                         masm.call(xir.method, xir.info.oopMap.stackMap());
                     } else if (dest.isAddress()) {
-                        masm.call(asAddress((LIRAddress) dest), (RiMethod) inst.extra, xir.info.oopMap.stackMap());
+                        masm.call(asAddress((LIRAddress) dest), xir.method, xir.info.oopMap.stackMap());
                     } else if (dest.isRegister()) {
-                        masm.call(dest.asRegister(), (RiMethod) inst.extra, xir.info.oopMap.stackMap());
+                        masm.call(dest.asRegister(), xir.method, xir.info.oopMap.stackMap());
                     }
                     break;
                 }
@@ -3122,7 +3148,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
     private void emitXirCompare(XirInstruction inst, LIRCondition lirCondition, Condition condition, LIROperand[] ops, Label label) {
         LIROperand x = ops[inst.x().index];
-        LIROperand y = ops[inst.x().index];
+        LIROperand y = ops[inst.y().index];
         compOp(lirCondition, x, y, null);
         masm.jcc(condition, label);
     }

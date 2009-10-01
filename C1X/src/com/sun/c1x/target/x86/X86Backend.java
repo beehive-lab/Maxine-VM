@@ -27,6 +27,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.xir.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,
@@ -66,6 +67,11 @@ public class X86Backend extends Backend {
     @Override
     public AbstractAssembler newAssembler(int frameSize) {
         return new X86MacroAssembler(compiler, compiler.target, frameSize);
+    }
+
+    @Override
+    public XirAssembler newXirAssembler() {
+        return new X86XirAssembler();
     }
 
     @Override

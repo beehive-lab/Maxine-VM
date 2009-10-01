@@ -31,6 +31,9 @@ public class LIRXirInstruction extends LIRInstruction {
     public final int[] operandIndices;
     public final XirSnippet snippet;
     public final RiMethod method;
+    public final int inputTempCount;
+    public final int tempCount;
+    public final int inputCount;
 
     public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, CodeEmitInfo info, RiMethod method) {
         super(LIROpcode.Xir, outputOperand, info, false, null, inputTempCount, tempCount, operands);
@@ -39,6 +42,9 @@ public class LIRXirInstruction extends LIRInstruction {
         this.operandIndices = operandIndices;
         this.outputOperandIndex = outputOperandIndex;
         this.originalOperands = originalOperands;
+        this.inputTempCount = inputTempCount;
+        this.tempCount = tempCount;
+        this.inputCount = operands.length - inputTempCount - tempCount;
     }
 
     public LIROperand[] getOperands() {
@@ -68,13 +74,37 @@ public class LIRXirInstruction extends LIRInstruction {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.print("LIRXIR");
+        out.print(toString());    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("LIRXIR ");
+
+        sb.append(snippet.toString());
+
+        sb.append(" // ");
+
+        int z = 0;
 
         for (LIROperand op : getOperands()) {
+
             if (op != null) {
-                out.print(" | ");
-                out.print(op.toString());
+                sb.append(" ");
+                sb.append(op.toString());
+            }
+
+            z++;
+
+            if (z == inputCount) {
+                sb.append(" | ");
+            }
+
+            if (z == inputCount + inputTempCount) {
+                sb.append(" | ");
             }
         }
+
+        return sb.toString();
     }
 }

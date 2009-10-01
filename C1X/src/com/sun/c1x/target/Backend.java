@@ -26,6 +26,7 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.xir.*;
 
 /**
  * The <code>Backend</code> class represents a compiler backend for C1X.
@@ -44,4 +45,5 @@ public abstract class Backend {
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
     public abstract AbstractAssembler newAssembler(int frameSize);
     public abstract GlobalStubEmitter newGlobalStubEmitter();
+    public abstract XirAssembler newXirAssembler();
 }

@@ -545,9 +545,15 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInvoke(Invoke x) {
         RiMethod target = x.target();
+
+        CodeEmitInfo info = stateFor(x, x.stateBefore());
+
+        XirSnippet snippet = null;
+        LIROperand destinationAddress = null;
         if (useXir(!target.isLoaded())) {
+
+
             // XIR support for INVOKE bytecodes
-            XirSnippet snippet = null;
             XirArgument receiver;
             switch (x.opcode()) {
                 case Bytecodes.INVOKESTATIC:
@@ -566,10 +572,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                     snippet = xir.genInvokeInterface(receiver, target);
                     break;
             }
+
             if (snippet != null) {
-                // TODO: visit and load the arguments to the call
-                emitXir(snippet, x, stateFor(x), x.target());
-                return;
+                destinationAddress = emitXir(snippet, x, info.copy(), x.target());
             }
         }
 
@@ -585,7 +590,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             resultRegister = resultRegisterFor(x.type());
         }
 
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
 
         assert args.size() == argList.size();
         loadInvokeArguments(x, args, argList);
@@ -595,35 +599,52 @@ public abstract class LIRGenerator extends ValueVisitor {
             receiver = args.get(0).result();
         }
 
-        // emit invoke code
-        boolean optimized = target.isLoaded() && target.isFinalMethod();
-        assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
+        if (snippet != null && destinationAddress != null) {
 
-        switch (x.opcode()) {
-            case Bytecodes.INVOKESTATIC:
-                lir.callStatic(target, resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
-                break;
-            case Bytecodes.INVOKESPECIAL:
-            case Bytecodes.INVOKEVIRTUAL:
-            case Bytecodes.INVOKEINTERFACE:
-                if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
-                    if (x.needsNullCheck()) {
-                        assert x.hasReceiver();
-                        lir.nullCheck(receiver, info.copy());
-                    }
-                    lir.callOptVirtual(target, receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
-                } else {
 
-                    if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
-                        lir.callInterface(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+            if (destinationAddress instanceof LIRConstant) {
+                // Direct call
+                assert ((LIRConstant) destinationAddress).value.asLong() == 0;
+                lir.callXirDirect(target, resultRegister, argList, info);
+            } else {
+                // Indirect call
+                lir.move(destinationAddress, LIROperandFactory.singleLocation(destinationAddress.kind, compilation.target.scratchRegister));
+                lir.callXirIndirect(target, resultRegister, argList, info);
+            }
+
+        } else {
+
+
+            // emit invoke code
+            boolean optimized = target.isLoaded() && target.isFinalMethod();
+            assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
+
+            switch (x.opcode()) {
+                case Bytecodes.INVOKESTATIC:
+                    lir.callStatic(target, resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
+                    break;
+                case Bytecodes.INVOKESPECIAL:
+                case Bytecodes.INVOKEVIRTUAL:
+                case Bytecodes.INVOKEINTERFACE:
+                    if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
+                        if (x.needsNullCheck()) {
+                            assert x.hasReceiver();
+                            lir.nullCheck(receiver, info.copy());
+                        }
+                        lir.callOptVirtual(target, receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
                     } else {
-                        lir.callVirtual(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+
+                        if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
+                            lir.callInterface(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                        } else {
+                            lir.callVirtual(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                        }
                     }
-                }
-                break;
-            default:
-                Util.shouldNotReachHere();
-                break;
+                    break;
+                default:
+                    Util.shouldNotReachHere();
+                    break;
+            }
         }
 
         if (!resultRegister.isIllegal()) {
@@ -836,7 +857,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             return null;
         }
 
-        return XirArgument.forInternalObject(i.operand());
+        return XirArgument.forInternalObject(new LIRItem(i, this));
     }
 
     private LIROperand allocateOperand(XirTemp temp) {
@@ -848,44 +869,62 @@ public abstract class LIRGenerator extends ValueVisitor {
         return newRegister(temp.kind);
     }
 
-    private LIROperand allocateOperand(XirArgument arg) {
+    private LIROperand allocateOperand(XirArgument arg, XirVariable var) {
         if (arg.constant != null) {
             return new LIRConstant(arg.constant);
         } else {
-            assert arg.object != null && arg.object instanceof LIROperand;
-            return (LIROperand) arg.object;
+            assert arg.object != null && arg.object instanceof LIRItem;
+            LIRItem item = (LIRItem) arg.object;
+            item.loadItem(var.kind);
+            return item.result();
         }
     }
 
-    void emitXir(XirSnippet snippet, Instruction x, CodeEmitInfo info, RiMethod method) {
+    LIROperand emitXir(XirSnippet snippet, Instruction x, CodeEmitInfo info, RiMethod method) {
 
         final LIROperand[] operands = new LIROperand[snippet.template.variableCount];
 
         XirVariable resultOperand = snippet.template.resultOperand;
-        LIROperand outputOperand = LIROperandFactory.IllegalLocation;
-        if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-            outputOperand = rlockResult(x, resultOperand.kind);
-            assert operands[resultOperand.index] == null;
+
+        if (resultOperand instanceof XirResult) {
+            LIROperand outputOperand = LIROperandFactory.IllegalLocation;
+            // This snippet has a result that must be separately allocated
+            // Otherwise it is assumed that the result is part of the inputs
+            if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
+                outputOperand = rlockResult(x, resultOperand.kind);
+                assert operands[resultOperand.index] == null;
+            }
+            operands[resultOperand.index] = outputOperand;
         }
-        operands[resultOperand.index] = outputOperand;
 
         final List<LIROperand> inputOperands = new ArrayList<LIROperand>();
         final List<Integer> inputOperandsIndices = new ArrayList<Integer>();
         final List<LIROperand> inputTempOperands = new ArrayList<LIROperand>();
         final List<Integer> inputTempOperandsIndices = new ArrayList<Integer>();
 
+        int parameterIndex = 0;
         for (XirParameter param : snippet.template.parameters) {
             int paramIndex = param.parameterIndex;
             XirArgument arg = snippet.arguments[paramIndex];
-            LIROperand op = allocateOperand(arg);
+            LIROperand op = allocateOperand(arg, param);
             assert operands[param.index] == null;
             operands[param.index] = op;
 
             // TODO: Determine if inputs are also used as temp?
             if (op.isRegister()) {
-                inputOperands.add(op);
-                inputOperandsIndices.add(param.index);
+
+                if (snippet.template.isParameterDestroyed(parameterIndex)) {
+                    LIROperand newOp = newRegister(op.kind);
+                    lir.move(op, newOp);
+                    inputTempOperands.add(newOp);
+                    inputTempOperandsIndices.add(param.index);
+                } else {
+                    inputOperands.add(op);
+                    inputOperandsIndices.add(param.index);
+                }
             }
+
+            parameterIndex++;
         }
 
         for (XirConstant c : snippet.template.constants) {
@@ -924,7 +963,12 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert operands[i] != null;
         }
 
-        lir.xir(snippet, operands, outputOperand, inputTempOperands.size(), tempOperands.size(), operandArray, operandIndicesArray, (outputOperand == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index, info, method);
+        LIROperand allocatedResultOperand = operands[resultOperand.index];
+        if (!allocatedResultOperand.isRegister()) {
+            allocatedResultOperand = LIROperandFactory.IllegalLocation;
+        }
+        lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(), operandArray, operandIndicesArray, (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index, info, method);
+        return operands[resultOperand.index];
     }
 
     @Override
