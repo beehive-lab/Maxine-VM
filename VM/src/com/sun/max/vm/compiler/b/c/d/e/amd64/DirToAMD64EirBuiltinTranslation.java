@@ -28,7 +28,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
 import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
@@ -1357,11 +1356,10 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
     @Override
     public void visitMakeStackVariable(MakeStackVariable builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length <= 2;
+        assert dirArguments.length == 1;
         final EirVariable result = (EirVariable) dirToEirValue(dirResult);
         final EirValue value = dirToEirValue(dirArguments[0]);
 
-        final StackVariable stackVariableKey;
         final EirVariable stackSlot;
         if (value instanceof EirVariable) {
             stackSlot = (EirVariable) value;
@@ -1370,18 +1368,8 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             assign(value.kind(), stackSlot, value);
         }
         result.setAliasedVariable(stackSlot);
-
-        if (dirArguments.length == 2) {
-            if (!(dirArguments[1] instanceof DirConstant)) {
-                ProgramError.unexpected("the " + StackVariable.class.getSimpleName() + " used with the " + MakeStackVariable.class.getSimpleName() + " built-in must be a compile-time constant");
-            }
-            final Object stackVariableKeyObject = ((DirConstant) dirArguments[1]).value().asObject();
-            stackVariableKey = (StackVariable) stackVariableKeyObject;
-        } else {
-            stackVariableKey = null;
-        }
         methodTranslation().addEpilogueStackSlotUse(stackSlot);
-        addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot, stackVariableKey));
+        addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot));
     }
 
     @Override

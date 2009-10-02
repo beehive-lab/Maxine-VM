@@ -344,10 +344,15 @@ public abstract class EirMethodGeneration {
         eirEpilogue.addStackSlotUse(useValue);
     }
 
+    /**
+     * Reserves a block of memory in the frame of the method being compiled.
+     *
+     * @param size the number of bytes to reserve
+     * @return the offset of the block from the top (i.e. highest address) of the frame
+     */
     public int addStackAllocation(int size) {
-        int offset = stackAllocated;
         stackAllocated += size;
-        return offset;
+        return stackAllocated;
     }
 
     protected abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);

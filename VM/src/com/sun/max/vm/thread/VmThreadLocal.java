@@ -171,36 +171,10 @@ public class VmThreadLocal {
      */
     public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", false, "points to table of JNI functions");
 
-    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER", false, "");
-    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER", false, "");
-
     /**
-     * Records the instruction pointer in the Java frame for the call that transitioned to native code. If this value is
-     * zero then, the thread is not in native code.
+     * The address of the current {@linkplain JavaFrameAnchor anchor list} for a thread.
      */
-    public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER
-        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER", false, "IP in Java frame at call to native code, 0 of if not in native");
-
-    /**
-     * Records information for the last Java caller for {@link C_FUNCTION} calls.
-     * This is only used by the Inspector for debugging
-     */
-    public static final VmThreadLocal LAST_JAVA_CALLER_STACK_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_STACK_POINTER_FOR_C", false, "Stack pointer for last Java caller to a C function");
-
-    /**
-     * Records information for the last Java caller for {@link C_FUNCTION} calls.
-     * This is only used by the Inspector for debugging
-     */
-    public static final VmThreadLocal LAST_JAVA_CALLER_FRAME_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_FRAME_POINTER_FOR_C", false, "Frame pointer for last Java caller to a C function");
-
-    /**
-     * Records information for the last Java caller for {@link C_FUNCTION} calls.
-     * This is only used by the Inspector for debugging
-     */
-    public static final VmThreadLocal LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C
-        = new VmThreadLocal("LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C", false, "IP for last Java caller to a C function");
+    public static final VmThreadLocal LAST_JAVA_FRAME_ANCHOR = new VmThreadLocal("LAST_JAVA_FRAME_ANCHOR", false, "");
 
     /**
      * The state of this thread with respect to GC. This will be one of the {@code THREAD_IN_...} constants defined in {@link Safepoint}.
@@ -616,7 +590,7 @@ public class VmThreadLocal {
     }
 
     public static boolean inJava(Pointer vmThreadLocals) {
-        return LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
+        return JavaFrameAnchor.inJava(JavaFrameAnchor.from(vmThreadLocals));
     }
 
     // GC support:
@@ -667,7 +641,8 @@ public class VmThreadLocal {
      * affecting this stack has occurred in between.
      */
     public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
-        final Pointer lastJavaCallerStackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
+        final Pointer lastJavaCallerStackPointer = JavaFrameAnchor.SP.get(anchor);
         final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
@@ -681,11 +656,7 @@ public class VmThreadLocal {
             Log.print(" and ");
             Log.print(lowestActiveSlot);
             Log.println(" are not covered by the reference map.");
-            Throw.stackDump("Stack trace for thread:",
-                            LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer(),
-                            LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer(),
-                            LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer());
-
+            Throw.stackDump("Stack trace for thread:", JavaFrameAnchor.PC.get(anchor), lastJavaCallerStackPointer, JavaFrameAnchor.FP.get(anchor));
             FatalError.unexpected("Stack reference map does not cover all active slots");
         }
 
