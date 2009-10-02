@@ -33,7 +33,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirTargetEmitter.*;
@@ -1848,10 +1847,8 @@ public interface SPARCEirInstruction {
     }
 
     public static class SET_STACK_ADDRESS extends SPARCEirBinaryOperation {
-        private final StackVariable stackVariableKey;
-        public SET_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source, StackVariable stackVariableKey) {
+        public SET_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source) {
             super(block, destination,   EirOperand.Effect.DEFINITION, G, source, EirOperand.Effect.USE, S);
-            this.stackVariableKey = stackVariableKey;
         }
 
         @Override
@@ -1872,9 +1869,6 @@ public interface SPARCEirInstruction {
                 } catch (AssemblyException e) {
                     ProgramError.unexpected();
                 }
-            }
-            if (stackVariableKey != null) {
-                emitter.recordStackVariableOffset(stackVariableKey, offset);
             }
         }
     }

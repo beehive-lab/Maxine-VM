@@ -479,7 +479,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        nativeInitialize(bootImage.header.threadLocalsSize);
+        nativeInitialize(bootImage.header.threadLocalsSize, bootImage.header.javaFrameAnchorSize);
         final MaxineVM vm = createVM(this.bootImage);
         this.vmConfiguration = vm.configuration;
 
@@ -536,8 +536,9 @@ public abstract class TeleVM implements MaxVM {
      * Initializes native tele code.
      *
      * @param threadLocalsSize the size of thread local storage as read from the image
+     * @param javaFrameAnchorSize the storage size of a {@link JavaFrameAnchor}
      */
-    private static native void nativeInitialize(int threadLocalsSize);
+    private static native void nativeInitialize(int threadLocalsSize, int javaFrameAnchorSize);
 
     /**
      * Starts a new VM process and returns a handle to it.

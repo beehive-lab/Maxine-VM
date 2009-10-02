@@ -38,7 +38,7 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize) {
-    threadLocals_initialize(threadLocalsSize);
+Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize, int javaFrameAnchorSize) {
+    threadLocals_initialize(threadLocalsSize, javaFrameAnchorSize);
 }
 
