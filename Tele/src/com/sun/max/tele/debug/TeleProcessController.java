@@ -147,7 +147,6 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, resumeScheduleTracer);
     }
 
-
     private final Object singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");
     private final Object singleStepPerformTracer = new Tracer(SINGLE_STEP, "perform");
 
@@ -165,7 +164,6 @@ public final class TeleProcessController {
         teleProcess().scheduleRequest(request, isSynchronous);
         Trace.end(TRACE_VALUE, singleStepScheduleTracer);
     }
-
 
     private final Object stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");
     private final Object stepOverPerformTracer = new Tracer(STEP_OVER, "perform");

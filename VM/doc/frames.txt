@@ -8,7 +8,7 @@ The primary tasks of a stack walking mechanism are:
 We want a mechanism that works for a stack containing frames for different forms of executing code.
 The possible code types are:
 
-o Code compiled by the optimizing compiler
+o Code compiled by the CPS compiler
 o Code compiled by the JIT
 o Code compiled by other compilers
 o Code being interpreted
@@ -64,9 +64,9 @@ INT = 2
           ...
           addq rsp, 34
           ret
-          
-          
-          
+
+
+
 Transitions into/out of native code
 ===================================
 
@@ -90,7 +90,7 @@ Transitions into/out of native code
                                               | ret
                                              /
                                             | mov [R1 + lastJavaPC] 0
-                                           
-                                          
-                                          
-   
+
+
+
+

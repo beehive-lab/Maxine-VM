@@ -73,7 +73,7 @@ public final class CiConstant extends CiValue {
     @Override
     public String toString() {
         final String val = basicType.isObject() ? "object@" + System.identityHashCode(value) : value.toString();
-        return basicType.javaName + " = " + val;
+        return basicType.javaName + "(" + val + ")";
     }
 
     /**
@@ -82,7 +82,7 @@ public final class CiConstant extends CiValue {
      * @return this constant's value as a string
      */
     public String valueString() {
-        return value.toString();
+        return (value == null) ? "null" : value.toString();
     }
 
     /**

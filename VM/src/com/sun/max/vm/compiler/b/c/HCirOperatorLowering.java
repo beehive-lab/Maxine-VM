@@ -369,8 +369,8 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                                 arguments)),
                         ce());
                 CirJavaFrameDescriptor jfd = HCirOperatorLowering.this.call.javaFrameDescriptor();
-                final MethodProfile methodProfile = getMethodProfile(jfd.classMethodActor());
-                final Hub mostFrequentHub = JitInstrumentation.computeMostFrequentHub(methodProfile, jfd.bytecodePosition(), 1500, 0.9f);
+                final MethodProfile methodProfile = getMethodProfile(jfd.classMethodActor);
+                final Hub mostFrequentHub = JitInstrumentation.computeMostFrequentHub(methodProfile, jfd.bytecodePosition, 1500, 0.9f);
 
                 if (mostFrequentHub != null) {
                     final CirValue cont = arguments[arguments.length - 2];

@@ -59,10 +59,10 @@ public class TirRecorder {
     }
 
     public void record(BytecodeLocation location) {
-        state.last().setPc(location.bytecodePosition());
-        visitor.setMethod(location.classMethodActor());
-        final byte[] bytecode = location.classMethodActor().codeAttribute().code();
-        scanner.scanInstruction(bytecode, location.bytecodePosition());
+        state.last().setPc(location.bytecodePosition);
+        visitor.setMethod(location.classMethodActor);
+        final byte[] bytecode = location.classMethodActor.codeAttribute().code();
+        scanner.scanInstruction(bytecode, location.bytecodePosition);
     }
 
     public void recordNesting(final TreeAnchor anchor, Bailout bailout) {
@@ -562,7 +562,7 @@ public class TirRecorder {
      */
     public TirState takeSnapshot(TreeAnchor anchor) {
         final TirState state = this.state.copy();
-        state.last().setPc(anchor.location().bytecodePosition());
+        state.last().setPc(anchor.location().bytecodePosition);
         return state;
     }
 }

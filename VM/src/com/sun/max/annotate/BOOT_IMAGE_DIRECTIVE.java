@@ -32,8 +32,7 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 public @interface BOOT_IMAGE_DIRECTIVE {
     /**
-     * Indicate whether the method (and its callees) should be compiled with the JIT compiler. Default is false (i.e., it
-     * must be compiled with the optimizing compiler).
+     * Indicate whether the method (and its callees) should be compiled with the JIT compiler.
      * @return
      */
     boolean useJitCompiler() default false;
