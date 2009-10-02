@@ -233,15 +233,9 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
                 // The part of the stack between the trap stub frame and the frame of the JNI stub that enters into the
                 // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
-                final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                if (instructionPointer.isZero()) {
-                    FatalError.unexpected("A mutator thread in Java at safepoint should be stopped in native monitor code");
-                }
-                final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
                 final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
                 final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-                stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+                stackReferenceMapPreparer.completeStackReferenceMap(vmThreadLocals);
                 stackReferenceMapPreparationTime += stackReferenceMapPreparer.preparationTime();
             }
         }

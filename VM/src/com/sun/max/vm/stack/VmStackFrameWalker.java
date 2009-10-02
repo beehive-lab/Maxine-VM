@@ -20,16 +20,16 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.collect.LinkSequence;
-import com.sun.max.annotate.INLINE;
 
 /**
  * @author Doug Simon
@@ -43,11 +43,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     public VmStackFrameWalker(Pointer vmThreadLocals) {
         super(VMConfiguration.hostOrTarget().compilerScheme());
         this.vmThreadLocals = vmThreadLocals;
-    }
-
-    @Override
-    public boolean isThreadInNative() {
-        return !vmThreadLocals.isZero() && !VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
     }
 
     public void setVmThreadLocals(Pointer vmThreadLocals) {

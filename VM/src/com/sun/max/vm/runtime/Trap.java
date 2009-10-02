@@ -115,7 +115,8 @@ public abstract class Trap {
     private static VMBooleanXXOption dumpStackOnTrap =
         register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
-    /** Whether to bang on the stack in the method prologue.
+    /**
+     * Whether to bang on the stack in the method prologue.
      */
     public static final boolean STACK_BANGING = true;
 

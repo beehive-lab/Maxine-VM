@@ -29,7 +29,7 @@
 #include "os.h"
 #include "word.h"
 
-extern void threadLocals_initialize(int threadLocalsSize);
+extern void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize);
 
 /**
  * The indexes of the VM thread locals accessed by native code.
@@ -48,10 +48,11 @@ typedef enum ThreadLocal {
     FORWARD_LINK = 5,
     BACKWARD_LINK = 6,
     ID = 9,
-    TRAP_NUMBER = 20,
-    TRAP_INSTRUCTION_POINTER = 21,
-    TRAP_FAULT_ADDRESS = 22,
-    TRAP_LATCH_REGISTER = 23
+    LAST_JAVA_FRAME_ANCHOR = 12,
+    TRAP_NUMBER = 15,
+    TRAP_INSTRUCTION_POINTER = 16,
+    TRAP_FAULT_ADDRESS = 17,
+    TRAP_LATCH_REGISTER = 18
 } ThreadLocal_t;
 
 typedef Address ThreadLocals;
@@ -60,6 +61,11 @@ typedef Address ThreadLocals;
  * Gets the size of the storage required for a set of thread locals.
  */
 extern int threadLocalsSize();
+
+/**
+ * Gets the size of a Java frame anchor.
+ */
+extern int javaFrameAnchorSize();
 
 /**
  * Sets the value of a specified thread local.

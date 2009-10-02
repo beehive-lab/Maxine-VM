@@ -435,9 +435,4 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         returnAddressPointer.setWord(catchAddress);
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
     }
-
-    @Override
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return stackPointer;
-    }
 }

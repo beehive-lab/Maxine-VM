@@ -1,4 +1,4 @@
-#Sun Jun 21 22:38:45 PDT 2009
+#Thu Oct 01 21:27:04 PDT 2009
 eclipse.preferences.version=1
 org.eclipse.jdt.core.builder.cleanOutputFolder=clean
 org.eclipse.jdt.core.builder.duplicateResourceTask=warning
@@ -83,7 +83,7 @@ org.eclipse.jdt.core.compiler.problem.uncheckedTypeOperation=error
 org.eclipse.jdt.core.compiler.problem.undocumentedEmptyBlock=ignore
 org.eclipse.jdt.core.compiler.problem.unhandledWarningToken=error
 org.eclipse.jdt.core.compiler.problem.unnecessaryElse=warning
-org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=warning
+org.eclipse.jdt.core.compiler.problem.unnecessaryTypeCheck=ignore
 org.eclipse.jdt.core.compiler.problem.unqualifiedFieldAccess=ignore
 org.eclipse.jdt.core.compiler.problem.unsafeTypeOperation=warning
 org.eclipse.jdt.core.compiler.problem.unusedDeclaredThrownException=ignore
