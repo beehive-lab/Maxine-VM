@@ -395,7 +395,7 @@ public class StackInspector extends Inspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
+                new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", false);
             }
         };
     }
