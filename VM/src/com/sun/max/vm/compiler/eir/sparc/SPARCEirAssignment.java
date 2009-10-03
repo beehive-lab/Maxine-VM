@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.eir.sparc;
 import static com.sun.max.asm.sparc.GPR.*;
 import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -105,11 +104,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
     }
 
     public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-        try {
-            emitter.assembler().setsw(sourceImmediate, destinationRegister.as());
-        } catch (AssemblyException e) {
-            ProgramError.unexpected();
-        }
+        emitter.assembler().setsw(sourceImmediate, destinationRegister.as());
     }
 
     /**
@@ -119,18 +114,14 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
      */
     private void emit_S_GF(SPARCEirTargetEmitter emitter, EirRegister destinationRegister) {
         final SPARCEirTargetEmitter.StackAddress stackAddress = emitter.stackAddress(sourceLocation().asStackSlot());
-        final int offset = stackAddress.offset() + JitStackFrameLayout.offsetInStackSlot(kind());
+        final int offset = stackAddress.offset + JitStackFrameLayout.offsetInStackSlot(kind());
 
         if (canUseImmediate(offset)) {
-            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offset, destinationRegister);
+            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offset, destinationRegister);
         } else {
-            try {
-                final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
-                emitter.assembler().setsw(offset, offsetRegister.as());
-                SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offsetRegister, destinationRegister);
-            } catch (AssemblyException e) {
-                ProgramError.unexpected();
-            }
+            final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
+            emitter.assembler().setsw(offset, offsetRegister.as());
+            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offsetRegister, destinationRegister);
         }
     }
 
@@ -145,17 +136,13 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
      */
     private void emit_GF_S(SPARCEirTargetEmitter emitter, EirRegister sourceRegister) {
         final SPARCEirTargetEmitter.StackAddress stackAddress = emitter.stackAddress(destinationLocation().asStackSlot());
-        final int offset = stackAddress.offset() + JitStackFrameLayout.offsetInStackSlot(kind());
+        final int offset = stackAddress.offset + JitStackFrameLayout.offsetInStackSlot(kind());
         if (canUseImmediate(offset)) {
-            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offset);
+            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offset);
         } else {
-            try {
-                final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
-                emitter.assembler().setsw(offset, offsetRegister.as());
-                SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offsetRegister);
-            } catch (AssemblyException e) {
-                ProgramError.unexpected();
-            }
+            final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
+            emitter.assembler().setsw(offset, offsetRegister.as());
+            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offsetRegister);
         }
     }
 

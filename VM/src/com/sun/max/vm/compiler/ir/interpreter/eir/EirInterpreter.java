@@ -506,7 +506,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * @param classMethodActor the actor for the constructor to be called
      */
     protected void callConstructor(ClassMethodActor classMethodActor) {
-        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi();
+        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi;
         final Kind[] parameterKinds = classMethodActor.getParameterKinds();
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, parameterKinds);
         final Value[] arguments = new Value[argumentLocations.length - 1];
@@ -573,7 +573,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * @param argumentLocations the ABI specified locations where the parameter values are held
      */
     private void callViaReflection(boolean isNativeInvoke, ClassMethodActor classMethodActor, Kind[] parameterKinds, EirLocation[] argumentLocations) throws InvocationTargetException {
-        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi();
+        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi;
         final Value[] arguments = new Value[argumentLocations.length];
         final Map<Value, Value> valuesToHandles = isNativeInvoke ? new HashMap<Value, Value>(argumentLocations.length) : null;
         for (int i = 0; i < argumentLocations.length; i++) {
@@ -607,7 +607,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * Calls a method via reflection, reading the arguments from the parameter locations specified by the ABI.
      */
     protected void callViaReflection(ClassMethodActor classMethodActor) throws InvocationTargetException {
-        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi();
+        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi;
         final Kind[] parameterKinds = classMethodActor.getParameterKinds();
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, parameterKinds);
         callViaReflection(false, classMethodActor, parameterKinds, argumentLocations);
@@ -621,7 +621,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     protected void callNativeMethodFromNativeStub(ClassMethodActor classMethodActor) throws InvocationTargetException {
         // Unwrap the object arguments and strip the JNIEnv first parameter as well as the class
         // parameter if this is a static method
-        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi();
+        final EirABI abi = eirGenerator().createIrMethod(classMethodActor).abi;
         final boolean isStatic = classMethodActor.isStatic();
         final Kind[] parameterKinds = classMethodActor.getParameterKinds();
         final Kind[] jniParameterKinds = Arrays.prepend(parameterKinds, Kind.WORD, Kind.WORD);

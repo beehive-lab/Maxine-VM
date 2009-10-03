@@ -122,6 +122,7 @@ public interface SPARCEirInstructionVisitor extends EirInstructionVisitor {
 
     void visit(SET_I32 instruction);
     void visit(SET_STACK_ADDRESS instruction);
+    void visit(STACK_ALLOCATE instruction);
     void visit(SLL_I32 instruction);
     void visit(SLL_I64 instruction);
     void visit(SRA_I32 instruction);

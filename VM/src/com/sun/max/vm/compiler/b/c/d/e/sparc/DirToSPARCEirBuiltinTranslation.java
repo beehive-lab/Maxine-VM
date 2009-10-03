@@ -558,6 +558,15 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new SET_STACK_ADDRESS(eirBlock(), result, stackSlot));
     }
 
+    @Override
+    public void visitStackAllocate(StackAllocate builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1;
+        assert dirArguments[0] instanceof DirConstant;
+        final int size = ((DirConstant) dirArguments[0]).value().asInt();
+        final int offset = methodTranslation().addStackAllocation(size);
+        final EirVariable result = (EirVariable) dirToEirValue(dirResult);
+        addInstruction(new STACK_ALLOCATE(eirBlock(), result, offset));
+    }
 
     private void integerToFloatingPointRegister(DirValue dirDestination, DirValue dirSource, Kind loadKind) {
         integerToFloatingPointRegister(dirToEirValue(dirDestination),  dirToEirValue(dirSource), loadKind);

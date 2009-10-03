@@ -28,7 +28,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -139,7 +138,6 @@ public enum JavaFrameAnchor {
         SP.set(anchor, stackPointer);
         PC.set(anchor, instructionPointer);
         PREVIOUS.set(anchor, previousAnchor);
-        FatalError.check(anchor != previousAnchor, "WTF?!!");
         return anchor;
     }
 }

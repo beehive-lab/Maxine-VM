@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.eir;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -32,16 +33,25 @@ import com.sun.max.vm.compiler.target.*;
 public final class EirStackSlot extends EirLocation {
 
     public enum Purpose {
-        PARAMETER, // incoming parameter of the method we are compiling
-        LOCAL      // reusable
+        /**
+         * A slot for an incoming argument. The offset for this type of slot is relative to the address of the first (stack based) incoming argument.
+         */
+        PARAMETER,
+
+        /**
+         * A slot allocated or pinned by the register allocator.
+         */
+        LOCAL,
+
+        /**
+         * The first (i.e. lowest address) slot of a block on the frame allocated by {@link StackAllocate}.
+         */
+        BLOCK
     }
 
-    // TODO: this should be an index, not an offset
     /**
-     * The logical offset of this stack slot. If this stack slot represents a {@linkplain #isParameter() parameter},
-     * then the value is relative to the address of the stack slot holding the first stack based parameter.
-     * Otherwise, the value is relative to the value of the {@linkplain EirABI#stackPointer() stack pointer}
-     * after execution of the enclosing method's prologue.
+     * The offset of this stack slot within the stack memory for slot of the same {@linkplain #purpose type}.
+     * The platform specific backend maps this offset to an address on the stack.
      */
     public final int offset;
 

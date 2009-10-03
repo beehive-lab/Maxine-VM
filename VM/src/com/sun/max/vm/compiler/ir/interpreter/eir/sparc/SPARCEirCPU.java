@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.ir.interpreter.eir.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -280,6 +281,9 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
             // Overflow arguments are stored at positive offset relative to the frame pointer.
             return slot.offset;
+        }
+        if (slot.purpose == Purpose.BLOCK) {
+            return -slot.offset;
         }
         final int frameSize = interpreter.frame().method().frameSize();
         return -frameSize + slot.offset + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;

@@ -35,6 +35,8 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
+import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirTargetEmitter.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.type.*;
@@ -833,11 +835,8 @@ public interface SPARCEirInstruction {
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
             if  (operand().location().category().equals(INTEGER_REGISTER)) {
-                try {
-                    final int immediateValue =  immediateOperand.value().asInt();
-                    emitter.assembler().set(immediateValue, operandGeneralRegister().as());
-                } catch (AssemblyException e) {
-                }
+                final int immediateValue =  immediateOperand.value().asInt();
+                emitter.assembler().set(immediateValue, operandGeneralRegister().as());
             } else {
                 impossibleLocationCategory();
             }
@@ -1811,11 +1810,7 @@ public interface SPARCEirInstruction {
         }
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            try {
-                emitter.assembler().set(sourceImmediate, destinationRegister.as());
-            } catch (AssemblyException e) {
-                ProgramError.unexpected();
-            }
+            emitter.assembler().set(sourceImmediate, destinationRegister.as());
         }
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
@@ -1834,12 +1829,35 @@ public interface SPARCEirInstruction {
         @Override
         public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
             final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-            try {
-                emitter.assembler().setx(sourceImmediate, scratchRegister.as(), destinationRegister.as());
-            } catch (AssemblyException e) {
-                ProgramError.unexpected();
+            emitter.assembler().setx(sourceImmediate, scratchRegister.as(), destinationRegister.as());
+        }
+        @Override
+        public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
+    public static class STACK_ALLOCATE extends SPARCEirUnaryOperation {
+        public final int offset;
+
+        public STACK_ALLOCATE(EirBlock block, EirValue operand, int offset) {
+            super(block, operand, EirOperand.Effect.DEFINITION, G);
+            this.offset = offset;
+        }
+
+        @Override
+        public void emit(SPARCEirTargetEmitter emitter) {
+            EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
+            final StackAddress source = emitter.stackAddress(stackSlot);
+            final GeneralPurpose destination = operandGeneralRegister();
+            if (isSimm13(source.offset)) {
+                emitter.assembler().add(source.base, source.offset, destination.as());
+            } else {
+                emitter.assembler().set(source.offset, destination.as());
+                emitter.assembler().add(source.base,  destination.as(), destination.as());
             }
         }
+
         @Override
         public void acceptVisitor(SPARCEirInstructionVisitor visitor) {
             visitor.visit(this);
@@ -1859,16 +1877,12 @@ public interface SPARCEirInstruction {
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
             final StackAddress source = emitter.stackAddress(sourceOperand().location().asStackSlot());
-            final int offset = source.offset();
+            final int offset = source.offset;
             if (isSimm13(offset)) {
-                emitter.assembler().add(source.base(), offset, destinationGeneralRegister().as());
+                emitter.assembler().add(source.base, offset, destinationGeneralRegister().as());
             } else {
-                try {
-                    emitter.assembler().set(offset, destinationGeneralRegister().as());
-                    emitter.assembler().add(source.base(),  destinationGeneralRegister().as(), destinationGeneralRegister().as());
-                } catch (AssemblyException e) {
-                    ProgramError.unexpected();
-                }
+                emitter.assembler().set(offset, destinationGeneralRegister().as());
+                emitter.assembler().add(source.base,  destinationGeneralRegister().as(), destinationGeneralRegister().as());
             }
         }
     }
@@ -2352,24 +2366,20 @@ public interface SPARCEirInstruction {
             final SPARCEirRegister.GeneralPurpose scratchEirRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
 
             final int imm = minMatchValue();
-            try {
-                if (imm != 0) {
-                    if (SPARCEirOperation.isSimm13(imm)) {
-                        emitter.assembler().sub(tagRegister, imm, tagRegister);
-                    } else {
-                        emitter.assembler().setsw(imm, scratchEirRegister.as());
-                        emitter.assembler().sub(tagRegister, scratchEirRegister.as(), tagRegister);
-                    }
-                }
-                if (SPARCEirOperation.isSimm13(numElements)) {
-                    emitter.assembler().cmp(tagRegister, numElements);
+            if (imm != 0) {
+                if (SPARCEirOperation.isSimm13(imm)) {
+                    emitter.assembler().sub(tagRegister, imm, tagRegister);
                 } else {
-                    final GPR numElementsRegister = scratchEirRegister.as();
-                    emitter.assembler().setuw(numElements, numElementsRegister);
-                    emitter.assembler().cmp(tagRegister, numElementsRegister);
+                    emitter.assembler().setsw(imm, scratchEirRegister.as());
+                    emitter.assembler().sub(tagRegister, scratchEirRegister.as(), tagRegister);
                 }
-            } catch (AssemblyException e) {
-                impossibleImmediateWidth();
+            }
+            if (SPARCEirOperation.isSimm13(numElements)) {
+                emitter.assembler().cmp(tagRegister, numElements);
+            } else {
+                final GPR numElementsRegister = scratchEirRegister.as();
+                emitter.assembler().setuw(numElements, numElementsRegister);
+                emitter.assembler().cmp(tagRegister, numElementsRegister);
             }
             final GPR tableRegister = scratchEirRegister.as();
             final GPR targetAddressRegister = tableRegister;
@@ -2409,13 +2419,9 @@ public interface SPARCEirInstruction {
             if (SPARCEirOperation.isSimm13(match)) {
                 emitter.assembler().cmp(tagRegister, match);
             } else {
-                try {
-                    final GPR matchRegister = scratchEirRegister.as();
-                    emitter.assembler().setuw(match, matchRegister);
-                    emitter.assembler().cmp(tagRegister, matchRegister);
-                } catch (AssemblyException e) {
-                    impossibleImmediateWidth();
-                }
+                final GPR matchRegister = scratchEirRegister.as();
+                emitter.assembler().setuw(match, matchRegister);
+                emitter.assembler().cmp(tagRegister, matchRegister);
             }
             emitter.assembler().be(AnnulBit.NO_A, targets[middleIndex].asLabel());
             emitter.assembler().nop(); // TODO -- exploit delay slot
