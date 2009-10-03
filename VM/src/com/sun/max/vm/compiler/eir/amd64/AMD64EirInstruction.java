@@ -2069,19 +2069,16 @@ public interface AMD64EirInstruction {
 
     public static class STACK_ALLOCATE extends AMD64EirUnaryOperation {
         public final int offset;
-        public final EirMethod eirMethod;
 
         public STACK_ALLOCATE(EirBlock block, EirValue operand, int offset) {
             super(block, operand, EirOperand.Effect.DEFINITION, G);
             this.offset = offset;
-            this.eirMethod = block.method();
         }
 
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final AMD64GeneralRegister64 destination = operandGeneralRegister().as64();
-            int offset = emitter.frameSize() - this.offset;
-            EirStackSlot stackSlot = new EirStackSlot(Purpose.LOCAL, offset);
+            EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
             final StackAddress source = emitter.stackAddress(stackSlot);
             if (source.isOffsetZero()) {
                 emitter.assembler().lea(destination, source.base());

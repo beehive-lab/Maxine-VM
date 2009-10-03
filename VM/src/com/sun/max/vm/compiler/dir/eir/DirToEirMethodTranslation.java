@@ -89,7 +89,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     protected DirToEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
-        super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
+        super(eirGenerator, eirMethod.abi, eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
         this.eirMethod = eirMethod;
         this.dirMethod = dirMethod;
 

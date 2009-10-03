@@ -677,8 +677,8 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     }
 
     public void visit(STACK_ALLOCATE instruction) {
-        int offset = instruction.eirMethod.frameSize() - instruction.offset;
-        EirStackSlot stackSlot = new EirStackSlot(Purpose.LOCAL, offset);
+        int offset = frame().method().frameSize() - instruction.offset;
+        EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
         final int sourceOffset = cpu.offset(stackSlot);
         cpu.write(instruction.operand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
     }

@@ -27,6 +27,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.ir.interpreter.eir.*;
 import com.sun.max.vm.thread.*;
@@ -110,10 +111,14 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
      */
     @Override
     protected int offset(EirStackSlot slot) {
+        final EirFrame frame = interpreter.frame();
+        final int frameSize = frame.method().frameSize();
         if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
-            final EirFrame frame = interpreter.frame();
             // Add one slot to account for the pushed return address and then add the size of the local stack frame
-            return slot.offset + frame.abi().stackSlotSize() + frame.method().frameSize();
+            return slot.offset + frame.abi().stackSlotSize() + frameSize;
+        }
+        if (slot.purpose == Purpose.BLOCK) {
+            return frameSize - slot.offset;
         }
         return slot.offset;
     }

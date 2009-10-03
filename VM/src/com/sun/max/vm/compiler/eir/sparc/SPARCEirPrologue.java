@@ -119,28 +119,24 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
      * @param scratchRegister a scratch register (may not necessarily be used)
      */
     public static void emitFrameBuilder(SPARCAssembler asm, int frameSize, GPR stackPointer, GPR scratchRegister, boolean omitStackBanging) {
-        try {
-            if (Trap.STACK_BANGING & !omitStackBanging) {
-                // We must make sure we will not be in a situation where we will not be able to flush the register window for the
-                // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
-                // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
-                // we know the current register window can take the trap.
-                final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
-                if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                    asm.ldub(stackPointer, stackBangOffset, GPR.G0);
-                } else {
-                    asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
-                    asm.ldub(stackPointer, scratchRegister, GPR.G0);
-                }
-            }
-            if (SPARCAssembler.isSimm13(-frameSize)) {
-                asm.save(stackPointer, -frameSize, stackPointer);
+        if (Trap.STACK_BANGING & !omitStackBanging) {
+            // We must make sure we will not be in a situation where we will not be able to flush the register window for the
+            // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
+            // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
+            // we know the current register window can take the trap.
+            final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias() - frameSize;
+            if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                asm.ldub(stackPointer, stackBangOffset, GPR.G0);
             } else {
-                asm.setsw(-frameSize, scratchRegister);
-                asm.save(stackPointer, scratchRegister, stackPointer);
+                asm.setsw(stackBangOffset & ~0x3FF, scratchRegister);   // Note: stackBangOffset is rounded off
+                asm.ldub(stackPointer, scratchRegister, GPR.G0);
             }
-        } catch (AssemblyException e) {
-            FatalError.unexpected(null, e);
+        }
+        if (SPARCAssembler.isSimm13(-frameSize)) {
+            asm.save(stackPointer, -frameSize, stackPointer);
+        } else {
+            asm.setsw(-frameSize, scratchRegister);
+            asm.save(stackPointer, scratchRegister, stackPointer);
         }
     }
 

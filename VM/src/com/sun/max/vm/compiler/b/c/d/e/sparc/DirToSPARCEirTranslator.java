@@ -43,6 +43,6 @@ public class DirToSPARCEirTranslator extends SPARCEirGenerator {
         final DirToSPARCEirMethodTranslation translation = new DirToSPARCEirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();
 
-        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize());
+        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
     }
 }
