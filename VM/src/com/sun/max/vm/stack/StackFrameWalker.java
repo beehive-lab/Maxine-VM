@@ -158,10 +158,13 @@ public abstract class StackFrameWalker {
 
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
-            if (targetMethod != null) {
+            if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
                 if (inNative) {
-                    FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Cannot be in Java code AND in native state unless inspecting");
+                    // Inspector specific: in JNI stub after transition to 'in native'
+                    if (readWord(anchor, JavaFrameAnchor.SP.offset).equals(stackPointer)) {
+                        advanceAnchor();
+                    }
                     inNative = false;
                 }
 
@@ -366,15 +369,15 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
-//                if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
-//                    Log.print("IP for stack prep: ");
-//                    Log.print(nativeStubTargetMethod.name());
-//                    Log.print(" [");
-//                    Log.print(nativeStubTargetMethod.codeStart());
-//                    Log.print("+");
-//                    Log.print(nativeFunctionCallPosition + 1);
-//                    Log.println(']');
-//                }
+                if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                    Log.print("IP for stack prep: ");
+                    Log.print(nativeStubTargetMethod.name());
+                    Log.print(" [");
+                    Log.print(nativeStubTargetMethod.codeStart());
+                    Log.print("+");
+                    Log.print(nativeFunctionCallPosition + 1);
+                    Log.println(']');
+                }
                 return nativeFunctionCall.plus(1);
             }
         }
