@@ -285,6 +285,8 @@ public class JTConfig {
         jtt.except.Except_Synchronized02.class,
         jtt.except.Except_Synchronized03.class,
         jtt.except.Except_Synchronized04.class,
+        jtt.except.Finally01.class,
+        jtt.except.Finally02.class,
         jtt.except.Throw_InCatch01.class,
         jtt.except.Throw_InCatch02.class,
         jtt.except.Throw_InCatch03.class,
