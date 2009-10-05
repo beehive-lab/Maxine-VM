@@ -369,8 +369,8 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
-                if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
-                    Log.print("IP for stack prep: ");
+                if (TRACE_STACK_WALK.getValue() && purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                    Log.print("IP for stack frame preparation of stub for native method ");
                     Log.print(nativeStubTargetMethod.name());
                     Log.print(" [");
                     Log.print(nativeStubTargetMethod.codeStart());
