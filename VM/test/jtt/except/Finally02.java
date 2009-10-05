@@ -18,47 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.xir;
+package jtt.except;
 
-import com.sun.c1x.ci.CiConstant;
+import com.sun.max.annotate.NEVER_INLINE;
 
-/**
- * This class represents an argument to an {@link XirSnippet}.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0=-1; 1=-1
  */
-public class XirArgument {
+public class Finally02 {
+    public static int test(int arg) {
+        try {
+            a();
+        } finally {
+            b();
+        }
 
-    public final CiConstant constant;
-    public final Object object;
-    public final XirArgument[] arguments;
-
-    private XirArgument(CiConstant value) {
-        this.constant = value;
-        this.object = null;
-        this.arguments = null;
+        return c();
     }
 
-    private XirArgument(Object o) {
-        this.constant = null;
-        this.object = o;
-        this.arguments = null;
+    @NEVER_INLINE
+    static int a() {
+        return 0;
     }
 
-    public static XirArgument forInternalObject(Object o) {
-        return new XirArgument(o);
+    @NEVER_INLINE
+    static int b() {
+        return -3;
     }
 
-    public static XirArgument forInt(int x) {
-        return new XirArgument(CiConstant.forInt(x));
-    }
-
-    public static XirArgument forWord(long x) {
-        return new XirArgument(CiConstant.forWord(x));
-    }
-
-    public static XirArgument forObject(Object o) {
-        return new XirArgument(CiConstant.forObject(o));
+    static int c() {
+        return -1;
     }
 }

@@ -1771,7 +1771,7 @@ public class LinearScan {
     // wrapper for Interval.splitChildAtOpId that performs a bailout in product mode
     // instead of returning null
     Interval splitChildAtOpId(Interval interval, int opId, LIRInstruction.OperandMode mode) {
-        Interval result = interval.splitChildAtOpId(opId, mode, this);
+        Interval result = interval.getSplitChildAtOpId(opId, mode, this);
 
         if (result != null) {
             if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -2173,6 +2173,7 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
+                case Word:
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";

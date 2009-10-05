@@ -113,4 +113,7 @@ public abstract class XirGenerator {
     public XirSnippet genArrayLength(XirArgument array) {
         return null;
     }
+
+	public void buildTemplates(XirAssembler asm) {
+	}
 }

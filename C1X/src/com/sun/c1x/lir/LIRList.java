@@ -107,6 +107,14 @@ public class LIRList {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, null, arguments, info, cpi, constantPool));
     }
 
+    public void callXirDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.XirDirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
+    }
+
+    public void callXirIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.XirIndirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
+    }
+
     public void membar() {
         append(new LIROp0(LIROpcode.Membar));
     }
@@ -561,7 +569,7 @@ public class LIRList {
         operations.add(i, op);
     }
 
-    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands) {
-        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, null));
+    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands, int[] operandIndices, int outputOperandIndex, CodeEmitInfo info, RiMethod method) {
+        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method));
     }
 }
