@@ -531,7 +531,6 @@ public abstract class LIRInstruction {
     }
 
     public List<ExceptionHandler> exceptionEdges() {
-
         List<ExceptionHandler> result = null;
 
         int i;
