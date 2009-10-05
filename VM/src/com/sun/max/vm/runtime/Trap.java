@@ -115,7 +115,8 @@ public abstract class Trap {
     private static VMBooleanXXOption dumpStackOnTrap =
         register(new VMBooleanXXOption("-XX:-DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause."), MaxineVM.Phase.PRISTINE);
 
-    /** Whether to bang on the stack in the method prologue.
+    /**
+     * Whether to bang on the stack in the method prologue.
      */
     public static final boolean STACK_BANGING = true;
 
@@ -132,7 +133,10 @@ public abstract class Trap {
      */
     private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
-    private static final CriticalMethod nativeExit = new CriticalNativeMethod(MaxineVM.class, "native_exit");
+    static {
+        new CriticalNativeMethod(MaxineVM.class, "native_exit");
+        new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
+    }
 
     @PROTOTYPE_ONLY
     private static final Method trapStubMethod = Classes.getDeclaredMethod(Trap.class, "trapStub", int.class, Pointer.class, Address.class);

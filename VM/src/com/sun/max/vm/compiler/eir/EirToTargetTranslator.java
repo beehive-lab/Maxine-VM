@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.eir;
 import static com.sun.max.vm.stack.JavaStackFrameLayout.*;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
@@ -36,7 +35,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.eir.EirTargetEmitter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
@@ -305,7 +303,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         code,
                         emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
-                        frameReferenceMapSize, eirMethod.abi().targetABI()
+                        frameReferenceMapSize, eirMethod.abi.targetABI()
         );
         assert TargetBundleLayout.from(targetMethod).bundleSize().equals(targetBundleLayout.bundleSize()) :
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +
@@ -318,12 +316,6 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             targetMethod.linkDirectCalls();
         }
         BytecodeBreakpointMessage.makeTargetBreakpoints(targetMethod);
-
-        if (MaxineVM.isPrototyping()) {
-            for (Map.Entry<StackVariable, Integer> entry : emitter.namedStackVariableOffsets()) {
-                entry.getKey().record(targetMethod, entry.getValue());
-            }
-        }
 
         eirMethod.cleanupAfterEmitting();
     }

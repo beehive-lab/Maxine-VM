@@ -32,7 +32,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirTargetEmitter.*;
@@ -2069,18 +2068,17 @@ public interface AMD64EirInstruction {
     }
 
     public static class STACK_ALLOCATE extends AMD64EirUnaryOperation {
-        private final int stackAllocationOffset;
+        public final int offset;
 
         public STACK_ALLOCATE(EirBlock block, EirValue operand, int offset) {
             super(block, operand, EirOperand.Effect.DEFINITION, G);
-            stackAllocationOffset = offset;
+            this.offset = offset;
         }
 
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final AMD64GeneralRegister64 destination = operandGeneralRegister().as64();
-            int offset = emitter.frameSize() - stackAllocationOffset;
-            EirStackSlot stackSlot = new EirStackSlot(Purpose.LOCAL, offset);
+            EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
             final StackAddress source = emitter.stackAddress(stackSlot);
             if (source.isOffsetZero()) {
                 emitter.assembler().lea(destination, source.base());
@@ -2104,17 +2102,14 @@ public interface AMD64EirInstruction {
      */
     public static class LEA_STACK_ADDRESS extends AMD64EirBinaryOperation {
 
-        private final StackVariable stackVariableKey;
-
         /**
          * Creates an instruction that assigns the address of a stack slot to the destination register.
          *
          * @param destination the register in which the address is saved
          * @param source a value that will be allocated to a stack slot
          */
-        public LEA_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source, StackVariable stackVariableKey) {
+        public LEA_STACK_ADDRESS(EirBlock block, EirValue destination, EirValue source) {
             super(block, destination, EirOperand.Effect.DEFINITION, G, source, EirOperand.Effect.USE, S);
-            this.stackVariableKey = stackVariableKey;
         }
 
         @Override
@@ -2127,10 +2122,6 @@ public interface AMD64EirInstruction {
                 emitter.assembler().lea(destination, source.offset8(), source.base());
             } else {
                 emitter.assembler().lea(destination, source.offset32(), source.base());
-            }
-
-            if (stackVariableKey != null) {
-                emitter.recordStackVariableOffset(stackVariableKey, source.offset());
             }
         }
 

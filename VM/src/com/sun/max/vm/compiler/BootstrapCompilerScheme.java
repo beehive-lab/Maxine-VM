@@ -22,11 +22,9 @@ package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
@@ -92,17 +90,4 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      * @return the last IR generator of this compiler
      */
     IrGenerator irGenerator();
-
-    /**
-     * Selects and returns the address used as the base for
-     * {@linkplain MakeStackVariable.StackVariable named stack variables}.
-     *
-     * @param stackPointer the stack pointer value for a frame being {@linkplain StackFrameWalker walked} that has a
-     *            named stack variable
-     * @param framePointer the frame pointer value for a frame being {@linkplain StackFrameWalker walked} that has a
-     *            named stack variable
-     * @return either {@code stackPointer} or {@code framePointer}, depending on which value is used as the base for
-     *         accessing a name stack variable in the denoted frame
-     */
-    Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer);
 }

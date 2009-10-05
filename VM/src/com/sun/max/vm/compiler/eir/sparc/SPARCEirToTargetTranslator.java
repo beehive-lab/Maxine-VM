@@ -50,12 +50,12 @@ public final class SPARCEirToTargetTranslator extends EirToTargetTranslator {
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi().targetABI().callEntryPoint().equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitScheme() != compilerScheme();
+        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi.targetABI().callEntryPoint().equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitScheme() != compilerScheme();
         SPARCAdapterFrameGenerator adapterFrameGenerator = null;
         if (requiresAdapter) {
-            adapterFrameGenerator = SPARCAdapterFrameGenerator.jitToOptimizedCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi());
+            adapterFrameGenerator = SPARCAdapterFrameGenerator.jitToOptimizedCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi);
         }
-        return new SPARCEirTargetEmitter((SPARCEirABI) eirMethod.abi(), eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterFrameGenerator);
+        return new SPARCEirTargetEmitter((SPARCEirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterFrameGenerator);
     }
 
 }

@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.compiler.target.*;
@@ -221,9 +222,9 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         }
 
         @Override
-        protected EirStackSlot.Purpose adapterArgumentPurpose() {
+        protected Purpose adapterArgumentPurpose() {
             // We need to override with LOCAL here to get the outgoing registers for the parameters.
-            return EirStackSlot.Purpose.LOCAL;
+            return Purpose.LOCAL;
         }
 
         @Override
