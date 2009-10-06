@@ -18,30 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.fail;
+package jtt.except;
 
 /*
  * @Harness: java
  * @Runs: 0=10; 1=11; 2=1
  */
-public class Catch_NPE_09 {
+public class Catch_NPE_10 {
 
     public static int test(int a) {
         int r = 0;
         try {
             r = 0;
-            throwNPE(a);
+            if (a == 0) {
+                throw null;
+            }
             r = 1;
-            throwNPE(a - 1);
+            if (a - 1 == 0) {
+                throw null;
+            }
         } catch (NullPointerException e) {
             return r + 10;
         }
         return r;
-    }
-
-    private static void throwNPE(int a) {
-        if (a == 0) {
-            throw null;
-        }
     }
 }
