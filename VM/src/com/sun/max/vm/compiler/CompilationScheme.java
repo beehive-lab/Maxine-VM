@@ -43,10 +43,17 @@ public interface CompilationScheme extends VMScheme {
          * Use the JIT compiler only (except for unsafe code).
          */
         JIT,
+
+        /**
+         * Use the interpreter only (except for unsafe code).
+         */
+        INTERPRETED,
+
         /**
          * Use the optimizing compiler only (except for some invocation stubs).
          */
         OPTIMIZED,
+
         /**
          * Use both compilers according to dynamic feedback.
          */

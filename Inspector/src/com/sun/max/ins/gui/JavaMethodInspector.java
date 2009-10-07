@@ -127,7 +127,7 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
-            return "<no method actor>";
+            return teleTargetMethod.description();
         }
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();

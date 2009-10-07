@@ -145,7 +145,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         isStopRow = new boolean[targetInstructionCount];
         Arrays.fill(isStopRow, false);
 
-        final BytecodeInfo[] bytecodeInfos = teleTargetRoutine.bytecodeInfos();
+        final BytecodeInfo[] bytecodeInfos = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeInfos() : null;
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
@@ -156,9 +156,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         }
 
-        if (bytecodeInfos != null && teleClassMethodActor != null && teleClassMethodActor.classMethodActor() != null) {
-            // JIT method with infos
-            final int[] bytecodeToTargetCodePositionMap = teleTargetRoutine.bytecodeToTargetCodePositionMap();
+        if (bytecodeInfos != null) { // JIT method
+            final int[] bytecodeToTargetCodePositionMap = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap() : null;
             boolean alternate = false;
             int bytecodeIndex = 0; // position in the original bytecode stream.
             for (int row = 0; row < targetInstructionCount; row++) {

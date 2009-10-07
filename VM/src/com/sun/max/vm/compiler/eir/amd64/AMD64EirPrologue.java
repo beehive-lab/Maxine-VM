@@ -119,7 +119,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
         // load the trap number into the first parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
-        // load the register state pointer into the second parameter register
+        // load the trap state pointer into the second parameter register
         asm.lea((AMD64GeneralRegister64) parameterRegisters.get(1), originalFrameSize, framePointer.indirect());
         // load the fault address into the third parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(2), VmThreadLocal.TRAP_FAULT_ADDRESS.offset, latchRegister.indirect());

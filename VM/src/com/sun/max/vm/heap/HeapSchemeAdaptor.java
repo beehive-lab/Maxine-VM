@@ -88,12 +88,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public void disableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
     }
 
     public void enableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
     }
 
     public long maxObjectInspectionAge() {

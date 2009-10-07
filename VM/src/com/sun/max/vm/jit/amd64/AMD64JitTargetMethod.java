@@ -59,7 +59,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
 
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCallSite(this, callOffset, callEntryPoint);
+        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
     }
 
     @Override

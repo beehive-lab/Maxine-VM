@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,39 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.amd64;
+package com.sun.max.vm.interpreter.sparc;
 
+import com.sun.max.asm.sparc.*;
+import com.sun.max.asm.sparc.complete.*;
+import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
+import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.type.*;
 
 /**
- * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
-public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
+public class SPARCInterpreterStub extends InterpreterStub {
 
-    public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    public SPARCInterpreterStub(ClassMethodActor classMethodActor, InterpreterStubCompiler compilerScheme, TargetABI abi) {
+        super(classMethodActor, compilerScheme, abi);
     }
 
-    @Override
-    public int callerInstructionPointerAdjustment() {
-        return -1;
+    public void adaptParameters(SPARCAssembler asm, SignatureDescriptor signature, IndexedSequence<GPR> gprParams, IndexedSequence<FPR> fprParams)  {
     }
 
-    @Override
-    public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
+    private static int computeFrameSize(ClassMethodActor classMethodActor) {
+        int bciSlot = Word.size();
+        int methodSlot = Word.size();
+        int primitiveStack = classMethodActor.codeAttribute().maxStack() * Word.size();
+        int referenceStack = primitiveStack;
+        int primitiveLocals = classMethodActor.codeAttribute().maxLocals() * Word.size();
+        int referenceLocals = primitiveLocals;
+        return bciSlot + methodSlot + primitiveStack + referenceStack + primitiveLocals + referenceLocals;
     }
 
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
-    }
 }
+
