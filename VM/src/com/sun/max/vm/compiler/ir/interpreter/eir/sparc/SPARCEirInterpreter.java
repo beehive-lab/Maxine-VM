@@ -25,6 +25,7 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirInstruction.*;
 import com.sun.max.vm.compiler.ir.interpreter.eir.*;
@@ -930,24 +931,26 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     public void visit(MEMBAR instruction) {
     }
 
-
     public void visit(SET_STACK_ADDRESS instruction) {
         final int sourceOffset = cpu.offset(instruction.sourceOperand().location().asStackSlot());
         cpu.write(instruction.destinationOperand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
     }
 
+    public void visit(STACK_ALLOCATE instruction) {
+        EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, instruction.offset);
+        final int sourceOffset = cpu.offset(stackSlot);
+        cpu.write(instruction.operand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
+    }
 
     public void visit(MOV_I32 instruction) {
         final int a = cpu.readInt(instruction.sourceLocation());
         cpu.writeInt(instruction.destinationLocation(), a);
     }
 
-
     public void visit(MOV_I64 instruction) {
         final long a = cpu.readInt(instruction.sourceLocation());
         cpu.writeLong(instruction.destinationLocation(), a);
     }
-
 
     public void visit(MUL_I32 instruction) {
         final int a = cpu.readInt(instruction.leftLocation());
@@ -955,37 +958,31 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         cpu.writeInt(instruction.destinationLocation(), a * b);
     }
 
-
     public void visit(MUL_I64 instruction) {
         final long a = cpu.readLong(instruction.leftLocation());
         final long b = cpu.readLong(instruction.rightLocation());
         cpu.writeLong(instruction.destinationLocation(), a * b);
     }
 
-
     public void visit(NEG_I32 instruction) {
         final int a = cpu.readInt(instruction.operandLocation());
         cpu.writeInt(instruction.operandLocation(), -a);
     }
-
 
     public void visit(NEG_I64 instruction) {
         final long a = cpu.readLong(instruction.operandLocation());
         cpu.writeLong(instruction.operandLocation(), -a);
     }
 
-
     public void visit(NOT_I32 instruction) {
         final int operand = cpu.readInt(instruction.operand().location());
         cpu.writeInt(instruction.operand().location(), ~operand);
     }
 
-
     public void visit(NOT_I64 instruction) {
         final long operand = cpu.readLong(instruction.operand().location());
         cpu.writeLong(instruction.operand().location(), ~operand);
     }
-
 
     public void visit(OR_I32 instruction) {
         final int a = cpu.readInt(instruction.leftLocation());
@@ -993,18 +990,15 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         cpu.writeInt(instruction.destinationLocation(), a | b);
     }
 
-
     public void visit(OR_I64 instruction) {
         final long a = cpu.readLong(instruction.leftLocation());
         final long b = cpu.readLong(instruction.rightLocation());
         cpu.writeLong(instruction.destinationLocation(), a | b);
     }
 
-
     public void visit(RDPC instruction) {
         cpu.write(instruction.operand().location(), new WordValue(Address.fromLong(cpu.currentInstructionAddress().index())));
     }
-
 
     public void visit(RET instruction) {
         if (cpu().usesRegisterWindow()) {

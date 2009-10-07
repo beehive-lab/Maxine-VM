@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,27 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include <stdlib.h>
+package jtt.jni;
 
-#include "c.h"
-#include "jni.h"
-#include "log.h"
-#include "threadLocals.h"
-#include "teleProcess.h"
+/*
+ * @Harness: java
+ * @Runs: 0c = 0c; 1c = 1c; 127c = 127c;
+ */
+public class JNI_IdentityChar {
+    public static char test(char arg) {
+        return id_char(arg);
+    }
 
-JNIEXPORT jint JNICALL
-JNI_OnLoad(JavaVM *vm, void *reserved)
-{
-    c_initialize();
-    teleProcess_initialize();
-#if !os_GUESTVMXEN
-    log_initialize(getenv("TELE_LOG_FILE"));
-#endif
-    return JNI_VERSION_1_2;
+    private static native char id_char(char b);
 }
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_tele_TeleVM_nativeInitialize(JNIEnv *env, jclass c, jint threadLocalsSize, int javaFrameAnchorSize) {
-    threadLocals_initialize(threadLocalsSize, javaFrameAnchorSize);
-}
-

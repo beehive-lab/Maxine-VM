@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.jit;
 
-import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.bytecode.Bytecode.*;
 import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
@@ -32,7 +31,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -478,7 +476,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * contains a position smaller than the throw position is found. The last entry of the catch table always contains
      * the position to the instructions following the last instruction of the last catch range.
      *
-     * @see TargetMethod#throwAddressToCatchAddress(boolean, com.sun.max.unsafe.Address, Class) 
+     * @see TargetMethod#throwAddressToCatchAddress(boolean, com.sun.max.unsafe.Address, Class)
      */
     public void buildExceptionHandlingInfo() {
         final Sequence<ExceptionHandlerEntry> exceptionHandlers = classMethodActor.codeAttribute().exceptionHandlerTable();

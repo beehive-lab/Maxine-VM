@@ -46,7 +46,7 @@ public abstract class XirAssembler {
     protected final List<XirConstant> constants = new ArrayList<XirConstant>();
     
     protected int variableCount;
-    private boolean finished;
+    protected boolean finished;
 
     public class XirLabel {
     	public final String name;

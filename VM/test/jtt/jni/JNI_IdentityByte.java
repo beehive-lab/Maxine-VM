@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cir.generate;
+package jtt.jni;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
-
-public class CirTranslatorTest_native extends BytecodeTest_native {
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(CirTranslatorTest_native.class.getSimpleName());
-        suite.addTestSuite(CirTranslatorTest_native.class);
-        return new CirTranslatorTestSetup(suite);
+/*
+ * @Harness: java
+ * @Runs: 0b = 0b; -1b = -1b; 1b = 1b; -128b = -128b; 127b = 127b
+ */
+public class JNI_IdentityByte {
+    public static byte test(byte arg) {
+        return id_byte(arg);
     }
 
-    public CirTranslatorTest_native(String name) {
-        super(name);
-    }
-
-    public static void main(String[] programArguments) {
-        junit.textui.TestRunner.run(CirTranslatorTest_native.suite());
-    }
-
+    private static native byte id_byte(byte b);
 }

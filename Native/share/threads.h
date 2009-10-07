@@ -52,7 +52,7 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize(ThreadLocals primordial_tl);
+extern void threads_initialize(Address primordial_threadLocalsAndAnchor);
 
 /**
  * Gets a ThreadLocals object associated with the current thread.

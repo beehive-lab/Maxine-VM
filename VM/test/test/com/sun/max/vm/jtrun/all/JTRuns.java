@@ -10372,6 +10372,350 @@ public class JTRuns {
             }
             pass();
         }
+        static void jtt_jni_JNI_IdentityBoolean() {
+            begin("jtt.jni.JNI_IdentityBoolean");
+            String runString = null;
+            try {
+            // (true) == true
+                runString = "(true)";
+                if (true != jtt.jni.JNI_IdentityBoolean.test(true)) {
+                    fail(runString);
+                    return;
+                }
+            // (false) == false
+                runString = "(false)";
+                if (false != jtt.jni.JNI_IdentityBoolean.test(false)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityByte() {
+            begin("jtt.jni.JNI_IdentityByte");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if ((byte) 0 != jtt.jni.JNI_IdentityByte.test((byte) 0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == -1
+                runString = "(-1)";
+                if ((byte) -1 != jtt.jni.JNI_IdentityByte.test((byte) -1)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 1
+                runString = "(1)";
+                if ((byte) 1 != jtt.jni.JNI_IdentityByte.test((byte) 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-128) == -128
+                runString = "(-128)";
+                if ((byte) -128 != jtt.jni.JNI_IdentityByte.test((byte) -128)) {
+                    fail(runString);
+                    return;
+                }
+            // (127) == 127
+                runString = "(127)";
+                if ((byte) 127 != jtt.jni.JNI_IdentityByte.test((byte) 127)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityChar() {
+            begin("jtt.jni.JNI_IdentityChar");
+            String runString = null;
+            try {
+            // ('\0') == '\0'
+                runString = "('\0')";
+                if ((char) 0 != jtt.jni.JNI_IdentityChar.test((char) 0)) {
+                    fail(runString);
+                    return;
+                }
+            // ('\1') == '\1'
+                runString = "('\1')";
+                if ((char) 1 != jtt.jni.JNI_IdentityChar.test((char) 1)) {
+                    fail(runString);
+                    return;
+                }
+            // ('') == ''
+                runString = "('')";
+                if ((char) 127 != jtt.jni.JNI_IdentityChar.test((char) 127)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityFloat() {
+            begin("jtt.jni.JNI_IdentityFloat");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if (0 != jtt.jni.JNI_IdentityFloat.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -1.0
+                runString = "(-1.0)";
+                if (-1.0f != jtt.jni.JNI_IdentityFloat.test(-1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 1.0
+                runString = "(1.0)";
+                if (1.0f != jtt.jni.JNI_IdentityFloat.test(1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityInt() {
+            begin("jtt.jni.JNI_IdentityInt");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if (0 != jtt.jni.JNI_IdentityInt.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == -1
+                runString = "(-1)";
+                if (-1 != jtt.jni.JNI_IdentityInt.test(-1)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 1
+                runString = "(1)";
+                if (1 != jtt.jni.JNI_IdentityInt.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-128) == -128
+                runString = "(-128)";
+                if (-128 != jtt.jni.JNI_IdentityInt.test(-128)) {
+                    fail(runString);
+                    return;
+                }
+            // (127) == 127
+                runString = "(127)";
+                if (127 != jtt.jni.JNI_IdentityInt.test(127)) {
+                    fail(runString);
+                    return;
+                }
+            // (-32768) == -32768
+                runString = "(-32768)";
+                if (-32768 != jtt.jni.JNI_IdentityInt.test(-32768)) {
+                    fail(runString);
+                    return;
+                }
+            // (32767) == 32767
+                runString = "(32767)";
+                if (32767 != jtt.jni.JNI_IdentityInt.test(32767)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityLong() {
+            begin("jtt.jni.JNI_IdentityLong");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if (0 != jtt.jni.JNI_IdentityLong.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == -1
+                runString = "(-1)";
+                if (-1 != jtt.jni.JNI_IdentityLong.test(-1)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 1
+                runString = "(1)";
+                if (1 != jtt.jni.JNI_IdentityLong.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-128) == -128
+                runString = "(-128)";
+                if (-128 != jtt.jni.JNI_IdentityLong.test(-128)) {
+                    fail(runString);
+                    return;
+                }
+            // (127) == 127
+                runString = "(127)";
+                if (127 != jtt.jni.JNI_IdentityLong.test(127)) {
+                    fail(runString);
+                    return;
+                }
+            // (-32768) == -32768
+                runString = "(-32768)";
+                if (-32768 != jtt.jni.JNI_IdentityLong.test(-32768)) {
+                    fail(runString);
+                    return;
+                }
+            // (32767) == 32767
+                runString = "(32767)";
+                if (32767 != jtt.jni.JNI_IdentityLong.test(32767)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityObject() {
+            begin("jtt.jni.JNI_IdentityObject");
+            String runString = null;
+            try {
+            // (null) == null
+                runString = "(null)";
+                if (null != jtt.jni.JNI_IdentityObject.test(null)) {
+                    fail(runString);
+                    return;
+                }
+            // ("XXX") == "XXX"
+                runString = "(\"XXX\")";
+                if (!"XXX".equals(jtt.jni.JNI_IdentityObject.test("XXX"))) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_IdentityShort() {
+            begin("jtt.jni.JNI_IdentityShort");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if ((short) 0 != jtt.jni.JNI_IdentityShort.test((short) 0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1) == -1
+                runString = "(-1)";
+                if ((short) -1 != jtt.jni.JNI_IdentityShort.test((short) -1)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 1
+                runString = "(1)";
+                if ((short) 1 != jtt.jni.JNI_IdentityShort.test((short) 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-128) == -128
+                runString = "(-128)";
+                if ((short) -128 != jtt.jni.JNI_IdentityShort.test((short) -128)) {
+                    fail(runString);
+                    return;
+                }
+            // (127) == 127
+                runString = "(127)";
+                if ((short) 127 != jtt.jni.JNI_IdentityShort.test((short) 127)) {
+                    fail(runString);
+                    return;
+                }
+            // (-32768) == -32768
+                runString = "(-32768)";
+                if ((short) -32768 != jtt.jni.JNI_IdentityShort.test((short) -32768)) {
+                    fail(runString);
+                    return;
+                }
+            // (32767) == 32767
+                runString = "(32767)";
+                if ((short) 32767 != jtt.jni.JNI_IdentityShort.test((short) 32767)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_ManyObjectParameters() {
+            begin("jtt.jni.JNI_ManyObjectParameters");
+            String runString = null;
+            try {
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.jni.JNI_ManyObjectParameters.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_ManyParameters() {
+            begin("jtt.jni.JNI_ManyParameters");
+            String runString = null;
+            try {
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.jni.JNI_ManyParameters.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_jni_JNI_Nop() {
+            begin("jtt.jni.JNI_Nop");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.jni.JNI_Nop.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
         static void jtt_jni_JNI_OverflowArguments() {
             begin("jtt.jni.JNI_OverflowArguments");
             String runString = null;

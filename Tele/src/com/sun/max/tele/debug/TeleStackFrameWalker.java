@@ -102,11 +102,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public boolean isThreadInNative() {
-        return teleEnabledVmThreadLocalValues != null && !teleEnabledVmThreadLocalValues.isInJavaCode();
-    }
-
-    @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
         final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
         if (teleTargetMethod != null) {

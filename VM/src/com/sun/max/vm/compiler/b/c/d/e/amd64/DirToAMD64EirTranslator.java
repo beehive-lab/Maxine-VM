@@ -50,7 +50,7 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
         translation.translateMethod();
 
-        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize());
+        eirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
 
         timer.stop();
     }
@@ -66,7 +66,7 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         final TreeEirMethod tirMethod = createTreeEirMethod(dirMethod.classMethodActor());
         final DirToAMD64EirMethodTranslation translation = new DirToAMD64EirMethodTranslation(this, tirMethod, dirMethod);
         translation.translateMethod();
-        tirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize());
+        tirMethod.setGenerated(translation.eirBlocks(), translation.literalPool, translation.parameterEirLocations, translation.resultEirLocation(), translation.frameSize(), translation.stackBlocksSize());
         return tirMethod;
     }
 

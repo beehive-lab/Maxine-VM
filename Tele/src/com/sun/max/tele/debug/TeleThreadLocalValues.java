@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.debug;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import java.util.*;
 
 import com.sun.max.memory.*;
@@ -186,10 +184,6 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
     public long getValue(String name) {
         assert values.containsKey(name) : "Unknown VM thread local: " + name;
         return values.get(name);
-    }
-
-    public boolean isInJavaCode() {
-        return get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
     }
 
     @Override
