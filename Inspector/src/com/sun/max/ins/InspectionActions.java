@@ -2701,24 +2701,28 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetRegionWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch memory region";
+        private static final String DEFAULT_REGION_DESCRIPTION = "";
         private final MemoryRegion memoryRegion;
+        private final String regionDescription;
 
         SetRegionWatchpointAction() {
             super(inspection(), "Watch memory region...");
             this.memoryRegion = null;
+            this.regionDescription = null;
             setEnabled(true);
         }
 
-        SetRegionWatchpointAction(MemoryRegion memoryRegion, String title) {
+        SetRegionWatchpointAction(MemoryRegion memoryRegion, String title, String regionDescription) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             this.memoryRegion = memoryRegion;
+            this.regionDescription = regionDescription == null ? DEFAULT_REGION_DESCRIPTION : regionDescription;
             setEnabled(maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
 
         @Override
         protected void procedure() {
             if (memoryRegion != null) {
-                setWatchpoint(memoryRegion, "");
+                setWatchpoint(memoryRegion, regionDescription);
             } else {
                 // TODO (mlvdv) Generalize AddressInputDialog for a Region
                 new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Watch memory...", "Watch") {
@@ -2766,11 +2770,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will create a memory watchpoint.
      *
      * @param memoryRegion an area of memory in the VM
-     * @param string a title for the action, use default name if null
+     * @param title a title for the action, use default name if null
+     * @param regionDescription a description that will be attached to the watchpoint for viewing purposes, default if null.
      * @return an Action that will set a memory watchpoint at the address.
      */
-    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String string) {
-        return new SetRegionWatchpointAction(memoryRegion, string);
+    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String title, String regionDescription) {
+        return new SetRegionWatchpointAction(memoryRegion, title, regionDescription);
     }
 
 
