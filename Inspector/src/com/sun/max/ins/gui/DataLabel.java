@@ -43,7 +43,7 @@ public abstract class DataLabel extends InspectorLabel {
         setToolTipText(toolTipText);
     }
 
-    public final void refresh(boolean force) {
+    public void refresh(boolean force) {
         // Values don't change unless explicitly set
     }
 
@@ -268,6 +268,11 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
             redisplay();
         }
+
+        public IntAsDecimal(Inspection inspection) {
+            this(inspection, 0);
+        }
+
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
@@ -473,13 +478,18 @@ public abstract class DataLabel extends InspectorLabel {
         }
     }
 
-    public static final class BiasedStackAddressAsHex extends AddressAsHex {
+    public static class BiasedStackAddressAsHex extends AddressAsHex {
         boolean biased;
         final StackBias bias;
+
         public BiasedStackAddressAsHex(Inspection inspection, Address address, StackBias bias) {
             super(inspection, address, null);
             this.bias = bias;
             biased = true;
+        }
+
+        public BiasedStackAddressAsHex(Inspection inspection, StackBias bias) {
+            this(inspection, Address.zero(), bias);
         }
 
         private boolean useBias() {
