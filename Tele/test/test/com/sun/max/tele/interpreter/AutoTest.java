@@ -40,9 +40,6 @@ public final class AutoTest {
         // Causes infinite regress in interpreter
         testCaseClassSet.remove(TeleInterpreterTest_jdk_System.class);
 
-        // Uses native builtins that can't be interpreted
-        testCaseClassSet.remove(TeleInterpreterTest_native.class);
-
         // Can't create a TeleVM with '-d' option (yet)
         testCaseClassSet.remove(TeleInterpreterRemoteTest.class);
 

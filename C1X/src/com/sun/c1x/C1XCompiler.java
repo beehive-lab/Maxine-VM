@@ -84,6 +84,9 @@ public class C1XCompiler extends CiCompiler {
     }
 
     private void init() {
+
+        xir.buildTemplates(backend.newXirAssembler());
+
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);

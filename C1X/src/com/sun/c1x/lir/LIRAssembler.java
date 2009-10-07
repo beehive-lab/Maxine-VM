@@ -408,19 +408,35 @@ public abstract class LIRAssembler {
             case StaticCall:
                 directCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
+
             case OptVirtualCall:
                 directCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
+
             case InterfaceCall:
                 interfaceCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
+
             case VirtualCall:
                 virtualCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
+
+            case XirDirectCall:
+                xirDirectCall(op.method(), op.info);
+                break;
+
+            case XirIndirectCall:
+                xirIndirectCall(op.method(), op.info);
+                break;
+
             default:
                 throw Util.shouldNotReachHere();
         }
     }
+
+    protected abstract void xirIndirectCall(RiMethod method, CodeEmitInfo info);
+
+    protected abstract void xirDirectCall(RiMethod method, CodeEmitInfo info);
 
     protected abstract void directCall(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
 

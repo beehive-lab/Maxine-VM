@@ -58,7 +58,7 @@ public interface CirRoutine extends Stoppable {
         private Static() {
         }
 
-        public static Value[] cirArgumentsToValues(CirValue[] cirArguments) {
+        public static Value[] cirArgumentsToValues(CirValue[] cirArguments, MethodActor methodActor) {
             final int numberOfArguments = cirArguments.length - 2; // clip the continuations
             final Value[] values = new Value[numberOfArguments];
             for (int i = 0; i < numberOfArguments; i++) {
@@ -98,14 +98,14 @@ public interface CirRoutine extends Stoppable {
                     final CirValue[] constructorArguments = Arrays.subArray(cirArguments, 1);
                     final Object uninitializedObject = cirArguments[0].value().asObject();
                     try {
-                        final Object initializedObject = methodActor.invokeConstructor(cirArgumentsToValues(constructorArguments)).asObject();
+                        final Object initializedObject = methodActor.invokeConstructor(cirArgumentsToValues(constructorArguments, methodActor)).asObject();
                         Objects.copy(initializedObject, uninitializedObject);
                         return VoidValue.VOID;
                     } catch (InstantiationException instantiationException) {
                         throw ProgramError.unexpected("could not instantiate an instance of " + uninitializedObject);
                     }
                 }
-                return methodActor.invoke(cirArgumentsToValues(cirArguments));
+                return methodActor.invoke(cirArgumentsToValues(cirArguments, methodActor));
             } catch (InvocationTargetException invocationTargetException) {
                 throw new CirFoldingException(invocationTargetException.getCause());
             } catch (IllegalAccessException illegalAccessException) {
