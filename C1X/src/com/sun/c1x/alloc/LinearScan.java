@@ -254,14 +254,7 @@ public class LinearScan {
             maxSpills++;
         }
 
-        int result = spillSlot + nofRegs;
-
-        // Number of stack slots limited because of stack banging.
-        if (result > compilation.target.pageSize / FrameMap.SpillSlotSize) {
-            bailout("too many stack slots used");
-        }
-
-        return result;
+        return spillSlot + nofRegs;
     }
 
     void assignSpillSlot(Interval it) {
