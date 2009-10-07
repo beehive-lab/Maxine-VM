@@ -22,11 +22,9 @@ package com.sun.max.vm.compiler.eir.sparc;
 
 import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirOperand.*;
 import com.sun.max.vm.type.*;
@@ -222,17 +220,12 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
      * @param value
      */
     protected void emit_G_I32(SPARCEirTargetEmitter emitter, GeneralBinaryOperationEmitter generalBinOpEmitter, SPARCEirRegister.GeneralPurpose destinationRegister, int value) {
-        try {
-            if (generalBinOpEmitter.canUseImmediate(value)) {
-                generalBinOpEmitter.emit_G_I(emitter, destinationRegister, value);
-            } else {
-                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-                emitter.assembler().setsw(value, scratchRegister.as());
-                generalBinOpEmitter.emit_G_G(emitter, destinationRegister, scratchRegister);
-            }
-        } catch (AssemblyException e) {
-            // Unexpected exception. Can only occur because of an error in the implementation of canUseImmediate
-            ProgramError.unexpected("Incorrect width for immediate operand");
+        if (generalBinOpEmitter.canUseImmediate(value)) {
+            generalBinOpEmitter.emit_G_I(emitter, destinationRegister, value);
+        } else {
+            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+            emitter.assembler().setsw(value, scratchRegister.as());
+            generalBinOpEmitter.emit_G_G(emitter, destinationRegister, scratchRegister);
         }
     }
     /**
@@ -255,20 +248,15 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 generalBinOpEmitter.emit_G_G(emitter, destinationGeneralRegister(), sourceGeneralRegister());
                 break;
             case IMMEDIATE_64:
-                try {
-                    final long value = sourceLocation().asImmediate().value().toLong();
-                    if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width.numberOfBits) {
-                        emit_G_I32(emitter, generalBinOpEmitter, destinationRegister, (int) value);
-                    } else {
-                        final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-                        // O7 is a secondary scratch register we can use if NOT in a leaf function.
-                        emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
-                        generalBinOpEmitter.emit_G_G(emitter, destinationGeneralRegister(), scratchRegister);
-                        break;
-                    }
-                } catch (AssemblyException e) {
-                    // Unexpected exception. Can only occur because of an error in the implementation of canUseImmediate
-                    ProgramError.unexpected("Incorrect width for immediate operand");
+                final long value = sourceLocation().asImmediate().value().toLong();
+                if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width.numberOfBits) {
+                    emit_G_I32(emitter, generalBinOpEmitter, destinationRegister, (int) value);
+                } else {
+                    final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                    // O7 is a secondary scratch register we can use if NOT in a leaf function.
+                    emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
+                    generalBinOpEmitter.emit_G_G(emitter, destinationGeneralRegister(), scratchRegister);
+                    break;
                 }
                 break;
             case IMMEDIATE_8:
@@ -355,31 +343,26 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
             @Override
             public void emit(SPARCEirTargetEmitter emitter) {
                 if  (destinationLocation().category().equals(INTEGER_REGISTER) && leftLocation().category().equals(INTEGER_REGISTER)) {
-                    try {
-                        switch(sourceLocation().category()) {
-                            case INTEGER_REGISTER:
-                                emit_G_G_G(emitter, destinationGeneralRegister(), leftGeneralRegister(), rightGeneralRegister());
-                                break;
-                            case IMMEDIATE_8:
-                                emit_G_G_I(emitter, destinationGeneralRegister(), leftGeneralRegister(), rightLocation().asImmediate().value().toInt());
-                                break;
-                            case IMMEDIATE_32: {
-                                final int simm13 = rightLocation().asImmediate().value().toInt();
-                                if (isSimm13(simm13)) {
-                                    emit_G_G_I(emitter, destinationGeneralRegister(), leftGeneralRegister(), simm13);
-                                } else {
-                                    final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-                                    emitter.assembler().setsw(simm13, scratchRegister.as());
-                                    emit_G_G_G(emitter, destinationGeneralRegister(), leftGeneralRegister(), scratchRegister);
-                                }
-                                break;
+                    switch(sourceLocation().category()) {
+                        case INTEGER_REGISTER:
+                            emit_G_G_G(emitter, destinationGeneralRegister(), leftGeneralRegister(), rightGeneralRegister());
+                            break;
+                        case IMMEDIATE_8:
+                            emit_G_G_I(emitter, destinationGeneralRegister(), leftGeneralRegister(), rightLocation().asImmediate().value().toInt());
+                            break;
+                        case IMMEDIATE_32: {
+                            final int simm13 = rightLocation().asImmediate().value().toInt();
+                            if (isSimm13(simm13)) {
+                                emit_G_G_I(emitter, destinationGeneralRegister(), leftGeneralRegister(), simm13);
+                            } else {
+                                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                                emitter.assembler().setsw(simm13, scratchRegister.as());
+                                emit_G_G_G(emitter, destinationGeneralRegister(), leftGeneralRegister(), scratchRegister);
                             }
-                            default:
-                                impossibleLocationCategory();
+                            break;
                         }
-                    } catch (AssemblyException e) {
-                        // Unexpected exception. Can only occur because of an error in the implementation of isSimm13
-                        ProgramError.unexpected("Error in isSimm13 implementation ?");
+                        default:
+                            impossibleLocationCategory();
                     }
                 } else {
                     // SPARC only allow for the destination and first source operand to be in register, and the second operand to be a register or an immediate. Anything else is incorrect
@@ -473,48 +456,38 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
 
             @Override
             public void emit(SPARCEirTargetEmitter emitter) {
-                try {
-                    switch(sourceLocation().category()) {
-                        case INTEGER_REGISTER:
-                            emitter.assembler().cmp(leftGeneralRegister().as(), rightGeneralRegister().as());
-                            break;
-                        case IMMEDIATE_8:
-                            emitter.assembler().cmp(leftGeneralRegister().as(), rightLocation().asImmediate().value().toInt());
-                            break;
-                        case IMMEDIATE_64:
-                            try {
-                                final long value = sourceLocation().asImmediate().value().toLong();
-                                if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width.numberOfBits) {
-                                    final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-                                    // O7 is a secondary scratch register we can use if NOT in a leaf function.
-                                    emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
-                                    emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
-                                    break;
-                                }
-                            } catch (AssemblyException e) {
-                                // Unexpected exception. Can only occur because of an error in the implementation of canUseImmediate
-                                ProgramError.unexpected("Incorrect width for immediate operand");
-                            }
-                            // Otherwise, fall through
-                        case IMMEDIATE_16:
-                        case IMMEDIATE_32: {
-                            final int simm13 = rightLocation().asImmediate().value().toInt();
-                            if (canUseImmediate(simm13)) {
-                                emitter.assembler().cmp(leftGeneralRegister().as(), rightLocation().asImmediate().value().toInt());
-                            } else {
-                                final Kind kind = rightLocation().asImmediate().value().kind();
-                                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(kind);
-                                emitter.assembler().setsw(simm13, scratchRegister.as());
-                                emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
-                            }
+                switch(sourceLocation().category()) {
+                    case INTEGER_REGISTER:
+                        emitter.assembler().cmp(leftGeneralRegister().as(), rightGeneralRegister().as());
+                        break;
+                    case IMMEDIATE_8:
+                        emitter.assembler().cmp(leftGeneralRegister().as(), rightLocation().asImmediate().value().toInt());
+                        break;
+                    case IMMEDIATE_64:
+                        final long value = sourceLocation().asImmediate().value().toLong();
+                        if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width.numberOfBits) {
+                            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                            // O7 is a secondary scratch register we can use if NOT in a leaf function.
+                            emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
+                            emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
                             break;
                         }
-                        default:
-                            impossibleLocationCategory();
+                        // Otherwise, fall through
+                    case IMMEDIATE_16:
+                    case IMMEDIATE_32: {
+                        final int simm13 = rightLocation().asImmediate().value().toInt();
+                        if (canUseImmediate(simm13)) {
+                            emitter.assembler().cmp(leftGeneralRegister().as(), rightLocation().asImmediate().value().toInt());
+                        } else {
+                            final Kind kind = rightLocation().asImmediate().value().kind();
+                            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(kind);
+                            emitter.assembler().setsw(simm13, scratchRegister.as());
+                            emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
+                        }
+                        break;
                     }
-                } catch (AssemblyException e) {
-                    // Unexpected exception. Can only occur because of an error in the implementation of isSimm13
-                    ProgramError.unexpected("Error in isSimm13 implementation ?");
+                    default:
+                        impossibleLocationCategory();
                 }
             }
         }

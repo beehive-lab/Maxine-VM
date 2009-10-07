@@ -397,20 +397,21 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     /**
      * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
-     * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub
-     * that enters into the native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. This method
-     * completes this part of the threads stack reference map.
+     * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub that
+     * enters into the native code for blocking on the global {@linkplain VmThreadMap#ACTIVE thread lock} is not yet
+     * prepared. This method completes this part of the threads stack reference map.
      *
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
-     * @param instructionPointer the execution point in the JNI stub that called into native function on which the
-     *            thread is blocked. This value was read from {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}.
-     * @param stackPointer the stack pointer for the JNI stub frame. This value was read from
-     *            {@link VmThreadLocal#LAST_JAVA_CALLER_STACK_POINTER}.
-     * @param framePointer the frame pointer for the JNI stub frame. This value was read from
-     *            {@link VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER}.
      */
-    public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public void completeStackReferenceMap(Pointer vmThreadLocals) {
         FatalError.check(!ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
+        Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
+        Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
+        if (instructionPointer.isZero()) {
+            FatalError.unexpected("A mutator thread in Java at safepoint should be blocked on a monitor");
+        }
         timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
@@ -483,13 +484,13 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
     public void prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
+        Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
         if (instructionPointer.isZero()) {
             FatalError.unexpected("Thread is not stopped");
         }
-
-        final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 

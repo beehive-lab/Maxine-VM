@@ -274,6 +274,9 @@ public class SPARCEirInstructionAdapter extends EirInstructionAdapter implements
     public void visit(SET_STACK_ADDRESS instruction) {
     }
 
+    public void visit(STACK_ALLOCATE instruction) {
+    }
+
     public void visit(SET_I32 instruction) {
     }
 

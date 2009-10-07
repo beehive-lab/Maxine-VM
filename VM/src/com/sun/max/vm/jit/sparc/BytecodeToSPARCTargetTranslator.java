@@ -327,69 +327,53 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
-        try {
-            final GPR scratchRegister = GPR.G1;
-            final GPR scratchRegister2 = GPR.O7;
-            final DFPR register = doublePrecisionParameterRegister(parameterIndex);
-            asm.reset();
-            if (argument == 0) {
-                asm.clr(scratchRegister);
-            } else {
-                asm.setx(SpecialBuiltin.doubleToLong(argument), scratchRegister2, scratchRegister);
-            }
-            asm.stx(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
-            asm.ldd(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
-            codeBuffer.emitCodeFrom(asm);
-        } catch (AssemblyException e) {
-            ProgramError.unexpected();
+        final GPR scratchRegister = GPR.G1;
+        final GPR scratchRegister2 = GPR.O7;
+        final DFPR register = doublePrecisionParameterRegister(parameterIndex);
+        asm.reset();
+        if (argument == 0) {
+            asm.clr(scratchRegister);
+        } else {
+            asm.setx(SpecialBuiltin.doubleToLong(argument), scratchRegister2, scratchRegister);
         }
+        asm.stx(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
+        asm.ldd(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
+        codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignFloatTemplateArgument(int parameterIndex, float argument) {
-        try {
-            final GPR scratchRegister = TARGET_ABI.scratchRegister();
-            final SFPR register = singlePrecisionParameterRegister(parameterIndex);
-            asm.reset();
-            if (argument == 0) {
-                asm.clr(scratchRegister);
-            } else {
-                asm.setsw(SpecialBuiltin.floatToInt(argument), scratchRegister);
-            }
-            asm.stw(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
-            asm.ld(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
-            codeBuffer.emitCodeFrom(asm);
-        } catch (AssemblyException e) {
-            ProgramError.unexpected();
+        final GPR scratchRegister = TARGET_ABI.scratchRegister();
+        final SFPR register = singlePrecisionParameterRegister(parameterIndex);
+        asm.reset();
+        if (argument == 0) {
+            asm.clr(scratchRegister);
+        } else {
+            asm.setsw(SpecialBuiltin.floatToInt(argument), scratchRegister);
         }
+        asm.stw(scratchRegister, CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA);
+        asm.ld(CPU_FRAME_POINTER, SPARCJitStackFrameLayout.OFFSET_TO_FLOATING_POINT_TEMP_AREA, register);
+        codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        try {
-            final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
-            asm.reset();
-            if (argument == 0) {
-                asm.clr(register);
-            } else {
-                asm.setsw(argument, register);
-            }
-            codeBuffer.emitCodeFrom(asm);
-        } catch (AssemblyException e) {
-            ProgramError.unexpected();
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        asm.reset();
+        if (argument == 0) {
+            asm.clr(register);
+        } else {
+            asm.setsw(argument, register);
         }
+        codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignLongTemplateArgument(int parameterIndex, long argument) {
-        try {
-            final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
-            asm.reset();
-            asm.setx(argument, GPR.O7, register);
-            codeBuffer.emitCodeFrom(asm);
-        } catch (AssemblyException e) {
-            ProgramError.unexpected();
-        }
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        asm.reset();
+        asm.setx(argument, GPR.O7, register);
+        codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
@@ -470,39 +454,35 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         // FIXME: a lot of this can be put in common with AMD64.
         // If we were to parameterized the template for lookup switch, the only difference between the two would be the
         // one liner that assemble the setting of the number of cases register.
-        try {
-            final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
-            if (numberOfCases == 0) {
-                // Skip completely if default target is next instruction.
-                // lookup switch are aligned on 4 bytes and have a minimum of 12 bytes.
-                final int nextBytecodePosition = (opcodePosition & 3) + 12;
-                if (defaultTargetBytecodePosition > nextBytecodePosition) {
-                    emitBranch(NONE, opcodePosition, defaultTargetBytecodePosition);
-                }
-                return;
+        final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
+        if (numberOfCases == 0) {
+            // Skip completely if default target is next instruction.
+            // lookup switch are aligned on 4 bytes and have a minimum of 12 bytes.
+            final int nextBytecodePosition = (opcodePosition & 3) + 12;
+            if (defaultTargetBytecodePosition > nextBytecodePosition) {
+                emitBranch(NONE, opcodePosition, defaultTargetBytecodePosition);
             }
-            final int sizeOfInlinedTable = numberOfCases * 2 * Ints.SIZE;
-            final int offsetToLastKey = sizeOfInlinedTable - (2 * Ints.SIZE);
-            asm.reset();
-            asm.setsw(offsetToLastKey, GPR.O1);
-            codeBuffer.emitCodeFrom(asm);
-            codeBuffer.emit(LOOKUP_SWITCH_TEMPLATE);
-
-            final LookupTable32 lookupTable32 = new LookupTable32(codeBuffer.currentPosition(), numberOfCases);
-            inlineDataRecorder.add(lookupTable32);
-            codeBuffer.reserve(lookupTable32.size());
-
-            final int[] matches = new int[numberOfCases];
-            final int[] targetBytecodePositions = new int[numberOfCases];
-            final BytecodeScanner scanner = bytecodeScanner();
-            for (int i = 0; i != numberOfCases; ++i) {
-                matches[i] = scanner.readSwitchCase();
-                targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
-            }
-            addSwitch(new LookupSwitch(opcodePosition, defaultTargetBytecodePosition, matches, targetBytecodePositions));
-        } catch (AssemblyException assemblyException) {
-            throw new TranslationException(assemblyException);
+            return;
         }
+        final int sizeOfInlinedTable = numberOfCases * 2 * Ints.SIZE;
+        final int offsetToLastKey = sizeOfInlinedTable - (2 * Ints.SIZE);
+        asm.reset();
+        asm.setsw(offsetToLastKey, GPR.O1);
+        codeBuffer.emitCodeFrom(asm);
+        codeBuffer.emit(LOOKUP_SWITCH_TEMPLATE);
+
+        final LookupTable32 lookupTable32 = new LookupTable32(codeBuffer.currentPosition(), numberOfCases);
+        inlineDataRecorder.add(lookupTable32);
+        codeBuffer.reserve(lookupTable32.size());
+
+        final int[] matches = new int[numberOfCases];
+        final int[] targetBytecodePositions = new int[numberOfCases];
+        final BytecodeScanner scanner = bytecodeScanner();
+        for (int i = 0; i != numberOfCases; ++i) {
+            matches[i] = scanner.readSwitchCase();
+            targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+        }
+        addSwitch(new LookupSwitch(opcodePosition, defaultTargetBytecodePosition, matches, targetBytecodePositions));
     }
 
     // FIXME: put this in common with AMD64 (pull up one level)
@@ -550,35 +530,31 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void emitTableSwitch(int lowMatch, int highMatch, int opcodePosition, int defaultTargetOffset, int numberOfCases) {
-        try {
-            int templateIndex = 0;
-            asm.reset();
-            asm.setsw(numberOfCases, GPR.O1);
-            if (lowMatch != 0) {
-                templateIndex = 1;
-                asm.setsw(lowMatch, GPR.O2);
-            }
-            final int templatePrefixSize = asm.currentPosition();
-            codeBuffer.emitCodeFrom(asm);
-            codeBuffer.emit(TABLE_SWITCH_TEMPLATES[templateIndex]);
-
-            final InlineDataDescriptor.JumpTable32 jumpTable32 = new InlineDataDescriptor.JumpTable32(codeBuffer.currentPosition(), lowMatch, highMatch);
-            inlineDataRecorder.add(jumpTable32);
-            assert jumpTable32.size() == numberOfCases * WordWidth.BITS_32.numberOfBytes;
-            codeBuffer.reserve(jumpTable32.size());
-
-            // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will
-            // be written.
-            final BytecodeScanner scanner = bytecodeScanner();
-            final int[] targetBytecodePositions = new int[numberOfCases];
-            for (int i = 0; i != numberOfCases; ++i) {
-                targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
-            }
-            final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
-            addSwitch(new TableSwitch(opcodePosition, templateIndex, defaultTargetBytecodePosition, targetBytecodePositions, templatePrefixSize));
-        } catch (AssemblyException assemblyException) {
-            throw new TranslationException(assemblyException);
+        int templateIndex = 0;
+        asm.reset();
+        asm.setsw(numberOfCases, GPR.O1);
+        if (lowMatch != 0) {
+            templateIndex = 1;
+            asm.setsw(lowMatch, GPR.O2);
         }
+        final int templatePrefixSize = asm.currentPosition();
+        codeBuffer.emitCodeFrom(asm);
+        codeBuffer.emit(TABLE_SWITCH_TEMPLATES[templateIndex]);
+
+        final InlineDataDescriptor.JumpTable32 jumpTable32 = new InlineDataDescriptor.JumpTable32(codeBuffer.currentPosition(), lowMatch, highMatch);
+        inlineDataRecorder.add(jumpTable32);
+        assert jumpTable32.size() == numberOfCases * WordWidth.BITS_32.numberOfBytes;
+        codeBuffer.reserve(jumpTable32.size());
+
+        // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will
+        // be written.
+        final BytecodeScanner scanner = bytecodeScanner();
+        final int[] targetBytecodePositions = new int[numberOfCases];
+        for (int i = 0; i != numberOfCases; ++i) {
+            targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+        }
+        final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
+        addSwitch(new TableSwitch(opcodePosition, templateIndex, defaultTargetBytecodePosition, targetBytecodePositions, templatePrefixSize));
     }
 
     @Override
@@ -629,12 +605,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
                 if (SPARCAssembler.isSimm13(offsetFromLiteralBase)) {
                     asm.ldx(literalBaseRegister, offsetFromLiteralBase, destinationRegister);
                 } else {
-                    try {
-                        asm.setsw(offsetFromLiteralBase, GPR.O7);
-                        asm.ldx(literalBaseRegister, GPR.O7, destinationRegister);
-                    } catch (AssemblyException e) {
-                        ProgramError.unexpected();
-                    }
+                    asm.setsw(offsetFromLiteralBase, GPR.O7);
+                    asm.ldx(literalBaseRegister, GPR.O7, destinationRegister);
                 }
                 codeBuffer.emitCodeFrom(asm);
 

@@ -95,11 +95,12 @@ public enum LIROpcode {
         , Idiv
         , Irem
     , EndOp3
-    ,
-    StaticCall
+        , StaticCall
         , OptVirtualCall
         , InterfaceCall
         , VirtualCall
+        , XirDirectCall
+        , XirIndirectCall
     ,
     Lock
         , Unlock

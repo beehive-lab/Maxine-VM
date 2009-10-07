@@ -62,9 +62,9 @@ public abstract class LIRInstruction {
 
     private OperandSlot[] operandSlots;
     private int outputCount;
-    private int inputCount;
-    private int tempCount;
-    private int tempInputCount;
+    private int allocatorInputCount;
+    private int allocatorTempCount;
+    private int allocatorTempInputCount;
     private List<LIRLocation> operands = new ArrayList<LIRLocation>(6);
 
     private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperandFactory.IllegalLocation);
@@ -174,11 +174,11 @@ public abstract class LIRInstruction {
         assert address.base.isRegister();
 
         int baseIndex = operands.size();
-        inputCount++;
+        allocatorInputCount++;
         operands.add(address.base);
 
         if (!address.index.isIllegal()) {
-            inputCount++;
+            allocatorInputCount++;
             operands.add(address.index);
         }
 
@@ -208,18 +208,18 @@ public abstract class LIRInstruction {
             } else if (input.isConstant()) {
                 return addConstant((LIRConstant) input);
             } else {
-                assert operands.size() == outputCount + inputCount + tempInputCount + tempCount;
+                assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
 
                 assert input instanceof LIRLocation;
                 operands.add((LIRLocation) input);
 
                 if (isInput && isTemp) {
-                    tempInputCount++;
+                    allocatorTempInputCount++;
                 } else if (isInput) {
-                    inputCount++;
+                    allocatorInputCount++;
                 } else {
                     assert isTemp;
-                    tempCount++;
+                    allocatorTempCount++;
                 }
 
                 return new OperandSlot(operands.size() - 1);
@@ -481,10 +481,10 @@ public abstract class LIRInstruction {
         if (mode == OperandMode.OutputMode) {
             return outputCount;
         } else if (mode == OperandMode.InputMode) {
-            return inputCount + tempInputCount;
+            return allocatorInputCount + allocatorTempInputCount;
         } else {
             assert mode == OperandMode.TempMode;
-            return tempInputCount + tempCount;
+            return allocatorTempInputCount + allocatorTempCount;
         }
     }
 
@@ -493,12 +493,12 @@ public abstract class LIRInstruction {
             assert index < outputCount;
             return operands.get(index);
         } else if (mode == OperandMode.InputMode) {
-            assert index < inputCount + tempInputCount;
+            assert index < allocatorInputCount + allocatorTempInputCount;
             return operands.get(index + outputCount);
         } else {
             assert mode == OperandMode.TempMode;
-            assert index < tempInputCount + tempCount;
-            return operands.get(index + outputCount + inputCount);
+            assert index < allocatorTempInputCount + allocatorTempCount;
+            return operands.get(index + outputCount + allocatorInputCount);
         }
     }
 
@@ -508,12 +508,12 @@ public abstract class LIRInstruction {
             assert index < outputCount;
             operands.set(index, colorLirOpr);
         } else if (mode == OperandMode.InputMode) {
-            assert index < inputCount + tempInputCount;
+            assert index < allocatorInputCount + allocatorTempInputCount;
             operands.set(index + outputCount, colorLirOpr);
         } else {
             assert mode == OperandMode.TempMode;
-            assert index < tempInputCount + tempCount;
-            operands.set(index + outputCount + inputCount, colorLirOpr);
+            assert index < allocatorTempInputCount + allocatorTempCount;
+            operands.set(index + outputCount + allocatorInputCount, colorLirOpr);
         }
     }
 
@@ -531,7 +531,6 @@ public abstract class LIRInstruction {
     }
 
     public List<ExceptionHandler> exceptionEdges() {
-
         List<ExceptionHandler> result = null;
 
         int i;

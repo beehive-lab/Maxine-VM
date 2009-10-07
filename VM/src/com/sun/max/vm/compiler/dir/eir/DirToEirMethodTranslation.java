@@ -89,7 +89,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     protected DirToEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
-        super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
+        super(eirGenerator, eirMethod.abi, eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
         this.eirMethod = eirMethod;
         this.dirMethod = dirMethod;
 
@@ -212,6 +212,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     public EirConstant dirToEirConstant(DirConstant dirConstant) {
         Value value = dirConstant.value();
+        return makeEirConstant(value);
+    }
+
+    public EirConstant makeEirConstant(Value value) {
         value = value.kind().toStackKind().convert(value); // we make no EIR constants smaller than INT
 
         EirConstant eirConstant = valueToEirConstant.get(value);
