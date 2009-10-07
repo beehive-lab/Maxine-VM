@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cir.optimize;
+package jtt.jni;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
-
-public class CirOptimizerTest_native extends BytecodeTest_native {
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(CirOptimizerTest_native.class.getSimpleName());
-        suite.addTestSuite(CirOptimizerTest_native.class);
-        return new CirOptimizerTestSetup(suite);
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; -1 = -1; 1 = 1; -128 = -128; 127 = 127; -32768 = -32768; 32767 = 32767;
+ */
+public class JNI_IdentityInt {
+    public static int test(int arg) {
+        return id_int(arg);
     }
 
-    public CirOptimizerTest_native(String name) {
-        super(name);
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(CirOptimizerTest_native.suite());
-    }
-
+    private static native int id_int(int b);
 }
