@@ -1863,25 +1863,19 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     void doRoot(Instruction instr) {
-        // This is where the tree-walk starts; instr must be root;
-        Value prev = currentInstruction;
         currentInstruction = instr;
-        try {
-            assert instr.isLive() : "use only with roots";
-            assert instr.subst() == instr : "shouldn't have missed substitution";
+        assert instr.isLive() : "use only with roots";
+        assert instr.subst() == instr : "shouldn't have missed substitution";
 
-            if (C1XOptions.TraceLIRVisit) {
-                TTY.println("Visiting    " + instr);
-            }
-            instr.accept(this);
-            if (C1XOptions.TraceLIRVisit) {
-                TTY.println("Operand for " + instr + " = " + instr.operand());
-            }
-
-            assert (!instr.operand().isIllegal()) || !isUsedForValue(instr) : "operand was not set for live instruction";
-        } finally {
-            currentInstruction = prev;
+        if (C1XOptions.TraceLIRVisit) {
+            TTY.println("Visiting    " + instr);
         }
+        instr.accept(this);
+        if (C1XOptions.TraceLIRVisit) {
+            TTY.println("Operand for " + instr + " = " + instr.operand());
+        }
+
+        assert (!instr.operand().isIllegal()) || !isUsedForValue(instr) : "operand was not set for live instruction";
     }
 
     private boolean isUsedForValue(Instruction instr) {
@@ -2217,24 +2211,16 @@ public abstract class LIRGenerator extends ValueVisitor {
         return argumentItems;
     }
 
-    // This is called for each node in tree; the walk stops if a root is reached
     protected void walk(Value instr) {
-        Value prev = currentInstruction;
-        currentInstruction = instr;
-        try {
-            if (instr instanceof Phi) {
-                assert instr.isLive() || instr.operand().isIllegal() : "phi must be pinned or illegal";
+        assert instr.isLive();
+        if (instr instanceof Phi) {
+            // a phi may not have an operand yet if it is for an exception block
+            if (instr.operand() == null) {
+                operandForPhi((Phi) instr);
             }
-            // stop walk when encounter a root
-            if (instr.isLive() && (!(instr instanceof Phi)) || (!instr.operand().isIllegal())) {
-                assert (!instr.operand().isIllegal()) || instr instanceof Constant : "this root has not yet been visited";
-            } else {
-                assert instr.subst() == instr : "shouldn't have missed substitution";
-                instr.accept(this);
-            }
-        } finally {
-            currentInstruction = prev;
         }
+        // the value must be a constant or have a valid operand
+        assert instr instanceof Constant || !instr.operand().isIllegal() : "this root has not been visited yet";
     }
 
     protected LIRLocation resultRegisterFor(CiKind type) {

@@ -42,13 +42,12 @@ public class CodeEmitInfo {
     private final ValueStack stack; // used by deoptimization (contains also monitors
     private final int bci;
 
-    // use scope from ValueStack
-    public CodeEmitInfo(int bci, ValueStack stack, List<ExceptionHandler> exceptionHandlers) {
-        this.scope = stack.scope();
+    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> exceptionHandlers) {
+        this.scope = state.scope();
         this.bci = bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
-        this.stack = stack;
+        this.stack = state;
         this.exceptionHandlers = exceptionHandlers;
     }
 
