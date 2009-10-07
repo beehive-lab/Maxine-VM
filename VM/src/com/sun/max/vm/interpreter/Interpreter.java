@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,39 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.amd64;
+package com.sun.max.vm.interpreter;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
+import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
 
-    public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
-    }
+public class Interpreter {
 
-    @Override
-    public int callerInstructionPointerAdjustment() {
-        return -1;
-    }
+    public static final CriticalMethod INTERPRETER_INTERPRET = new CriticalMethod(Interpreter.class, "interpret", SignatureDescriptor.fromJava(Void.TYPE));
 
-    @Override
-    public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
-    }
-
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
+    //@INTERPRETER
+    static void interpret() {
+        Log.print("About to interpret ");
+        Log.printMethod(UnsafeCast.asClassMethodActor(VmThreadLocal.INTERPRETED_METHOD.getConstantReference().toJava()), true);
+        FatalError.unimplemented();
     }
 }

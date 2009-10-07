@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,39 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.amd64;
+package com.sun.max.vm.interpreter.amd64;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
+import com.sun.max.asm.*;
+import com.sun.max.vm.*;
 
 /**
- * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
-public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
-
-    public AMD64OptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+public class Package extends VMPackage {
+    public Package() {
+        super();
     }
 
     @Override
-    public int callerInstructionPointerAdjustment() {
-        return -1;
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.platform().processorKind.instructionSet == InstructionSet.AMD64;
     }
 
-    @Override
-    public final int registerReferenceMapSize() {
-        return AMD64TargetMethod.registerReferenceMapSize();
-    }
-
-    @Override
-    public final void patchCallSite(int callOffset, Word callEntryPoint) {
-        AMD64TargetMethod.patchCall32Site(this, callOffset, callEntryPoint);
-    }
-
-    @Override
-    public void forwardTo(TargetMethod newTargetMethod) {
-        AMD64TargetMethod.forwardTo(this, newTargetMethod);
-    }
 }

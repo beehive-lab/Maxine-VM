@@ -69,7 +69,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.println("target method: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
             writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
-            teleTargetMethod.traceBundle(writer);
+            teleTargetMethod.disassemble(writer);
             writer.flush();
             final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
             final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());

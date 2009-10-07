@@ -18,37 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package com.sun.max.vm.interpreter;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.*;
 
 /**
- * @author Thomas Wuerthinger
+ * @author Paul Caprioli
  */
-public class TeleC1XTargetMethod extends TeleTargetMethod {
-
-    TeleC1XTargetMethod(TeleVM teleVM, Reference ref) {
-        super(teleVM, ref);
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-
-    @Override
-    public int[] getCatchRangePositions() {
-        return null;
-    }
-
-    @Override
-    public int[] getCatchBlockPositions() {
-        return null;
+public class Package extends VMPackage {
+    public Package() {
+        super();
     }
 }

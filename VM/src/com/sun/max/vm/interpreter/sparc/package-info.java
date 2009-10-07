@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
-
 /**
- * Canonical surrogate for an optimized compilation of a Java {@link ClassMethod} in the tele VM.
+ * SPARC-specific interpreter.
  *
- * @author Michael Van De Vanter
+ * @author Paul Caprioli
  */
-public final class TeleOptimizedTargetMethod extends TeleTargetMethod {
-
-    TeleOptimizedTargetMethod(TeleVM teleVM, Reference optimizedTargetMethodReference) {
-        super(teleVM, optimizedTargetMethodReference);
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
-}
+package com.sun.max.vm.interpreter.sparc;

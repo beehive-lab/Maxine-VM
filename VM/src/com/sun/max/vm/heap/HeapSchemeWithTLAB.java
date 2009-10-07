@@ -323,7 +323,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             // It is a refill, not an initial fill. So invoke handler.
             doBeforeTLABRefill(allocationMark, enabledVmThreadLocals.getWord(TLAB_TOP.index).asPointer());
         } else {
-            ProgramError.check(enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).isZero(),
+            ProgramError.check(enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).isZero(),
                 "Must not refill TLAB when in Immortal allocation");
         }
 
@@ -390,7 +390,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             // Check for the second here.
             checkAllocationEnabled(size);
             // Check for Immortal memory allocation.
-            final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+            final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
             if (!immortalAllocation.isZero()) {
                 return ImmortalHeap.allocate(size, true);
             }
