@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.dir;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * An abstract reference to another method from within DIR.
@@ -31,6 +32,7 @@ import com.sun.max.vm.type.*;
 public class DirMethodValue extends DirValue {
 
     private final ClassMethodActor classMethodActor;
+    public final Value value;
 
     public ClassMethodActor classMethodActor() {
         return classMethodActor;
@@ -38,10 +40,16 @@ public class DirMethodValue extends DirValue {
 
     public DirMethodValue(ClassMethodActor classMethodActor) {
         this.classMethodActor = classMethodActor;
+        this.value = ReferenceValue.from(classMethodActor);
     }
 
     public Kind kind() {
         return Kind.WORD;
+    }
+
+    @Override
+    public Value value() {
+        return value;
     }
 
     public boolean isConstant() {
