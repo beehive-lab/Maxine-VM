@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.tele.interpreter;
+package jtt.jni;
 
-import junit.framework.*;
-
-import com.sun.max.ide.*;
-
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
+/*
+ * @Harness: java
+ * @Runs: 0c = 0c; 1c = 1c; 127c = 127c;
+ */
+public class JNI_IdentityChar {
+    public static char test(char arg) {
+        return id_char(arg);
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
-    }
-
-    public static Test suite() {
-        final TestCaseClassSet testCaseClassSet = new TestCaseClassSet(new Package());
-        testCaseClassSet.addToEnd(TeleInterpreterTest_subtype.class);
-
-        // Causes infinite regress in interpreter
-        testCaseClassSet.remove(TeleInterpreterTest_jdk_System.class);
-
-        // Can't create a TeleVM with '-d' option (yet)
-        testCaseClassSet.remove(TeleInterpreterRemoteTest.class);
-
-        return new TeleInterpreterTestSetup(testCaseClassSet.toTestSuite());
-    }
+    private static native char id_char(char b);
 }
