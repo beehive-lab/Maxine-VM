@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.fail;
+package jtt.except;
 
 /*
  * @Harness: java
@@ -41,11 +41,5 @@ public class Catch_NPE_10 {
             return r + 10;
         }
         return r;
-    }
-
-    private static void throwNPE(int a) {
-        if (a == 0) {
-            throw null;
-        }
     }
 }

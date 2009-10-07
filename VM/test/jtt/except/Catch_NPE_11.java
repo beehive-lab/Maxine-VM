@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,16 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.jni;
+package jtt.except;
 
 /*
  * @Harness: java
- * @Runs: 0 = 0.0f; -1.0f = -1.0f; 1.0f = 1.0f
+ * @Runs: 0=10; 1=11; 2=1
  */
-public class JNI_IdentityFloat {
-    public static float test(float arg) {
-        return id_float(arg);
+public class Catch_NPE_11 {
+
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            throwE(a);
+            r = 1;
+            throwE(a - 1);
+        } catch (ArithmeticException e) {
+            return r + 10;
+        }
+        return r;
     }
 
-    private static native float id_float(float b);
+    private static void throwE(int a) {
+        int i = 1 / a;
+    }
 }

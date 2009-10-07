@@ -22,7 +22,7 @@ package jtt.jni;
 
 /*
  * @Harness: java
- * @Runs: 0 = 0; -1 = -1; 1 = 1; -128 = -128; 127 = 127; -32768 = -32768; 32767 = 32767;
+ * @Runs: 0L = 0L; -1L = -1L; 1L = 1L; -128L = -128L; 127L = 127L; -32768L = -32768L; 32767L = 32767L;
  */
 public class JNI_IdentityLong {
     public static long test(long arg) {
