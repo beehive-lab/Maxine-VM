@@ -1395,8 +1395,6 @@ public class LinearScan {
 
         // TODO: Check if the order of the registers (cpu, fpu, xmm) is important there!
 
-        //LIRVisitState visitor = new LIRVisitState();
-
         // iterate all blocks in reverse order
         for (int i = blockCount() - 1; i >= 0; i--) {
             BlockBegin block = blockAt(i);

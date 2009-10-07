@@ -793,13 +793,15 @@ public class ValueStack {
      */
     public Iterable<Value> allLiveStateValues() {
         // TODO: implement a more efficient iterator for use in linear scan
-        int max = this.valuesSize();
-        List<Value> result = new ArrayList<Value>(max);
+        List<Value> result = new ArrayList<Value>(valuesSize());
+        for (ValueStack stack = this; stack != null; stack = stack.scope.callerState()) {
+            int max = stack.valuesSize();
 
-        for (int i = 0; i < max; i++) {
-            Value instr = values[i];
-            if (instr != null && instr.isLive()) {
-                result.add(instr);
+            for (int i = 0; i < max; i++) {
+                Value instr = stack.values[i];
+                if (instr != null && instr.isLive()) {
+                    result.add(instr);
+                }
             }
         }
 
