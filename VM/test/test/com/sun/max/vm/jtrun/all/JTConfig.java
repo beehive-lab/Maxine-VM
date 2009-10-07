@@ -277,6 +277,7 @@ public class JTConfig {
         jtt.except.Catch_NPE_08.class,
         jtt.except.Catch_NPE_09.class,
         jtt.except.Catch_NPE_10.class,
+        jtt.except.Catch_NPE_11.class,
         jtt.except.Catch_StackOverflowError_01.class,
         jtt.except.Catch_StackOverflowError_02.class,
         jtt.except.Catch_StackOverflowError_03.class,

@@ -22,7 +22,7 @@ package jtt.jni;
 
 /*
  * @Harness: java
- * @Runs: 0 = 0; -1.0f = -1.0f; 1.0f = 1.0f
+ * @Runs: 0 = 0.0f; -1.0f = -1.0f; 1.0f = 1.0f
  */
 public class JNI_IdentityFloat {
     public static float test(float arg) {
