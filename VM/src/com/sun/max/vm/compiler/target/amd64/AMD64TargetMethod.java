@@ -41,8 +41,26 @@ public abstract class AMD64TargetMethod {
         return Unsigned.idiv(AMD64GeneralRegister64.ENUMERATOR.numberOfValues(), Bytes.WIDTH);
     }
 
-    public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
-        patchCode(targetMethod, callOffset, callEntryPoint.asAddress().toLong(), RCALL);
+    /**
+     * Patches the offset operand of a 32-bit relative CALL instruction.
+     *
+     * @param targetMethod the method containing the CALL instruction
+     * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
+     * @param destination the absolute target address of the CALL
+     */
+    public static void patchCall32Site(TargetMethod targetMethod, int callOffset, Word destination) {
+        patchCode(targetMethod, callOffset, destination.asAddress().toLong(), RCALL);
+    }
+
+    /**
+     * Patches the offset operand of a 32-bit relative JUMP instruction.
+     *
+     * @param targetMethod the method containing the JUMP instruction
+     * @param jumpOffset the offset within the code of {@code targetMethod} of the JUMP to be patched
+     * @param destination the absolute target address of the JUMP
+     */
+    public static void patchJump32Site(TargetMethod targetMethod, int jumpOffset, Word destination) {
+        patchCode(targetMethod, jumpOffset, destination.asAddress().toLong(), RJMP);
     }
 
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
@@ -69,7 +87,9 @@ public abstract class AMD64TargetMethod {
         } else {
             // TODO: Patching code is probably not thread safe!
             //       Patch location must not straddle a cache-line (32-byte) boundary.
-            FatalError.check(true | callSite.isWordAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
+            if (false && !callSite.isWordAligned()) {
+                FatalError.unexpected("Method " + targetMethod.description() + " entry point is not word aligned.");
+            }
             // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
             final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
             callSite.writeWord(0, patch);

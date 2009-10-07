@@ -21,6 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
@@ -34,6 +35,7 @@ import com.sun.c1x.value.*;
 public class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
+    final RiMethod target;
     final Value[] arguments;
     final boolean canTrap;
 
@@ -41,17 +43,19 @@ public class Intrinsic extends StateSplit {
      * Creates a new Intrinsic instruction.
      * @param type the result type of the instruction
      * @param intrinsic the actual intrinsic
+     * @param target the method for this intrinsic
      * @param args the arguments to the call (including the receiver object)
      * @param isStatic <code>true</code> if this method is static
      * @param stateBefore the lock stack
      * @param preservesState <code>true</code> if the implementation of this intrinsic preserves register state
      * @param canTrap <code>true</code> if this intrinsic can cause a trap
      */
-    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, Value[] args, boolean isStatic,
+    public Intrinsic(CiKind type, C1XIntrinsic intrinsic, RiMethod target, Value[] args, boolean isStatic,
                      ValueStack stateBefore, boolean preservesState, boolean canTrap) {
         super(type, stateBefore);
         this.intrinsic = intrinsic;
         this.arguments = args;
+        this.target = target;
         initFlag(Flag.IsStatic, isStatic);
         // Preserves state means that the intrinsic preserves register state across all cases,
         // including slow cases--even if it causes a trap. If so, it can still be a candidate
@@ -69,6 +73,14 @@ public class Intrinsic extends StateSplit {
      */
     public C1XIntrinsic intrinsic() {
         return intrinsic;
+    }
+
+    /**
+     * Gets the target method for this invocation instruction.
+     * @return the target method
+     */
+    public RiMethod target() {
+        return target;
     }
 
     /**

@@ -30,7 +30,7 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 
 /**
- * The <code>ExternalCommand</code> class represents an external command with input and output files.
+ * The {@code ExternalCommand} class represents an external command with input and output files.
  *
  * @author Ben L. Titzer
  */

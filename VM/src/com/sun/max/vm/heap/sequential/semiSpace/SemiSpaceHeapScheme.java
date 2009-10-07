@@ -35,6 +35,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -60,8 +61,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     /**
      * A VM option for specifying amount of memory to be reserved for allocating and raising an
-     * OutOfMemoryError when insufficient memory is available to satisfy an {@linkplain #allocate(Size)
-     * allocation} request.
+     * OutOfMemoryError when insufficient memory is available to satisfy an allocation request.
      *
      * @see #safetyZoneSize
      */
@@ -124,7 +124,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
-     * memory is available to satisfy an {@linkplain #allocate(Size) allocation} request.
+     * memory is available to satisfy an allocation request.
      *
      * @see #safetyZoneSizeOption
      */
@@ -162,12 +162,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
-    private int numberOfGarbageCollectionInvocations;
+    private long lastGCTime;
 
     /**
-     * A VM option for disabling use of TLABs.
+     * A VM option for triggering a GC before every allocation.
      */
-    private static final VMBooleanXXOption excessiveGCOption = register(new VMBooleanXXOption("-XX:-ExcessiveGC",
+    private static final VMBooleanXXOption GCBeforeAllocationOption = register(new VMBooleanXXOption("-XX:-GCBeforeAllocation",
         "Perform a garbage collection before every allocation. This is ignored if " + useTLABOption + " is specified."), MaxineVM.Phase.PRISTINE);
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
@@ -191,10 +191,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
-                Log.print("Could not allocate object heap of size ");
+                Log.println("Error occurred during initialization of VM");
+                Log.print("Could not reserve ");
                 Log.print(size.toLong());
-                Log.println();
-                FatalError.unexpected("Insufficient memory to initialize SemiSpaceHeapScheme");
+                Log.println(" bytes of memory for object heap");
+                MaxineVM.native_exit(1);
             }
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
@@ -207,6 +208,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             verifyReferences = MaxineVM.isDebug() || verifyReferencesOption.getValue();
+
+            lastGCTime = System.currentTimeMillis();
 
             // From now on we can allocate
 
@@ -292,15 +295,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     /**
      * Routine that performs the actual garbage collection.
      */
-    private final class Collect implements Runnable {
-        public void run() {
+    final class Collect extends Collector {
+        @Override
+        public void collect(int invocationCount) {
             try {
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
 
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                ++numberOfGarbageCollectionInvocations;
                 InspectableHeapInfo.beforeGarbageCollection();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
@@ -356,6 +359,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 toSpace.mark.set(allocationMark()); // for debugging
 
+                lastGCTime = System.currentTimeMillis();
+
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
                 // Post-verification of the heap.
@@ -368,7 +373,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                     Log.print("Timings (");
                     Log.print(TimerUtil.getHzSuffix(HeapScheme.GC_TIMING_CLOCK));
                     Log.print(") for GC ");
-                    Log.print(numberOfGarbageCollectionInvocations);
+                    Log.print(invocationCount);
                     Log.print(": clear & initialize=");
                     Log.print(clearTimer.getLastElapsedTime());
                     Log.print(", root scan=");
@@ -666,7 +671,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         return true;
     }
 
-    @INLINE
     private void executeCollectorThread() {
         if (!Heap.gcDisabled()) {
             collectorThread.execute();
@@ -763,7 +767,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         refillTLAB(enabledVmThreadLocals, tlab, tlabSize);
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");
@@ -794,7 +798,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
         // Immortal heap allocation
-        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION.index).asPointer();
+        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
         if (!immortalAllocation.isZero()) {
             return ImmortalHeap.allocate(size, true);
         }
@@ -852,7 +856,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         Pointer cell;
         Address end;
         do {
-            if (excessiveGCOption.getValue()) {
+            if (GCBeforeAllocationOption.getValue()) {
                 Heap.collectGarbage(size);
             }
             oldAllocationMark = allocationMark().asPointer();
@@ -901,7 +905,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
             final VmThread vmThread = UnsafeCast.asVmThread(enabledVmThreadLocals.getReference(VM_THREAD.index).toJava());
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.print(": Placed TLAB padding at ");
             Log.print(tlabMark);
             Log.print(" [words=");
@@ -1129,7 +1133,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     public void disableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.zero());
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
         if (usesTLAB()) {
             super.disableImmortalMemoryAllocation();
         }
@@ -1138,9 +1142,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     public void enableImmortalMemoryAllocation() {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION.index, Word.allOnes());
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
         if (usesTLAB()) {
             super.enableImmortalMemoryAllocation();
         }
+    }
+
+    @Override
+    public long maxObjectInspectionAge() {
+        return System.currentTimeMillis() - lastGCTime;
     }
 }

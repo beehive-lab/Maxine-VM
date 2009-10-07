@@ -28,19 +28,20 @@ import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiConstant;
 
 /**
- * The <code>Value</code> class definition.
+ * This class represents a value within the HIR graph, including local variables, phis, and
+ * all other instructions.
  *
  * @author Ben L. Titzer
  */
 public abstract class Value {
     /**
-     * An enumeration of flags on instructions.
+     * An enumeration of flags on values.
      */
     public enum Flag {
-        NonNull,            // produces non-null value
+        NonNull,            // this value is non-null
         NoNullCheck,        // does not require null check
         NoStoreCheck,       // does not require store check
-        NoBoundsCheck,       // does not require range (bounds) check
+        NoBoundsCheck,      // does not require bounds check
         NoWriteBarrier,     // does not require write barrier
         NoZeroCheck,        // divide or modulus cannot cause exception
         DirectCompare,
@@ -51,7 +52,6 @@ public abstract class Value {
         PreservesState,     // intrinsic preserves state
         UnorderedIsTrue,
         NeedsPatching,
-        ThrowIncompatibleClassChangeError,
         LiveValue,          // live because value is used
         LiveDeopt,          // live for deoptimization
         LiveControl,        // live for control dependencies
@@ -63,28 +63,27 @@ public abstract class Value {
 
         public final int mask = 1 << ordinal();
     }
+
     private static final int LIVE_FLAGS = Flag.LiveValue.mask |
                                           Flag.LiveDeopt.mask |
                                           Flag.LiveControl.mask |
                                           Flag.LiveSideEffect.mask;
     public static int nextID;
-    protected final int id;
-    protected final CiKind valueType;
+
+    public final int id;
+    public final CiKind kind;
+
     private int flags;
     private Value subst;
-    protected LIROperand lirOperand;
-
-    public Value(CiKind type) {
-        valueType = type;
-        id = nextID++;
-    }
+    private LIROperand lirOperand;
 
     /**
-     * Gets the unique ID of this instruction.
-     * @return the id of this instruction
+     * Creates a new value with the specified kind.
+     * @param type the type of this value
      */
-    public final int id() {
-        return id;
+    public Value(CiKind type) {
+        kind = type;
+        id = nextID++;
     }
 
     /**
@@ -95,14 +94,14 @@ public abstract class Value {
      * upon it.
      * @return {@code true} if this instruction should be considered live
      */
-    public boolean isLive() {
+    public final boolean isLive() {
         return C1XOptions.PinAllInstructions || (flags & LIVE_FLAGS) != 0;
     }
 
     /**
      * Clears all liveness flags.
      */
-    public void clearLive() {
+    public final void clearLive() {
         flags = flags & ~LIVE_FLAGS;
     }
 
@@ -111,7 +110,7 @@ public abstract class Value {
      * @return the value type of this instruction
      */
     public final CiKind type() {
-        return valueType;
+        return kind;
     }
 
     /**
@@ -144,12 +143,22 @@ public abstract class Value {
         this.subst = subst;
     }
 
+    /**
+     * Clear any internal state related to null checks, because a null check
+     * for this instruction is redundant. The state cleared may depend
+     * on the type of this instruction
+     */
     public final void redundantNullCheck() {
         if (clearNullCheck()) {
             C1XMetrics.NullChecksRedundant++;
         }
     }
 
+    /**
+     * Clear any internal state related to null checks, because a null check
+     * for this instruction is redundant. The state cleared may depend
+     * on the type of this instruction
+     */
     public final void eliminateNullCheck() {
         if (clearNullCheck()) {
             C1XMetrics.NullCheckEliminations++;
@@ -164,6 +173,10 @@ public abstract class Value {
         return false;
     }
 
+    /**
+     * Clears any internal state associated with null checks.
+     * @return {@code true} if this instruction had any state that was changed
+     */
     protected boolean internalClearNullCheck() {
         // most instructions don't care about clearing of their null checks
         return false;
@@ -187,7 +200,7 @@ public abstract class Value {
     }
 
     /**
-     * Set a flag on this instruction.
+     * Clear a flag on this instruction.
      * @param flag the flag to set
      */
     public final void clearFlag(Flag flag) {
@@ -195,7 +208,7 @@ public abstract class Value {
     }
 
     /**
-     * Set a flag on this instruction.
+     * Set or clear a flag on this instruction.
      * @param flag the flag to set
      * @param val if <code>true</code>, set the flag, otherwise clear it
      */
@@ -208,7 +221,8 @@ public abstract class Value {
     }
 
     /**
-     * Initialize a flag on this instruction.
+     * Initialize a flag on this instruction. Assumes the flag is not initially set,
+     * e.g. in the constructor of an instruction.
      * @param flag the flag to set
      * @param val if <code>true</code>, set the flag, otherwise do nothing
      */
@@ -234,6 +248,10 @@ public abstract class Value {
         return !checkFlag(Flag.NoNullCheck);
     }
 
+    /**
+     * Checks whether this value is a constant (i.e. it is of type {@link Constant}.
+     * @return {@code true} if this value is a constant
+     */
     public final boolean isConstant() {
         return this instanceof Constant;
     }
@@ -247,6 +265,11 @@ public abstract class Value {
         return checkFlag(Flag.PhiDead);
     }
 
+    /**
+     * Convert this value to a constant if it is a constant, otherwise return null.
+     * @return the {@link CiConstant} represented by this value if it is a constant; {@code null}
+     * otherwise
+     */
     public final CiConstant asConstant() {
         if (this instanceof Constant) {
             return ((Constant) this).value;
@@ -258,7 +281,7 @@ public abstract class Value {
      * Gets the LIR operand associated with this instruction.
      * @return the LIR operand for this instruction
      */
-    public LIROperand operand() {
+    public final LIROperand operand() {
         return lirOperand;
     }
 
@@ -266,7 +289,7 @@ public abstract class Value {
      * Sets the LIR operand associated with this instruction.
      * @param operand the operand to associate with this instruction
      */
-    public void setOperand(LIROperand operand) {
+    public final void setOperand(LIROperand operand) {
         assert operand != null && !operand.isIllegal() : "operand must exist";
         lirOperand = operand;
     }
@@ -274,7 +297,7 @@ public abstract class Value {
     /**
      * Clears the LIR operand associated with this instruction.
      */
-    public void clearOperand() {
+    public final void clearOperand() {
         lirOperand = LIROperandFactory.IllegalLocation;
     }
 
@@ -283,7 +306,7 @@ public abstract class Value {
      * @return the exact type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
     public RiType exactType() {
-        return null;
+        return null; // default: unknown exact type
     }
 
     /**
@@ -291,7 +314,7 @@ public abstract class Value {
      * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
      */
     public RiType declaredType() {
-        return null;
+        return null; // default: unknown declared type
     }
 
     /**
@@ -327,44 +350,16 @@ public abstract class Value {
         return builder.toString();
     }
 
-    public boolean isDeadPhi() {
+    public final boolean isDeadPhi() {
         return checkFlag(Flag.PhiDead);
     }
 
     /**
      * This method supports the visitor pattern by accepting a visitor and calling the
-     * appropriate <code>visit()</code> method.
+     * appropriate {@code visit()} method.
+     *
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
-
-    /**
-     * Utility method to check that two instructions have the same basic type.
-     * @param i the first instruction
-     * @param other the second instruction
-     * @return {@code true} if the instructions have the same basic type
-     */
-    public static boolean sameBasicType(Value i, Value other) {
-        return i.type().basicType == other.type().basicType;
-    }
-
-    /**
-     * Checks that two instructions are equivalent, optionally comparing constants.
-     * @param x the first instruction
-     * @param y the second instruction
-     * @param compareConstants {@code true} if equivalent constants should be considered equivalent
-     * @return {@code true} if the instructions are equivalent; {@code false} otherwise
-     */
-    public static boolean equivalent(Instruction x, Instruction y, boolean compareConstants) {
-        if (x == y) {
-            return true;
-        }
-        if (compareConstants && x != null && y != null) {
-            if (x.isConstant() && x.asConstant().equivalent(y.asConstant())) {
-                return true;
-            }
-        }
-        return false;
-    }
 
 }

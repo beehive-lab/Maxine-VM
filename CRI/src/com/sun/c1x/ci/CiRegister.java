@@ -21,11 +21,10 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>Register</code> class definition.
+ * This class represents a machine register.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public final class CiRegister {
 
@@ -106,7 +105,7 @@ public final class CiRegister {
 
     /**
      * Utility function for asserting that the given registers are all different.
-     * 
+     *
      * @param registers
      *            an array of registers that should be checked for equal entries
      * @return false if an equal entry is found, true otherwise

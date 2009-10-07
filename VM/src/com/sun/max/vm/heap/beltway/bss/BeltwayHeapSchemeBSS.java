@@ -77,7 +77,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         @INLINE
         @Override
         public boolean contains(Pointer origin) {
-            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
@@ -112,14 +112,17 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             parallelCollector.initialize(this);
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getFromSpace();
             bssCollector = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getFromSpace();
     }
 
     public Belt getFromSpace() {

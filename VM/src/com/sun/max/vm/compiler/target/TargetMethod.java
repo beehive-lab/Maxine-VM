@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.io.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -36,7 +35,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -83,7 +81,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     protected byte[] scalarLiterals;
 
     @INSPECTED
-    private Object[] referenceLiterals;
+    protected Object[] referenceLiterals;
 
     @INSPECTED
     protected byte[] code;
@@ -303,23 +301,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
-    /**
-     * Traces the {@linkplain #referenceLiterals() reference literals} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (referenceLiterals != null) {
-            writer.println("References: ");
-            writer.indent();
-            for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
-            }
-            writer.outdent();
-        }
-    }
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
     }
@@ -482,41 +463,33 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
 
-    @Override
     public void cleanup() {
     }
 
-    @Override
     public boolean contains(Builtin builtin, boolean defaultResult) {
         return false;
     }
 
-    @Override
     public int count(Builtin builtin, int defaultResult) {
         return 0;
     }
 
-    @Override
     public Class<? extends IrTraceObserver> irTraceObserverType() {
         return null;
     }
 
-    @Override
     public boolean isGenerated() {
         return false;
     }
 
-    @Override
     public boolean isNative() {
         return false;
     }
 
-    @Override
     public String name() {
         return description();
     }
 
-    @Override
     public String traceToString() {
         return description();
     }

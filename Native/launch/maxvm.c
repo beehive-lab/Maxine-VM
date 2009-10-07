@@ -48,7 +48,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
  * by a call to 'pthread_main_np()'. As of the Snow Leopard, the '__CFInitialize' function
  * called when CoreFoundation expects to be executing on pthread_main_np().
  * As such, a constant of a CoreFoundation data type is declared here to ensure that it
- * is loaded on the correct thread. This 'solution' was devised after reading the source code at:
+ * is loaded on the correct thread. This solution was arrived at after reading the source code at:
  *
  *     http://www.opensource.apple.com/source/CF/CF-550/CFRuntime.c
  */

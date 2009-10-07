@@ -29,9 +29,9 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
+ * This class implements an assembler that can encode most X86 instructions.
  *
  * @author Thomas Wuerthinger
- *
  */
 public abstract class X86Assembler extends AbstractAssembler {
 
@@ -45,8 +45,20 @@ public abstract class X86Assembler extends AbstractAssembler {
         notEqual(0x5),
         less(0xc),
         lessEqual(0xe),
-        greater(0xf), greaterEqual(0xd), below(0x2), belowEqual(0x6), above(0x7), aboveEqual(0x3), overflow(0x0), noOverflow(
-                        0x1), carrySet(0x2), carryClear(0x3), negative(0x8), positive(0x9), parity(0xa), noParity(0xb);
+        greater(0xf),
+        greaterEqual(0xd),
+        below(0x2),
+        belowEqual(0x6),
+        above(0x7),
+        aboveEqual(0x3),
+        overflow(0x0),
+        noOverflow(0x1),
+        carrySet(0x2),
+        carryClear(0x3),
+        negative(0x8),
+        positive(0x9),
+        parity(0xa),
+        noParity(0xb);
 
         public final int value;
 
@@ -141,6 +153,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(op2 | encode(dst) << 3 | encode(src));
     }
 
+    @SuppressWarnings({"PointlessBitwiseExpression"})
     void emitOperandHelper(CiRegister reg, Address addr) {
 
         CiRegister base = addr.base;
@@ -277,13 +290,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         assert reg.isXMM();
         assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
-    }
-
-    void emitFarith(int b1, int b2, int i) {
-        assert Util.isByte(b1) && Util.isByte(b2) : "wrong opcode";
-        assert 0 <= i && i < 8 : "illegal stack offset";
-        emitByte(b1);
-        emitByte(b2 + i);
     }
 
     // Now the Assembler instruction (identical for 32/64 bits)
@@ -489,13 +495,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(0);
 
     }
-    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
 
+    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
         recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         prefix(adr);
         emitByte(0xFF);
         emitOperand(X86.rdx, adr);
-
     }
 
     protected final void emitGlobalStubCall(Object globalStubID, CodeEmitInfo info) {

@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.eir.sparc;
 
 import static com.sun.max.vm.compiler.eir.EirLocationCategory.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -159,13 +158,9 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
      * This translates into a pair of real instructions  {@code sethi, Ro; ld [Rp + Ro], R}..
      */
     private void emitWithOffset(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int offset32) {
-        try {
-            final SPARCEirRegister.GeneralPurpose offsetRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-            emitter.assembler().setsw(offset32, offsetRegister.as());
-            emit(emitter, pointerRegister, offsetRegister);
-        } catch (AssemblyException e) {
-            impossibleImmediateWidth();
-        }
+        final SPARCEirRegister.GeneralPurpose offsetRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+        emitter.assembler().setsw(offset32, offsetRegister.as());
+        emit(emitter, pointerRegister, offsetRegister);
     }
 
     private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int offset13, SPARCEirRegister.GeneralPurpose indexRegister) {

@@ -138,11 +138,11 @@ public final class FatalError extends Error {
             Log.println();
         }
         Log.print("Faulting thread: ");
-        Log.printVmThread(vmThread, true);
+        Log.printThread(vmThread, true);
 
         if (!trapState.isZero()) {
             Log.print("------ Trap State for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(" ------");
             TrapStateAccess.instance().logTrapState(trapState);
         }
@@ -213,7 +213,7 @@ public final class FatalError extends Error {
     static void dumpStackAndThreadLocals(Pointer vmThreadLocals, boolean trappedInNative) {
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         Log.print("------ Stack dump for thread ");
-        Log.printVmThread(vmThread, false);
+        Log.printThread(vmThread, false);
         Log.println(" ------");
         if (!trappedInNative && vmThreadLocals == VmThread.currentVmThreadLocals()) {
             Throw.stackDump(null, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
@@ -222,9 +222,9 @@ public final class FatalError extends Error {
         }
 
         Log.print("------ Thread locals for thread ");
-        Log.printVmThread(vmThread, false);
+        Log.printThread(vmThread, false);
         Log.println(" ------");
-        Log.printVmThreadLocals(vmThreadLocals, true);
+        Log.printThreadLocals(vmThreadLocals, true);
     }
 
     static final class DumpStackOfNonCurrentThread implements Pointer.Procedure {

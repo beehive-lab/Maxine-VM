@@ -46,16 +46,12 @@ public class HIRTestExecutor implements Executor {
     public static final MaxRiRuntime runtime = new MaxRiRuntime();
 
     private static void initialize(boolean loadingPackages) {
-        Iterable<Option<?>> opt = JavaTester.options.getOptions();
-        for (Option x : opt) {
-            if (x.getName().equals("c1x-optlevel")) {
-                C1XOptions.setOptimizationLevel((Integer) x.getDefaultValue());
-            }
-        }
+        C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
+
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
         final CiTarget target = createTarget();
-        final C1XCompiler compiler = new C1XCompiler(runtime, target);
+        final C1XCompiler compiler = new C1XCompiler(runtime, target, null);
 
         // create MaxineRuntime
         generator = new HIRGenerator(runtime, target, compiler);
@@ -77,7 +73,7 @@ public class HIRTestExecutor implements Executor {
     public Object execute(JavaExecHarness.JavaTestCase c, Object[] vals) throws InvocationTargetException {
         final CiConstant[] args = new CiConstant[vals.length];
         for (int i = 0; i < args.length; i++) {
-            args[i] = CiConstant.fromBoxedJavaValue(vals[i]);
+            args[i] = IRInterpreter.fromBoxedJavaValue(vals[i]);
         }
         final ClassMethodActor classMethodActor = (ClassMethodActor) c.slot2;
         final IR method = generator.makeHirMethod(runtime.getRiMethod(classMethodActor));
@@ -108,7 +104,7 @@ public class HIRTestExecutor implements Executor {
          * @return the IR for the method
          */
         public IR makeHirMethod(RiMethod classMethodActor) {
-            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, null, classMethodActor);
+            C1XCompilation compilation = new C1XCompilation(compiler, target, riRuntime, classMethodActor);
             return compilation.emitHIR();
         }
     }

@@ -24,12 +24,12 @@ import java.lang.annotation.*;
 
 
 /**
- * Every thus annotated method is never to be inlined by the VM's optimizing compiler.
- * 
+ * Every thus annotated method is never to be inlined by the compiler.
+ *
  * This annotation exists primarily for annotating methods that <b>must never</b> be inlined
  * for semantic reasons. Typically, this is to ensure that a separate activation frame is
  * always used for a call to the method.
- * 
+ *
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)

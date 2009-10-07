@@ -26,9 +26,9 @@ import java.lang.annotation.*;
  * It must also be purely functional (without side-effects)
  * and idempotent (not influenced by any changing state).
  *
- * If the method is static, it is to be meta-evaluated unconditionally by the VM's optimizing compiler.
+ * If the method is static, it is to be meta-evaluated unconditionally by the CPS compiler.
  * If the method is non-static, it will be meta-evaluated whenever its receiver is known at compile time.
- * 
+ *
  * @author Bernd Mathiske
  */
 @Retention(RetentionPolicy.RUNTIME)

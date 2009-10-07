@@ -35,7 +35,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Methods with this annotation must be compiled with the optimizing compiler, not the JIT.
+ * Methods with this annotation must be compiled with the bootstrap compiler, not the JIT.
  * Neither can they be interpreted.
  * <p>
  * This is the case when a method uses values of type {@link Word} or
@@ -52,7 +52,7 @@ import com.sun.max.vm.type.*;
  * <li>{@link C_FUNCTION}</li>
  * <li>{@link JNI_FUNCTION}</li>
  * <li>{@link SUBSTITUTE}: the substitutee is unsafe</li>
- * <li>{@link SURROGATE}: the substitutee is unsafe</li>
+ * <li>{@link LOCAL_SUBSTITUTION}: the substitutee is unsafe</li>
  * </ul>
  * <p>
  * However, some must be pointed out manually with this annotation.
@@ -104,7 +104,7 @@ public @interface UNSAFE {
         }
 
         /**
-         * Find out whether the given method must be compiled by the optimizing compiler only, without resolving any constant pool constants.
+         * Find out whether the given method must be compiled by the bootstrap compiler only, without resolving any constant pool constants.
          */
         private static boolean isUnsafe(ClassMethodActor classMethodActor) {
             if (classMethodActor.isUnsafe()) {
@@ -172,7 +172,7 @@ public @interface UNSAFE {
                                 isUnsafe.setValue(true);
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
-                            // much likely a reference to a @PROTOTYPE_ONLY method - do nothing
+                            // probably a reference to a @PROTOTYPE_ONLY method - do nothing
                         }
                     }
                 }

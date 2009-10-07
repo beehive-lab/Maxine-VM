@@ -76,6 +76,9 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
         }
         // Clone the template.
         final TargetMethod trampoline = template.duplicate();
+        if (!MaxineVM.isPrototyping()) {
+            trampoline.linkDirectCalls();
+        }
         final DynamicTrampoline dynamicTrampoline = allocateTrampoline(tableIndex, trampoline);
         // Fix the clone's literal constant holding the index to the dispatch table
         final Object[] literals = trampoline.referenceLiterals();

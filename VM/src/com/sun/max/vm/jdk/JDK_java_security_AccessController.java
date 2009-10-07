@@ -144,9 +144,9 @@ final class JDK_java_security_AccessController {
             } else {
                 while (bytecodeLocations.hasNext()) {
                     final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
-                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor();
+                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor;
                     if (classMethodActor.isApplicationVisible()) {
-                        final ProtectionDomain protectionDomain = bytecodeLocation.classMethodActor().holder().protectionDomain();
+                        final ProtectionDomain protectionDomain = bytecodeLocation.classMethodActor.holder().protectionDomain();
                         if (protectionDomain != null) {
                             result.append(protectionDomain);
                         }

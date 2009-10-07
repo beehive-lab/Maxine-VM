@@ -217,7 +217,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     /**
      * Gets the current interpreter frame type state.
-     * @return the type state 
+     * @return the type state
      */
     public TypeState typeState() {
         return (TypeState) frame;

@@ -23,7 +23,6 @@ package com.sun.max.vm.code;
 import static com.sun.max.vm.VMOptions.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -32,9 +31,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Target machine code cache management.
@@ -150,7 +147,7 @@ public abstract class CodeManager {
 
     private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Code arrays: code=[");
         Log.print(codeCell);
         Log.print(" - ");
@@ -175,56 +172,13 @@ public abstract class CodeManager {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    /**
-     * Allocates space in this code region for a runtime stub.
-     * Note that this method will allocate a byte array of the specified size and inline it in the code
-     * region to preserve the invariant that the code region can be scanned linearly as a collection of objects.
-     *
-     * @param stub an object describing the size of the runtime stub (i.e. the size in bytes to allocate). If
-     *            allocation is successful, the address of the memory chunk allocated (i.e. the address of the first
-     *            element of the internally allocated byte array) will be accessible through the
-     *            {@link MemoryRegion#start()} method of this object.
-     */
-    synchronized void allocateRuntimeStub(RuntimeStub stub) {
-        assert !MaxineVM.isPrototyping() : "Relocation of runtime stubs not yet supported.";
-        CodeRegion currentCodeRegion;
-
-        if (!MaxineVM.isPrototyping()) {
-            // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
-            Safepoint.disable();
-            Heap.disableAllocationForCurrentThread();
-            currentCodeRegion = runtimeCodeRegion;
-        } else {
-            currentCodeRegion = Code.bootCodeRegion;
-        }
-
-        String allocationTraceDescription = Code.traceAllocation.getValue() ? stub.name() : null;
-        int stubLength = stub.size().toInt();
-        Size allocationSize = Layout.byteArrayLayout().getArraySize(stubLength);
-        Pointer stubCell = currentCodeRegion.allocate(allocationSize, true);
-        traceChunkAllocation(allocationTraceDescription, allocationSize, stubCell);
-        if (stubCell.isZero()) {
-            FatalError.unexpected("could not allocate runtime stub");
-        }
-        Cell.plantArray(stubCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), stubLength);
-        stub.setStart(stubCell.plus(Layout.byteArrayLayout().getElementOffsetInCell(0)));
-
-        if (!MaxineVM.isPrototyping()) {
-            // It is now safe again to perform operations that may block and/or trigger a garbage collection
-            Safepoint.enable();
-            Heap.enableAllocationForCurrentThread();
-        }
-
-        currentCodeRegion.addToSortedMemoryRegions(stub);
-    }
-
     private void traceChunkAllocation(Object purpose, Size size, Pointer cell) {
         if (!cell.isZero() && purpose != null) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated chunk in CodeManager for ");
             if (purpose instanceof MethodActor) {
-                Log.printMethodActor((MethodActor) purpose, false);
+                Log.printMethod((MethodActor) purpose, false);
             } else {
                 Log.print(purpose);
             }
@@ -268,21 +222,6 @@ public abstract class CodeManager {
         final CodeRegion codeRegion = codePointerToCodeRegion(codePointer);
         if (codeRegion != null) {
             return codeRegion.findTargetMethod(codePointer);
-        }
-        return null;
-    }
-
-    /**
-     * Looks up the runtime stub that contains the specified code pointer.
-     *
-     * @param codePointer the code pointer to lookup
-     * @return the runtime stub that contains the specified code pointer, if it exists;
-     *         {@code null} otherwise
-     */
-    RuntimeStub codePointerToRuntimeStub(Address codePointer) {
-        final CodeRegion codeRegion = codePointerToCodeRegion(codePointer);
-        if (codeRegion != null) {
-            return codeRegion.findRuntimeStub(codePointer);
         }
         return null;
     }

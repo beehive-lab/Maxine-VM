@@ -26,7 +26,46 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
 /**
-  * Utility class that provides functionality common to all SPARC stack frame layout.
+ * Utility class that provides functionality common to all SPARC stack frame layout.
+ *
+ * The layout of the stack is as follows:
+ * <p>
+ * <pre>
+ *   Base     Offset       Contents
+ *   ----------------+--------------------------------+----------------
+ *                   |                                |
+ *                   :    blocks allocated by the     :
+ *                   :    StackAllocate builtin       :
+ *                   |                                |
+ *                   +--------------------------------+
+ *                   |                                |
+ *                   :  outgoing arguments (6 .. n)   :
+ *                   :    and register allocator      :
+ *                   :         spill area             :
+ *                   |                                |
+ *   %sp*       +176 +--------------------------------+   ---
+ *                   | outgoing argument 5            |    ^
+ *                   |     ...                        |    |
+ *                   | outgoing argument 0            |    |
+ *   %sp*       +128 +--------------------------------+    |
+ *                   | save slot for %i7              | MIN_STACK_FRAME_SIZE (176)
+ *                   |     ...                        |    |
+ *                   | save slot for %i0              |    |
+ *                   | save slot for %l7              |    |
+ *                   |     ...                        |    |
+ *                   | save slot for %l0              |    v
+ *   %sp*       +0   +--------------------------------+   ---
+ *                   |                                |    ^
+ *                   |                                |    |
+ *                   |                                | STACK_BIAS (2047)
+ *                   |                                |    |
+ *                   |                                |    v
+ *   %sp --->        +--------------------------------+   ---
+ *
+ *
+ *
+ * Note: %sp* == %sp + STACK_BIAS
+ * </pre>
  *
  * @author Laurent Daynes
  * @author Paul Caprioli
@@ -93,13 +132,14 @@ public final class SPARCStackFrameLayout {
     /**
      * Computes the offset of a local stack slot relative to the frame pointer register (%fp).
      * The offset of the local slot is computed by the EIR from the top of the stack.
-     * The Eir is oblivious to the details of the stack frame layout (stack bias, register window saving area, etc...).
-     * These needs to be accounted for when computing a offset from the frame pointer register.
-     * @see  offsetToFirstFreeSlotFromStackPointer
+     * EIR is oblivious to the details of the stack frame layout (stack bias, register window saving area, etc...).
+     * These need to be accounted for when computing an offset from the frame pointer register.
      *
      * @param frameSize size of the stack frame where the slot resides.
      * @param slotOffset offset of the stack slot.
      * @return an offset in bytes relative to the frame pointer register
+     *
+     * @see #OFFSET_FROM_SP_TO_FIRST_SLOT
      */
     public static int localSlotOffsetFromFrame(int frameSize,  int slotOffset) {
         return OFFSET_FROM_SP_TO_FIRST_SLOT - frameSize + slotOffset;

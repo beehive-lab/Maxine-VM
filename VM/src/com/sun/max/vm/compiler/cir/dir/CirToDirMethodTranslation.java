@@ -293,8 +293,8 @@ class CirToDirMethodTranslation {
         DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor.get(cirJavaFrameDescriptor);
         if (dirJavaFrameDescriptor == null) {
             dirJavaFrameDescriptor = new DirJavaFrameDescriptor(cirToDirJavaFrameDescriptor(cirJavaFrameDescriptor.parent()),
-                                                                       cirJavaFrameDescriptor.classMethodActor(),
-                                                                       cirJavaFrameDescriptor.bytecodePosition(),
+                                                                cirJavaFrameDescriptor.classMethodActor,
+                                                                cirJavaFrameDescriptor.bytecodePosition,
                                                                        cirToDirValues(cirJavaFrameDescriptor.locals),
                                                                        cirToDirValues(cirJavaFrameDescriptor.stackSlots));
             cirToDirJavaFrameDescriptor.put(cirJavaFrameDescriptor, dirJavaFrameDescriptor);

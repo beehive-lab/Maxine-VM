@@ -24,10 +24,12 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -86,13 +88,16 @@ public class ExceptionDispatcher {
     }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
-        try {
-            final TypeDescriptor type = assembler.constantPool().classAt(classConstantIndex).typeDescriptor();
-            return type.equals(JavaTypeDescriptor.forJavaClass(Throwable.class));
-        } catch (LinkageError e) {
-            // Defer linkage errors until the dispatcher is actually run or compiled
-            return false;
+        ClassConstant classAt = assembler.constantPool().classAt(classConstantIndex);
+        final TypeDescriptor type = classAt.typeDescriptor();
+        if (type.equals(JavaTypeDescriptor.THROWABLE)) {
+            return true;
         }
+        ClassActor catchType = classAt.resolve(assembler.constantPool(), classConstantIndex);
+        if (!ClassRegistry.javaLangThrowableActor().isAssignableFrom(catchType)) {
+            throw ErrorContext.verifyError("Catch type is not a subclass of Throwable in handler");
+        }
+        return false;
     }
 
 

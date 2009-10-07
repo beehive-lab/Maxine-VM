@@ -20,11 +20,10 @@
  */
 package com.sun.c1x.debug;
 
-import static com.sun.c1x.ir.Instruction.*;
-
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.util.Util;
 
 /**
  * Prints a listing for a {@linkplain BlockBegin block}.
@@ -36,10 +35,8 @@ public class BlockPrinter implements BlockClosure {
     private final InstructionPrinter ip;
     private final boolean cfgOnly;
     private final boolean liveOnly;
-    final IR ir;
 
     public BlockPrinter(IR ir, InstructionPrinter ip, boolean cfgOnly, boolean liveOnly) {
-        this.ir = ir;
         this.ip = ip;
         this.cfgOnly = cfgOnly;
         this.liveOnly = liveOnly;
@@ -86,7 +83,7 @@ public class BlockPrinter implements BlockClosure {
                 out.print(", ");
             }
             Value value = stack.stackAt(i);
-            out.print(i + ":" + valueString(value));
+            out.print(i + ":" + Util.valueString(value));
             i += value.type().sizeInSlots();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
@@ -114,7 +111,7 @@ public class BlockPrinter implements BlockClosure {
                     // synchronized methods push null on the lock stack
                     out.print("this");
                 } else {
-                    out.print(valueString(value));
+                    out.print(Util.valueString(value));
                 }
             }
             out.print("]");

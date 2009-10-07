@@ -78,10 +78,14 @@ public class C1XTargetMethod extends TargetMethod {
         initFrameLayout(ciTargetMethod);
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
+
+        if (!MaxineVM.isPrototyping()) {
+            linkDirectCalls();
+        }
     }
 
     private int neededBytes(int value) {
-        return ((value - 1) / Bytes.SIZE) + 1;
+        return ((value - 1) / Bytes.WIDTH) + 1;
     }
 
     private int registerReferenceMapBytes() {
@@ -135,7 +139,7 @@ public class C1XTargetMethod extends TargetMethod {
         Object[] referenceLiterals = objectReferences.toArray();
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCode().length);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, ciTargetMethod.targetCodeSize());
         Code.allocate(targetBundleLayout, this);
         this.setData(scalarLiterals, referenceLiterals, ciTargetMethod.targetCode());
 
@@ -201,8 +205,8 @@ public class C1XTargetMethod extends TargetMethod {
         return relativeDataPos;
     }
 
+    @UNSAFE
     private void patchInstructions(TargetBundleLayout targetBundleLayout, CiTargetMethod ciTargetMethod, int[] relativeDataPositions) {
-
         Offset codeStart = targetBundleLayout.cellOffset(TargetBundleLayout.ArrayField.code);
 
         Offset dataDiff = Offset.zero();
@@ -257,8 +261,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     private void initStopPositions(CiTargetMethod ciTargetMethod) {
-
-
         int numberOfIndirectCalls = ciTargetMethod.indirectCalls.size();
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
         int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
@@ -345,6 +347,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
+    @UNSAFE
     @Override
     public final void patchCallSite(int callOffset, Word callEntryPoint) {
         final int displacement = callEntryPoint.asAddress().minus(codeStart().plus(callOffset)).toInt();
@@ -359,6 +362,7 @@ public class C1XTargetMethod extends TargetMethod {
     // TODO: (tw) Get rid of these!!!!!!!
     private static final int RJMP = 0xe9;
 
+    @UNSAFE
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;
         assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
@@ -370,6 +374,7 @@ public class C1XTargetMethod extends TargetMethod {
         patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
     }
 
+    @UNSAFE
     private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
         final Pointer callSite = targetMethod.codeStart().plus(offset);
         final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
@@ -390,6 +395,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
+    @UNSAFE
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
 
@@ -459,7 +465,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     private ClassMethodActor getClassMethodActor(CiRuntimeCall runtimeCall, RiMethod method) {
-
         if (method != null) {
             final MaxRiMethod maxMethod = (MaxRiMethod) method;
             return maxMethod.asClassMethodActor("directCall()");

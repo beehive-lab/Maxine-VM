@@ -21,6 +21,8 @@
 package com.sun.max.vm.compiler.snippet;
 
 import static com.sun.max.vm.runtime.Safepoint.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
+import static com.sun.max.vm.stack.JavaFrameAnchor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
@@ -30,9 +32,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -111,29 +114,37 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
     public static final class NativeCallPrologue extends NativeStubSnippet {
         @SNIPPET
         @INLINE
-        public static Word nativeCallPrologue() {
-            return nativeCallPrologue0(VmThread.currentVmThreadLocals(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());
+        public static void nativeCallPrologue() {
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Word previousAnchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index);
+            Pointer anchor = JavaFrameAnchor.create(getCpuStackPointer(), getCpuFramePointer(), getInstructionPointer(), previousAnchor);
+
+            nativeCallPrologue0(enabledVmThreadLocals, anchor);
         }
 
+        /**
+         * Makes the transition from the 'in Java' state to the 'in native' state.
+         *
+         * @param enabledVmThreadLocals the safepoints-triggered VM thread locals for the current thread
+         * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just before
+         *            the transition is made
+         */
         @INLINE
-        public static Word nativeCallPrologue0(Pointer vmThreadLocals, Word stackPointer, Word framePointer, Word instructionPointer) {
+        public static void nativeCallPrologue0(Pointer enabledVmThreadLocals, Word anchor) {
             if (!NATIVE_CALLS_DISABLED.getConstantWord().isZero()) {
                 FatalError.unexpected("Calling native code while native calls are disabled");
             }
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_FRAME_POINTER.index, framePointer);
-            enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_STACK_POINTER.index, stackPointer);
-            enabledVmThreadLocals.setWord(LAST_JAVA_CALLER_INSTRUCTION_POINTER.index, instructionPointer);
+
+            // Update the last Java frame anchor for the current thread:
+            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
 
             if (Safepoint.UseCASBasedGCMutatorSynchronization) {
                 enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
-
             } else {
-                MemoryBarrier.memopStore(); // The following store must be last:
-
-                MUTATOR_STATE.setVariableWord(vmThreadLocals, THREAD_IN_NATIVE);
+                MemoryBarrier.memopStore();
+                // The following store must be last:
+                enabledVmThreadLocals.setWord(MUTATOR_STATE.index, THREAD_IN_NATIVE);
             }
-            return vmThreadLocals;
         }
 
         public static final NativeCallPrologue SNIPPET = new NativeCallPrologue();
@@ -145,11 +156,24 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
     public static final class NativeCallEpilogue extends NativeStubSnippet {
         @SNIPPET
         @INLINE
-        public static void nativeCallEpilogue(Pointer vmThreadLocals) {
-            spinUntilGCFinished(vmThreadLocals);
+        public static void nativeCallEpilogue() {
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Pointer anchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index).asPointer();
+            nativeCallEpilogue0(enabledVmThreadLocals, PREVIOUS.get(anchor));
+        }
 
-            // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
-            LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+        /**
+         * Makes the transition from the 'in native' state to the 'in Java' state, blocking on a
+         * spin lock if a GC is currently underway.
+         *
+         * @param enabledVmThreadLocals the safepoints-triggered VM thread locals for the current thread
+         * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after
+         *            the transition is made
+         */
+        @INLINE
+        public static void nativeCallEpilogue0(Pointer enabledVmThreadLocals, Pointer anchor) {
+            spinUntilGCFinished(enabledVmThreadLocals);
+            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
         }
 
         /**
@@ -157,8 +181,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
          */
         @INLINE
         @NO_SAFEPOINTS("Cannot take a trap while GC is running")
-        private static void spinUntilGCFinished(Pointer vmThreadLocals) {
-            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        private static void spinUntilGCFinished(Pointer enabledVmThreadLocals) {
             if (UseCASBasedGCMutatorSynchronization) {
                 while (true) {
                     if (enabledVmThreadLocals.getWord(MUTATOR_STATE.index).equals(THREAD_IN_NATIVE)) {
@@ -206,12 +229,11 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
     public static final class NativeCallPrologueForC extends NativeStubSnippet {
         @SNIPPET
         @INLINE
-        public static Word nativeCallPrologueForC() {
-            final Pointer vmThreadLocals = VmThread.currentVmThreadLocals();
-            LAST_JAVA_CALLER_FRAME_POINTER_FOR_C.setVariableWord(vmThreadLocals, VMRegister.getCpuFramePointer());
-            LAST_JAVA_CALLER_STACK_POINTER_FOR_C.setVariableWord(vmThreadLocals, VMRegister.getCpuStackPointer());
-            LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C.setVariableWord(vmThreadLocals, VMRegister.getInstructionPointer());
-            return vmThreadLocals;
+        public static void nativeCallPrologueForC() {
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Word previousAnchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index);
+            Pointer anchor = JavaFrameAnchor.create(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), previousAnchor);
+            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, anchor);
         }
 
         public static final NativeCallPrologueForC SNIPPET = new NativeCallPrologueForC();
@@ -220,12 +242,12 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
     public static final class NativeCallEpilogueForC extends NativeStubSnippet {
         @SNIPPET
         @INLINE
-        public static void nativeCallEpilogueForC(Pointer vmThreadLocals) {
-            // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
-            LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C.setVariableWord(vmThreadLocals, Word.zero());
+        public static void nativeCallEpilogueForC() {
+            Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer();
+            Pointer anchor = enabledVmThreadLocals.getWord(LAST_JAVA_FRAME_ANCHOR.index).asPointer();
+            enabledVmThreadLocals.setWord(LAST_JAVA_FRAME_ANCHOR.index, PREVIOUS.get(anchor));
         }
 
         public static final NativeCallEpilogueForC SNIPPET = new NativeCallEpilogueForC();
     }
-
 }

@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.type.*;
@@ -35,18 +36,37 @@ import com.sun.max.vm.type.*;
  */
 public class EirMethod extends AbstractIrMethod {
 
+    public final EirABI abi;
+    private int frameSize;
+    private EirLiteralPool literalPool;
+    private IndexedSequence<EirBlock> blocks;
+
+    /**
+     * Locations where this method retrieves its parameters.
+     */
+    private EirLocation[] parameterLocations;
+
+    /**
+     * Locations where this method's callers set up the method's parameters.
+     */
+    private EirLocation[] argumentLocations;
+
+    /**
+     * Location where this method writes its return value.
+     */
+    private EirLocation resultLocation;
+
+    /**
+     * The total size of the blocks allocated in the frame via the {@link StackAllocate} builtin.
+     */
+    private int stackBlocksSize;
+
     public boolean isTemplate() {
         return classMethodActor().isTemplate();
     }
 
     public boolean isTrampoline() {
-        return classMethodActor() instanceof TrampolineMethodActor;
-    }
-
-    private final EirABI abi;
-
-    public EirABI abi() {
-        return abi;
+        return classMethodActor().isTrampoline();
     }
 
     public EirMethod(ClassMethodActor classMethodActor, EirABI eirABI) {
@@ -59,11 +79,6 @@ public class EirMethod extends AbstractIrMethod {
         abi = eirABIsScheme.getABIFor(classMethodActor);
     }
 
-    /**
-     * Locations where this method retrieves its parameters.
-     */
-    private EirLocation[] parameterLocations;
-
     public EirLocation[] parameterLocations() {
         return parameterLocations;
     }
@@ -71,11 +86,6 @@ public class EirMethod extends AbstractIrMethod {
     public void setParameterLocations(EirLocation[] parameterLocations) {
         this.parameterLocations = parameterLocations;
     }
-
-    /**
-     * Locations where this method's callers set up the method's parameters.
-     */
-    private EirLocation[] argumentLocations;
 
     public EirLocation[] argumentLocations() {
         return argumentLocations;
@@ -85,8 +95,6 @@ public class EirMethod extends AbstractIrMethod {
         this.argumentLocations = argumentLocations;
     }
 
-    private EirLocation resultLocation;
-
     public EirLocation resultLocation() {
         return resultLocation;
     }
@@ -94,8 +102,6 @@ public class EirMethod extends AbstractIrMethod {
     protected void setResultLocation(EirLocation resultLocation) {
         this.resultLocation = resultLocation;
     }
-
-    private int frameSize;
 
     /**
      * Gets the size of the stack frame used for the local variables in
@@ -114,28 +120,33 @@ public class EirMethod extends AbstractIrMethod {
         frameSize = numberOfBytes;
     }
 
+    /**
+     * Gets the total size of the blocks allocated in the frame via the {@link StackAllocate} builtin.
+     * The value returned by {@link #frameSize()} includes this amount.
+     */
+    public int stackBlocksSize() {
+        return stackBlocksSize;
+    }
+
     public void emit(EirTargetEmitter emitter) {
         for (EirBlock block : blocks()) {
             block.emit(emitter);
         }
     }
 
-    private IndexedSequence<EirBlock> blocks;
-
     public IndexedSequence<EirBlock> blocks() {
         return blocks;
     }
-
-    private EirLiteralPool literalPool;
 
     public EirLiteralPool literalPool() {
         return literalPool;
     }
 
     public void setGenerated(IndexedSequence<EirBlock> blocks, EirLiteralPool literalPool, EirLocation[] parameterLocations,
-                             final EirLocation resultLocation, int frameSize) {
+                             final EirLocation resultLocation, int frameSize, int stackBlocksSize) {
         this.blocks = blocks;
         this.literalPool = literalPool;
+        this.stackBlocksSize = stackBlocksSize;
         setParameterLocations(parameterLocations);
         setArgumentLocations(parameterLocations); // FIXME: this should be different for SPARC. An extra parameter is needed...
         setResultLocation(resultLocation);

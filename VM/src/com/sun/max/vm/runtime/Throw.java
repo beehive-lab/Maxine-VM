@@ -22,7 +22,6 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -207,14 +206,16 @@ public final class Throw {
         if (message != null) {
             Log.println(message);
         }
-        final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+
+        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
+        final Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (instructionPointer.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");
-            Log.printVmThread(vmThread, true);
+            Log.printThread(vmThread, true);
         } else {
-            final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            final Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
+            final Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
             vmThread.stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
         }
     }
@@ -277,7 +278,14 @@ public final class Throw {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
                 Log.print("        -> ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod.classMethodActor(), false);
+                final Pointer codeStart = targetMethod.codeStart();
+                Log.print(" [");
+                Log.print(codeStart);
+                Log.print("+");
+                Log.print(pointer.minus(codeStart).toInt());
+                Log.println("]");
+
             }
             pointer = pointer.plus(Word.size());
         }

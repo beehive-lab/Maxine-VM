@@ -44,15 +44,11 @@ import com.sun.max.vm.stack.*;
  */
 public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
 
-    private CiTarget c1xTarget;
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
     private XirGenerator xirGenerator;
 
     public static final Option<Integer> OptLevel;
-
-    //@PROTOTYPE_ONLY
-    //private final Map<TargetMethod, C1XTargetMethodGenerator> targetMap = new HashMap<TargetMethod, C1XTargetMethodGenerator>();
 
     public C1XCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -80,9 +76,9 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
-            c1xTarget = createTarget(c1xRuntime, vmConfiguration());
+            CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
             xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
         }
     }
 
@@ -164,33 +160,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public final TargetMethod compile(ClassMethodActor classMethodActor) {
-        // ignore compilation directive for now
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {
-
-            C1XTargetMethod targetMethod = new C1XTargetMethod(this, classMethodActor, compiledMethod);
-
-//            if (MaxineVM.isPrototyping()) {
-//                // in prototyping mode, we need to be able to iterate over the calls in the code
-//                // for the closure process
-//                targetMap.put(targetMethod, generator);
-//            }
-            assert targetMethod != null;
-            return targetMethod;
+            return new C1XTargetMethod(this, classMethodActor, compiledMethod);
         }
         throw FatalError.unexpected("bailout"); // compilation failed
     }
-
-
-//    @PROTOTYPE_ONLY
-//    public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
-//        // iterate over all the calls in this target method and add them to the appropriate lists
-//        // this is used in code reachability during prototyping
-//        //C1XTargetMethodGenerator ciTargetMethod = targetMap.get(targetMethod);
-//        //assert ciTargetMethod != null : "no registered MaxCiTargetMethod for this TargetMethod";
-//        targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
-//    }
 
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, StackFrameWalker.Purpose purpose, Object context) {
         return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);

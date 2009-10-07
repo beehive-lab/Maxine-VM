@@ -662,24 +662,24 @@ public class C0XCompilation {
 
     private void doPutField(RiField riField) {
         Location object = pop1();
-        Location value = popX(riField.basicType());
+        Location value = popX(riField.kind());
         codeGen.genPutField(riField, object, value);
     }
 
     private void doGetField(RiField riField) {
         Location object = pop1();
         Location r = codeGen.genGetField(riField, object);
-        pushX(r, riField.basicType());
+        pushX(r, riField.kind());
     }
 
     private void doPutStatic(RiField riField) {
-        Location value = popX(riField.basicType());
+        Location value = popX(riField.kind());
         codeGen.getPutStatic(riField, value);
     }
 
     void doGetStatic(RiField riField) {
         Location r = codeGen.genGetStatic(riField);
-        pushX(r, riField.basicType());
+        pushX(r, riField.kind());
     }
 
     private void doThrow(int i) {

@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Class to capture common methods for heap scheme implementations.
@@ -81,5 +84,21 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     public void zapRegion(MemoryRegion region) {
         Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
+    }
+
+    public void disableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.zero());
+    }
+
+    public void enableImmortalMemoryAllocation() {
+        final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
+        enabledVmThreadLocals.setWord(IMMORTAL_ALLOCATION_ENABLED.index, Word.allOnes());
+    }
+
+    public long maxObjectInspectionAge() {
+        FatalError.unimplemented();
+        return 0;
+
     }
 }

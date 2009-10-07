@@ -31,6 +31,7 @@ import com.sun.c1x.value.*;
 /**
  * The <code>ScopeData</code> class represents inlining context when parsing the bytecodes
  * of an inlined method.
+ *
  * @author Ben L. Titzer
 */
 public class ScopeData {
@@ -53,8 +54,6 @@ public class ScopeData {
     int workListIndex;
     // maximum inline size for this scope
     int maxInlineSize;
-    // expression stack depth at point where inline occurred
-    int callerStackSize;
 
     // Exception handler list
     List<ExceptionHandler> exceptionHandlers;
@@ -451,14 +450,6 @@ public class ScopeData {
         }
         // pop the last item off the end
         return workList[--workListIndex];
-    }
-
-    /**
-     * Checks whether the work list is empty, which indicates parsing is complete.
-     * @return <code>true</code> if there are no more blocks in the worklist
-     */
-    public boolean isWorkListEmpty() {
-        return workListIndex == 0;
     }
 
     /**

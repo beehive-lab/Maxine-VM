@@ -140,7 +140,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         if (Heap.traceRootScanning()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Finalizing JIT reference maps for ");
-            Log.printMethodActor(classMethodActor(), true);
+            Log.printMethod(classMethodActor(), true);
             Log.unlock(lockDisabledSafepoints);
         }
 
@@ -198,7 +198,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
             }
 
             Log.print("Finalized JIT reference maps for ");
-            Log.printMethodActor(classMethodActor(), true);
+            Log.printMethod(classMethodActor(), true);
             Log.unlock(lockDisabledSafepoints);
         }
 

@@ -61,8 +61,8 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
-    private static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
-    private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
+    public static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
+    public static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     /**
      * The number of normal stack slots per JIT stack slot. See {@link #JIT_SLOT_SIZE} for an explanation of why

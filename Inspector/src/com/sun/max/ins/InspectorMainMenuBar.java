@@ -158,7 +158,6 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(sub);
         menu.add(actions.viewMethodCodeByAddress());
         menu.add(actions.viewNativeCodeByAddress());
-        menu.add(actions.viewRuntimeStubByAddress());
         return menu;
     }
 

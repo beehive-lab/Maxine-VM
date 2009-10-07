@@ -26,9 +26,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.exp.ExpStackWalker.*;
 
 /**
- *
+ * This class represents a "stateless" view of a stack frame, including only the
+ * operations on the stack frame that are needed by the stack frame walker. The
+ * actual stack frame state (e.g the instruction pointer and stack pointer) are
+ * encapsulated as a {@link ExpStackWalker.Cursor cursor} and passed to each of
+ * the methods. This interface is typically implemented by a compiled method, but
+ * may also be implemented by stubs, a bytecode interpreter, etc.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public interface ExpStackFrameLayout {
 

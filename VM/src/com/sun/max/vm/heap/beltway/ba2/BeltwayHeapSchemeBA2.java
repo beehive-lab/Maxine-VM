@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.ba2.BeltwayBA2Collector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
@@ -35,7 +36,7 @@ import com.sun.max.vm.reference.*;
  * An Heap Scheme for a Appel-style collector implemented with Beltway. Uses two belts: one for the nursery and one for
  * the mature space.
  *
- * The scheme uses a two collectors, one for minor collection of the young generation only, one for full collection.
+ * The scheme uses two collectors, one for minor collection of the young generation only, one for full collection.
  * There is a single-threaded and parallel version for each of these collectors. An instance of each of these collector
  * is created and initialized at prototyping time. What collectors to use (single-threaded vs parallel) is selected at
  * runtime.
@@ -90,20 +91,21 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  || inNurserySpace(origin);
+            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin)  ||
+            inNurserySpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
     final BA2HeapBoundChecker ba2HeapBoundChecker;
 
-    Runnable minorGCCollector;
-    Runnable fullGCCollector;
+    Collector minorGCCollector;
+    Collector fullGCCollector;
 
-    public Runnable getMinorGC() {
+    public Collector getMinorGC() {
         return minorGCCollector;
     }
 
-    public Runnable getMajorGC() {
+    public Collector getMajorGC() {
         return fullGCCollector;
     }
 
@@ -143,18 +145,21 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
             adjustedCardTableAddress = BeltwayCardRegion.adjustedCardTableBase(cardRegion.cardTableBase().asPointer());
             beltManager.swapBelts(getMatureSpace(), getNurserySpace());
             getMatureSpace().setExpandable(true);
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getNurserySpace();
 
             final BeltwayBA2Collector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
-            minorGCCollector =  (Runnable) collectors[0];
-            fullGCCollector =  (Runnable) collectors[1];
+            minorGCCollector = collectors[0];
+            fullGCCollector = collectors[1];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "NurserySpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getNurserySpace();
     }
 
     @INLINE(override = true)

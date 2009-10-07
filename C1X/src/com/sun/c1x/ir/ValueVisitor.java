@@ -118,8 +118,4 @@ public abstract class ValueVisitor {
     }
     public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
     }
-    public void visitProfileCall(ProfileCall i) {
-    }
-    public void visitProfileCounter(ProfileCounter i) {
-    }
 }

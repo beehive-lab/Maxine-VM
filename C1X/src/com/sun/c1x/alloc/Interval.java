@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 
 /**
- *
+ * Represents an interval in the linear scan register allocator.
  * @author Thomas Wuerthinger
  */
 public final class Interval {
@@ -152,7 +152,7 @@ public final class Interval {
     }
 
     int from() {
-        return first.from();
+        return first.from;
     }
 
     int to() {
@@ -308,15 +308,15 @@ public final class Interval {
 
     void nextRange() {
         assert this != EndMarker : "not allowed on sentinel";
-        current = current.next();
+        current = current.next;
     }
 
     int currentFrom() {
-        return current.from();
+        return current.from;
     }
 
     int currentTo() {
-        return current.to();
+        return current.to;
     }
 
     boolean currentAtEnd() {
@@ -362,10 +362,10 @@ public final class Interval {
         assert first != Range.EndMarker : "interval has no range";
 
         Range r = first;
-        while (r.next() != Range.EndMarker) {
-            r = r.next();
+        while (r.next != Range.EndMarker) {
+            r = r.next;
         }
-        return r.to();
+        return r.to;
     }
 
     // consistency check of split-children
@@ -425,15 +425,15 @@ public final class Interval {
         return null;
     }
 
-    Interval splitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
+    Interval getSplitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
-        assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
+        assert opId >= 0 : "invalid opId (method cannot be called for spill moves)";
 
-        Interval result;
         if (splitChildren.size() == 0) {
-            result = this;
+            assert this.covers(opId, mode) : this + " does not cover " + opId;
+            return this;
         } else {
-            result = null;
+            Interval result = null;
             int len = splitChildren.size();
 
             // in outputMode, the end of the interval (opId == cur.to()) is not valid
@@ -455,25 +455,39 @@ public final class Interval {
                 }
             }
 
-            assert result != null : "no matching interval found";
-            for (i = 0; i < len; i++) {
-                Interval tmp = splitChildren.get(i);
-                if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
-                    TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
-                    result.print(TTY.out, allocator);
-                    tmp.print(TTY.out, allocator);
-                    assert false : "two valid result intervals found";
-                }
+            assert checkSplitChild(result, opId, allocator, toOffset, mode);
+            return result;
+        }
+    }
+
+    private boolean checkSplitChild(Interval result, int opId, LinearScan allocator, int toOffset, LIRInstruction.OperandMode mode) {
+        if (result == null) {
+            // this is an error
+            StringBuilder msg = new StringBuilder(this.toString()).append(" has no child at ").append(opId);
+            if (splitChildren.size() > 0) {
+                Interval first = splitChildren.get(0);
+                Interval last = splitChildren.get(splitChildren.size() - 1);
+                msg.append(" (first = ").append(first).append(", last = ").append(last).append(")");
             }
+            throw new CiBailout("Linear Scan Error: " + msg);
         }
 
+        int len = splitChildren.size();
+        for (int i = 0; i < len; i++) {
+            Interval tmp = splitChildren.get(i);
+            if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
+                TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
+                result.print(TTY.out, allocator);
+                tmp.print(TTY.out, allocator);
+                throw new CiBailout("two valid result intervals found");
+            }
+        }
         assert result.covers(opId, mode) : "opId not covered by interval";
-
-        return result;
+        return true;
     }
 
     // returns the last split child that ends before the given opId
-    Interval splitChildBeforeOpId(int opId) {
+    Interval getSplitChildBeforeOpId(int opId) {
         assert opId >= 0 : "invalid opId";
 
         Interval parent = splitParent();
@@ -594,13 +608,13 @@ public final class Interval {
 
     void addRange(int from, int to) {
         assert from < to : "invalid range";
-        assert first() == Range.EndMarker || to < first().next().from() : "not inserting at begin of interval";
-        assert from <= first().to() : "not inserting at begin of interval";
+        assert first() == Range.EndMarker || to < first().next.from : "not inserting at begin of interval";
+        assert from <= first().to : "not inserting at begin of interval";
 
-        if (first().from() <= to) {
+        if (first().from <= to) {
             // join intersecting ranges
-            first().setFrom(Math.min(from, first().from()));
-            first().setTo(Math.max(to, first().to()));
+            first().from = Math.min(from, first().from);
+            first().to = Math.max(to, first().to);
         } else {
             // insert new range
             first = new Range(from, to, first());
@@ -647,21 +661,21 @@ public final class Interval {
         // split the ranges
         Range prev = null;
         Range cur = first;
-        while (cur != Range.EndMarker && cur.to() <= splitPos) {
+        while (cur != Range.EndMarker && cur.to <= splitPos) {
             prev = cur;
-            cur = cur.next();
+            cur = cur.next;
         }
         assert cur != Range.EndMarker : "split interval after end of last range";
 
-        if (cur.from() < splitPos) {
-            result.first = new Range(splitPos, cur.to(), cur.next());
-            cur.setTo(splitPos);
-            cur.setNext(Range.EndMarker);
+        if (cur.from < splitPos) {
+            result.first = new Range(splitPos, cur.to, cur.next);
+            cur.to = splitPos;
+            cur.next = Range.EndMarker;
 
         } else {
             assert prev != null : "split before start of first range";
             result.first = cur;
-            prev.setNext(Range.EndMarker);
+            prev.next = Range.EndMarker;
         }
         result.current = result.first;
         cachedTo = -1; // clear cached value
@@ -712,7 +726,7 @@ public final class Interval {
     Interval splitFromStart(int splitPos) {
         assert isVirtualInterval() : "cannot split fixed intervals";
         assert splitPos > from() && splitPos < to() : "can only split inside interval";
-        assert splitPos > first.from() && splitPos <= first.to() : "can only split inside first range";
+        assert splitPos > first.from && splitPos <= first.to : "can only split inside first range";
         assert firstUsage(IntervalUseKind.noUse) > splitPos : "can not split when use positions are present";
 
         // allocate new interval
@@ -720,13 +734,13 @@ public final class Interval {
 
         // the new created interval has only one range (checked by assert on above,
         // so the splitting of the ranges is very simple
-        result.addRange(first.from(), splitPos);
+        result.addRange(first.from, splitPos);
 
-        if (splitPos == first.to()) {
-            assert first.next() != Range.EndMarker : "must not be at end";
-            first = first.next();
+        if (splitPos == first.to) {
+            assert first.next != Range.EndMarker : "must not be at end";
+            first = first.next;
         } else {
-            first.setFrom(splitPos);
+            first.from = splitPos;
         }
 
         return result;
@@ -736,16 +750,16 @@ public final class Interval {
     boolean covers(int opId, LIRInstruction.OperandMode mode) {
         Range cur = first;
 
-        while (cur != Range.EndMarker && cur.to() < opId) {
-            cur = cur.next();
+        while (cur != Range.EndMarker && cur.to < opId) {
+            cur = cur.next;
         }
         if (cur != Range.EndMarker) {
-            assert cur.to() != cur.next().from() : "ranges not separated";
+            assert cur.to != cur.next.from : "ranges not separated";
 
             if (mode == LIRInstruction.OperandMode.OutputMode) {
-                return cur.from() <= opId && opId < cur.to();
+                return cur.from <= opId && opId < cur.to;
             } else {
-                return cur.from() <= opId && opId <= cur.to();
+                return cur.from <= opId && opId <= cur.to;
             }
         }
         return false;
@@ -759,22 +773,26 @@ public final class Interval {
 
         Range cur = first;
         while (cur != Range.EndMarker) {
-            assert cur.to() < cur.next().from() : "no space between ranges";
+            assert cur.to < cur.next.from : "no space between ranges";
 
             // hole-range starts before this range . hole
-            if (holeFrom < cur.from()) {
+            if (holeFrom < cur.from) {
                 return true;
 
                 // hole-range completely inside this range . no hole
-            } else if (holeTo <= cur.to()) {
-                return false;
+            } else {
+                if (holeTo <= cur.to) {
+                    return false;
 
-                // overlapping of hole-range with this range . hole
-            } else if (holeFrom <= cur.to()) {
-                return true;
+                    // overlapping of hole-range with this range . hole
+                } else {
+                    if (holeFrom <= cur.to) {
+                        return true;
+                    }
+                }
             }
 
-            cur = cur.next();
+            cur = cur.next;
         }
 
         return false;
@@ -782,7 +800,7 @@ public final class Interval {
 
     @Override
     public String toString() {
-        return registerNumber() + " " + typeName();
+        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to() + "]";
     }
 
     private String typeName() {
@@ -823,7 +841,7 @@ public final class Interval {
         Range cur = first;
         while (cur != Range.EndMarker) {
             cur.print(out);
-            cur = cur.next();
+            cur = cur.next;
             assert cur != null : "range list not closed with range sentinel";
         }
 

@@ -29,6 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -66,7 +67,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
     }
 
     @Override
-    public EirLocation[] getParameterLocations(EirStackSlot.Purpose stackSlotPurpose, Kind... kinds) {
+    public EirLocation[] getParameterLocations(Purpose stackSlotPurpose, Kind... kinds) {
         final EirLocation[] result = new EirLocation[kinds.length];
         int iGeneral = 0;
         int iXMM = 0;

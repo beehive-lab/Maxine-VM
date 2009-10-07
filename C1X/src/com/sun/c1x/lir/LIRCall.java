@@ -32,10 +32,10 @@ import com.sun.c1x.ci.*;
  */
 public abstract class LIRCall extends LIRInstruction {
 
-    protected CiRuntimeCall addr;   // TODO not sure if we should create a new class for address
+    protected CiRuntimeCall addr;
     protected List<LIROperand> arguments;
 
-    private static LIROperand[] combine(LIROperand receiver, List<LIROperand> arguments) {
+    private static LIROperand[] prepend(LIROperand receiver, List<LIROperand> arguments) {
         LIROperand[] operands = new LIROperand[arguments.size() + 1];
         operands[0] = receiver;
         for (int i = 0; i < arguments.size(); i++) {
@@ -51,7 +51,7 @@ public abstract class LIRCall extends LIRInstruction {
      * @param arguments
      */
     public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
-        super(opcode, result, info, !calleeSaved, null, 0, 0, combine(receiver, arguments));
+        super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
         this.addr = entry;
         this.arguments = arguments;
     }

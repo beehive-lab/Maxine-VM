@@ -29,7 +29,7 @@ import test.com.sun.max.vm.compiler.bytecode.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-
+import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -64,6 +64,7 @@ public class MaxineTesterConfiguration {
     static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
     static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
+    static final Map<String, String[]> jtLoadParams = new HashMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     static {
@@ -103,28 +104,20 @@ public class MaxineTesterConfiguration {
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
-        jtt(jtt.micro.BigIntParams02.class,               RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
+        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
 
-        dacapo("antlr",              FAIL_SPARC);
-        dacapo("bloat",              FAIL_SPARC);
-        dacapo("xalan",              FAIL_SPARC);
-        dacapo("hsqldb",   FAIL_ALL, FAIL_SPARC);
-        dacapo("luindex",            FAIL_SPARC);
-        dacapo("lusearch",           FAIL_SPARC);
-        dacapo("jython",             FAIL_SPARC);
-        dacapo("chart",    FAIL_ALL, FAIL_SPARC);
-        dacapo("eclipse",  FAIL_ALL, FAIL_SPARC);
-        dacapo("fop",                FAIL_SPARC);
-        dacapo("pmd",                FAIL_SPARC);
+        dacapo("antlr");
+        dacapo("bloat");
+        dacapo("xalan",    FAIL_ALL);
+        dacapo("hsqldb");
+        dacapo("luindex");
+        dacapo("lusearch", FAIL_ALL);
+        dacapo("jython",   FAIL_ALL);
+        dacapo("chart",    FAIL_ALL);
+        dacapo("eclipse",  FAIL_ALL);
+        dacapo("fop");
+        dacapo("pmd");
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");
@@ -193,16 +186,27 @@ public class MaxineTesterConfiguration {
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
         auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
-        imageConfig("optopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
-        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
-        imageConfig("java", "-run=com.sun.max.vm.run.java");
+        jtImageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        jtImageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        jtImageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        jtImageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        jtImageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
+        jtImageConfig("java", "-run=com.sun.max.vm.run.java");
+
+        String c1xClass = C1XCompilerScheme.class.getName();
+
+        jtLoadConfig("cpscps", "-caller=cps", "-callee=cps");
+        jtLoadConfig("cpsjit", "-caller=cps", "-callee=jit");
+        jtLoadConfig("cpsc1x", "-caller=cps", "-callee=" + c1xClass);
+        jtLoadConfig("jitcps", "-caller=jit", "-callee=cps");
+        jtLoadConfig("jitjit", "-caller=jit", "-callee=jit");
+        jtLoadConfig("jitc1x", "-caller=jit", "-callee=" + c1xClass);
+        jtLoadConfig("c1xcps", "-caller=" + c1xClass, "-callee=cps");
+        jtLoadConfig("c1xc1x", "-caller=" + c1xClass, "-callee=jit");
+        jtLoadConfig("c1xjit", "-caller=" + c1xClass, "-callee=" + c1xClass);
 
         maxvmConfig("std");
         maxvmConfig("jit", "-Xjit");
-        maxvmConfig("pgi", "-XX:+PGI");
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
 
@@ -237,12 +241,16 @@ public class MaxineTesterConfiguration {
         addExpectedResults(name, results);
     }
 
-    private static void imageConfig(String name, String... params) {
+    private static void jtImageConfig(String name, String... params) {
         zeeImageConfigs.add(name);
         imageParams.put(name, params);
     }
 
-    private static void imageConfig(String name, Expectation result, String... params) {
+    private static void jtLoadConfig(String name, String... params) {
+        jtLoadParams.put(name, params);
+    }
+
+    private static void jtImageConfig(String name, Expectation result, String... params) {
         zeeImageConfigs.add(name);
         configResultMap.put(name, new Expectation[]{result});
         imageParams.put(name, params);
@@ -266,13 +274,12 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
         if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
-            return "optopt,optjit,jitopt,jitjit";
+            return "cpscps,cpsjit,jitcps,jitjit";
         }
-        return "optc1x,optopt,jitopt,optjit,jitjit";
+        return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
     }
 
     public static boolean isSupported(String config) {
-
         Expectation[] expect = configResultMap.get(config);
         if (expect != null) {
             final Platform platform = Platform.host();
@@ -360,7 +367,7 @@ public class MaxineTesterConfiguration {
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
      * These tests are omitted by the MaxineTester unless the
      * @param testCase the test case
-     * @return <code>true</code> if the test is probably slow
+     * @return {@code true} if the test is probably slow
      */
     public static boolean isSlowAutoTestCase(TestCase testCase) {
         for (Class<?> c : slowAutoTestClasses) {

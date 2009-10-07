@@ -68,11 +68,19 @@ public class LIRItem {
             if (r.kind != reg.kind) {
                 // moves between different types need an intervening spill slot
                 LIROperand tmp = gen.forceToSpill(r, reg.kind);
-                gen.lir().move(tmp, reg);
+                gen.lir.move(tmp, reg);
             } else {
-                gen.lir().move(r, reg);
+                gen.lir.move(r, reg);
             }
             result = reg;
+        }
+    }
+
+    public void loadItem(CiKind type) {
+        if (type == CiKind.Byte || type == CiKind.Boolean) {
+            loadByteItem();
+        } else {
+            loadItem();
         }
     }
 
@@ -93,8 +101,8 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(value().type().basicType);
-                gen.lir().move(result, newResult);
+                newResult = gen.newRegister(value().type());
+                gen.lir.move(result, newResult);
             }
             return newResult;
         } else {
@@ -127,7 +135,7 @@ public class LIRItem {
                 // make sure that it is a byte register
                 assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
-                gen.lir().move(res, reg);
+                gen.lir.move(res, reg);
                 result = reg;
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
@@ -177,8 +185,8 @@ public class LIRItem {
             result = value().operand();
         }
         if (!result().isRegister()) {
-            LIROperand reg = gen.newRegister(value().type().basicType);
-            gen.lir().move(result(), reg);
+            LIROperand reg = gen.newRegister(value().type());
+            gen.lir.move(result(), reg);
             if (result().isConstant()) {
                 result = reg;
             } else {

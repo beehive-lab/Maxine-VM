@@ -21,6 +21,7 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -41,13 +42,13 @@ public interface JavaMonitor {
     void monitorExit();
 
     /**
-     * Implements <code>Object.wait()</code> for this <code>JavaMonitor</code>'s bound object.
+     * Implements {@link Object#wait()} for this monitor's bound object.
      */
     void monitorWait(long timeoutMilliSeconds) throws InterruptedException;
 
     /**
-     * Implements <code>Object.notify()</code> / <code>Object.notifyAll()</code> for
-     * this <code>JavaMonitor</code>'s bound object.
+     * Implements {@link Object#notify()} and {@link Object#notifyAll()} for
+     * this monitor's bound object.
      */
     void monitorNotify(boolean all);
 
@@ -61,7 +62,7 @@ public interface JavaMonitor {
 
     /**
      * Returns the displaced misc header word of this <code>JavaMonitor</code>'s bound object.
-     * This must be previously set by {@link #setDisplacedMisc(Word lockWord) setDisplacedMisc()}.
+     * This must be previously set by {@link #setDisplacedMisc(Word) setDisplacedMisc()}.
      *
      * @return the displaced misc header word
      */
@@ -70,17 +71,17 @@ public interface JavaMonitor {
     /**
      * Stores a copy of the given header misc word.
      *
-     * This is intended to store the misc header word of this <code>JavaMonitor</code>'s
+     * This is intended to store the misc header word of this monitor's
      * bound object, if it needs to be displaced in order to complete the binding.
      *
-     * @param lockWord the misc header word
+     * @param lockword the misc header word
      */
-    void setDisplacedMisc(Word lockWord);
+    void setDisplacedMisc(Word lockword);
 
     /**
-     * Compares and swaps the the displaced misc header word of this <code>JavaMonitor</code>'s
+     * Compares and swaps the the displaced misc header word of this monitor's
      * bound object.
-     * @see  #setDisplacedMisc(Word lockWord)
+     * @see  #setDisplacedMisc(Word lockword)
      * @param suspectedValue the suspected current displaced misc word
      * @param newValue the new displaced misc word
      * @return suspectedValue if successful, the current displaced misc word if unsuccessful
@@ -88,9 +89,9 @@ public interface JavaMonitor {
     Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue);
 
     /**
-     * Sets this <code>JavaMonitor</code> to be owned by the given thread.
+     * Sets this monitor to be owned by the given thread.
      *
-     * Note: This method should only be called when this <code>JavaMonitor</code>
+     * Note: This method should only be called when this monitor
      * is not currently owned, and cannot be acquired by any other thread.
      *
      * @param owner the new owner thread
@@ -99,12 +100,17 @@ public interface JavaMonitor {
     void monitorPrivateAcquire(VmThread owner, int lockQty);
 
     /**
-     * Set this <code>JavaMonitor</code> to be not owned.
+     * Set this monitor to be not owned.
      *
-     * Note: This method should only be called when this <code>JavaMonitor</code>
+     * Note: This method should only be called when this monitor
      * has been acquired via
      * {@link #monitorPrivateAcquire(VmThread owner, int lockQty) monitorPrivateAcquire()},
      * and cannot be acquired by any other thread.
      */
     void monitorPrivateRelease();
+
+    /**
+     * Prints the details of this monitor to the {@linkplain Log VM log stream}.
+     */
+    void log();
 }

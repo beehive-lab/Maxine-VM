@@ -174,11 +174,11 @@ Psetrun_dbg(struct ps_prochandle *P,
     for(i=0; i<ctl_len; i++) {
         printf("%d ", ctl[i]);
     }
-    print_ps_prochandle(P);
+    log_process(P);
     printf("\n");
     if (write(ctlfd, ctl, size) != size) {
         log_println("PROBLEM WRITE\n");
-        print_ps_prochandle(P);
+        log_process(P);
         /* If it is dead or lost, return the real status, not PS_RUN */
         if (errno == ENOENT || errno == EAGAIN) {
             (void) Pstopstatus(P, PCNULL, 0);
@@ -194,7 +194,7 @@ Psetrun_dbg(struct ps_prochandle *P,
     }
 
     log_println("AFTER WRITE\n");
-    print_ps_prochandle(P);
+    log_process(P);
 
     P->state = PS_RUN;
     return (0);
@@ -398,8 +398,10 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
 
     w.pr_pad = 0;
 
+#if log_TELE
     log_println("BEFORE PSETWAPT\n");
-    print_ps_prochandle(ph);
+    log_process(ph);
+#endif
 
     int error = Psetwapt(ph, &w);
     if (error != 0) {
@@ -407,18 +409,24 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(
         return false;
     }
 
+#if log_TELE
     log_println("AFTER PSETWAPT\n");
-    print_ps_prochandle(ph);
+    log_process(ph);
+#endif
 
+#if log_TELE
     int rc = proc_Pstate(ph);
     log_println("nativeActivateWatchpoint before sync: proc_Pstate %d; errno: %d", rc, errno);
     log_println("ERROR: %s", strerror(errno));
+#endif
 
     proc_Psync(ph);
 
+#if log_TELE
     rc = proc_Pstate(ph);
     log_println("nativeActivateWatchpoint after sync: proc_Pstate %d; errno: %d", rc, errno);
     log_println("ERROR: %s", strerror(errno));
+#endif
 
     return true;
 }

@@ -23,43 +23,13 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.CiConstant;
 
 /**
- * The <code>RiConstantPool</code> class provides the interface to the constant pool that is
- * used by C1X. The <code>lookup</code> methods look up a constant pool entry without performing
- * resolution, and are used during compilation. The <code>resolve</code> methods are used
- * for resolving constant pool entries at run time, and calls to these methods are inserted
- * by C1X for unresolved entries.
+ * This interface represents the runtime representation of the constant pool that is
+ * used by the compilers when parsing bytecode. The <code>lookup</code> methods look up a constant
+ * pool entry without performing  resolution, and are used during compilation.
  *
  * @author Ben L. Titzer
  */
 public interface RiConstantPool {
-
-    /**
-     * Resolves a reference to a field for a GETFIELD operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolveGetField(char cpi);
-
-    /**
-     * Resolves a reference to a field for a PUTFIELD operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolvePutField(char cpi);
-
-    /**
-     * Resolves a reference to a field for a GETSTATIC operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolveGetStatic(char cpi);
-
-    /**
-     * Resolves a reference to a field for a PUTSTATIC operation at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the compiler interface field
-     */
-    RiField resolvePutStatic(char cpi);
 
     /**
      * Resolves a reference to a method for an INVOKEVIRTUAL operation at runtime.
@@ -178,21 +148,6 @@ public interface RiConstantPool {
     RiType lookupType(char cpi);
 
     /**
-     * Resolves a reference to a constant string at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the string object
-     */
-    String resolveString(char cpi);
-
-    /**
-     * Resolves a reference to a Java class at runtime.
-     * @param cpi the constant pool index
-     * @return a reference to the Java class
-     */
-    Class<?> resolveClass(char cpi);
-
-
-    /**
      * Looks up a constant at the specified index.
      * @param cpi the constant pool index
      * @return the {@code CiConstant} instance representing the constant
@@ -211,7 +166,7 @@ public interface RiConstantPool {
 
     /**
      * Constant object that can be used to identify this constant pool when it is referenced from the code.
-     * 
+     *
      * @return a constant object representing this constant pool
      */
     CiConstant encoding();

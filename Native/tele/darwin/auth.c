@@ -25,21 +25,19 @@
 int acquireTaskportRight() {
 
     AuthorizationRef authorization;
-    OSStatus status;
-
-    status = AuthorizationCreate (NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &authorization);
+    OSStatus status = AuthorizationCreate (NULL, kAuthorizationEmptyEnvironment, kAuthorizationFlagDefaults, &authorization);
     if (status != 0) {
         fprintf(stderr, "Error creating authorization reference\n");
         return -1;
     }
-    AuthorizationItem right = { "system.privilege.taskport", 0, 0 , 0 };
+    AuthorizationItem right = { "system.privilege.taskport.debug", 0, 0 , 0 };
     AuthorizationItem items[] = { right };
     AuthorizationRights rights = { sizeof(items) / sizeof(items[0]), items };
     AuthorizationFlags flags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights | kAuthorizationFlagPreAuthorize;
 
     status = AuthorizationCopyRights (authorization, &rights, kAuthorizationEmptyEnvironment, flags, NULL);
     if (status != 0) {
-        fprintf(stderr, "Error authorization current process for right to call task_for_pid\n");
+        fprintf(stderr, "Error authorizing current process with right to call task_for_pid\n");
         return -1;
     }
     return 0;

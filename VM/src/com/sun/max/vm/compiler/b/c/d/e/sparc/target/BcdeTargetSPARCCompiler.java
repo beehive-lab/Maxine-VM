@@ -187,12 +187,19 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final int adapterFrameSize = SPARCAdapterFrameGenerator.jitToOptimizedAdapterFrameSize(stackFrameWalker, startOfAdapter);
         final Pointer stackPointer = stackFrameWalker.stackPointer();
 
+        final Pointer callerStackPointer;
+        if (adapterFrameSize > 0 && instructionPointer.greaterThan(startOfAdapter)) {
+            callerStackPointer = stackPointer.plus(adapterFrameSize);
+        } else {
+            callerStackPointer = stackPointer;
+        }
+
         switch(purpose) {
             case EXCEPTION_HANDLING: {
                 assert !isTopFrame;
-                // Record this JIT -> OPT adapter frame's frame pointer as the next stack pointer
-                //final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                //stackUnwindingContext.setStackPointer(???);
+                // Record the JIT frame's CPU stack pointer as we walk through this JIT->Opt adapter
+                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
+                stackUnwindingContext.setStackPointer(callerStackPointer);
                 break;
             }
             case REFERENCE_MAP_PREPARING: {
@@ -224,18 +231,12 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, jitFramePointer).asPointer();
-        final Pointer callerStackPointer;
         final Pointer callerInstructionPointer;
         if (instructionPointer.greaterThan(optimizedEntryPoint)) {
             // We're past the jit entry point. The return address has been saved in the local register L1 which can be obtained in the register window's saved area.
             callerInstructionPointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, SPARCAdapterFrameGenerator.SAVED_CALLER_ADDRESS).asPointer();
         } else {
             callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
-        }
-        if (adapterFrameSize > 0 && instructionPointer.greaterThan(startOfAdapter)) {
-            callerStackPointer = stackPointer.plus(adapterFrameSize);
-        } else {
-            callerStackPointer = stackPointer;
         }
         stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;
@@ -251,8 +252,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         return instructionPointer.greaterEqual(startOfAdapter);
     }
 
-    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize) {
-        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize);
+    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize, boolean isAdapterFrame) {
+        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize, isAdapterFrame);
         return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
     }
 
@@ -290,7 +291,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final Pointer stackPointer;
         // We use lessEqual here because the instruction pointer may be on one of the two nops preceding the optimized entry point if the
         // method doesn't need an adapter frame.
-        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize());
+        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize(), false);
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
@@ -470,10 +471,5 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         }
         stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;
-    }
-
-    @Override
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return framePointer;
     }
 }

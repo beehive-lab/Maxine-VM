@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.dir.eir;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -78,7 +77,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         eirBlock.appendInstruction(eirEpilogue);
         if (!isTemplate()) {
             if (eirMethod.isTrampoline()) {
-                final boolean isStaticTrampoline = ((TrampolineMethodActor) eirMethod.classMethodActor()).invocation() == TRAMPOLINE.Invocation.STATIC;
+                final boolean isStaticTrampoline = eirMethod.classMethodActor().isStaticTrampoline();
                 eirBlock.appendInstruction(createTrampolineExit(eirBlock, isStaticTrampoline));
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 eirBlock.appendInstruction(createTrapStubExit(eirBlock));
@@ -90,7 +89,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     protected DirToEirMethodTranslation(EirGenerator eirGenerator, EirMethod eirMethod, DirMethod dirMethod) {
-        super(eirGenerator, eirMethod.abi(), eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
+        super(eirGenerator, eirMethod.abi, eirMethod.isTemplate(), eirMethod.isTemplate() || eirMethod.isNative() || eirMethod.classMethodActor().isCFunction());
         this.eirMethod = eirMethod;
         this.dirMethod = dirMethod;
 
@@ -213,6 +212,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     public EirConstant dirToEirConstant(DirConstant dirConstant) {
         Value value = dirConstant.value();
+        return makeEirConstant(value);
+    }
+
+    public EirConstant makeEirConstant(Value value) {
         value = value.kind().toStackKind().convert(value); // we make no EIR constants smaller than INT
 
         EirConstant eirConstant = valueToEirConstant.get(value);
@@ -267,8 +270,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         }
         return new EirJavaFrameDescriptor(instruction,
                                           dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor.parent(), instruction),
-                                          dirJavaFrameDescriptor.classMethodActor(),
-                                          dirJavaFrameDescriptor.bytecodePosition(),
+                                          dirJavaFrameDescriptor.classMethodActor,
+                                          dirJavaFrameDescriptor.bytecodePosition,
                                           dirToEirValues(dirJavaFrameDescriptor.locals),
                                           dirToEirValues(dirJavaFrameDescriptor.stackSlots));
     }
@@ -311,4 +314,5 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         rearrangeBlocks();
         notifyAfterTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
     }
+
 }

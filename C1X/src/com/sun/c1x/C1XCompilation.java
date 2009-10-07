@@ -34,26 +34,23 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
-import com.sun.c1x.xir.*;
 
 /**
- * The <code>Compilation</code> class encapsulates global information about the compilation of a particular method,
+ * This class encapsulates global information about the compilation of a particular method,
  * including a reference to the runtime, statistics about the compiled code, etc.
  *
  * @author Ben L. Titzer
  */
 public class C1XCompilation {
 
+    public final C1XCompiler compiler;
     public final CiTarget target;
     public final RiRuntime runtime;
     public final RiMethod method;
     public final CiStatistics stats;
     public final int osrBCI;
-    public final XirGenerator xirGenerator;
 
-    boolean needsDebugInfo;
     boolean hasExceptionHandlers;
-    boolean hasUnsafeAccess;
     CiBailout bailout;
 
     private FrameMap frameMap;
@@ -64,7 +61,6 @@ public class C1XCompilation {
     private CFGPrinter cfgPrinter;
 
     private List<ExceptionInfo> exceptionInfoList;
-    public C1XCompiler compiler;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -75,11 +71,10 @@ public class C1XCompilation {
      * @param method the method to be compiled
      * @param osrBCI the bytecode index for on-stack replacement, if requested
      */
-    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirGenerator xirGenerator, RiMethod method, int osrBCI) {
+    C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, RiMethod method, int osrBCI) {
         this.compiler = compiler;
         this.target = target;
         this.runtime = runtime;
-        this.xirGenerator = xirGenerator;
         this.method = method;
         this.osrBCI = osrBCI;
         this.stats = new CiStatistics();
@@ -93,21 +88,12 @@ public class C1XCompilation {
      * @param runtime the runtime implementation
      * @param method the method to be compiled
      */
-    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, XirGenerator xirGenerator, RiMethod method) {
-        this(compiler, target, runtime, xirGenerator, method, -1);
+    public C1XCompilation(C1XCompiler compiler, CiTarget target, RiRuntime runtime, RiMethod method) {
+        this(compiler, target, runtime, method, -1);
     }
 
     public IR hir() {
         return hir;
-    }
-
-    /**
-     * Gets the bailout condition if this compilation failed.
-     *
-     * @return the bailout condition
-     */
-    public CiBailout bailout() {
-        return bailout;
     }
 
     /**
@@ -308,10 +294,18 @@ public class C1XCompilation {
 
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.LIR_CREATE.start();
+            }
+
             frameMap = this.compiler.backend.newFrameMap(method, hir.topScope.numberOfLocks());
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.doBlock(begin);
+            }
+
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.LIR_CREATE.stop();
             }
 
             new LinearScan(this, hir, lirGenerator, frameMap()).allocate();
@@ -337,7 +331,16 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            return assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+
+            if (C1XOptions.PrintCFGToFile) {
+                cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
+            }
+
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.CODE_CREATE.stop();
+            }
+            return targetMethod;
         }
 
         return null;

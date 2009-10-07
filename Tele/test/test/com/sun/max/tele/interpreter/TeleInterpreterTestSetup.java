@@ -29,7 +29,7 @@ import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 
 /**
  *  @author Athul Acharya

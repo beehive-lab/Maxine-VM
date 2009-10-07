@@ -29,18 +29,20 @@ import com.sun.max.vm.reference.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleJitTargetMethod extends TeleTargetMethod {
+public class TeleJitTargetMethod extends TeleCPSTargetMethod {
 
     TeleJitTargetMethod(TeleVM teleVM, Reference jitTargetMethodReference) {
         super(teleVM, jitTargetMethodReference);
     }
 
+    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         final Reference intArrayReference = teleVM().fields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
         final TeleArrayObject teleIntArray = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         return teleIntArray == null ? null : (int[]) teleIntArray.shallowCopy();
     }
 
+    @Override
     public BytecodeInfo[] bytecodeInfos() {
         final Reference infoArrayReference = teleVM().fields().JitTargetMethod_bytecodeInfos.readReference(reference());
         final TeleArrayObject teleBytecodeInfoArray = (TeleArrayObject) teleVM().makeTeleObject(infoArrayReference);

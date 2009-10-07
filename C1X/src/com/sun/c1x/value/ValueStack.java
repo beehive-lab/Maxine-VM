@@ -99,12 +99,6 @@ public class ValueStack {
         return copy(true, true, true);
     }
 
-    public boolean isSame(ValueStack other) {
-        assert scope() == other.scope();
-        assert localsSize() == other.localsSize();
-        return isSameAcrossScopes(other);
-    }
-
     public boolean isSameAcrossScopes(ValueStack other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
@@ -133,15 +127,6 @@ public class ValueStack {
      */
     public final IRScope scope() {
         return scope;
-    }
-
-    /**
-     * Returns whether this value stack is locked (i.e. is for an exception site).
-     *
-     * @return <code>true</code> if this stack is locked
-     */
-    public final boolean isLockStack() {
-        return lockStack;
     }
 
     /**
@@ -699,41 +684,41 @@ public class ValueStack {
 
 
     private static boolean typeMismatch(Value x, Value y) {
-        return y == null || x.type().basicType != y.type().basicType;
+        return y == null || x.type() != y.type();
     }
 
     private static Value assertType(CiKind basicType, Value x) {
-        assert x != null && x.type().basicType == basicType;
+        assert x != null && x.type() == basicType;
         return x;
     }
 
     private static Value assertLong(Value x) {
-        assert x != null && x.type().basicType == CiKind.Long;
+        assert x != null && x.type() == CiKind.Long;
         return x;
     }
 
     private static Value assertJsr(Value x) {
-        assert x != null && x.type().basicType == CiKind.Jsr;
+        assert x != null && x.type() == CiKind.Jsr;
         return x;
     }
 
     private static Value assertInt(Value x) {
-        assert x != null && x.type().basicType == CiKind.Int;
+        assert x != null && x.type() == CiKind.Int;
         return x;
     }
 
     private static Value assertFloat(Value x) {
-        assert x != null && x.type().basicType == CiKind.Float;
+        assert x != null && x.type() == CiKind.Float;
         return x;
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && x.type().basicType == CiKind.Object;
+        assert x != null && x.type() == CiKind.Object;
         return x;
     }
 
     private static Value assertDouble(Value x) {
-        assert x != null && x.type().basicType == CiKind.Double;
+        assert x != null && x.type() == CiKind.Double;
         return x;
     }
 
@@ -808,13 +793,15 @@ public class ValueStack {
      */
     public Iterable<Value> allLiveStateValues() {
         // TODO: implement a more efficient iterator for use in linear scan
-        int max = this.valuesSize();
-        List<Value> result = new ArrayList<Value>(max);
+        List<Value> result = new ArrayList<Value>(valuesSize());
+        for (ValueStack stack = this; stack != null; stack = stack.scope.callerState()) {
+            int max = stack.valuesSize();
 
-        for (int i = 0; i < max; i++) {
-            Value instr = values[i];
-            if (instr != null && instr.isLive()) {
-                result.add(instr);
+            for (int i = 0; i < max; i++) {
+                Value instr = stack.values[i];
+                if (instr != null && instr.isLive()) {
+                    result.add(instr);
+                }
             }
         }
 

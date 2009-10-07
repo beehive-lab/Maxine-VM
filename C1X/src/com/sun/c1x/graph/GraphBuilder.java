@@ -188,32 +188,6 @@ public class GraphBuilder {
         curBlock = start;
     }
 
-    BlockBegin headerBlock(BlockBegin entry, BlockBegin.BlockFlag f, ValueStack state) {
-        assert entry.checkBlockFlag(f);
-        // create header block
-        BlockBegin h = new BlockBegin(entry.bci(), ir.nextBlockNumber());
-        h.setDepthFirstNumber(0);
-
-        Instruction l = h;
-        RiMethodProfile methodProfile = method().methodData();
-        if (C1XOptions.ProfileBranches && methodProfile != null) {
-            // increment the invocation counter;
-            // note that the normal append() won't work, so we do this manually
-            Instruction m = new Constant(methodProfile.encoding());
-            h.setNext(m, 0);
-            Instruction p = new ProfileCounter(m, methodProfile.invocationCountOffset(), 1);
-            m.setNext(p, 0);
-            l = p;
-        }
-
-        BlockEnd g = new Goto(entry, null, false);
-        l.setNext(g, entry.bci());
-        h.setEnd(g);
-        h.setBlockFlag(f);
-        g.setStateAfter(state.immutableCopy());
-        return h;
-    }
-
     public boolean hasHandler() {
         return scopeData.hasHandler();
     }
@@ -619,7 +593,7 @@ public class GraphBuilder {
 
     void genConvert(int opcode, CiKind from, CiKind to) {
         CiKind tt = to.stackType();
-        push(tt.basicType, append(new Convert(opcode, pop(from.stackType()), tt)));
+        push(tt, append(new Convert(opcode, pop(from.stackType()), tt)));
     }
 
     void genIncrement() {
@@ -631,7 +605,6 @@ public class GraphBuilder {
     }
 
     void genGoto(int fromBCI, int toBCI) {
-        profileBCI(fromBCI);
         append(new Goto(blockAt(toBCI), null, toBCI <= fromBCI)); // backwards branch => safepoint
     }
 
@@ -739,14 +712,14 @@ public class GraphBuilder {
         RiField field = constantPool().lookupGetField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
         LoadField load = new LoadField(apop(), field, false, stateBefore, isLoaded, cpi, constantPool());
-        appendOptimizedLoadField(field.basicType(), load);
+        appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutField(char cpi) {
         ValueStack stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        Value value = pop(field.basicType().stackType());
+        Value value = pop(field.kind().stackType());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
@@ -757,7 +730,7 @@ public class GraphBuilder {
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
         LoadField load = new LoadField(container, field, true, stateBefore, isInitialized, cpi, constantPool());
-        appendOptimizedLoadField(field.basicType(), load);
+        appendOptimizedLoadField(field.kind(), load);
     }
 
     void genPutStatic(char cpi) {
@@ -766,7 +739,7 @@ public class GraphBuilder {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
-        Value value = pop(field.basicType().stackType());
+        Value value = pop(field.kind().stackType());
         StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedStoreField(store);
     }
@@ -815,7 +788,6 @@ public class GraphBuilder {
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
         if (!tryOptimizeCall(target, args, true)) {
             if (!tryInline(target, args, null, stateBefore)) {
-                profileInvocation(target);
                 appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
         }
@@ -826,7 +798,6 @@ public class GraphBuilder {
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
         if (!tryOptimizeCall(target, args, false)) {
             // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
-            profileCall(args[0], null);
             appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool, stateBefore);
         }
     }
@@ -867,7 +838,6 @@ public class GraphBuilder {
                 }
             }
             // devirtualization failed, produce an actual invokevirtual
-            profileCall(args[0], null);
             appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
@@ -886,8 +856,6 @@ public class GraphBuilder {
         if (!tryOptimizeCall(target, args, false)) {
             if (!tryInline(target, args, knownHolder, stateBefore)) {
                 // could not optimize or inline the method call
-                profileInvocation(target);
-                profileCall(args[0], target.holder());
                 appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
             }
         }
@@ -940,14 +908,6 @@ public class GraphBuilder {
         return null;
     }
 
-    Value getReceiver(RiMethod target) {
-        return curState.stackAt(curState.stackSize() - target.signatureType().argumentSlots(false) - 1);
-    }
-
-    Value[] popArguments(RiMethod target) {
-        return curState.popArguments(target.signatureType().argumentSlots(false));
-    }
-
     void callRegisterFinalizer() {
         Value receiver = curState.loadLocal(0);
         RiType declaredType = receiver.declaredType();
@@ -984,7 +944,7 @@ public class GraphBuilder {
             // append a call to the registration intrinsic
             loadLocal(0, CiKind.Object);
             append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
-                                          curState.popArguments(1), false, curState.immutableCopy(), true, true));
+                                 null, curState.popArguments(1), false, curState.immutableCopy(), true, true));
             C1XMetrics.InlinedFinalizerChecks++;
         }
 
@@ -1019,7 +979,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type().basicType, x);
+                curState.push(x.type(), x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -1033,7 +993,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type().basicType, x);
+                curState.push(x.type(), x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1157,40 +1117,6 @@ public class GraphBuilder {
         return false;
     }
 
-    private void profileCall(Value receiver, RiType knownHolder) {
-        if (C1XOptions.ProfileCalls) {
-            append(new ProfileCall(method(), bci(), receiver, knownHolder));
-        }
-    }
-
-    private void profileInvocation(RiMethod callee) {
-        if (C1XOptions.ProfileCalls) {
-            RiMethodProfile mdo = callee.methodData();
-            if (mdo != null) {
-                int offset = mdo.invocationCountOffset();
-                if (offset >= 0) {
-                    // if the method data object exists and it has an entry for the invocation count
-                    Value m = append(new Constant(mdo.encoding()));
-                    append(new ProfileCounter(m, offset, 1));
-                }
-            }
-        }
-    }
-
-    private void profileBCI(int bci) {
-        if (C1XOptions.ProfileBranches) {
-            RiMethodProfile mdo = method().methodData();
-            if (mdo != null) {
-                int offset = mdo.bciCountOffset(bci);
-                if (offset >= 0) {
-                    // if the method data object exists and it has an entry for the bytecode index
-                    Value m = append(new Constant(mdo.encoding()));
-                    append(new ProfileCounter(m, offset, 1));
-                }
-            }
-        }
-    }
-
     private Value appendConstant(CiConstant type) {
         return appendWithBCI(new Constant(type), bci(), false);
     }
@@ -1207,7 +1133,7 @@ public class GraphBuilder {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
             // Canonicalizer canon = new Canonicalizer(x, bci);
-            canonicalizer.canonicalize(x, bci);
+            canonicalizer.canonicalize(x);
             List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this
@@ -1400,7 +1326,7 @@ public class GraphBuilder {
         CiKind resultType = returnBasicType(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, args, isStatic, curState.copy(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
@@ -1489,12 +1415,6 @@ public class GraphBuilder {
                 append(check);
             }
         }
-
-        if (C1XOptions.ProfileInlinedCalls) {
-            profileCall(receiver, knownHolder);
-        }
-
-        profileInvocation(target);
 
         // Introduce a new callee continuation point. If the target has
         // more than one return instruction or the return does not allow
@@ -1749,7 +1669,7 @@ public class GraphBuilder {
                     get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
                     Value oc = appendConstant(CiConstant.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type().basicType, e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.type(), e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

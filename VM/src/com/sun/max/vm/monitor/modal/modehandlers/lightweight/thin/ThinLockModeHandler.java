@@ -65,88 +65,88 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         super(delegate);
     }
 
-    private ModalLockWord64 inflate(Object object, ThinLockWord64 lockWord) {
-        ModalLockWord64 inflatedLockWord = delegate().prepareModalLockWord(object, lockWord);
-        ThinLockWord64 thinLockWord = lockWord;
+    private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
+        ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
+        ThinLockword64 thinLockword = lockword;
         while (true) {
-            final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, thinLockWord, inflatedLockWord));
-            if (answer.equals(thinLockWord)) {
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, inflatedLockword));
+            if (answer.equals(thinLockword)) {
                 break;
             } else if (answer.isInflated()) {
-                delegate().cancelPreparedModalLockWord(inflatedLockWord);
-                inflatedLockWord = answer;
+                delegate().cancelPreparedModalLockword(inflatedLockword);
+                inflatedLockword = answer;
                 break;
             }
             // We will spin if the thin lock word has been changed in any way (new owner, rcount change, new hashcode)
-            thinLockWord = ThinLockWord64.from(answer);
-            inflatedLockWord = delegate().rePrepareModalLockWord(inflatedLockWord, thinLockWord);
+            thinLockword = ThinLockword64.from(answer);
+            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword);
         }
-        return inflatedLockWord;
+        return inflatedLockword;
     }
 
-    protected void slowPathMonitorEnter(Object object, ModalLockWord64 lockWord, int lockwordThreadID) {
-        ModalLockWord64 newLockWord = lockWord;
+    protected void slowPathMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
+        ModalLockword64 newLockword = lockword;
         int retries = THIN_LOCK_RETRIES;
         while (true) {
-            if (ThinLockWord64.isThinLockWord(newLockWord)) {
-                final ThinLockWord64 thinLockWord = ThinLockWord64.from(newLockWord);
+            if (ThinLockword64.isThinLockword(newLockword)) {
+                final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
                 // Do we own the lock?
-                if (thinLockWord.getLockOwnerID() == lockwordThreadID) {
+                if (thinLockword.getLockOwnerID() == lockwordThreadID) {
                     // Attempt to inc the recursion count
-                    if (!thinLockWord.countOverflow()) {
-                        final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, thinLockWord, thinLockWord.incrementCount()));
-                        if (answer.equals(thinLockWord)) {
+                    if (!thinLockword.countOverflow()) {
+                        final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
+                        if (answer.equals(thinLockword)) {
                             return;
                         }
                         // An inflation or a new hashcode was installed. Try again
-                        newLockWord = answer;
+                        newLockword = answer;
                         continue;
                     }
                 } else {
-                    final ThinLockWord64 asUnlocked = thinLockWord.asUnlocked();
-                    final ThinLockWord64 asLocked  = thinLockWord.asLockedOnceBy(lockwordThreadID);
-                    final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
+                    final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
+                    final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+                    final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
                     if (answer.equals(asUnlocked)) {
                         // The current thread got the lock
                         return;
                     }
                     // This could be a hashcode, inflation or another thread got the lock.
                     // Lets try again.
-                    newLockWord = answer;
+                    newLockword = answer;
                     if (--retries > 0) {
                         continue;
                     }
                 }
                 // Count overflow or too much contention - inflate
-                newLockWord = inflate(object, thinLockWord);
+                newLockword = inflate(object, thinLockword);
             }
 
             // The monitor is inflated
-            if (delegate().delegateMonitorEnter(object, newLockWord, lockwordThreadID)) {
+            if (delegate().delegateMonitorEnter(object, newLockword, lockwordThreadID)) {
                 return;
             }
 
             // Try again. Monitor was deflated.
-            newLockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
+            newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
             retries = THIN_LOCK_RETRIES;
         }
     }
 
-    protected void slowPathMonitorExit(Object object, ModalLockWord64 lockWord, int lockwordThreadID) {
-        if (ThinLockWord64.isThinLockWord(lockWord)) {
-            ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
-            if (thinLockWord.countUnderflow() || thinLockWord.getLockOwnerID() != lockwordThreadID) {
+    protected void slowPathMonitorExit(Object object, ModalLockword64 lockword, int lockwordThreadID) {
+        if (ThinLockword64.isThinLockword(lockword)) {
+            ThinLockword64 thinLockword = ThinLockword64.from(lockword);
+            if (thinLockword.countUnderflow() || thinLockword.getLockOwnerID() != lockwordThreadID) {
                 throw new IllegalMonitorStateException();
             }
-            final boolean isRelease = thinLockWord.decrementCount().countUnderflow();
+            final boolean isRelease = thinLockword.decrementCount().countUnderflow();
             while (true) {
-                ThinLockWord64 answer = ThinLockWord64.from(Word.zero());
+                ThinLockword64 answer = ThinLockword64.from(Word.zero());
                 if (isRelease) {
-                    answer = ThinLockWord64.from(ObjectAccess.compareAndSwapMisc(object, thinLockWord, thinLockWord.asUnlocked()));
+                    answer = ThinLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.asUnlocked()));
                 } else {
-                    answer = ThinLockWord64.from(ObjectAccess.compareAndSwapMisc(object, thinLockWord, thinLockWord.decrementCount()));
+                    answer = ThinLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.decrementCount()));
                 }
-                if (answer.equals(thinLockWord)) {
+                if (answer.equals(thinLockword)) {
                     return;
                 } else if (answer.isInflated()) {
                     // We don't have to check for deflation, as this cannot happen while we own the lock.
@@ -154,78 +154,78 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                     return;
                 }
                 // A hashcode was installed. Try again.
-                thinLockWord = answer;
+                thinLockword = answer;
             }
         }
         // We don't have to check for deflation, as this cannot happen while we own the lock.
-        delegate().delegateMonitorExit(object, lockWord);
+        delegate().delegateMonitorExit(object, lockword);
     }
 
-    protected int makeHashCode(Object object, ModalLockWord64 lockWord) {
-        ModalLockWord64 newLockWord = lockWord;
+    protected int makeHashCode(Object object, ModalLockword64 lockword) {
+        ModalLockword64 newLockword = lockword;
         int newHashcode = 0;
         while (true) {
-            if (ThinLockWord64.isThinLockWord(newLockWord)) {
-                final ThinLockWord64 thinLockWord = ThinLockWord64.from(newLockWord);
-                final int hashcode = thinLockWord.getHashcode();
+            if (ThinLockword64.isThinLockword(newLockword)) {
+                final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
+                final int hashcode = thinLockword.getHashcode();
                 if (hashcode != 0) {
                     return hashcode;
                 }
                 if (newHashcode == 0) {
                     newHashcode = monitorScheme().createHashCode(object);
                 }
-                newLockWord = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, thinLockWord, thinLockWord.setHashcode(newHashcode)));
-                if (newLockWord.equals(thinLockWord)) {
+                newLockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.setHashcode(newHashcode)));
+                if (newLockword.equals(thinLockword)) {
                     return newHashcode;
                 }
                 // Could be another thread beat us to the hashcode, or an inflation. Try again.
                 continue;
             }
-            newHashcode = delegate().delegateMakeHashcode(object, newLockWord);
+            newHashcode = delegate().delegateMakeHashcode(object, newLockword);
             if (newHashcode != 0) {
                 return newHashcode;
             }
             // Possible deflation. Try again.
-            newLockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
+            newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
         }
     }
 
-    protected void monitorNotify(Object object, boolean all, ModalLockWord64 lockWord) {
-        if (ThinLockWord64.isThinLockWord(lockWord)) {
-            final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
-            if (thinLockWord.countUnderflow() || thinLockWord.getLockOwnerID() != encodeCurrentThreadIDForLockword()) {
+    protected void monitorNotify(Object object, boolean all, ModalLockword64 lockword) {
+        if (ThinLockword64.isThinLockword(lockword)) {
+            final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
+            if (thinLockword.countUnderflow() || thinLockword.getLockOwnerID() != encodeCurrentThreadIDForLockword()) {
                 throw new IllegalMonitorStateException();
             }
             // By lightweight lock semantics we have no threads waiting, so just return.
             return;
         }
         //  We don't have to check for deflation, as either we own the lock or an exception will be thrown
-        delegate().delegateMonitorNotify(object, all, lockWord);
+        delegate().delegateMonitorNotify(object, all, lockword);
     }
 
-    protected void monitorWait(Object object, long timeout, ModalLockWord64 lockWord) throws InterruptedException {
-        if (ThinLockWord64.isThinLockWord(lockWord)) {
-            final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
-            if (thinLockWord.countUnderflow() || thinLockWord.getLockOwnerID() != encodeCurrentThreadIDForLockword()) {
+    protected void monitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException {
+        if (ThinLockword64.isThinLockword(lockword)) {
+            final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
+            if (thinLockword.countUnderflow() || thinLockword.getLockOwnerID() != encodeCurrentThreadIDForLockword()) {
                 throw new IllegalMonitorStateException();
             }
-            final ModalLockWord64 newLockWord = inflate(object, thinLockWord);
+            final ModalLockword64 newLockword = inflate(object, thinLockword);
             // We don't have to check for deflation as we own the lock
-            delegate().delegateMonitorWait(object, timeout, newLockWord);
+            delegate().delegateMonitorWait(object, timeout, newLockword);
             return;
         }
         // We don't have to check for deflation, as either we own the lock or an exception will be thrown
-        delegate().delegateMonitorWait(object, timeout, lockWord);
+        delegate().delegateMonitorWait(object, timeout, lockword);
     }
 
-    protected boolean threadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID) {
-        ModalLockWord64 newLockWord = lockWord;
+    protected boolean threadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int threadID) {
+        ModalLockword64 newLockword = lockword;
         while (true) {
-            if (ThinLockWord64.isThinLockWord(newLockWord)) {
-                final ThinLockWord64 thinLockWord = ThinLockWord64.from(newLockWord);
-                return !thinLockWord.countUnderflow() && thinLockWord.getLockOwnerID() == threadID;
+            if (ThinLockword64.isThinLockword(newLockword)) {
+                final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
+                return !thinLockword.countUnderflow() && thinLockword.getLockOwnerID() == threadID;
             }
-            final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockWord, thread, threadID);
+            final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockword, thread, threadID);
             switch (result) {
                 case TRUE:
                     return true;
@@ -236,7 +236,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
 
             // Deflation. Try again.
-            newLockWord = ModalLockWord64.from(ObjectAccess.readMisc(object));
+            newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
         }
     }
 
@@ -249,11 +249,11 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     }
 
     // Inspector support
-    public static int decodeLockOwnerThreadID(ThinLockWord64 thinLockWord) {
-        if (thinLockWord.equals(thinLockWord.asUnlocked())) {
+    public static int decodeLockOwnerThreadID(ThinLockword64 thinLockword) {
+        if (thinLockword.equals(thinLockword.asUnlocked())) {
             return -1;
         }
-        return decodeLockwordThreadID(thinLockWord.getLockOwnerID());
+        return decodeLockwordThreadID(thinLockword.getLockOwnerID());
     }
 
     /**
@@ -265,42 +265,42 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super(delegate);
         }
 
-        public boolean delegateMonitorEnter(Object object, ModalLockWord64 lockWord, int lockwordThreadID) {
-            final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
-            final ThinLockWord64 asUnlocked = thinLockWord.asUnlocked();
-            final ThinLockWord64 asLocked  = thinLockWord.asLockedOnceBy(lockwordThreadID);
-            final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
+        public boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
+            final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
+            final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
+            final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
             if (!answer.equals(asUnlocked)) {
                 slowPathMonitorEnter(object, answer, lockwordThreadID);
             }
             return true;
         }
 
-        public void delegateMonitorExit(Object object, ModalLockWord64 lockWord) {
+        public void delegateMonitorExit(Object object, ModalLockword64 lockword) {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final ThinLockWord64 thinLockWord = ThinLockWord64.from(lockWord);
-            final ThinLockWord64 asUnlocked = thinLockWord.asUnlocked();
-            final ThinLockWord64 asLocked  = thinLockWord.asLockedOnceBy(lockwordThreadID);
-            final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
+            final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
+            final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
+            final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
             if (!answer.equals(asLocked)) {
                 slowPathMonitorExit(object, answer, lockwordThreadID);
             }
         }
 
-        public void delegateMonitorNotify(Object object, boolean all, ModalLockWord64 lockWord) {
-            monitorNotify(object, all, ThinLockWord64.from(lockWord));
+        public void delegateMonitorNotify(Object object, boolean all, ModalLockword64 lockword) {
+            monitorNotify(object, all, ThinLockword64.from(lockword));
         }
 
-        public void delegateMonitorWait(Object object, long timeout, ModalLockWord64 lockWord) throws InterruptedException {
-            monitorWait(object, timeout, ThinLockWord64.from(lockWord));
+        public void delegateMonitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException {
+            monitorWait(object, timeout, ThinLockword64.from(lockword));
         }
 
-        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockWord64 lockWord, VmThread thread, int threadID) {
-            return threadHoldsMonitor(object, ThinLockWord64.from(lockWord), thread, threadID) ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
+        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int threadID) {
+            return threadHoldsMonitor(object, ThinLockword64.from(lockword), thread, threadID) ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
         }
 
-        public int delegateMakeHashcode(Object object, ModalLockWord64 lockWord) {
-            return makeHashCode(object, ThinLockWord64.from(lockWord));
+        public int delegateMakeHashcode(Object object, ModalLockword64 lockword) {
+            return makeHashCode(object, ThinLockword64.from(lockword));
         }
 
         public void delegateAfterGarbageCollection() {
@@ -311,21 +311,21 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             beforeGarbageCollection();
         }
 
-        public ModalLockWord64 prepareModalLockWord(Object object, ModalLockWord64 currentlockWord) {
-            final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(currentlockWord);
-            ThinLockWord64 thinLockWord = ThinLockWord64.from(biasedLockWord.asUnbiasable());
-            if (biasedLockWord.countUnderflow()) {
+        public ModalLockword64 prepareModalLockword(Object object, ModalLockword64 currentLockword) {
+            final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
+            ThinLockword64 thinLockword = ThinLockword64.from(biasedLockword.asUnbiasable());
+            if (biasedLockword.countUnderflow()) {
                 // The lock was not held, only biased, so remove the threadID too.
-                thinLockWord = thinLockWord.asUnlocked();
+                thinLockword = thinLockword.asUnlocked();
             }
-            return thinLockWord;
+            return thinLockword;
         }
 
-        public ModalLockWord64 rePrepareModalLockWord(ModalLockWord64 preparedLockWord, ModalLockWord64 currentlockWord) {
-            return prepareModalLockWord(null, currentlockWord);
+        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword) {
+            return prepareModalLockword(null, currentLockword);
         }
 
-        public void cancelPreparedModalLockWord(ModalLockWord64 preparedLockWord) {
+        public void cancelPreparedModalLockword(ModalLockword64 preparedLockword) {
             // Nothing to do
         }
     }
@@ -348,10 +348,10 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             // Fast path monitor enter.
             // TODO: Arch dependent membars
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            final ThinLockWord64 asUnlocked = lockWord.asUnlocked();
-            final ThinLockWord64 asLocked = lockWord.asLockedOnceBy(lockwordThreadID);
-            final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            final ThinLockword64 asUnlocked = lockword.asUnlocked();
+            final ThinLockword64 asLocked = lockword.asLockedOnceBy(lockwordThreadID);
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
             if (!answer.equals(asUnlocked)) {
                 slowPathMonitorEnter(object, answer, lockwordThreadID);
             }
@@ -366,17 +366,17 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             // Fast path monitor exit.
             // TODO: Arch dependent membars
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            final ThinLockWord64 asUnlocked = lockWord.asUnlocked();
-            final ThinLockWord64 asLocked  = lockWord.asLockedOnceBy(lockwordThreadID);
-            final ModalLockWord64 answer = ModalLockWord64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            final ThinLockword64 asUnlocked = lockword.asUnlocked();
+            final ThinLockword64 asLocked  = lockword.asLockedOnceBy(lockwordThreadID);
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
             if (!answer.equals(asLocked)) {
                 slowPathMonitorExit(object, answer, lockwordThreadID);
             }
         }
 
         public Word createMisc(Object object) {
-            return ThinLockWord64.unlockedFromHashcode(monitorScheme().createHashCode(object));
+            return ThinLockword64.unlockedFromHashcode(monitorScheme().createHashCode(object));
         }
 
         public int makeHashCode(Object object) {
@@ -384,14 +384,14 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             if (MaxineVM.isPrototyping()) {
                 return monitorScheme().createHashCode(object);
             }
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            return super.makeHashCode(object, lockWord);
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            return super.makeHashCode(object, lockword);
         }
 
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
             nullCheck(object);
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            return super.threadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword());
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            return super.threadHoldsMonitor(object, lockword, thread, encodeCurrentThreadIDForLockword());
         }
 
         public void monitorNotify(Object object, boolean all) {
@@ -400,8 +400,8 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 HostMonitor.notify(object);
                 return;
             }
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            super.monitorNotify(object, all, lockWord);
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            super.monitorNotify(object, all, lockword);
         }
 
         public void monitorWait(Object object, long timeout) throws InterruptedException {
@@ -410,8 +410,8 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 HostMonitor.wait(object, timeout);
                 return;
             }
-            final ThinLockWord64 lockWord = ThinLockWord64.from(ObjectAccess.readMisc(object));
-            super.monitorWait(object, timeout, lockWord);
+            final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
+            super.monitorWait(object, timeout, lockword);
         }
 
         @Override

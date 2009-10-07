@@ -144,16 +144,6 @@ public class LIROp2 extends LIRInstruction {
     }
 
     /**
-     * Gets the resulting type of this instruction.
-     *
-     * @return type the resulting type
-     *
-     */
-    public CiKind type() {
-        return type;
-    }
-
-    /**
      * Gets the temporary operand of this instruction.
      *
      * @return tmp the temporary operand of this instruction

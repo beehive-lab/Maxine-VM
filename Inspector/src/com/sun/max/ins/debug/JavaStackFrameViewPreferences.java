@@ -59,6 +59,9 @@ public final class JavaStackFrameViewPreferences extends TableColumnVisibilityPr
     // Names of other preferences in view
     private static final String BIAS_SLOT_OFFSETS_PREFERENCE = "biasSlotOffsets";
 
+    // Default value of offset biasing when no other information present.
+    private static final boolean DEFAULT_BIAS_SLOT_OFFSETS_PREFERENCE = false;
+
     /**
      * @return a GUI panel suitable for setting global preferences for this kind of view.
      */
@@ -66,7 +69,7 @@ public final class JavaStackFrameViewPreferences extends TableColumnVisibilityPr
         return globalPreferences(inspection).getPanel();
     }
 
-    private boolean biasSlotOffsets = false;
+    private boolean biasSlotOffsets = DEFAULT_BIAS_SLOT_OFFSETS_PREFERENCE;
 
     /**
      * Creates a persistent, global set of preferences for view preferences.
@@ -81,7 +84,7 @@ public final class JavaStackFrameViewPreferences extends TableColumnVisibilityPr
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        biasSlotOffsets = settings.get(saveSettingsListener, BIAS_SLOT_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        biasSlotOffsets = settings.get(saveSettingsListener, BIAS_SLOT_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, DEFAULT_BIAS_SLOT_OFFSETS_PREFERENCE);
     }
 
 

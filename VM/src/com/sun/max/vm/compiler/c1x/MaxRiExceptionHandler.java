@@ -23,7 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>MaxRiExceptionHandler</code> represents an exception handler
+ * The {@code MaxRiExceptionHandler} represents an exception handler
  * in the compiler interface.
  *
  * @author Ben L. Titzer
@@ -86,7 +86,7 @@ public class MaxRiExceptionHandler implements RiExceptionHandler {
 
     /**
      * Checks whether this is a handler for all exceptions.
-     * @return <code>true</code> if this handler catches all exceptions
+     * @return {@code true} if this handler catches all exceptions
      */
     public boolean isCatchAll() {
         return classCPI == 0;

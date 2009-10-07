@@ -25,7 +25,7 @@ import com.sun.c1x.ci.CiKind;
 
 
 /**
- * The <code>RiType</code> interface represents a resolved or unresolved type in the compiler
+ * This interface represents a resolved or unresolved type in the compiler
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.
  * Types, like fields and methods, are resolved through {@link RiConstantPool constant
  * pools}, and their actual implementation is provided by the {@link RiRuntime runtime}
@@ -128,12 +128,6 @@ public interface RiType {
      * @return {@code true} if this type is an array class
      */
     boolean isArrayKlass();
-
-    /**
-     * Checks whether this type is an array of non-primitive elements.
-     * @return {@code true} if this type is an array of non-primitive elements
-     */
-    boolean isTypeArrayClass();
 
     /**
      * Checks whether this type is final.

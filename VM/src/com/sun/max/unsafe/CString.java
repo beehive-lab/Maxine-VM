@@ -262,7 +262,7 @@ public final class CString {
      * the memory for the buffer is the responsibility of the caller.
      *
      * @param strings an array of Java strings
-     * @param appendNullDelimiter <code>true</code> if a null delimiter character '\0' should be appended
+     * @param appendNullDelimiter {@code true} if a null delimiter character '\0' should be appended
      * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
      *         {@code main} function
      */

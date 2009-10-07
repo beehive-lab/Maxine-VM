@@ -33,7 +33,7 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
+public class BeltwaySSCollector extends BeltwayCollector {
 
     public BeltwaySSCollector() {
         super("BSS");
@@ -54,7 +54,8 @@ public class BeltwaySSCollector extends BeltwayCollector implements Runnable {
         verifyBelt(fromSpace);
     }
 
-    public void run() {
+    @Override
+    protected void collect(int invocationCount) {
         final BeltwayHeapSchemeBSS ssHeapScheme = (BeltwayHeapSchemeBSS) heapScheme;
         final Belt fromSpace = ssHeapScheme.getFromSpace();
         final Belt toSpace = ssHeapScheme.getToSpace();

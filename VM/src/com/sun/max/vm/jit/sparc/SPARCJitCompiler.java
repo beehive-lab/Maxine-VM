@@ -32,11 +32,13 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.b.c.d.e.sparc.target.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
+import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -55,6 +57,67 @@ public class SPARCJitCompiler extends JitCompiler {
     private static GPR jitLiteralBaseRegister;
 
     private final SPARCTemplateBasedTargetGenerator targetGenerator;
+
+    /**
+     * Unwinds a thread's stack to an exception handler in JITed code.
+     *
+     * To enable us to find the SPARC register spill area, the last Opt method we walked through recorded the
+     * SPARC stack pointer in the StackUnwindingContext object.
+     *
+     * Note that a JIT-frame may not have a register window on its own.
+     * It is shared with all the JIT frames between an opt->jit and a jit->opt adapter (or jit->runtime call).  The
+     * register window keeps moving with the stack pointer.
+     *
+     * <p>
+     * The critical state of the registers before the RET instruction is:
+     * <ul>
+     * <li>%i7 must hold exception handler address, taking into account the SPARC link register convention.</li>
+     * <li>%i6 must hold the stack pointer of the handler</li>
+     * </ul>
+     *
+     * @param context the stack unwinding context
+     * @param catchAddress the address of the exception handler
+     * @param catcherStackPointer the stack pointer for the exception handler
+     * @param catcherJitFramePointer the frame pointer for the exception handler
+     */
+    @NEVER_INLINE
+    private static void unwind(StackUnwindingContext context, Address catchAddress, Pointer catcherTopOfStackPointer, Pointer catcherJitFramePointer) {
+        // Put the exception where the exception handler expects to find it
+        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(context.throwable));
+
+        final Pointer literalBase = catcherJitFramePointer.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
+
+        // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
+        // mandatory output register.  We also need to bias it.
+        final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
+
+        final Word catcherFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I6);
+        final Word catcherCallAddress = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I7);
+
+        // Set the top of stack to null (will be replaced later with the throwable)
+        catcherTopOfStackPointer.writeReference(0, null);
+
+        // Patch the JIT frame pointer in the saved register window area of the JIT frame to which we'll unwind:
+        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitFramePointerRegister, catcherJitFramePointer);
+        // Patch the literal base register in the saved register window area of the JIT frame to which we'll unwind:
+        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitLiteralBaseRegister, literalBase);
+        // Patch the frame pointer in the saved register window area of the JIT frame to which we'll unwind:
+        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, GPR.I6, catcherFramePointer);
+        // Patch the link register value in the saved register window area of the JIT frame to which we'll unwind:
+        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, GPR.I7, catcherCallAddress);
+
+        if (context.throwable instanceof StackOverflowError) {
+            // This complete call-chain must be inlined down to the native call
+            // so that no further stack banging instructions
+            // are executed before execution jumps to the catch handler.
+            VirtualMemory.protectPage(VmThread.current().guardPage());
+        }
+
+        SpecialBuiltin.flushRegisterWindows();
+
+        VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));  // sets %i7
+        VMRegister.setAbiFramePointer(catcherStackPointer);  // sets %i6
+    }
 
     public SPARCJitCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -81,63 +144,6 @@ public class SPARCJitCompiler extends JitCompiler {
         return targetGenerator;
     }
 
-    /**
-     * Unwinds a thread's stack to an exception handler in JITed code.  We have to unwind first to a stub that uses as
-     * its frame the frame of the closest JIT -> OPT frame adapter or JIT -> OPT call.  The exit stub then re-establishes
-     * the stack pointer to that of the JITed frame that catches the exception.
-     *
-     * We need this two-step unwinding for the following reason: a JIT-frame may not have a register window on its own.
-     * It is shared with all the JIT frames between an opt->jit and a jit->opt adapter (or jit->runtime call).  The
-     * register window keeps moving with the stack pointer.  If we return directly to the JIT frame, the saved register
-     * window for the JIT frame is lost (the stack pointer of the JIT frame doesn't point to where the register window
-     * was saved) and the first attempt to restore the window will load arbitrary values in the registers (with whatever
-     * is at the top of the stack).  So we have first to return to a frame with a stack pointer that points to a register
-     * window, then set the stack pointer to where the actual top of the stack is for the JIT frame where the exception
-     * is caught.
-     *
-     * <p>
-     * The critical state of the registers before the RET instruction is:
-     * <ul>
-     * <li>%i0 must hold the address of the register window to be restored</li>
-     * <li>%i7 must hold the unwind stub address.</li>
-     * <li>%i6 must hold the stack pointer of the handler</li>
-     * </ul>
-     *
-     * @param context the stack unwinding context
-     * @param catchAddress the address of the exception handler
-     * @param catcherStackPointer the stack pointer for the exception handler
-     * @param catcherJitFramePointer the frame pointer for the exception handler
-     */
-    @NEVER_INLINE
-    private static void unwind(StackUnwindingContext context, Address catchAddress, Pointer catcherStackPointer, Pointer catcherJitFramePointer, Pointer jitLiteralBase) {
-        // Put the exception where the exception handler expects to find it
-        VmThreadLocal.EXCEPTION_OBJECT.setVariableReference(Reference.fromJava(context.throwable));
-
-        if (context.throwable instanceof StackOverflowError) {
-            // This complete call-chain must be inlined down to the native call
-            // so that no further stack banging instructions
-            // are executed before execution jumps to the catch handler.
-            VirtualMemory.protectPage(VmThread.current().guardPage());
-        }
-
-        final Word catcherFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I6);
-        final Word catcherCallAddress = SPARCStackFrameLayout.getRegisterInSavedWindow(context.stackPointer(), GPR.I7);
-
-        // Patch the JIT frame pointer in the saved register window area of the JIT frame to which we'll unwind:
-        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitFramePointerRegister, catcherJitFramePointer);
-        // Patch the literal base register in the saved register window area of the JIT frame to which we'll unwind:
-        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, jitLiteralBaseRegister, jitLiteralBase);
-        // Patch the frame pointer in the saved register window area of the JIT frame to which we'll unwind:
-        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, GPR.I6, catcherFramePointer);
-        // Patch the link register value in the saved register window area of the JIT frame to which we'll unwind:
-        SPARCStackFrameLayout.setRegisterInSavedWindow(catcherStackPointer, GPR.I7, catcherCallAddress);
-
-        SpecialBuiltin.flushRegisterWindows();
-
-        VMRegister.setCallAddressRegister(catchAddress.minus(InstructionSet.SPARC.offsetToReturnPC));
-        VMRegister.setAbiFramePointer(catcherStackPointer);
-    }
-
     private boolean walkAdapterFrame(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, boolean isTopFrame) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
@@ -146,9 +152,9 @@ public class SPARCJitCompiler extends JitCompiler {
         final Pointer stackPointer;
         final int adapterTopFrameSize =  SPARCAdapterFrameGenerator.optToJitAdapterFrameSize(stackFrameWalker, optimizedEntryPoint);
 
-        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize :  adapterTopFrameSize - SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;
+        final int adapterFrameSize =  isTopFrame ? adapterTopFrameSize : adapterTopFrameSize - SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE;
 
-        final boolean inCallerRegisterWindow = BcdeTargetSPARCCompiler.inCallerRegisterWindow(instructionPointer, optimizedEntryPoint, adapterTopFrameSize);
+        final boolean inCallerRegisterWindow = BcdeTargetSPARCCompiler.inCallerRegisterWindow(instructionPointer, optimizedEntryPoint, adapterTopFrameSize, true);
 
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
@@ -219,17 +225,6 @@ public class SPARCJitCompiler extends JitCompiler {
         return true;
     }
 
-    private static Pointer getCallerInstructionPointer(FRAME_STATE frameState, StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
-        final Pointer callerInstructionPointer;
-        if (frameState.isReturnInstructionPointerOnStack()) {
-            final Pointer returnInstructionPointer = frameState.returnInstructionPointer(stackFrameWalker, targetMethod);
-            callerInstructionPointer = stackFrameWalker.readWord(returnInstructionPointer, 0).asPointer();
-        } else {
-            callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
-        }
-        return callerInstructionPointer;
-    }
-
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
         assert targetMethod instanceof SPARCJitTargetMethod;
         final SPARCJitTargetMethod jitTargetMethod = (SPARCJitTargetMethod) targetMethod;
@@ -245,13 +240,14 @@ public class SPARCJitCompiler extends JitCompiler {
                 return walkAdapterFrame(stackFrameWalker, targetMethod, purpose, context, isTopFrame);
             }
         }
+
         // In JITed code.
         if (isTopFrame) {
             // Make sure the appropriate ABI is used to obtain the top frame's stack and frame pointers.
             stackFrameWalker.useABI(targetMethod.abi());
         }
 
-        final FRAME_STATE frameState = stackFrameState(stackFrameWalker, jitTargetMethod);
+        final FrameState frameState = stackFrameState(stackFrameWalker, jitTargetMethod);
         final Pointer localVariablesBase = frameState.localVariablesBase(stackFrameWalker, jitTargetMethod);
 
         switch (purpose) {
@@ -285,18 +281,11 @@ public class SPARCJitCompiler extends JitCompiler {
                     // frame pointer - (space for non-local parameters + saved literal base (1 slot) + space of the first slot itself).
                     final int offsetToFirstOperandStackSlot = jitTargetMethod.stackFrameLayout().sizeOfNonParameterLocals() + 2 * JitStackFrameLayout.JIT_SLOT_SIZE;
                     final Pointer catcherTopOfStackPointer = localVariablesBase.minus(offsetToFirstOperandStackSlot);
-                    // Set the top of stack to null (will be replaced later with the throwable)
-                    catcherTopOfStackPointer.writeReference(0, null);
-
-                    // Compute the catcher stack pointer: this one will be the top frame, so we need to augment it with space for saving a register window plus
-                    // mandatory output register.  We also need to bias it.
-                    final Pointer catcherStackPointer = StackBias.JIT_SPARC_V9.bias(catcherTopOfStackPointer.minus(SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE));
-                    final Pointer literalBase = localVariablesBase.readWord(-JitStackFrameLayout.STACK_SLOT_SIZE).asPointer();
 
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throwing.raise()
                     Safepoint.enable();
 
-                    unwind(stackUnwindingContext, catchAddress, catcherStackPointer, localVariablesBase, literalBase);
+                    unwind(stackUnwindingContext, catchAddress, catcherTopOfStackPointer, localVariablesBase);
                     // We should never reach here
                 }
                 break;
@@ -320,7 +309,23 @@ public class SPARCJitCompiler extends JitCompiler {
             }
         }
 
-        final Pointer callerInstructionPointer = getCallerInstructionPointer(frameState, stackFrameWalker, jitTargetMethod);
+        final Pointer callerInstructionPointer;
+        if (frameState.isReturnInstructionPointerOnStack()) {
+            final Pointer returnInstructionPointer = frameState.returnInstructionPointer(stackFrameWalker, jitTargetMethod);
+            callerInstructionPointer = stackFrameWalker.readWord(returnInstructionPointer, 0).asPointer();
+        } else {
+            final Pointer trapStateInPreviousFrame = stackFrameWalker.trapState();
+            if (trapStateInPreviousFrame != Pointer.zero()) {
+                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousFrame);
+            } else if (isTopFrame && frameState == FrameState.BUILDING_CALLEE_FRAME && (purpose == Purpose.EXCEPTION_HANDLING || purpose == Purpose.REFERENCE_MAP_PREPARING)) {
+                // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g., when banging the stack).
+                // We can fish for the caller's instruction pointer in the trap state.
+                final Pointer trapStateInPreviousUnwalkedFrame = stackFrameWalker.stackPointer().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
+            } else {
+                callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, jitTargetMethod.abi()).asPointer();
+            }
+        }
         final Pointer callerStackPointer = frameState.callerStackPointer(stackFrameWalker, jitTargetMethod);
         final Pointer callerFramePointer = frameState.callerFramePointer(stackFrameWalker, jitTargetMethod);
         stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
@@ -328,7 +333,7 @@ public class SPARCJitCompiler extends JitCompiler {
         return true;
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod, Object context, FRAME_STATE frameState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod, Object context, FrameState frameState) {
         final Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
@@ -347,11 +352,11 @@ public class SPARCJitCompiler extends JitCompiler {
                                                      operandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE);
     }
 
-    private FRAME_STATE stackFrameState(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
+    private FrameState stackFrameState(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         if (instructionPointer.lessThan(optimizedEntryPoint)) {
-            return FRAME_STATE.IN_CALLER_FRAME;
+            return FrameState.IN_CALLER_FRAME;
         }
         // The stack frame of JITed code is setup by a small sequence of instructions called the frame builder below.
         // The frame builder starts at the end of the optimized-to-jit adapter. Its size depends on the frame size.
@@ -364,9 +369,9 @@ public class SPARCJitCompiler extends JitCompiler {
             final int currentInstruction = stackFrameWalker.readInt(instructionPointer, 0);
             final int prevInstruction = stackFrameWalker.readInt(instructionPointer, -InstructionSet.SPARC.instructionWidth);
             if (currentInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE || prevInstruction == BytecodeToSPARCTargetTranslator.RET_TEMPLATE) {
-                return FRAME_STATE.EXITING_CALLEE;
+                return FrameState.EXITING_CALLEE;
             }
-            return FRAME_STATE.NORMAL;
+            return FrameState.NORMAL;
         }
         // We're in the frame builder
         // If the target method's frame size is large, the ABI frame pointer is changed by the second instruction only.
@@ -374,20 +379,16 @@ public class SPARCJitCompiler extends JitCompiler {
         if (!SPARCAssembler.isSimm13(targetMethod.frameSize())) {
             if (instructionPointer.equals(startOfFrameBuilder) ||
                             instructionPointer.equals(startOfFrameBuilder.plus(InstructionSet.SPARC.instructionWidth))) {
-                return FRAME_STATE.IN_CALLER_FRAME;
+                return FrameState.IN_CALLER_FRAME;
             }
         }
         // We're building the frame. The frame pointer is already set up (can be obtained off the ABI frame pointer register).
-        return FRAME_STATE.BUILDING_CALLEE_FRAME;
+        return FrameState.BUILDING_CALLEE_FRAME;
     }
 
-    /**
-     *
-     *
-     */
-    enum FRAME_STATE {
+    private enum FrameState {
         /**
-         * Normal state. Frame pointer is in the Frame Pointer register defined by the ABI.
+         * Normal state.  Frame pointer is in the frame pointer register defined by the ABI.
          * Caller's address and frame pointer are on the stack, just above the template slots.
          * Stack pointer is just the ABI stack pointer.
          */
@@ -416,8 +417,9 @@ public class SPARCJitCompiler extends JitCompiler {
         },
 
         /**
-         * State when entering the method. The callee's frame isn't allocated yet. The Frame Pointer register is still set to the caller's.
-         * The callee's frame pointer can be computed from the caller's Stack Pointer and the called method's frame size.
+         * State when entering the method.  The callee's frame isn't allocated yet.
+         * The Frame Pointer register is still set to the caller's.
+         * The callee's frame pointer can be computed from the caller's stack pointer and the called method's frame size.
          */
         IN_CALLER_FRAME {
             @Override
@@ -433,8 +435,9 @@ public class SPARCJitCompiler extends JitCompiler {
         },
 
         /**
-         * State when building the stack frame on entering the method. The callee's frame is allocated, but the frame pointer isn't setup.
-         * Further, the call save area may not be initialized.
+         * State when building the stack frame on entering the method.
+         * The callee's frame is allocated, but the frame pointer isn't setup.
+         * Furthermore, the call save area may not be initialized.
          * The callee's frame pointer can be computed from the callee's stack pointer.
          */
         BUILDING_CALLEE_FRAME {

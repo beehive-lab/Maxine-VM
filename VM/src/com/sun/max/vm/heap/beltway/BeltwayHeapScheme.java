@@ -26,12 +26,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -89,6 +90,36 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayCellVisitorImpl cellVisitor;
 
+    // Grip forwarder to process discovered reference in a specific belt.
+    private final class GripForwarder implements SpecialReferenceManager.GripForwarder {
+        private Belt evacuatedBelt;
+
+        public void initialize(Belt evacuatedBelt) {
+            this.evacuatedBelt = evacuatedBelt;
+        }
+
+        public boolean isReachable(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (evacuatedBelt.contains(origin)) {
+                final Grip forwardGrip = Layout.readForwardGrip(origin);
+                if (forwardGrip.isZero()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public Grip getForwardGrip(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (evacuatedBelt.contains(origin)) {
+                return Layout.readForwardGrip(origin);
+            }
+            return grip;
+        }
+    }
+
+    private final GripForwarder gripForwarder = new GripForwarder();
+
     public final BeltwayHeapVerifier heapVerifier = new BeltwayHeapVerifier();
 
     protected final BeltwayCardRegion cardRegion = new BeltwayCardRegion();
@@ -126,9 +157,9 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected boolean verifyAfterGC = false;
 
     /**
-     * The thread running the collector, and coordinating the GC threads when the GC support parallel collection.
+     * The thread running the collector, and coordinating the GC threads when the GC supports parallel collection.
      */
-    protected BlockingServerDaemon collectorThread;
+    protected StopTheWorldGCDaemon collectorThread;
 
     public static final OutOfMemoryError outOfMemoryError = new OutOfMemoryError();
     public static boolean outOfMemory = false;
@@ -167,6 +198,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     protected abstract int [] beltHeapPercentage();
     protected abstract String [] beltDescriptions();
     protected abstract HeapBoundChecker heapBoundChecker();
+    protected abstract void initializeTlabAllocationBelt();
 
     public Size getMaxHeapSize() {
         return dynamicHeapMaxSize;
@@ -218,6 +250,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             dynamicHeapMaxSize = calculateHeapSize();
             dynamicHeapStart = allocateHeapStorage(dynamicHeapMaxSize);
             beltManager.initializeBelts(this);
+            initializeTlabAllocationBelt(); // enable tlab allocation -- needed for InspectableHeapInfo.
+
             InspectableHeapInfo.init(beltManager.belts());
 
             if (Heap.verbose()) {
@@ -231,7 +265,8 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
                 Platform.target().pageSize));
             BeltwayCardRegion.switchToRegularCardTable(cardRegion.cardTableBase().asPointer());
         } else if (phase == MaxineVM.Phase.STARTING) {
-            collectorThread =  parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
+            //collectorThread = parallelScavenging ? new BeltwayStopTheWorldDaemon("GC") : new StopTheWorldGCDaemon("GC");
+            collectorThread = new StopTheWorldGCDaemon("GC");
             collectorThread.start();
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (parallelScavenging) {
@@ -292,6 +327,16 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             Log.println("Scan Code");
         }
         Code.visitCells(cellVisitor, false);
+
+        if (Heap.verbose()) {
+            Log.println("Scan Immortal");
+        }
+        ImmortalHeap.visitCells(cellVisitor);
+    }
+
+    public void processDiscoveredSpecialReferences(Belt evacuatedBelt) {
+        gripForwarder.initialize(evacuatedBelt);
+        SpecialReferenceManager.processDiscoveredSpecialReferences(gripForwarder);
     }
 
     protected Size calculateHeapSize() {
@@ -461,7 +506,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
         }
         if (Heap.traceAllocation()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": Allocated TLAB at ");
             Log.print(tlab);
             Log.print(" [TOP=");

@@ -199,6 +199,7 @@ static void blueZoneTrap(NativeThreadLocals ntl) {
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+    int primordial = 0;
     char *sigName;
     if (traceTraps || log_TRAP) {
         sigName = signalName(signal);
@@ -212,19 +213,30 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (ntl == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }
-    if (getThreadLocal(int, tl, ID) == 0) {
-        log_exit(-22, "FATAL: trap taken on primordial thread!");
-    }
-
+    int trapNumber = getTrapNumber(signal);
+    Address faultAddress = getFaultAddress(signalInfo, ucontext);
     ThreadLocals disabled_tl = getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS);
+
+    if (getThreadLocal(int, tl, ID) == 0) {
+        sigName = signalName(signal);
+        if (sigName == NULL) {
+            sigName = "<unknown>";
+        }
+        log_println("Trap taken on primordial thread (this is usually bad)!");
+        log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+        log_println("trapInfo[0] (trap number)         = %p", trapNumber);
+        log_println("trapInfo[1] (instruction pointer) = %p", getInstructionPointer(ucontext));
+        log_println("trapInfo[2] (fault address)       = %p", faultAddress);
+        log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
+        log_println("Java trap stub 0x%0lx", _javaTrapStub);
+        primordial = 1;
+    }
 
     if (disabled_tl == 0) {
         log_exit(-21, "could not find disabled VM thread locals in trap handler");
     }
 
-    int trapNumber = getTrapNumber(signal);
-    Address faultAddress = getFaultAddress(signalInfo, ucontext);
-    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize) {
+    if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
             virtualMemory_unprotectPage(ntl->stackRedZone);

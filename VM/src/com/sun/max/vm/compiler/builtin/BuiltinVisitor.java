@@ -191,6 +191,7 @@ public interface BuiltinVisitor<IR_Type> {
     void visitBarMemory(BarMemory builtin, IR_Type result, IR_Type[] arguments);
 
     void visitMakeStackVariable(MakeStackVariable builtin, IR_Type result, IR_Type[] arguments);
+    void visitStackAllocate(StackAllocate builtin, IR_Type result, IR_Type[] arguments);
 
     void visitSafepoint(SafepointBuiltin builtin, IR_Type result, IR_Type[] arguments);
 

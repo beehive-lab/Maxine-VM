@@ -26,24 +26,43 @@ import com.sun.c1x.ir.*;
 
 
 /**
- * The <code>Loop</code> class definition.
+ * This class represents a loop, including a header block, an end block, blocks making up the body,
+ * and any blocks that are exitted to from the loop body.
  *
  * @author Marcelo Cintra
- *
  */
 public class Loop {
 
-    BlockBegin loopHeader;
-    BlockBegin loopEnd;
-    List <BlockBegin> loopBody;       // all the blocks that form the loop, except the loopHeader
-    List <BlockBegin> loopExitNodes;  // blocks that are target of an exit edge in loop
+    class Edge {
+        final BlockBegin source;
+        final BlockBegin destination;
+
+        public Edge(BlockBegin source, BlockBegin destination) {
+            this.source = source;
+            this.destination = destination;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Edge)) {
+                return false;
+            }
+            Edge other = (Edge) obj;
+            return other.destination == destination && other.source == source;
+        }
+    }
+
+    BlockBegin header;
+    final BlockBegin end;
+    final List<BlockBegin> body;   // all the blocks that form the loop, except the loopHeader
+    final List<Edge> exitEdges;    // edges that exit the loop
 
     public Loop(BlockBegin loopStart, BlockBegin loopEnd, List <BlockBegin> loopBody) {
-        this.loopHeader = loopStart;
-        this.loopEnd = loopEnd;
-        this.loopBody = loopBody;
-        assert !loopBody.contains(loopStart) : "Loop body must not contain the loop header";
-        loopExitNodes = new ArrayList<BlockBegin>();
+        this.header = loopStart;
+        this.end = loopEnd;
+        this.body = loopBody;
+        body.remove(header);
+        exitEdges = new ArrayList<Edge>();
         findLoopExitNodes();
     }
 
@@ -53,63 +72,70 @@ public class Loop {
      * and possibly, from loop header.
      */
     private void findLoopExitNodes() {
-        exitNodesForBlock(loopHeader);
+        addExitNodesForBlock(header);
 
-        for (BlockBegin block : loopBody) {
-            exitNodesForBlock(block);
+        for (BlockBegin block : body) {
+            addExitNodesForBlock(block);
         }
     }
 
     public boolean contains(BlockBegin block) {
-        if (block == loopHeader) {
-            return true;
-        }
-
-        return loopBody.contains(block);
+        // TODO: use a bitmap for performance reasons
+        return block == header || body.contains(block);
     }
 
-    /**
-     *
-     */
-    private void exitNodesForBlock(BlockBegin block) {
+    public BlockBegin header() {
+        return header;
+    }
+
+    private void addExitNodesForBlock(BlockBegin block) {
         for (int i = 0; i < block.numberOfSux(); i++) {
             BlockBegin successor = block.suxAt(i);
-            if (!loopBody.contains(successor) && block != loopHeader && !loopExitNodes.contains(successor)) {
-                loopExitNodes.add(successor);
+
+            if (!body.contains(successor) && successor != header) {
+                Edge newEdge = new Edge(block, successor);
+                if (!exitEdges.contains(newEdge)) {
+                    exitEdges.add(newEdge);
+                }
             }
         }
     }
 
-    public Loop(BlockBegin loopStart, BlockBegin loopEnd) {
-        this.loopHeader = loopStart;
-        this.loopEnd = loopEnd;
-        this.loopBody = new ArrayList <BlockBegin>();
+    public int numberOfBlocks() {
+        return body.size() + 1;
     }
 
     public void addBlock(BlockBegin block) {
-        if (block != loopHeader) {
-            loopBody.add(block);
+        if (block != header && !body.contains(block)) {
+            body.add(block);
+            findLoopExitNodes();
         }
     }
 
     public void setLoopHeader(BlockBegin loopHeader) {
-        this.loopHeader = loopHeader;
+        this.header = loopHeader;
+        findLoopExitNodes();
     }
 
     public List<BlockBegin> getLoopBlocks() {
         ArrayList<BlockBegin> loopBlocks = new ArrayList <BlockBegin>();
-        loopBlocks.add(loopHeader);
-        loopBlocks.addAll(loopBody);
+        loopBlocks.add(header);
+        loopBlocks.addAll(body);
         return loopBlocks;
     }
 
     @Override
     public String toString() {
-        String output = "\nLoop Header: " + blockInfo(loopHeader) + "\nLoop End   : " + blockInfo(loopEnd);
-        output += "\nBlocks:\n";
-        for (BlockBegin block : loopBody) {
+        String output = "\nLoop Header: " + blockInfo(header) + "\nLoop End: " + blockInfo(end);
+        output += "\nLoopBody:\n";
+        for (BlockBegin block : body) {
             output += blockInfo(block) + "\n";
         }
+        output += "\nExitEdges:\n";
+        for (Edge edge : exitEdges) {
+            output += "B" + edge.source.blockID + " -> B" + edge.destination.blockID + "\n";
+        }
+
         return output;
     }
 

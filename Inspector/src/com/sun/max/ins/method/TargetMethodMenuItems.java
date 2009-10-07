@@ -34,7 +34,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
 
-
 /**
  * Provides the menu items related to a {@link TeleTargetMethod}.
  *
@@ -70,7 +69,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.println("target method: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
             writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
-            teleTargetMethod.traceBundle(writer);
+            teleTargetMethod.disassemble(writer);
             writer.flush();
             final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
             final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
@@ -84,7 +83,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
                         if (bytecodeLocation != null) {
                             final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                             if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
                                 return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                             }
                         }

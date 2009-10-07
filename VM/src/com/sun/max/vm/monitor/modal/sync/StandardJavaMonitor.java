@@ -64,8 +64,8 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         currentThread.setState(Thread.State.BLOCKED);
         mutex.lock();
         currentThread.setState(Thread.State.RUNNABLE);
-        bindingProtection = BindingProtection.PROTECTED;
         ownerThread = currentThread;
+        setBindingProtection(BindingProtection.PROTECTED);
         recursionCount = 1;
         traceEndMonitorEnter(currentThread);
     }
@@ -78,8 +78,10 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             raiseIllegalMonitorStateException(ownerThread);
         }
         if (--recursionCount == 0) {
-            bindingProtection = BindingProtection.UNPROTECTED;
             ownerThread = null;
+            if (waitingThreads == null) {
+                setBindingProtection(BindingProtection.UNPROTECTED);
+            }
             traceEndMonitorExit(currentThread);
             mutex.unlock();
         }
@@ -112,7 +114,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         boolean timedOut = false;
         if (!interrupted) {
             if (ownerThread.nextWaitingThread() != ownerThread) {
-                // The thread is still on the _waitingThreads list: remove it
+                // The thread is still on the waitingThreads list: remove it
                 timedOut = true;
 
                 if (ownerThread == waitingThreads) {
@@ -198,8 +200,8 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void dump() {
-        super.dump();
+    public void log() {
+        super.log();
         Log.print(" mutex=");
         Log.print(Address.fromLong(mutex.logId()));
         Log.print(" waiters={");

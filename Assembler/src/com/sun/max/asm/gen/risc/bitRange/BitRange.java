@@ -20,14 +20,12 @@
  */
 package com.sun.max.asm.gen.risc.bitRange;
 
-import com.sun.max.program.*;
-
 /**
  * A {@code BitRange} is a specification of how a field's value is encoded in the
  * bit positions in an instruction. The bit positions are not necessarily contiguous.
  * In addition, one or more implicit bits for a field's value can be specified with an
  * {@link OmittedBitRange}.
- * 
+ *
  * @author Dave Ungar
  * @author Adam Spitz
  * @author Bernd Mathiske
@@ -41,7 +39,7 @@ public abstract class BitRange {
      * 2:4 of the instruction, bits 4:3 of the value are encoded in bit positions 30:31 of the instruction,
      * bits 2:1 of the value are both 0 and bit 0 of the value is encoded in bit position 18 of the instruction.
      * This bitrange has a {@link #width width} of 8 and an {@link #encodedWidth encoded width} of 6.
-     * 
+     *
      * @param bits   the bit range specification
      * @param order  how contiguous bit ranges are specified in the relevant architecture manual
      */
@@ -72,7 +70,7 @@ public abstract class BitRange {
             }
             // else this is an error; fall through
         }
-        throw ProgramError.unexpected("invalid bit range");
+        throw new IllegalArgumentException("invalid bit range");
     }
 
     /**
@@ -125,7 +123,7 @@ public abstract class BitRange {
 
     /**
      * Gets the Java source code to encode {@code value} into the field represented by this bit range.
-     * 
+     *
      * @param value    the value to be encoded
      * @param signed   specifies if the value is signed
      * @param checked  specifies if {@code value} is guaranteed to be within the valid range of values for this bit range

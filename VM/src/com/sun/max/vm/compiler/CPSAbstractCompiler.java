@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -131,13 +130,7 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         throw new UnsupportedOperationException();
     }
 
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        throw new UnsupportedOperationException();
-    }
-
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }
-
-
 }

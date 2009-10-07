@@ -23,8 +23,9 @@ package com.sun.c1x.globalstub;
 import com.sun.c1x.ci.*;
 
 /**
- * @author Thomas Wuerthinger
+ * An interface to represent the entity that generates stubs.
  *
+ * @author Thomas Wuerthinger
  */
 public interface GlobalStubEmitter {
 

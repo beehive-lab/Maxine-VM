@@ -60,15 +60,13 @@ final class ControlFlowOptimizer {
 
     private final IR ir;
 
-    private static final int ShortLoopSize = 5;
-
     private ControlFlowOptimizer(IR ir) {
         this.ir = ir;
     }
 
     private void reorderShortLoop(List<BlockBegin> code, BlockBegin headerBlock, int headerIdx) {
         int i = headerIdx + 1;
-        int maxEnd = Math.min(headerIdx + ShortLoopSize, code.size());
+        int maxEnd = Math.min(headerIdx + C1XOptions.ShortLoopSize, code.size());
         while (i < maxEnd && code.get(i).loopDepth() >= headerBlock.loopDepth()) {
             i++;
         }
@@ -80,7 +78,6 @@ final class ControlFlowOptimizer {
             if (endBlock.numberOfSux() == 1 && endBlock.suxAt(0) == headerBlock) {
                 // short loop from headerIdx to endIdx found . reorder blocks such that
                 // the headerBlock is the last block instead of the first block of the loop
-                // Util.traceLinearScan(1, "Reordering short loop: length %d, header B%d, end B%d", endIdx - headerIdx + 1, headerBlock.blockID, endBlock.blockID);
 
                 for (int j = headerIdx; j < endIdx; j++) {
                     code.set(j, code.get(j + 1));
@@ -186,9 +183,6 @@ final class ControlFlowOptimizer {
 
                 if (lastBranch.info == null) {
                     if (lastBranch.block() == code.get(i + 1)) {
-
-                        // Util.traceLinearScan(3, "Deleting unconditional branch at end of block B%d", block.blockID);
-
                         // delete last branch instruction
                         Util.truncate(instructions, instructions.size() - 1);
 
@@ -199,9 +193,6 @@ final class ControlFlowOptimizer {
                             LIRBranch prevBranch = (LIRBranch) prevOp;
 
                             if (prevBranch.block() == code.get(i + 1) && prevBranch.info == null) {
-
-                                // Util.traceLinearScan(3, "Negating conditional branch and deleting unconditional branch at end of block B%d", block.blockID);
-
                                 // eliminate a conditional branch to the immediate successor
                                 prevBranch.changeBlock(lastBranch.block());
                                 prevBranch.negateCondition();

@@ -101,13 +101,6 @@ public class LIRBranch extends LIRInstruction {
         return cond;
     }
 
-    /**
-     * @return the type of this condition
-     */
-    CiKind type() {
-        return type;
-    }
-
     public Label label() {
         return label;
     }

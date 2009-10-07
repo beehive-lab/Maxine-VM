@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
@@ -102,25 +103,27 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+            return
+            inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) ||
+            inToSpace(origin) || inEdenSpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
     final GenHeapBoundChecker genHeapBoundChecker;
 
-    private Runnable edenGC;
-    private Runnable toGC;
-    private Runnable majorGC;
+    private Collector edenGC;
+    private Collector toGC;
+    private Collector majorGC;
 
-    public Runnable getMinorGC() {
+    public Collector getMinorGC() {
         return edenGC;
     }
 
-    public Runnable getMajorGC() {
+    public Collector getMajorGC() {
         return majorGC;
     }
 
-    public Runnable getToGC() {
+    public Collector getToGC() {
         return toGC;
     }
 
@@ -156,20 +159,22 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             }
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getEdenSpace();
-
             final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
 
-            edenGC = (Runnable) collectors[0];
-            toGC =  (Runnable) collectors[1];
-            majorGC = (Runnable) collectors[2];
+            edenGC = collectors[0];
+            toGC =  collectors[1];
+            majorGC = collectors[2];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getEdenSpace();
     }
 
     @INLINE

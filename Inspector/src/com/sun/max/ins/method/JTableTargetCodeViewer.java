@@ -676,7 +676,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (maxVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
+                                    if (maxVM().findJavaSourceFile(location.classMethodActor.holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             public void actionPerformed(ActionEvent e) {

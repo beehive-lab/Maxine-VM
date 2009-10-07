@@ -36,9 +36,9 @@ public class FrameMap {
     public static final int SpillSlotSize = 4;
 
     private final C1XCompiler compilation;
-
     private final CallingConvention incomingArguments;
     private final int monitorCount;
+    private final int returnAddressSize;
 
     // Values set after register allocation is complete
     private int frameSize;
@@ -47,8 +47,9 @@ public class FrameMap {
     // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
     private int reservedOutgoingArgumentsArea;
 
-    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
+    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors, int retAddrSize) {
         this.compilation = compiler;
+        this.returnAddressSize = retAddrSize;
         frameSize = -1;
         spillSlotCount = -1;
 
@@ -95,14 +96,12 @@ public class FrameMap {
 
     int spOffsetForSpill(int index) {
         assert index >= 0 && index < spillSlotCount : "out of range";
-        int offset = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SpillSlotSize;
-        return offset;
+        return Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SpillSlotSize;
     }
 
     int spOffsetForMonitorBase(int index) {
         int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SpillSlotSize;
-        int offset = Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-        return offset;
+        return Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
     }
 
     int spOffsetForMonitorLock(int index)  {
@@ -137,8 +136,8 @@ public class FrameMap {
         assert this.spillSlotCount == -1 : "can only be set once";
         this.spillSlotCount = spillSlotCount;
         assert frameSize == -1 : "should only be calculated once";
-        frameSize = Util.roundTo(spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock() +
-        compilation.target.arch.framePadding, compilation.target.stackAlignment);
+        int fs = returnAddressSize + spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock() + compilation.target.arch.framePadding;
+        frameSize = Util.roundTo(fs, compilation.target.stackAlignment) - returnAddressSize;
     }
 
     public CiLocation regname(LIROperand opr) {
