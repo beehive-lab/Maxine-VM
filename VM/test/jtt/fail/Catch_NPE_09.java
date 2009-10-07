@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,47 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.xir;
+package jtt.fail;
 
-import com.sun.c1x.ci.CiConstant;
-
-/**
- * This class represents an argument to an {@link XirSnippet}.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=1
  */
-public class XirArgument {
+public class Catch_NPE_09 {
 
-    public final CiConstant constant;
-    public final Object object;
-    public final XirArgument[] arguments;
-
-    private XirArgument(CiConstant value) {
-        this.constant = value;
-        this.object = null;
-        this.arguments = null;
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            throwNPE(a);
+            r = 1;
+            throwNPE(a - 1);
+        } catch (NullPointerException e) {
+            return r + 10;
+        }
+        return r;
     }
 
-    private XirArgument(Object o) {
-        this.constant = null;
-        this.object = o;
-        this.arguments = null;
-    }
-
-    public static XirArgument forInternalObject(Object o) {
-        return new XirArgument(o);
-    }
-
-    public static XirArgument forInt(int x) {
-        return new XirArgument(CiConstant.forInt(x));
-    }
-
-    public static XirArgument forWord(long x) {
-        return new XirArgument(CiConstant.forWord(x));
-    }
-
-    public static XirArgument forObject(Object o) {
-        return new XirArgument(CiConstant.forObject(o));
+    private static void throwNPE(int a) {
+        if (a == 0) {
+            throw null;
+        }
     }
 }

@@ -832,8 +832,17 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     private void read(Kind kind, final Kind offsetKind, DirValue dirResult, DirValue[] dirArguments) {
+        final EirValue pointer;
+        DirValue dirPointer = dirArguments[0];
+        if (dirPointer instanceof DirMethodValue) {
+            final EirValue constant = methodTranslation().makeEirConstant(dirPointer.value());
+            pointer = createEirVariable(constant.kind());
+            assign(constant.kind(), pointer, constant);
+        } else {
+            pointer = dirToEirValue(dirPointer);
+        }
+
         final EirValue result = dirToEirValue(dirResult);
-        final EirValue pointer = dirToEirValue(dirArguments[0]);
         final DirValue dirOffset = dirArguments[1];
         final AMD64EirLoad loadInstruction = dirOffset.isZeroConstant() ? new AMD64EirLoad(eirBlock(), kind, result, pointer) :
                                                                           new AMD64EirLoad(eirBlock(), kind, result, pointer, offsetKind, dirToEirValue(dirOffset));
@@ -1014,7 +1023,15 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     private void write(Kind kind, Kind offsetKind, DirValue[] dirArguments) {
-        final EirValue pointer = dirToEirValue(dirArguments[0]);
+        DirValue dirPointer = dirArguments[0];
+        final EirValue pointer;
+        if (dirPointer instanceof DirMethodValue) {
+            final EirValue constant = methodTranslation().makeEirConstant(dirPointer.value());
+            pointer = createEirVariable(constant.kind());
+            assign(constant.kind(), pointer, constant);
+        } else {
+            pointer = dirToEirValue(dirPointer);
+        }
         final DirValue dirOffset = dirArguments[1];
         final EirValue value = dirToEirValue(dirArguments[2]);
 

@@ -18,47 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.xir;
+package jtt.jni;
 
-import com.sun.c1x.ci.CiConstant;
-
-/**
- * This class represents an argument to an {@link XirSnippet}.
- *
- * @author Thomas Wuerthinger
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0b = 0b; -1b = -1b; 1b = 1b; -128b = -128b; 127b = 127b
  */
-public class XirArgument {
-
-    public final CiConstant constant;
-    public final Object object;
-    public final XirArgument[] arguments;
-
-    private XirArgument(CiConstant value) {
-        this.constant = value;
-        this.object = null;
-        this.arguments = null;
+public class JNI_IdentityByte {
+    public static byte test(byte arg) {
+        return id_byte(arg);
     }
 
-    private XirArgument(Object o) {
-        this.constant = null;
-        this.object = o;
-        this.arguments = null;
-    }
-
-    public static XirArgument forInternalObject(Object o) {
-        return new XirArgument(o);
-    }
-
-    public static XirArgument forInt(int x) {
-        return new XirArgument(CiConstant.forInt(x));
-    }
-
-    public static XirArgument forWord(long x) {
-        return new XirArgument(CiConstant.forWord(x));
-    }
-
-    public static XirArgument forObject(Object o) {
-        return new XirArgument(CiConstant.forObject(o));
-    }
+    private static native byte id_byte(byte b);
 }

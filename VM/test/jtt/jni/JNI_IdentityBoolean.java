@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.tele.interpreter;
+package jtt.jni;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
-
-public class TeleInterpreterTest_native extends BytecodeTest_native {
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(TeleInterpreterTest_native.class.getSimpleName());
-        suite.addTestSuite(TeleInterpreterTest_native.class);
-        return new TeleInterpreterTestSetup(suite);
+/*
+ * @Harness: java
+ * @Runs: true = true; false = false
+ */
+public class JNI_IdentityBoolean {
+    public static boolean test(boolean arg) {
+        return id_boolean(arg);
     }
 
-    public TeleInterpreterTest_native(String name) {
-        super(name);
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(TeleInterpreterTest_native.suite());
-    }
-
+    private static native boolean id_boolean(boolean b);
 }
