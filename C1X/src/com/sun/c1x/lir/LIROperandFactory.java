@@ -109,4 +109,12 @@ public class LIROperandFactory {
     public static LIROperand address(CiRegister rsp, int disp, CiKind t) {
         return address(new LIRLocation(CiKind.Int, rsp), disp, t);
     }
+
+    public static LIROperand constant(CiConstant value) {
+        return new LIRConstant(value);
+    }
+
+    public static LIROperand scratch(CiKind type, CiTarget target) {
+        return singleLocation(type, target.scratchRegister);
+    }
 }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.eir.amd64;
 
+import static com.sun.max.vm.compiler.eir.EirStackSlot.Purpose.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
@@ -38,10 +40,13 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
      * Converts a logical stack slot offset to a {@linkplain StackAddress target address}.
      */
     public StackAddress stackAddress(EirStackSlot slot) {
-        if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
+        if (slot.purpose == PARAMETER) {
             // The offset is adjusted to account for the frame allocated for local variables as
             // well as the return address that is pushed to the stack by a call instruction.
             return new StackAddress(slot.offset + frameSize() + abi().stackSlotSize(), stackPointer.indirect());
+        }
+        if (slot.purpose == BLOCK) {
+            return new StackAddress(currentEirBlock().method().frameSize() - slot.offset, framePointer.indirect());
         }
         return new StackAddress(slot.offset, framePointer.indirect());
     }
@@ -51,8 +56,8 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
      * an {@linkplain #isOffset8Bit() 8 or 32 bit} {@linkplain #offset32() offset}.
      */
     public static final class StackAddress {
-        private final int offset;
-        private final AMD64IndirectRegister64 base;
+        public final int offset;
+        public final AMD64IndirectRegister64 base;
 
         StackAddress(int offset, AMD64IndirectRegister64 base) {
             this.offset = offset;

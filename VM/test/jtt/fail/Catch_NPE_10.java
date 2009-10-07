@@ -18,25 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cir.generate;
+package jtt.fail;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+/*
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=1
+ */
+public class Catch_NPE_10 {
 
-public class CirTranslatorTest_native extends BytecodeTest_native {
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(CirTranslatorTest_native.class.getSimpleName());
-        suite.addTestSuite(CirTranslatorTest_native.class);
-        return new CirTranslatorTestSetup(suite);
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            if (a == 0) {
+                throw null;
+            }
+            r = 1;
+            if (a - 1 == 0) {
+                throw null;
+            }
+        } catch (NullPointerException e) {
+            return r + 10;
+        }
+        return r;
     }
 
-    public CirTranslatorTest_native(String name) {
-        super(name);
+    private static void throwNPE(int a) {
+        if (a == 0) {
+            throw null;
+        }
     }
-
-    public static void main(String[] programArguments) {
-        junit.textui.TestRunner.run(CirTranslatorTest_native.suite());
-    }
-
 }

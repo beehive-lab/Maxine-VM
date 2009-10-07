@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,24 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.amd64;
+package jtt.jni;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
-
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64TranslatorTest_native extends BytecodeTest_native {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AMD64TranslatorTest_native.suite());
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; -1 = -1; 1 = 1; -128 = -128; 127 = 127; -32768 = -32768; 32767 = 32767;
+ */
+public class JNI_IdentityLong {
+    public static long test(long arg) {
+        return id_long(arg);
     }
 
-    public static Test suite() {
-        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_native.class));
-    }
-
-    public AMD64TranslatorTest_native(String name) {
-        super(name);
-    }
-
+    private static native long id_long(long b);
 }

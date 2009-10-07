@@ -464,7 +464,7 @@ final class LinearScanWalker extends IntervalWalker {
             // memory . avoid useless moves from memory to register and back
             Interval parent = it;
             while (parent != null && parent.isSplitChild()) {
-                parent = parent.splitChildBeforeOpId(parent.from());
+                parent = parent.getSplitChildBeforeOpId(parent.from());
 
                 if (parent.assignedReg() < allocator.nofRegs) {
                     if (parent.firstUsage(IntervalUseKind.shouldHaveRegister) == Integer.MAX_VALUE) {
@@ -999,8 +999,8 @@ final class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-        Interval beginHint = registerHint.splitChildAtOpId(beginPos, LIRInstruction.OperandMode.InputMode, allocator);
-        Interval endHint = registerHint.splitChildAtOpId(endPos, LIRInstruction.OperandMode.OutputMode, allocator);
+        Interval beginHint = registerHint.getSplitChildAtOpId(beginPos, LIRInstruction.OperandMode.InputMode, allocator);
+        Interval endHint = registerHint.getSplitChildAtOpId(endPos, LIRInstruction.OperandMode.OutputMode, allocator);
         if (beginHint == endHint || beginHint.to() != beginPos || endHint.from() != endPos) {
             // registerHint must be split : otherwise the re-writing of use positions does not work
             return;

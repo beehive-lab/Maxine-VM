@@ -32,11 +32,9 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
@@ -170,9 +168,6 @@ public final class JniNativeInterface {
             pointer().setWord(i, functionPointer);
         }
         nativeInitializeJniInterface(pointer());
-        if (MaxineVM.isDebug()) {
-            checkInvariants();
-        }
     }
 
     /**
@@ -189,27 +184,6 @@ public final class JniNativeInterface {
             }
         }
         return null;
-    }
-
-    private static void check(StackVariable stackVariable) {
-        for (CriticalMethod jniFunction : jniFunctions) {
-            final ClassMethodActor classMethodActor = jniFunction.classMethodActor;
-            final Integer offset = stackVariable.offset(classMethodActor);
-            if (offset == null) {
-                Log.print("The offset of stack variable ");
-                Log.print(stackVariable);
-                Log.print(" in ");
-                Log.printMethod(jniFunction.classMethodActor, false);
-                Log.println(" has not been recorded.");
-                FatalError.unexpected("The offset for a stack variable has not been recorded");
-            }
-        }
-    }
-
-    public static void checkInvariants() {
-        check(JniFunctionWrapper.savedLastJavaCallerFramePointer());
-        check(JniFunctionWrapper.savedLastJavaCallerInstructionPointer());
-        check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
     }
 
     /**

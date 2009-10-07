@@ -239,14 +239,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         } catch (Throwable t) {
             Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());
             Trace.line(1, "Compiler scheme is: " + compilerScheme.toString() + " - trying different compiler scheme...");
-            if (Trace.level() >= 1) {
-                t.printStackTrace();
-            }
             if (failoverOption.getValue()) {
                 return synchronousCompileHelper(classMethodActor, null, compilerScheme);
             }
-            t.printStackTrace();
-            throw new RuntimeException("Error compiling: " + classMethodActor + ": " + t.getMessage());
+            throw new RuntimeException("Error compiling: " + classMethodActor, t);
         }
     }
 
