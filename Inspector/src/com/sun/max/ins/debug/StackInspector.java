@@ -30,8 +30,8 @@ import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.debug.JavaStackFramePanel.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -52,7 +52,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class StackInspector extends Inspector {
+public class StackInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static StackInspector stackInspector;
@@ -83,40 +83,7 @@ public class StackInspector extends Inspector {
         }
     }
 
-    private static StackViewPreferences globalPreferences;
-
-    /**
-     * @return the global, persistent set of user preferences for viewing stacks
-     */
-    public static StackViewPreferences globalPreferences(Inspection inspection) {
-        if (globalPreferences == null) {
-            globalPreferences = new StackViewPreferences(inspection) {
-                @Override
-                public void setSlotNameDisplayMode(SlotNameDisplayMode slotNameDisplayMode) {
-                    super.setSlotNameDisplayMode(slotNameDisplayMode);
-                    if (stackInspector != null) {
-                        stackInspector.refreshView(true);
-                    }
-                }
-                @Override
-                public void setBiasSlotOffsets(boolean biasSlotOffsets) {
-                    super.setBiasSlotOffsets(biasSlotOffsets);
-                    if (stackInspector != null) {
-                        stackInspector.refreshView(true);
-                    }
-                }
-            };
-        }
-        return globalPreferences;
-    }
-
-    /**
-     * @return a GUI panel suitable for setting global preferences for this kind of view.
-     */
-    public static JPanel globalPreferencesPanel(Inspection inspection) {
-        return globalPreferences(inspection).getPanel();
-    }
-
+    private static JavaStackFrameViewPreferences viewPreferences;
 
     static class TruncatedStackFrame extends StackFrame {
         private StackFrame truncatedStackFrame;
@@ -163,7 +130,7 @@ public class StackInspector extends Inspector {
     private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
     private boolean stateChanged = true;  // conservative assessment of possible stack change
-    private StackFramePanel<? extends StackFrame> selectedFramePanel;
+    private JavaStackFramePanel<? extends JavaStackFrame> selectedFramePanel;
 
     private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
 
@@ -255,6 +222,7 @@ public class StackInspector extends Inspector {
             final Component oldRightComponent = splitPane.getRightComponent();
             Component newRightComponent = oldRightComponent;
 
+            // TODO (mlvdv) Create appropriate stack frame viewers for all the kinds of frames we might find.
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
@@ -265,7 +233,7 @@ public class StackInspector extends Inspector {
                         selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {
                         final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                        selectedFramePanel = new JavaStackFramePanel(inspection(), javaStackFrame);
+                        selectedFramePanel = new DefaultJavaStackFramePanel(inspection(), javaStackFrame, thread, viewPreferences);
                     }
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
@@ -290,6 +258,10 @@ public class StackInspector extends Inspector {
     public StackInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
+
+        viewPreferences = JavaStackFrameViewPreferences.globalPreferences(inspection);
+        viewPreferences.addListener(this);
+
         createFrame(null);
         getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
         getMenu(DEFAULT_INSPECTOR_MENU).add(copyStackToClipboardAction);
@@ -401,7 +373,9 @@ public class StackInspector extends Inspector {
         return new InspectorAction(inspection(), "View Options") {
             @Override
             public void procedure() {
-                new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
+                // TODO (mlvdv) view options
+                //new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<JavaStackFrameColumnKind>(inspection(), "Stack Frame Options", viewPreferences);
             }
         };
     }
@@ -513,6 +487,7 @@ public class StackInspector extends Inspector {
     @Override
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
         if (selectedFramePanel != null) {
+            // TODO (mlvdv)  This call is a no-op at present.  What should happen?
             selectedFramePanel.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
         }
     }
@@ -520,6 +495,11 @@ public class StackInspector extends Inspector {
     @Override
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
         reconstructView();
+    }
+
+    @Override
+    public void watchpointSetChanged() {
+        refreshView(false);
     }
 
     public void viewConfigurationChanged() {
@@ -589,6 +569,9 @@ public class StackInspector extends Inspector {
 
     private final InspectorAction copyStackToClipboardAction = new CopyStackToClipboardAction();
 
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
+    }
 
     @Override
     public void inspectorClosing() {

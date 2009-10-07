@@ -86,8 +86,8 @@ public final class SPARCStackFrameLayout {
      * @param slotOffset offset of the stack slot.
      * @return
      */
-    public static int slotOffsetFromFrame(int frameSize, int slotOffset) {
-        return STACK_BIAS - frameSize + slotOffset;
+    public static Offset slotOffsetFromFrame(int frameSize, Offset slotOffset) {
+        return slotOffset.plus(STACK_BIAS).minus(frameSize);
     }
 
     /**

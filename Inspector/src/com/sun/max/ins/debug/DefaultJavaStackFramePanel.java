@@ -22,37 +22,40 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.stack.*;
 
-
 /**
- * Display panel for VM stack frames.
+ * Display panel specialized for displaying VM stack frames for Java methods.
  *
  * @author Michael Van De Vanter
  */
-abstract class StackFramePanel<StackFrame_Type extends StackFrame> extends InspectorPanel {
+public final class DefaultJavaStackFramePanel extends JavaStackFramePanel<JavaStackFrame> {
 
-    protected StackFrame_Type stackFrame;
+    private final JavaStackFrameTable javaStackFrameTable;
 
-    public StackFramePanel(Inspection inspection, StackFrame_Type stackFrame) {
-        super(inspection, new BorderLayout());
-        this.stackFrame = stackFrame;
-    }
-
-    public final StackFrame_Type stackFrame() {
-        return stackFrame;
-    }
-
-    public final void setStackFrame(StackFrame stackFrame) {
-        final Class<StackFrame_Type> type = null;
-        this.stackFrame = StaticLoophole.cast(type, stackFrame);
+    public DefaultJavaStackFramePanel(Inspection inspection, JavaStackFrame javaStackFrame, MaxThread thread, JavaStackFrameViewPreferences preferences) {
+        super(inspection, javaStackFrame);
+        javaStackFrameTable = new JavaStackFrameTable(inspection, javaStackFrame, thread, preferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), javaStackFrameTable);
+        add(scrollPane, BorderLayout.CENTER);
         refresh(true);
     }
 
-    public void instructionPointerFocusChanged(Pointer instructionPointer) {
+    @Override
+    public void refresh(boolean force) {
+        javaStackFrameTable.refresh(force);
+        super.refresh(force);
     }
+
+    @Override
+    public void redisplay() {
+        javaStackFrameTable.redisplay();
+        super.redisplay();
+    }
+
 }
