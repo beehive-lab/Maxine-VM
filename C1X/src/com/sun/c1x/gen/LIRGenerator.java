@@ -1985,9 +1985,9 @@ public abstract class LIRGenerator extends ValueVisitor {
             // curVal can be null without phi being null in conjunction with inlining
             if (phi.isLive() && curVal != null && curVal != phi) {
                 assert !phi.isIllegal() : "illegal phi cannot be marked as live";
-//                if (curVal instanceof Phi) {
-//                    operandForPhi((Phi) curVal);
-//                }
+                if (curVal instanceof Phi) {
+                    operandForPhi((Phi) curVal);
+                }
                 LIROperand operand = curVal.operand();
                 if (operand == null || operand.isIllegal()) {
                     assert curVal instanceof Constant || curVal instanceof Local : "these can be produced lazily";
@@ -2052,7 +2052,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     LIROperand operandForInstruction(Value x) {
         LIROperand operand = x.operand();
-        if (operand.isIllegal()) {
+        if (operand == null || operand.isIllegal()) {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
@@ -2060,7 +2060,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
-                x.setOperand(rlock(x.type()));
+                operand = rlock(x.type());
+                x.setOperand(operand);
                 instructionForOperand.put(operand.vregNumber(), x);
             }
         }
