@@ -55,7 +55,7 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
 
         setResizable(true);
         setClosable(true);
-        setIconifiable(false);
+        setIconifiable(true);
         setVisible(false);
 
         addInternalFrameListener(new InternalFrameAdapter() {
