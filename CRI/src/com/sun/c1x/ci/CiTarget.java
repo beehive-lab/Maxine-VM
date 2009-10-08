@@ -39,6 +39,7 @@ public class CiTarget {
     public final CiRegister[] allocatableRegisters;
     public final CiRegister[] registerReferenceMapTemplate;
     public final CiRegister[] callerSavedRegisters;
+    public final CiRegister.AllocationSet allocatableRegisters2;
     public int pageSize;
     public boolean isMP;
     public final CiRegister stackRegister;
@@ -71,6 +72,7 @@ public class CiTarget {
         this.allocatableRegisters = allocatableRegisters;
         this.pageSize = pageSize;
         this.isMP = isMP;
+        this.allocatableRegisters2 = new CiRegister.AllocationSet(allocatableRegisters);
     }
 
     private static boolean contains(CiRegister reg, CiRegister[] arr) {

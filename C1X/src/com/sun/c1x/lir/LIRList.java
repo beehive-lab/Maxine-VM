@@ -23,6 +23,7 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
@@ -34,10 +35,11 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.xir.*;
 
 /**
+ * This class represents a list of LIR instructions and contains factory methods for
+ * creating and appending LIR instructions to this list.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class LIRList {
 
@@ -149,11 +151,11 @@ public class LIRList {
     }
 
     public void unalignedMove(LIRAddress src, LIROperand dst) {
-        append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, null, LIROp1.LIRMoveKind.Unaligned));
+        append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, dst.kind, null));
     }
 
     public void unalignedMove(LIROperand src, LIRAddress dst) {
-        append(new LIROp1(LIROpcode.Move, src, dst, src.kind, null, LIROp1.LIRMoveKind.Unaligned));
+        append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, src.kind, null));
     }
 
     public void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
@@ -169,7 +171,7 @@ public class LIRList {
     }
 
     public void volatileMove(LIROperand src, LIROperand dst, CiKind type, CodeEmitInfo info) {
-        append(new LIROp1(LIROpcode.Move, src, dst, type, info, LIROp1.LIRMoveKind.Volatile));
+        append(new LIROp1(LIROp1.LIRMoveKind.Volatile, src, dst, type, info));
     }
 
     public void oop2reg(Object o, LIROperand reg) {
