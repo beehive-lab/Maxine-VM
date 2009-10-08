@@ -791,9 +791,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = resultRegisterFor(x.type());
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
 
-
         RiType klass = x.instanceClass();
-
         if (x.instanceClass().isLoaded()) {
             lir.oop2reg(klass.getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
         } else {
@@ -801,19 +799,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
-        if (C1XOptions.UseFastNewInstance && klass.isLoaded()) {
-//            CiRuntimeCall stubId = klass.isInitialized() ? CiRuntimeCall.FastNewInstance : CiRuntimeCall.FastNewInstanceInitCheck;
-//            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, stubId);
-//            assert klass.isLoaded() : "must be loaded";
-//            // allocate space for instance
-//            assert klass.sizeHelper() >= 0 : "illegal instance size";
-//            int instanceSize = Util.align(klass.sizeHelper(), compilation.target.heapAlignment);
-//            lir.allocateObject(reg, X86FrameMap.rcxOopOpr, X86FrameMap.rdiOopOpr, X86FrameMap.rsiOopOpr, LIROperandFactory.IllegalOperand, compilation.runtime.headerSize(), instanceSize, klassReg, !klass.isInitialized(), slowPath);
-        } else {
-            CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, GlobalStub.NewInstance);
-            lir.branch(LIRCondition.Always, CiKind.Illegal, slowPath);
-            lir.branchDestination(slowPath.continuation);
-        }
+        CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, GlobalStub.NewInstance);
+        lir.branch(LIRCondition.Always, CiKind.Illegal, slowPath);
+        lir.branchDestination(slowPath.continuation);
+
         LIROperand result = rlockResult(x);
         lir.move(reg, result);
     }

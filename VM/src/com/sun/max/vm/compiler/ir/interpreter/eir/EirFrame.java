@@ -43,7 +43,7 @@ public class EirFrame {
     }
 
     public EirABI abi() {
-        return method.abi();
+        return method.abi;
     }
 
     private EirBlock catchBlock;

@@ -22,7 +22,6 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Abstracts over one or more stack frames for non-Java code. The reason that a
@@ -32,8 +31,7 @@ import com.sun.max.vm.thread.*;
  * return instruction is Java code that transitioned the call stack from Java
  * code into native code. This is known because all such transitions occur
  * through a {@linkplain NativeStubGenerator native stub} which records the current
- * {@linkplain VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER frame pointer} and
- * {@linkplain VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER instruction pointer}.
+ * {@link JavaFrameAnchor}.
  *
  * @author Doug Simon
  */

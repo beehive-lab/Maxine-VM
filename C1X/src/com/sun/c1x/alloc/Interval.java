@@ -425,15 +425,15 @@ public final class Interval {
         return null;
     }
 
-    Interval splitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
+    Interval getSplitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
-        assert opId >= 0 : "invalid opId (method can not be called for spill moves)";
+        assert opId >= 0 : "invalid opId (method cannot be called for spill moves)";
 
-        Interval result;
         if (splitChildren.size() == 0) {
-            result = this;
+            assert this.covers(opId, mode) : this + " does not cover " + opId;
+            return this;
         } else {
-            result = null;
+            Interval result = null;
             int len = splitChildren.size();
 
             // in outputMode, the end of the interval (opId == cur.to()) is not valid
@@ -455,25 +455,39 @@ public final class Interval {
                 }
             }
 
-            assert result != null : "no matching interval found";
-            for (i = 0; i < len; i++) {
-                Interval tmp = splitChildren.get(i);
-                if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
-                    TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
-                    result.print(TTY.out, allocator);
-                    tmp.print(TTY.out, allocator);
-                    assert false : "two valid result intervals found";
-                }
+            assert checkSplitChild(result, opId, allocator, toOffset, mode);
+            return result;
+        }
+    }
+
+    private boolean checkSplitChild(Interval result, int opId, LinearScan allocator, int toOffset, LIRInstruction.OperandMode mode) {
+        if (result == null) {
+            // this is an error
+            StringBuilder msg = new StringBuilder(this.toString()).append(" has no child at ").append(opId);
+            if (splitChildren.size() > 0) {
+                Interval first = splitChildren.get(0);
+                Interval last = splitChildren.get(splitChildren.size() - 1);
+                msg.append(" (first = ").append(first).append(", last = ").append(last).append(")");
             }
+            throw new CiBailout("Linear Scan Error: " + msg);
         }
 
+        int len = splitChildren.size();
+        for (int i = 0; i < len; i++) {
+            Interval tmp = splitChildren.get(i);
+            if (tmp != result && tmp.from() <= opId && opId < tmp.to() + toOffset) {
+                TTY.println(String.format("two valid result intervals found for opId %d: %d and %d", opId, result.registerNumber(), tmp.registerNumber()));
+                result.print(TTY.out, allocator);
+                tmp.print(TTY.out, allocator);
+                throw new CiBailout("two valid result intervals found");
+            }
+        }
         assert result.covers(opId, mode) : "opId not covered by interval";
-
-        return result;
+        return true;
     }
 
     // returns the last split child that ends before the given opId
-    Interval splitChildBeforeOpId(int opId) {
+    Interval getSplitChildBeforeOpId(int opId) {
         assert opId >= 0 : "invalid opId";
 
         Interval parent = splitParent();
@@ -786,7 +800,7 @@ public final class Interval {
 
     @Override
     public String toString() {
-        return registerNumber() + " " + typeName();
+        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to() + "]";
     }
 
     private String typeName() {

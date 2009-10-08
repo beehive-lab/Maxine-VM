@@ -205,7 +205,8 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
             task_t childTask;
-            if (acquireTaskportRight() != 0) {
+            boolean acquireTaskportRightIsNowFunctional = false;
+            if (acquireTaskportRightIsNowFunctional && acquireTaskportRight() != 0) {
                 return -1;
             }
             if (Task_for_pid(POS, mach_task_self(), childPid, &childTask) != KERN_SUCCESS) {

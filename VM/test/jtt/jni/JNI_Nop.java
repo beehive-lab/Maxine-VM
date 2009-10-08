@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package jtt.jni;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
-
-/**
- * Canonical surrogate for an optimized compilation of a Java {@link ClassMethod} in the tele VM.
- *
- * @author Michael Van De Vanter
+/*
+ * @Harness: java
+ * @Runs: 0 = true, 1 = true
  */
-public final class TeleOptimizedTargetMethod extends TeleTargetMethod {
-
-    TeleOptimizedTargetMethod(TeleVM teleVM, Reference optimizedTargetMethodReference) {
-        super(teleVM, optimizedTargetMethodReference);
+public class JNI_Nop {
+    public static boolean test(int arg) {
+        if (arg == 0) {
+            nop();
+            return true;
+        }
+        if (arg == 1) {
+            sync_nop();
+            return true;
+        }
+        return false;
     }
 
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
+    private static synchronized native void nop();
+    private static synchronized native void sync_nop();
 }

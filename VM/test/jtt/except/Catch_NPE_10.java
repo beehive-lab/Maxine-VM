@@ -18,24 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.amd64;
+package jtt.except;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+/*
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=1
+ */
+public class Catch_NPE_10 {
 
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64TranslatorTest_native extends BytecodeTest_native {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AMD64TranslatorTest_native.suite());
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            if (a == 0) {
+                throw null;
+            }
+            r = 1;
+            if (a - 1 == 0) {
+                throw null;
+            }
+        } catch (NullPointerException e) {
+            return r + 10;
+        }
+        return r;
     }
-
-    public static Test suite() {
-        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_native.class));
-    }
-
-    public AMD64TranslatorTest_native(String name) {
-        super(name);
-    }
-
 }

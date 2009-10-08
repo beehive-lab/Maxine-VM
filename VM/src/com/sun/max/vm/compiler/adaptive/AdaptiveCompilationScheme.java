@@ -74,7 +74,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * The compiler that is used as the default at prototyping time.
      */
     @PROTOTYPE_ONLY
-    protected final BootstrapCompilerScheme prototypeCompiler;
+    protected final BootstrapCompilerScheme bootstrapCompiler;
 
     /**
      * The baseline (JIT) compiler.
@@ -97,6 +97,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     @RESET
     protected LinkedList<CompilationObserver> observers;
 
+    private static final VMOption intOption = register(new VMOption("-Xint",
+                    "Interpreted mode execution only."), MaxineVM.Phase.STARTING);
     private static final VMOption jitOption = register(new VMOption("-Xjit",
                     "Selects JIT only mode, with no recompilation."), MaxineVM.Phase.STARTING);
     private static final VMOption optOption = register(new VMOption("-Xopt",
@@ -138,8 +140,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        prototypeCompiler = vmConfiguration.compilerScheme();
-        optimizingCompiler = prototypeCompiler;
+        bootstrapCompiler = vmConfiguration.compilerScheme();
+        optimizingCompiler = bootstrapCompiler;
         jitCompiler = vmConfiguration.jitScheme();
     }
 
@@ -160,20 +162,22 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compilationThread.start();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (mode == null) {
-                if (jitOption.isPresent()) {
-                    defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                    defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
-                    setMode(Mode.JIT);
-                } else if (optOption.isPresent()) {
-                    defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
-                    defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
-                    setMode(Mode.OPTIMIZED);
-                } else {
-                    defaultRecompilationThreshold0 = thresholdOption.getValue();
-                    JitInstrumentation.enable();
-                    setMode(Mode.MIXED);
-                }
+            if (jitOption.isPresent()) {
+                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+                setMode(Mode.JIT);
+            } else if (intOption.isPresent()) {
+                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+                setMode(Mode.INTERPRETED);
+            } else if (optOption.isPresent()) {
+                defaultRecompilationThreshold0 = RECOMPILATION_DISABLED;
+                defaultRecompilationThreshold1 = RECOMPILATION_DISABLED;
+                setMode(Mode.OPTIMIZED);
+            } else {
+                defaultRecompilationThreshold0 = thresholdOption.getValue();
+                JitInstrumentation.enable();
+                setMode(Mode.MIXED);
             }
 
             if (BACKGROUND_COMPILATION) {
@@ -202,6 +206,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
         synchronized (classMethodActor) {
+            assert !(classMethodActor.isNative() && classMethodActor.isJniFunction()) : "cannot compile JNI functions that are native";
             Object targetState = classMethodActor.targetState;
             if (targetState == null) {
                 // this is the first compilation.
@@ -235,14 +240,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         } catch (Throwable t) {
             Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());
             Trace.line(1, "Compiler scheme is: " + compilerScheme.toString() + " - trying different compiler scheme...");
-            if (Trace.level() >= 1) {
-                t.printStackTrace();
-            }
             if (failoverOption.getValue()) {
                 return synchronousCompileHelper(classMethodActor, null, compilerScheme);
             }
-            t.printStackTrace();
-            throw new RuntimeException("Error compiling: " + classMethodActor + ": " + t.getMessage());
+            throw new RuntimeException("Error compiling: " + classMethodActor, t);
         }
     }
 
@@ -298,6 +299,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             // the JIT cannot handle unsafe features
             return optimizingCompiler;
         }
+
         if (MaxineVM.isPrototyping()) {
             // if we are prototyping, then always use the prototype compiler
             // unless forced to use the JIT (e.g. for testing purposes)
@@ -314,14 +316,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
 
             if (classMethodActor.isSynthetic() || classMethodActor.holder().packageName().startsWith(new com.sun.max.unsafe.Package().name()) || classMethodActor.holder().packageName().startsWith("com.sun.max")) {
-                return prototypeCompiler;
+                return bootstrapCompiler;
             }
 
             if (mode == Mode.PROTOTYPE_JIT) {
                 return jitCompiler;
             }
 
-            return prototypeCompiler;
+            return bootstrapCompiler;
         }
 
         // templates should only be compiled at prototyping time
@@ -329,6 +331,12 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
         if (recommendedCompiler != null) {
             return recommendedCompiler;
+        }
+
+        if (mode == Mode.INTERPRETED) {
+            if (!classMethodActor.isSynthetic() && !classMethodActor.isNative()) {
+                return vmConfiguration().interpreterStubCompiler;
+            }
         }
 
         if (firstCompile) {

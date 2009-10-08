@@ -18,37 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package jtt.jni;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
-
-/**
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; -1 = -1; 1 = 1; -128 = -128; 127 = 127; -32768 = -32768; 32767 = 32767;
  */
-public class TeleC1XTargetMethod extends TeleTargetMethod {
-
-    TeleC1XTargetMethod(TeleVM teleVM, Reference ref) {
-        super(teleVM, ref);
+public class JNI_IdentityInt {
+    public static int test(int arg) {
+        return id_int(arg);
     }
 
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-
-    @Override
-    public int[] getCatchRangePositions() {
-        return null;
-    }
-
-    @Override
-    public int[] getCatchBlockPositions() {
-        return null;
-    }
+    private static native int id_int(int b);
 }

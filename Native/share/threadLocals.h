@@ -29,7 +29,7 @@
 #include "os.h"
 #include "word.h"
 
-extern void threadLocals_initialize(int threadLocalsSize);
+extern void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize);
 
 /**
  * The indexes of the VM thread locals accessed by native code.
@@ -48,10 +48,12 @@ typedef enum ThreadLocal {
     FORWARD_LINK = 5,
     BACKWARD_LINK = 6,
     ID = 9,
-    TRAP_NUMBER = 20,
-    TRAP_INSTRUCTION_POINTER = 21,
-    TRAP_FAULT_ADDRESS = 22,
-    TRAP_LATCH_REGISTER = 23
+    JNI_ENV = 11,
+    LAST_JAVA_FRAME_ANCHOR = 12,
+    TRAP_NUMBER = 15,
+    TRAP_INSTRUCTION_POINTER = 16,
+    TRAP_FAULT_ADDRESS = 17,
+    TRAP_LATCH_REGISTER = 18
 } ThreadLocal_t;
 
 typedef Address ThreadLocals;
@@ -60,6 +62,11 @@ typedef Address ThreadLocals;
  * Gets the size of the storage required for a set of thread locals.
  */
 extern int threadLocalsSize();
+
+/**
+ * Gets the size of a Java frame anchor.
+ */
+extern int javaFrameAnchorSize();
 
 /**
  * Sets the value of a specified thread local.
@@ -76,9 +83,18 @@ extern int threadLocalsSize();
  * @param type the type to which the retrieved thread local value is cast
  * @param tl a ThreadLocals value
  * @param name the name of the thread local to access (a ThreadLocal_t value)
- * @return value the value of the named thread local, cast to 'type'
+ * @return the value of the named thread local, cast to 'type'
  */
 #define getThreadLocal(type, tl, name) ((type) *((Address *) tl + name))
+
+/**
+ * Gets the address of a specified thread local.
+ *
+ * @param tl a ThreadLocals value
+ * @param name the name of the thread local to address
+ * @return the address of the named thread local, cast to Address
+ */
+#define getThreadLocalAddress(tl, name) ((Address) tl + (name * sizeof(Address)))
 
 /**
  * Sets the value of a specified thread local to all three thread local spaces.

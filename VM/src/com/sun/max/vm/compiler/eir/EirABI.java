@@ -61,7 +61,7 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     }
 
     public int frameSize(int numLocalStackSlots, int extraBytes) {
-        return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize() + extraBytes);
+        return targetABI().alignFrameSize((numLocalStackSlots * stackSlotSize()) + extraBytes);
     }
 
     /**

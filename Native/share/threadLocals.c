@@ -34,14 +34,21 @@
 #include "threadLocals.h"
 
 int theThreadLocalsSize = -1;
+int theJavaFrameAnchorSize = -1;
 
-void threadLocals_initialize(int threadLocalsSize) {
+void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize) {
     theThreadLocalsSize = threadLocalsSize;
+    theJavaFrameAnchorSize = javaFrameAnchorSize;
 }
 
 int threadLocalsSize() {
     c_ASSERT(theThreadLocalsSize > 0);
     return theThreadLocalsSize;
+}
+
+int javaFrameAnchorSize() {
+    c_ASSERT(theJavaFrameAnchorSize > 0);
+    return theJavaFrameAnchorSize;
 }
 
 void threadLocals_println(ThreadLocals tl) {

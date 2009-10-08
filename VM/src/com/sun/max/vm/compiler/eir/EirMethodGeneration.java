@@ -20,10 +20,13 @@
  */
 package com.sun.max.vm.compiler.eir;
 
+import static com.sun.max.vm.compiler.eir.EirStackSlot.Purpose.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.EirAssignment.*;
@@ -48,9 +51,9 @@ public abstract class EirMethodGeneration {
     public final boolean usesSharedEpilogue;
 
     /**
-     * The amount of memory to add to the frame size as a result of calls to the {@link StackAllocate#stackAllocate(int)}.
+     * The amount of memory allocated within the frame as a result of calls to the {@link StackAllocate#stackAllocate(int)}.
      */
-    private int stackAllocated;
+    private int stackBlocksSize;
 
     protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
 
@@ -176,7 +179,15 @@ public abstract class EirMethodGeneration {
      * Gets the size of the stack frame currently allocated used for local variables.
      */
     public int frameSize() {
-        return abi.frameSize(localStackSlots.length(), stackAllocated);
+        return abi.frameSize(localStackSlots.length(), stackBlocksSize);
+    }
+
+    /**
+     * Gets the total size of the blocks allocated in the frame via the {@link StackAllocate} builtin.
+     * The value returned by {@link #frameSize()} includes this amount.
+     */
+    public int stackBlocksSize() {
+        return stackBlocksSize;
     }
 
     public EirStackSlot localStackSlotFromIndex(int index) {
@@ -209,7 +220,8 @@ public abstract class EirMethodGeneration {
      * @return the canonical object representing the stack slot at {@code stackSlot.offset()}
      */
     public EirStackSlot canonicalizeStackSlot(EirStackSlot stackSlot) {
-        final AppendableIndexedSequence<EirStackSlot> stackSlots = stackSlot.purpose == EirStackSlot.Purpose.PARAMETER ? parameterStackSlots : localStackSlots;
+        assert stackSlot.purpose != BLOCK;
+        final AppendableIndexedSequence<EirStackSlot> stackSlots = stackSlot.purpose == PARAMETER ? parameterStackSlots : localStackSlots;
         return canonicalizeStackSlot(stackSlot, stackSlots);
     }
 
@@ -344,10 +356,16 @@ public abstract class EirMethodGeneration {
         eirEpilogue.addStackSlotUse(useValue);
     }
 
+    /**
+     * Reserves a block of memory in the frame of the method being compiled.
+     *
+     * @param size the number of bytes to reserve
+     * @return the offset of the block from the top (i.e. highest address) of the frame
+     */
     public int addStackAllocation(int size) {
-        int offset = stackAllocated;
-        stackAllocated += size;
-        return offset;
+        assert Size.fromInt(size).isWordAligned();
+        stackBlocksSize += size;
+        return stackBlocksSize;
     }
 
     protected abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);

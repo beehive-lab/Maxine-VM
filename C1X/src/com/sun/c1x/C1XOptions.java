@@ -31,6 +31,7 @@ public class C1XOptions {
     private static final boolean ____ = false;
     // Checkstyle: resume
 
+
     // inlining settings
     public static boolean InlineMethods                      = ____;
     public static boolean InlineMethodsWithExceptionHandlers = ____;
@@ -144,6 +145,7 @@ public class C1XOptions {
     // LIR settings
     public static boolean GenerateLIR                        = true;
     public static boolean GenerateLIRXIR                     = ____;
+    public static boolean PrintXirTemplates                  = ____;
     public static boolean GenerateUnresolvedLIRXIR           = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean LIRTraceExecution                  = ____;
@@ -166,7 +168,6 @@ public class C1XOptions {
     public static boolean UseTLAB                            = ____;
     public static int     ReadPrefetchInstr                  = 0;
     public static boolean UseFastLocking                     = ____;
-    public static boolean UseFastNewInstance                 = ____;
     public static boolean UseSlowPath                        = ____;
     public static boolean UseFastNewObjectArray              = ____;
     public static boolean UseFastNewTypeArray                = ____;

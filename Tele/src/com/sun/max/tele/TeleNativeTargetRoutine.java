@@ -28,7 +28,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -152,14 +151,6 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public StopPositions getStopPositions() {
-        return null;
-    }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
         return null;
     }
 

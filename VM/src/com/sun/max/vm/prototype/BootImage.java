@@ -43,6 +43,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -234,6 +235,11 @@ public class BootImage {
         public final int threadLocalsSize;
 
         /**
+         * The storage size of a {@link JavaFrameAnchor}.
+         */
+        public final int javaFrameAnchorSize;
+
+        /**
          * The indexes of the VM thread locals accessed directly by C code.
          */
         public final int SAFEPOINT_LATCH;
@@ -244,6 +250,8 @@ public class BootImage {
         public final int FORWARD_LINK;
         public final int BACKWARD_LINK;
         public final int ID;
+        public final int JNI_ENV;
+        public final int LAST_JAVA_FRAME_ANCHOR;
         public final int TRAP_NUMBER;
         public final int TRAP_INSTRUCTION_POINTER;
         public final int TRAP_FAULT_ADDRESS;
@@ -288,6 +296,7 @@ public class BootImage {
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
 
             threadLocalsSize = endian.readInt(dataInputStream);
+            javaFrameAnchorSize = endian.readInt(dataInputStream);
 
             SAFEPOINT_LATCH = endian.readInt(dataInputStream);
             SAFEPOINTS_ENABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
@@ -297,6 +306,8 @@ public class BootImage {
             FORWARD_LINK = endian.readInt(dataInputStream);
             BACKWARD_LINK = endian.readInt(dataInputStream);
             ID = endian.readInt(dataInputStream);
+            JNI_ENV = endian.readInt(dataInputStream);
+            LAST_JAVA_FRAME_ANCHOR = endian.readInt(dataInputStream);
             TRAP_NUMBER = endian.readInt(dataInputStream);
             TRAP_INSTRUCTION_POINTER = endian.readInt(dataInputStream);
             TRAP_FAULT_ADDRESS = endian.readInt(dataInputStream);
@@ -338,6 +349,7 @@ public class BootImage {
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 
             threadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
+            javaFrameAnchorSize = JavaFrameAnchor.size();
 
             SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
             SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;
@@ -347,6 +359,8 @@ public class BootImage {
             FORWARD_LINK = VmThreadLocal.FORWARD_LINK.index;
             BACKWARD_LINK = VmThreadLocal.BACKWARD_LINK.index;
             ID = VmThreadLocal.ID.index;
+            JNI_ENV = VmThreadLocal.JNI_ENV.index;
+            LAST_JAVA_FRAME_ANCHOR = VmThreadLocal.LAST_JAVA_FRAME_ANCHOR.index;
             TRAP_NUMBER = VmThreadLocal.TRAP_NUMBER.index;
             TRAP_INSTRUCTION_POINTER = VmThreadLocal.TRAP_INSTRUCTION_POINTER.index;
             TRAP_FAULT_ADDRESS = VmThreadLocal.TRAP_FAULT_ADDRESS.index;

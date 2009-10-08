@@ -127,7 +127,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      * Locates the row, if any, that represent a range of memory that includes a specific location in VM memory.
      *
      * @param address a location in VM memory.
-     * @return the row in the model corresponding to hte location, -1 if none
+     * @return the row in the model corresponding to the location, -1 if none
      */
     public abstract int findRow(Address address);
 

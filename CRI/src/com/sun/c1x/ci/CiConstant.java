@@ -73,7 +73,7 @@ public final class CiConstant extends CiValue {
     @Override
     public String toString() {
         final String val = basicType.isObject() ? "object@" + System.identityHashCode(value) : value.toString();
-        return basicType.javaName + " = " + val;
+        return basicType.javaName + "(" + val + ")";
     }
 
     /**
@@ -82,7 +82,7 @@ public final class CiConstant extends CiValue {
      * @return this constant's value as a string
      */
     public String valueString() {
-        return value.toString();
+        return (value == null) ? "null" : value.toString();
     }
 
     /**
@@ -134,6 +134,18 @@ public final class CiConstant extends CiValue {
             }
         }
         throw new Error("Constant is not int: " + this);
+    }
+
+    /**
+     * Converts this constant to a primitive boolean.
+     * @return the boolean value of this constant
+     */
+    public boolean asBoolean() {
+    	if (basicType == CiKind.Boolean) {
+    		return (Boolean) value;
+    	}
+
+        throw new Error("Constant is not boolean: " + this);
     }
 
     /**

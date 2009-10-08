@@ -18,29 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
+package jtt.except;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.BytecodeInfo;
-import com.sun.max.vm.reference.*;
-
-/**
- * Canonical surrogate for a DTI stub in the {@link TeleVM}.
- *
- * @author Simon Wilkinson
+/*
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=1
  */
-public class TeleInterpretedTargetMethod extends TeleTargetMethod {
+public class Catch_NPE_09 {
 
-    TeleInterpretedTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
-        super(teleVM, targetMethodReference);
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            throwNPE(a);
+            r = 1;
+            throwNPE(a - 1);
+        } catch (NullPointerException e) {
+            return r + 10;
+        }
+        return r;
     }
 
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
+    private static void throwNPE(int a) {
+        if (a == 0) {
+            throw null;
+        }
     }
-
-    public int[] bytecodeToTargetCodePositionMap() {
-        return null;
-    }
-
 }

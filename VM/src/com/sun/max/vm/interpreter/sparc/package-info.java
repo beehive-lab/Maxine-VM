@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,41 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.debug;
-
-import java.awt.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.*;
-
-
 /**
- * Display panel for VM stack frames.
+ * SPARC-specific interpreter.
  *
- * @author Michael Van De Vanter
+ * @author Paul Caprioli
  */
-abstract class StackFramePanel<StackFrame_Type extends StackFrame> extends InspectorPanel {
-
-    protected StackFrame_Type stackFrame;
-
-    public StackFramePanel(Inspection inspection, StackFrame_Type stackFrame) {
-        super(inspection, new BorderLayout());
-        this.stackFrame = stackFrame;
-    }
-
-    public final StackFrame_Type stackFrame() {
-        return stackFrame;
-    }
-
-    public final void setStackFrame(StackFrame stackFrame) {
-        final Class<StackFrame_Type> type = null;
-        this.stackFrame = StaticLoophole.cast(type, stackFrame);
-        refresh(true);
-    }
-
-    public void instructionPointerFocusChanged(Pointer instructionPointer) {
-    }
-}
+package com.sun.max.vm.interpreter.sparc;

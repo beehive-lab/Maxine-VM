@@ -90,7 +90,7 @@ import com.sun.max.vm.run.java.*;
  * <P>
  * Not all of these commands are strictly necessary any more. They evolved during the period when dynamic compilation
  * was not available and JDK startup was incomplete. However, they do make it possible to build a completely
- * self-contained image entirely compiled with the optimizing compiler. A more typical use is for environments where
+ * self-contained image entirely compiled with the bootstrap compiler. A more typical use is for environments where
  * more of the native libraries are written in Java (but not included in the VM source base) and need to be present in
  * the image at startup.
  *

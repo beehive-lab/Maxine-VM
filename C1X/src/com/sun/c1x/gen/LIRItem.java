@@ -76,6 +76,14 @@ public class LIRItem {
         }
     }
 
+    public void loadItem(CiKind type) {
+        if (type == CiKind.Byte || type == CiKind.Boolean) {
+            loadByteItem();
+        } else {
+            loadItem();
+        }
+    }
+
     public void loadForStore(CiKind type) {
         if (gen.canStoreAsConstant(value(), type)) {
             result = value().operand();

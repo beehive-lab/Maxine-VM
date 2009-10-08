@@ -254,14 +254,7 @@ public class LinearScan {
             maxSpills++;
         }
 
-        int result = spillSlot + nofRegs;
-
-        // Number of stack slots limited because of stack banging.
-        if (result > compilation.target.pageSize / FrameMap.SpillSlotSize) {
-            bailout("too many stack slots used");
-        }
-
-        return result;
+        return spillSlot + nofRegs;
     }
 
     void assignSpillSlot(Interval it) {
@@ -1395,8 +1388,6 @@ public class LinearScan {
 
         // TODO: Check if the order of the registers (cpu, fpu, xmm) is important there!
 
-        //LIRVisitState visitor = new LIRVisitState();
-
         // iterate all blocks in reverse order
         for (int i = blockCount() - 1; i >= 0; i--) {
             BlockBegin block = blockAt(i);
@@ -1771,7 +1762,7 @@ public class LinearScan {
     // wrapper for Interval.splitChildAtOpId that performs a bailout in product mode
     // instead of returning null
     Interval splitChildAtOpId(Interval interval, int opId, LIRInstruction.OperandMode mode) {
-        Interval result = interval.splitChildAtOpId(opId, mode, this);
+        Interval result = interval.getSplitChildAtOpId(opId, mode, this);
 
         if (result != null) {
             if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -2173,6 +2164,7 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
+                case Word:
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";

@@ -20,19 +20,10 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import java.io.*;
-import java.util.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * A mechanism for forcing a value onto the stack and obtaining the address of the stack slot. If the first parameter to
@@ -61,128 +52,6 @@ public class MakeStackVariable extends SpecialBuiltin {
     public static final MakeStackVariable BUILTIN = new MakeStackVariable();
 
     /**
-     * A key for identifying stack-located variables in {@linkplain TargetMethod compiled methods}. Any given key will
-     * identify at most one stack located variable per compiled method but the same key can be used to identify
-     * variables in more than one method.
-     * <p>
-     * A compiler {@linkplain StackVariable#record(TargetMethod, int) records} the offset of a variable created by a
-     * call to one of the {@code createStackVariable} builtins that take a second parameter of type
-     * {@link StackVariable}. The variable's offset is relative to the pointer used to access the stack
-     * based local variables or parameters of the method.
-     */
-    public static final class StackVariable {
-
-        private final String name;
-
-        private StackVariable(String name) {
-            this.name = name;
-            stackVariables.append(this);
-        }
-
-        /**
-         * Creates a new stack variable.
-         *
-         * NOTE: Stack variables can only be used in methods that will be compiled into the boot image. This
-         * obviates the need to synchronize {@link #offset(ClassMethodActor)} which is important as this
-         * method is called during stack frame walking. This constraint is enforced by annotating {@link #create(String)}
-         * with {@link PROTOTYPE_ONLY}.
-         */
-        @PROTOTYPE_ONLY
-        public static StackVariable create(String name) {
-            return new StackVariable(name);
-        }
-
-        /*
-         * Must not use identity hashing, because the inspector needs to have the same view as the target VM on this:
-         */
-        private final Map<ClassMethodActor, Integer> stackOffsetPerTargetMethod = new HashMap<ClassMethodActor, Integer>();
-
-        private static final AppendableSequence<StackVariable> stackVariables = new ArrayListSequence<StackVariable>();
-
-        @PROTOTYPE_ONLY
-        private static class ConflictDetectionMap extends HashMap<ClassMethodActor,  List<StackVariable>> {
-
-            /**
-             * Checks the offset of any previously recorded stack variable for a given method against the offset
-             * of a new stack variable. A {@linkplain ProgramWarning warning} is issued if any two offsets match.
-             */
-            synchronized void check(ClassMethodActor key, StackVariable stackVariable, int offset) {
-                List<StackVariable> existingStackVariables = get(key);
-                if (existingStackVariables == null) {
-                    existingStackVariables = new LinkedList<StackVariable>();
-                    put(key, existingStackVariables);
-                }
-                for (StackVariable existingStackVariable : existingStackVariables) {
-                    final Integer existingStackVariableOffset = existingStackVariable.stackOffsetPerTargetMethod.get(key);
-                    if (existingStackVariableOffset != null) {
-                        if (offset == existingStackVariableOffset) {
-                            ProgramWarning.message(existingStackVariable + " and " + stackVariable + " both have the same offset (" + offset + ") in " + key);
-                        }
-                    }
-                }
-                existingStackVariables.add(stackVariable);
-            }
-        }
-
-        @PROTOTYPE_ONLY
-        private static final ConflictDetectionMap conflictDetectionMap = new ConflictDetectionMap();
-
-        @PROTOTYPE_ONLY
-        public static void dump(PrintStream out) {
-            out.println("== Stack variables ==");
-            for (StackVariable stackVariable : stackVariables) {
-                out.println("   Stack variable: " + stackVariable);
-                for (Map.Entry<ClassMethodActor, Integer> entry : stackVariable.stackOffsetPerTargetMethod.entrySet()) {
-                    out.println("     " + entry.getKey().name + " -> " + entry.getValue());
-                }
-            }
-        }
-
-        /**
-         * Records the frame-based offset of the variable identified by this key in the frame of a given compiled method.
-         */
-        @PROTOTYPE_ONLY
-        public synchronized void record(TargetMethod targetMethod, int offset) {
-            final ClassMethodActor key = targetMethod.classMethodActor();
-            if (MaxineVM.isPrototyping()) {
-                conflictDetectionMap.check(key, this, offset);
-            }
-            final Integer oldOffset = stackOffsetPerTargetMethod.put(key, offset);
-            assert oldOffset == null || oldOffset.intValue() == offset;
-        }
-
-        /**
-         * Gets the offset of the variable identified by this key in the frame a given method.
-         *
-         * @return the offset of this variable in the compiled version of {@code classMethodActor} or null if the method
-         *         has not been compiled
-         */
-        public Integer offset(ClassMethodActor classMethodActor) {
-            return stackOffsetPerTargetMethod.get(classMethodActor);
-        }
-
-        /**
-         * Gets the address of the variable identified by this key in the frame a given compiled method.
-         *
-         * @param namedVariablesBasePointer the stack frame address that is the base for all stack variable's accessed
-         *            via this mechanism
-         */
-        public Pointer address(TargetMethod targetMethod, Pointer namedVariablesBasePointer) {
-            final Integer offset = offset(targetMethod.classMethodActor());
-            FatalError.check(offset != null, "Could not find offset of stack variable");
-            return namedVariablesBasePointer.plus(offset);
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-
-    @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Address makeStackVariable(Reference value);
-
-    /**
      * Forces the register allocator to put a given value on the stack (as opposed to in a register). That stack slot is
      * pinned for the remainder of the method (i.e. it will not be reused by the register allocator for another
      * variable).
@@ -190,45 +59,41 @@ public class MakeStackVariable extends SpecialBuiltin {
      * @param value a value that is to be stack resident. If {@code value} is a lvalue, then the register allocator
      *            guarantees that it will be allocated on the stack. Otherwise, a stack slot is allocated and
      *            initialized with {@code value}.
-     * @param key an object that can be used to access the value when inspecting the stack frame of the method
-     *            containing this built-in call. This object must be a compile time constant. That is, it must be a
-     *            {@code static} field that is either marked {@code final} or has {@link CONSTANT} or
-     *            {@link CONSTANT_WHEN_NOT_ZERO} applied to its definition.
      * @return the address of the stack slot where {@code value} resides
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(byte value, StackVariable key);
+    public static native Pointer makeStackVariable(int value);
 
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(int value, StackVariable key);
-
-    /**
-     * @see #makeStackVariable(int, com.sun.max.vm.compiler.builtin.MakeStackVariable.StackVariable)
-     */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(float value, StackVariable key);
+    public static native Pointer makeStackVariable(byte value);
 
     /**
-     * @see #makeStackVariable(int, com.sun.max.vm.compiler.builtin.MakeStackVariable.StackVariable)
+     * @see #makeStackVariable(int)
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(long value, StackVariable key);
+    public static native Pointer makeStackVariable(float value);
 
     /**
-     * @see #makeStackVariable(int, com.sun.max.vm.compiler.builtin.MakeStackVariable.StackVariable)
+     * @see #makeStackVariable(int)
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(double value, StackVariable key);
+    public static native Pointer makeStackVariable(long value);
 
     /**
-     * @see #makeStackVariable(int, com.sun.max.vm.compiler.builtin.MakeStackVariable.StackVariable)
+     * @see #makeStackVariable(int)
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(Reference value, StackVariable key);
+    public static native Pointer makeStackVariable(double value);
 
     /**
-     * @see #makeStackVariable(int, com.sun.max.vm.compiler.builtin.MakeStackVariable.StackVariable)
+     * @see #makeStackVariable(int)
      */
     @BUILTIN(builtinClass = MakeStackVariable.class)
-    public static native Pointer makeStackVariable(Word value, StackVariable key);
+    public static native Pointer makeStackVariable(Reference value);
+
+    /**
+     * @see #makeStackVariable(int)
+     */
+    @BUILTIN(builtinClass = MakeStackVariable.class)
+    public static native Pointer makeStackVariable(Word value);
 }

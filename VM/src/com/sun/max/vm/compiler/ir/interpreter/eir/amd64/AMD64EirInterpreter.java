@@ -31,6 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.AMD64EirInstruction.*;
 import com.sun.max.vm.compiler.ir.interpreter.*;
@@ -676,7 +677,10 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     }
 
     public void visit(STACK_ALLOCATE instruction) {
-        FatalError.unimplemented();
+        int offset = frame().method().frameSize() - instruction.offset;
+        EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
+        final int sourceOffset = cpu.offset(stackSlot);
+        cpu.write(instruction.operand().location(), new WordValue(cpu.readFramePointer().plus(sourceOffset)));
     }
 
     public void visit(LFENCE instruction) {

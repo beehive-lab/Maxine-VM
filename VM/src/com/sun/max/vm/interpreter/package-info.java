@@ -18,25 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.eir.sparc;
-
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
-
-public class SPARCEirTranslatorTest_native extends BytecodeTest_native {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(SPARCEirTranslatorTest_native.suite());
-    }
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_native.class.getSimpleName());
-        suite.addTestSuite(SPARCEirTranslatorTest_native.class);
-        return new SPARCEirTranslatorTestSetup(suite);
-    }
-
-    public SPARCEirTranslatorTest_native(String name) {
-        super(name);
-    }
-
-}
+/**
+ * A bytecode interpreter.
+ *
+ * @author Paul Caprioli
+ */
+package com.sun.max.vm.interpreter;

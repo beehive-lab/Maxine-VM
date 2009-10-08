@@ -65,7 +65,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null).perform();
+                    actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
                     final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (watchpoints.length() > 0) {
                         return watchpoints.first();
@@ -86,7 +86,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
-                    actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null).perform();
+                    actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
                     final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (watchpoints.length() > 0) {
                         return watchpoints.first();
@@ -94,7 +94,7 @@ public final class MemoryWordsTable extends InspectorTable {
                     return null;
                 }
             });
-            menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word"));
+            menu.add(actions().setRegionWatchpoint(memoryRegion, "Watch this memory word", null));
             menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
             menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
         }

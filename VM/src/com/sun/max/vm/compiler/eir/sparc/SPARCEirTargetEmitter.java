@@ -26,6 +26,7 @@ import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.EirStackSlot.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 
@@ -60,31 +61,31 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
      * @return a StackAddress instance
      */
     public StackAddress stackAddress(EirStackSlot slot) {
-        if (slot.purpose == EirStackSlot.Purpose.PARAMETER) {
+        if (slot.purpose == Purpose.PARAMETER) {
             // Parameters are on the caller's stack, at positive offset from the callee's FP.
             final int offset = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.SAVE_AREA_SIZE + SPARCStackFrameLayout.ARGUMENT_SLOTS_SIZE + slot.offset;
             return new StackAddress(offset, framePointer());
         }
+
+        if (slot.purpose == Purpose.BLOCK) {
+            return new StackAddress(SPARCStackFrameLayout.STACK_BIAS - slot.offset, framePointer());
+        }
+
         // Locals are addressed from the frame pointer too. But they are located below FP. Due to the bias, their offset may be positive as well.
         // This makes their offset independent of SP.
         // Note that slot.offset is an offset relative to the stack pointer. It needs to be converted into a frame pointer-relative offset.
-        final int offset =  SPARCStackFrameLayout.localSlotOffsetFromFrame(frameSize(), slot.offset);
+
+        final int offset = SPARCStackFrameLayout.localSlotOffsetFromFrame(frameSize(), slot.offset);
         return new StackAddress(offset, framePointer());
     }
 
     public static final class StackAddress {
-        private final int offset;
-        private final GPR base;
+        public final int offset;
+        public final GPR base;
 
         StackAddress(int offset, GPR base) {
             this.offset = offset;
             this.base = base;
-        }
-        public int offset() {
-            return offset;
-        }
-        public GPR base() {
-            return base;
         }
     }
 

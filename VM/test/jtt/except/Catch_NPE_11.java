@@ -18,25 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.tele.interpreter;
+package jtt.except;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+/*
+ * @Harness: java
+ * @Runs: 0=10; 1=11; 2=1
+ */
+public class Catch_NPE_11 {
 
-public class TeleInterpreterTest_native extends BytecodeTest_native {
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(TeleInterpreterTest_native.class.getSimpleName());
-        suite.addTestSuite(TeleInterpreterTest_native.class);
-        return new TeleInterpreterTestSetup(suite);
+    public static int test(int a) {
+        int r = 0;
+        try {
+            r = 0;
+            throwE(a);
+            r = 1;
+            throwE(a - 1);
+        } catch (ArithmeticException e) {
+            return r + 10;
+        }
+        return r;
     }
 
-    public TeleInterpreterTest_native(String name) {
-        super(name);
+    private static int throwE(int a) {
+        return 1 / a;
     }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(TeleInterpreterTest_native.suite());
-    }
-
 }

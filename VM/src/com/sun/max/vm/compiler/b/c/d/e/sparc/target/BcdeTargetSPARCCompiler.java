@@ -472,9 +472,4 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;
     }
-
-    @Override
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return framePointer;
-    }
 }

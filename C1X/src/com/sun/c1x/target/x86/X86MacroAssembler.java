@@ -1375,7 +1375,11 @@ public class X86MacroAssembler extends X86Assembler {
     @Override
     public void buildFrame(int frameSizeInBytes) {
         decrement(X86.rsp, frameSizeInBytes); // does not emit code for frameSize == 0
-        bangStackWithOffset(C1XOptions.StackShadowPages * target.pageSize);
+        int framePages = frameSizeInBytes / target.pageSize;
+        // emit multiple stack bangs for methods with frames larger than a page
+        for (int i = 0; i <= framePages; i++) {
+            bangStackWithOffset((i + C1XOptions.StackShadowPages) * target.pageSize);
+        }
     }
 
     public void shouldNotReachHere() {

@@ -605,6 +605,23 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     /**
+     * Traces the {@linkplain #referenceLiterals() reference literals} addressed by the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
+        if (referenceLiterals != null) {
+            writer.println("References: ");
+            writer.indent();
+            for (int i = 0; i < referenceLiterals.length; i++) {
+                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
+                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
+            }
+            writer.outdent();
+        }
+    }
+
+    /**
      * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code
      * encoded as a byte array in the format described {@linkplain InlineDataDescriptor here}.
      *
