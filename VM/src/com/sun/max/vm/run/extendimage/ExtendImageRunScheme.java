@@ -127,6 +127,13 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 extendImage();
             }
         }
+
+        if (phase == MaxineVM.Phase.STARTING) {
+            for (ClassActor classActor : reinitClasses) {
+                classActor.callInitializer();
+            }
+        }
+
         super.initialize(phase);
 
         if (phase == MaxineVM.Phase.RUNNING) {
@@ -134,9 +141,6 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             while (propEnum.hasMoreElements()) {
                 final String propertyName = (String) propEnum.nextElement();
                 System.setProperty(propertyName, properties.getProperty(propertyName));
-            }
-            for (ClassActor classActor : reinitClasses) {
-                classActor.callInitializer();
             }
             for (StaticMethodActor methodActor : callMethods) {
                 try {
