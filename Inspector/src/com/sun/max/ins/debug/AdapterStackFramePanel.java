@@ -22,55 +22,16 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
-import javax.swing.*;
-
-import com.sun.max.collect.*;
-import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.vm.stack.*;
 
 
-final class AdapterStackFramePanel extends StackFramePanel<AdapterStackFrame> {
-
-    private final AppendableSequence<InspectorLabel> labels = new ArrayListSequence<InspectorLabel>(10);
+final class AdapterStackFramePanel extends JavaStackFramePanel<AdapterStackFrame> {
 
     public AdapterStackFramePanel(Inspection inspection, AdapterStackFrame adapterStackFrame) {
         super(inspection, adapterStackFrame);
-        final String frameClassName = adapterStackFrame.getClass().getSimpleName();
-        final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
-        addLabel(header, new TextLabel(inspection(), "Frame size:", frameClassName));
-        addLabel(header, new DataLabel.IntAsDecimal(inspection(), adapterStackFrame.layout.frameSize()));
-        addLabel(header, new TextLabel(inspection(), "Frame pointer:", frameClassName));
-        addLabel(header, new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, adapterStackFrame.framePointer, this));
-        addLabel(header, new TextLabel(inspection(), "Stack pointer:", frameClassName));
-        addLabel(header, new DataLabel.AddressAsHex(inspection(), adapterStackFrame.stackPointer));
-        addLabel(header, new TextLabel(inspection(), "Instruction pointer:", frameClassName));
-        addLabel(header, new WordValueLabel(inspection(), ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer, this));
-        SpringUtilities.makeCompactGrid(header, 2);
-
-        add(header, BorderLayout.NORTH);
         add(new InspectorPanel(inspection()), BorderLayout.CENTER);
     }
 
-    private void addLabel(JPanel panel, InspectorLabel label) {
-        panel.add(label);
-        labels.append(label);
-    }
-
-    @Override
-    public void refresh(boolean force) {
-        for (InspectorLabel label : labels) {
-            label.refresh(force);
-        }
-    }
-
-    @Override
-    public void redisplay() {
-        for (InspectorLabel label : labels) {
-            label.redisplay();
-        }
-    }
 }

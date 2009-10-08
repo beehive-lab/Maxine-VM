@@ -154,14 +154,14 @@ public class PreferenceDialog extends SimpleDialog {
         registersInspectorPanel.setBorder(border);
         prefPanel.add(registersInspectorPanel);
 
-        final JPanel stackLabelPanel = new InspectorPanel(inspection, new BorderLayout());
-        stackLabelPanel.setBorder(border);
-        stackLabelPanel.add(new TextLabel(inspection, "Stacks"), BorderLayout.WEST);
-        prefPanel.add(stackLabelPanel);
+        final JPanel javaStackFrameLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        javaStackFrameLabelPanel.setBorder(border);
+        javaStackFrameLabelPanel.add(new TextLabel(inspection, "Java Stack Frames"), BorderLayout.WEST);
+        prefPanel.add(javaStackFrameLabelPanel);
 
-        final JPanel stackInspectorPanel = StackInspector.globalPreferencesPanel(inspection);
-        stackInspectorPanel.setBorder(border);
-        prefPanel.add(stackInspectorPanel);
+        final JPanel javaStackFramePanel = JavaStackFrameViewPreferences.globalPreferencesPanel(inspection);
+        javaStackFramePanel.setBorder(border);
+        prefPanel.add(javaStackFramePanel);
 
         final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         vmThreadLocalsLabelPanel.setBorder(border);
