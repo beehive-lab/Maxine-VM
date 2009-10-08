@@ -20,44 +20,32 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
 
 /**
- * The <code>UnsafePutRaw</code> instruction represents an unsafe store operation.
+ * The <code>StoreRegister</code> instruction represents a write of a physical register.
+ * This instruction is part of the HIR support for low-level operations, such as safepoints,
+ * stack banging, etc, and does not correspond to a Java operation.
  *
  * @author Ben L. Titzer
  */
-public class UnsafePutRaw extends UnsafeRawOp {
+public class StoreRegister extends Instruction {
 
+    final CiRegister register;
     Value value;
 
     /**
-     * Constructs a new UnsafeGetRaw instruction.
-     * @param basicType the basic type of the operation
-     * @param addr the instruction generating the base address
-     * @param value the instruction generating the value to store
+     * Creates a new StoreReigster instance.
+     * @param kind the kind of value stored to the register
+     * @param register the register to store
+     * @param value the value to write
      */
-    public UnsafePutRaw(CiKind basicType, Value addr, Value value) {
-        super(basicType, addr, false);
+    public StoreRegister(CiKind kind, CiRegister register, Value value) {
+        super(kind);
+        this.register = register;
         this.value = value;
-    }
-
-    /**
-     * Gets the instruction generating the value that will be stored.
-     * @return the instruction generating the value
-     */
-    public Value value() {
-        return value;
-    }
-
-    /**
-     * Iterates over the input values to this instruction.
-     * @param closure the closure to apply
-     */
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        super.inputValuesDo(closure);
-        value = closure.apply(value);
+        setFlag(Flag.LiveStore);
     }
 
     /**
@@ -66,10 +54,25 @@ public class UnsafePutRaw extends UnsafeRawOp {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitUnsafePutRaw(this);
+        v.visitStoreRegister(this);
     }
 
-    public int log2scale() {
-        return log2Scale;
+    public CiRegister register() {
+        return register;
     }
+
+    public Value value() {
+        return value;
+    }
+
+    /**
+     * Iterates over the input values to this instruction. In this case,
+     * it is only the written value.
+     * @param closure the closure to apply to each value
+     */
+    @Override
+    public void inputValuesDo(ValueClosure closure) {
+        value = closure.apply(value);
+    }
+
 }

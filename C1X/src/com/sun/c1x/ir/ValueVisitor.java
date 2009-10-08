@@ -36,6 +36,14 @@ public abstract class ValueVisitor {
     }
     public void visitResolveClass(ResolveClass i) {
     }
+    public void visitLoadRegister(LoadRegister i) {
+    }
+    public void visitStoreRegister(StoreRegister i) {
+    }
+    public void visitLoadPointer(LoadPointer i) {
+    }
+    public void visitStorePointer(StorePointer i) {
+    }
     public void visitLoadField(LoadField i) {
     }
     public void visitStoreField(StoreField i) {
