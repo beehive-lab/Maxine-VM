@@ -73,7 +73,7 @@ JNIEnv jniEnv() {
  */
 JNIEnv *currentJniEnv() {
     ThreadLocals tl = thread_currentThreadLocals();
-    c_ASSERT(tl != NULL);
+    c_ASSERT(tl != 0);
     JNIEnv *env = (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
     c_ASSERT(env != NULL);
     return env;
@@ -507,6 +507,7 @@ static jobject jni_NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID,
 
 // Structure containing all  functions
 const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
+    {
     NULL,
     NULL,
     NULL,
@@ -785,6 +786,7 @@ const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     // New 1_6 features
 
     /* jni_GetObjectRefType */ NULL,
+    },
 
     // Maxine specific
 
