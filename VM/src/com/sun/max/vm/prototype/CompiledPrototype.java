@@ -474,7 +474,6 @@ public class CompiledPrototype extends Prototype {
         add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
-        addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, imageMethodActors, vmEntryPoint);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
@@ -604,7 +603,9 @@ public class CompiledPrototype extends Prototype {
     public void compileUnsafeMethods() {
         Trace.begin(1, "compiling unsafe methods");
         for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            worklist.add(classMethodActor);
+            if (!(classMethodActor.isNative() && classMethodActor.isJniFunction())) {
+                worklist.add(classMethodActor);
+            }
         }
         compileWorklist();
         Trace.end(1, "compiling unsafe methods");

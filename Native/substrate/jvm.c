@@ -1898,8 +1898,7 @@ void JVM_RawMonitorExit(void *monitor) {
  * java.lang.management support
  */
 void *JVM_GetManagement(jint version) {
-    c_UNIMPLEMENTED();
-    return 0;
+    return NULL;
 }
 
 /*

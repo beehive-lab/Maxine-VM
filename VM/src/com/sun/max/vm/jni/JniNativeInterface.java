@@ -28,10 +28,9 @@ import java.util.regex.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -52,22 +51,25 @@ public final class JniNativeInterface {
     }
 
     @PROTOTYPE_ONLY
-    private static CriticalMethod[] getJniFunctions() {
-        final StaticMethodActor[] jniFunctionActors = Arrays.filter(ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), new Predicate<StaticMethodActor>() {
-            public boolean evaluate(StaticMethodActor staticMethodActor) {
-                return staticMethodActor.isJniFunction();
+    private static StaticMethodActor[] getJniFunctionActors() {
+        StaticMethodActor[] localStaticMethodActors = ClassActor.fromJava(JniFunctions.class).localStaticMethodActors();
+        int count = 0;
+        for (StaticMethodActor m : localStaticMethodActors) {
+            if (m.isJniFunction()) {
+                count++;
             }
-        }, new StaticMethodActor[0]);
+        }
+        final StaticMethodActor[] jniFunctionActors = new StaticMethodActor[count];
+        int i = 0;
+        for (StaticMethodActor m : localStaticMethodActors) {
+            if (m.isJniFunction()) {
+                jniFunctionActors[i++] = m;
+            }
+        }
+        assert i == count;
 
         checkAgainstJniHeaderFile(jniFunctionActors);
-
-        final CriticalMethod[] jniFunctions = Arrays.map(jniFunctionActors, CriticalMethod.class, new MapFunction<StaticMethodActor, CriticalMethod>() {
-            public CriticalMethod map(StaticMethodActor staticMethodActor) {
-                return new CriticalMethod(staticMethodActor, CallEntryPoint.C_ENTRY_POINT);
-            }
-        });
-
-        return jniFunctions;
+        return jniFunctionActors;
     }
 
     @PROTOTYPE_ONLY
@@ -131,43 +133,67 @@ public final class JniNativeInterface {
         ProgramError.check(jniFunctionNames.length() == jniFunctionActors.length);
     }
 
-    private static final CriticalMethod[] jniFunctions = getJniFunctions();
+    private static final StaticMethodActor[] jniFunctionActors = getJniFunctionActors();
+
+    private static final CriticalMethod[] jniFunctions;
+    static {
+        jniFunctions = new CriticalMethod[jniFunctionActors.length];
+        for (int i = 0; i < jniFunctions.length; ++i) {
+            StaticMethodActor staticMethodActor = jniFunctionActors[i];
+            if (!staticMethodActor.isNative()) {
+                jniFunctions[i] = new CriticalMethod(staticMethodActor, CallEntryPoint.C_ENTRY_POINT);
+            }
+        }
+    }
 
     public static CriticalMethod[] jniFunctions() {
         return jniFunctions;
     }
 
-    private static Pointer pointer = Pointer.zero();
+    private static Pointer jniEnv = Pointer.zero();
 
     /**
      * Get the address of the table of JNI functions.
      */
-    public static Pointer pointer() {
-        if (pointer.isZero()) {
-            pointer = Memory.mustAllocate(jniFunctions.length * Word.size());
+    public static Pointer jniEnv() {
+        if (jniEnv.isZero()) {
+            FatalError.unexpected("JNI env pointer is zero");
         }
-        return pointer;
+        return jniEnv;
     }
 
     /**
-     * Patches the {@link #pointer} array for certain JNI functions that are implemented in C for
-     * portability reasons (i.e. handling of varargs).
+     * Completes the JNI function table for the JNI functions that are implemented in Java.
      *
-     * {@link #pointer} is implicitly passed down to the implementing C function by means of its 'JNIEnv' parameter.
+     * @param jniEnv pointer the JNI function table
      */
-    @C_FUNCTION
-    private static native void nativeInitializeJniInterface(Pointer jniEnvironment);
-
-    /**
-     * Initializes the JNI function vector, aka struct JniNativeInterface in C/C++ land.
-     * Must be called at VM startup, relying on having as few other features working as possible at that moment.
-     */
-    public static void initialize() {
+    public static void initialize(Pointer jniEnv) {
+        JniNativeInterface.jniEnv = jniEnv;
         for (int i = 0; i < jniFunctions.length; i++) {
-            final Word functionPointer = jniFunctions[i].address();
-            pointer().setWord(i, functionPointer);
+            CriticalMethod function = jniFunctions[i];
+            if (function != null) {
+                final Word functionPointer = function.address();
+                if (!jniEnv.getWord(i).isZero()) {
+                    Log.print("Overwriting value ");
+                    Log.print(jniEnv.getWord(i));
+                    Log.print(" in JNI function table at index ");
+                    Log.print(i);
+                    Log.print(" with function ");
+                    Log.printMethod(function.classMethodActor, true);
+                    FatalError.crash("Multiple implementations for a JNI function");
+                }
+                jniEnv.setWord(i, functionPointer);
+            } else {
+                if (jniEnv.getWord(i).isZero()) {
+                    Log.print("Entry in JNI function table at index ");
+                    Log.print(i);
+                    Log.println(" for ");
+                    Log.printMethod(jniFunctionActors[i], false);
+                    Log.println(" has no implementation");
+                    FatalError.crash("Missing implementation for JNI function");
+                }
+            }
         }
-        nativeInitializeJniInterface(pointer());
     }
 
     /**
@@ -178,9 +204,12 @@ public final class JniNativeInterface {
      */
     public static TargetMethod jniTargetMethod(Address instructionPointer) {
         for (int i = 0; i < jniFunctions.length; i++) {
-            final TargetMethod targetMethod = jniFunctions[i].targetMethod();
-            if (targetMethod != null && targetMethod.contains(instructionPointer)) {
-                return targetMethod;
+            CriticalMethod function = jniFunctions[i];
+            if (function != null) {
+                final TargetMethod targetMethod = function.targetMethod();
+                if (targetMethod != null && targetMethod.contains(instructionPointer)) {
+                    return targetMethod;
+                }
             }
         }
         return null;
