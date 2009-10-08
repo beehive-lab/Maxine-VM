@@ -35,21 +35,8 @@ public class LIROp1 extends LIRInstruction {
         Normal, Volatile, Unaligned
     }
 
-    protected CiKind type;              // the operand type
-
-
-    protected LIRMoveKind flags = LIRMoveKind.Normal; // flag that indicate the kind of move
-
-
-    /**
-     * Sets the move kind for this instruction.
-     *
-     * @param kind the kind
-     */
-    void setKind(LIRMoveKind kind) {
-        assert code == LIROpcode.Move : "Instruction opcode must be of kind LIROpcode.Move";
-        flags = kind;
-    }
+    protected final CiKind type;          // the operand type
+    protected final LIRMoveKind moveKind; // flag that indicate the kind of move
 
     /**
      * Constructs a new LIROp1 instruction.
@@ -58,12 +45,12 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
      * @param type the basic type of this instruction
-     * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info) {
         super(opcode, result, info, false, null, 0, 0, opr);
         this.type = type;
+        this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
 
@@ -103,19 +90,16 @@ public class LIROp1 extends LIRInstruction {
     /**
      * Constructs a new LIROp1 instruction.
      *
-     * @param opcode the instruction's opcode
+     * @param moveKind the kind of move the instruction represents
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
      * @param type the basic type of this instruction
-     * @param patch the patching code for this instruction
      * @param info the object holding information needed to emit debug information
-     * @param moveKind the kind of move the instruction represents
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info, LIRMoveKind moveKind) {
-        super(opcode, result, info, false, null, 0, 0, opr);
+    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info) {
+        super(LIROpcode.Move, result, info, false, null, 0, 0, opr);
         this.type = type;
-        assert opcode == LIROpcode.Move : "The " + opcode + " is not valid on LIROp1. Opcode must be of type LIROpcode.Move";
-        setKind(moveKind);
+        this.moveKind = moveKind;
     }
 
     /**
@@ -128,6 +112,7 @@ public class LIROp1 extends LIRInstruction {
     public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
         super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr);
         this.type = CiKind.Illegal;
+        this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
 
@@ -156,14 +141,9 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIRMoveKind moveKind() {
         assert code == LIROpcode.Move : "The opcode must be of type LIROpcode.Move in LIROp1";
-        return flags;
+        return moveKind;
     }
 
-    /**
-     * Gets the kind of move of this instruction.
-     *
-     * @return flags the constant that represents the move kind.
-     */
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitOp1(this);

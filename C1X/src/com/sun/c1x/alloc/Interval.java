@@ -107,7 +107,7 @@ public final class Interval {
 
     private Range current; // interval iteration: the current Range
     Interval next; // interval iteration: sorted list of Intervals (ends with sentinel)
-    private IntervalState state; // interval iteration: to which set belongs this interval
+    IntervalState state; // interval iteration: to which set belongs this interval
 
     private int assignedRegister;
     private int assignedHighRegister;
@@ -167,14 +167,6 @@ public final class Interval {
         return usePosAndKinds.size() / 2;
     }
 
-    Interval next() {
-        return next;
-    }
-
-    void setNext(Interval next) {
-        this.next = next;
-    }
-
     int assignedReg() {
         return assignedRegister;
     }
@@ -197,14 +189,6 @@ public final class Interval {
 
     void setRegisterHint(Interval i) {
         registerHint = i;
-    }
-
-    IntervalState state() {
-        return state;
-    }
-
-    void setState(IntervalState s) {
-        state = s;
     }
 
     // access to split parent and split children
@@ -406,7 +390,7 @@ public final class Interval {
         if (registerHint != null) {
             assert registerHint.isSplitParent() : "ony split parents are valid hint registers";
 
-            if (registerHint.assignedReg() >= 0 && registerHint.assignedReg() < allocator.nofRegs) {
+            if (registerHint.assignedReg() >= 0 && registerHint.assignedReg() < allocator.allocatableRegisters.nofRegs) {
                 return registerHint;
             } else if (registerHint.splitChildren.size() > 0) {
                 // search the first split child that has a register assigned
@@ -414,7 +398,7 @@ public final class Interval {
                 for (int i = 0; i < len; i++) {
                     Interval cur = registerHint.splitChildren.get(i);
 
-                    if (cur.assignedReg() >= 0 && cur.assignedReg() < allocator.nofRegs) {
+                    if (cur.assignedReg() >= 0 && cur.assignedReg() < allocator.allocatableRegisters.nofRegs) {
                         return cur;
                     }
                 }
