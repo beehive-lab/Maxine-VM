@@ -31,7 +31,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.stack.VmStackFrameWalker;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -40,19 +39,21 @@ import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.object.TupleAccess;
 
 /**
  * Upcalls from C that implement JNI functions.
  *
- *
- * ATTENTION: All the methods annotated by {@link JNI_FUNCTION} must appear in the exact same order as specified in
- * jni.h (and jni.c), see the functions at the bottom.
+ * All the methods annotated by {@link JNI_FUNCTION} must appear in the exact same order as specified in
+ * jni.h (and jni.c). In addition, any methods annotated by {@link JNI_FUNCTION} that are declared
+ * {@code native} must have implementations in jni.c their entries in the JNI function table
+ * must be initialized in jni.c.
  *
  * @see JniNativeInterface
  *
@@ -315,26 +316,11 @@ public final class JniFunctions {
         return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
     }
 
-    private static void replacedBySubstrate() {
-        ProgramError.unexpected("a JNI function should have been replaced by a C function in the substrate");
-    }
-
-    /**
-     * A Call to this method is delegated by the substrate to {@link #NewObjectV(Pointer, JniHandle, MethodID, Pointer)}.
-     */
     @JNI_FUNCTION
-    private static JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
-                    InvocationTargetException {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
-                    InvocationTargetException {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
     private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
@@ -397,16 +383,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static JniHandle CallObjectMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList) {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallObjectMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
 
     /**
      * Copies arguments from the native jvalue array at {@code arguments} into {@code argumentValues}. The number of
@@ -474,7 +454,7 @@ public final class JniFunctions {
         }
     }
 
-    private static Value CallValueMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static Value CallValueMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null || methodActor.isStatic() || methodActor.isInitializer() || methodActor instanceof InterfaceMethodActor) {
             throw new NoSuchMethodException();
@@ -491,143 +471,95 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
     }
 
     @JNI_FUNCTION
-    private static boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static boolean CallBooleanMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList) {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallBooleanMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
 
     @JNI_FUNCTION
-    private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asBoolean();
     }
 
     @JNI_FUNCTION
-    private static byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static byte CallByteMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallByteMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asByte();
     }
 
     @JNI_FUNCTION
-    private static char CallCharMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallCharMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static char CallCharMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallCharMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asChar();
     }
 
     @JNI_FUNCTION
-    private static short CallShortMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallShortMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static short CallShortMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallShortMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asShort();
     }
 
     @JNI_FUNCTION
-    private static int CallIntMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallIntMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static int CallIntMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallIntMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asInt();
     }
 
     @JNI_FUNCTION
-    private static long CallLongMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallLongMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static long CallLongMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallLongMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asLong();
     }
 
     @JNI_FUNCTION
-    private static float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static float CallFloatMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallFloatMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asFloat();
     }
 
     @JNI_FUNCTION
-    private static double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static double CallDoubleMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallDoubleMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asDouble();
     }
 
@@ -657,31 +589,21 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        replacedBySubstrate();
-    }
+    private static native void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static void CallVoidMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-    }
+    private static native void CallVoidMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         CallValueMethodA(env, object, methodID, arguments);
     }
 
     @JNI_FUNCTION
-    private static JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException,
@@ -690,16 +612,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -708,16 +624,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -726,16 +636,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -744,16 +648,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -762,16 +660,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -780,16 +672,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -798,16 +684,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -816,16 +696,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -834,14 +708,10 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/) {
-        replacedBySubstrate();
-    }
+    private static native void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
 
     @JNI_FUNCTION
-    private static void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments) {
-        replacedBySubstrate();
-    }
+    private static native void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
     private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
@@ -1004,7 +874,7 @@ public final class JniFunctions {
         }
     }
 
-    private static Value CallStaticValueMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static Value CallStaticValueMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
             throw new NoSuchMethodException();
@@ -1026,174 +896,112 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static JniHandle CallStaticObjectMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return JniHandle.zero();
-    }
+    private static native JniHandle CallStaticObjectMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
     }
 
     @JNI_FUNCTION
-    private static boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static boolean CallStaticBooleanMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return false;
-    }
+    private static native boolean CallStaticBooleanMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
     }
 
     @JNI_FUNCTION
-    private static byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static byte CallStaticByteMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (byte) 0;
-    }
+    private static native byte CallStaticByteMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
     }
 
     @JNI_FUNCTION
-    private static char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static char CallStaticCharMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return '\0';
-    }
+    private static native char CallStaticCharMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
     }
 
     @JNI_FUNCTION
-    private static short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static short CallStaticShortMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (short) 0;
-    }
+    private static native short CallStaticShortMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
     }
 
     @JNI_FUNCTION
-    private static int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static int CallStaticIntMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0;
-    }
+    private static native int CallStaticIntMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
     }
 
     @JNI_FUNCTION
-    private static long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static long CallStaticLongMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0L;
-    }
+    private static native long CallStaticLongMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
     }
 
     @JNI_FUNCTION
-    private static float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static float CallStaticFloatMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return (float) 0.0;
-    }
+    private static native float CallStaticFloatMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
     }
 
     @JNI_FUNCTION
-    private static double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static double CallStaticDoubleMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-        return 0.0;
-    }
+    private static native double CallStaticDoubleMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
     }
 
     @JNI_FUNCTION
-    private static void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/) {
-        replacedBySubstrate();
-    }
+    private static native void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
 
     @JNI_FUNCTION
-    private static void CallStaticVoidMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) {
-        replacedBySubstrate();
-    }
+    private static native void CallStaticVoidMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         CallStaticValueMethodA(env, javaClass, methodID, arguments);
     }
 

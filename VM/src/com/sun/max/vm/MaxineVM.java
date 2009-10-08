@@ -499,7 +499,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
+    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -524,7 +524,7 @@ public final class MaxineVM {
 
         ImmortalHeap.initialize();
 
-        JniNativeInterface.initialize();
+        JniNativeInterface.initialize(jniEnv);
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 

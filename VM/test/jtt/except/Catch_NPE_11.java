@@ -39,7 +39,7 @@ public class Catch_NPE_11 {
         return r;
     }
 
-    private static void throwE(int a) {
-        int i = 1 / a;
+    private static int throwE(int a) {
+        return 1 / a;
     }
 }

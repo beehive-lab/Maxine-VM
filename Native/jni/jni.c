@@ -37,15 +37,54 @@
 #include "log.h"
 #include "kind.h"
 #include "word.h"
+#include "threads.h"
 
 #include "jni.h"
 
-typedef struct {
-    struct JNINativeInterface_ jniNativeInterface;
+/**
+ * Type that extends the standard JNI function table to add GetNumberOfArguments() and GetKindsOfArguments() at the end.
+ */
+typedef struct ExtendedJNINativeInterface_ {
+    const struct JNINativeInterface_ jniNativeInterface;
 
     jint (JNICALL *GetNumberOfArguments)(JNIEnv *env, jmethodID methodID);
     void (JNICALL *GetKindsOfArguments)(JNIEnv *env, jmethodID methodID, char *kinds);
-} ExtendedJniNativeInterface, *ExtendedJniEnv;
+} *ExtendedJniEnv;
+
+/**
+ * The global (extended) JNI function table.
+ */
+extern const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface;
+
+/**
+ * The global JNI Invocation API function table.
+ */
+extern struct JavaVM_ main_vm;
+
+/**
+ * Gets a pointer to the global JNI function table.
+ */
+JNIEnv jniEnv() {
+    return &jni_ExtendedNativeInterface.jniNativeInterface;
+}
+
+/**
+ * Gets the thread-local pointer to the pointer to the global JNI function table.
+ */
+JNIEnv *currentJniEnv() {
+    ThreadLocals tl = thread_currentThreadLocals();
+    c_ASSERT(tl != NULL);
+    JNIEnv *env = (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
+    c_ASSERT(env != NULL);
+    return env;
+}
+
+typedef jint (JNICALL *JNI_OnLoad_t)(JavaVM *, void *);
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_vm_jni_DynamicLinker_invokeJNIOnLoad(JNIEnv *env, jclass c, JNI_OnLoad_t JNI_OnLoad) {
+    return (*JNI_OnLoad)((JavaVM *) &main_vm, NULL);
+}
 
 /**
  * Copies the varargs in 'argumentList' into 'argumentArray' according to the types specified in 'kinds'.
@@ -135,43 +174,43 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
     va_end(argumentList); \
     } while (0)
 
-static jobject CallObjectMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jobject jni_CallObjectMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallObjectMethodV, jobject);
 }
 
-static jboolean CallBooleanMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jboolean jni_CallBooleanMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallBooleanMethodV, jboolean);
 }
 
-static jbyte CallByteMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jbyte jni_CallByteMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallByteMethodV, jbyte);
 }
 
-static jchar CallCharMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jchar jni_CallCharMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallCharMethodV, jchar);
 }
 
-static jshort CallShortMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jshort jni_CallShortMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallShortMethodV, jshort);
 }
 
-static jint CallIntMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jint jni_CallIntMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallIntMethodV, jint);
 }
 
-static jlong CallLongMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jlong jni_CallLongMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallLongMethodV, jlong);
 }
 
-static jfloat CallFloatMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jfloat jni_CallFloatMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallFloatMethodV, jfloat);
 }
 
-static jdouble CallDoubleMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static jdouble jni_CallDoubleMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_METHOD(CallDoubleMethodV, jdouble);
 }
 
-static void CallVoidMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
+static void jni_CallVoidMethod(JNIEnv *env, jobject object, jmethodID methodID, ...) {
     CALL_VOID_METHOD(CallVoidMethodV);
 }
 
@@ -194,43 +233,43 @@ static void CallVoidMethod(JNIEnv *env, jobject object, jmethodID methodID, ...)
     va_end(argumentList); \
     } while (0)
 
-static jobject CallNonvirtualObjectMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jobject jni_CallNonvirtualObjectMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualObjectMethodV, jobject);
 }
 
-static jboolean CallNonvirtualBooleanMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jboolean jni_CallNonvirtualBooleanMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualBooleanMethodV, jboolean);
 }
 
-static jbyte CallNonvirtualByteMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jbyte jni_CallNonvirtualByteMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualByteMethodV, jbyte);
 }
 
-static jchar CallNonvirtualCharMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jchar jni_CallNonvirtualCharMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualCharMethodV, jchar);
 }
 
-static jshort CallNonvirtualShortMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jshort jni_CallNonvirtualShortMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualShortMethodV, jshort);
 }
 
-static jint CallNonvirtualIntMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jint jni_CallNonvirtualIntMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualIntMethodV, jint);
 }
 
-static jlong CallNonvirtualLongMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jlong jni_CallNonvirtualLongMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualLongMethodV, jlong);
 }
 
-static jfloat CallNonvirtualFloatMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jfloat jni_CallNonvirtualFloatMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualFloatMethodV, jfloat);
 }
 
-static jdouble CallNonvirtualDoubleMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static jdouble jni_CallNonvirtualDoubleMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_NONVIRTUAL_METHOD(CallNonvirtualDoubleMethodV, jdouble);
 }
 
-static void CallNonvirtualVoidMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
+static void jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, ...) {
     CALL_VOID_NONVIRTUAL_METHOD(CallNonvirtualVoidMethodV);
 }
 
@@ -253,43 +292,43 @@ static void CallNonvirtualVoidMethod(JNIEnv *env, jobject object, jclass javaCla
     va_end(argumentList); \
     } while (0)
 
-static jobject CallStaticObjectMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jobject jni_CallStaticObjectMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticObjectMethodV, jobject);
 }
 
-static jboolean CallStaticBooleanMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jboolean jni_CallStaticBooleanMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticBooleanMethodV, jboolean);
 }
 
-static jbyte CallStaticByteMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jbyte jni_CallStaticByteMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticByteMethodV, jbyte);
 }
 
-static jchar CallStaticCharMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jchar jni_CallStaticCharMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticCharMethodV, jchar);
 }
 
-static jshort CallStaticShortMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jshort jni_CallStaticShortMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticShortMethodV, jshort);
 }
 
-static jint CallStaticIntMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jint jni_CallStaticIntMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticIntMethodV, jint);
 }
 
-static jlong CallStaticLongMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jlong jni_CallStaticLongMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticLongMethodV, jlong);
 }
 
-static jfloat CallStaticFloatMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jfloat jni_CallStaticFloatMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticFloatMethodV, jfloat);
 }
 
-static jdouble CallStaticDoubleMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jdouble jni_CallStaticDoubleMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(CallStaticDoubleMethodV, jdouble);
 }
 
-static void CallStaticVoidMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static void jni_CallStaticVoidMethod(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_VOID_STATIC_METHOD(CallStaticVoidMethodV);
 }
 
@@ -307,43 +346,43 @@ static void CallStaticVoidMethod(JNIEnv *env, jclass javaClass, jmethodID method
     (*env)->functionName(env, object, methodID, argumentArray); \
     } while (0)
 
-static jobject CallObjectMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jobject jni_CallObjectMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallObjectMethodA);
 }
 
-static jboolean CallBooleanMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jboolean jni_CallBooleanMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallBooleanMethodA);
 }
 
-static jbyte CallByteMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jbyte jni_CallByteMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallByteMethodA);
 }
 
-static jchar CallCharMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jchar jni_CallCharMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallCharMethodA);
 }
 
-static jshort CallShortMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jshort jni_CallShortMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallShortMethodA);
 }
 
-static jint CallIntMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jint jni_CallIntMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallIntMethodA);
 }
 
-static jlong CallLongMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jlong jni_CallLongMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallLongMethodA);
 }
 
-static jfloat CallFloatMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jfloat jni_CallFloatMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallFloatMethodA);
 }
 
-static jdouble CallDoubleMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static jdouble jni_CallDoubleMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
 	CALL_METHOD_V(CallDoubleMethodA);
 }
 
-static void CallVoidMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
+static void jni_CallVoidMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_list argumentList) {
     CALL_VOID_METHOD_V(CallVoidMethodA);
 }
 
@@ -361,43 +400,43 @@ static void CallVoidMethodV(JNIEnv *env, jobject object, jmethodID methodID, va_
     (*env)->functionName(env, object, javaClass, methodID, argumentArray); \
     } while (0)
 
-static jobject CallNonvirtualObjectMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jobject jni_CallNonvirtualObjectMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualObjectMethodA);
 }
 
-static jboolean CallNonvirtualBooleanMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jboolean jni_CallNonvirtualBooleanMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualBooleanMethodA);
 }
 
-static jbyte CallNonvirtualByteMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jbyte jni_CallNonvirtualByteMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualByteMethodA);
 }
 
-static jchar CallNonvirtualCharMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jchar jni_CallNonvirtualCharMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualCharMethodA);
 }
 
-static jshort CallNonvirtualShortMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jshort jni_CallNonvirtualShortMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualShortMethodA);
 }
 
-static jint CallNonvirtualIntMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jint jni_CallNonvirtualIntMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualIntMethodA);
 }
 
-static jlong CallNonvirtualLongMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jlong jni_CallNonvirtualLongMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualLongMethodA);
 }
 
-static jfloat CallNonvirtualFloatMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jfloat jni_CallNonvirtualFloatMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualFloatMethodA);
 }
 
-static jdouble CallNonvirtualDoubleMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jdouble jni_CallNonvirtualDoubleMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_NONVIRTUAL_METHOD_V(CallNonvirtualDoubleMethodA);
 }
 
-static void CallNonvirtualVoidMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static void jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject object, jclass javaClass, jmethodID methodID, va_list argumentList) {
     CALL_VOID_NONVIRTUAL_METHOD_V(CallNonvirtualVoidMethodA);
 }
 
@@ -415,144 +454,376 @@ static void CallNonvirtualVoidMethodV(JNIEnv *env, jobject object, jclass javaCl
     (*env)->functionName(env, javaClass, methodID, argumentArray); \
     } while (0)
 
-static jobject CallStaticObjectMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jobject jni_CallStaticObjectMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticObjectMethodA);
 }
 
-static jboolean CallStaticBooleanMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jboolean jni_CallStaticBooleanMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticBooleanMethodA);
 }
 
-static jbyte CallStaticByteMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jbyte jni_CallStaticByteMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticByteMethodA);
 }
 
-static jchar CallStaticCharMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jchar jni_CallStaticCharMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticCharMethodA);
 }
 
-static jshort CallStaticShortMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jshort jni_CallStaticShortMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticShortMethodA);
 }
 
-static jint CallStaticIntMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jint jni_CallStaticIntMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticIntMethodA);
 }
 
-static jlong CallStaticLongMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jlong jni_CallStaticLongMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticLongMethodA);
 }
 
-static jfloat CallStaticFloatMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jfloat jni_CallStaticFloatMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticFloatMethodA);
 }
 
-static jdouble CallStaticDoubleMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jdouble jni_CallStaticDoubleMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
 	CALL_STATIC_METHOD_V(CallStaticDoubleMethodA);
 }
 
-static void CallStaticVoidMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static void jni_CallStaticVoidMethodV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
     CALL_VOID_STATIC_METHOD_V(CallStaticVoidMethodA);
 }
 
 /*
  * NewObject Routines
  */
-static jobject NewObject(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
+static jobject jni_NewObject(JNIEnv *env, jclass javaClass, jmethodID methodID, ...) {
     CALL_STATIC_METHOD(NewObjectV, jobject);
 }
 
-static jobject NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
+static jobject jni_NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_list argumentList) {
     CALL_STATIC_METHOD_V(NewObjectA);
 }
 
+// Structure containing all  functions
+const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
+    NULL,
+    NULL,
+    NULL,
 
-#define ASSIGN_FUNCTION(jniFunctionName) \
-    do { *((void **) &(env->jniFunctionName)) = (void*)(jniFunctionName); } while (0)
+    NULL,
 
-/**
- * Patches the JNI functions array for certain JNI functions that are implemented in C for
- * portability reasons (i.e. handling of varargs).
- */
-void nativeInitializeJniInterface(JNIEnv env) {
-#if log_LOADER
-	log_println("BEGIN jni nativeInitialize");
-#endif
-	c_ASSERT((jint) -1 < 0);
-    c_ASSERT(sizeof(jint) == 4);
+    /* jni_GetVersion */ NULL,
 
-    c_ASSERT((jlong) -1 < 0);
-    c_ASSERT(sizeof(jlong) == 8);
+    /* jni_DefineClass */ NULL,
+    /* jni_FindClass */ NULL,
 
-    ASSIGN_FUNCTION(CallObjectMethod);
-    ASSIGN_FUNCTION(CallBooleanMethod);
-    ASSIGN_FUNCTION(CallByteMethod);
-    ASSIGN_FUNCTION(CallCharMethod);
-    ASSIGN_FUNCTION(CallShortMethod);
-    ASSIGN_FUNCTION(CallIntMethod);
-    ASSIGN_FUNCTION(CallLongMethod);
-    ASSIGN_FUNCTION(CallFloatMethod);
-    ASSIGN_FUNCTION(CallDoubleMethod);
-    ASSIGN_FUNCTION(CallVoidMethod);
+    /* jni_FromReflectedMethod */ NULL,
+    /* jni_FromReflectedField */ NULL,
 
-    ASSIGN_FUNCTION(CallNonvirtualObjectMethod);
-    ASSIGN_FUNCTION(CallNonvirtualBooleanMethod);
-    ASSIGN_FUNCTION(CallNonvirtualByteMethod);
-    ASSIGN_FUNCTION(CallNonvirtualCharMethod);
-    ASSIGN_FUNCTION(CallNonvirtualShortMethod);
-    ASSIGN_FUNCTION(CallNonvirtualIntMethod);
-    ASSIGN_FUNCTION(CallNonvirtualLongMethod);
-    ASSIGN_FUNCTION(CallNonvirtualFloatMethod);
-    ASSIGN_FUNCTION(CallNonvirtualDoubleMethod);
-    ASSIGN_FUNCTION(CallNonvirtualVoidMethod);
+    /* jni_ToReflectedMethod */ NULL,
 
-    ASSIGN_FUNCTION(CallStaticObjectMethod);
-    ASSIGN_FUNCTION(CallStaticBooleanMethod);
-    ASSIGN_FUNCTION(CallStaticByteMethod);
-    ASSIGN_FUNCTION(CallStaticCharMethod);
-    ASSIGN_FUNCTION(CallStaticShortMethod);
-    ASSIGN_FUNCTION(CallStaticIntMethod);
-    ASSIGN_FUNCTION(CallStaticLongMethod);
-    ASSIGN_FUNCTION(CallStaticFloatMethod);
-    ASSIGN_FUNCTION(CallStaticDoubleMethod);
-    ASSIGN_FUNCTION(CallStaticVoidMethod);
+    /* jni_GetSuperclass */ NULL,
+    /* jni_IsAssignableFrom */ NULL,
 
-    ASSIGN_FUNCTION(CallObjectMethodV);
-    ASSIGN_FUNCTION(CallBooleanMethodV);
-    ASSIGN_FUNCTION(CallByteMethodV);
-    ASSIGN_FUNCTION(CallCharMethodV);
-    ASSIGN_FUNCTION(CallShortMethodV);
-    ASSIGN_FUNCTION(CallIntMethodV);
-    ASSIGN_FUNCTION(CallLongMethodV);
-    ASSIGN_FUNCTION(CallFloatMethodV);
-    ASSIGN_FUNCTION(CallDoubleMethodV);
-    ASSIGN_FUNCTION(CallVoidMethodV);
+    /* jni_ToReflectedField */ NULL,
 
-    ASSIGN_FUNCTION(CallNonvirtualObjectMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualBooleanMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualByteMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualCharMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualShortMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualIntMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualLongMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualFloatMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualDoubleMethodV);
-    ASSIGN_FUNCTION(CallNonvirtualVoidMethodV);
+    /* jni_Throw */ NULL,
+    /* jni_ThrowNew */ NULL,
+    /* jni_ExceptionOccurred */ NULL,
+    /* jni_ExceptionDescribe */ NULL,
+    /* jni_ExceptionClear */ NULL,
+    /* jni_FatalError */ NULL,
 
-    ASSIGN_FUNCTION(CallStaticObjectMethodV);
-    ASSIGN_FUNCTION(CallStaticBooleanMethodV);
-    ASSIGN_FUNCTION(CallStaticByteMethodV);
-    ASSIGN_FUNCTION(CallStaticCharMethodV);
-    ASSIGN_FUNCTION(CallStaticShortMethodV);
-    ASSIGN_FUNCTION(CallStaticIntMethodV);
-    ASSIGN_FUNCTION(CallStaticLongMethodV);
-    ASSIGN_FUNCTION(CallStaticFloatMethodV);
-    ASSIGN_FUNCTION(CallStaticDoubleMethodV);
-    ASSIGN_FUNCTION(CallStaticVoidMethodV);
+    /* jni_PushLocalFrame */ NULL,
+    /* jni_PopLocalFrame */ NULL,
 
-    ASSIGN_FUNCTION(NewObject);
-    ASSIGN_FUNCTION(NewObjectV);
-#if log_LOADER
-	log_println("END jni nativeInitialize");
-#endif
+    /* jni_NewGlobalRef */ NULL,
+    /* jni_DeleteGlobalRef */ NULL,
+    /* jni_DeleteLocalRef */ NULL,
+    /* jni_IsSameObject */ NULL,
+
+    /* jni_NewLocalRef */ NULL,
+    /* jni_EnsureLocalCapacity */ NULL,
+
+    /* jni_AllocObject */ NULL,
+    jni_NewObject,
+    jni_NewObjectV,
+    /* jni_NewObjectA */ NULL,
+
+    /* jni_GetObjectClass */ NULL,
+    /* jni_IsInstanceOf */ NULL,
+
+    /* jni_GetMethodID */ NULL,
+
+    jni_CallObjectMethod,
+    jni_CallObjectMethodV,
+    /* jni_CallObjectMethodA */ NULL,
+    jni_CallBooleanMethod,
+    jni_CallBooleanMethodV,
+    /* jni_CallBooleanMethodA */ NULL,
+    jni_CallByteMethod,
+    jni_CallByteMethodV,
+    /* jni_CallByteMethodA */ NULL,
+    jni_CallCharMethod,
+    jni_CallCharMethodV,
+    /* jni_CallCharMethodA */ NULL,
+    jni_CallShortMethod,
+    jni_CallShortMethodV,
+    /* jni_CallShortMethodA */ NULL,
+    jni_CallIntMethod,
+    jni_CallIntMethodV,
+    /* jni_CallIntMethodA */ NULL,
+    jni_CallLongMethod,
+    jni_CallLongMethodV,
+    /* jni_CallLongMethodA */ NULL,
+    jni_CallFloatMethod,
+    jni_CallFloatMethodV,
+    /* jni_CallFloatMethodA */ NULL,
+    jni_CallDoubleMethod,
+    jni_CallDoubleMethodV,
+    /* jni_CallDoubleMethodA */ NULL,
+    jni_CallVoidMethod,
+    jni_CallVoidMethodV,
+    /* jni_CallVoidMethodA */ NULL,
+
+    jni_CallNonvirtualObjectMethod,
+    jni_CallNonvirtualObjectMethodV,
+    /* jni_CallNonvirtualObjectMethodA */ NULL,
+    jni_CallNonvirtualBooleanMethod,
+    jni_CallNonvirtualBooleanMethodV,
+    /* jni_CallNonvirtualBooleanMethodA */ NULL,
+    jni_CallNonvirtualByteMethod,
+    jni_CallNonvirtualByteMethodV,
+    /* jni_CallNonvirtualByteMethodA */ NULL,
+    jni_CallNonvirtualCharMethod,
+    jni_CallNonvirtualCharMethodV,
+    /* jni_CallNonvirtualCharMethodA */ NULL,
+    jni_CallNonvirtualShortMethod,
+    jni_CallNonvirtualShortMethodV,
+    /* jni_CallNonvirtualShortMethodA */ NULL,
+    jni_CallNonvirtualIntMethod,
+    jni_CallNonvirtualIntMethodV,
+    /* jni_CallNonvirtualIntMethodA */ NULL,
+    jni_CallNonvirtualLongMethod,
+    jni_CallNonvirtualLongMethodV,
+    /* jni_CallNonvirtualLongMethodA */ NULL,
+    jni_CallNonvirtualFloatMethod,
+    jni_CallNonvirtualFloatMethodV,
+    /* jni_CallNonvirtualFloatMethodA */ NULL,
+    jni_CallNonvirtualDoubleMethod,
+    jni_CallNonvirtualDoubleMethodV,
+    /* jni_CallNonvirtualDoubleMethodA */ NULL,
+    jni_CallNonvirtualVoidMethod,
+    jni_CallNonvirtualVoidMethodV,
+    /* jni_CallNonvirtualVoidMethodA */ NULL,
+
+    /* jni_GetFieldID */ NULL,
+
+    /* jni_GetObjectField */ NULL,
+    /* jni_GetBooleanField */ NULL,
+    /* jni_GetByteField */ NULL,
+    /* jni_GetCharField */ NULL,
+    /* jni_GetShortField */ NULL,
+    /* jni_GetIntField */ NULL,
+    /* jni_GetLongField */ NULL,
+    /* jni_GetFloatField */ NULL,
+    /* jni_GetDoubleField */ NULL,
+
+    /* jni_SetObjectField */ NULL,
+    /* jni_SetBooleanField */ NULL,
+    /* jni_SetByteField */ NULL,
+    /* jni_SetCharField */ NULL,
+    /* jni_SetShortField */ NULL,
+    /* jni_SetIntField */ NULL,
+    /* jni_SetLongField */ NULL,
+    /* jni_SetFloatField */ NULL,
+    /* jni_SetDoubleField */ NULL,
+
+    /* jni_GetStaticMethodID */ NULL,
+
+    jni_CallStaticObjectMethod,
+    jni_CallStaticObjectMethodV,
+    /* jni_CallStaticObjectMethodA */ NULL,
+    jni_CallStaticBooleanMethod,
+    jni_CallStaticBooleanMethodV,
+    /* jni_CallStaticBooleanMethodA */ NULL,
+    jni_CallStaticByteMethod,
+    jni_CallStaticByteMethodV,
+    /* jni_CallStaticByteMethodA */ NULL,
+    jni_CallStaticCharMethod,
+    jni_CallStaticCharMethodV,
+    /* jni_CallStaticCharMethodA */ NULL,
+    jni_CallStaticShortMethod,
+    jni_CallStaticShortMethodV,
+    /* jni_CallStaticShortMethodA */ NULL,
+    jni_CallStaticIntMethod,
+    jni_CallStaticIntMethodV,
+    /* jni_CallStaticIntMethodA */ NULL,
+    jni_CallStaticLongMethod,
+    jni_CallStaticLongMethodV,
+    /* jni_CallStaticLongMethodA */ NULL,
+    jni_CallStaticFloatMethod,
+    jni_CallStaticFloatMethodV,
+    /* jni_CallStaticFloatMethodA */ NULL,
+    jni_CallStaticDoubleMethod,
+    jni_CallStaticDoubleMethodV,
+    /* jni_CallStaticDoubleMethodA */ NULL,
+    jni_CallStaticVoidMethod,
+    jni_CallStaticVoidMethodV,
+    /* jni_CallStaticVoidMethodA */ NULL,
+
+    /* jni_GetStaticFieldID */ NULL,
+
+    /* jni_GetStaticObjectField */ NULL,
+    /* jni_GetStaticBooleanField */ NULL,
+    /* jni_GetStaticByteField */ NULL,
+    /* jni_GetStaticCharField */ NULL,
+    /* jni_GetStaticShortField */ NULL,
+    /* jni_GetStaticIntField */ NULL,
+    /* jni_GetStaticLongField */ NULL,
+    /* jni_GetStaticFloatField */ NULL,
+    /* jni_GetStaticDoubleField */ NULL,
+
+    /* jni_SetStaticObjectField */ NULL,
+    /* jni_SetStaticBooleanField */ NULL,
+    /* jni_SetStaticByteField */ NULL,
+    /* jni_SetStaticCharField */ NULL,
+    /* jni_SetStaticShortField */ NULL,
+    /* jni_SetStaticIntField */ NULL,
+    /* jni_SetStaticLongField */ NULL,
+    /* jni_SetStaticFloatField */ NULL,
+    /* jni_SetStaticDoubleField */ NULL,
+
+    /* jni_NewString */ NULL,
+    /* jni_GetStringLength */ NULL,
+    /* jni_GetStringChars */ NULL,
+    /* jni_ReleaseStringChars */ NULL,
+
+    /* jni_NewStringUTF */ NULL,
+    /* jni_GetStringUTFLength */ NULL,
+    /* jni_GetStringUTFChars */ NULL,
+    /* jni_ReleaseStringUTFChars */ NULL,
+
+    /* jni_GetArrayLength */ NULL,
+
+    /* jni_NewObjectArray */ NULL,
+    /* jni_GetObjectArrayElement */ NULL,
+    /* jni_SetObjectArrayElement */ NULL,
+
+    /* jni_NewBooleanArray */ NULL,
+    /* jni_NewByteArray */ NULL,
+    /* jni_NewCharArray */ NULL,
+    /* jni_NewShortArray */ NULL,
+    /* jni_NewIntArray */ NULL,
+    /* jni_NewLongArray */ NULL,
+    /* jni_NewFloatArray */ NULL,
+    /* jni_NewDoubleArray */ NULL,
+
+    /* jni_GetBooleanArrayElements */ NULL,
+    /* jni_GetByteArrayElements */ NULL,
+    /* jni_GetCharArrayElements */ NULL,
+    /* jni_GetShortArrayElements */ NULL,
+    /* jni_GetIntArrayElements */ NULL,
+    /* jni_GetLongArrayElements */ NULL,
+    /* jni_GetFloatArrayElements */ NULL,
+    /* jni_GetDoubleArrayElements */ NULL,
+
+    /* jni_ReleaseBooleanArrayElements */ NULL,
+    /* jni_ReleaseByteArrayElements */ NULL,
+    /* jni_ReleaseCharArrayElements */ NULL,
+    /* jni_ReleaseShortArrayElements */ NULL,
+    /* jni_ReleaseIntArrayElements */ NULL,
+    /* jni_ReleaseLongArrayElements */ NULL,
+    /* jni_ReleaseFloatArrayElements */ NULL,
+    /* jni_ReleaseDoubleArrayElements */ NULL,
+
+    /* jni_GetBooleanArrayRegion */ NULL,
+    /* jni_GetByteArrayRegion */ NULL,
+    /* jni_GetCharArrayRegion */ NULL,
+    /* jni_GetShortArrayRegion */ NULL,
+    /* jni_GetIntArrayRegion */ NULL,
+    /* jni_GetLongArrayRegion */ NULL,
+    /* jni_GetFloatArrayRegion */ NULL,
+    /* jni_GetDoubleArrayRegion */ NULL,
+
+    /* jni_SetBooleanArrayRegion */ NULL,
+    /* jni_SetByteArrayRegion */ NULL,
+    /* jni_SetCharArrayRegion */ NULL,
+    /* jni_SetShortArrayRegion */ NULL,
+    /* jni_SetIntArrayRegion */ NULL,
+    /* jni_SetLongArrayRegion */ NULL,
+    /* jni_SetFloatArrayRegion */ NULL,
+    /* jni_SetDoubleArrayRegion */ NULL,
+
+    /* jni_RegisterNatives */ NULL,
+    /* jni_UnregisterNatives */ NULL,
+
+    /* jni_MonitorEnter */ NULL,
+    /* jni_MonitorExit */ NULL,
+
+    /* jni_GetJavaVM */ NULL,
+
+    /* jni_GetStringRegion */ NULL,
+    /* jni_GetStringUTFRegion */ NULL,
+
+    /* jni_GetPrimitiveArrayCritical */ NULL,
+    /* jni_ReleasePrimitiveArrayCritical */ NULL,
+
+    /* jni_GetStringCritical */ NULL,
+    /* jni_ReleaseStringCritical */ NULL,
+
+    /* jni_NewWeakGlobalRef */ NULL,
+    /* jni_DeleteWeakGlobalRef */ NULL,
+
+    /* jni_ExceptionCheck */ NULL,
+
+    /* jni_NewDirectByteBuffer */ NULL,
+    /* jni_GetDirectBufferAddress */ NULL,
+    /* jni_GetDirectBufferCapacity */ NULL,
+
+    // New 1_6 features
+
+    /* jni_GetObjectRefType */ NULL,
+
+    // Maxine specific
+
+    /* jni_GetNumberOfArguments */ NULL,
+    /* jni_GetNumberOfArguments */ NULL
+};
+
+jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
+    *penv = (void *) currentJniEnv();
+    /* TODO: check that requested version is supported */
+    return JNI_OK;
 }
+
+jint JNICALL jni_DestroyJavaVM(JavaVM *vm) {
+    return c_UNIMPLEMENTED();
+}
+
+jint JNICALL jni_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
+    return c_UNIMPLEMENTED();
+}
+
+jint JNICALL jni_DetachCurrentThread(JavaVM *vm) {
+    return c_UNIMPLEMENTED();
+}
+
+jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args) {
+    return c_UNIMPLEMENTED();
+}
+
+const struct JNIInvokeInterface_ jni_InvokeInterface = {
+    (void *) &jni_ExtendedNativeInterface,
+    NULL,
+    NULL,
+
+    jni_DestroyJavaVM,
+    jni_AttachCurrentThread,
+    jni_DetachCurrentThread,
+    jni_GetEnv,
+    jni_AttachCurrentThreadAsDaemon
+};
+
+struct JavaVM_ main_vm = {&jni_InvokeInterface};

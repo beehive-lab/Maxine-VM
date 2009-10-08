@@ -226,6 +226,7 @@ static void checkImage(void) {
     checkThreadLocalIndex(FORWARD_LINK);
     checkThreadLocalIndex(BACKWARD_LINK);
     checkThreadLocalIndex(ID);
+    checkThreadLocalIndex(JNI_ENV);
     checkThreadLocalIndex(LAST_JAVA_FRAME_ANCHOR);
     checkThreadLocalIndex(TRAP_INSTRUCTION_POINTER);
     checkThreadLocalIndex(TRAP_FAULT_ADDRESS);
