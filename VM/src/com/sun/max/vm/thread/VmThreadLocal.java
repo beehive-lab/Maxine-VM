@@ -167,7 +167,7 @@ public class VmThreadLocal {
     };
 
     /**
-     * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
+     * The address of the table of {@linkplain JniNativeInterface#jniEnv() JNI functions}.
      */
     public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", false, "points to table of JNI functions");
 

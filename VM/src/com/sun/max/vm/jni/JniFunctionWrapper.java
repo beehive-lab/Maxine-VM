@@ -116,7 +116,6 @@ public final class JniFunctionWrapper {
      *            the frame via the {@link MakeStackVariable} builtin.
      * @param framePointer the stack pointer of the JNI function frame. The value is used to read variables saved to in
      *            the frame via the {@link MakeStackVariable} builtin.
-     * @param anchor TODO
      * @return the target method for the JNI function denoted by {@code instructionPointer} or null if JNI tracing is
      *         not enabled
      */
