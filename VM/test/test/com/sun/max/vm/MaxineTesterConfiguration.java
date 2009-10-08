@@ -68,7 +68,7 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     static {
-        output(test.output.AWTFont.class,                  FAIL_ALL);
+        output(test.output.AWTFont.class,                  FAIL_LINUX, FAIL_DARWIN);
         output(test.output.JavacTest.class,                RAND_LINUX);
         output(test.output.CatchOutOfMemory.class);
         output(test.output.PrintDate.class);

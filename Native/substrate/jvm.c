@@ -78,6 +78,13 @@ JNIMethod resolveCriticalInstanceMethod(JNIEnv *env, char *className, char *meth
     return result;
 }
 
+#define JVM_INTERFACE_VERSION 4
+
+jint JVM_GetInterfaceVersion(void) {
+    return JVM_INTERFACE_VERSION;
+}
+
+
 /*************************************************************************
  PART 1: Functions for Native Libraries
  ************************************************************************/
@@ -195,21 +202,37 @@ JVM_ActiveProcessorCount(void) {
     return 0;
 }
 
+#if os_SOLARIS
+#include <dlfcn.h>
+#endif
+
 void *
 JVM_LoadLibrary(const char *name) {
+#if os_SOLARIS
+    return dlopen(name, RTLD_LAZY);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 void
 JVM_UnloadLibrary(void * handle) {
+#if os_SOLARIS
+    dlclose(handle);
+#else
     c_UNIMPLEMENTED();
+#endif
 }
 
 void *
 JVM_FindLibraryEntry(void *handle, const char *name) {
+#if os_SOLARIS
+    return dlsym(handle, name);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jboolean
@@ -1701,40 +1724,69 @@ JVM_Sync(jint fd) {
 
 jint
 JVM_InitializeSocketLibrary(void) {
+#if os_SOLARIS
+    return 0;
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
+#if os_SOLARIS
+#include <sys/types.h>
+#include <sys/socket.h>
+#else
 struct sockaddr;
+#endif
 
 jint
 JVM_Socket(jint domain, jint type, jint protocol) {
+#if os_SOLARIS
+    return socket(domain, type, protocol);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_SocketClose(jint fd) {
+#if os_SOLARIS
+    return close(fd);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_SocketShutdown(jint fd, jint howto) {
+#if os_SOLARIS
+    return shutdown(fd, howto);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
+#if os_SOLARIS
+    return recv(fd, buf, nBytes, flags);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
+#if os_SOLARIS
+    return send(fd, buf, nBytes, flags);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
