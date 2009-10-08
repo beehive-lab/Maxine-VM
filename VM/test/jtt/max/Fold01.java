@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
+package jtt.max;
 
 import com.sun.max.annotate.FOLD;
 
@@ -26,36 +26,18 @@ import com.sun.max.annotate.FOLD;
  * @Harness: java
  * @Runs: 0=true
  */
-public class Fold02 {
+public class Fold01 {
 
     public static boolean test(int arg) {
-        return fint(10, 10) && ffloat(0.1f, 0.1f) && fobj(null, null);
+        return result();
     }
 
     @FOLD
-    static boolean fint(int x, int y) {
+    static boolean result() {
         int j = 2;
         for (int i = 0; i < 100; i++) {
             j = j + 8 / j;
         }
-        return x == y;
-    }
-
-    @FOLD
-    static boolean ffloat(float x, float y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
-    }
-
-    @FOLD
-    static boolean fobj(Object x, Object y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
+        return true;
     }
 }
