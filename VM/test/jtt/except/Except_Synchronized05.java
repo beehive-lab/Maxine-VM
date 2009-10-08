@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: 0 = 0; 1 = 1
+ * @Runs: 0 = 0; 1 = 2
  */
 package jtt.except;
 
@@ -29,7 +29,10 @@ public class Except_Synchronized05 {
     Object field;
 
     public static int test(int arg) {
-        return new Except_Synchronized05().bar(arg) != null ? 1 : 0;
+        Except_Synchronized05 obj = new Except_Synchronized05();
+        int a = obj.bar(arg) != null ? 1 : 0;
+        int b = obj.baz(arg) != null ? 1 : 0;
+        return a + b;
     }
 
     public synchronized Object bar(int arg) {
@@ -42,6 +45,20 @@ public class Except_Synchronized05 {
             // do nothing
         }
         return field;
+    }
+
+    public Object baz(int arg) {
+        synchronized (this) {
+            try {
+                String f = foo1(arg);
+                if (f == null) {
+                    field = new Object();
+                }
+            } catch (NullPointerException e) {
+                // do nothing
+            }
+            return field;
+        }
     }
 
     private String foo1(int arg) {
