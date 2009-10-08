@@ -45,7 +45,7 @@
  * Type that extends the standard JNI function table to add GetNumberOfArguments() and GetKindsOfArguments() at the end.
  */
 typedef struct ExtendedJNINativeInterface_ {
-    const struct JNINativeInterface_ jniNativeInterface;
+    struct JNINativeInterface_ jniNativeInterface;
 
     jint (JNICALL *GetNumberOfArguments)(JNIEnv *env, jmethodID methodID);
     void (JNICALL *GetKindsOfArguments)(JNIEnv *env, jmethodID methodID, char *kinds);
@@ -54,7 +54,7 @@ typedef struct ExtendedJNINativeInterface_ {
 /**
  * The global (extended) JNI function table.
  */
-extern const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface;
+extern struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface;
 
 /**
  * The global JNI Invocation API function table.
@@ -506,7 +506,7 @@ static jobject jni_NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID,
 }
 
 // Structure containing all  functions
-const struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
+struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     {
     NULL,
     NULL,
