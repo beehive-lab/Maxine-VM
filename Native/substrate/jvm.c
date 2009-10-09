@@ -202,13 +202,13 @@ JVM_ActiveProcessorCount(void) {
     return 0;
 }
 
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
 #include <dlfcn.h>
 #endif
 
 void *
 JVM_LoadLibrary(const char *name) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return dlopen(name, RTLD_LAZY);
 #else
     c_UNIMPLEMENTED();
@@ -218,7 +218,7 @@ JVM_LoadLibrary(const char *name) {
 
 void
 JVM_UnloadLibrary(void * handle) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     dlclose(handle);
 #else
     c_UNIMPLEMENTED();
@@ -227,7 +227,7 @@ JVM_UnloadLibrary(void * handle) {
 
 void *
 JVM_FindLibraryEntry(void *handle, const char *name) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return dlsym(handle, name);
 #else
     c_UNIMPLEMENTED();
@@ -1724,7 +1724,7 @@ JVM_Sync(jint fd) {
 
 jint
 JVM_InitializeSocketLibrary(void) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return 0;
 #else
     c_UNIMPLEMENTED();
@@ -1732,7 +1732,7 @@ JVM_InitializeSocketLibrary(void) {
 #endif
 }
 
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
 #include <sys/types.h>
 #include <sys/socket.h>
 #else
@@ -1741,7 +1741,7 @@ struct sockaddr;
 
 jint
 JVM_Socket(jint domain, jint type, jint protocol) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return socket(domain, type, protocol);
 #else
     c_UNIMPLEMENTED();
@@ -1751,7 +1751,7 @@ JVM_Socket(jint domain, jint type, jint protocol) {
 
 jint
 JVM_SocketClose(jint fd) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return close(fd);
 #else
     c_UNIMPLEMENTED();
@@ -1761,7 +1761,7 @@ JVM_SocketClose(jint fd) {
 
 jint
 JVM_SocketShutdown(jint fd, jint howto) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return shutdown(fd, howto);
 #else
     c_UNIMPLEMENTED();
@@ -1771,7 +1771,7 @@ JVM_SocketShutdown(jint fd, jint howto) {
 
 jint
 JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return recv(fd, buf, nBytes, flags);
 #else
     c_UNIMPLEMENTED();
@@ -1781,7 +1781,7 @@ JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
 
 jint
 JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS
+#if os_SOLARIS || os_LINUX
     return send(fd, buf, nBytes, flags);
 #else
     c_UNIMPLEMENTED();

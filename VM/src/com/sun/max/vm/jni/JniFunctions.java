@@ -141,8 +141,8 @@ public final class JniFunctions {
 
     private static Class findClass(ClassLoader classLoader, String slashifiedName) throws ClassNotFoundException {
         if (slashifiedName.startsWith("[")) {
-            final Class componentClass = findClass(classLoader, slashifiedName.substring(1));
-            return ArrayClassActor.forComponentClassActor(ClassActor.fromJava(componentClass)).toJava();
+            TypeDescriptor descriptor = JavaTypeDescriptor.parseTypeDescriptor(slashifiedName);
+            return descriptor.resolve(classLoader).toJava();
         }
         return classLoader.loadClass(dottify(slashifiedName));
     }
