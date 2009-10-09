@@ -1143,7 +1143,8 @@ public final class DataPrototype extends Prototype {
 
         adjustMemoryRegions();
 
-        MaxineVM.target().phase = MaxineVM.Phase.PRIMORDIAL;
+        MaxineVM target = MaxineVM.target();
+        target.phase = MaxineVM.Phase.PRIMORDIAL;
         heapDataWriter = new ByteArrayMemoryRegionWriter(Heap.bootHeapRegion, "heap");
         codeDataWriter = new ByteArrayMemoryRegionWriter(Code.bootCodeRegion, "code");
 
