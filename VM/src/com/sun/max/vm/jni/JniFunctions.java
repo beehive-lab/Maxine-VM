@@ -23,6 +23,7 @@ package com.sun.max.vm.jni;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import java.lang.reflect.*;
+import java.nio.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -323,8 +324,7 @@ public final class JniFunctions {
     private static native JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
 
     @JNI_FUNCTION
-    private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
-                    InvocationTargetException {
+    private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
 
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
@@ -563,8 +563,7 @@ public final class JniFunctions {
         return CallValueMethodA(env, object, methodID, arguments).asDouble();
     }
 
-    private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
         if (!(classActor instanceof TupleClassActor)) {
             throw new NoSuchMethodException();
@@ -606,8 +605,7 @@ public final class JniFunctions {
     private static native JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException,
-                    IllegalAccessException, InvocationTargetException {
+    private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
     }
 
@@ -618,8 +616,7 @@ public final class JniFunctions {
     private static native boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
     }
 
@@ -630,8 +627,7 @@ public final class JniFunctions {
     private static native byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
     }
 
@@ -642,8 +638,7 @@ public final class JniFunctions {
     private static native char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
     }
 
@@ -654,8 +649,7 @@ public final class JniFunctions {
     private static native short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
     }
 
@@ -666,8 +660,7 @@ public final class JniFunctions {
     private static native int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
     }
 
@@ -678,8 +671,7 @@ public final class JniFunctions {
     private static native long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
     }
 
@@ -690,8 +682,7 @@ public final class JniFunctions {
     private static native float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
     }
 
@@ -702,8 +693,7 @@ public final class JniFunctions {
     private static native double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
     }
 
@@ -714,8 +704,7 @@ public final class JniFunctions {
     private static native void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
 
     @JNI_FUNCTION
-    private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws NoSuchMethodException, IllegalAccessException,
-                    InvocationTargetException {
+    private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
     }
 
@@ -1813,22 +1802,37 @@ public final class JniFunctions {
         return VmThread.fromJniEnv(env).pendingException() != null;
     }
 
-    @JNI_FUNCTION
-    private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) {
-        FatalError.unimplemented();
-        return null;
+    private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
+    private static final MethodActor DirectByteBufferConstructor = DirectByteBuffer.findClassMethodActor(SymbolTable.INIT, SignatureDescriptor.fromJava(void.class, long.class, int.class));
+
+    @FOLD
+    private static int directByteBufferAddressFieldOffset() {
+        return ClassActor.fromJava(Buffer.class).findLocalInstanceFieldActor("address").offset();
     }
 
     @JNI_FUNCTION
-    private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) {
-        FatalError.unimplemented();
-        return null;
+    private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
+        int cap = (int) capacity;
+        return JniHandles.createLocalHandle(DirectByteBufferConstructor.invokeConstructor(LongValue.from(address.toLong()), IntValue.from(cap)).asObject());
+    }
+
+    @JNI_FUNCTION
+    private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
+        Object buf = buffer.unhand();
+        if (DirectByteBuffer.isInstance(buf)) {
+            long address = TupleAccess.readLong(buf, directByteBufferAddressFieldOffset());
+            return Pointer.fromLong(address);
+        }
+        return Pointer.zero();
     }
 
     @JNI_FUNCTION
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        FatalError.unimplemented();
-        return 0L;
+        Object buf = buffer.unhand();
+        if (DirectByteBuffer.isInstance(buf)) {
+            return ((Buffer) buf).capacity();
+        }
+        return -1;
     }
 
     @JNI_FUNCTION
@@ -1840,14 +1844,12 @@ public final class JniFunctions {
         return tag;
     }
 
-
-
     /*
      * Extended JNI native interface, see Native/jni/jni.c:
      */
 
     @JNI_FUNCTION
-    private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws NoSuchMethodException {
+    private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null) {
             throw new NoSuchMethodException();
@@ -1856,7 +1858,7 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws NoSuchMethodException {
+    private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null) {
             throw new NoSuchMethodException();

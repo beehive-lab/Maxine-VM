@@ -203,7 +203,7 @@ public class VmThread {
     }
 
 
-    public Thread javaThread() {
+    public final Thread javaThread() {
         return javaThread;
     }
 
@@ -316,7 +316,7 @@ public class VmThread {
     }
 
     /**
-     * Bind the given @see java.lang.Thread to this VmThread.
+     * Bind the given {@code Thread} to this VmThread.
      * @param javaThread thread to be bound
      */
     public VmThread setJavaThread(Thread javaThread) {
@@ -682,7 +682,7 @@ public class VmThread {
         return JniHandles.createLocalHandle(jniHandles, object);
     }
 
-    public JniHandles jniHandles() {
+    public final JniHandles jniHandles() {
         return jniHandles;
     }
 
