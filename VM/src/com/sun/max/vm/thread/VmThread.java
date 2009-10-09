@@ -386,7 +386,8 @@ public class VmThread {
             nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM.host().phase = MaxineVM.Phase.PRIMORDIAL;
+        MaxineVM vm = MaxineVM.host();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
     }
 
     /**

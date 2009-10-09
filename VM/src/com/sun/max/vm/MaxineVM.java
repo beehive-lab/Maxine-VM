@@ -533,7 +533,8 @@ public final class MaxineVM {
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-        hostOrTarget().phase = Phase.PRISTINE;
+        MaxineVM vm = hostOrTarget();
+        vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
             if (HELP_OPTION.isPresent()) {

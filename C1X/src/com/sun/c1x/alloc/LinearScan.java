@@ -1888,7 +1888,7 @@ public class LinearScan {
 
         if (moveResolver.hasMappings()) {
             // insert moves after first instruction
-            moveResolver.setInsertPosition(block.lir(), 0); // TODO: 0 vs 1 bug?
+            moveResolver.setInsertPosition(block.lir(), 0);
             moveResolver.resolveAndAppendMoves();
         }
     }
