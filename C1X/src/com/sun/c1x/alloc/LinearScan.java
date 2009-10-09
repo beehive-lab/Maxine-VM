@@ -390,7 +390,7 @@ public class LinearScan {
         }
     }
 
-    static abstract class IntervalClosure {
+    abstract static class IntervalClosure {
         abstract boolean apply(Interval i);
     }
 
@@ -965,7 +965,11 @@ public class LinearScan {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > CiRegister.FirstVirtualRegisterNumber || reg >= allocatableRegisters.registerMapping.length || (reg >= 0 && reg < allocatableRegisters.registerMapping.length && allocatableRegisters.registerMapping[reg] != null && allocatableRegisters.allocatableRegister[reg]);
+        return reg > CiRegister.FirstVirtualRegisterNumber
+               || reg >= allocatableRegisters.registerMapping.length
+               || (reg >= 0 && reg < allocatableRegisters.registerMapping.length
+                   && allocatableRegisters.registerMapping[reg] != null
+                   && allocatableRegisters.allocatableRegister[reg]);
     }
 
     void addDef(int regNum, int defPos, IntervalUseKind useKind, CiKind type) {

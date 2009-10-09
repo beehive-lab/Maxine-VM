@@ -70,7 +70,7 @@ public class LoadPointer extends StateSplit {
     public Value pointer() {
         return pointer;
     }
-    
+
     /**
      * Iterates over the input values to this instruction. In this case,
      * it is only the pointer value.
@@ -80,5 +80,4 @@ public class LoadPointer extends StateSplit {
     public void inputValuesDo(ValueClosure closure) {
         pointer = closure.apply(pointer);
     }
-
 }

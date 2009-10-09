@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;

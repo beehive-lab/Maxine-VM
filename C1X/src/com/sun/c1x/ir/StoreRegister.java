@@ -74,5 +74,4 @@ public class StoreRegister extends Instruction {
     public void inputValuesDo(ValueClosure closure) {
         value = closure.apply(value);
     }
-
 }
