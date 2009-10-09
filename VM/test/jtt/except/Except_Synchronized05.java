@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,44 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
-
-import com.sun.max.annotate.FOLD;
-
 /*
  * @Harness: java
- * @Runs: 0=true
+ * @Runs: 0 = 0; 1 = 2
  */
-public class Fold02 {
+package jtt.except;
 
-    public static boolean test(int arg) {
-        return fint(10, 10) && ffloat(0.1f, 0.1f) && fobj(null, null);
+public class Except_Synchronized05 {
+
+    Object field;
+
+    public static int test(int arg) {
+        Except_Synchronized05 obj = new Except_Synchronized05();
+        int a = obj.bar(arg) != null ? 1 : 0;
+        int b = obj.baz(arg) != null ? 1 : 0;
+        return a + b;
     }
 
-    @FOLD
-    static boolean fint(int x, int y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
+    public synchronized Object bar(int arg) {
+        try {
+            String f = foo1(arg);
+            if (f == null) {
+                field = new Object();
+            }
+        } catch (NullPointerException e) {
+            // do nothing
         }
-        return x == y;
+        return field;
     }
 
-    @FOLD
-    static boolean ffloat(float x, float y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
+    public Object baz(int arg) {
+        synchronized (this) {
+            try {
+                String f = foo1(arg);
+                if (f == null) {
+                    field = new Object();
+                }
+            } catch (NullPointerException e) {
+                // do nothing
+            }
+            return field;
         }
-        return x == y;
     }
 
-    @FOLD
-    static boolean fobj(Object x, Object y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
+    private String foo1(int arg) {
+        if (arg == 0) {
+            throw null;
         }
-        return x == y;
+        return null;
     }
 }
