@@ -446,7 +446,7 @@ public class Util {
         return (int) l;
     }
 
-    public static boolean traceLinearScan(int level, String string, Object...objects) {
+    public static boolean traceLinearScan(int level, String string, Object... objects) {
         if (C1XOptions.TraceLinearScanLevel >= level) {
             TTY.println(String.format(string, objects));
         }

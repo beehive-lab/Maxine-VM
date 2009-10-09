@@ -264,7 +264,7 @@ public class IR {
             pred.end().substituteSuccessor(oldBlock, newBlock);
             // and add each predecessor to the successor
             newBlock.addPredecessor(pred);
-    }
+        }
         // this block is now disconnected; remove all its incoming and outgoing edges
         oldBlock.predecessors().clear();
         oldBlock.end().successors().clear();

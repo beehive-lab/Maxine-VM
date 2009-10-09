@@ -37,15 +37,16 @@ import com.sun.c1x.util.*;
  */
 final class LinearScanWalker extends IntervalWalker {
 
-    private int firstReg; // the reg. number of the first phys. register
-    private int lastReg; // the reg. nmber of the last phys. register
-    private int numPhysRegs; // required by current interval
+    private int firstReg;         // the reg. number of the first physical register
+    private int lastReg;          // the reg. nmber of the last physical register
+    private int numPhysRegs;      // required by current interval
     private boolean adjacentRegs; // have lo/hi words of phys. regs be adjacent
 
-    private final int[] usePos = new int[allocator.nofRegs];
-    private final int[] blockPos = new int[allocator.nofRegs];
+    private final CiRegister.AllocationSet allocatableRegisters;
+    private final int[] usePos;
+    private final int[] blockPos;
 
-    private List<Interval>[] spillIntervals = Util.uncheckedCast(new List[allocator.nofRegs]);
+    private List<Interval>[] spillIntervals;
 
     private MoveResolver moveResolver; // for ordering spill moves
 
@@ -65,9 +66,13 @@ final class LinearScanWalker extends IntervalWalker {
     LinearScanWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
         super(allocator, unhandledFixedFirst, unhandledAnyFirst);
         moveResolver = new MoveResolver(allocator);
-        for (int i = 0; i < allocator.nofRegs; i++) {
+        allocatableRegisters = allocator.allocatableRegisters;
+        spillIntervals = Util.uncheckedCast(new List[allocatableRegisters.nofRegs]);
+        for (int i = 0; i < allocatableRegisters.nofRegs; i++) {
             spillIntervals[i] = new ArrayList<Interval>(2);
         }
+        usePos = new int[allocatableRegisters.nofRegs];
+        blockPos = new int[allocatableRegisters.nofRegs];
     }
 
     void initUseLists(boolean onlyProcessUsePos) {
@@ -82,7 +87,7 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void excludeFromUse(int reg) {
-        assert reg < allocator.nofRegs : "interval must have a register assigned (stack slots not allowed)";
+        assert reg < allocatableRegisters.nofRegs : "interval must have a register assigned (stack slots not allowed)";
         if (reg >= firstReg && reg <= lastReg) {
             usePos[reg] = 0;
         }
@@ -138,9 +143,9 @@ final class LinearScanWalker extends IntervalWalker {
     void freeExcludeActiveFixed() {
         Interval list = activeFirst(IntervalKind.fixedKind);
         while (list != Interval.EndMarker) {
-            assert list.assignedReg() < allocator.nofRegs : "active interval must have a register assigned";
+            assert list.assignedReg() < allocatableRegisters.nofRegs : "active interval must have a register assigned";
             excludeFromUse(list);
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -148,7 +153,7 @@ final class LinearScanWalker extends IntervalWalker {
         Interval list = activeFirst(IntervalKind.anyKind);
         while (list != Interval.EndMarker) {
             excludeFromUse(list);
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -161,7 +166,7 @@ final class LinearScanWalker extends IntervalWalker {
             } else {
                 setUsePos(list, list.currentIntersectsAt(cur), true);
             }
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -169,7 +174,7 @@ final class LinearScanWalker extends IntervalWalker {
         Interval list = inactiveFirst(IntervalKind.anyKind);
         while (list != Interval.EndMarker) {
             setUsePos(list, list.currentIntersectsAt(cur), true);
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -180,7 +185,7 @@ final class LinearScanWalker extends IntervalWalker {
             if (kind == IntervalKind.fixedKind && cur.to() <= list.from()) {
                 setUsePos(list, list.from(), true);
             }
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -188,7 +193,7 @@ final class LinearScanWalker extends IntervalWalker {
         Interval list = activeFirst(IntervalKind.fixedKind);
         while (list != Interval.EndMarker) {
             excludeFromUse(list);
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -196,7 +201,7 @@ final class LinearScanWalker extends IntervalWalker {
         Interval list = unhandledFirst(IntervalKind.fixedKind);
         while (list != Interval.EndMarker) {
             setBlockPos(list, list.intersectsAt(cur));
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -209,7 +214,7 @@ final class LinearScanWalker extends IntervalWalker {
                 assert list.currentIntersectsAt(cur) == -1 : "invalid optimization: intervals intersect";
             }
 
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -217,7 +222,7 @@ final class LinearScanWalker extends IntervalWalker {
         Interval list = activeFirst(IntervalKind.anyKind);
         while (list != Interval.EndMarker) {
             setUsePos(list, Math.min(list.nextUsage(IntervalUseKind.loopEndMarker, currentPosition), list.to()), false);
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -227,7 +232,7 @@ final class LinearScanWalker extends IntervalWalker {
             if (list.currentIntersects(cur)) {
                 setUsePos(list, Math.min(list.nextUsage(IntervalUseKind.loopEndMarker, currentPosition), list.to()), false);
             }
-            list = list.next();
+            list = list.next;
         }
     }
 
@@ -371,10 +376,10 @@ final class LinearScanWalker extends IntervalWalker {
         return optimalSplitPos;
     }
 
-// split an interval at the optimal position between minSplitPos and
-// maxSplitPos in two parts:
-// 1 the left part has already a location assigned
-// 2) the right part is sorted into to the unhandled-list
+    // split an interval at the optimal position between minSplitPos and
+    // maxSplitPos in two parts:
+    // 1) the left part has already a location assigned
+    // 2) the right part is sorted into to the unhandled-list
     void splitBeforeUsage(Interval it, int minSplitPos, int maxSplitPos) {
         // Util.traceLinearScan(2, "----- splitting interval: ");
         if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -383,7 +388,7 @@ final class LinearScanWalker extends IntervalWalker {
         // Util.traceLinearScan(2, "      between %d and %d", minSplitPos, maxSplitPos);
 
         assert it.from() < minSplitPos : "cannot split at start of interval";
-        assert currentPosition() < minSplitPos : "cannot split before current position";
+        assert currentPosition < minSplitPos : "cannot split before current position";
         assert minSplitPos <= maxSplitPos : "invalid order";
         assert maxSplitPos <= it.to() : "cannot split after end of interval";
 
@@ -401,21 +406,21 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         // must calculate this before the actual split is performed and before split position is moved to odd opId
-    boolean moveNecessary = !allocator.isBlockBegin(optimalSplitPos) && !it.hasHoleBetween(optimalSplitPos - 1, optimalSplitPos);
+        boolean moveNecessary = !allocator.isBlockBegin(optimalSplitPos) && !it.hasHoleBetween(optimalSplitPos - 1, optimalSplitPos);
 
-    if (!allocator.isBlockBegin(optimalSplitPos)) {
+        if (!allocator.isBlockBegin(optimalSplitPos)) {
             // move position before actual instruction (odd opId)
             optimalSplitPos = (optimalSplitPos - 1) | 1;
         }
 
         // Util.traceLinearScan(4, "      splitting at position %d", optimalSplitPos);
-    assert allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 1) : "split pos must be odd when not on block boundary";
-    assert !allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 0) : "split pos must be even on block boundary";
+        assert allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 1) : "split pos must be odd when not on block boundary";
+        assert !allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 0) : "split pos must be even on block boundary";
 
         Interval splitPart = it.split(optimalSplitPos);
 
-    allocator.appendInterval(splitPart);
-    allocator.copyRegisterFlags(it, splitPart);
+        allocator.appendInterval(splitPart);
+        allocator.copyRegisterFlags(it, splitPart);
         splitPart.setInsertMoveWhenActivated(moveNecessary);
         unhandledFirst[IntervalKind.anyKind.ordinal()] = appendToUnhandled(unhandledFirst(IntervalKind.anyKind), splitPart);
 
@@ -435,7 +440,7 @@ final class LinearScanWalker extends IntervalWalker {
 
     void splitForSpilling(Interval it) {
         // calculate allowed range of splitting position
-        int maxSplitPos = currentPosition();
+        int maxSplitPos = currentPosition;
         int minSplitPos = Math.max(it.previousUsage(IntervalUseKind.shouldHaveRegister, maxSplitPos) + 1, it.from());
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
@@ -445,16 +450,16 @@ final class LinearScanWalker extends IntervalWalker {
             TTY.println("      between %d and %d", minSplitPos, maxSplitPos);
         }
 
-        assert it.state() == IntervalState.activeState : "why spill interval that is not active?";
+        assert it.state == IntervalState.activeState : "why spill interval that is not active?";
         assert it.from() <= minSplitPos : "cannot split before start of interval";
         assert minSplitPos <= maxSplitPos : "invalid order";
         assert maxSplitPos < it.to() : "cannot split at end end of interval";
-        assert currentPosition() < it.to() : "interval must not end before current position";
+        assert currentPosition < it.to() : "interval must not end before current position";
 
         if (minSplitPos == it.from()) {
             // the whole interval is never used, so spill it entirely to memory
             // Util.traceLinearScan(2, "      spilling entire interval because split pos is at beginning of interval");
-            assert it.firstUsage(IntervalUseKind.shouldHaveRegister) > currentPosition() : "interval must not have use position before currentPosition";
+            assert it.firstUsage(IntervalUseKind.shouldHaveRegister) > currentPosition : "interval must not have use position before currentPosition";
 
             allocator.assignSpillSlot(it);
             allocator.changeSpillState(it, minSplitPos);
@@ -466,7 +471,7 @@ final class LinearScanWalker extends IntervalWalker {
             while (parent != null && parent.isSplitChild()) {
                 parent = parent.getSplitChildBeforeOpId(parent.from());
 
-                if (parent.assignedReg() < allocator.nofRegs) {
+                if (parent.assignedReg() < allocatableRegisters.nofRegs) {
                     if (parent.firstUsage(IntervalUseKind.shouldHaveRegister) == Integer.MAX_VALUE) {
                         // parent is never used, so kick it out of its assigned register
                         // Util.traceLinearScan(4, "      kicking out interval %d out of its register because it is never used", parent.regNum());
@@ -520,7 +525,7 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void splitStackInterval(Interval it) {
-        int minSplitPos = currentPosition() + 1;
+        int minSplitPos = currentPosition + 1;
         int maxSplitPos = Math.min(it.firstUsage(IntervalUseKind.shouldHaveRegister), it.to());
 
         splitBeforeUsage(it, minSplitPos, maxSplitPos);
@@ -532,10 +537,10 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     void splitAndSpillInterval(Interval it) {
-        assert it.state() == IntervalState.activeState || it.state() == IntervalState.inactiveState : "other states not allowed";
+        assert it.state == IntervalState.activeState || it.state == IntervalState.inactiveState : "other states not allowed";
 
-        int currentPos = currentPosition();
-        if (it.state() == IntervalState.inactiveState) {
+        int currentPos = currentPosition;
+        if (it.state == IntervalState.inactiveState) {
             // the interval is currently inactive, so no spill slot is needed for now.
             // when the split part is activated, the interval has a new chance to get a register,
             // so in the best case no stack slot is necessary
@@ -791,108 +796,109 @@ final class LinearScanWalker extends IntervalWalker {
 
     // Split an Interval and spill it to memory so that cur can be placed in a register
     void allocLockedReg(Interval cur) {
-      if (C1XOptions.TraceLinearScanLevel >= 2) {
-          TTY.print("need to split and spill to get register for "); cur.print(TTY.out, allocator);
-      }
+        if (C1XOptions.TraceLinearScanLevel >= 2) {
+            TTY.print("need to split and spill to get register for ");
+            cur.print(TTY.out, allocator);
+        }
 
-      // collect current usage of registers
-      initUseLists(false);
-      spillExcludeActiveFixed();
-    //  spillBlockUnhandledFixed(cur);
-      assert unhandledFirst(IntervalKind.fixedKind) == Interval.EndMarker :  "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
-      spillBlockInactiveFixed(cur);
-      spillCollectActiveAny();
-      spillCollectInactiveAny(cur);
+        // collect current usage of registers
+        initUseLists(false);
+        spillExcludeActiveFixed();
+        //  spillBlockUnhandledFixed(cur);
+        assert unhandledFirst(IntervalKind.fixedKind) == Interval.EndMarker : "must not have unhandled fixed intervals because all fixed intervals have a use at position 0";
+        spillBlockInactiveFixed(cur);
+        spillCollectActiveAny();
+        spillCollectInactiveAny(cur);
 
-      if (C1XOptions.TraceLinearScanLevel >= 4) {
-        TTY.println("      state of registers:");
-        for (int i = firstReg; i <= lastReg; i++) {
-            if (allocator.isProcessedRegNum(i)) {
-              TTY.print("      reg %d: usePos: %d, blockPos: %d, intervals: ", i, usePos[i], blockPos[i]);
-              for (int j = 0; j < spillIntervals[i].size(); j++) {
-                TTY.print("%d ", spillIntervals[i].get(j).registerNumber());
-              }
-              TTY.println();
+        if (C1XOptions.TraceLinearScanLevel >= 4) {
+            TTY.println("      state of registers:");
+            for (int i = firstReg; i <= lastReg; i++) {
+                if (allocator.isProcessedRegNum(i)) {
+                    TTY.print("      reg %d: usePos: %d, blockPos: %d, intervals: ", i, usePos[i], blockPos[i]);
+                    for (int j = 0; j < spillIntervals[i].size(); j++) {
+                        TTY.print("%d ", spillIntervals[i].get(j).registerNumber());
+                    }
+                    TTY.println();
+                }
             }
         }
-      }
 
-      // the register must be free at least until this position
-      int regNeededUntil = Math.min(cur.firstUsage(IntervalUseKind.mustHaveRegister), cur.from() + 1);
-      int intervalTo = cur.to();
-      assert regNeededUntil > 0 && regNeededUntil < Integer.MAX_VALUE : "interval has no use";
+        // the register must be free at least until this position
+        int regNeededUntil = Math.min(cur.firstUsage(IntervalUseKind.mustHaveRegister), cur.from() + 1);
+        int intervalTo = cur.to();
+        assert regNeededUntil > 0 && regNeededUntil < Integer.MAX_VALUE : "interval has no use";
 
-      int splitPos = 0;
-      int usePos = 0;
-      boolean[] needSplit = new boolean[1];
-      int reg;
-      int regHi;
+        int splitPos = 0;
+        int usePos = 0;
+        boolean[] needSplit = new boolean[1];
+        int reg;
+        int regHi;
 
-      if (adjacentRegs) {
-        reg = findLockedDoubleReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), needSplit);
-        regHi = reg + 1;
+        if (adjacentRegs) {
+            reg = findLockedDoubleReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), needSplit);
+            regHi = reg + 1;
 
-        if (reg != LinearScan.getAnyreg()) {
-          usePos = Math.min(this.usePos[reg], this.usePos[regHi]);
-          splitPos = Math.min(blockPos[reg], blockPos[regHi]);
+            if (reg != LinearScan.getAnyreg()) {
+                usePos = Math.min(this.usePos[reg], this.usePos[regHi]);
+                splitPos = Math.min(blockPos[reg], blockPos[regHi]);
+            }
+        } else {
+            reg = findLockedReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), cur.assignedReg(), needSplit);
+            regHi = LinearScan.getAnyreg();
+
+            if (reg != LinearScan.getAnyreg()) {
+                usePos = this.usePos[reg];
+                splitPos = blockPos[reg];
+
+                if (numPhysRegs == 2) {
+                    if (cur.assignedReg() != LinearScan.getAnyreg()) {
+                        regHi = reg;
+                        reg = cur.assignedReg();
+                    } else {
+                        regHi = findLockedReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), reg, needSplit);
+                        if (regHi != LinearScan.getAnyreg()) {
+                            usePos = Math.min(usePos, this.usePos[regHi]);
+                            splitPos = Math.min(splitPos, blockPos[regHi]);
+                        }
+                    }
+
+                    if (regHi != LinearScan.getAnyreg() && reg > regHi) {
+                        // sort register numbers to prevent e.g. a move from eax : ebx to ebx : eax
+                        int temp = reg;
+                        reg = regHi;
+                        regHi = temp;
+                    }
+                }
+            }
         }
-      } else {
-        reg = findLockedReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), cur.assignedReg(), needSplit);
-        regHi = LinearScan.getAnyreg();
 
-        if (reg != LinearScan.getAnyreg()) {
-          usePos = this.usePos[reg];
-          splitPos = blockPos[reg];
+        if (reg == LinearScan.getAnyreg() || (numPhysRegs == 2 && regHi == LinearScan.getAnyreg()) || usePos <= cur.firstUsage(IntervalUseKind.mustHaveRegister)) {
+            // the first use of cur is later than the spilling position . spill cur
+            // Util.traceLinearScan(4, "able to spill current interval. firstUsage(register): %d, usePos: %d", cur.firstUsage(IntervalUseKind.mustHaveRegister), usePos);
 
-          if (numPhysRegs == 2) {
-            if (cur.assignedReg() != LinearScan.getAnyreg()) {
-              regHi = reg;
-              reg = cur.assignedReg();
-            } else {
-              regHi = findLockedReg(regNeededUntil, intervalTo, LinearScan.getAnyreg(), reg, needSplit);
-              if (regHi != LinearScan.getAnyreg()) {
-                usePos = Math.min(usePos, this.usePos[regHi]);
-                splitPos = Math.min(splitPos, blockPos[regHi]);
-              }
+            if (cur.firstUsage(IntervalUseKind.mustHaveRegister) <= cur.from() + 1) {
+                assert false : "cannot spill interval that is used in first instruction (possible reason: no register found)";
+                // assign a reasonable register and do a bailout in product mode to avoid errors
+                allocator.assignSpillSlot(cur);
+                throw new CiBailout("LinearScan: no register found");
             }
 
-            if (regHi != LinearScan.getAnyreg() && reg > regHi) {
-              // sort register numbers to prevent e.g. a move from eax : ebx to ebx : eax
-              int temp = reg;
-              reg = regHi;
-              regHi = temp;
+            splitAndSpillInterval(cur);
+        } else {
+            // Util.traceLinearScan(4, "decided to use register %d, %d", reg, regHi);
+            assert reg != LinearScan.getAnyreg() && (numPhysRegs == 1 || regHi != LinearScan.getAnyreg()) : "no register found";
+            assert splitPos > 0 : "invalid splitPos";
+            assert !needSplit[0] == false || splitPos > cur.from() : "splitting interval at from";
+
+            cur.assignReg(reg, regHi);
+            if (needSplit[0]) {
+                // register not available for full interval :  so split it
+                splitWhenPartialRegisterAvailable(cur, splitPos);
             }
-          }
+
+            // perform splitting and spilling for all affected intervalls
+            splitAndSpillIntersectingIntervals(reg, regHi);
         }
-      }
-
-      if (reg == LinearScan.getAnyreg() || (numPhysRegs == 2 && regHi == LinearScan.getAnyreg()) || usePos <= cur.firstUsage(IntervalUseKind.mustHaveRegister)) {
-        // the first use of cur is later than the spilling position . spill cur
-        // Util.traceLinearScan(4, "able to spill current interval. firstUsage(register): %d, usePos: %d", cur.firstUsage(IntervalUseKind.mustHaveRegister), usePos);
-
-        if (cur.firstUsage(IntervalUseKind.mustHaveRegister) <= cur.from() + 1) {
-          assert false : "cannot spill interval that is used in first instruction (possible reason: no register found)";
-          // assign a reasonable register and do a bailout in product mode to avoid errors
-            allocator.assignSpillSlot(cur);
-          throw new CiBailout("LinearScan: no register found");
-        }
-
-        splitAndSpillInterval(cur);
-      } else {
-        // Util.traceLinearScan(4, "decided to use register %d, %d", reg, regHi);
-        assert reg != LinearScan.getAnyreg() && (numPhysRegs == 1 || regHi != LinearScan.getAnyreg()) : "no register found";
-        assert splitPos > 0 : "invalid splitPos";
-        assert !needSplit[0] == false || splitPos > cur.from() : "splitting interval at from";
-
-        cur.assignReg(reg, regHi);
-        if (needSplit[0]) {
-          // register not available for full interval :  so split it
-          splitWhenPartialRegisterAvailable(cur, splitPos);
-        }
-
-        // perform splitting and spilling for all affected intervalls
-        splitAndSpillIntersectingIntervals(reg, regHi);
-      }
     }
 
     boolean noAllocationPossible(Interval cur) {
@@ -930,25 +936,25 @@ final class LinearScanWalker extends IntervalWalker {
         } else if (type == CiKind.Float || type == CiKind.Double) {
             assert false : "should not reach here!";
         } else {
-            firstReg = allocator.pdFirstCpuReg;
-            lastReg = allocator.pdLastCpuReg;
+            firstReg = allocatableRegisters.pdFirstCpuReg;
+            lastReg = allocatableRegisters.pdLastCpuReg;
         }
 
-        assert 0 <= firstReg && firstReg < allocator.nofRegs : "out of range";
-        assert 0 <= lastReg && lastReg < allocator.nofRegs : "out of range";
+        assert 0 <= firstReg && firstReg < allocatableRegisters.nofRegs : "out of range";
+        assert 0 <= lastReg && lastReg < allocatableRegisters.nofRegs : "out of range";
     }
     // TODO: Platform specific!
 
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
-        if (allocator.gen().isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
+        if (allocator.gen.isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
             assert cur.type() != CiKind.Float && cur.type() != CiKind.Double : "cpu regs only";
-            firstReg = allocator.pdFirstByteReg;
-            lastReg = allocator.pdLastByteReg;
+            firstReg = allocatableRegisters.pdFirstByteReg;
+            lastReg = allocatableRegisters.pdLastByteReg;
             return true;
         } else if (cur.type() == CiKind.Float || cur.type() == CiKind.Double) {
-            firstReg = allocator.pdFirstXmmReg;
-            lastReg = allocator.pdLastXmmReg;
+            firstReg = allocatableRegisters.pdFirstXmmReg;
+            lastReg = allocatableRegisters.pdLastXmmReg;
             return true;
         }
 
@@ -1011,7 +1017,7 @@ final class LinearScanWalker extends IntervalWalker {
         assert cur.firstUsage(IntervalUseKind.mustHaveRegister) == beginPos : "must have use position at begin of interval because of move";
         assert endHint.firstUsage(IntervalUseKind.mustHaveRegister) == endPos : "must have use position at begin of interval because of move";
 
-        if (beginHint.assignedReg() < allocator.nofRegs) {
+        if (beginHint.assignedReg() < allocatableRegisters.nofRegs) {
             // registerHint is not spilled at beginPos : so it would not be benefitial to immediately spill cur
             return;
         }
@@ -1027,7 +1033,7 @@ final class LinearScanWalker extends IntervalWalker {
     // allocate a physical register or memory location to an interval
     @Override
     boolean activateCurrent() {
-        Interval cur = current();
+        Interval cur = current;
         boolean result = true;
 
         if (C1XOptions.TraceLinearScanLevel >= 2) {
@@ -1039,7 +1045,7 @@ final class LinearScanWalker extends IntervalWalker {
             TTY.println("      splitParent: %d, insertMoveWhenActivated: %b", cur.splitParent().registerNumber(), cur.insertMoveWhenActivated());
         }
 
-        if (cur.assignedReg() >= allocator.nofRegs) {
+        if (cur.assignedReg() >= allocatableRegisters.nofRegs) {
             // activating an interval that has a stack slot assigned . split it at first use position
             // used for method parameters
             // Util.traceLinearScan(4, "      interval has spill slot assigned (method parameter) . split it before first use");
@@ -1048,7 +1054,7 @@ final class LinearScanWalker extends IntervalWalker {
             result = false;
 
         } else {
-            if (allocator.gen().isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.MustStartInMemory)) {
+            if (allocator.gen.isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.MustStartInMemory)) {
                 // activating an interval that must start in a stack slot : but may get a register later
                 // used for lirRoundfp: rounding is done by store to stack and reload later
                 // Util.traceLinearScan(4, "      interval must start in stack slot . split it before first use");
@@ -1074,7 +1080,7 @@ final class LinearScanWalker extends IntervalWalker {
                 }
 
                 // spilled intervals need not be move to active-list
-                if (cur.assignedReg() >= allocator.nofRegs) {
+                if (cur.assignedReg() >= allocatableRegisters.nofRegs) {
                     result = false;
                 }
             }
