@@ -55,7 +55,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return createHashCode(object);
         }
         final Address oldMisc = ObjectAccess.readMisc(object).asAddress();
@@ -76,7 +76,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.enter(object);
         }
     }
@@ -85,7 +85,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
         }
     }
@@ -94,7 +94,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.wait(object, timeout);
         }
     }
@@ -103,7 +103,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.notify(object);
         }
     }
@@ -112,7 +112,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
         if (object == null) {
             throw new NullPointerException();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.notifyAll(object);
         }
     }

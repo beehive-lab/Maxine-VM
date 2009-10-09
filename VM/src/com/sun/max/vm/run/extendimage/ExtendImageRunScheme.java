@@ -122,8 +122,8 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
-            if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted()) {
                 extendImage();
             }
         }
@@ -198,7 +198,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
                 forceClass(testRunPackageName + ".JavaTesterTests", false);
-                tester.initialize(MaxineVM.Phase.PROTOTYPING);
+                tester.initialize(MaxineVM.Phase.BOOTSTRAPPING);
             } catch (Exception ex) {
                 ProgramError.unexpected(ex.getMessage());
             }

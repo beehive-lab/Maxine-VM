@@ -135,7 +135,7 @@ public class JavaMonitorManager {
      * @param phase the current VM phase
      */
     public static void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             bindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
 
             int unboundListImageQty = UNBOUNDLIST_IMAGE_QTY;
@@ -245,7 +245,7 @@ public class JavaMonitorManager {
         } else {
             managedMonitor = new StandardJavaMonitor();
         }
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             managedMonitor.allocate();
         }
         return managedMonitor;

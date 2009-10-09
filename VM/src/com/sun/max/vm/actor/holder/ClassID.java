@@ -56,7 +56,7 @@ public final class ClassID {
 
     public static synchronized ClassActor toClassActor(int id) {
         try {
-            if (MaxineVM.isPrototyping() && mapping != null) {
+            if (MaxineVM.isHosted() && mapping != null) {
                 final ClassActor classActor = mapping.idToClassActor(id);
                 if (classActor != null) {
                     return classActor;

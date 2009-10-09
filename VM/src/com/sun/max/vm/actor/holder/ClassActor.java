@@ -155,7 +155,7 @@ public abstract class ClassActor extends Actor {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
                 initializationState = InitializationState.INITIALIZED;
@@ -1071,7 +1071,7 @@ public abstract class ClassActor extends Actor {
 
     @PROTOTYPE_ONLY
     private void checkProhibited(Utf8Constant typeName) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
                 ProgramError.check(!typeName.toString().startsWith(prohibitedPackagePrefix), "attempt to load from prohibited package: " + typeName);
             }
@@ -1290,7 +1290,7 @@ public abstract class ClassActor extends Actor {
 
     @INLINE
     public final Class mirror() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
         if (mirror == null) {
@@ -1343,7 +1343,7 @@ public abstract class ClassActor extends Actor {
      */
     @INLINE
     public static ClassActor fromJava(final Class<?> javaClass) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
         return (ClassActor) TupleAccess.readObject(javaClass, Class_classActor.offset());
@@ -1371,7 +1371,7 @@ public abstract class ClassActor extends Actor {
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
             result.or(interfaceActor.getSuperClassActorSerials());
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (kind == Kind.WORD) {
                 result.clear(ClassRegistry.javaLangObjectActor().id);
             }

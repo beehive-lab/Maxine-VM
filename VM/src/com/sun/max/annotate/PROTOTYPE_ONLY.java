@@ -26,7 +26,7 @@ import java.lang.annotation.*;
  * Indicates that a method, field or class is omitted from the target VM.
  * <p>
  * Typically this is used when the annotated method, field or class is only used by code guarded (directly or
- * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isPrototyping()}. For example:
+ * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isHosted()}. For example:
  *
  * <pre>
  * @PROTOTYPE_ONLY

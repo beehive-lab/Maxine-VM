@@ -37,7 +37,7 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements
 
     @INLINE
     public final int createHashCode(Object object) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return System.identityHashCode(object);
         }
         return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;

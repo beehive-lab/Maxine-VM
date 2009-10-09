@@ -100,7 +100,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE
         public static void makeClassInitialized(ClassActor classActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 classActor.makeInitialized();
             } else if (!classActor.isInitialized()) {
                 classActor.makeInitialized();
@@ -143,7 +143,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
         public static void checkCast(ClassActor classActor, Object object) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
                     Throw.classCastException(classActor, object);
                 }
@@ -158,7 +158,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE(afterSnippetsAreCompiled = true)
         public static boolean instanceOf(ClassActor classActor, Object object) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return object != null && classActor.toJava().isAssignableFrom(object.getClass());
             }
             return classActor.isNonNullInstance(object);
@@ -170,7 +170,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE
         public static void checkArrayIndex(Object array, int index) throws ArrayIndexOutOfBoundsException {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostArrayAccess.checkIndex(array, index);
             } else {
                 ArrayAccess.checkIndex(array, index);
@@ -183,7 +183,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE
         public static void checkReferenceArrayStore(Object array, Object value) throws ArrayIndexOutOfBoundsException {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostArrayAccess.checkSetObject(array, value);
             } else {
                 ArrayAccess.checkSetObject(array, value);
@@ -196,7 +196,7 @@ public abstract class Snippet extends IrRoutine {
         @SNIPPET
         @INLINE
         public static void checkNullPointer(Object object) throws NullPointerException {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 noninlineCheckNullPointer(object);
             }
             // null checks are implicitly checked
@@ -283,7 +283,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static int longCompare(long greater, int less) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 if (greater > less) {
                     return 1;
                 }
@@ -304,7 +304,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static long longSignedShiftedRight(long number, int shift) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return number >> shift;
             }
             return nativeLongSignedShiftedRight(number, shift);
@@ -319,7 +319,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static long longTimes(long factor1, long factor2) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return factor1 * factor2;
             }
             return nativeLongTimes(factor1, factor2);
@@ -334,7 +334,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static long longDivided(long dividend, long divisor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return dividend / divisor;
             }
             return nativeLongDivided(dividend, divisor);
@@ -349,7 +349,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static long longRemainder(long dividend, long divisor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return dividend % divisor;
             }
             return nativeLongRemainder(dividend, divisor);
@@ -364,7 +364,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static float floatRemainder(float dividend, float divisor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return dividend % divisor;
             }
             return nativeFloatRemainder(dividend, divisor);
@@ -379,7 +379,7 @@ public abstract class Snippet extends IrRoutine {
 
         @SNIPPET
         public static double doubleRemainder(double dividend, double divisor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return dividend % divisor;
             }
             return nativeDoubleRemainder(dividend, divisor);

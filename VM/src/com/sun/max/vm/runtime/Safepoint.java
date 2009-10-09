@@ -201,7 +201,7 @@ public abstract class Safepoint {
      */
     @INLINE
     public static boolean isTriggered() {
-        return !MaxineVM.isPrototyping() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
+        return !MaxineVM.isHosted() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }
 
     /**

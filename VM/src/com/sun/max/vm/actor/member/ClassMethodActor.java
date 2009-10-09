@@ -115,7 +115,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
         if (compilee().isInline()) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 if (compilee().isInlineAfterSnippetsAreCompiled()) {
                     return compilerScheme.areSnippetsCompiled();
                 }
@@ -176,7 +176,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
                     }
-                    if (MaxineVM.isPrototyping()) {
+                    if (MaxineVM.isHosted()) {
                         validateInlineAnnotation(compilee);
                     }
                 }
@@ -188,7 +188,7 @@ public abstract class ClassMethodActor extends MethodActor {
                 codeAttribute = processedCodeAttribute;
 
                 final ClassActor holder = compilee.holder();
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (holder.kind != Kind.WORD) {
                         // We simply verify all methods during boot image build time as the overhead should be acceptable.
                         verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);

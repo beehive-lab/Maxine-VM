@@ -50,7 +50,7 @@ public interface SPARCTargetMethod {
             final Pointer callSite = targetMethod.codeStart().plus(callOffset);
             final int displacement = (int) (callEntryPoint.asAddress().toLong() - callSite.toLong());
             final int callInstruction = CALL | (displacement >>> 2);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final byte[] code = targetMethod.code();
                 code[callOffset] = (byte) (callInstruction >> 24);
                 code[callOffset + 1] = (byte) (callInstruction >> 16);
@@ -78,7 +78,7 @@ public interface SPARCTargetMethod {
             FatalError.check((disp22 >>> 21) == 0x0 || (disp22 >>> 21) == 0x7FF, "Forwarding too far.");
             final int cti = BA_A | (disp22 & 0x3FFFFF);
 
-            assert !MaxineVM.isPrototyping() : "Should not be invoking patchCode";
+            assert !MaxineVM.isHosted() : "Should not be invoking patchCode";
             callSite.writeInt(offset, cti);
         }
 

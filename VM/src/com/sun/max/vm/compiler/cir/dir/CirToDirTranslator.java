@@ -55,7 +55,7 @@ public class CirToDirTranslator extends DirGenerator {
         final CirClosure closure = cirMethod.copyClosure();
         CirBlockUpdating.apply(closure);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (cirMethod.classMethodActor().isTemplate()) {
                 CirTemplateChecker.apply(cirGenerator, cirMethod, closure);
             }

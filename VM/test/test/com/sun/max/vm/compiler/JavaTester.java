@@ -97,7 +97,7 @@ public final class JavaTester {
         final Registry<JavaExecHarness.Executor> executors = Registry.newRegistry(JavaExecHarness.Executor.class);
 
         if (NATIVE_TESTS.getValue()) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 Prototype.loadLibrary("javatest");
             } else {
                 System.loadLibrary("javatest");

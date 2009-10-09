@@ -261,7 +261,7 @@ public abstract class MethodActor extends MemberActor {
     }
 
     public static MethodActor fromJava(Method javaMethod) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toMethodActor(javaMethod);
         }
         // The injected field in a Method object that is used to speed up this translation is lazily initialized.
@@ -275,7 +275,7 @@ public abstract class MethodActor extends MemberActor {
     }
 
     public static MethodActor fromJavaConstructor(Constructor javaConstructor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toMethodActor(javaConstructor);
         }
         // The injected field in a Constructor object that is used to speed up this translation is lazily initialized.
@@ -295,7 +295,7 @@ public abstract class MethodActor extends MemberActor {
 
     public final Method toJava() {
         assert !isInstanceInitializer();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
         Metrics.increment("MethodActor.toJava()");
@@ -323,7 +323,7 @@ public abstract class MethodActor extends MemberActor {
 
     public final Constructor<?> toJavaConstructor() {
         assert isInstanceInitializer();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJavaConstructor(this);
         }
         final Class<?> javaHolder = holder().toJava();
@@ -405,7 +405,7 @@ public abstract class MethodActor extends MemberActor {
      */
     public Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
         assert !isInstanceInitializer();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // When running hosted, the generated stub cannot be executed, because it does not verify.
             // In this situation we simply use normal Java reflection.
             final Method javaMethod = toJava();
@@ -438,7 +438,7 @@ public abstract class MethodActor extends MemberActor {
     public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
         final GeneratedConstructorStub stub = UnsafeCast.asGeneratedConstructorStub(makeInvocationStub());
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // When running hosted by HotSpot, the generated stub cannot be executed if the target method is inaccessible.
             // In this situation we simply use normal Java reflection.
             final Constructor javaConstructor = toJavaConstructor();
@@ -458,7 +458,7 @@ public abstract class MethodActor extends MemberActor {
     private static Object getBoxedJavaValue(Value value, Class<?> parameterType) {
         final Kind parameterKind = Kind.fromJava(parameterType);
         if (parameterKind == Kind.WORD) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final Word word = value.unboxWord();
                 final Class<Class<? extends Word>> type = null;
                 final Class<? extends Word> wordType = StaticLoophole.cast(type, parameterType);

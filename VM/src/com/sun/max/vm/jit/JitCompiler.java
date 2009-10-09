@@ -48,7 +48,7 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
 
-        if (MaxineVM.isPrototyping() && phase == MaxineVM.Phase.CREATING_COMPILED_PROTOTYPE) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             init();
         }
     }
@@ -70,7 +70,7 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     }
 
     public JitTargetMethod compile(ClassMethodActor classMethodActor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             init();
         }
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);

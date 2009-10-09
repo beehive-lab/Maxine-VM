@@ -341,7 +341,7 @@ public class CompiledPrototype extends Prototype {
 
     CompiledPrototype(JavaPrototype javaPrototype, int numberCompilerThreads) {
         super(javaPrototype.vmConfiguration());
-        this.vmConfiguration().initializeSchemes(Phase.CREATING_COMPILED_PROTOTYPE);
+        this.vmConfiguration().initializeSchemes(Phase.COMPILING);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }

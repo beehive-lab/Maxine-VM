@@ -188,7 +188,7 @@ public class VmThread {
     };
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototypeCompactReferenceMapInterpreter.get();
         }
         return compactReferenceMapInterpreter;
@@ -386,7 +386,7 @@ public class VmThread {
             nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM.host().setPhase(MaxineVM.Phase.PRIMORDIAL);
+        MaxineVM.host().phase = MaxineVM.Phase.PRIMORDIAL;
     }
 
     /**
@@ -404,7 +404,7 @@ public class VmThread {
      * @return a value of C type JNIEnv*
      */
     public static Pointer currentJniEnvironmentPointer() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Pointer.zero();
         }
         return JNI_ENV.pointer(currentVmThreadLocals());
@@ -412,7 +412,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread current() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
@@ -672,7 +672,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());

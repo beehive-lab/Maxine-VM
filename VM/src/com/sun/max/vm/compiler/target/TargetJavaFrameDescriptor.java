@@ -104,7 +104,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         }
 
         final byte[] compressedJavaFrameDescriptors = byteArrayOutputStream.toByteArray();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             testInflation(javaFrameDescriptors, compressedJavaFrameDescriptors);
         }
 
@@ -255,7 +255,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * Gets the cell size for a given object.
      */
     private static Size getSize(Object object) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Size.zero();
         }
         return ObjectAccess.size(object);

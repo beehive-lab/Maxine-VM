@@ -453,7 +453,7 @@ public enum Bytecode implements BytecodeInfo {
     public static final IndexedSequence<Bytecode> VALUES = new ArraySequence<Bytecode>(values());
 
     static {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             verifyFlags();
         }
     }

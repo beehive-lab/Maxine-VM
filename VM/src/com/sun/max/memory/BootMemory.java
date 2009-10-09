@@ -70,7 +70,7 @@ public final class BootMemory {
      */
     public Pointer address() {
         if (buffer.isZero()) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 buffer = Memory.mustAllocate(bufferBytes.length);
             } else {
                 buffer = Reference.fromJava(bufferBytes).toOrigin().plus(dataOffset);

@@ -55,7 +55,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
     public static final class LinkNativeMethod extends Snippet {
         @Override
         public boolean isFoldable(IrValue[] arguments) {
-            if (MaxineVM.isPrototyping() || !super.isFoldable(arguments)) {
+            if (MaxineVM.isHosted() || !super.isFoldable(arguments)) {
                 return false;
             }
             try {

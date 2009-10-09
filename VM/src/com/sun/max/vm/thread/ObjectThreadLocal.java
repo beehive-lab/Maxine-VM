@@ -64,7 +64,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      * @return the current thread's value of this thread-local
      */
     public Type get() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototype.get();
         }
         Object value = getVariableReference().toJava();
@@ -84,7 +84,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      * @return the current thread's value of this thread-local
      */
     public Type getWithoutInitialization() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototype.get();
         }
         Object value = getVariableReference().toJava();
@@ -105,7 +105,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      *        this thread-local.
      */
     public void set(Type value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             prototype.set(value);
         } else {
             setVariableReference(Reference.fromJava(value));

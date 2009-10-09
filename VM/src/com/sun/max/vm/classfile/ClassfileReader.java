@@ -417,7 +417,7 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (runtimeVisibleAnnotationsBytes != null) {
                         final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                         for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
@@ -799,7 +799,7 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (isClinit) {
                         // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
@@ -890,7 +890,7 @@ public final class ClassfileReader {
                 classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
                 classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
 
-                if (MaxineVM.isPrototyping() && substituteeIndex != -1) {
+                if (MaxineVM.isHosted() && substituteeIndex != -1) {
                     methodActors[substituteeIndex] = methodActor;
                 } else {
                     if (methodActorSet.add(methodActor) != null) {
@@ -1220,7 +1220,7 @@ public final class ClassfileReader {
         // Ensure there are no trailing bytes
         classfileStream.checkEndOfFile();
 
-        if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
+        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
@@ -1272,7 +1272,7 @@ public final class ClassfileReader {
             superClassActor.checkAccessBy(classActor);
         }
 
-        if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
+        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(METHOD_SUBSTITUTIONS.class))) {

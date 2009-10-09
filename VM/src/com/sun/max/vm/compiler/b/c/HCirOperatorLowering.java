@@ -808,7 +808,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         if (!isCFunction) {
             call = call(nativeCallEpilogue, cont(ccBody), ce());
         } else {
-            if (MaxineVM.isPrototyping() && !classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
+            if (MaxineVM.isHosted() && !classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
                 call = call(nativeCallEpilogueForC, cont(ccBody), ce());
             } else {
                 call = ccBody;
@@ -823,7 +823,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
             call = call(nativeCallPrologue, cont(call), ce());
         } else {
             if (classMethodActor.isCFunction()) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
                         call = call(nativeCallPrologueForC, cont(call), ce());
                     }

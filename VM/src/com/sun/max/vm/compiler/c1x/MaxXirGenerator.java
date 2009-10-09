@@ -1334,7 +1334,7 @@ public class MaxXirGenerator extends XirGenerator {
 
         @INLINE
         private static Object[] createObjectArray(DynamicHub hub, int length) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return (Object[]) Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
             }
             return UnsafeCast.asObjectArray(Heap.createArray(hub, length));
@@ -1342,7 +1342,7 @@ public class MaxXirGenerator extends XirGenerator {
 
         @INLINE
         private static Object createArray(DynamicHub hub, int length) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
             }
             return Heap.createArray(hub, length);
@@ -1350,7 +1350,7 @@ public class MaxXirGenerator extends XirGenerator {
 
         @INLINE
         private static void safeArrayStore(Object[] array, int index, Object val) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = val;
             } else {
                 ArrayAccess.setObject(array, index, val);

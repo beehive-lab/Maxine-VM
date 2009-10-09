@@ -338,7 +338,7 @@ public class JavaPrototype extends Prototype {
 
                     initializeMaxClasses();
 
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.PROTOTYPING);
+                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
                     // VM implementation classes ending up in the bootstrap image
                     // are supposed to be limited to those loaded up to here.
@@ -351,7 +351,7 @@ public class JavaPrototype extends Prototype {
                     VmThreadLocal.completeInitialization();
 
                 } else {
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.PROTOTYPING);
+                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
                 }
             }
         });

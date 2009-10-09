@@ -234,7 +234,7 @@ public class InvocationStubGenerator<T> {
 
             try {
                 ClassfileWriter.saveGeneratedClass(new ClassInfo(stubClassActor), constantPoolEditor.copy());
-                if (MaxineVM.isPrototyping() && saveJavaSource) {
+                if (MaxineVM.isHosted() && saveJavaSource) {
                     traceStubAsJavaSource(superClass, name, declaringClass, returnType, parameterTypes, isStatic, classToInstantiate, target, boxing, stubClassName);
                 }
             } catch (IOException ioException) {
@@ -242,7 +242,7 @@ public class InvocationStubGenerator<T> {
             }
             this.constantPoolEditor.release();
 
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 stub = superClass.cast(stubClassActor.toJava().newInstance());
             } else {
                 // In the target we cannot call Class.newInstance() as it calls the constructor for the stub class by reflection
@@ -453,7 +453,7 @@ public class InvocationStubGenerator<T> {
                 if (isInterface) {
                     asm.invokeinterface(targetCPI, argSlots, argSlots, returnValueSlots);
                 } else {
-                    if (isPrivate && !MaxineVM.isPrototyping()) {
+                    if (isPrivate && !MaxineVM.isHosted()) {
                         // Can't do this while prototyping as the Hotspot verifier will reject an invokespecial to an inaccessible method
                         asm.invokespecial(targetCPI, argSlots, returnValueSlots);
                     } else {
