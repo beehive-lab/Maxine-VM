@@ -96,10 +96,7 @@ public final class JniFunctions {
     // Checkstyle: stop method name check
 
     @JNI_FUNCTION
-    private static int GetVersion(Pointer env) {
-        FatalError.unimplemented();
-        return -1;
-    }
+    private static native int GetVersion(Pointer env);
 
     private static String dottify(String slashifiedName) {
         return slashifiedName.replace('/', '.');
@@ -1683,10 +1680,7 @@ public final class JniFunctions {
     }
 
     @JNI_FUNCTION
-    private static int GetJavaVM(Pointer env, Pointer vmPointerPointer) {
-        FatalError.unexpected("Unimplemented: GetJavaVM()");
-        return 0;
-    }
+    private static native int GetJavaVM(Pointer env, Pointer vmPointerPointer);
 
     @JNI_FUNCTION
     private static void GetStringRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {

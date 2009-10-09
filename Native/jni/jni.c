@@ -41,6 +41,8 @@
 
 #include "jni.h"
 
+static jint CurrentVersion = JNI_VERSION_1_6;
+
 /**
  * Type that extends the standard JNI function table to add GetNumberOfArguments() and GetKindsOfArguments() at the end.
  */
@@ -505,6 +507,15 @@ static jobject jni_NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID,
     CALL_STATIC_METHOD_V(NewObjectA);
 }
 
+static jint jni_GetVersion(JNIEnv *env) {
+    return CurrentVersion;
+}
+
+static jint jni_GetJavaVM(JNIEnv *env, JavaVM **vm) {
+    *vm = (JavaVM *) (&main_vm);
+    return JNI_OK;
+}
+
 // Structure containing all  functions
 struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     {
@@ -514,7 +525,7 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
 
     NULL,
 
-    /* jni_GetVersion */ NULL,
+    jni_GetVersion,
 
     /* jni_DefineClass */ NULL,
     /* jni_FindClass */ NULL,
@@ -763,7 +774,7 @@ struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     /* jni_MonitorEnter */ NULL,
     /* jni_MonitorExit */ NULL,
 
-    /* jni_GetJavaVM */ NULL,
+    jni_GetJavaVM,
 
     /* jni_GetStringRegion */ NULL,
     /* jni_GetStringUTFRegion */ NULL,
