@@ -231,7 +231,7 @@ public final class BootImageGenerator {
             outputDirectory.mkdirs();
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
-            VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
+            VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();

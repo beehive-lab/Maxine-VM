@@ -152,7 +152,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
             super.initialize(phase);
         }
         JTUtil.verbose = 3;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             registerClasses();
             nativeTests = BootImageGenerator.nativeTests;
             super.initialize(phase);

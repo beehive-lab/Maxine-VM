@@ -82,7 +82,7 @@ public abstract class Hybrid {
      * @return the expanded hybrid with array features
      */
     public final Hybrid expand(int length) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final Expansion oldValue = hybridToExpansion.put(this, new Expansion(this, length));
             assert oldValue == null;
             return this;
@@ -102,7 +102,7 @@ public abstract class Hybrid {
      */
     @INLINE
     public final int length() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return hybridToExpansion.get(this).words.length;
         }
         return ArrayAccess.readArrayLength(this);
@@ -115,7 +115,7 @@ public abstract class Hybrid {
      */
     @INLINE
     public final void setWord(int wordIndex, Word value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             assert wordIndex >= firstWordIndex();
             final Expansion expansion = hybridToExpansion.get(this);
             WordArray.set(expansion.words, wordIndex, value);
@@ -131,7 +131,7 @@ public abstract class Hybrid {
      */
     @INLINE
     public final Word getWord(int wordIndex) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             assert wordIndex >= firstWordIndex();
             final Expansion expansion = hybridToExpansion.get(this);
             return WordArray.get(expansion.words, wordIndex);
@@ -146,7 +146,7 @@ public abstract class Hybrid {
      */
     @INLINE
     public final void setInt(int intIndex, int value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             assert intIndex >= firstIntIndex();
             final Expansion expansion = hybridToExpansion.get(this);
             expansion.ints[intIndex] = value;
@@ -162,7 +162,7 @@ public abstract class Hybrid {
      */
     @INLINE
     public final int getInt(int intIndex) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             assert intIndex >= firstIntIndex();
             final Expansion expansion = hybridToExpansion.get(this);
             try {

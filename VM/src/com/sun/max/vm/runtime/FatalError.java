@@ -111,7 +111,7 @@ public final class FatalError extends Error {
      * @return never
      */
     public static FatalError unexpected(String message, boolean trappedInNative, Throwable throwable, Pointer trapState) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             throw new FatalError(message, throwable);
         }
 

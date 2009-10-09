@@ -28,7 +28,7 @@ import com.sun.max.vm.MaxineVM;
  */
 public class Prototyping01 {
     public static int test(int arg) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             doSomething();
             doSomething();
             doSomething();

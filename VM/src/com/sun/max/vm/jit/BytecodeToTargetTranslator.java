@@ -665,7 +665,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         if (referenceLiterals.isEmpty()) {
             return null;
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Sequence.Static.toArray(referenceLiterals, Object.class);
         }
         // Must not cause checkcast here, since some reference literals may be static tuples.

@@ -140,7 +140,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 return classMethodActor;
             }
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final Class<?> javaClass = classActor.toJava();
                 final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());

@@ -24,6 +24,7 @@ import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -67,7 +68,14 @@ public final class MaxineVM {
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
 
     /**
-     * The signature of {@link #run(Pointer, Pointer, Word, Word, Word, int, Pointer)}.
+     * The signature of {@link #run(com.sun.max.unsafe.Pointer,
+     *     com.sun.max.unsafe.Pointer,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Pointer,
+     *     int,
+     *     com.sun.max.unsafe.Pointer)}.
      */
     public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
 
@@ -108,19 +116,13 @@ public final class MaxineVM {
 
     private static int exitCode = 0;
 
-    public final VMConfiguration configuration;
-    private Phase phase = Phase.PROTOTYPING;
-
-
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
         MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
         final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
         if (p != null) {
             final String[] parts = p.split(",");
-            for (int i = 0; i < parts.length; i++) {
-                MAXINE_CODE_BASE_LIST.add(parts[i]);
-            }
+            MAXINE_CODE_BASE_LIST.addAll(Arrays.asList(parts));
         }
 
         Method runMethod = null;
@@ -138,12 +140,12 @@ public final class MaxineVM {
         /**
          * Running on a host VM in order to construct a target VM or to run tests.
          */
-        PROTOTYPING,
+        BOOTSTRAPPING,
 
         /**
-         * Creating the compiled prototype.
+         * Creating the compiled boot image.
          */
-        CREATING_COMPILED_PROTOTYPE,
+        COMPILING,
 
         /**
          * Executing target VM code, but many features do not work yet.
@@ -170,6 +172,7 @@ public final class MaxineVM {
      * An enum for the properties whose values must be obtained from the native environment at runtime. The enum
      * constants in this class are used to read values from the native_properties_t struct defined in
      * Native/substrate/maxine.c returned by {@link MaxineVM#native_properties()}.
+     * TODO: this is over-abstracted: why an enum and a struct?
      *
      * @author Doug Simon
      */
@@ -267,7 +270,7 @@ public final class MaxineVM {
      * configuration.
      */
     public static void usingTarget(Runnable runnable) {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             runnable.run();
@@ -282,7 +285,7 @@ public final class MaxineVM {
      * configuration.
      */
     public static <Result_Type> Result_Type usingTarget(Function<Result_Type> function) {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             try {
@@ -310,7 +313,7 @@ public final class MaxineVM {
      * Runs a given function that may throw a checked exception in the context of the target VM configuration.
      */
     public static <Result_Type> Result_Type usingTargetWithException(Function<Result_Type> function) throws Exception {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             try {
@@ -341,7 +344,7 @@ public final class MaxineVM {
     @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
-        if (isPrototyping()) {
+        if (isHosted()) {
             if (globalHostOrTarget != null) {
                 return globalHostOrTarget;
             }
@@ -350,21 +353,22 @@ public final class MaxineVM {
         return host;
     }
 
-    // Substituted by isPrototyping_()
+    // Substituted by isHosted_()
     @UNSAFE
-    public static boolean isPrototyping() {
+    public static boolean isHosted() {
         return true;
     }
 
     @UNSAFE
     @LOCAL_SUBSTITUTION
     @FOLD
-    public static boolean isPrototyping_() {
+    public static boolean isHosted_() {
         return false;
     }
 
     /**
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
+     * @return {@code true} if this is a debug build
      */
     @UNSAFE
     @FOLD
@@ -375,13 +379,12 @@ public final class MaxineVM {
     /**
      * Determines if a given constructor, field or method exists only for prototyping purposes and should not be part of
      * a generated target image.
+     * @param member the member to check
+     * @return {@code true} if the member is only valid at prototyping time
      */
     @PROTOTYPE_ONLY
     public static boolean isPrototypeOnly(AccessibleObject member) {
-        if (member.getAnnotation(PROTOTYPE_ONLY.class) != null) {
-            return true;
-        }
-        return isPrototypeOnly(Classes.getDeclaringClass(member));
+        return member.getAnnotation(PROTOTYPE_ONLY.class) != null || isPrototypeOnly(Classes.getDeclaringClass(member));
     }
 
     /**
@@ -393,12 +396,15 @@ public final class MaxineVM {
      * 2. It is nested class in an {@linkplain Class#getEnclosingClass() enclosing} prototype-only class.
      * 3. It is in a {@linkplain MaxPackage#fromClass(Class) Maxine package} that is not a {@linkplain BasePackage base},
      *    {@linkplain AsmPackage assembler}, {@linkplain VMPackage VM} or test package.
+     *
+     * @param javaClass the class to check
+     * @return {@code true} if the class is only valid at prototyping time
      */
     @PROTOTYPE_ONLY
     public static boolean isPrototypeOnly(Class<?> javaClass) {
         final Boolean value = PROTOTYPE_CLASSES.get(javaClass);
         if (value != null) {
-            return value.booleanValue();
+            return value;
         }
 
         if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
@@ -418,7 +424,7 @@ public final class MaxineVM {
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
         if (enclosingClass != null) {
             final boolean result = isPrototypeOnly(enclosingClass);
-            PROTOTYPE_CLASSES.put(javaClass, Boolean.valueOf(result));
+            PROTOTYPE_CLASSES.put(javaClass, result);
             return result;
         }
         PROTOTYPE_CLASSES.put(javaClass, Boolean.FALSE);
@@ -443,7 +449,7 @@ public final class MaxineVM {
     }
 
     public static boolean isRunning() {
-        return host().phase() == Phase.RUNNING;
+        return host().phase == Phase.RUNNING;
     }
 
     /**
@@ -451,8 +457,7 @@ public final class MaxineVM {
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        for (int i = 0; i < MAXINE_CODE_BASE_LIST.size(); i++) {
-            final String prefix = MAXINE_CODE_BASE_LIST.get(i);
+        for (final String prefix : MAXINE_CODE_BASE_LIST) {
             if (className.startsWith(prefix)) {
                 return true;
             }
@@ -528,7 +533,7 @@ public final class MaxineVM {
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-        hostOrTarget().setPhase(MaxineVM.Phase.PRISTINE);
+        hostOrTarget().phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
             if (HELP_OPTION.isPresent()) {
@@ -613,17 +618,11 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void native_writeFreeMemory(long freeMem);
 
+    public final VMConfiguration configuration;
+    public Phase phase = Phase.BOOTSTRAPPING;
 
     public MaxineVM(VMConfiguration vmConfiguration) {
         configuration = vmConfiguration;
-    }
-
-    public Phase phase() {
-        return phase;
-    }
-
-    public void setPhase(Phase phase) {
-        this.phase = phase;
     }
 
 }

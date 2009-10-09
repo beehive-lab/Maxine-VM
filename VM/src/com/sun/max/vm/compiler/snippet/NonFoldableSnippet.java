@@ -52,7 +52,7 @@ public abstract class NonFoldableSnippet extends Snippet {
     public static final class CreateTupleOrHybrid extends NonFoldableSnippet {
         @SNIPPET
         public static Object createTupleOrHybrid(ClassActor classActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 try {
                     return Objects.allocateInstance(classActor.toJava());
                 } catch (InstantiationException instantiationException) {
@@ -76,7 +76,7 @@ public abstract class NonFoldableSnippet extends Snippet {
         if (length < 0) {
             Throw.negativeArraySizeException(length);
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
         }
         return Heap.createArray(arrayClassActor.dynamicHub(), length);
@@ -84,7 +84,7 @@ public abstract class NonFoldableSnippet extends Snippet {
 
     @INLINE
     static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
         }
         return Heap.createArray(arrayClassActor.dynamicHub(), length);
@@ -126,7 +126,7 @@ public abstract class NonFoldableSnippet extends Snippet {
                     final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
                     for (int i = 0; i < length; i++) {
                         final Object subArray = createMultiReferenceArrayAtIndex(nextIndex, subArrayClassActor, lengths);
-                        if (MaxineVM.isPrototyping()) {
+                        if (MaxineVM.isHosted()) {
                             final Object[] array = (Object[]) result;
                             array[i] = subArray;
                         } else {
@@ -163,7 +163,7 @@ public abstract class NonFoldableSnippet extends Snippet {
     public static final class RaiseThrowable extends NonFoldableSnippet {
         @SNIPPET
         public static void raiseThrowable(Throwable throwable) throws Throwable {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 throw throwable;
             }
             Throw.raise(throwable);

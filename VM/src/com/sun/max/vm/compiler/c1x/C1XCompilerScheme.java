@@ -32,6 +32,7 @@ import com.sun.max.program.option.*;
 import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.prototype.JavaPrototype;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
@@ -73,12 +74,18 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PROTOTYPING) {
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
             CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
             xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget);
             compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
+        }
+        if (phase == MaxineVM.Phase.COMPILING) {
+            if (MaxineVM.isHosted()) {
+                // can only refer to JavaPrototype at prototyping time.
+                JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
+            }
         }
     }
 

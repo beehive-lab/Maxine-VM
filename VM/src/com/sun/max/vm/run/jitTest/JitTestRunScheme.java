@@ -44,7 +44,7 @@ public class JitTestRunScheme extends JavaRunScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             CompiledPrototype.registerJitClass(JitTest.class);
         }
     }

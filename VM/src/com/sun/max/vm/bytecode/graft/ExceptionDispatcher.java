@@ -71,7 +71,7 @@ public class ExceptionDispatcher {
      */
     @NEVER_INLINE
     public static Throwable safepointAndLoadExceptionObject() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototypeSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();

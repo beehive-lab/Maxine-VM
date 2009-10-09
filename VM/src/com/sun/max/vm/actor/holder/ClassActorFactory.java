@@ -43,7 +43,7 @@ public final class ClassActorFactory {
 
     @PROTOTYPE_ONLY
     static ClassLoader prototypeClassLoader() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // Shielded by this conditional, we can access the prototype class loader without it ending up in the boot image:
             return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
         }
@@ -158,12 +158,12 @@ public final class ClassActorFactory {
 
     @INLINE
     private static boolean isWord(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
-        return MaxineVM.isPrototyping() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.WORD, typeDescriptor, superClassActor);
+        return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.WORD, typeDescriptor, superClassActor);
     }
 
     @INLINE
     private static boolean isHybrid(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
-        return MaxineVM.isPrototyping() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
+        return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
     }
 
     /**

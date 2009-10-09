@@ -69,7 +69,7 @@ public class C1XTargetMethod extends TargetMethod {
 
     private void init(CiTargetMethod ciTargetMethod) {
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // Save the target method for later gathering of calls
             this.prototypingCiTargetMethod = ciTargetMethod;
         }
@@ -79,7 +79,7 @@ public class C1XTargetMethod extends TargetMethod {
         initStopPositions(ciTargetMethod);
         initExceptionTable(ciTargetMethod);
 
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             linkDirectCalls();
         }
     }
@@ -378,7 +378,7 @@ public class C1XTargetMethod extends TargetMethod {
     private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {
         final Pointer callSite = targetMethod.codeStart().plus(offset);
         final long displacement = (target - (callSite.toLong() + 5L)) & 0xFFFFFFFFL;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final byte[] code = targetMethod.code();
             code[offset] = (byte) controlTransferOpcode;
             code[offset + 1] = (byte) displacement;

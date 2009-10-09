@@ -43,7 +43,7 @@ public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final String qty = System.getProperty(JavaMonitorManager.UNBOUNDLIST_IMAGE_QTY_PROPERTY);
             if (qty == null) {
                 System.setProperty(JavaMonitorManager.UNBOUNDLIST_IMAGE_QTY_PROPERTY, "2000");

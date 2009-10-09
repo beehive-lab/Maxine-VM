@@ -315,7 +315,7 @@ public abstract class TargetLocation {
 
         public static final IndexedSequence<Tag> VALUES = new ArraySequence<Tag>(values());
         static {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 // Ensure that a Tag ordinal can be encoded as an unsigned byte.
                 ProgramError.check(VALUES.length() <= 0xFF);
 

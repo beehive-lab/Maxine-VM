@@ -644,7 +644,7 @@ public final class VMOptions {
         for (VMOption option : startingPhaseOptions) {
             option.beforeExit();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (String argument : VMOption.unmatchedVMArguments()) {
                 if (argument != null) {
                     ProgramWarning.message("VM argument not matched by any VM option: " + argument);

@@ -52,7 +52,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
     private CPSTargetMethod template;
 
     private synchronized void generateTemplate() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // The template is created at prototyping time only.
             if (template == null) {
                 template = (CPSTargetMethod) CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
@@ -71,12 +71,12 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
      */
     @Override
     public DynamicTrampoline createTrampoline(int tableIndex) {
-        if (MaxineVM.isPrototyping() && template == null) {
+        if (MaxineVM.isHosted() && template == null) {
             generateTemplate();
         }
         // Clone the template.
         final TargetMethod trampoline = template.duplicate();
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             trampoline.linkDirectCalls();
         }
         final DynamicTrampoline dynamicTrampoline = allocateTrampoline(tableIndex, trampoline);

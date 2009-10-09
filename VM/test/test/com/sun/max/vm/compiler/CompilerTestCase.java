@@ -398,7 +398,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
                 // Save the generated class file to the filesystem so that a generated stub for a method in the
                 // generated class can find the corresponding Class instance
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(className, classfileBytes);
                 }
 

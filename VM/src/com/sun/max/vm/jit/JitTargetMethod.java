@@ -256,7 +256,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
             this.referenceMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
-            if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
+            if (interpreter.performsAllocation() || MaxineVM.isHosted()) {
                 // if computing the reference map requires allocation or if prototyping,
                 // compute the reference map now
                 finalizeReferenceMaps();

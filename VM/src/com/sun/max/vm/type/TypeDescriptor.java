@@ -220,7 +220,7 @@ public abstract class TypeDescriptor extends Descriptor {
      */
     public boolean isResolvableWithoutClassLoading(final ClassActor holder, final ClassLoader classLoader) {
         TypeDescriptor typeDescriptor = this;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // When running the compiler in a prototype environment (e.g. for JUnit testing), it's
             // desirable to minimize the startup time of the compiler. That is, we do not want to
             // eagerly load all the classes normally loaded in a JavaPrototype. However, these
@@ -261,7 +261,7 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     public ClassActor resolve(final ClassLoader classLoader) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return resolveInPrototype(classLoader);
         }
         return ClassActor.fromJava(resolveType(classLoader));

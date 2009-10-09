@@ -225,7 +225,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
             beltManager = new BeltManager(beltDescriptions());
 

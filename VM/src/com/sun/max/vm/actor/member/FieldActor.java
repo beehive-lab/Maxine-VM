@@ -149,7 +149,7 @@ public class FieldActor extends MemberActor {
     }
 
     public Value readValue(Reference reference) {
-        if (MaxineVM.isPrototyping() && this instanceof InjectedFieldActor) {
+        if (MaxineVM.isHosted() && this instanceof InjectedFieldActor) {
             final InjectedFieldActor injectedFieldActor = StaticLoophole.cast(this);
             return injectedFieldActor.readInjectedValue(reference);
         }
@@ -162,7 +162,7 @@ public class FieldActor extends MemberActor {
     }
 
     public static FieldActor fromJava(Field javaField) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toFieldActor(javaField);
         }
         FieldActor fieldActor = (FieldActor) TupleAccess.readObject(javaField, Field_fieldActor.offset());
@@ -175,7 +175,7 @@ public class FieldActor extends MemberActor {
     }
 
     public Field toJava() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
         final Class javaHolder = holder().toJava();
@@ -215,7 +215,7 @@ public class FieldActor extends MemberActor {
                     // default value for its type.
                     return true;
                 }
-                if (MaxineVM.isPrototyping() && MaxineVM.isMaxineClass(holder())) {
+                if (MaxineVM.isHosted() && MaxineVM.isMaxineClass(holder())) {
                     // The class initializers of all Maxine classes are run while prototyping and
                     // the values they assign to static final fields are frozen in the boot image.
                     return true;
@@ -231,7 +231,7 @@ public class FieldActor extends MemberActor {
 
         if (isConstant(flags())) {
             assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
-            return MaxineVM.isPrototyping() || !isStatic() || holder.isInitialized();
+            return MaxineVM.isHosted() || !isStatic() || holder.isInitialized();
         }
         return false;
     }

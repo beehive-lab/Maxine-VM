@@ -277,7 +277,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
@@ -285,7 +285,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         }
         for (Label label : safepointLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
