@@ -462,7 +462,7 @@ public class LinearScan {
 
                         insertionBuffer.move(j, fromOpr, toOpr, null);
 
-                        // Util.traceLinearScan(4, "inserting move after definition of interval %d to stack slot %d at opId %d", interval.regNum(), interval.canonicalSpillSlot() - nofRegs, opId);
+                        // Util.traceLinearScan(4, "inserting move after definition of interval %d to stack slot %d at opId %d", interval.registerNumber(), interval.canonicalSpillSlot() - numRegs, opId);
 
                         interval = interval.next;
                     }
@@ -731,12 +731,10 @@ public class LinearScan {
             block.setLiveIn(new BitMap(liveSize));
             block.setLiveOut(new BitMap(liveSize));
 
-            // Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
             if (C1XOptions.TraceLinearScanLevel >= 4) {
+                Util.traceLinearScan(4, "liveGen  B%d ", block.blockID);
                 TTY.println(block.liveGen().toString());
-            }
-            // Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
-            if (C1XOptions.TraceLinearScanLevel >= 4) {
+                Util.traceLinearScan(4, "liveKill B%d ", block.blockID);
                 TTY.println(block.liveKill().toString());
             }
         } // end of block iteration
@@ -1886,7 +1884,7 @@ public class LinearScan {
 
         if (moveResolver.hasMappings()) {
             // insert moves after first instruction
-            moveResolver.setInsertPosition(block.lir(), 1);
+            moveResolver.setInsertPosition(block.lir(), 0); // TODO: 0 vs 1 bug?
             moveResolver.resolveAndAppendMoves();
         }
     }
