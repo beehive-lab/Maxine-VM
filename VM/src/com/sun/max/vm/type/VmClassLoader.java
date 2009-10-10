@@ -47,7 +47,7 @@ import com.sun.max.vm.value.*;
 public final class VmClassLoader extends ClassLoader {
 
     /**
-     * This exists (solely) for the purpose of being able to reify generated classes while prototyping. These are needed
+     * This exists (solely) for the purpose of being able to reify generated classes while bootstrapping. These are needed
      * so that the actors for generated stubs can be created. This field is omitted when generating the boot image.
      *
      * Optionally the class is written to the file system to allow the Inspector to access it when debugging the generated VM.
@@ -55,7 +55,7 @@ public final class VmClassLoader extends ClassLoader {
      * As a temporary measure it is also used at target run time to allow the inspector to grab the class file from the target
      * without depending on all the I/O machinery working.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private Map<String, byte[]> generatedClassfiles = new HashMap<String, byte[]>();
 
     private synchronized void storeRuntimeGeneratedClassFile(String name, byte[] classfile) {
@@ -100,7 +100,7 @@ public final class VmClassLoader extends ClassLoader {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public ClasspathFile findGeneratedClassfile(String name) {
         final byte[] classfileBytes = generatedClassfiles.get(name);
         if (classfileBytes != null) {
@@ -194,7 +194,7 @@ public final class VmClassLoader extends ClassLoader {
         VMConfiguration.hostOrTarget().runScheme().runNativeInitializationMethods();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private VmClassLoader() {
     }
 

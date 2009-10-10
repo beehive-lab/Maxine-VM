@@ -30,7 +30,7 @@ import com.sun.max.vm.template.generate.*;
  *
  * @author Laurent Daynes
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public class UnresolvedAtTestTime extends UnresolvedAtCompileTime {
     public static byte staticByteField;
     public static boolean staticBooleanField;

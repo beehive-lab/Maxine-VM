@@ -104,7 +104,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private Pointer trampolineRefmapPointer;
 
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
         assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
         for (VmThreadLocal tl : vmThreadLocals) {

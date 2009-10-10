@@ -80,8 +80,8 @@ public interface CompilationScheme extends VMScheme {
      * This method makes a target method for the specified method actor. If the method is already compiled, it will
      * return the current target method for the specified method. If the method is not compiled, it will perform
      * compilation according to this compilation scheme's internal policies and return the new target method. Note that
-     * this method may return {@code null} if the internal compilation policy rejects compilation of the method (e.g. at
-     * prototyping time or at runtime if there is an interpreter installed). This method is <i>synchronous</i> in the
+     * this method may return {@code null} if the internal compilation policy rejects compilation of the method (e.g. while
+     * bootstrapping or at runtime if there is an interpreter installed). This method is <i>synchronous</i> in the
      * sense that it will wait for compilation to complete if this compilation scheme uses multiple background
      * compilation threads.
      *
@@ -96,7 +96,7 @@ public interface CompilationScheme extends VMScheme {
 
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued
-     * compilations. This is necessary, for example, during prototyping time to ensure that all compilations have
+     * compilations. This is necessary, for example, during bootstrapping to ensure that all compilations have
      * finished before proceeding to the next step in creating the image.
      *
      * @return true if there are any methods that are scheduled to be compiled that have not been completed yet

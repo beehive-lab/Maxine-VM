@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class SPARCEirABIsScheme extends EirABIsScheme<SPARCEirRegister> {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCEirABIsScheme(VMConfiguration vmConfiguration,
                     EirABI<SPARCEirRegister> javaABI,
                     EirABI<SPARCEirRegister> nativeABI,

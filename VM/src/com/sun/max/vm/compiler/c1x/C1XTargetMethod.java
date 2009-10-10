@@ -54,8 +54,8 @@ public class C1XTargetMethod extends TargetMethod {
     private byte[] referenceMap;
     private int referenceRegisterCount = -1;
 
-    @PROTOTYPE_ONLY
-    private CiTargetMethod prototypingCiTargetMethod;
+    @HOSTED_ONLY
+    private CiTargetMethod bootstrappingCiTargetMethod;
 
     public C1XTargetMethod(RuntimeCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
         super(classMethodActor, compilerScheme,  VMConfiguration.target().targetABIsScheme().optimizedJavaABI());
@@ -71,7 +71,7 @@ public class C1XTargetMethod extends TargetMethod {
 
         if (MaxineVM.isHosted()) {
             // Save the target method for later gathering of calls
-            this.prototypingCiTargetMethod = ciTargetMethod;
+            this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
         initCodeBuffer(ciTargetMethod);
@@ -437,11 +437,11 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
 
         // iterate over direct calls
-        for (CiTargetMethod.Call site : prototypingCiTargetMethod.directCalls) {
+        for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {
             if (site.runtimeCall != null) {
                 directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
@@ -451,7 +451,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
 
         // iterate over all the calls and append them to the appropriate lists
-        for (CiTargetMethod.Call site : prototypingCiTargetMethod.indirectCalls) {
+        for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.indirectCalls) {
             assert site.method != null;
             if (site.method.isLoaded()) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");

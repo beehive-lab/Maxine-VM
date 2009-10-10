@@ -26,7 +26,7 @@ import com.sun.max.vm.*;
 
 /**
  * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) host-only field} is
+ * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only field} is
  * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
  *
  * @author Doug Simon

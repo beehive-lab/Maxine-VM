@@ -38,7 +38,7 @@ import com.sun.max.vm.reference.*;
  *
  * The scheme uses two collectors, one for minor collection of the young generation only, one for full collection.
  * There is a single-threaded and parallel version for each of these collectors. An instance of each of these collector
- * is created and initialized at prototyping time. What collectors to use (single-threaded vs parallel) is selected at
+ * is created and initialized while bootstrapping. What collectors to use (single-threaded vs parallel) is selected at
  * runtime.
  *
  * The rationale for doing this is that the collector objects are allocated in the boot region and out of reach of the

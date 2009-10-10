@@ -53,7 +53,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
 
     private synchronized void generateTemplate() {
         if (MaxineVM.isHosted()) {
-            // The template is created at prototyping time only.
+            // The template is created while bootstrapping only.
             if (template == null) {
                 template = (CPSTargetMethod) CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
                 assert template.referenceLiterals().length == 1;

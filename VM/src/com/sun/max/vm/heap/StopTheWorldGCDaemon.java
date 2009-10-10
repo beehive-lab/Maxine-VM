@@ -312,7 +312,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * This must be called from {@link HeapScheme#finalize(com.sun.max.vm.MaxineVM.Phase)} of any {@link HeapScheme}
      * implementation that uses the {@link StopTheWorldGCDaemon}.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void checkInvariants() {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);

@@ -68,7 +68,7 @@ public abstract class Snippet extends IrRoutine {
         return "<snippet: " + name() + ">";
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void register() {
         for (Snippet snippet : snippets) {
             final MethodActor  foldingMethodActor = snippet.foldingMethodActor();

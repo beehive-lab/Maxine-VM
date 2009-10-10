@@ -422,7 +422,7 @@ public final class ClassfileReader {
                         final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                         for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                             final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                            if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                            if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
                                 continue nextField;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
                                 assert !Actor.isFinal(flags) :
@@ -801,7 +801,7 @@ public final class ClassfileReader {
 
                 if (MaxineVM.isHosted()) {
                     if (isClinit) {
-                        // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
+                        // Class initializer's for all Maxine class are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
                         if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
                             continue nextMethod;
@@ -824,7 +824,7 @@ public final class ClassfileReader {
                     final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                     for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                         final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                        if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                        if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
                             continue nextMethod;
                         }
                         flags = setVmFlags(name, descriptor, genericSignature, flags, info);
@@ -1225,7 +1225,7 @@ public final class ClassfileReader {
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
                     classFlags |= TEMPLATE;
-                } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
                     ProgramError.unexpected("Trying to load a prototype only class " + name);
                 }
             }

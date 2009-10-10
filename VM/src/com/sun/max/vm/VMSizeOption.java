@@ -44,7 +44,7 @@ public class VMSizeOption extends VMOption {
      * @param defaultValue the default size for this option when it is not present on the command line
      * @param help the help text to report for this option
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VMSizeOption(String prefix, Size defaultValue, String help) {
         super(prefix, help);
         value = defaultValue;

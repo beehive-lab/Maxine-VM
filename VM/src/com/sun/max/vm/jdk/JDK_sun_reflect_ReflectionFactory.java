@@ -57,11 +57,11 @@ public class JDK_sun_reflect_ReflectionFactory {
 
     /**
      * Creates a method stub needed to invoke the specified method and adds it to the
-     * pre-populated list at prototyping time.
+     * pre-populated list while bootstrapping.
      * @param methodActor the method actor for which to create a method stub
      * @return the method stub for the specified method actor
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static ClassActor createPrePopulatedMethodStub(MethodActor methodActor) {
         MethodAccessor stub = prePopulatedMethodStubs.get(methodActor);
         if (stub == null) {
@@ -73,7 +73,7 @@ public class JDK_sun_reflect_ReflectionFactory {
 
     /**
      * Creates a method stub needed to invoke the specified constructor and adds it to the
-     * pre-populated list at prototyping time.
+     * pre-populated list while bootstrapping.
      * @param methodActor the method actor for which to create a method stub
      * @return the method stub for the specified method acto
      */

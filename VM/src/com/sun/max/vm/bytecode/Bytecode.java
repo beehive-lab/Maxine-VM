@@ -458,7 +458,7 @@ public enum Bytecode implements BytecodeInfo {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void verifyFlags() {
         try {
             int allFlags = 0;

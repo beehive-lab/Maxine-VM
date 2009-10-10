@@ -43,7 +43,7 @@ public abstract class InterpreterStub extends TargetMethod {
     }
 
     @Override
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         FatalError.unimplemented();
     }

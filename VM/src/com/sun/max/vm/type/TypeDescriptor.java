@@ -236,7 +236,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
-            if (MaxineVM.isPrototypeOnly(javaClass)) {
+            if (MaxineVM.isHostedOnly(javaClass)) {
                 return false;
             }
 
@@ -260,7 +260,7 @@ public abstract class TypeDescriptor extends Descriptor {
         return ClassActor.fromJava(resolveType(classLoader));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private ClassActor resolveInPrototype(final ClassLoader classLoader) {
         Classes.initialize(PrimitiveClassActor.class);
         return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(this);

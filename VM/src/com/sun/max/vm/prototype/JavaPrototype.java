@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * This class loads and initializes important JDK packages needed during prototyping.
+ * This class loads and initializes important JDK packages needed during bootstrapping.
  *
  * @author Bernd Mathiske
  */
@@ -135,7 +135,7 @@ public class JavaPrototype extends Prototype {
      * @param javaClass the class to load into the prototype
      */
     private void loadClass(Class javaClass) {
-        assert !MaxineVM.isPrototypeOnly(javaClass);
+        assert !MaxineVM.isHostedOnly(javaClass);
         Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
     }
 
@@ -284,7 +284,7 @@ public class JavaPrototype extends Prototype {
      * Ensures that all the Maxine classes currently in the {@linkplain ClassRegistry#vmClassRegistry() VM class
      * registry} are {@linkplain Classes#initialize(Class) initialized}. Any class in a subpackage of {@code
      * com.sun.max} is deemed to be a Maxine class. These initializers are never re-run in the target VM
-     * and so they are omitted from the boot image (as if they had the {@link PROTOTYPE_ONLY} annotation
+     * and so they are omitted from the boot image (as if they had the {@link HOSTED_ONLY} annotation
      * applied to them).
      */
     private static void initializeMaxClasses() {
@@ -473,10 +473,10 @@ public class JavaPrototype extends Prototype {
      * Gets the corresponding class actor for the specified Java class.
      *
      * @param javaClass the Java class for which to get the class actor
-     * @return the class actor for {@code javaClass} or {@code null} if {@code javaClass} is annotated with {@link PROTOTYPE_ONLY}
+     * @return the class actor for {@code javaClass} or {@code null} if {@code javaClass} is annotated with {@link HOSTED_ONLY}
      */
     public ClassActor toClassActor(Class javaClass) {
-        if (MaxineVM.isPrototypeOnly(javaClass)) {
+        if (MaxineVM.isHostedOnly(javaClass)) {
             return null;
         }
         synchronized (javaClassMap) {

@@ -270,7 +270,7 @@ public final class JDKInterceptor {
     }
 
     /**
-     * Register a field of a class to be reset at prototyping time.
+     * Register a field of a class to be reset while bootstrapping.
      * @param javaClass the java class that declared the field
      * @param fieldName the name of the field as a string
      */

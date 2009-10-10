@@ -33,7 +33,7 @@ import com.sun.max.vm.trampoline.template.Package;
  *
  * @author Mick Jordan
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class VMConfigurations {
 
     private VMConfigurations() {

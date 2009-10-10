@@ -454,7 +454,7 @@ public abstract class MethodActor extends MemberActor {
         return stub.newInstance(argumentValues);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static Object getBoxedJavaValue(Value value, Class<?> parameterType) {
         final Kind parameterKind = Kind.fromJava(parameterType);
         if (parameterKind == Kind.WORD) {
@@ -484,7 +484,7 @@ public abstract class MethodActor extends MemberActor {
      *
      * @return
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static Object[] getBoxedJavaValues(Value[] values, Class[] parameterTypes) {
         final Object[] boxedJavaValues = new Object[parameterTypes.length];
         assert values.length == parameterTypes.length;

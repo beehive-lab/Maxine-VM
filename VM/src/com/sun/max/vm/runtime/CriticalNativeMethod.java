@@ -39,7 +39,7 @@ public class CriticalNativeMethod extends CriticalMethod {
 
     private static CriticalNativeMethod[] criticalNativeMethods = {};
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void registerCriticalNativeMethod(CriticalNativeMethod criticalNativeMethod) {
         criticalNativeMethods = Arrays.copyOf(criticalNativeMethods, criticalNativeMethods.length + 1);
         criticalNativeMethods[criticalNativeMethods.length - 1] = criticalNativeMethod;
@@ -53,7 +53,7 @@ public class CriticalNativeMethod extends CriticalMethod {
      * @param methodName the name of the method as a string
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CriticalNativeMethod(Class javaClass, String methodName) {
         super(javaClass, methodName, null, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
@@ -64,7 +64,7 @@ public class CriticalNativeMethod extends CriticalMethod {
      * Create a new critical entrypoint for the specified class method actor.
      * @param classMethodActor the method for which to create an entrypoint
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CriticalNativeMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);

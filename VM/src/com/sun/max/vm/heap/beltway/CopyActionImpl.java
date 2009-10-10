@@ -48,7 +48,7 @@ public class CopyActionImpl implements Action {
 
     /**
      * Initialize the heap scheme this closure is being used by.
-     * This needs to be decoupled from the constructor because the closure is typically created at prototyping time
+     * This needs to be decoupled from the constructor because the closure is typically created while bootstrapping
      * before the heap scheme might be created.
      */
     public void initialize(BeltwayHeapScheme heapScheme) {

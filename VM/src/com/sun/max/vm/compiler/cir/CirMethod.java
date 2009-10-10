@@ -234,9 +234,9 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     public synchronized CirCall inline(CirOptimizer cirOptimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
         if (cirBytecode == null) {
             // This usually denotes a case where the code for a snippet includes
-            // a section that is only executed if VM.isPrototyping() is true and
+            // a section that is only executed if MaxineVM.isHosted() is true and
             // this section uses the snippet. The solution in this case is to
-            // put the prototyping-only code in a separate method that will not be
+            // put the bootstrapping-only code in a separate method that will not be
             // inlined
             ProgramError.check(!makingIr, "cannot inline " + classMethodActor() + " while making its IR");
 

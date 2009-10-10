@@ -230,7 +230,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             beltManager = new BeltManager(beltDescriptions());
 
             // Parallel GC support. FIXME: Should this be here at all ?
-            // the number of GC threads to use should be a VM startup decision, not  a prototyping one.
+            // the number of GC threads to use should be a VM startup decision, not  a bootstrapping one.
             for (int i = 0; i < numberOfGCThreads; i++) {
                 JavaMonitorManager.bindStickyMonitor(BeltwayCollectorThread.tokens[i], new StandardJavaMonitor());
             }

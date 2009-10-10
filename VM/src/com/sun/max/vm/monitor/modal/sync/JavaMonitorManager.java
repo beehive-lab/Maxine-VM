@@ -36,7 +36,7 @@ import com.sun.max.vm.thread.*;
 /**
  * Manages a pool of {@linkplain JavaMonitor monitors} and their binding and unbinding to objects.
  * <p>
- * Binding can be performed at prototyping or runtime. If binding is performed at prototyping time then either a default
+ * Binding can be performed at bootstrapping or runtime. If binding is performed while bootstrapping then either a default
  * or specialized monitor can be used. If binding is performed at runtime then an unbound monitor is taken from
  * a free list.
  * <p>
@@ -190,7 +190,7 @@ public class JavaMonitorManager {
      * @param requireProxyAcquirableMonitors true if proxy acquirable monitors are required; false otherwise
      * @see ProxyAcquirableJavaMonitor
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setRequireProxyAcquirableMonitors(boolean requireProxyAcquirableMonitors) {
         JavaMonitorManager.requireProxyAcquirableMonitors = requireProxyAcquirableMonitors;
     }
@@ -203,7 +203,7 @@ public class JavaMonitorManager {
      * @param object the object to bind
      * @param monitor the monitor to bind
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object, ManagedMonitor monitor) {
         monitor.setBoundObject(object);
         addToStickyMonitors(monitor);
@@ -217,18 +217,18 @@ public class JavaMonitorManager {
      *
      * @param object the object to bind
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static <Object_Type> Object_Type bindStickyMonitor(Object_Type object) {
         return bindStickyMonitor(object, new StandardJavaMonitor());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void addToStickyMonitors(ManagedMonitor monitor) {
         stickyMonitors = Arrays.copyOf(stickyMonitors, stickyMonitors.length + 1);
         stickyMonitors[stickyMonitors.length - 1] = monitor;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void addToBindableMonitors(ManagedMonitor monitor) {
         if (numberOfBindableMonitors == bindableMonitors.length) {
             final ManagedMonitor[] newAllBindable = new ManagedMonitor[bindableMonitors.length + unboundListGrowQty];

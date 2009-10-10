@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 
 public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static Object static_method() {
         return null;
     }

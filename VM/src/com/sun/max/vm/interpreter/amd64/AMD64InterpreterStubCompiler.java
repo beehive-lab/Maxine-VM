@@ -36,7 +36,7 @@ import com.sun.max.vm.stack.amd64.*;
  */
 public class AMD64InterpreterStubCompiler extends InterpreterStubCompiler {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public AMD64InterpreterStubCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }

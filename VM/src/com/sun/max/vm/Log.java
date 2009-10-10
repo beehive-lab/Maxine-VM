@@ -337,8 +337,8 @@ public final class Log {
         private LogOutputStream() {
         }
 
-        @PROTOTYPE_ONLY
-        private static final OutputStream prototypeOutputStream;
+        @HOSTED_ONLY
+        private static final OutputStream hostedOutputStream;
         static {
             // Use the same environment variable as used by the native code - see Native/share/debug.c
             String path = System.getenv("MAXINE_LOG_FILE");
@@ -346,12 +346,12 @@ public final class Log {
                 path = "stdout";
             }
             if (path.equals("stdout")) {
-                prototypeOutputStream = System.out;
+                hostedOutputStream = System.out;
             } else if (path.equals("stderr")) {
-                prototypeOutputStream = System.err;
+                hostedOutputStream = System.err;
             } else {
                 try {
-                    prototypeOutputStream = new FileOutputStream(path);
+                    hostedOutputStream = new FileOutputStream(path);
                 } catch (FileNotFoundException fileNotFoundException) {
                     throw ProgramError.unexpected("Could not open file for VM output stream: " + path, fileNotFoundException);
                 }
@@ -361,9 +361,9 @@ public final class Log {
         @Override
         public void write(int b) throws IOException {
             if (MaxineVM.isHosted()) {
-                prototypeOutputStream.write(b);
+                hostedOutputStream.write(b);
                 if (b == '\n') {
-                    prototypeOutputStream.flush();
+                    hostedOutputStream.flush();
                 }
             } else {
                 log_print_char(b);
@@ -373,10 +373,10 @@ public final class Log {
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             if (MaxineVM.isHosted()) {
-                prototypeOutputStream.write(b, off, len);
+                hostedOutputStream.write(b, off, len);
                 for (int i = (off + len) - 1; i >= off; --i) {
                     if (b[i] == '\n') {
-                        prototypeOutputStream.flush();
+                        hostedOutputStream.flush();
                         break;
                     }
                 }

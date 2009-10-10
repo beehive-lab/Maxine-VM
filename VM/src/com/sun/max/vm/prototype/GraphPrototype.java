@@ -554,7 +554,7 @@ public class GraphPrototype extends Prototype {
             // must ensure that any ClassActor instances reference the java.lang.Class instance
             exploreClassActor((ClassActor) object);
         } else if (object instanceof JDK.ClassRef) {
-            // resolve class ref's at prototyping type
+            // resolve class ref's at bootstrapping type
             exploreClassRef((JDK.ClassRef) object);
         }
 
@@ -580,7 +580,7 @@ public class GraphPrototype extends Prototype {
     private void exploreClass(Class javaClass) throws ProgramError {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         if (classActor == null) {
-            if (MaxineVM.isPrototypeOnly(javaClass)) {
+            if (MaxineVM.isHostedOnly(javaClass)) {
                 throw ProgramError.unexpected("Instance of prototype only class " + javaClass + " should not be reachable.");
             }
             throw ProgramError.unexpected("Could not get class actor for " + javaClass);

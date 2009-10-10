@@ -45,7 +45,7 @@ public final class Heap {
     private static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         public InitialHeapSizeOption() {
             super("-Xms", Size.M.times(512), "The initial heap size.");
         }

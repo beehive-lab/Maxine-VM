@@ -124,7 +124,7 @@ public final class BootImageGenerator {
 
     private final Option<String> vmArguments = options.newStringOption("vmargs", null,
             "A set of one or VM arguments. This is useful for exercising VM functionality or " +
-            "enabling VM tracing while prototyping.");
+            "enabling VM tracing while bootstrapping.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for

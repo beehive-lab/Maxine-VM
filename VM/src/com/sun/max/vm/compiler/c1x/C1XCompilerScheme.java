@@ -83,7 +83,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         }
         if (phase == MaxineVM.Phase.COMPILING) {
             if (MaxineVM.isHosted()) {
-                // can only refer to JavaPrototype at prototyping time.
+                // can only refer to JavaPrototype while bootstrapping.
                 JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
             }
         }

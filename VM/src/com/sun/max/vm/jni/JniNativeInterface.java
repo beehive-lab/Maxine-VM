@@ -50,7 +50,7 @@ public final class JniNativeInterface {
     private JniNativeInterface() {
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static StaticMethodActor[] getJniFunctionActors() {
         StaticMethodActor[] localStaticMethodActors = ClassActor.fromJava(JniFunctions.class).localStaticMethodActors();
         int count = 0;
@@ -72,7 +72,7 @@ public final class JniNativeInterface {
         return jniFunctionActors;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void checkAgainstJniHeaderFile(StaticMethodActor[] jniFunctionActors) {
         String jniHeaderFilePath = System.getProperty("max.jni.headerFile");
         if (jniHeaderFilePath == null) {

@@ -51,7 +51,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The prototyping phase responsible for compiling and linking methods in the target.
+ * The bootstrapping phase responsible for compiling and linking methods in the target.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -228,7 +228,7 @@ public class CompiledPrototype extends Prototype {
 
 
     private void gatherNewAnonymousClass(final LinkSequence<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
-        if (!MaxineVM.isPrototypeOnly(enclosingMethod)) {
+        if (!MaxineVM.isHostedOnly(enclosingMethod)) {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
                 getAnonymousClasses(methodActor).add(classActor);

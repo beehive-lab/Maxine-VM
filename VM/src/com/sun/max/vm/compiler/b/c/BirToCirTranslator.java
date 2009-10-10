@@ -123,13 +123,13 @@ public class BirToCirTranslator extends CirGenerator {
 
     /**
      * Performs wrapping of a method annotated by {@link WRAPPED} (explicitly or {@linkplain JNI_FUNCTION implicitly}).
-     * Note that this transformation is only performed during {@linkplain MaxineVM#isHosted() prototyping}.
+     * Note that this transformation is only performed during {@linkplain MaxineVM#isHosted() bootstrapping}.
      *
      * @param classMethodActor a method being compiled
      * @param cirClosure the initial CIR graph for {@code classMethodActor}
      * @return the closure for {@code classMethodActor} after any relevant wrapping transformation has been applied
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private CirClosure applyWrapping(final ClassMethodActor classMethodActor, final CirClosure cirClosure) {
         if (!classMethodActor.isInitializer()) {
             Class wrapperHolder = null;

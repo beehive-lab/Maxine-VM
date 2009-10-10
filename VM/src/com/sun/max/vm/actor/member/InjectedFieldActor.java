@@ -42,9 +42,9 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
     TypeDescriptor holderTypeDescriptor();
 
     /**
-     * Support for reading an injected field while prototyping.
+     * Support for reading an injected field while bootstrapping.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     Value_Type readInjectedValue(Reference reference);
 
     public static final class Static {
@@ -58,7 +58,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
         private Static() {
         }
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         static void registerInjectedFieldActor(InjectedFieldActor injectedFieldActor) {
             assert ClassRegistry.vmClassRegistry().get(injectedFieldActor.holderTypeDescriptor()) == null :
                 "cannot inject field into pre-existing class " + injectedFieldActor.holderTypeDescriptor().toJavaString();

@@ -178,8 +178,8 @@ public class VmThread {
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
-    @PROTOTYPE_ONLY
-    private static final ThreadLocal<CompactReferenceMapInterpreter> prototypeCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
+    @HOSTED_ONLY
+    private static final ThreadLocal<CompactReferenceMapInterpreter> hostedCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
 
         @Override
         protected CompactReferenceMapInterpreter initialValue() {
@@ -189,7 +189,7 @@ public class VmThread {
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
         if (MaxineVM.isHosted()) {
-            return prototypeCompactReferenceMapInterpreter.get();
+            return hostedCompactReferenceMapInterpreter.get();
         }
         return compactReferenceMapInterpreter;
     }
@@ -347,11 +347,11 @@ public class VmThread {
     }
 
     /**
-     * This happens during prototyping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
+     * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
      * there is no 'Thread' constructor that we could call without a valid parent thread, we hereby clone the host VM's
      * main thread.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static VmThread createMain() {
         final Thread thread = HostObjectAccess.mainThread();
         final VmThread vmThread = VmThreadFactory.create(thread);
@@ -365,7 +365,7 @@ public class VmThread {
         return mainVMThread;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Size stackSize() {
         return DEFAULT_STACK_SIZE;
     }
@@ -654,7 +654,7 @@ public class VmThread {
 
 
     // Only used by the EIR interpreter(s)
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void setVmThreadLocals(Address address) {
         vmThreadLocals = address.asPointer();
     }

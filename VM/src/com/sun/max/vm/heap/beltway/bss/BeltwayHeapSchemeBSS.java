@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space. The heap
  * scheme can use two collectors, a single-threaded one and a parallel one. An instance of each of these collectors is
- * created at prototyping time and their reference stored in static variable. Which of the two collector to use is
+ * created while bootstrapping and their reference stored in static variable. Which of the two collector to use is
  * decided at runtime. The rationale for doing this is that the collector objects are allocated in the boot region and
  * out of reach of the copying mechanism. This allows the collector objects to use their instance fields (including
  * references field, if they point to boot regions objects) at any time (included GC time).
