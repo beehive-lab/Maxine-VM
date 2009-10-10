@@ -52,7 +52,6 @@ public class BlockBegin extends Instruction {
         IsOnWorkList,
         WasVisited,
         DefaultExceptionHandler,
-        Merged,
         ParserLoopHeader,
         CriticalEdgeSplit,
         LinearScanLoopHeader,

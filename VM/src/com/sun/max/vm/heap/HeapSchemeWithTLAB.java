@@ -239,7 +239,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             OBJECT_HUB = TupleClassActor.fromJava(Object.class).dynamicHub();
             BYTE_ARRAY_HUB = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub();
             MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;

@@ -18,35 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
+package com.sun.c1x.ir;
 
-import com.sun.max.annotate.FOLD;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
 
-/*
- * @Harness: java
- * @Runs: 0=true
+/**
+ * The <code>LoadRegister</code> instruction represents a read of a physical register.
+ * This instruction is part of the HIR support for low-level operations, such as safepoints,
+ * stack banging, etc, and does not correspond to a Java operation.
+ *
+ * @author Ben L. Titzer
  */
-public class Fold03 {
+public class LoadRegister extends Instruction {
 
-    public static boolean test(int arg) {
-        return flong(10, 10) && fdouble(0.0d, 0.0d);
+    final CiRegister register;
+
+    /**
+     * Creates a new LoadPointer instance.
+     * @param kind the kind of value loaded from the register
+     * @param register the register to laod
+     */
+    public LoadRegister(CiKind kind, CiRegister register) {
+        super(kind);
+        this.register = register;
     }
 
-    @FOLD
-    static boolean flong(long x, long y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
+    public CiRegister register() {
+        return register;
     }
 
-    @FOLD
-    static boolean fdouble(double x, double y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
+    /**
+     * Implements this instruction's half of the visitor pattern.
+     * @param v the visitor to accept
+     */
+    @Override
+    public void accept(ValueVisitor v) {
+        v.visitLoadRegister(this);
     }
 }

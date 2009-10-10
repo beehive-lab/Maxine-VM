@@ -128,7 +128,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.adapterReturnPosition(),
                         codeGenerator.targetABI());
 
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls();
         }

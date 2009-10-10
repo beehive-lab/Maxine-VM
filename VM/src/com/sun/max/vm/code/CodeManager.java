@@ -89,7 +89,7 @@ public abstract class CodeManager {
 
         allocationSize = bundleSize;
 
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             // The allocation and initialization of objects in a code region must be atomic with respect to garbage collection.
             Safepoint.disable();
             Heap.disableAllocationForCurrentThread();
@@ -113,7 +113,7 @@ public abstract class CodeManager {
         byte[] code;
         byte[] scalarLiterals = null;
         Object[] referenceLiterals = null;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             code = new byte[codeLength];
             scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
             referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
@@ -136,7 +136,7 @@ public abstract class CodeManager {
         final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
         targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
 
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
             Safepoint.enable();
             Heap.enableAllocationForCurrentThread();

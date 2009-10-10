@@ -293,7 +293,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public String disassemble(byte[] code) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
             writer.flush();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,30 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.monitor;
+package jtt.max;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.vm.MaxineVM;
 
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0=1; 1=2
  */
-public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements MonitorScheme {
-
-    protected AbstractMonitorScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
-    }
-
-    private int counter;
-
-    @INLINE
-    public final int createHashCode(Object object) {
+public class Prototyping01 {
+    public static int test(int arg) {
         if (MaxineVM.isHosted()) {
-            return System.identityHashCode(object);
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
+            doSomething();
         }
-        return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
+        return arg + 1;
     }
-
-
+    static void doSomething() {
+        for (int i = 0; i < 50; i++) {
+            new Object().toString();
+        }
+    }
 }

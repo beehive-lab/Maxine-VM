@@ -150,7 +150,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (BeltwayGenerationalCollector collector : singleThreadedCollectors) {
                 collector.initialize(this);
             }

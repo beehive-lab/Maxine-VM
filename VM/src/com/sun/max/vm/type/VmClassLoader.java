@@ -59,7 +59,7 @@ public final class VmClassLoader extends ClassLoader {
     private Map<String, byte[]> generatedClassfiles = new HashMap<String, byte[]>();
 
     private synchronized void storeRuntimeGeneratedClassFile(String name, byte[] classfile) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (generatedClassfiles == null) {
                 generatedClassfiles = new HashMap<String, byte[]>();
             } else if (generatedClassfiles.containsKey(name)) {
@@ -72,7 +72,7 @@ public final class VmClassLoader extends ClassLoader {
     public void saveGeneratedClassfile(String name, byte[] classfile) {
         storeRuntimeGeneratedClassFile(name, classfile);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final String path = System.getProperty("maxine.vmclassloader.saveclassdir");
             if (path != null) {
                 final File classfileFile = new File(path + File.separator + name.replace(".", File.separator) + ".class");
@@ -140,7 +140,7 @@ public final class VmClassLoader extends ClassLoader {
 
     @Override
     public synchronized Class<?> findClass(String name) throws ClassNotFoundException {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             try {
                 return super.findClass(name);
             } catch (ClassNotFoundException e) {

@@ -128,7 +128,7 @@ public final class TargetBundleLayout {
         cellOffsets = new Offset[numberOfFields];
         WordArray.fill(cellOffsets, INVALID_OFFSET);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             bundleSize = Size.zero();
         }
 

@@ -107,7 +107,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             singleThreadedCollector.initialize(this);
             parallelCollector.initialize(this);
         }

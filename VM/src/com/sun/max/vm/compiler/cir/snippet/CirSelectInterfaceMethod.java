@@ -53,7 +53,7 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
 
     @Override
     public boolean mustNotInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (isConstantArgument(arguments, Parameter.declaredMethod)) {
                 final MethodActor declaredMethod = (MethodActor) getConstantArgumentValue(arguments, Parameter.declaredMethod).asObject();
                 // Accessor method selection must never be inlined, instead it must always be folded:

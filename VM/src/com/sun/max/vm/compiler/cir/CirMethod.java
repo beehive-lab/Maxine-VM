@@ -108,7 +108,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // This happens when interpreting a CIR method with the CirInterpreter
             if (!isFoldable(cirOptimizer, arguments)) {
                 return CirRoutine.Static.fold(this, arguments);
@@ -164,7 +164,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     private CirClosure cachedClosure;
 
     private void cache(CirClosure closure) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // So let's not fill the host VM's heap too much here.
         } else {
             cachedClosure = closure;

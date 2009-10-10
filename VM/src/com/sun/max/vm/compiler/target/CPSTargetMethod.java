@@ -449,7 +449,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         writer.println("target method: " + this);
         traceBundle(writer);
         writer.flush();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             Disassemble.disassemble(byteArrayOutputStream, this);
         }
         return byteArrayOutputStream.toString();

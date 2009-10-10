@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
-import test.com.sun.max.vm.jtrun.JTClasses;
+import test.com.sun.max.vm.jtrun.*;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list
@@ -222,11 +222,6 @@ public class JTConfig {
         jtt.bytecode.BC_tableswitch4.class,
         jtt.bytecode.BC_wide01.class,
         jtt.bytecode.BC_wide02.class,
-        jtt.directives.Fold01.class,
-        jtt.directives.Fold02.class,
-        jtt.directives.Fold03.class,
-        jtt.directives.Inline01.class,
-        jtt.directives.Prototyping01.class,
         jtt.except.BC_aaload.class,
         jtt.except.BC_aastore.class,
         jtt.except.BC_anewarray.class,
@@ -288,6 +283,7 @@ public class JTConfig {
         jtt.except.Except_Synchronized02.class,
         jtt.except.Except_Synchronized03.class,
         jtt.except.Except_Synchronized04.class,
+        jtt.except.Except_Synchronized05.class,
         jtt.except.Finally01.class,
         jtt.except.Finally02.class,
         jtt.except.Throw_InCatch01.class,
@@ -444,12 +440,17 @@ public class JTConfig {
         jtt.loop.Loop05.class,
         jtt.loop.Loop06.class,
         jtt.loop.LoopSwitch01.class,
+        jtt.max.Fold01.class,
+        jtt.max.Fold02.class,
+        jtt.max.Fold03.class,
         jtt.max.Hub_Subtype01.class,
         jtt.max.Hub_Subtype02.class,
         jtt.max.ImmortalHeap_allocation.class,
         jtt.max.ImmortalHeap_gc.class,
         jtt.max.ImmortalHeap_switching.class,
+        jtt.max.Inline01.class,
         jtt.max.Invoke_except01.class,
+        jtt.max.Prototyping01.class,
         jtt.max.Unsigned_idiv01.class,
         jtt.micro.ArrayCompare01.class,
         jtt.micro.ArrayCompare02.class,

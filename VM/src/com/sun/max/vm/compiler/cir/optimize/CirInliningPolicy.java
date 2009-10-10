@@ -60,11 +60,11 @@ public class CirInliningPolicy {
             return false;
         }
         if (compilee.isInline()) {
-            if (MaxineVM.isPrototyping() && compilee.isInlineAfterSnippetsAreCompiled() && !cirOptimizer.cirGenerator().compilerScheme().areSnippetsCompiled()) {
+            if (MaxineVM.isHosted() && compilee.isInlineAfterSnippetsAreCompiled() && !cirOptimizer.cirGenerator().compilerScheme().areSnippetsCompiled()) {
                 return false;
             }
             return true;
-        } else if (MaxineVM.isPrototyping() && CompiledPrototype.jitCompile(cirMethod.classMethodActor())) {
+        } else if (MaxineVM.isHosted() && CompiledPrototype.jitCompile(cirMethod.classMethodActor())) {
             // for testing purposes, don't inline methods that are marked to be compiled by the JIT
             return false;
         }

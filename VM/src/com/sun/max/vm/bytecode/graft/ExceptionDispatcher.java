@@ -71,7 +71,7 @@ public class ExceptionDispatcher {
      */
     @NEVER_INLINE
     public static Throwable safepointAndLoadExceptionObject() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototypeSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
@@ -97,7 +97,7 @@ public class ExceptionDispatcher {
         // Prevent loading types during image building: can safely assume that the type
         // in an exception handler is indeed a subclass of Throwable.
         ClassActor catchType = null;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (classRef.isResolvableWithoutClassLoading(assembler.constantPool())) {
                 catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
             }

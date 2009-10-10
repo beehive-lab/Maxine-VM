@@ -37,7 +37,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static int readLength(Object array) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostObjectAccess.getArrayLength(array);
             }
             return ArrayAccess.readArrayLength(array);
@@ -50,7 +50,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static byte getByte(Object array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostArrayAccess.getByte(array, index);
             }
             return ArrayAccess.getByte(array, index);
@@ -63,7 +63,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static short getShort(short[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getShort(array, index);
@@ -76,7 +76,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static char getChar(char[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getChar(array, index);
@@ -89,7 +89,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static int getInt(int[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getInt(array, index);
@@ -102,7 +102,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static float getFloat(float[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getFloat(array, index);
@@ -115,7 +115,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static long getLong(long[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getLong(array, index);
@@ -128,7 +128,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static double getDouble(double[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getDouble(array, index);
@@ -141,7 +141,7 @@ public abstract class ArrayGetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static Object getReference(Object[] array, int index) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return array[index];
             }
             return ArrayAccess.getObject(array, index);

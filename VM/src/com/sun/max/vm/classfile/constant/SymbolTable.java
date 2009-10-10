@@ -88,7 +88,7 @@ public final class SymbolTable {
     public static synchronized Utf8Constant makeSymbol(String value) {
         Utf8ConstantEntry utf8 = symbolTable.get(value);
         if (utf8 == null) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 // String interning is implemented with another data structure when running hosted
                 utf8 = new Utf8ConstantEntry(value.intern());
             } else {

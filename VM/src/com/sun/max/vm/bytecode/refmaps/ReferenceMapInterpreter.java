@@ -601,7 +601,7 @@ public abstract class ReferenceMapInterpreter {
      *         interpretation
      */
     private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // This indirection is simply for debugging the interpreter loop.
             try {
                 return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
@@ -673,7 +673,7 @@ public abstract class ReferenceMapInterpreter {
                 visitReferencesAtCurrentBytecodePosition(visitor, false);
             }
 
-            if (MaxineVM.isPrototyping() && trace) {
+            if (MaxineVM.isHosted() && trace) {
                 System.err.println("  " + currentFrameToString());
                 System.err.println(opcodeBytecodePosition + ":  " + opcode);
             }

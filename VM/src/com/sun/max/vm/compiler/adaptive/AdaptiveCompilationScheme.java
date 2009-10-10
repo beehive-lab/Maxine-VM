@@ -154,7 +154,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (BACKGROUND_COMPILATION) {
                 // launch a compiler thread if background compilation is supported (currently no)
                 final CompilationThread compilationThread = new CompilationThread();
@@ -300,7 +300,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return optimizingCompiler;
         }
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // if we are prototyping, then always use the prototype compiler
             // unless forced to use the JIT (e.g. for testing purposes)
             if (CompiledPrototype.jitCompile(classMethodActor)) {
@@ -309,7 +309,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 synchronized (this) {
                     if (c1xCompiler == null) {
                         c1xCompiler = new C1XCompilerScheme(vmConfiguration());
-                        c1xCompiler.initialize(Phase.PROTOTYPING);
+                        c1xCompiler.initialize(Phase.BOOTSTRAPPING);
                     }
                     return c1xCompiler;
                 }

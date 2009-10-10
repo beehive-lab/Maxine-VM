@@ -175,7 +175,7 @@ public class MaxRiField implements RiField {
     public CiConstant constantValue() {
         if (fieldActor != null && fieldActor.isConstant()) {
             Value v;
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 v = HostTupleAccess.readValue(null, fieldActor);
             } else {
                 v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));

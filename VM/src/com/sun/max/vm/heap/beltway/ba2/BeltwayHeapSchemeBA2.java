@@ -133,7 +133,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (BeltwayBA2Collector collector : singleThreadedCollectors) {
                 collector.initialize(this);
             }

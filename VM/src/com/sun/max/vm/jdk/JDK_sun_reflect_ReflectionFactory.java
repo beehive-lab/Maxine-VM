@@ -78,7 +78,7 @@ public class JDK_sun_reflect_ReflectionFactory {
      * @return the method stub for the specified method acto
      */
     public static ClassActor createPrePopulatedConstructorStub(MethodActor methodActor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             ConstructorAccessor stub = prePopulatedConstructorStubs.get(methodActor);
             if (stub == null) {
                 stub = newConstructorStub(methodActor.toJavaConstructor(), null, Boxing.JAVA);

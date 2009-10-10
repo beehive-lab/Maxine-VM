@@ -99,7 +99,7 @@ public class BirToCirTranslator extends CirGenerator {
         HCirToLCirTranslation.apply(methodTranslation);
         notifyAfterTransformation(cirMethod, cirClosure, HCIR_TO_LCIR);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             cirClosure = applyWrapping(classMethodActor, cirClosure);
         }
 
@@ -123,7 +123,7 @@ public class BirToCirTranslator extends CirGenerator {
 
     /**
      * Performs wrapping of a method annotated by {@link WRAPPED} (explicitly or {@linkplain JNI_FUNCTION implicitly}).
-     * Note that this transformation is only performed during {@linkplain MaxineVM#isPrototyping() prototyping}.
+     * Note that this transformation is only performed during {@linkplain MaxineVM#isHosted() prototyping}.
      *
      * @param classMethodActor a method being compiled
      * @param cirClosure the initial CIR graph for {@code classMethodActor}
@@ -185,7 +185,7 @@ public class BirToCirTranslator extends CirGenerator {
 
         if (compilerScheme().optimizing()) {
             CirInliningPolicy cirInliningPolicy = CirInliningPolicy.DYNAMIC;
-            if (MaxineVM.isPrototyping() && !cirMethod.classMethodActor().isHiddenToReflection()) {
+            if (MaxineVM.isHosted() && !cirMethod.classMethodActor().isHiddenToReflection()) {
                 final ACCESSOR accessorAnnotation = cirMethod.classMethodActor().getAnnotation(ACCESSOR.class);
                 if (accessorAnnotation != null) {
                     cirInliningPolicy = new CirInliningPolicy(accessorAnnotation.value());

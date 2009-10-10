@@ -164,7 +164,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     public void monitorExit(Object object) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
             return;
         }
@@ -198,7 +198,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     public void monitorNotify(Object object, boolean all) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.notify(object);
             return;
         }
@@ -217,7 +217,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     public void monitorWait(Object object, long timeout) throws InterruptedException {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.wait(object, timeout);
             return;
         }
@@ -262,7 +262,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
         public void monitorEnter(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
             }
@@ -314,7 +314,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
         public int makeHashCode(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
             int newHashcode = 0;
@@ -365,7 +365,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
         public void monitorEnter(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
             }
@@ -445,7 +445,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         public int makeHashCode(Object object) {
             // This is under construction!
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
             int newHashcode = 0;

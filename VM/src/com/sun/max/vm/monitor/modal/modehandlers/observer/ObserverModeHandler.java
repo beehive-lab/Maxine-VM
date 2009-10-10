@@ -52,7 +52,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             JavaMonitorManager.bindStickyMonitor(this);
         }
     }
@@ -103,7 +103,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     public int makeHashCode(Object object) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return monitorScheme().createHashCode(object);
         }
         notifyObservers(Event.MAKE_HASHCODE, object);
@@ -112,7 +112,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     public void monitorEnter(Object object) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.enter(object);
             return;
         }
@@ -122,7 +122,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     public void monitorExit(Object object) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.exit(object);
             return;
         }
@@ -132,7 +132,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     public void monitorNotify(Object object, boolean all) {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.notify(object);
             return;
         }
@@ -146,7 +146,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     public void monitorWait(Object object, long timeout) throws InterruptedException {
         nullCheck(object);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             HostMonitor.wait(object, timeout);
             return;
         }
