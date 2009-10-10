@@ -20,8 +20,7 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
-import test.com.sun.max.vm.jtrun.JTClasses;
-import jtt.max.*;
+import test.com.sun.max.vm.jtrun.*;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list

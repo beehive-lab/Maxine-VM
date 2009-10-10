@@ -39,7 +39,10 @@ import com.sun.max.ins.*;
  */
 public class TableRowTextSearcher extends AbstractInspectionHolder implements RowTextSearcher {
 
-    private final JTable table;
+    /**
+     * The text rows being searched.
+     */
+    private final String[] rowsOfText;
 
     /**
      * Create a search session for a table.
@@ -49,16 +52,17 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
      */
     public TableRowTextSearcher(Inspection inspection, JTable jTable) {
         super(inspection);
-        table = jTable;
+        rowsOfText = rowsOfText(jTable);
     }
 
-    public IndexedSequence<Integer> search(Pattern pattern) {
-        final AppendableIndexedSequence<Integer> matchingRows = new VectorSequence<Integer>(64);
+    private static String[] rowsOfText(JTable table) {
         final TableModel tableModel = table.getModel();
         final int rowCount = tableModel.getRowCount();
         final TableColumnModel columnModel = table.getColumnModel();
         final int columnCount = columnModel.getColumnCount();
+        String[] rowsOfText = new String[rowCount];
         for (int row = 0; row < rowCount; row++) {
+            StringBuilder rowText = new StringBuilder();
             for (int col = 0; col < columnCount; col++) {
                 final TableColumn column = columnModel.getColumn(col);
                 final TableCellRenderer cellRenderer = column.getCellRenderer();
@@ -66,10 +70,19 @@ public class TableRowTextSearcher extends AbstractInspectionHolder implements Ro
                 final Object valueAt = tableModel.getValueAt(row, columnIndex);
                 final Component tableCellRendererComponent = cellRenderer.getTableCellRendererComponent(table, valueAt, false, false, row, columnIndex);
                 final TextSearchable searchable = (TextSearchable) tableCellRendererComponent;
-                if (pattern.matcher(searchable.getSearchableText()).find()) {
-                    matchingRows.append(row);
-                    break;
-                }
+                rowText.append(' ').append(searchable.getSearchableText());
+            }
+            rowsOfText[row] = rowText.toString();
+        }
+        return rowsOfText;
+    }
+
+    public IndexedSequence<Integer> search(Pattern pattern) {
+        String[] rowsOfText = this.rowsOfText;
+        AppendableIndexedSequence<Integer> matchingRows = new VectorSequence<Integer>(rowsOfText.length);
+        for (int row = 0; row < rowsOfText.length; row++) {
+            if (pattern.matcher(rowsOfText[row]).find()) {
+                matchingRows.append(row);
             }
         }
         return matchingRows;

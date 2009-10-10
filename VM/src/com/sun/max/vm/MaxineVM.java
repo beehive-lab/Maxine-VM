@@ -213,13 +213,6 @@ public final class MaxineVM {
         return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
     }
 
-    public static void writeInitialVMParams() {
-        native_writeMaxMemory(Heap.maxSize().toLong());
-        native_writeTotalMemory(Heap.maxSize().toLong());
-        // TODO: write a sensible value here, and keep native space up to date
-        native_writeFreeMemory(Heap.maxSize().toLong() >> 1);
-    }
-
     @PROTOTYPE_ONLY
     public static boolean isHostInitialized() {
         return host != null;
@@ -388,7 +381,7 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class exists only for prototyping purposes and should not be part
+     * Determines if a given class exists only for hosted execution and should not be part
      * of a generated target image. A class is determined to be a prototype-only class if any
      * of the following apply:
      *
@@ -609,15 +602,6 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
-
-    @C_FUNCTION
-    public static native void native_writeMaxMemory(long maxMem);
-
-    @C_FUNCTION
-    public static native void native_writeTotalMemory(long totalMem);
-
-    @C_FUNCTION
-    public static native void native_writeFreeMemory(long freeMem);
 
     public final VMConfiguration configuration;
     public Phase phase = Phase.BOOTSTRAPPING;

@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.type;
 
-import java.util.*;
-
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -208,12 +206,6 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     /**
-     * This just reduces repetition of identical warning messages.
-     */
-    @PROTOTYPE_ONLY
-    private static Map<ClassActor, Set<TypeDescriptor>> suspiciousReferencesByHolder;
-
-    /**
      * Determines if this constant can be resolved without causing class loading.
      *
      * @param holder the class that contains this type descriptor as a reference to another class
@@ -238,24 +230,25 @@ public abstract class TypeDescriptor extends Descriptor {
             }
 
             final Class<?> javaClass;
-            try {
-                // Don't trigger class initialization
-                javaClass = Classes.forName(typeDescriptor.toJavaString(), false, getClass().getClassLoader());
-                if (javaClass.getPackage().getName().equals("java.lang")) {
-                    return true;
-                }
-                if (!MaxineVM.isPrototypeOnly(javaClass)) {
-                    if (MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            } catch (NoClassDefFoundError e) {
+            // Don't trigger class initialization
+            javaClass = Classes.forName(typeDescriptor.toJavaString(), false, getClass().getClassLoader());
+            if (javaClass.getPackage().getName().equals("java.lang")) {
+                return true;
+            }
+
+            if (MaxineVM.isPrototypeOnly(javaClass)) {
                 return false;
             }
+
+            if (PrototypeClassLoader.isOmittedType(typeDescriptor)) {
+                return false;
+            }
+
+            if (MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+                return true;
+            }
+
+            return false;
         }
         return ClassRegistry.get(classLoader, typeDescriptor, true) != null;
     }
