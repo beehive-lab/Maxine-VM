@@ -59,7 +59,7 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
             try {
                 final MethodActor methodActor = methodRefConstant.resolve(constantPool, index);
                 sequence.append(methodActor);
-            } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+            } catch (HostOnlyMethodError prototypeOnlyMethodError) {
                 ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(constantPool)));
             }
         } else {

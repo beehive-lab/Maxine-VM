@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,14 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * memory.h
+package com.sun.max.vm.prototype;
+
+import com.sun.max.vm.*;
+
+/**
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isPrototypeOnly(Class) host-only}
+ * class via the {@link PrototypeClassLoader}.
  *
- *  Created on: May 23, 2008
- *  Author: Karthik M
+ * @author Doug Simon
  */
-
-#ifndef MEMORY_H_
-#define MEMORY_H_
-
-#endif /* MEMORY_H_ */
+public class HostOnlyClassError extends NoClassDefFoundError {
+    public HostOnlyClassError(String className) {
+        super(className);
+    }
+}

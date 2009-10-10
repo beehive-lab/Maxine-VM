@@ -88,13 +88,24 @@ public class ExceptionDispatcher {
     }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
-        ClassConstant classAt = assembler.constantPool().classAt(classConstantIndex);
-        final TypeDescriptor type = classAt.typeDescriptor();
+        ClassConstant classRef = assembler.constantPool().classAt(classConstantIndex);
+        final TypeDescriptor type = classRef.typeDescriptor();
         if (type.equals(JavaTypeDescriptor.THROWABLE)) {
             return true;
         }
-        ClassActor catchType = classAt.resolve(assembler.constantPool(), classConstantIndex);
-        if (!ClassRegistry.javaLangThrowableActor().isAssignableFrom(catchType)) {
+
+        // Prevent loading types during image building: can safely assume that the type
+        // in an exception handler is indeed a subclass of Throwable.
+        ClassActor catchType = null;
+        if (MaxineVM.isPrototyping()) {
+            if (classRef.isResolvableWithoutClassLoading(assembler.constantPool())) {
+                catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
+            }
+        } else {
+            catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
+        }
+
+        if (catchType != null && !ClassRegistry.javaLangThrowableActor().isAssignableFrom(catchType)) {
             throw ErrorContext.verifyError("Catch type is not a subclass of Throwable in handler");
         }
         return false;

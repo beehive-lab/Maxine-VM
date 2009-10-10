@@ -34,11 +34,6 @@
 #include "virtualMemory.h"
 #include "log.h"
 
-long total_memory = -1;
-long max_memory = -1;
-long free_memory = -1;
-
-
 Address memory_allocate(Size size)
 {
     Address mem = (Address) calloc(1, (size_t) size);
@@ -66,20 +61,3 @@ jint memory_deallocate(Address pointer)
     //log_println("MEMORY FREED at address: %x", pointer);
     return 0;
 }
-
-void native_writeMaxMemory(long mem)
-{
-	max_memory = mem;
-}
-
-void native_writeTotalMemory(long mem)
-{
-	total_memory = mem;
-}
-
-void native_writeFreeMemory(long mem)
-{
-	free_memory = mem;
-}
-
-

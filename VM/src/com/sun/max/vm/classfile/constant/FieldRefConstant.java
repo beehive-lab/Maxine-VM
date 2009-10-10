@@ -172,7 +172,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
                 final Class fieldType = type.resolveType(javaClass.getClassLoader());
                 final Field field = Classes.resolveField(javaClass, fieldType, name.string);
                 if (MaxineVM.isPrototypeOnly(field)) {
-                    throw new PrototypeOnlyFieldError(errorMessage);
+                    throw new HostOnlyFieldError(errorMessage);
                 }
             }
 

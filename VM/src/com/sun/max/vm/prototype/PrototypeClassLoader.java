@@ -28,7 +28,6 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -70,28 +69,38 @@ public final class PrototypeClassLoader extends ClassLoader {
     }
 
     /**
-     * Adds the name of package that must not correspond to any class loaded into the VM class registry.
-     * Calling {@link #loadClass(String, boolean)} for a class in the named package will return null.
+     * Adds the name of package whose constituent classes must not be loaded into the VM class registry. Calling
+     * {@link #loadClass(String, boolean)} for a class in the named package will return null.
      *
      * @param packageName
+     * @param retrospective if true, then this method verifies that the VM class registry does not currently contain any
+     *            classes in the specified package
      */
-    public static void omitPackage(String packageName) {
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
+    public static void omitPackage(String packageName, boolean retrospective) {
+        if (retrospective) {
+            for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+                ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
+            }
         }
         omittedPackages.add(packageName);
     }
 
     /**
      * Determines if a given type descriptor denotes a class that must not be loaded in VM class registry.
-     * The set of omitted classes is determined by any preceding calls to {@link #omitClass(Class)} and {@link #omitPackage(String)}.
+     * The set of omitted classes is determined by any preceding calls to {@link #omitClass(Class)} and {@link #omitPackage(String, boolean)}.
      *
      * @param typeDescriptor the descriptor of a type to test
      * @return {@code true} if {@code typeDescriptor} denotes a class that must not be loaded in VM class registry
      */
     public static boolean isOmittedType(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        return omittedClasses.contains(className) || omittedPackages.contains(Classes.getPackageName(className));
+        if (omittedClasses.contains(className)) {
+            return true;
+        }
+        if (omittedPackages.contains(Classes.getPackageName(className))) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -152,9 +161,6 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if the class specified by the type descriptor could not be found
      */
     public ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
-        if (isOmittedType(typeDescriptor)) {
-            FatalError.unexpected("attempt to load a class that should not be in the boot image: " + typeDescriptor);
-        }
         try {
             return MaxineVM.usingTargetWithException(new Function<ClassActor>() {
                 public ClassActor call() throws Exception {
@@ -186,7 +192,7 @@ public final class PrototypeClassLoader extends ClassLoader {
     public ClassActor mustMakeClassActor(TypeDescriptor typeDescriptor) {
         try {
             return makeClassActor(typeDescriptor);
-        } catch (Throwable throwable) {
+        } catch (ClassNotFoundException throwable) {
             throw ProgramError.unexpected("could not make class Actor: " + typeDescriptor, throwable);
         }
     }
@@ -280,12 +286,10 @@ public final class PrototypeClassLoader extends ClassLoader {
                 public Class call() throws ClassNotFoundException {
                     final Class<?> javaType = PrototypeClassLoader.super.loadClass(name, resolve);
                     if (MaxineVM.isPrototypeOnly(javaType)) {
-                        Trace.line(1, "Ignoring prototype only type: " + javaType);
-                        return null;
+                        throw new HostOnlyClassError(javaType.getName());
                     }
                     if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {
-                        Trace.line(1, "Ignoring explicitly omitted type: " + javaType);
-                        return null;
+                        throw new OmittedClassError(javaType.getName());
                     }
                     makeClassActor(JavaTypeDescriptor.forJavaClass(javaType));
                     return javaType;
@@ -295,5 +299,4 @@ public final class PrototypeClassLoader extends ClassLoader {
             throw Exceptions.cast(ClassNotFoundException.class, exception);
         }
     }
-
 }

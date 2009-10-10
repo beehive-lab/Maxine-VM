@@ -193,7 +193,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
-        MaxineVM.writeInitialVMParams();
         MaxineVM.hostOrTarget().setPhase(MaxineVM.Phase.STARTING);
 
         // Now we can decode all the other VM arguments using the full language
@@ -240,8 +239,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             MaxineVM.host().setPhase(Phase.RUNNING);
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.RUNNING);
 
-            lookupAndInvokeMain(loadMainClass());
-            error = false;
+            Class<?> mainClass = loadMainClass();
+            if (mainClass != null) {
+                lookupAndInvokeMain(mainClass);
+                error = false;
+            }
 
         } catch (ClassNotFoundException classNotFoundException) {
             error = true;
@@ -303,7 +305,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             final JarFile jarFile = new JarFile(jarFileName);
             mainClassName = findMainClassNameInJarFile(jarFile);
             if (mainClassName == null) {
-                throw ProgramError.unexpected("could not find main class in jarfile: " + jarFileName);
+                Log.println("could not find main class in jarfile: " + jarFileName);
+                return null;
             }
         }
         return appClassLoader.loadClass(mainClassName);

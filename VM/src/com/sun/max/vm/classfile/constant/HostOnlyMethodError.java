@@ -18,14 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * memory.h
+package com.sun.max.vm.classfile.constant;
+
+import java.lang.reflect.*;
+
+import com.sun.max.vm.*;
+
+/**
+ * Thrown when a {@linkplain PoolConstant constant pool entry} for a
+ * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) host-only method} is
+ * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
  *
- *  Created on: May 23, 2008
- *  Author: Karthik M
+ * @author Doug Simon
  */
+public class HostOnlyMethodError extends NoSuchMethodError {
 
-#ifndef MEMORY_H_
-#define MEMORY_H_
-
-#endif /* MEMORY_H_ */
+    public HostOnlyMethodError(String s) {
+        super(s);
+    }
+}

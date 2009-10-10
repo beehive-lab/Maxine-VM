@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.type;
 
-import java.util.*;
-
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -208,12 +206,6 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     /**
-     * This just reduces repetition of identical warning messages.
-     */
-    @PROTOTYPE_ONLY
-    private static Map<ClassActor, Set<TypeDescriptor>> suspiciousReferencesByHolder;
-
-    /**
      * Determines if this constant can be resolved without causing class loading.
      *
      * @param holder the class that contains this type descriptor as a reference to another class
@@ -244,25 +236,19 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
-            final boolean result = !MaxineVM.isPrototypeOnly(javaClass) &&
-                                   MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass));
-//            if (!result) {
-//                if (com.sun.max.Package.contains(javaClass)) {
-//                    if (_suspiciousReferencesByHolder == null) {
-//                        _suspiciousReferencesByHolder = new HashMap<ClassActor, Set<TypeDescriptor>>();
-//                    }
-//                    Set<TypeDescriptor> suspiciousReferences = _suspiciousReferencesByHolder.get(holder);
-//                    if (suspiciousReferences == null) {
-//                        suspiciousReferences = new HashSet<TypeDescriptor>();
-//                        _suspiciousReferencesByHolder.put(holder, suspiciousReferences);
-//                    }
-//                    if (!suspiciousReferences.contains(this)) {
-//                        suspiciousReferences.add(this);
-//                        ProgramWarning.message("Code in " + holder + " refers to a MaxineVM class (" + javaClass.getName() + ") that is not included in the VM: missing \"VM.isPrototyping()\" guard?");
-//                    }
-//                }
-//            }
-            return result;
+            if (MaxineVM.isPrototypeOnly(javaClass)) {
+                return false;
+            }
+
+            if (PrototypeClassLoader.isOmittedType(typeDescriptor)) {
+                return false;
+            }
+
+            if (MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+                return true;
+            }
+
+            return false;
         }
         return ClassRegistry.get(classLoader, typeDescriptor, true) != null;
     }
