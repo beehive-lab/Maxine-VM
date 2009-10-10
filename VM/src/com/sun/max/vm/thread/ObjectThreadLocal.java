@@ -37,15 +37,15 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      */
     private static final Object UNINITIALIZED = new Object();
 
-    @PROTOTYPE_ONLY
-    private final ThreadLocal<Type> prototype = new ThreadLocal<Type>() {
+    @HOSTED_ONLY
+    private final ThreadLocal<Type> hosted = new ThreadLocal<Type>() {
         @Override
         protected Type initialValue() {
             return ObjectThreadLocal.this.initialValue();
         }
     };
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public ObjectThreadLocal(String name, String description) {
         super(name, true, description);
     }
@@ -65,7 +65,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      */
     public Type get() {
         if (MaxineVM.isHosted()) {
-            return prototype.get();
+            return hosted.get();
         }
         Object value = getVariableReference().toJava();
         if (value == UNINITIALIZED) {
@@ -85,7 +85,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      */
     public Type getWithoutInitialization() {
         if (MaxineVM.isHosted()) {
-            return prototype.get();
+            return hosted.get();
         }
         Object value = getVariableReference().toJava();
         if (value == UNINITIALIZED) {
@@ -106,7 +106,7 @@ public class ObjectThreadLocal<Type> extends VmThreadLocal {
      */
     public void set(Type value) {
         if (MaxineVM.isHosted()) {
-            prototype.set(value);
+            hosted.set(value);
         } else {
             setVariableReference(Reference.fromJava(value));
         }

@@ -125,7 +125,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         descriptors.add(descriptor);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void testInflation(Sequence<TargetJavaFrameDescriptor> original, byte[] compressedJavaFrameDescriptors) {
         try {
             final Sequence<TargetJavaFrameDescriptor> inflated = inflate(compressedJavaFrameDescriptors);

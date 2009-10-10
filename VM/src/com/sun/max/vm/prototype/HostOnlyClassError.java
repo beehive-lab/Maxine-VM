@@ -23,7 +23,7 @@ package com.sun.max.vm.prototype;
 import com.sun.max.vm.*;
 
 /**
- * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isPrototypeOnly(Class) host-only}
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
  * class via the {@link PrototypeClassLoader}.
  *
  * @author Doug Simon

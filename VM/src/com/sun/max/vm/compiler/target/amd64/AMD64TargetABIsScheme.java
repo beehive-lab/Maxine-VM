@@ -63,14 +63,14 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
 
     private static final int NULL_STACK_BIAS = 0;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> createAMD64TargetABI(RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment, CallEntryPoint callEntryPoint, VMConfiguration vmConfiguration) {
         return  new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(registerRoleAssignment, callEntryPoint,
                         integerParameterRegisters, integerParameterRegisters, floatingPointParameterRegisters,
                         false, true, stackFrameAlignment(vmConfiguration), NULL_STACK_BIAS);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public AMD64TargetABIsScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration,
                         createAMD64TargetABI(nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
@@ -78,7 +78,7 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
                         createAMD64TargetABI(optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static int stackFrameAlignment(VMConfiguration vmConfiguration) {
         if (vmConfiguration.platform().operatingSystem == OperatingSystem.DARWIN) {
             // Darwin requires 16-byte stack frame alignment.

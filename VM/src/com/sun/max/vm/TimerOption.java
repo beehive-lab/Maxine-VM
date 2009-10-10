@@ -43,7 +43,7 @@ public class TimerOption extends VMBooleanXXOption {
      * @param timer the timer to use. This should be a multi-thread safe timer (e.g. {@link MultiThreadTimer}) if it
      *            may be used by more than one thread.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public TimerOption(String prefix, String label, String help, Timer timer) {
         this(prefix, label, help, new TimerMetric(timer));
     }
@@ -55,7 +55,7 @@ public class TimerOption extends VMBooleanXXOption {
      * @param label a description of action timed by this option (e.g. "Compilation")
      * @param help describes the option's semantics
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public TimerOption(String prefix, String label, String help, TimerMetric timerMetric) {
         super(prefix, help);
         this.timerMetric = timerMetric;

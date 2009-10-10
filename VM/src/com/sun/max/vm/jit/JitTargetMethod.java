@@ -115,7 +115,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return super.callEntryPointForDirectCall(directCallIndex);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return stopPosition(directCalleeIndex) < targetCodePositionFor(0);
@@ -257,7 +257,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             this.referenceMapEditor.set(referenceMapEditor);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isHosted()) {
-                // if computing the reference map requires allocation or if prototyping,
+                // if computing the reference map requires allocation or if bootstrapping,
                 // compute the reference map now
                 finalizeReferenceMaps();
             }

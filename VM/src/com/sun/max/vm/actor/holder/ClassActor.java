@@ -1061,15 +1061,15 @@ public abstract class ClassActor extends Actor {
         return result;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static String prohibitedPackagePrefix = null;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void prohibitPackagePrefix(MaxPackage prefix) {
         prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void checkProhibited(Utf8Constant typeName) {
         if (MaxineVM.isHosted()) {
             if (prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
@@ -1311,7 +1311,7 @@ public abstract class ClassActor extends Actor {
         return UnsafeCast.asClass(oldValue.toJava());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final void setMirror(Class javaClass) {
         if (mirror == null) {
             mirror = javaClass;
@@ -1332,13 +1332,13 @@ public abstract class ClassActor extends Actor {
         return javaSignature(true);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Map<Class, ClassActor> classToClassActorMap = new HashMap<Class, ClassActor>();
 
     /**
      * Gets the class actor for a given Java class.
      * <p>
-     * If this called during prototyping and the given Java class is annotated with {@link PROTOTYPE_ONLY}, then null
+     * If this called during bootstrapping and the given Java class is annotated with {@link HOSTED_ONLY}, then null
      * is returned.
      */
     @INLINE

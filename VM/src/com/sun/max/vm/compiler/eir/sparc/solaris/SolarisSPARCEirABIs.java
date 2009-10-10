@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.eir.sparc.*;
  */
 public final class SolarisSPARCEirABIs extends SPARCEirABIsScheme {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SolarisSPARCEirABIs(VMConfiguration vmConfiguration) {
         super(vmConfiguration, new SPARCEirJavaABI(vmConfiguration),
                         new SPARCEirNativeABI(vmConfiguration),

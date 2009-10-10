@@ -29,11 +29,11 @@ import java.lang.annotation.*;
  * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isHosted()}. For example:
  *
  * <pre>
- * @PROTOTYPE_ONLY
+ * @HOSTED_ONLY
  * private int counter;
  *
  * public void getValue() {
- *     if (VM.isPrototyping()) {
+ *     if (MaxineVM.isHosted()) {
  *         counter++;
  *     }
  *     return value;
@@ -56,5 +56,5 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD})
-public @interface PROTOTYPE_ONLY {
+public @interface HOSTED_ONLY {
 }

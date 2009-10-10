@@ -147,7 +147,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 final AccessibleObject member = name.equals(SymbolTable.INIT) ?
                     Classes.getDeclaredConstructor(javaClass, parameterTypes) :
                     Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
-                if (MaxineVM.isPrototypeOnly(member)) {
+                if (MaxineVM.isHostedOnly(member)) {
                     throw new HostOnlyMethodError(errorMessage);
                 }
             }

@@ -49,7 +49,7 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
      * @param tuple   a {@link TupleNode} instance holding the static fields of a class or a normal object
      * @param offset  the field's offset
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static FieldActor findFieldActor(Object tuple, int offset) {
         return HostObjectAccess.readHub(tuple).findFieldActor(offset);
     }

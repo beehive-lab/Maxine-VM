@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.eir.*;
  */
 public abstract class AMD64EirABIsScheme extends EirABIsScheme<AMD64EirRegister> {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected AMD64EirABIsScheme(VMConfiguration vmConfiguration,
                     EirABI<AMD64EirRegister> javaABI,
                     EirABI<AMD64EirRegister> nativeABI,

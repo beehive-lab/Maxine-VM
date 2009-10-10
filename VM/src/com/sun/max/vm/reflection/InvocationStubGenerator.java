@@ -454,7 +454,7 @@ public class InvocationStubGenerator<T> {
                     asm.invokeinterface(targetCPI, argSlots, argSlots, returnValueSlots);
                 } else {
                     if (isPrivate && !MaxineVM.isHosted()) {
-                        // Can't do this while prototyping as the Hotspot verifier will reject an invokespecial to an inaccessible method
+                        // Can't do this while bootstrapping as the Hotspot verifier will reject an invokespecial to an inaccessible method
                         asm.invokespecial(targetCPI, argSlots, returnValueSlots);
                     } else {
                         asm.invokevirtual(targetCPI, argSlots, returnValueSlots);
@@ -703,7 +703,7 @@ public class InvocationStubGenerator<T> {
 
     static final PoolConstant[] PROTOTYPE_CONSTANTS;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Method findValueUnboxMethod(Kind kind) {
         final String kindName = kind.name.toString();
         if (kind == Kind.REFERENCE) {

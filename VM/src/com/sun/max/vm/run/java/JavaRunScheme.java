@@ -76,11 +76,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private StaticMethodActor[] initIDMethods;
 
     /**
-     * At prototyping time, searches the class registry for non-Maxine classes that have methods called
+     * While bootstrapping, searches the class registry for non-Maxine classes that have methods called
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
      * identifiers for native code, and need to be re-executed upon startup.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
@@ -98,7 +98,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * Runs all the native initializer methods gathered at prototyping time.
+     * Runs all the native initializer methods gathered while bootstrapping.
      */
     public void runNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
@@ -126,8 +126,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * The initialization method of the Java run scheme runs at both prototyping time and startup.
-     * At prototyping time, it gathers the methods needed for native initialization, and at startup
+     * The initialization method of the Java run scheme runs at both bootstrapping and startup.
+     * While bootstrapping, it gathers the methods needed for native initialization, and at startup
      * it initializes basic VM services.
      */
     @Override

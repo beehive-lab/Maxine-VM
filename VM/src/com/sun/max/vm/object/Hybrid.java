@@ -49,11 +49,11 @@ public abstract class Hybrid {
 
     /**
      * Hybrid objects cannot be directly represented in the Java language,
-     * so during prototyping that are represented as tuples plus an expansion.
+     * so during bootstrapping that are represented as tuples plus an expansion.
      *
      * @author Bernd Mathiske
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static class Expansion {
         final Hybrid hybrid;
         final Word[] words;
@@ -69,7 +69,7 @@ public abstract class Hybrid {
     /**
      * A map that stores the association between a hybrid and its expansion.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Map<Hybrid, Expansion> hybridToExpansion = Collections.synchronizedMap(new IdentityHashMap<Hybrid, Expansion>());
 
     protected Hybrid() {

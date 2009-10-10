@@ -71,9 +71,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
 
     /**
-     * The compiler that is used as the default at prototyping time.
+     * The compiler that is used as the default while bootstrapping.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected final BootstrapCompilerScheme bootstrapCompiler;
 
     /**
@@ -146,7 +146,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     }
 
     /**
-     * This method initializes the adaptive compilation system, either at prototyping time or
+     * This method initializes the adaptive compilation system, either while bootstrapping or
      * at VM startup time. This implementation creates daemon threads to handle asynchronous
      * compilations.
      *
@@ -301,7 +301,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         }
 
         if (MaxineVM.isHosted()) {
-            // if we are prototyping, then always use the prototype compiler
+            // if we are bootstrapping, then always use the prototype compiler
             // unless forced to use the JIT (e.g. for testing purposes)
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
@@ -326,7 +326,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return bootstrapCompiler;
         }
 
-        // templates should only be compiled at prototyping time
+        // templates should only be compiled while bootstrapping
         assert !classMethodActor.isTemplate();
 
         if (recommendedCompiler != null) {

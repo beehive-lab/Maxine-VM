@@ -616,7 +616,7 @@ public abstract class ReferenceMapInterpreter {
         return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public String[] framesToStrings(ReferenceMapInterpreterContext context) {
         assert this.context == null;
         resetInterpreter(context);
@@ -631,7 +631,7 @@ public abstract class ReferenceMapInterpreter {
         return frameStrings;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private String currentFrameToString() {
         final StringBuilder sb = new StringBuilder("locals[").append(maxLocals()).append("] = { ");
         for (int i = 0; i != maxLocals(); ++i) {

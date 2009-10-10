@@ -60,7 +60,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     /**
      * This is only here to support ClassFileWriter.testLoadGeneratedClasses().
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static final Map<ClassLoader, ClassRegistry> classLoaderToRegistryMap = new IdentityHashMap<ClassLoader, ClassRegistry>() {
         @Override
         public ClassRegistry put(ClassLoader key, ClassRegistry value) {

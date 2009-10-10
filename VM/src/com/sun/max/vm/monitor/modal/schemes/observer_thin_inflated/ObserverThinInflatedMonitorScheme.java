@@ -59,7 +59,7 @@ public class ObserverThinInflatedMonitorScheme extends ModalMonitorScheme {
         };
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void attach(MonitorObserver observer) {
         final ObserverModeHandler observerModeHandler = (ObserverModeHandler) entryHandler();
         observerModeHandler.attach(observer);

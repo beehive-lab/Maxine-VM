@@ -39,7 +39,7 @@ import com.sun.max.ide.*;
  *
  * @author Doug Simon
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 interface AMD64AssemblerSpecification {
 
     void add(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source);
@@ -725,7 +725,7 @@ interface AMD64AssemblerSpecification {
      *
      * @author Doug Simon
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static class Generator {
         public static void main(String[] args) {
             final String[] programArguments = {

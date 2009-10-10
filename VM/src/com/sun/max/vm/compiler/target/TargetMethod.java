@@ -208,7 +208,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return codeStart;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final void setCodeStart(Pointer codeStart) {
         this.codeStart = codeStart;
     }
@@ -360,7 +360,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *
      * @return true if all the direct callees in this target method's prologue were linked to a resolved target method
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final boolean linkDirectCallsInPrologue() {
         boolean linkedAll = true;
         final Object[] directCallees = directCallees();
@@ -381,7 +381,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return linkedAll;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
     }
@@ -445,7 +445,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param virtualCalls a sequence of virtual calls to which this method should append
      * @param interfaceCalls a sequence of interface calls to which this method should append
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
 
     @Override

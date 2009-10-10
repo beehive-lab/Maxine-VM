@@ -30,7 +30,7 @@ import com.sun.max.vm.actor.member.*;
 
 /**
  * A utility class for validating a given method with respect to usage of the {@link INLINE} and {@link NEVER_INLINE} annotations.
- * This check is expensive and so should only be performed when {@linkplain MaxineVM#isHosted() prototyping}.
+ * This check is expensive and so should only be performed when {@linkplain MaxineVM#isHosted() bootstrapping}.
  *
  * @author Doug Simon
  */
@@ -41,7 +41,7 @@ public final class InliningAnnotationsValidator {
     /**
      * Validates a given method with respect to usage of the INLINE annotation.
      * This check is expensive and so should only be performed when
-     * {@linkplain MaxineVM#isHosted() prototyping}.
+     * {@linkplain MaxineVM#isHosted() bootstrapping}.
      */
     public static void apply(ClassMethodActor classMethodActor) {
         if (!MaxineVM.isMaxineClass(classMethodActor.holder())) {

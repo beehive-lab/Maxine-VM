@@ -38,12 +38,11 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * This class implements object access routines for use at prototyping time (i.e. running
- * on a host virtual machine such as HotSpot).
+ * This class implements object access routines for use while bootstrapping.
  *
  * @author Bernd Mathiske
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class HostObjectAccess {
 
     private HostObjectAccess() {
@@ -182,7 +181,7 @@ public final class HostObjectAccess {
     private static final Object NULL = new Object();
 
     /**
-     * A map used during prototyping time to replace references to a particular object with
+     * A map used during bootstrapping to replace references to a particular object with
      * references to another object during graph reachability.
      */
     private static Map<Object, Object> objectMap; // TODO: this map and its uses should probably be moved to the prototype

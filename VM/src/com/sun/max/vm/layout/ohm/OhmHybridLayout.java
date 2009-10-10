@@ -74,7 +74,7 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         return tupleSize.minus(headerSize()).roundedUpBy(Word.size()).dividedBy(Word.size()).toInt();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;
@@ -90,7 +90,7 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
@@ -105,7 +105,7 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         return tupleLayout.readValue(kind, mirror, offset);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {

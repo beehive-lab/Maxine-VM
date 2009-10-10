@@ -52,7 +52,7 @@ public class ExceptionDispatcher {
     /**
      * Thread local for passing the exception when interpreting with an {@link IrInterpreter}.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static final ThreadLocal<Throwable> INTERPRETER_EXCEPTION = new ThreadLocal<Throwable>() {
         @Override
         public void set(Throwable value) {
@@ -80,7 +80,7 @@ public class ExceptionDispatcher {
         return exception;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Throwable prototypeSafepointAndLoadExceptionObject() {
         Throwable throwable = INTERPRETER_EXCEPTION.get();
         INTERPRETER_EXCEPTION.set(null);

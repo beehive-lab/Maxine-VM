@@ -31,7 +31,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The class loader used during prototyping to make {@linkplain ClassActor actors} for the classes to be put in the boot image.
+ * The class loader used during bootstrapping to make {@linkplain ClassActor actors} for the classes to be put in the boot image.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -285,7 +285,7 @@ public final class PrototypeClassLoader extends ClassLoader {
             return MaxineVM.usingTargetWithException(new Function<Class>() {
                 public Class call() throws ClassNotFoundException {
                     final Class<?> javaType = PrototypeClassLoader.super.loadClass(name, resolve);
-                    if (MaxineVM.isPrototypeOnly(javaType)) {
+                    if (MaxineVM.isHostedOnly(javaType)) {
                         throw new HostOnlyClassError(javaType.getName());
                     }
                     if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {

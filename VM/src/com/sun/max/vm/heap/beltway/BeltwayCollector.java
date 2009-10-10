@@ -55,7 +55,7 @@ public abstract class BeltwayCollector extends Collector {
      * Prototyping time initialization.
      * @param heapScheme
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void initialize(BeltwayHeapScheme heapScheme) {
         // Initialize useful short cuts.
         this.heapScheme = heapScheme;

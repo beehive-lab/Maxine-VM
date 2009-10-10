@@ -41,7 +41,7 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      *
      * @param packageLoader a package loader which can be used to load classes that define built-ins
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     void createBuiltins(PackageLoader packageLoader);
 
     /**
@@ -50,13 +50,13 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      *
      * @param packageLoader a package loader which can be used to load classes that define snippets
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     void createSnippets(PackageLoader packageLoader);
 
     /**
      * Optimize the internal snippets.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     void compileSnippets();
 
     IrMethod compileIR(ClassMethodActor classMethodActor);
@@ -66,7 +66,7 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      *
      * @return {@code true} if the snippets are compiled; {@code false} otherwise
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     boolean areSnippetsCompiled();
 
     /**

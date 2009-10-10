@@ -224,17 +224,17 @@ public abstract class TargetLocation {
         BLOCK,
         METHOD;
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         Tag() {
             this(null);
         }
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         Tag(int lowestImplicitOperand, int highestImplicitOperand) {
             this(new Range(lowestImplicitOperand, highestImplicitOperand + 1));
         }
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         Tag(Range implicitOperandTagsRange) {
             final String name = name();
             final int lastUnderscoreIndex = name.lastIndexOf('_');
@@ -300,7 +300,7 @@ public abstract class TargetLocation {
             return null;
         }
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         private void initializeImplicitOperandTags() {
             final Range range = implicitOperandTagsRange;
             if (range != null) {

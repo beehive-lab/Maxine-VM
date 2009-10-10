@@ -72,7 +72,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         return false;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public synchronized void attach(MonitorObserver observer) {
         if (!observerListContains(observer)) {
             final MonitorObserver[] newObservers = new MonitorObserver[observers.length + 1];

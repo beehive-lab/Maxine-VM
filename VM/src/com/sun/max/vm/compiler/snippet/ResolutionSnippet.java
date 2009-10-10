@@ -43,7 +43,7 @@ import com.sun.max.vm.runtime.*;
  */
 public abstract class ResolutionSnippet extends Snippet {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected ResolutionSnippet() {
         ProgramError.check((serial() & 0xffff) == serial());
         final Class[] expectedSignature = {ResolutionGuard.class};

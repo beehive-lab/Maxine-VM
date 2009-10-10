@@ -274,7 +274,7 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * @see InliningAnnotationsValidator#apply(ClassMethodActor)
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void validateInlineAnnotation(ClassMethodActor compilee) {
         if (!compilee.holder().isGenerated()) {
             try {

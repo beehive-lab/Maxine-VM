@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  */
 public final class UnsafeCast {
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private UnsafeCast() {
     }
 

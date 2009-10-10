@@ -50,7 +50,7 @@ public abstract class TrapStateAccess {
         return VMConfiguration.host().trapStateAccess;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static TrapStateAccess create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();

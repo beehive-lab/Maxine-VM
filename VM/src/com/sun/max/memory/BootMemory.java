@@ -40,12 +40,12 @@ import com.sun.max.vm.reference.*;
 public final class BootMemory {
 
     /**
-     * Making this constructor {@linkplain PROTOTYPE_ONLY prototype-only} forces all {@code BootMemory}
+     * Making this constructor {@linkplain HOSTED_ONLY prototype-only} forces all {@code BootMemory}
      * objects to live in the boot heap.
      *
      * @param size the size of the buffer
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public BootMemory(int size) {
         bufferBytes = new byte[size];
     }

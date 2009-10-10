@@ -39,7 +39,7 @@ import com.sun.max.vm.runtime.*;
  */
 public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public UnixAMD64EirTemplateABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();

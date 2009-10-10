@@ -67,7 +67,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         return Stoppable.NONE;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void registerMethod(ClassMethodActor classMethodActor) {
         if (classMethodActor.isBuiltin()) {
             final BUILTIN builtinAnnotation = classMethodActor.getAnnotation(BUILTIN.class);
@@ -110,7 +110,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
     /**
      * Assigning the serial numbers alphabetically and thus deterministically facilitates matching builtins between VM and Inspector.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void initialize() {
         builtins = IndexedSequence.Static.sort(builtins, Builtin.class);
         for (int i = 0; i < builtins.length(); i++) {
@@ -119,7 +119,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void register(BootstrapCompilerScheme compilerScheme) {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {

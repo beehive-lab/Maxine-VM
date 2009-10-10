@@ -207,11 +207,11 @@ public class VMOption {
 
     // Prototype-time support for setting VM options
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static String[] vmArguments = null;
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static Pointer vmArgumentPointers = null;
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static String[] matchedVmArguments = null;
 
     /**
@@ -219,11 +219,11 @@ public class VMOption {
      * This allows some functionality/state controlled by VM options to be exercised and/or pre-set while
      * building the boot image.
      *
-     * Note: Any option values set at prototype time while building the boot image are persisted in the boot image.
+     * Note: Any option values set while bootstrapping are persisted in the boot image.
      *
-     * @param vmArgs a set of command line arguments used to enable VM options at prototype time
+     * @param vmArgs a set of command line arguments used to enable VM options while bootstrapping
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setVMArguments(String[] vmArgs) {
         vmArguments = vmArgs;
         if (vmArgumentPointers != null) {
@@ -238,7 +238,7 @@ public class VMOption {
      * against a VM option.
      * @return all of the VM arguments that have not been matched
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static List<String> unmatchedVMArguments() {
         if (vmArguments != null) {
             final List<String> unmatched = new ArrayList<String>(vmArguments.length);
@@ -252,7 +252,7 @@ public class VMOption {
         return Collections.emptyList();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static ProgramError parseError(String message, int index) {
         final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Arrays.toString(vmArguments, " ")));
         for (int i = 0; i < index; ++i) {
@@ -266,7 +266,7 @@ public class VMOption {
      * Searches for a {@linkplain #setVMArguments(String[]) registered} VM argument that this option matches and,
      * if found, calls {@link #parse(Pointer)} or {@link #parseValue(Pointer)} on the argument.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void findMatchingArgumentAndParse() {
         if (vmArguments != null) {
             if (vmArgumentPointers == null) {

@@ -32,7 +32,7 @@ public class JTRunScheme extends JTAbstractRunScheme {
     }
 
     @Override
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Class<?>[] getClassList() {
         return JTConfig.testClasses.testClasses;
     }

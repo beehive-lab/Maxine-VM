@@ -40,7 +40,7 @@ import com.sun.max.vm.runtime.*;
  */
 public final class TargetBreakpoint {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static byte[] createBreakpointCode(InstructionSet instructionSet) {
         try {
             switch (instructionSet) {

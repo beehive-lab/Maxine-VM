@@ -260,7 +260,7 @@ public final class JavaTypeDescriptor {
             final TypeDescriptor elementDescriptor = TypeDescriptor.makeTypeDescriptor(string.substring(dimensions, string.length()));
             final Class elementClass = resolveToJavaClass(elementDescriptor, classLoader);
             if (MaxineVM.isHosted()) {
-                // in prototyping mode, we must use java reflection.
+                // in bootstrapping mode, we must use java reflection.
                 Class resultClass = elementClass;
                 while (dimensions > 0) {
                     // Reflectively create an instance of the array here and get its class

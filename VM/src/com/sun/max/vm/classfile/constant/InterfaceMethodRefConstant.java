@@ -145,7 +145,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
                 final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());
                 final Method method = Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
-                if (MaxineVM.isPrototypeOnly(method)) {
+                if (MaxineVM.isHostedOnly(method)) {
                     throw new HostOnlyMethodError(errorMessage);
                 }
             }

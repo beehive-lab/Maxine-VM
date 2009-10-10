@@ -216,7 +216,7 @@ public class FieldActor extends MemberActor {
                     return true;
                 }
                 if (MaxineVM.isHosted() && MaxineVM.isMaxineClass(holder())) {
-                    // The class initializers of all Maxine classes are run while prototyping and
+                    // The class initializers of all Maxine classes are run while bootstrapping and
                     // the values they assign to static final fields are frozen in the boot image.
                     return true;
                 }
