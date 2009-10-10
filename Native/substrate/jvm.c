@@ -39,6 +39,11 @@
 #include "maxine.h"
 #include "memory.h"
 
+/**
+ * Defined in Native/substrate/jni.c
+ */
+extern JNIEnv *currentJniEnv();
+
 #if os_DARWIN
 #define lseek64 lseek
 #endif
@@ -137,8 +142,7 @@ jlong JVM_NanoTime(JNIEnv *env, jclass ignored) {
 }
 
 void
-JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos,
-          jobject dst, jint dst_pos, jint length) {
+JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos, jobject dst, jint dst_pos, jint length) {
     JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V");
     (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod, src, src_pos, dst, dst_pos, length);
 }
@@ -167,12 +171,15 @@ void JVM_Halt(jint code) {
 }
 
 void JVM_GC(void) {
-    c_UNIMPLEMENTED();
+    JNIEnv *env = currentJniEnv();
+    JNIMethod result = resolveCriticalStaticMethod(env, "java/lang/System", "gc", "()V");
+    (*env)->CallStaticVoidMethod(env, result.jClass, result.jMethod);
 }
 
 jlong JVM_MaxObjectInspectionAge(void) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIEnv *env = currentJniEnv();
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxObjectInspectionAge", "()J");
+    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
 }
 
 void JVM_TraceInstructions(jboolean on) {
@@ -183,17 +190,21 @@ void JVM_TraceMethodCalls(jboolean on) {
     // safely ignored.
 }
 
-jlong JVM_TotalMemory(void) {
-    return total_memory;
-}
-
 jlong JVM_FreeMemory(void) {
-    return free_memory;
+    JNIEnv *env = currentJniEnv();
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "reportFreeSpace", "()J");
+    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
 }
 
 jlong
 JVM_MaxMemory(void) {
-    return max_memory;
+    JNIEnv *env = currentJniEnv();
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxSize", "()J");
+    return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
+}
+
+jlong JVM_TotalMemory(void) {
+    return JVM_MaxMemory();
 }
 
 jint
@@ -1886,8 +1897,12 @@ JVM_GetHostByName(char* name) {
 
 int
 JVM_GetHostName(char* name, int namelen) {
+#if os_SOLARIS || os_LINUX
+    return gethostname(name, namelen);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 /*
@@ -1901,14 +1916,20 @@ JVM_GetHostName(char* name, int namelen) {
  */
 int
 jio_vsnprintf(char *str, size_t count, const char *fmt, va_list args) {
-    c_UNIMPLEMENTED();
-    return 0;
+    if ((intptr_t)count <= 0) {
+        return -1;
+    }
+    return vsnprintf(str, count, fmt, args);
 }
 
 int
 jio_snprintf(char *str, size_t count, const char *fmt, ...) {
-    c_UNIMPLEMENTED();
-    return 0;
+    va_list args;
+    int len;
+    va_start(args, fmt);
+    len = jio_vsnprintf(str, count, fmt, args);
+    va_end(args);
+    return len;
 }
 
 int

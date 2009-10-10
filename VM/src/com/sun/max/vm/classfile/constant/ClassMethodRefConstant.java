@@ -148,7 +148,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                     Classes.getDeclaredConstructor(javaClass, parameterTypes) :
                     Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
                 if (MaxineVM.isPrototypeOnly(member)) {
-                    throw new PrototypeOnlyMethodError(errorMessage);
+                    throw new HostOnlyMethodError(errorMessage);
                 }
             }
             throw new NoSuchMethodError(errorMessage);

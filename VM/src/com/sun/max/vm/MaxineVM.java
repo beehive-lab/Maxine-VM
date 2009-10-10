@@ -210,13 +210,6 @@ public final class MaxineVM {
         return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
     }
 
-    public static void writeInitialVMParams() {
-        native_writeMaxMemory(Heap.maxSize().toLong());
-        native_writeTotalMemory(Heap.maxSize().toLong());
-        // TODO: write a sensible value here, and keep native space up to date
-        native_writeFreeMemory(Heap.maxSize().toLong() >> 1);
-    }
-
     @PROTOTYPE_ONLY
     public static boolean isHostInitialized() {
         return host != null;
@@ -603,16 +596,6 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
-
-    @C_FUNCTION
-    public static native void native_writeMaxMemory(long maxMem);
-
-    @C_FUNCTION
-    public static native void native_writeTotalMemory(long totalMem);
-
-    @C_FUNCTION
-    public static native void native_writeFreeMemory(long freeMem);
-
 
     public MaxineVM(VMConfiguration vmConfiguration) {
         configuration = vmConfiguration;
