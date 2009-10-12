@@ -522,10 +522,10 @@ static void jni_reserved() {
 // Structure containing all  functions
 struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     {
-    jni_reserved,
-    jni_reserved,
-    jni_reserved,
-    jni_reserved,
+    (void *) jni_reserved,
+    (void *) jni_reserved,
+    (void *) jni_reserved,
+    (void *) jni_reserved,
 
     jni_GetVersion,
 
