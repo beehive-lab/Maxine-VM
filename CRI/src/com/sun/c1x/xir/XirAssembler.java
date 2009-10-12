@@ -44,7 +44,7 @@ public abstract class XirAssembler {
     protected final List<XirParameter> parameters = new ArrayList<XirParameter>();
     protected final List<XirTemp> temps = new ArrayList<XirTemp>();
     protected final List<XirConstant> constants = new ArrayList<XirConstant>();
-    
+
     protected int variableCount;
     protected boolean finished;
 
@@ -58,7 +58,7 @@ public abstract class XirAssembler {
             this.index = index;
             this.inline = inline;
         }
-        
+
         @Override
         public String toString() {
         	return name;
@@ -81,13 +81,13 @@ public abstract class XirAssembler {
 			return constant;
 		}
     }
-    
+
     public final class XirResult extends XirVariable {
-    
+
     	public XirResult(CiKind kind, int index) {
     		super(kind, false);
     	}
-    	
+
     	public String toString() {
     		return "result";
     	}
@@ -104,16 +104,16 @@ public abstract class XirAssembler {
             this.value = value;
             this.name = name;
         }
-        
+
         @Override
         public String toString() {
         	return name;
         }
-        
+
         public String detailedToString() {
-        	
+
         	StringBuffer sb = new StringBuffer();
-        	
+
         	sb.append(name);
         	sb.append('$');
         	sb.append(super.kind.typeChar);
@@ -123,15 +123,15 @@ public abstract class XirAssembler {
         	return sb.toString();
         }
     }
-    
+
     public class XirConstant extends XirVariable {
         public final CiConstant value;
-    	
+
         XirConstant(CiConstant value) {
         	super(value.basicType, true);
         	this.value = value;
         }
-        
+
         @Override
         public String toString() {
         	return value.valueString();
@@ -153,12 +153,12 @@ public abstract class XirAssembler {
             super(kind, false);
             this.name = name;
         }
-        
+
         @Override
         public String toString() {
         	return name;
         }
-        
+
         public String detailedToString() {
         	StringBuffer sb = new StringBuffer();
         	sb.append(name);
@@ -170,23 +170,23 @@ public abstract class XirAssembler {
 
     public class XirFixed extends XirTemp {
         public final CiLocation location;
-        
+
         XirFixed(String name, CiLocation location) {
             super(name, location.kind);
             this.location = location;
         }
     }
-    
-    public void resetJavaTailCall() {
+
+    public void restart() {
     	reset();
     	resultOperand = null;
     }
 
-    public void reset(CiKind kind) {
+    public void restart(CiKind kind) {
         reset();
         resultOperand = new XirResult(kind, 0);
     }
-    
+
     private void reset() {
         variableCount = 0;
         finished = false;
@@ -196,7 +196,7 @@ public abstract class XirAssembler {
         temps.clear();
         constants.clear();
     }
-   
+
     public class XirInstruction {
         public final CiKind kind;
         public final XirOp op;
@@ -230,18 +230,18 @@ public abstract class XirAssembler {
             assert arguments.length > 2 : "no z operand for this instruction";
             return arguments[2];
         }
-        
+
         @Override
         public String toString() {
         	StringBuffer sb = new StringBuffer();
-        	
+
         	if (result != null) {
         		sb.append(result.toString());
         		sb.append(" = ");
         	}
-        	
+
         	sb.append(op.name());
-        	
+
         	if (kind != CiKind.Void) {
         		sb.append('$');
         		sb.append(kind.typeChar);
@@ -256,15 +256,15 @@ public abstract class XirAssembler {
 					}
 					sb.append(arguments[i]);
 				}
-				
+
 	        	sb.append(")");
 			}
-        	
+
         	if (extra != null) {
         		sb.append(" ");
         		sb.append(extra);
         	}
-        	
+
         	return sb.toString();
         }
     }
