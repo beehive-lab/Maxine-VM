@@ -92,7 +92,7 @@ final class JDK_sun_reflect_Reflection {
                 while (bytecodeLocations.hasNext()) {
                     final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
-                    if (!classMethodActor.isWrapper() && !classMethodActor.holder().isGenerated()) {
+                    if (!!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
                             result = classMethodActor;
                             return false;

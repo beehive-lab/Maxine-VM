@@ -516,14 +516,16 @@ static jint jni_GetJavaVM(JNIEnv *env, JavaVM **vm) {
     return JNI_OK;
 }
 
+static void jni_reserved() {
+}
+
 // Structure containing all  functions
 struct ExtendedJNINativeInterface_ jni_ExtendedNativeInterface = {
     {
-    NULL,
-    NULL,
-    NULL,
-
-    NULL,
+    jni_reserved,
+    jni_reserved,
+    jni_reserved,
+    jni_reserved,
 
     jni_GetVersion,
 

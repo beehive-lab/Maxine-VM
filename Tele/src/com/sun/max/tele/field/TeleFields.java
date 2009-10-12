@@ -255,7 +255,7 @@ public class TeleFields extends AbstractTeleVMHolder {
                 }
 
                 try {
-                    final boolean changed = Files.updateGeneratedContent(sourceFile, charArrayWriter, "    // START GENERATED CONTENT", "    // END GENERATED CONTENT");
+                    final boolean changed = Files.updateGeneratedContent(sourceFile, charArrayWriter, "    // START GENERATED CONTENT", "    // END GENERATED CONTENT", false);
                     if (changed) {
                         ProgramWarning.message("The source file " + sourceFile + " was updated" + (inInspector ? ": recompile and restart the inspector" : ""));
                     } else {
