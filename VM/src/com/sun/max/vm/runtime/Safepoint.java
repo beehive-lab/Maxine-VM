@@ -126,7 +126,7 @@ public abstract class Safepoint {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();
@@ -201,7 +201,7 @@ public abstract class Safepoint {
      */
     @INLINE
     public static boolean isTriggered() {
-        return !MaxineVM.isPrototyping() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
+        return !MaxineVM.isHosted() && SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }
 
     /**
@@ -253,7 +253,7 @@ public abstract class Safepoint {
 
     public abstract Symbol latchRegister();
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected abstract byte[] createCode();
 
     public boolean isAt(Pointer instructionPointer) {

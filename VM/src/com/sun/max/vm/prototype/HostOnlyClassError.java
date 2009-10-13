@@ -18,35 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
+package com.sun.max.vm.prototype;
 
-import com.sun.max.annotate.FOLD;
+import com.sun.max.vm.*;
 
-/*
- * @Harness: java
- * @Runs: 0=true
+/**
+ * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
+ * class via the {@link PrototypeClassLoader}.
+ *
+ * @author Doug Simon
  */
-public class Fold03 {
-
-    public static boolean test(int arg) {
-        return flong(10, 10) && fdouble(0.0d, 0.0d);
-    }
-
-    @FOLD
-    static boolean flong(long x, long y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
-    }
-
-    @FOLD
-    static boolean fdouble(double x, double y) {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return x == y;
+public class HostOnlyClassError extends NoClassDefFoundError {
+    public HostOnlyClassError(String className) {
+        super(className);
     }
 }

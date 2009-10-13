@@ -23,17 +23,17 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Indicates that a method, field or class is omitted from the target VM.
+ * Indicates that a method, field or class exists only for the purpose of hosted execution.
  * <p>
  * Typically this is used when the annotated method, field or class is only used by code guarded (directly or
- * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isPrototyping()}. For example:
+ * indirectly) by a call to {@link com.sun.max.vm.MaxineVM#isHosted()}. For example:
  *
  * <pre>
- * @PROTOTYPE_ONLY
+ * @HOSTED_ONLY
  * private int counter;
  *
  * public void getValue() {
- *     if (VM.isPrototyping()) {
+ *     if (MaxineVM.isHosted()) {
  *         counter++;
  *     }
  *     return value;
@@ -56,5 +56,5 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD})
-public @interface PROTOTYPE_ONLY {
+public @interface HOSTED_ONLY {
 }

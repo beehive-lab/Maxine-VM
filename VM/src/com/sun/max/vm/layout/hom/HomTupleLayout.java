@@ -163,7 +163,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return layoutFields(superClassActor, fieldActors, headerSize());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static void visitFields(ObjectCellVisitor visitor, Object tuple, TupleLayout layout) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
@@ -180,7 +180,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         } while (classActor != null);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
         visitFields(visitor, tuple, this);
@@ -190,7 +190,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return headerSize + hubOffset;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
@@ -200,7 +200,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return result;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {
             return;

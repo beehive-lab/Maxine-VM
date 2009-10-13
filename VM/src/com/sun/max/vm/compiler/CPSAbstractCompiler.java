@@ -54,11 +54,11 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
     public void initialize(Phase phase) {
         super.initialize(phase);
 
-        if (phase == Phase.PROTOTYPING || phase == Phase.STARTING) {
+        if (phase == Phase.BOOTSTRAPPING || phase == Phase.STARTING) {
             IrObserverConfiguration.attach(irGenerators());
         }
 
-        if (MaxineVM.isPrototyping() && phase == MaxineVM.Phase.CREATING_COMPILED_PROTOTYPE) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             compileSnippets();
         }
     }
@@ -74,28 +74,28 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void createBuiltins(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Builtin.class);
         Builtin.initialize();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void createSnippets(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Snippet.class);
         packageLoader.loadAndInitializeAll(HotpathSnippet.class);
         packageLoader.loadAndInitializeAll(DynamicTrampoline.class);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private boolean areSnippetsCompiled = false;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public boolean areSnippetsCompiled() {
         return areSnippetsCompiled;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void compileSnippets() {
         areSnippetsCompiled = true;
         ClassActor.DEFERRABLE_QUEUE_2.runAll();
@@ -117,12 +117,12 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         return irGenerator().makeIrMethod(classMethodActor);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         throw new UnsupportedOperationException();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void initializeForJitCompilations() {
     }
 

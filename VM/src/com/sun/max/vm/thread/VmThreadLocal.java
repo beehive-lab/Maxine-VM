@@ -167,7 +167,7 @@ public class VmThreadLocal {
     };
 
     /**
-     * The address of the table of {@linkplain JniNativeInterface#pointer() JNI functions}.
+     * The address of the table of {@linkplain JniNativeInterface#jniEnv() JNI functions}.
      */
     public static final VmThreadLocal JNI_ENV = new VmThreadLocal("JNI_ENV", false, "points to table of JNI functions");
 
@@ -289,7 +289,7 @@ public class VmThreadLocal {
      * Performs various initialization that can only be done once all the VM thread locals have
      * been created and registered with this class.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void completeInitialization() {
         assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
         final AppendableSequence<VmThreadLocal> referenceVmThreadLocals = new ArrayListSequence<VmThreadLocal>();
@@ -311,7 +311,7 @@ public class VmThreadLocal {
         StackReferenceMapPreparer.setVmThreadLocalGCRoots(Sequence.Static.toArray(referenceVmThreadLocals, VmThreadLocal.class));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static StackTraceElement findDeclaration(String name, StackTraceElement[] stackTraceElements) {
         for (StackTraceElement stackTraceElement : stackTraceElements) {
             if (!stackTraceElement.getMethodName().equals("<init>")) {
@@ -329,7 +329,7 @@ public class VmThreadLocal {
      * @param isReference specifies if this variable is a reference
      * @param description a very short textual description, useful for debugging
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VmThreadLocal(String name, boolean isReference, String description) {
         this.isReference = isReference;
         this.name = name;

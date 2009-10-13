@@ -505,6 +505,28 @@ function run_jttgen() {
 }
 
 #=======================================
+# 'jnigen' command
+#=======================================
+
+jnigen_help="(re)generate content in JniFunctions.java from JniFunctionsSource.java
+
+    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+    
+    The exit code is non-zero if JniFunctions.java was modified."
+
+function run_jnigen() {
+    if [ $# -ne 0 ]; then
+        run_help jnigen
+        exit 1
+    fi
+    
+    run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) com.sun.max.vm.jni.JniFunctionsGenerator
+    result=$?
+    exit $result
+}
+
+#=======================================
 # 'check' command
 #=======================================
 

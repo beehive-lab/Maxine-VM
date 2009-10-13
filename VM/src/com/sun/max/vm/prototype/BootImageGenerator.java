@@ -124,7 +124,7 @@ public final class BootImageGenerator {
 
     private final Option<String> vmArguments = options.newStringOption("vmargs", null,
             "A set of one or VM arguments. This is useful for exercising VM functionality or " +
-            "enabling VM tracing while prototyping.");
+            "enabling VM tracing while bootstrapping.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
@@ -231,7 +231,7 @@ public final class BootImageGenerator {
             outputDirectory.mkdirs();
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
-            VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
+            VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();

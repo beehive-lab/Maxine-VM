@@ -67,7 +67,7 @@ public class BirTracer extends Tracer {
      * @return {@code true} of tracing should continue, or {@code false} otherwise.
      */
     public boolean visitBytecode(BytecodeLocation location, BirState state) {
-        assert MaxineVM.isPrototyping();
+        assert MaxineVM.isHosted();
         assert isTracing();
         saveState(state);
         visitBytecode(location);

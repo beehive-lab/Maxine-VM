@@ -37,8 +37,7 @@ public final class Classes {
      * Wraps a call to {@link ClassLoader#loadClass(String)} that is expected not to fail. Should a
      * {@link ClassNotFoundException} occur, it is converted to {@link NoClassDefFoundError}
      *
-     * @return the value returned by calling {@link ClassLoader#loadClass(String)} on {@code classLoader} (which may be
-     *         null)
+     * @return the value returned by calling {@link ClassLoader#loadClass(String)} on {@code classLoader}
      */
     public static Class load(ClassLoader classLoader, String name) {
         try {

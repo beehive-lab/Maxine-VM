@@ -37,7 +37,7 @@ import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public class TemplateGenerator {
 
     protected TargetGenerator targetGenerator;
@@ -71,7 +71,7 @@ public class TemplateGenerator {
     protected Class initializeClassInTarget(final Class javaClass) {
         return MaxineVM.usingTarget(new Function<Class>() {
             public Class call() {
-                assert !MaxineVM.isPrototypeOnly(javaClass);
+                assert !MaxineVM.isHostedOnly(javaClass);
                 final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
                 final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
                 MakeClassInitialized.makeClassInitialized(tupleClassActor);

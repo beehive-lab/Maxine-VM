@@ -250,6 +250,7 @@ public class BootImage {
         public final int FORWARD_LINK;
         public final int BACKWARD_LINK;
         public final int ID;
+        public final int JNI_ENV;
         public final int LAST_JAVA_FRAME_ANCHOR;
         public final int TRAP_NUMBER;
         public final int TRAP_INSTRUCTION_POINTER;
@@ -305,6 +306,7 @@ public class BootImage {
             FORWARD_LINK = endian.readInt(dataInputStream);
             BACKWARD_LINK = endian.readInt(dataInputStream);
             ID = endian.readInt(dataInputStream);
+            JNI_ENV = endian.readInt(dataInputStream);
             LAST_JAVA_FRAME_ANCHOR = endian.readInt(dataInputStream);
             TRAP_NUMBER = endian.readInt(dataInputStream);
             TRAP_INSTRUCTION_POINTER = endian.readInt(dataInputStream);
@@ -357,6 +359,7 @@ public class BootImage {
             FORWARD_LINK = VmThreadLocal.FORWARD_LINK.index;
             BACKWARD_LINK = VmThreadLocal.BACKWARD_LINK.index;
             ID = VmThreadLocal.ID.index;
+            JNI_ENV = VmThreadLocal.JNI_ENV.index;
             LAST_JAVA_FRAME_ANCHOR = VmThreadLocal.LAST_JAVA_FRAME_ANCHOR.index;
             TRAP_NUMBER = VmThreadLocal.TRAP_NUMBER.index;
             TRAP_INSTRUCTION_POINTER = VmThreadLocal.TRAP_INSTRUCTION_POINTER.index;

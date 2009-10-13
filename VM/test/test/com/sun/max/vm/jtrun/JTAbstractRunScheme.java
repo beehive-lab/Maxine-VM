@@ -57,7 +57,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         super(vmConfiguration);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void addClassToImage(Class<?> javaClass) {
         final ClassActor actor = ClassActor.fromJava(javaClass);
         if (actor == null) {
@@ -89,7 +89,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void addMethods(ClassMethodActor[] methodActors) {
         if (methodActors != null) {
             for (ClassMethodActor method : methodActors) {
@@ -98,7 +98,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void addMethodToImage(ClassMethodActor method) {
         CompiledPrototype.registerImageMethod(method);
         if (BootImageGenerator.unlinked) {
@@ -106,7 +106,7 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void registerClasses() {
         if (BootImageGenerator.callerJit) {
             CompiledPrototype.registerJitClass(JTRuns.class);
@@ -152,13 +152,13 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
             super.initialize(phase);
         }
         JTUtil.verbose = 3;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             registerClasses();
             nativeTests = BootImageGenerator.nativeTests;
             super.initialize(phase);
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public abstract Class[] getClassList();
 }

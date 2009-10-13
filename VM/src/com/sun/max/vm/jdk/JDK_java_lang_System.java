@@ -597,12 +597,12 @@ public final class JDK_java_lang_System {
     static class BootClasspathVMOption extends VMOption {
         private String path;
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         static BootClasspathVMOption create(String suffix, String help) {
             return register(new BootClasspathVMOption(suffix, help), MaxineVM.Phase.STARTING);
         }
 
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         BootClasspathVMOption(String suffix, String help) {
             super("-Xbootclasspath" + suffix, help);
         }
@@ -734,7 +734,7 @@ public final class JDK_java_lang_System {
         // 9. load the native code for zip and java libraries
         VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
-        // 10. initialize the file system with current runtime values as opposed to prototyping time values
+        // 10. initialize the file system with current runtime values as opposed to bootstrapping values
         ClassActor.fromJava(File.class).callInitializer();
 
         // 11. load the character encoding class

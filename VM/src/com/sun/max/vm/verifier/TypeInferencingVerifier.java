@@ -79,7 +79,7 @@ public class TypeInferencingVerifier extends ClassVerifier {
             CodeAttributePrinter.print(Log.out, codeAttribute);
         }
 
-        if (MaxineVM.isPrototyping() && addStackMapAttribute) {
+        if (MaxineVM.isHosted() && addStackMapAttribute) {
             final TypeCheckingMethodVerifier typeCheckingMethodVerifier = new TypeCheckingMethodVerifier(this, classMethodActor, codeAttribute);
             typeCheckingMethodVerifier.verify();
         }

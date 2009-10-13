@@ -167,12 +167,12 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
                 return fieldActor;
             }
             final String errorMessage = type + " " + holder.javaSignature(true) + "." + name;
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final Class<?> javaClass = holder.toJava();
                 final Class fieldType = type.resolveType(javaClass.getClassLoader());
                 final Field field = Classes.resolveField(javaClass, fieldType, name.string);
-                if (MaxineVM.isPrototypeOnly(field)) {
-                    throw new PrototypeOnlyFieldError(errorMessage);
+                if (MaxineVM.isHostedOnly(field)) {
+                    throw new HostOnlyFieldError(errorMessage);
                 }
             }
 

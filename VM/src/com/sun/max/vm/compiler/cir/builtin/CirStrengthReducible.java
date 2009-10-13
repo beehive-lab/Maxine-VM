@@ -263,7 +263,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor == 0 || divisor == -1 || divisor == 1) {
                     return true;
                 }
-                if (MaxineVM.isPrototyping() && Ints.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+                if (MaxineVM.isHosted() && Ints.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
                     ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
                         " with use of " + Unsigned.class + " or a shift operation"));
                 }
@@ -320,7 +320,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor == 0L || divisor == -1L || divisor == 1L) {
                     return true;
                 }
-                if (MaxineVM.isPrototyping() && Longs.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+                if (MaxineVM.isHosted() && Longs.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
                     ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
                         " with use of " + Unsigned.class + " or a shift operation"));
                 }

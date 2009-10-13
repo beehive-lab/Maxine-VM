@@ -35,7 +35,7 @@ import com.sun.c1x.target.x86.X86Assembler.Condition;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.XirAssembler.*;
+import com.sun.c1x.xir.CiXirAssembler.*;
 
 public class X86LIRAssembler extends LIRAssembler {
 

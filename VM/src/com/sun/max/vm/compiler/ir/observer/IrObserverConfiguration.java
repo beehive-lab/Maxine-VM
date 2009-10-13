@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.ir.*;
  * relies on two system properties: "max.ir.observers" and "max.ir.observer.filters".
  * <p>
  * The first system property can be used to specify a list of IrObservers that are attached to each IrGenerator instance
- * at prototyping and startup time. It accepts a comma-separated list of class names. The class names can either be
+ * at bootstrapping and startup time. It accepts a comma-separated list of class names. The class names can either be
  * fully qualified or assumed to reside in this package (com.sun.max.vm.compiler.ir.observer).
  * <p>
  * For example:

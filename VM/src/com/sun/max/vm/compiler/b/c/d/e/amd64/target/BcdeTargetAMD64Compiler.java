@@ -364,7 +364,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
             assert unwindMethod != null;
         }

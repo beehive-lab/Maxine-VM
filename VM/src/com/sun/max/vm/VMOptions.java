@@ -55,7 +55,7 @@ public final class VMOptions {
      * {@linkplain VMOption#prefix prefixes}. This means that suboptions precede their parent option
      * where a suboption is an option whose prefix starts with but is not equal to the parent's prefix.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
         public int compare(VMOption o1, VMOption o2) {
             return o2.prefix.compareTo(o1.prefix);
@@ -65,13 +65,13 @@ public final class VMOptions {
     /**
      * Used to collect and sort VM options as they are declared.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final SortedSet<VMOption> pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
 
     /**
      * Used to collect and sort VM options as they are declared.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final SortedSet<VMOption> startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
 
     private static VMOption[] pristinePhaseOptions;
@@ -170,7 +170,7 @@ public final class VMOptions {
         Log.println();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
@@ -192,7 +192,7 @@ public final class VMOptions {
      * @param phase the VM phase during which the option should be parsed
      * @return the {@code option} object
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
         assert phase != null;
         final Iterable<VMOption> allOptions = Iterables.join(pristinePhaseOptionsSet, startingPhaseOptionsSet);
@@ -644,7 +644,7 @@ public final class VMOptions {
         for (VMOption option : startingPhaseOptions) {
             option.beforeExit();
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (String argument : VMOption.unmatchedVMArguments()) {
                 if (argument != null) {
                     ProgramWarning.message("VM argument not matched by any VM option: " + argument);

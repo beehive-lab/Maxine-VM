@@ -37,7 +37,7 @@ public abstract class DynamicTrampolineExit {
 
     public abstract Address trampolineReturnAddress(DynamicTrampoline dynamicTrampoline, Address vtableEntryPoint, Pointer stackPointer);
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static DynamicTrampolineExit create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();

@@ -68,7 +68,7 @@ import com.sun.max.vm.type.*;
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
 public @interface UNSAFE {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final class Static {
 
         private Static() {

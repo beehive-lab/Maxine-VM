@@ -49,7 +49,7 @@ public class HIRTestExecutor implements Executor {
         C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
 
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
         final CiTarget target = createTarget();
         final C1XCompiler compiler = new C1XCompiler(runtime, target, null);
 

@@ -39,7 +39,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * A machine word, opaque.
  *
- * Boxed while prototyping on a non-MaxineVM VM, but unboxed on a MaxineVM VM!!!
+ * Boxed while bootstrapping, but unboxed in the target VM!!!
  * As canonical "boxed Java value" type for this new "primitive" type, use 'WordValue'.
  *
  * @author Bernd Mathiske
@@ -51,7 +51,7 @@ public abstract class Word {
      */
     private static final String MAX_EXTEND_WORDTYPES_PROPERTY = "max.extend.wordtypes";
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Class[] getSubclasses() {
         final Class[] defaultClasses = new Class[]{
             Address.class, Offset.class, Pointer.class, Size.class, Word.class,
@@ -172,7 +172,7 @@ public abstract class Word {
         return BoxedPointer.from(box.nativeWord());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final <Word_Type extends Word> Word_Type as(Class<Word_Type> wordType) {
         if (wordType.isInstance(this)) {
             return wordType.cast(this);

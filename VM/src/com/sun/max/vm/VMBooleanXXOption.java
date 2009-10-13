@@ -47,7 +47,7 @@ public class VMBooleanXXOption extends VMOption {
      * @param defaultValue the default value of the option when it is not specified
      * @param help the help text for the option
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VMBooleanXXOption(String prefix, String help) {
         super(prefix + " ", help);
         if (prefix.startsWith("-XX:+")) {

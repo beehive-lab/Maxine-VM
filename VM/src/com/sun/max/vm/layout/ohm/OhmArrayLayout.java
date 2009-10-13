@@ -89,14 +89,14 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         return getArraySize(readLength(accessor));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
         visitor.visitHeaderField(lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(HostObjectAccess.getArrayLength(array)));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
@@ -115,13 +115,13 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitObjectCell(Object array, ObjectCellVisitor visitor) {
         visitHeader(visitor, array);
         visitElements(visitor, array);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         if (offset == lengthOffset) {
             return IntValue.from(mirror.readArrayLength());
@@ -135,7 +135,7 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         return mirror.readElement(kind, index);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         assert kind.isPrimitiveOfSameSizeAs(value.kind());
         if (offset == lengthOffset) {

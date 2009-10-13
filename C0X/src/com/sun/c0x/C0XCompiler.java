@@ -25,7 +25,7 @@ import com.sun.c1x.ci.CiResult;
 import com.sun.c1x.ci.CiTarget;
 import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.xir.XirGenerator;
+import com.sun.c1x.xir.RiXirGenerator;
 
 /**
  * The <code>C0XCompiler</code> class definition.
@@ -54,7 +54,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiResult compileMethod(RiMethod method, XirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;
@@ -68,7 +68,7 @@ public class C0XCompiler extends CiCompiler {
      * @return a {@link com.sun.c1x.ci.CiTargetMethod target method} representing the compiled method
      */
     @Override
-    public CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C0XCompilation comp = new C0XCompilation(runtime, method, target, null);
         comp.compile();
         return null;

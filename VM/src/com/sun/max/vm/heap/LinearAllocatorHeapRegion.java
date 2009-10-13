@@ -78,7 +78,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion {
         Pointer cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
         Address end = cell.plus(size);
         if (end.greaterThan(end())) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 ProgramError.unexpected("out of space in linear allocator region");
             }
             return Pointer.zero();

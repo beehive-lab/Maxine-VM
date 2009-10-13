@@ -1125,7 +1125,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void prologue() {
         if (blockState.birBlock().hasSafepoint()) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final C_FUNCTION cFunctionAnnotation = methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
                 if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
                     callAndPush(JavaOperator.SAFEPOINT_OP);
@@ -1171,7 +1171,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 if (fieldActor.isFinal() && JavaTypeDescriptor.isPrimitive(fieldActor.descriptor()) && fieldActor.holder().isInitialized()) {
                     // This can be transformed directly into a constant value if the field holder has been initialized
                     final Value fieldValue;
-                    if (MaxineVM.isPrototyping()) {
+                    if (MaxineVM.isHosted()) {
                         fieldValue = HostTupleAccess.readValue(null, fieldActor);
                     } else {
                         fieldValue = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));

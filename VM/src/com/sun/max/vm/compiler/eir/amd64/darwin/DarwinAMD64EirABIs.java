@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.eir.amd64.unix.*;
  */
 public class DarwinAMD64EirABIs extends AMD64EirABIsScheme {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public DarwinAMD64EirABIs(VMConfiguration vmConfiguration) {
         super(vmConfiguration, new UnixAMD64EirJavaABI(vmConfiguration),
                         new UnixAMD64EirNativeABI(vmConfiguration),

@@ -30,7 +30,7 @@ import com.sun.max.annotate.*;
  * 
  * @author Laurent Daynes
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public interface UnresolvedAtCompileTimeInterface {
     void parameterlessUnresolvedInterfaceMethod();
 }

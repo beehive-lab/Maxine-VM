@@ -27,7 +27,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Instances of this class represent static tuples during prototyping.
+ * Instances of this class represent static tuples during bootstrapping.
  * The boot image generator substitutes the former by the latter.
  * Thus the boot image does not contain any of the former.
  *
@@ -46,7 +46,7 @@ public final class StaticTuple {
     }
 
     public static Object create(ClassActor classActor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return new StaticTuple(classActor);
         }
         final Object staticTuple = Heap.createTuple(classActor.staticHub());
@@ -73,14 +73,14 @@ public final class StaticTuple {
     }
 
     public static boolean is(Object object) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return object instanceof StaticTuple;
         }
         return ObjectAccess.readHub(object) instanceof StaticHub;
     }
 
     public static String toString(Object staticTuple) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final StaticTuple s = (StaticTuple) staticTuple;
             return s.toString();
         }

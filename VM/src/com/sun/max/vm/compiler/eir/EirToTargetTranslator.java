@@ -87,7 +87,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final Object[] result = new Object[referenceLiterals.length()];
         int i = 0;
         for (EirLiteral referenceLiteral : referenceLiterals) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 result[i] = referenceLiteral.value().asObject();
             } else {
                 // Must not cause checkcast here, since some reference literals may be static tuples.
@@ -309,7 +309,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             "computed target bundle size differs from derived target bundle size for " + targetMethod.classMethodActor() +
             "\n    computed:\n" + targetBundleLayout +
             "\n     derived:\n" + TargetBundleLayout.from(targetMethod);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // the compiled prototype links all methods in a separate phase
         } else {
             // at target runtime, each method gets linked individually right after generating it:

@@ -26,14 +26,14 @@ import com.sun.max.vm.*;
 
 /**
  * Thrown when a {@linkplain PoolConstant constant pool entry} for a
- * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) prototype-only field} is
+ * {@linkplain MaxineVM#isHostedOnly(AccessibleObject) host-only field} is
  * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
  *
  * @author Doug Simon
  */
-public class PrototypeOnlyFieldError extends NoSuchMethodError {
+public class HostOnlyFieldError extends NoSuchMethodError {
 
-    public PrototypeOnlyFieldError(String s) {
+    public HostOnlyFieldError(String s) {
         super(s);
     }
 }

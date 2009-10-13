@@ -62,7 +62,7 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
 
     protected abstract Class<? extends BuiltinVisitor> builtinTranslationClass();
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void createBuiltins(PackageLoader packageLoader) {
         super.createBuiltins(packageLoader);

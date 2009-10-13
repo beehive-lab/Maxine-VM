@@ -601,7 +601,7 @@ public abstract class ReferenceMapInterpreter {
      *         interpretation
      */
     private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // This indirection is simply for debugging the interpreter loop.
             try {
                 return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
@@ -616,7 +616,7 @@ public abstract class ReferenceMapInterpreter {
         return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public String[] framesToStrings(ReferenceMapInterpreterContext context) {
         assert this.context == null;
         resetInterpreter(context);
@@ -631,7 +631,7 @@ public abstract class ReferenceMapInterpreter {
         return frameStrings;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private String currentFrameToString() {
         final StringBuilder sb = new StringBuilder("locals[").append(maxLocals()).append("] = { ");
         for (int i = 0; i != maxLocals(); ++i) {
@@ -673,7 +673,7 @@ public abstract class ReferenceMapInterpreter {
                 visitReferencesAtCurrentBytecodePosition(visitor, false);
             }
 
-            if (MaxineVM.isPrototyping() && trace) {
+            if (MaxineVM.isHosted() && trace) {
                 System.err.println("  " + currentFrameToString());
                 System.err.println(opcodeBytecodePosition + ":  " + opcode);
             }

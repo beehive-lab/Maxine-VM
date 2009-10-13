@@ -314,7 +314,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void arrayStoreException(Object array, Object value) {
         FatalError.check(array != null && value != null, "Arguments for raising an ArrayStoreException cannot be null");
-        final ClassActor arrayClassActor = MaxineVM.isPrototyping() ? ClassActor.fromJava(array.getClass()) : ObjectAccess.readClassActor(array);
+        final ClassActor arrayClassActor = MaxineVM.isHosted() ? ClassActor.fromJava(array.getClass()) : ObjectAccess.readClassActor(array);
         final ClassActor componentClassActor = arrayClassActor.componentClassActor();
         throw new ArrayStoreException(value.getClass().getName() + " is not assignable to " + componentClassActor.name);
     }

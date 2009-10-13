@@ -54,7 +54,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * @param start the starting memory address
      * @param size the size of the code region in bytes
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CodeRegion(Address start, Size size, String description) {
         super(start, size, description);
     }
@@ -87,7 +87,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      *
      * @return the sorted list of target methods in this code region
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Iterable<TargetMethod> targetMethods() {
         final AppendableSequence<TargetMethod> result = new ArrayListSequence<TargetMethod>(sortedMemoryRegions.length());
         for (MemoryRegion memoryRegion : sortedMemoryRegions) {

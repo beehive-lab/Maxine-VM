@@ -130,7 +130,7 @@ public final class JDK_java_lang_Throwable {
             while (bytecodeLocations.hasNext()) {
                 final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
                 final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
-                if (classMethodActor.isApplicationVisible()) {
+                if (classMethodActor.isApplicationVisible() || classMethodActor.isNative()) {
                     addStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
                 }
             }
@@ -146,6 +146,9 @@ public final class JDK_java_lang_Throwable {
      * @param targetMethodOffset the instruction pointer offset within the target method. This value is ignored if {@code sourceLineNumber >= 0}
      */
     private static void addStackTraceElement(final List<StackTraceElement> result, final ClassMethodActor classMethodActor, int sourceLineNumber, int targetMethodOffset) {
+        if (classMethodActor.isNative()) {
+            sourceLineNumber = -2;
+        }
         final ClassActor holder = classMethodActor.holder();
         final String sourceFileName = sourceLineNumber < 0 && targetMethodOffset >= 0 ? holder.sourceFileName + "@" + targetMethodOffset : holder.sourceFileName;
         result.add(new StackTraceElement(holder.name.toString(), classMethodActor.name.toString(), sourceFileName, sourceLineNumber));

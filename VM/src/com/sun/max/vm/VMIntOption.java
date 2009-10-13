@@ -43,7 +43,7 @@ public class VMIntOption extends VMOption {
      * @param defaultValue the default value of the option when it is not specified
      * @param help the help text for the option
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VMIntOption(String prefix, int defaultValue, String help) {
         super(prefix, help);
         value = defaultValue;

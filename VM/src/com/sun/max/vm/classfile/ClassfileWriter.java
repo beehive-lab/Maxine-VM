@@ -65,7 +65,7 @@ public class ClassfileWriter {
      */
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
         } else {
             classInfo.actor.classfile = classfile;
@@ -642,7 +642,7 @@ public class ClassfileWriter {
     /**
      * A command line interface for producing Maxine preprocessed class files for one or more classes.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void main(String[] args) {
         final OptionSet options = new OptionSet() {
             @Override
@@ -693,7 +693,7 @@ public class ClassfileWriter {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void processClass(String className, File outputDirectory, Map<String, byte[]> classNameToClassfileMap) {
         Class<?> javaClass;
         try {
@@ -702,7 +702,7 @@ public class ClassfileWriter {
             ProgramWarning.message("Could not find class: " + className);
             return;
         }
-        if (MaxineVM.isPrototypeOnly(javaClass)) {
+        if (MaxineVM.isHostedOnly(javaClass)) {
             ProgramWarning.message("Cannot create a class actor for prototype only class: " + className);
             return;
         }
@@ -736,14 +736,14 @@ public class ClassfileWriter {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static class TestClassLoader extends ClassLoader {
         public void load(String className, byte[] classfileBytes) {
             ClassfileReader.defineClassActor(className, this, classfileBytes, null, null);
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void testLoadGeneratedClasses(Map<String, byte[]> classNameToClassfileMap, File outputDirectory) {
         try {
             final URL[] urls = {outputDirectory.toURI().toURL()};

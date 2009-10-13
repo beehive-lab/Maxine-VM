@@ -73,7 +73,7 @@ public class AtomicReference {
      */
     @INLINE
     public final boolean compareAndSet(Object expect, Object update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect == value) {
                     value = update;
@@ -96,7 +96,7 @@ public class AtomicReference {
      */
     @INLINE
     public final Object compareAndSwap(Object expect, Object update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect == value) {
                     value = update;

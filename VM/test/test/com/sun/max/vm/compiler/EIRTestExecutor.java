@@ -62,7 +62,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
         final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.eirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

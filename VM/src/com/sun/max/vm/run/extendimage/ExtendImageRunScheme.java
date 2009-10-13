@@ -122,11 +122,18 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
-            if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
+            if (MaxineVM.isHosted()) {
                 extendImage();
             }
         }
+
+        if (phase == MaxineVM.Phase.STARTING) {
+            for (ClassActor classActor : reinitClasses) {
+                classActor.callInitializer();
+            }
+        }
+
         super.initialize(phase);
 
         if (phase == MaxineVM.Phase.RUNNING) {
@@ -134,9 +141,6 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             while (propEnum.hasMoreElements()) {
                 final String propertyName = (String) propEnum.nextElement();
                 System.setProperty(propertyName, properties.getProperty(propertyName));
-            }
-            for (ClassActor classActor : reinitClasses) {
-                classActor.callInitializer();
             }
             for (StaticMethodActor methodActor : callMethods) {
                 try {
@@ -173,7 +177,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void extendImage() {
         final String mainClass = System.getProperty(MAINCLASS_PROPERTY_NAME);
         final String fileList = System.getProperty(SPECFILE_PROPERTY_NAME);
@@ -194,14 +198,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
                 Trace.line(1, "extending image with " + testerRunSchemeClassname);
                 forceCompileMethod(testerRunSchemeClassname + ".run");
                 forceClass(testRunPackageName + ".JavaTesterTests", false);
-                tester.initialize(MaxineVM.Phase.PROTOTYPING);
+                tester.initialize(MaxineVM.Phase.BOOTSTRAPPING);
             } catch (Exception ex) {
                 ProgramError.unexpected(ex.getMessage());
             }
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void processSpecFile(File fileList) {
         final File parent = fileList.getParentFile();
         BufferedReader bs = null;
@@ -274,7 +278,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void doInclude(File parent, String fileName) {
         final File f = new File(parent, fileName);
         if (includeSet.contains(f)) {
@@ -284,7 +288,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         processSpecFile(f);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceClass(String className, boolean isMain) {
         Trace.line(1, "extending image with class " + className);
         try {
@@ -306,7 +310,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void omitClass(String className) {
         Trace.line(1, "omitting class " + className + " from image");
         try {
@@ -316,7 +320,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceClassInit(String className) {
         forceClass(className, false);
         Trace.line(1, "initializing class " + className);
@@ -327,13 +331,13 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceLoadPackage(String packageName) {
         Trace.line(1, "extending image with classes in package " + packageName);
         JavaPrototype.javaPrototype().loadPackage(packageName, false);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceCompileMethod(String forceMethodName) {
         final int ix = forceMethodName.lastIndexOf('.');
         if (ix < 0) {
@@ -356,7 +360,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceConstructorStubs(final String className) {
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
@@ -372,7 +376,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void forceInvocationStub(String forceMethodName) {
         final int ix = forceMethodName.lastIndexOf('.');
         if (ix < 0) {
@@ -396,7 +400,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doCallMethod(String argument) {
         final int ix = argument.lastIndexOf('.');
         if (ix < 0) {
@@ -415,7 +419,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doSetProperty(String argument) {
         final int ix = argument.lastIndexOf('=');
         String propertyName;
@@ -429,12 +433,12 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         properties.put(propertyName, propertyValue);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doReinitClass(String argument) {
         doForceInitClass(argument, true);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected ClassActor doForceInitClass(String argument, boolean reinit) {
         final String className = argument;
         try {
@@ -452,14 +456,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         return null;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doResetLauncher() {
         resetLauncher = true;
         Trace.line(1, "arranging to reset sun.misc.Launcher prior to main");
         forceCompileMethod("sun.misc.Launcher.<clinit>");
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doResetField(String argument) {
         final int ix = argument.lastIndexOf('.');
         if (ix < 0) {
@@ -481,7 +485,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doImageFile(String argument) {
         String pathName = argument;
         String asName = argument;
@@ -503,7 +507,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void putImageFile(File file, File asFile) {
         try {
             String path = asFile.getPath();
@@ -519,7 +523,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void putDirectory(File dir, File asFile) {
         final String[] files = dir.list();
         for (String path : files) {
@@ -532,7 +536,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             }
         }
     }
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected void doImagefsPrefix(String argument) {
         final int last = argument.length() - 1;
         if (argument.charAt(last) == File.separatorChar) {

@@ -56,7 +56,7 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
         final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.cirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

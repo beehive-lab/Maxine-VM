@@ -39,7 +39,7 @@ import com.sun.max.vm.jni.*;
  */
 public class UnixAMD64EirNativeABI extends UnixAMD64EirCFunctionABI {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public UnixAMD64EirNativeABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, false);
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();

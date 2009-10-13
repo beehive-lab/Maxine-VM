@@ -68,21 +68,21 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         return Sequence.Static.appended(super.irGenerators(), birToCirTranslator);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void createBuiltins(PackageLoader packageLoader) {
         super.createBuiltins(packageLoader);
         packageLoader.loadAndInitializeAllAndInstantiateLeaves(CirBuiltin.class);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void createSnippets(PackageLoader packageLoader) {
         super.createSnippets(packageLoader);
         packageLoader.loadAndInitializeAllAndInstantiateLeaves(CirSnippet.class);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void translateSnippets() {
         Trace.begin(1, "translateSnippets");
         for (int i = 0; i < Snippet.snippets().length(); i++) {
@@ -102,7 +102,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         Trace.end(1, "translateSnippets");
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void optimizeSnippets() {
         Trace.begin(1, "optimizeSnippets");
         // Each snippet optimization must proceed without encountering prior folding,
@@ -137,7 +137,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
      * After optimizing all Snippets, there are many CirMethods holding unoptimized CIR closures.
      * We need to clear those so that these methods can be compiled properly when needed.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void cleanupAfterSnippets() {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
@@ -162,7 +162,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         optimizing = false;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void compileSnippets() {
         translateSnippets();
@@ -187,7 +187,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
 
 
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void gatherCalls(final TargetMethod targetMethod,
                     final AppendableSequence<MethodActor> directCalls,

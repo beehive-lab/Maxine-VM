@@ -341,7 +341,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         public void monitorEnter(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.enter(object);
                 return;
             }
@@ -359,7 +359,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         public void monitorExit(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.exit(object);
                 return;
             }
@@ -381,7 +381,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         public int makeHashCode(Object object) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
             final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
@@ -396,7 +396,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         public void monitorNotify(Object object, boolean all) {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.notify(object);
                 return;
             }
@@ -406,7 +406,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         public void monitorWait(Object object, long timeout) throws InterruptedException {
             nullCheck(object);
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostMonitor.wait(object, timeout);
                 return;
             }

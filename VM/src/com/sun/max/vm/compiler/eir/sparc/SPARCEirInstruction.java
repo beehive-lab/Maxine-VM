@@ -483,7 +483,7 @@ public interface SPARCEirInstruction {
         }
 
         private void assembleStaticTrampolineCall(SPARCEirTargetEmitter emitter) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final int arbitraryPlaceHolderBeforeLinkingTheBootCodeRegion = -1;
                 emitter.assembler().call(arbitraryPlaceHolderBeforeLinkingTheBootCodeRegion);
             } else {

@@ -49,6 +49,18 @@ public class PackageLoader {
     }
 
     /**
+     * Loads a given class.
+     * A subclass can override this method to omit loading of certain classes in a package
+     * which can result in this method returning {@code null}.
+     *
+     * @param className
+     * @return the {@code Class} instance for {@code className}
+     */
+    protected Class loadClass(String className) {
+        return Classes.load(classLoader, className);
+    }
+
+    /**
      * Loads classes under a given package.
      *
      * @param packageName the name of the package from which classes are loaded
@@ -67,7 +79,7 @@ public class PackageLoader {
                 if (!className.endsWith("package-info")) {
                     if (!classNames.contains(className)) {
                         if (recursive || Classes.getPackageName(className).equals(packageName)) {
-                            final Class javaClass = Classes.load(classLoader, className);
+                            final Class javaClass = loadClass(className);
                             if (javaClass != null) {
                                 Classes.link(javaClass);
                                 classNames.add(className);

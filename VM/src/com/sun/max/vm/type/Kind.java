@@ -78,7 +78,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     }
 
     public static Kind<?> fromJava(Class type) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (type.isPrimitive()) {
                 for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
                     if (kind.javaClass == type) {
@@ -96,7 +96,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
     public static Kind<?> fromBoxedClass(Class type) {
         assert !type.isPrimitive();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
                 if (kind.boxedClass == type) {
                     return kind;

@@ -109,7 +109,7 @@ public abstract class StackFrameWalker {
     private Purpose purpose = null;
     private Pointer stackPointer = Pointer.zero();
     private Pointer framePointer;
-    private Pointer anchor;
+    private Pointer currentAnchor;
     private Pointer instructionPointer;
     private Pointer calleeStackPointer = Pointer.zero();
     private Pointer calleeFramePointer;
@@ -148,9 +148,9 @@ public abstract class StackFrameWalker {
         this.instructionPointer = instructionPointer;
         this.framePointer = framePointer;
         this.stackPointer = stackPointer;
-        this.anchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
+        this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
-        boolean inNative = !readWord(anchor, JavaFrameAnchor.PC.offset).isZero();
+        boolean inNative = !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         TargetMethod lastJavaCallee = null;
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
@@ -161,10 +161,6 @@ public abstract class StackFrameWalker {
             if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
                 if (inNative) {
-                    // Inspector specific: in JNI stub after transition to 'in native'
-                    if (readWord(anchor, JavaFrameAnchor.SP.offset).equals(stackPointer)) {
-                        advanceAnchor();
-                    }
                     inNative = false;
                 }
 
@@ -290,18 +286,13 @@ public abstract class StackFrameWalker {
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
         if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isJniFunction()) {
-            if (readWord(anchor, JavaFrameAnchor.PC.offset).isZero()) {
-                advanceAnchor();
-            } else {
-                FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Anchor in @C_FUNCTION method frame cannot have a non-zero PC unless inspecting");
-            }
+            Pointer anchor = nextAnchor();
             final Word lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset);
             final Word lastJavaCallerStackPointer = readWord(anchor, JavaFrameAnchor.SP.offset);
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
             advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
                     lastJavaCallerFramePointer);
-            advanceAnchor();
             return true;
         }
         if (!isRunMethod(lastJavaCalleeMethodActor)) {
@@ -315,6 +306,7 @@ public abstract class StackFrameWalker {
      * in native code.
      */
     private void advanceFrameInNative(Purpose purpose) {
+        Pointer anchor = nextAnchor();
         Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
         if (lastJavaCallerInstructionPointer.isZero()) {
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
@@ -324,10 +316,15 @@ public abstract class StackFrameWalker {
             readWord(anchor, JavaFrameAnchor.FP.offset));
     }
 
-    private void advanceAnchor() {
-        if (!anchor.isZero()) {
-            anchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+    private Pointer nextAnchor() {
+        FatalError.check(!currentAnchor.isZero(), "No more anchors");
+        if (readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero()) {
+            currentAnchor = readWord(currentAnchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
         }
+        FatalError.check(!readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero(), "Encountered anchor with zero PC");
+        Pointer anchor = this.currentAnchor;
+        this.currentAnchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+        return anchor;
     }
 
     private void checkPurpose(Purpose purpose, Object context) {
@@ -490,7 +487,6 @@ public abstract class StackFrameWalker {
 
     @INLINE
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
-
         this.calleeInstructionPointer = this.instructionPointer;
         this.calleeFramePointer = this.framePointer;
         this.calleeStackPointer = this.stackPointer;

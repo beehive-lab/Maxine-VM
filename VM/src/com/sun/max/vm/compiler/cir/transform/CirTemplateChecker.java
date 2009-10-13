@@ -49,7 +49,7 @@ import com.sun.max.vm.runtime.VMRegister.*;
  *
  * @author Doug Simon
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class CirTemplateChecker extends CirVisitor {
 
     private final MethodActor classMethodActor;

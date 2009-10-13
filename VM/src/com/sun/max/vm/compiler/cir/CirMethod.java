@@ -108,7 +108,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // This happens when interpreting a CIR method with the CirInterpreter
             if (!isFoldable(cirOptimizer, arguments)) {
                 return CirRoutine.Static.fold(this, arguments);
@@ -164,7 +164,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     private CirClosure cachedClosure;
 
     private void cache(CirClosure closure) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // So let's not fill the host VM's heap too much here.
         } else {
             cachedClosure = closure;
@@ -234,9 +234,9 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     public synchronized CirCall inline(CirOptimizer cirOptimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
         if (cirBytecode == null) {
             // This usually denotes a case where the code for a snippet includes
-            // a section that is only executed if VM.isPrototyping() is true and
+            // a section that is only executed if MaxineVM.isHosted() is true and
             // this section uses the snippet. The solution in this case is to
-            // put the prototyping-only code in a separate method that will not be
+            // put the bootstrapping-only code in a separate method that will not be
             // inlined
             ProgramError.check(!makingIr, "cannot inline " + classMethodActor() + " while making its IR");
 

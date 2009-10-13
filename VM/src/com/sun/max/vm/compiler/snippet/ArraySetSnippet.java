@@ -45,7 +45,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setByte(Object array, int index, int value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostArrayAccess.setByte(array, index, (byte) value);
             } else {
                 ArrayAccess.setByte(array, index, (byte) value);
@@ -59,7 +59,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setShort(short[] array, int index, short value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setShort(array, index, value);
@@ -73,7 +73,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setChar(char[] array, int index, char value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setChar(array, index, value);
@@ -87,7 +87,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setInt(int[] array, int index, int value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setInt(array, index, value);
@@ -101,7 +101,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setFloat(float[] array, int index, float value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setFloat(array, index, value);
@@ -115,7 +115,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setLong(long[] array, int index, long value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setLong(array, index, value);
@@ -129,7 +129,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setDouble(double[] array, int index, double value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setDouble(array, index, value);
@@ -143,7 +143,7 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void setReference(Object[] array, int index, Object value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 array[index] = value;
             } else {
                 ArrayAccess.setObject(array, index, value);

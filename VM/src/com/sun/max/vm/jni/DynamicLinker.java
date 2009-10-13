@@ -213,7 +213,7 @@ public final class DynamicLinker {
      */
     public static Word lookup(MethodActor classMethodActor, String symbol) throws UnsatisfiedLinkError {
         Word symbolAddress = null;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             symbolAddress = MethodID.fromMethodActor(classMethodActor);
         } else {
             try {
