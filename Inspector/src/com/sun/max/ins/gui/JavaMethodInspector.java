@@ -135,6 +135,7 @@ public class JavaMethodInspector extends MethodInspector {
         breakAtLabelsMenu.add(actions.removeTargetCodeLabelBreakpoints(teleTargetMethod, "Remove target code breakpoints"));
         debugMenu.add(breakAtLabelsMenu);
         debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor, "Invoke this method"));
+        debugMenu.addSeparator();
         debugMenu.add(actions.genericBreakpointMenuItems());
         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
         viewBreakpointsMenuItem.setText("View Breakpoints");
