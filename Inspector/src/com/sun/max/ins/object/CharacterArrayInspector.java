@@ -47,7 +47,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame(null);
+        createFrame();
     }
 
     @Override

@@ -39,6 +39,7 @@ import com.sun.max.util.*;
  * Renders memory contents, lets you select the start address, etc.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class MemoryBytesInspector extends Inspector {
 
@@ -72,7 +73,22 @@ public final class MemoryBytesInspector extends Inspector {
         this.numberOfGroups = numberOfGroups;
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
         this.numberOfGroupsPerLine = numberOfGroupsPerLine;
-        createFrame(null);
+
+        final InspectorFrame frame = createFrame();
+        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other memory byte inspectors"));
+        defaultMenu.add(actions().closeViews(allMemoryInspectorsPredicate, "Close all memory byte inspectors"));
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         inspection.gui().setLocationRelativeToMouse(this);
         memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
@@ -194,9 +210,7 @@ public final class MemoryBytesInspector extends Inspector {
 
     @Override
     protected void createView() {
-        getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
-        getMenu(DEFAULT_INSPECTOR_MENU).add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
-        getMenu(DEFAULT_INSPECTOR_MENU).add(actions().closeViews(allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
+
 
         contentPane = new InspectorPanel(inspection());
         frame().setContentPane(contentPane);

@@ -71,7 +71,20 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        createFrame(null);
+
+        final InspectorFrame frame = createFrame();
+
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectSelectedThreadMemoryWords("Inspect thread's memory"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
