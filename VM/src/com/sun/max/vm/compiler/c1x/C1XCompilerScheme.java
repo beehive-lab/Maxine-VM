@@ -47,7 +47,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     private MaxRiRuntime c1xRuntime;
     private C1XCompiler compiler;
-    private XirGenerator xirGenerator;
+    private RiXirGenerator xirGenerator;
 
     public static final Option<Integer> OptLevel;
 

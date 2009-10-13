@@ -26,7 +26,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.xir.*;
 
 
-public class X86XirAssembler extends XirAssembler {
+public class X86XirAssembler extends CiXirAssembler {
 
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
@@ -164,7 +164,7 @@ public class X86XirAssembler extends XirAssembler {
     }
 
     @Override
-    public XirAssembler copy() {
+    public CiXirAssembler copy() {
         return new X86XirAssembler();
     }
 }
