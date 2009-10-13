@@ -64,6 +64,11 @@ public final class Heap {
     private static Size maxSize;
     private static Size initialSize;
 
+    // Note: Called via reflection from jvm.c
+    public static long maxSizeLong() {
+        return maxSize().toLong();
+    }
+
     public static Size maxSize() {
         if (maxSize.isZero()) {
             maxSize = maxSizeOption();
@@ -383,8 +388,8 @@ public final class Heap {
         long beforeFree = 0L;
         long beforeUsed = 0L;
         if (verbose()) {
-            beforeUsed = reportUsedSpace().toLong();
-            beforeFree = reportFreeSpace().toLong();
+            beforeUsed = reportUsedSpace();
+            beforeFree = reportFreeSpace();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
@@ -398,8 +403,8 @@ public final class Heap {
         }
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
-            final long afterUsed = reportUsedSpace().toLong();
-            final long afterFree = reportFreeSpace().toLong();
+            final long afterUsed = reportUsedSpace();
+            final long afterFree = reportFreeSpace();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
             Log.printCurrentThread(false);
@@ -421,14 +426,17 @@ public final class Heap {
         return freedEnough;
     }
 
-    public static Size reportFreeSpace() {
-        return heapScheme().reportFreeSpace();
+    // Note: Called via reflection from jvm.c
+    public static long reportFreeSpace() {
+        return heapScheme().reportFreeSpace().toLong();
     }
 
-    public static Size reportUsedSpace() {
-        return heapScheme().reportUsedSpace();
+    // Note: Called via reflection from jvm.c
+    public static long reportUsedSpace() {
+        return heapScheme().reportUsedSpace().toLong();
     }
 
+    // Note: Called via reflection from jvm.c
     public static long maxObjectInspectionAge() {
         return heapScheme().maxObjectInspectionAge();
     }

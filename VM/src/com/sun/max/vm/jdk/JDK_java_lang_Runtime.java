@@ -26,7 +26,7 @@ import com.sun.max.vm.heap.*;
 
 /**
  * Implements method substitutions for {@link java.lang.Runtime java.lang.Runtime}.
- * 
+ *
  * @author Bernd Mathiske
  */
 @METHOD_SUBSTITUTIONS(Runtime.class)
@@ -42,7 +42,7 @@ public final class JDK_java_lang_Runtime {
      */
     @SUBSTITUTE
     private long freeMemory() {
-        return Heap.reportFreeSpace().toLong();
+        return Heap.reportFreeSpace();
     }
 
     /**

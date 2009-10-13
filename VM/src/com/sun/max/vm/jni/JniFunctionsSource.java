@@ -250,8 +250,8 @@ public final class JniFunctionsSource {
     }
 
     @JNI_FUNCTION
-    private static JniHandle PopLocalFrame(Pointer env, JniHandle result) {
-        return JniHandles.popLocalFrame(result);
+    private static JniHandle PopLocalFrame(Pointer env, JniHandle res) {
+        return JniHandles.popLocalFrame(res);
     }
 
     @JNI_FUNCTION
