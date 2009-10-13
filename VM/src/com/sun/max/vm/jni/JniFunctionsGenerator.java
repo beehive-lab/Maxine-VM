@@ -46,7 +46,6 @@ public class JniFunctionsGenerator {
     static final int BEFORE_FIRST_JNI_FUNCTION = -1;
     static final int BEFORE_JNI_FUNCTION = 0;
     static final int BEFORE_PROLOGUE = 1;
-    static final int BEFORE_EPILOGUE = 2;
 
     /**
      * An extension of {@link BufferedReader} that tracks the line number.
@@ -78,6 +77,52 @@ public class JniFunctionsGenerator {
         }
     }
 
+    static class JniFunctionDeclaration {
+        static Pattern PATTERN = Pattern.compile("    private static (native )?(\\w+) (\\w+)\\(([^)]*)\\).*");
+
+        String line;
+        String returnType;
+        boolean isNative;
+        String name;
+        String parameters;
+        String arguments;
+        String sourcePos;
+
+        static JniFunctionDeclaration parse(String line, String sourcePos) {
+            Matcher m = PATTERN.matcher(line);
+            if (!m.matches()) {
+                return null;
+            }
+
+            JniFunctionDeclaration decl = new JniFunctionDeclaration();
+            decl.line = line;
+            decl.isNative = m.group(1) != null;
+            decl.returnType = m.group(2);
+            decl.name = m.group(3);
+            decl.parameters = m.group(4);
+
+            String[] parameters = decl.parameters.split(",\\s*");
+            StringBuilder arguments = new StringBuilder();
+            for (int i = 0; i < parameters.length; ++i) {
+                if (arguments.length() != 0) {
+                    arguments.append(", ");
+                }
+                arguments.append(parameters[i].substring(parameters[i].lastIndexOf(' ') + 1));
+            }
+            decl.arguments = arguments.toString();
+            decl.sourcePos = sourcePos;
+            return decl;
+        }
+
+        public String declareHelper() {
+            int index = line.indexOf('(');
+            return line.substring(0, index) + '_' + line.substring(index);
+        }
+
+        public String callHelper() {
+            return name + "_(" + arguments + ")";
+        }
+    }
 
     /**
      * Inserts or updates generated source into {@link JniFunctions JniFunctions.java}. The generated source is derived from
@@ -103,13 +148,7 @@ public class JniFunctionsGenerator {
         LineReader lr = new LineReader(inputFile);
         String line = null;
 
-        Pattern decl = Pattern.compile("    private static (\\w+) (\\w+).*");
-
-        String errReturnValue = null;
-        String functionName = null;
-
         int state = BEFORE_FIRST_JNI_FUNCTION;
-
         Writer writer = new StringWriter();
         PrintWriter out = new PrintWriter(writer);
 
@@ -126,76 +165,85 @@ public class JniFunctionsGenerator {
                     out.println();
                 }
                 state = BEFORE_PROLOGUE;
-                out.println("    // Source: " + inputFile.getName() + ":" + lr.lineNo);
                 out.println(line);
                 continue;
             }
 
             if (state == BEFORE_PROLOGUE) {
                 out.println(line);
-                Matcher matcher = decl.matcher(line);
-                lr.check(matcher.matches(), "JNI function declaration does not match pattern \"" + decl + "\"");
-                if (!matcher.group(1).equals("native")) {
 
-                    String returnType = matcher.group(1);
-                    functionName = matcher.group(2);
+                JniFunctionDeclaration decl = JniFunctionDeclaration.parse(line, inputFile.getName() + ":" + lr.lineNo);
+                lr.check(decl != null, "JNI function declaration does not match pattern \"" + JniFunctionDeclaration.PATTERN + "\"");
 
-                    out.println("        Pointer anchor = prologue(env, \"" + functionName + "\");");
-                    out.println("        try {");
-
-                    if (returnType.equals("void")) {
-                        errReturnValue = null;
-                    } else if (returnType.equals("boolean")) {
-                        errReturnValue = " false";
-                    } else if (returnType.equals("char")) {
-                        errReturnValue = " (char) JNI_ERR";
-                    } else if (returnType.equals("int") ||
-                               returnType.equals("byte") ||
-                               returnType.equals("char") ||
-                               returnType.equals("short") ||
-                               returnType.equals("float") ||
-                               returnType.equals("long") ||
-                               returnType.equals("double")) {
-                        errReturnValue = " JNI_ERR";
+                if (!decl.isNative) {
+                    if (decl.returnType.equals("void")) {
+                        generateVoidFunction(out, decl);
                     } else {
-                        errReturnValue = " as" + returnType + "(0)";
+                        generateNonVoidFunction(out, decl);
                     }
-
-                    state = BEFORE_EPILOGUE;
-                } else {
-                    state = BEFORE_JNI_FUNCTION;
                 }
-                continue;
-            }
-
-            if (line.equals("    }") && state == BEFORE_EPILOGUE) {
                 state = BEFORE_JNI_FUNCTION;
-                out.println("        } catch (Throwable t) {");
-                out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
-                if (errReturnValue != null) {
-                    out.println("            return" + errReturnValue + ";");
-                }
-                out.println("        } finally {");
-                out.println("            epilogue(anchor, \"" + functionName + "\");");
-                out.println("        }");
-                out.println(line);
                 continue;
             }
 
             if (state == BEFORE_FIRST_JNI_FUNCTION) {
                 continue;
             }
-
-            if (state == BEFORE_EPILOGUE) {
-                out.print("    ");
-            }
             out.println(line);
         }
 
-        lr.check(line != null, "Did not find last line consisting of '}'");
-
         writer.close();
         return Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
+    }
+
+    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl) {
+        final String errReturnValue;
+        if (decl.returnType.equals("boolean")) {
+            errReturnValue = "false";
+        } else if (decl.returnType.equals("char")) {
+            errReturnValue = " (char) JNI_ERR";
+        } else if (decl.returnType.equals("int") ||
+                   decl.returnType.equals("byte") ||
+                   decl.returnType.equals("char") ||
+                   decl.returnType.equals("short") ||
+                   decl.returnType.equals("float") ||
+                   decl.returnType.equals("long") ||
+                   decl.returnType.equals("double")) {
+            errReturnValue = "JNI_ERR";
+        } else {
+            errReturnValue = "as" + decl.returnType + "(0)";
+        }
+
+        out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
+        out.println("        " + decl.returnType + " result;");
+        out.println("        try {");
+        out.println("            result = " + decl.callHelper() + ";");
+        out.println("        } catch (Throwable t) {");
+        out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
+        out.println("            result = " + errReturnValue + ";");
+        out.println("        }");
+        out.println("        epilogue(anchor, \"" + decl.name + "\");");
+        out.println("        return result;");
+        out.println("    }");
+        out.println();
+        out.println("    @INLINE");
+        out.println("    // Source: " + decl.sourcePos);
+        out.println(decl.declareHelper());
+    }
+
+    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl) {
+        out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
+        out.println("        try {");
+        out.println("            " + decl.callHelper() + ";");
+        out.println("        } catch (Throwable t) {");
+        out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
+        out.println("        }");
+        out.println("        epilogue(anchor, \"" + decl.name + "\");");
+        out.println("    }");
+        out.println();
+        out.println("    @INLINE");
+        out.println("    // Source: " + decl.sourcePos);
+        out.println(decl.declareHelper());
     }
 
     /**

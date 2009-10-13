@@ -199,7 +199,7 @@ jlong JVM_FreeMemory(void) {
 jlong
 JVM_MaxMemory(void) {
     JNIEnv *env = currentJniEnv();
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxSize", "()J");
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/heap/Heap", "maxSizeLong", "()J");
     return (*env)->CallStaticLongMethod(env, result.jClass, result.jMethod);
 }
 
