@@ -22,7 +22,6 @@ package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
@@ -34,29 +33,44 @@ import com.sun.max.vm.layout.*;
 public class TupleInspector extends ObjectInspector {
 
     private ObjectScrollPane fieldsPane;
-    private final InspectorMenuItems classMethodInspectorMenuItems;
-    private final InspectorMenuItems targetMethodInspectorMenuItems;
 
     TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+
+
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
-        if (teleClassMethodActor != null) {
-            classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
-        } else {
-            classMethodInspectorMenuItems = null;
-        }
+        TeleTargetMethod teleTargetMethod = null;
         if (TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
-            final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleObject;
-            targetMethodInspectorMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
-        } else {
-            targetMethodInspectorMenuItems = null;
+            teleTargetMethod = (TeleTargetMethod) teleObject;
         }
-        if (classMethodInspectorMenuItems != null) {
-            getMenu(DEFAULT_INSPECTOR_MENU).add(classMethodInspectorMenuItems);
+
+        final InspectionActions actions = inspection.actions();
+
+        if (teleTargetMethod != null) {
+            frame.makeMenu(MenuKind.DEBUG_MENU).add(actions.setTargetCodeBreakpointAtMethodEntry(teleTargetMethod));
         }
-        if (targetMethodInspectorMenuItems != null) {
-            getMenu(DEFAULT_INSPECTOR_MENU).add(targetMethodInspectorMenuItems);
+        if (teleClassMethodActor != null) {
+            final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
+            objectMenu.add(actions.inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
+            objectMenu.add(actions.inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+            objectMenu.add(actions.inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions.inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
+            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+            final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
+            codeMenu.add(actions.viewJavaSource(teleClassMethodActor));
+            codeMenu.add(actions.viewMethodBytecode(teleClassMethodActor));
+            codeMenu.add(actions.viewTargetMethodCodeMenu(teleClassMethodActor));
+            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
+
+            final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
+            final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
+            breakOnEntryMenu.add(actions.setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+            debugMenu.add(breakOnEntryMenu);
+            debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor));
+            debugMenu.add(defaultMenuItems(MenuKind.DEBUG_MENU));
         }
     }
 
@@ -72,12 +86,6 @@ public class TupleInspector extends ObjectInspector {
     protected boolean refreshView(boolean force) {
         if (isShowing() || force) {
             fieldsPane.refresh(force);
-            if (classMethodInspectorMenuItems != null) {
-                classMethodInspectorMenuItems.refresh(force);
-            }
-            if (targetMethodInspectorMenuItems != null) {
-                targetMethodInspectorMenuItems.refresh(force);
-            }
             super.refreshView(force);
         }
         return true;

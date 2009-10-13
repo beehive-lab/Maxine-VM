@@ -62,7 +62,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         } else {
             saveSettingsListener = null;
         }
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         addChangeListener(tabChangeListener);
     }
 

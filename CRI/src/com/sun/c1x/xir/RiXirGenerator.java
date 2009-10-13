@@ -32,7 +32,7 @@ import com.sun.c1x.ci.CiKind;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public abstract class XirGenerator {
+public abstract class RiXirGenerator {
 
     public XirSnippet genResolveClassObject(RiType type) {
         return null;
@@ -114,6 +114,6 @@ public abstract class XirGenerator {
         return null;
     }
 
-	public void buildTemplates(XirAssembler asm) {
+	public void buildTemplates(CiXirAssembler asm) {
 	}
 }

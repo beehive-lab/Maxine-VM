@@ -33,7 +33,7 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorMenu extends JMenu implements Prober {
+public class InspectorMenu extends JMenu implements Prober {
 
     private final AppendableSequence<InspectorMenuItems> menuItems = new LinkSequence<InspectorMenuItems>();
     private AppendableSequence<InspectorAction> actions = new LinkSequence<InspectorAction>();
@@ -77,7 +77,6 @@ public final class InspectorMenu extends JMenu implements Prober {
     }
 
     public void add(InspectorMenuItems inspectorMenuItems) {
-        addSeparator();
         menuItems.append(inspectorMenuItems);
         inspectorMenuItems.addTo(this);
     }

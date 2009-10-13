@@ -36,7 +36,7 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.XirAssembler.*;
+import com.sun.c1x.xir.CiXirAssembler.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -68,7 +68,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final C1XCompilation compilation;
-    protected final XirGenerator xir;
+    protected final RiXirGenerator xir;
 
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;

@@ -147,7 +147,7 @@ public class C1XTest {
         // create MaxineRuntime
         final CiTarget target = createTarget();
         final MaxRiRuntime runtime = new MaxRiRuntime();
-        final XirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
+        final RiXirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
         final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target, xirGenerator) : new C0XCompiler(runtime, target);
@@ -166,7 +166,7 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
@@ -194,7 +194,7 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
+    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods) {
         C1XTimers.reset();
         long start = System.nanoTime();
         totalBytes = 0;
@@ -212,7 +212,7 @@ public class C1XTest {
         }
     }
 
-    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, List<MethodActor> methods) {
+    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -228,7 +228,7 @@ public class C1XTest {
         }
     }
 
-    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, XirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
+    private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
 
         RiMethod riMethod = runtime.getRiMethod((ClassMethodActor) method);

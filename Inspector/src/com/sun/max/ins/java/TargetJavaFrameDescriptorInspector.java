@@ -54,7 +54,8 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         super(inspection, LongValue.from(subject(javaFrameDescriptor)));
         this.javaFrameDescriptor = javaFrameDescriptor;
         framePointer = TeleIntegerRegisters.symbolizer(maxVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     /**
