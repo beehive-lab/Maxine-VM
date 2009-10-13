@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.Inspector.*;
 
 /**
  * A internal frame controlled by an {@linkplain Inspector inspector}.
@@ -44,15 +45,11 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
     /**
      * Creates an internal frame for an Inspector.
      * @param inspector
-     * @param menu an optional menu, replaces default inspector menu if non-null
      */
-    public InspectorFrame(Inspector inspector, InspectorMenu menu) {
+    public InspectorFrame(Inspector inspector) {
         this.inspector = inspector;
-
         menuBar = new InspectorMenuBar(inspector.inspection());
-        menuBar.add((menu == null) ? inspector.createDefaultMenu() : menu);
         setJMenuBar(menuBar);
-
         setResizable(true);
         setClosable(true);
         setIconifiable(true);
@@ -84,8 +81,17 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
         return inspector;
     }
 
-    public InspectorMenu getMenu(String name) {
-        return menuBar.findMenu(name);
+    /**
+     * Finds, and creates if doesn't exist, a named menu on the frame's menu bar.
+     * <br>
+     * <strong>Note:</strong> the menus will appear left to right on the
+     * frame's menu bar in the order in which they were created.
+     *
+     * @param name the name of the menu
+     * @return a menu, possibly new, in the menu bar.
+     */
+    public InspectorMenu makeMenu(MenuKind menuKind) {
+        return menuBar.makeMenu(menuKind);
     }
 
     public void setSelected() {

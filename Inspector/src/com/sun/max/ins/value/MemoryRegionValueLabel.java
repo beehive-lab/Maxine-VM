@@ -58,7 +58,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
                     }
                     case MouseEvent.BUTTON3: {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
-                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName, null));
+                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName));
                         menu.add(inspection().actions().selectMemoryRegion(memoryRegion));
                         menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
