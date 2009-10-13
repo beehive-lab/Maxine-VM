@@ -155,7 +155,7 @@ public abstract class ClassActor extends Actor {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
                 initializationState = InitializationState.INITIALIZED;
@@ -1061,17 +1061,17 @@ public abstract class ClassActor extends Actor {
         return result;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static String prohibitedPackagePrefix = null;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void prohibitPackagePrefix(MaxPackage prefix) {
         prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void checkProhibited(Utf8Constant typeName) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
                 ProgramError.check(!typeName.toString().startsWith(prohibitedPackagePrefix), "attempt to load from prohibited package: " + typeName);
             }
@@ -1290,7 +1290,7 @@ public abstract class ClassActor extends Actor {
 
     @INLINE
     public final Class mirror() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
         if (mirror == null) {
@@ -1311,7 +1311,7 @@ public abstract class ClassActor extends Actor {
         return UnsafeCast.asClass(oldValue.toJava());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final void setMirror(Class javaClass) {
         if (mirror == null) {
             mirror = javaClass;
@@ -1332,18 +1332,18 @@ public abstract class ClassActor extends Actor {
         return javaSignature(true);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Map<Class, ClassActor> classToClassActorMap = new HashMap<Class, ClassActor>();
 
     /**
      * Gets the class actor for a given Java class.
      * <p>
-     * If this called during prototyping and the given Java class is annotated with {@link PROTOTYPE_ONLY}, then null
+     * If this called during bootstrapping and the given Java class is annotated with {@link HOSTED_ONLY}, then null
      * is returned.
      */
     @INLINE
     public static ClassActor fromJava(final Class<?> javaClass) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
         return (ClassActor) TupleAccess.readObject(javaClass, Class_classActor.offset());
@@ -1371,7 +1371,7 @@ public abstract class ClassActor extends Actor {
         for (InterfaceActor interfaceActor : localInterfaceActors()) {
             result.or(interfaceActor.getSuperClassActorSerials());
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (kind == Kind.WORD) {
                 result.clear(ClassRegistry.javaLangObjectActor().id);
             }

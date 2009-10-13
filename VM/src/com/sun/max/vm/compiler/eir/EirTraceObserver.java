@@ -32,7 +32,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
  * Extends {@link IrTraceObserver} to show traces of each EIR transformation.
  *
  * <p>
- * To enable EIR tracing during compilation at prototyping time or in the target, pass the following system property:
+ * To enable EIR tracing during compilation while bootstrapping or in the target, pass the following system property:
  * <p>
  *
  * <pre>

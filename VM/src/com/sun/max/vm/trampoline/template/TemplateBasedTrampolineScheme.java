@@ -37,7 +37,7 @@ public class TemplateBasedTrampolineScheme extends AbstractVMScheme implements D
 
     private final DynamicTrampolineExit dynamicTrampolineExit;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public TemplateBasedTrampolineScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         dynamicTrampolineExit = DynamicTrampolineExit.create(vmConfiguration);

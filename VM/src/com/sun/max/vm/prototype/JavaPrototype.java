@@ -45,7 +45,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * This class loads and initializes important JDK packages needed during prototyping.
+ * This class loads and initializes important JDK packages needed during bootstrapping.
  *
  * @author Bernd Mathiske
  */
@@ -135,7 +135,7 @@ public class JavaPrototype extends Prototype {
      * @param javaClass the class to load into the prototype
      */
     private void loadClass(Class javaClass) {
-        assert !MaxineVM.isPrototypeOnly(javaClass);
+        assert !MaxineVM.isHostedOnly(javaClass);
         Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
     }
 
@@ -236,8 +236,8 @@ public class JavaPrototype extends Prototype {
             // that we do not wish to account for before running the target VM.
             // In particular they install shutdown hooks,
             // which then end up in the boot image and cause bugs at target runtime.
-            PrototypeClassLoader.omitPackage("java.util.logging");
-            PrototypeClassLoader.omitPackage("java.util.prefs");
+            PrototypeClassLoader.omitPackage("java.util.logging", true);
+            PrototypeClassLoader.omitPackage("java.util.prefs", true);
         }
 
         loadPackage("java.lang", false);
@@ -248,7 +248,6 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util", false);
         loadPackage("java.util.zip", false); // needed to load classes from jar/zip files
         loadPackage("java.util.jar", false); // needed to load classes from jar files
-        loadPackage("java.security", false); // needed to create a Thread
         loadClass(sun.misc.VM.class);
 
         // These classes need to be compiled and in the boot image in order to be able to
@@ -269,6 +268,10 @@ public class JavaPrototype extends Prototype {
         // Necessary for early tracing:
         loadPackage("java.util.regex", false);
         loadClass(sun.security.action.GetPropertyAction.class);
+
+        if (System.getProperty("max.allow.all.core.packages") == null) {
+            PrototypeClassLoader.omitPackage("java.security", false);
+        }
     }
 
     private static Sequence<Class> mainPackageClasses = new ArrayListSequence<Class>();
@@ -281,15 +284,43 @@ public class JavaPrototype extends Prototype {
      * Ensures that all the Maxine classes currently in the {@linkplain ClassRegistry#vmClassRegistry() VM class
      * registry} are {@linkplain Classes#initialize(Class) initialized}. Any class in a subpackage of {@code
      * com.sun.max} is deemed to be a Maxine class. These initializers are never re-run in the target VM
-     * and so they are omitted from the boot image (as if they had the {@link PROTOTYPE_ONLY} annotation
+     * and so they are omitted from the boot image (as if they had the {@link HOSTED_ONLY} annotation
      * applied to them).
      */
     private static void initializeMaxClasses() {
         final ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.vmClassRegistry());
         for (ClassActor classActor : classActors) {
             if (MaxineVM.isMaxineClass(classActor)) {
-                Classes.initialize(classActor.toJava());
+                try {
+                    Classes.initialize(classActor.toJava());
+                } catch (HostOnlyClassError error) {
+                }
             }
+        }
+    }
+
+    /**
+     * Extends {@link PackageLoader} to ignore classes that are {@link HostOnlyClassError prototype only} or
+     * explicitly {@linkplain OmittedClassError omitted} from the boot image.
+     *
+     * @author Doug Simon
+     */
+    static class PrototypePackageLoader extends PackageLoader {
+
+        public PrototypePackageLoader(ClassLoader classLoader, Classpath classpath) {
+            super(classLoader, classpath);
+        }
+
+        @Override
+        protected Class loadClass(String className) {
+            try {
+                return super.loadClass(className);
+            } catch (HostOnlyClassError e) {
+                Trace.line(1, "Ignoring prototype only type: " + className);
+            } catch (OmittedClassError e) {
+                Trace.line(1, "Ignoring explicitly omitted type: " + className);
+            }
+            return null;
         }
     }
 
@@ -302,7 +333,7 @@ public class JavaPrototype extends Prototype {
     public JavaPrototype(final VMConfiguration vmConfiguration, final boolean loadPackages) {
         super(vmConfiguration);
 
-        packageLoader = new PackageLoader(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
+        packageLoader = new PrototypePackageLoader(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
         theJavaPrototype = this;
 
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
@@ -338,7 +369,7 @@ public class JavaPrototype extends Prototype {
 
                     initializeMaxClasses();
 
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.PROTOTYPING);
+                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
                     // VM implementation classes ending up in the bootstrap image
                     // are supposed to be limited to those loaded up to here.
@@ -351,7 +382,7 @@ public class JavaPrototype extends Prototype {
                     VmThreadLocal.completeInitialization();
 
                 } else {
-                    vmConfiguration.initializeSchemes(MaxineVM.Phase.PROTOTYPING);
+                    vmConfiguration.initializeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
                 }
             }
         });
@@ -429,9 +460,9 @@ public class JavaPrototype extends Prototype {
         if (javaClass == null) {
             try {
                 javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
-            } catch (NoClassDefFoundError noClassDefFoundError) {
-                // try again with the prototype class loader.
-                javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
+            } catch (OmittedClassError e) {
+                // Failed with the prototype loader: try again with the VM class loader.
+                javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER);
             }
             classActorMap.put(classActor, javaClass);
         }
@@ -442,10 +473,10 @@ public class JavaPrototype extends Prototype {
      * Gets the corresponding class actor for the specified Java class.
      *
      * @param javaClass the Java class for which to get the class actor
-     * @return the class actor for {@code javaClass} or {@code null} if {@code javaClass} is annotated with {@link PROTOTYPE_ONLY}
+     * @return the class actor for {@code javaClass} or {@code null} if {@code javaClass} is annotated with {@link HOSTED_ONLY}
      */
     public ClassActor toClassActor(Class javaClass) {
-        if (MaxineVM.isPrototypeOnly(javaClass)) {
+        if (MaxineVM.isHostedOnly(javaClass)) {
             return null;
         }
         synchronized (javaClassMap) {

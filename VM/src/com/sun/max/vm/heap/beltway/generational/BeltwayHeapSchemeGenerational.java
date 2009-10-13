@@ -36,7 +36,7 @@ import com.sun.max.vm.reference.*;
  * Heap scheme for a three-generations generational collector. Configured with three belts: one for a nursery (the eden
  * space); one for a survivor space (to space); and one for the tenured generation (the mature space). The scheme uses a
  * specific collector for each belt when they fills up. There is a single-threaded and parallel version for each of
- * these collectors. An instance of each of these collector is created and initialized at prototyping time. What
+ * these collectors. An instance of each of these collector is created and initialized while bootstrapping. What
  * collectors to use (single-threaded vs parallel) is selected at runtime.
  *
  * The rationale for doing this is that the collector objects are allocated in the boot region and out of reach of the
@@ -150,7 +150,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (BeltwayGenerationalCollector collector : singleThreadedCollectors) {
                 collector.initialize(this);
             }

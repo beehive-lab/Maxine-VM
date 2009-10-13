@@ -60,7 +60,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     /**
      * This is only here to support ClassFileWriter.testLoadGeneratedClasses().
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static final Map<ClassLoader, ClassRegistry> classLoaderToRegistryMap = new IdentityHashMap<ClassLoader, ClassRegistry>() {
         @Override
         public ClassRegistry put(ClassLoader key, ClassRegistry value) {
@@ -78,7 +78,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     public static ClassRegistry makeRegistry(ClassLoader classLoader) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final ClassRegistry classRegistry = classLoaderToRegistryMap.get(classLoader);
             if (classRegistry != null) {
                 return classRegistry;
@@ -127,7 +127,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             ProgramWarning.message("Cannot add class actor for " + classActor.name + " to registry more than once");
             return;
         }
-        if (MaxineVM.isPrototyping() && this == vmClassRegistry) {
+        if (MaxineVM.isHosted() && this == vmClassRegistry) {
             if (javaLangObjectActor == null && typeDescriptor.equals(JavaTypeDescriptor.OBJECT)) {
                 javaLangObjectActor = (TupleClassActor) classActor;
             }
@@ -163,7 +163,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
 
     public ClassActor get(TypeDescriptor typeDescriptor) {
         final ClassActor classActor = typeDescriptorToClassActor.get(typeDescriptor);
-        if (false && (!MaxineVM.isPrototyping() && classActor == null)) {
+        if (false && (!MaxineVM.isHosted() && classActor == null)) {
             Log.print("unresolved: ");
             Log.println(typeDescriptor.string);
         }

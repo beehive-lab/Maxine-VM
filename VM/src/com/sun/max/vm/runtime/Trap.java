@@ -138,7 +138,7 @@ public abstract class Trap {
         new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Method trapStubMethod = Classes.getDeclaredMethod(Trap.class, "trapStub", int.class, Pointer.class, Address.class);
 
     /**
@@ -148,13 +148,13 @@ public abstract class Trap {
      * @return true if {@code classMethodActor} is the actor for {@link #trapStub(int, Pointer, Address)}
      */
     public static boolean isTrapStub(MethodActor methodActor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava() != null && methodActor.toJava().equals(trapStubMethod);
         }
         return methodActor == trapStub.classMethodActor;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected Trap() {
     }
 

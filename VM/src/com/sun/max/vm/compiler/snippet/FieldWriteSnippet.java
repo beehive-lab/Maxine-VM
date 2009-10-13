@@ -47,7 +47,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeByte(Object tuple, FieldActor byteFieldActor, byte value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeByte(tuple, byteFieldActor, value);
             } else {
                 TupleAccess.writeByte(tuple, byteFieldActor.offset(), value);
@@ -60,7 +60,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeBoolean(Object tuple, FieldActor booleanFieldActor, boolean value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeBoolean(tuple, booleanFieldActor, value);
             } else {
                 TupleAccess.writeBoolean(tuple, booleanFieldActor.offset(), value);
@@ -73,7 +73,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeShort(Object tuple, FieldActor shortFieldActor, short value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeShort(tuple, shortFieldActor, value);
             } else {
                 TupleAccess.writeShort(tuple, shortFieldActor.offset(), value);
@@ -86,7 +86,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeChar(Object tuple, FieldActor charFieldActor, char value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeChar(tuple, charFieldActor, value);
             } else {
                 TupleAccess.writeChar(tuple, charFieldActor.offset(), value);
@@ -99,7 +99,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeInt(Object tuple, FieldActor intFieldActor, int value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeInt(tuple, intFieldActor, value);
             } else {
                 TupleAccess.writeInt(tuple, intFieldActor.offset(), value);
@@ -112,7 +112,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeFloat(Object tuple, FieldActor floatFieldActor, float value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeFloat(tuple, floatFieldActor, value);
             } else {
                 TupleAccess.writeFloat(tuple, floatFieldActor.offset(), value);
@@ -125,7 +125,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeLong(Object tuple, FieldActor longFieldActor, long value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeLong(tuple, longFieldActor, value);
             } else {
                 TupleAccess.writeLong(tuple, longFieldActor.offset(), value);
@@ -138,7 +138,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeDouble(Object tuple, FieldActor doubleFieldActor, double value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeDouble(tuple, doubleFieldActor, value);
             } else {
                 TupleAccess.writeDouble(tuple, doubleFieldActor.offset(), value);
@@ -151,7 +151,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeWord(Object tuple, FieldActor wordFieldActor, Word value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeWord(tuple, wordFieldActor, value);
             } else {
                 TupleAccess.writeWord(tuple, wordFieldActor.offset(), value);
@@ -164,7 +164,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static void writeReference(Object tuple, FieldActor referenceFieldActor, Object value) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 HostTupleAccess.writeObject(tuple, referenceFieldActor, value);
             } else {
                 TupleAccess.writeObject(tuple, referenceFieldActor.offset(), value);

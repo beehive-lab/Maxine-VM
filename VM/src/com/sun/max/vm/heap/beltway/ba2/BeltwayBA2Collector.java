@@ -45,7 +45,7 @@ public abstract class BeltwayBA2Collector extends BeltwayCollector {
         super(collectorName);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void initialize(BeltwayHeapScheme heapScheme) {
         super.initialize(heapScheme);

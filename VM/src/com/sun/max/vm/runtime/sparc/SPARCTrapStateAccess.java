@@ -99,7 +99,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
         return ByteArrayBitMap.computeBitMapSize(SPARCEirABI.integerNonSystemReservedGlobalRegisters.length() + SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCTrapStateAccess(VMConfiguration vmConfiguration) {
     }
 

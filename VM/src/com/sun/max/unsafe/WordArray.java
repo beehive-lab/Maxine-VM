@@ -51,7 +51,7 @@ public final class WordArray {
     /**
      * Replaces all {@code null} entries in a given word array with the appropriately typed boxed zero value.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static <Word_Type extends Word> void replaceNullWithZero(Word_Type[] array) {
         final Class<Class<Word_Type>> type = null;
         final Class<Word_Type> wordType = StaticLoophole.cast(type, array.getClass().getComponentType());

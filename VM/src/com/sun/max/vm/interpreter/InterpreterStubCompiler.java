@@ -34,12 +34,12 @@ import com.sun.max.vm.compiler.*;
  */
 public abstract class InterpreterStubCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public InterpreterStubCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static InterpreterStubCompiler create(VMConfiguration vmConfiguration) {
         try {
             final String isa = vmConfiguration.platform().processorKind.instructionSet.name();

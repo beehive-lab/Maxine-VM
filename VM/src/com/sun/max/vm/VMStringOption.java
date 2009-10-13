@@ -49,7 +49,7 @@ public class VMStringOption extends VMOption {
      * @param defaultValue the default string value of this option
      * @param help the help text for this option
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VMStringOption(String prefix, boolean space, String defaultValue, String help) {
         super(prefix, help);
         this.value = defaultValue;

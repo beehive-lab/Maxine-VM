@@ -71,9 +71,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
 
     /**
-     * The compiler that is used as the default at prototyping time.
+     * The compiler that is used as the default while bootstrapping.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected final BootstrapCompilerScheme bootstrapCompiler;
 
     /**
@@ -146,7 +146,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     }
 
     /**
-     * This method initializes the adaptive compilation system, either at prototyping time or
+     * This method initializes the adaptive compilation system, either while bootstrapping or
      * at VM startup time. This implementation creates daemon threads to handle asynchronous
      * compilations.
      *
@@ -154,7 +154,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (BACKGROUND_COMPILATION) {
                 // launch a compiler thread if background compilation is supported (currently no)
                 final CompilationThread compilationThread = new CompilationThread();
@@ -206,6 +206,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
         synchronized (classMethodActor) {
+            assert !(classMethodActor.isNative() && classMethodActor.isJniFunction()) : "cannot compile JNI functions that are native";
             Object targetState = classMethodActor.targetState;
             if (targetState == null) {
                 // this is the first compilation.
@@ -299,8 +300,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return optimizingCompiler;
         }
 
-        if (MaxineVM.isPrototyping()) {
-            // if we are prototyping, then always use the prototype compiler
+        if (MaxineVM.isHosted()) {
+            // if we are bootstrapping, then always use the prototype compiler
             // unless forced to use the JIT (e.g. for testing purposes)
             if (CompiledPrototype.jitCompile(classMethodActor)) {
                 return jitCompiler;
@@ -308,7 +309,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 synchronized (this) {
                     if (c1xCompiler == null) {
                         c1xCompiler = new C1XCompilerScheme(vmConfiguration());
-                        c1xCompiler.initialize(Phase.PROTOTYPING);
+                        c1xCompiler.initialize(Phase.BOOTSTRAPPING);
                     }
                     return c1xCompiler;
                 }
@@ -325,7 +326,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return bootstrapCompiler;
         }
 
-        // templates should only be compiled at prototyping time
+        // templates should only be compiled while bootstrapping
         assert !classMethodActor.isTemplate();
 
         if (recommendedCompiler != null) {

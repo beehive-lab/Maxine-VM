@@ -90,7 +90,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         return getArraySize(readLength(accessor));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
@@ -98,7 +98,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         visitor.visitHeaderField(origin + arrayLengthOffset, "length", JavaTypeDescriptor.WORD, new WordValue(lengthToWord(HostObjectAccess.getArrayLength(array))));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
@@ -117,7 +117,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitObjectCell(Object array, ObjectCellVisitor visitor) {
         visitHeader(visitor, array);
         visitElements(visitor, array);
@@ -128,7 +128,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         return origin + hubOffset;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
@@ -140,7 +140,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         return mirror.readElement(kind, index);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {
             return;

@@ -60,7 +60,7 @@ public interface HeapScheme extends VMScheme {
      * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
      * and pass to the target VM.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     int auxiliarySpaceSize(int bootImageSize);
 
     /**

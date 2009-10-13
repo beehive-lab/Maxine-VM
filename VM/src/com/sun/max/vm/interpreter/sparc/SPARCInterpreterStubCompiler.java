@@ -36,7 +36,7 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCInterpreterStubCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }

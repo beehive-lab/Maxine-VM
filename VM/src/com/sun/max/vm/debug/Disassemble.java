@@ -42,7 +42,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * @author Bernd Mathiske
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class Disassemble {
 
     private Disassemble() {

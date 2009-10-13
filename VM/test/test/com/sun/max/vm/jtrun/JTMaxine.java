@@ -161,7 +161,7 @@ public class JTMaxine {
             Class<?> compilerSchemeClass = Class.forName(name);
             Constructor constructor = compilerSchemeClass.getConstructor(VMConfiguration.class);
             RuntimeCompilerScheme compiler = (RuntimeCompilerScheme) constructor.newInstance(vmConfiguration);
-            compiler.initialize(MaxineVM.Phase.PROTOTYPING);
+            compiler.initialize(MaxineVM.Phase.BOOTSTRAPPING);
             return compiler;
         } catch (ClassNotFoundException e) {
             System.out.println("Could not find compiler scheme class: " + name);

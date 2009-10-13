@@ -44,98 +44,78 @@ public class BlockMerger implements BlockClosure {
     }
 
     public void apply(BlockBegin block) {
-        while (tryMerge(block)) {
-            // keep trying to merge the block with its successor
+        while (block.end() instanceof Goto && block != startBlock) {
+            BlockEnd end = block.end();
+            BlockBegin sux = end.defaultSuccessor();
+
+            assert end.successors().size() == 1 : "end must have exactly one successor";
+            assert !sux.isExceptionEntry() : "should not have Goto to exception entry";
+
+            if (!end.isSafepoint()) {
+                if (sux.numberOfPreds() == 1) {
+                    // the successor has only one predecessor, merge it into this block
+                    mergeBlocks(block, sux, end);
+                    C1XMetrics.BlocksMerged++;
+                    continue;
+                } else if (C1XOptions.DoBlockSkipping && block.next() == end && !block.isExceptionEntry()) {
+                    // the successor has multiple predecessors, but this block is empty
+                    if (skipBlock(block, sux, end)) {
+                        C1XMetrics.BlocksSkipped++;
+                        continue;
+                    }
+                }
+            }
+            break;
         }
     }
 
-    private boolean tryMerge(BlockBegin block) {
-        BlockEnd oldEnd = block.end();
-        BlockEnd newEnd = oldEnd;
-        if (oldEnd instanceof Goto && block != startBlock) {
-            BlockBegin sux = oldEnd.defaultSuccessor();
-
-            assert oldEnd.successors().size() == 1 : "end must have exactly one successor";
-            assert !sux.isExceptionEntry() : "should not have Goto to exception entry";
-
-            if (!oldEnd.isSafepoint()) {
-                if (sux.numberOfPreds() == 1) {
-                    // the successor has only one predecessor, merge it into this block
-                    if (C1XOptions.DetailedAsserts) {
-                        verifyStates(block, sux);
-                    }
-
-                    // find instruction before oldEnd & append first instruction of sux block
-                    Instruction prev = oldEnd.prev(block);
-                    Instruction next = sux.next();
-                    assert !(prev instanceof BlockEnd) : "must not be a BlockEnd";
-                    prev.setNext(next, next.bci());
-                    BlockUtil.disconnectFromGraph(sux);
-                    sux.setBlockFlag(BlockBegin.BlockFlag.Merged);
-                    newEnd = sux.end();
-                    block.setEnd(newEnd);
-                    // add exception handlers of deleted block, if any
-                    for (BlockBegin xhandler : sux.exceptionHandlerBlocks()) {
-                        block.addExceptionHandler(xhandler);
-
-                        // also substitute predecessor of exception handler
-                        assert xhandler.isPredecessor(sux) : "missing predecessor";
-                        xhandler.removePredecessor(sux);
-                        if (!xhandler.isPredecessor(block)) {
-                            xhandler.addPredecessor(block);
-                        }
-                    }
-
-                    C1XMetrics.BlocksMerged++;
-                } else if (C1XOptions.DoBlockSkipping && block.next() == oldEnd && !block.isExceptionEntry()) {
-                    // the successor has multiple predecessors, but this block is empty
-                    final ValueStack oldState = oldEnd.stateAfter();
-                    assert sux.stateBefore().scope() == oldState.scope();
-                    if (block.stateBefore().hasPhisFor(block)) {
-                        // can't skip a block that has phis
+    private boolean skipBlock(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
+        final ValueStack oldState = oldEnd.stateAfter();
+        assert sux.stateBefore().scope() == oldState.scope();
+        if (block.stateBefore().hasPhisFor(block)) {
+            // can't skip a block that has phis
+            return false;
+        }
+        for (BlockBegin pred : block.predecessors()) {
+            final ValueStack predState = pred.end().stateAfter();
+            if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
+                // scopes would not match after skipping this block
+                // XXX: if phi's were smarter about scopes, this would not be necessary
+                return false;
+            }
+            if (sux.stateBefore().hasPhisFor(sux)) {
+                Iterable<Phi> suxPhis = sux.stateBefore().allPhis(sux);
+                for (Phi phi : suxPhis) {
+                    if (phi.operandIn(block.end().stateAfter()) != phi.operandIn(pred.end().stateAfter())) {
                         return false;
                     }
-                    for (BlockBegin pred : block.predecessors()) {
-                        final ValueStack predState = pred.end().stateAfter();
-                        if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
-                            // scopes would not match after skipping this block
-                            // XXX: if phi's were smarter about scopes, this would not be necessary
-                            return false;
-                        }
-                        if (sux.stateBefore().hasPhisFor(sux)) {
-                            Iterable<Phi> suxPhis = sux.stateBefore().allPhis(sux);
-                            for (Phi phi : suxPhis) {
-                                if (phi.operandIn(block.end().stateAfter()) != phi.operandIn(pred.end().stateAfter())) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    ir.replaceBlock(block, sux);
-                    C1XMetrics.BlocksSkipped++;
                 }
             }
         }
-        return newEnd != oldEnd;
+        ir.replaceBlock(block, sux);
+        return true;
     }
 
-    private void verifyStates(BlockBegin block, BlockBegin sux) {
-        // verify that state at the end of block and at the beginning of sux are equal
-        // no phi functions must be present at beginning of sux
-        ValueStack suxState = sux.stateBefore();
-        ValueStack endState = block.end().stateAfter();
-        while (endState.scope() != suxState.scope()) {
-            // match up inlining level
-            endState = endState.popScope();
-        }
-        assert endState.stackSize() == suxState.stackSize() : "stack not equal";
-        assert endState.localsSize() == suxState.localsSize() : "locals not equal";
+    private void mergeBlocks(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
+        BlockEnd newEnd;
+        // find instruction before oldEnd & append first instruction of sux block
+        Instruction prev = oldEnd.prev(block);
+        Instruction next = sux.next();
+        assert !(prev instanceof BlockEnd) : "must not be a BlockEnd";
+        prev.setNext(next, next.bci());
+        BlockUtil.disconnectFromGraph(sux);
+        newEnd = sux.end();
+        block.setEnd(newEnd);
+        // add exception handlers of deleted block, if any
+        for (BlockBegin xhandler : sux.exceptionHandlerBlocks()) {
+            block.addExceptionHandler(xhandler);
 
-        for (int i = 0; i < endState.localsSize(); i++) {
-            assert endState.localAt(i) == suxState.localAt(i);
-        }
-        for (int i = 0; i < endState.stackSize(); i++) {
-            assert endState.stackAt(i) == suxState.stackAt(i);
+            // also substitute predecessor of exception handler
+            assert xhandler.isPredecessor(sux) : "missing predecessor";
+            xhandler.removePredecessor(sux);
+            if (!xhandler.isPredecessor(block)) {
+                xhandler.addPredecessor(block);
+            }
         }
     }
 }

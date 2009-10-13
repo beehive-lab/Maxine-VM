@@ -156,7 +156,7 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(type = CiRuntimeCall.NewInstance)
     public static Object runtimeNewInstance(Hub hub) {
         final ClassActor classActor = hub.classActor;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             try {
                 return Objects.allocateInstance(classActor.toJava());
             } catch (InstantiationException instantiationException) {
@@ -178,7 +178,7 @@ public class C1XRuntimeCalls {
         if (length < 0) {
             Throw.negativeArraySizeException(length);
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Array.newInstance(hub.classActor.componentClassActor().toJava(), length);
         }
         return Heap.createArray(hub, length);
@@ -222,7 +222,7 @@ public class C1XRuntimeCalls {
     @UNSAFE
     @INLINE
     private static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
         }
         return Heap.createArray(arrayClassActor.dynamicHub(), length);
@@ -248,7 +248,7 @@ public class C1XRuntimeCalls {
                 final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
                 for (int i = 0; i < length; i++) {
                     final Object subArray = runtimeNewMultiArrayHelper(nextIndex, subArrayClassActor, lengths);
-                    if (MaxineVM.isPrototyping()) {
+                    if (MaxineVM.isHosted()) {
                         final Object[] array = (Object[]) result;
                         array[i] = subArray;
                     } else {
@@ -461,7 +461,7 @@ public class C1XRuntimeCalls {
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
         assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
         }
 

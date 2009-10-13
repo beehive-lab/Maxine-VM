@@ -34,8 +34,8 @@ import com.sun.max.vm.value.*;
 
 /**
  * Boxed representations of object references (and null).
- * We cannot use com.sun.max.vm.value.DirectReferenceValue,
- * because it wraps an Object, not a reference for prototyping reasons.
+ * We cannot use {@link ObjectReferenceValue},
+ * because it wraps an Object, not a reference for bootstrapping reasons.
  * Instead we need to wrap a Reference here,
  * since there is no related Object in our address space.
  *

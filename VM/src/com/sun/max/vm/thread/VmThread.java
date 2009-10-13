@@ -178,8 +178,8 @@ public class VmThread {
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
-    @PROTOTYPE_ONLY
-    private static final ThreadLocal<CompactReferenceMapInterpreter> prototypeCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
+    @HOSTED_ONLY
+    private static final ThreadLocal<CompactReferenceMapInterpreter> hostedCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
 
         @Override
         protected CompactReferenceMapInterpreter initialValue() {
@@ -188,8 +188,8 @@ public class VmThread {
     };
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
-        if (MaxineVM.isPrototyping()) {
-            return prototypeCompactReferenceMapInterpreter.get();
+        if (MaxineVM.isHosted()) {
+            return hostedCompactReferenceMapInterpreter.get();
         }
         return compactReferenceMapInterpreter;
     }
@@ -203,7 +203,7 @@ public class VmThread {
     }
 
 
-    public Thread javaThread() {
+    public final Thread javaThread() {
         return javaThread;
     }
 
@@ -316,7 +316,7 @@ public class VmThread {
     }
 
     /**
-     * Bind the given @see java.lang.Thread to this VmThread.
+     * Bind the given {@code Thread} to this VmThread.
      * @param javaThread thread to be bound
      */
     public VmThread setJavaThread(Thread javaThread) {
@@ -347,11 +347,11 @@ public class VmThread {
     }
 
     /**
-     * This happens during prototyping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
+     * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
      * there is no 'Thread' constructor that we could call without a valid parent thread, we hereby clone the host VM's
      * main thread.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static VmThread createMain() {
         final Thread thread = HostObjectAccess.mainThread();
         final VmThread vmThread = VmThreadFactory.create(thread);
@@ -365,7 +365,7 @@ public class VmThread {
         return mainVMThread;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Size stackSize() {
         return DEFAULT_STACK_SIZE;
     }
@@ -386,7 +386,8 @@ public class VmThread {
             nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM.host().setPhase(MaxineVM.Phase.PRIMORDIAL);
+        MaxineVM vm = MaxineVM.host();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
     }
 
     /**
@@ -404,7 +405,7 @@ public class VmThread {
      * @return a value of C type JNIEnv*
      */
     public static Pointer currentJniEnvironmentPointer() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Pointer.zero();
         }
         return JNI_ENV.pointer(currentVmThreadLocals());
@@ -412,7 +413,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread current() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
@@ -463,7 +464,7 @@ public class VmThread {
         // Disable safepoints:
         Safepoint.setLatchRegister(disabledVmThreadLocals);
 
-        JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
+        JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
 
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
@@ -653,7 +654,7 @@ public class VmThread {
 
 
     // Only used by the EIR interpreter(s)
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void setVmThreadLocals(Address address) {
         vmThreadLocals = address.asPointer();
     }
@@ -672,7 +673,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
@@ -682,7 +683,7 @@ public class VmThread {
         return JniHandles.createLocalHandle(jniHandles, object);
     }
 
-    public JniHandles jniHandles() {
+    public final JniHandles jniHandles() {
         return jniHandles;
     }
 

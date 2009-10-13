@@ -43,19 +43,6 @@ public class UnsafePutRaw extends UnsafeRawOp {
     }
 
     /**
-     * Constructs a new UnsafeGetRaw instruction.
-     * @param basicType the basic type of the operation
-     * @param addr the instruction generating the base address
-     * @param index the instruction generating the index
-     * @param log2scale the log base 2 of the scaling factor
-     * @param value the instruction generating the value to store
-     */
-    public UnsafePutRaw(CiKind basicType, Value addr, Value index, int log2scale, Instruction value) {
-        super(basicType, addr, index, log2scale, false);
-        this.value = value;
-    }
-
-    /**
      * Gets the instruction generating the value that will be stored.
      * @return the instruction generating the value
      */

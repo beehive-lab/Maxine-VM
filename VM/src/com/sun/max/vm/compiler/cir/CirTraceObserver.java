@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
  * until the CIR compilation has completed.
  *
  * <p>
- * To enable CIR tracing during compilation at prototyping time or in the target, pass the following
+ * To enable CIR tracing during compilation while bootstrapping or in the target, pass the following
  * system property:
  * <p>
  * <pre>

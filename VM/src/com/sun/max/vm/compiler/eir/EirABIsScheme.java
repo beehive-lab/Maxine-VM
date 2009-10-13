@@ -65,7 +65,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      * @param templateABI
      * @param treeABI abi for tree calls.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected EirABIsScheme(VMConfiguration vmConfiguration,
                             EirABI<EirRegister_Type> javaABI,
                             EirABI<EirRegister_Type> nativeABI,

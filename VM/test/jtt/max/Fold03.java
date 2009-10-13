@@ -18,29 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
+package jtt.max;
 
-import com.sun.max.vm.MaxineVM;
+import com.sun.max.annotate.FOLD;
 
 /*
  * @Harness: java
- * @Runs: 0=1; 1=2
+ * @Runs: 0=true
  */
-public class Prototyping01 {
-    public static int test(int arg) {
-        if (MaxineVM.isPrototyping()) {
-            doSomething();
-            doSomething();
-            doSomething();
-            doSomething();
-            doSomething();
-            doSomething();
-        }
-        return arg + 1;
+public class Fold03 {
+
+    public static boolean test(int arg) {
+        return flong(10, 10) && fdouble(0.0d, 0.0d);
     }
-    static void doSomething() {
-        for (int i = 0; i < 50; i++) {
-            new Object().toString();
+
+    @FOLD
+    static boolean flong(long x, long y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
         }
+        return x == y;
+    }
+
+    @FOLD
+    static boolean fdouble(double x, double y) {
+        int j = 2;
+        for (int i = 0; i < 100; i++) {
+            j = j + 8 / j;
+        }
+        return x == y;
     }
 }

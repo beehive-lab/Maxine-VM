@@ -175,18 +175,26 @@ public final class Files {
     }
 
     /**
-     * Updates the generated content part of a file. A generated content part is delimited by a line containing
-     * only {@code start} and a line containing only {@code end}. If the given file already exists and
-     * has these delimiters, the content between these lines is compared with {@code content} and replaced
-     * if it is different. If the file does not exist, a new file is created with {@code content} surrounded
-     * by the specified delimiters. If the file exists and does not currently have the specified delimiters, an
-     * IOException is thrown.
+     * Updates the generated content part of a file. A generated content part is delimited by a line containing only
+     * {@code start} and a line containing only {@code end}. If the given file already exists and has these delimiters,
+     * the content between these lines is compared with {@code content} and replaced if it is different. If the file
+     * does not exist, a new file is created with {@code content} surrounded by the specified delimiters. If the file
+     * exists and does not currently have the specified delimiters, an IOException is thrown.
      *
-     * @return true if the file was modified or created
+     * @param file the file to be modified (or created) with some generated content
+     * @param content the generated content
+     * @param start the starting delimiter of the section in {@code file} to be updated with {@code content}
+     * @param start the ending delimiter of the section in {@code file} to be updated with {@code content}
+     * @param checkOnly if {@code true}, then {@code file} is not updated; the value returned by this method indicates
+     *            whether it would have been updated were this argument {@code true}
+     * @return true if {@code file} was modified or created (or would have been if {@code checkOnly} was {@code false})
      */
-    public static boolean updateGeneratedContent(File file, ReadableSource content, String start, String end) throws IOException {
+    public static boolean updateGeneratedContent(File file, ReadableSource content, String start, String end, boolean checkOnly) throws IOException {
 
         if (!file.exists()) {
+            if (checkOnly) {
+                return true;
+            }
             final PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file)));
             try {
                 final Reader reader = content.reader(true);
@@ -270,7 +278,9 @@ public final class Files {
             existingFileReader = null;
 
             if (changed) {
-                copy(tempFile, file);
+                if (!checkOnly) {
+                    copy(tempFile, file);
+                }
                 return true;
             }
             return false;

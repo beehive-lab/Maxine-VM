@@ -18,26 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.directives;
+package com.sun.max.vm.prototype;
 
-import com.sun.max.annotate.FOLD;
+import com.sun.max.vm.type.*;
 
-/*
- * @Harness: java
- * @Runs: 0=true
+/**
+ * Error thrown when an attempt is made to load an {@linkplain PrototypeClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * class via the {@link PrototypeClassLoader}.
+ *
+ * @author Doug Simon
  */
-public class Fold01 {
-
-    public static boolean test(int arg) {
-        return result();
-    }
-
-    @FOLD
-    static boolean result() {
-        int j = 2;
-        for (int i = 0; i < 100; i++) {
-            j = j + 8 / j;
-        }
-        return true;
+public class OmittedClassError extends NoClassDefFoundError {
+    public OmittedClassError(String className) {
+        super(className);
     }
 }

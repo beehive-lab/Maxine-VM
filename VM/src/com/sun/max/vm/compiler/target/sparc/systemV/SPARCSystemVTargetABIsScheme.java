@@ -40,17 +40,17 @@ import com.sun.max.vm.compiler.target.sparc.*;
  */
 public final class SPARCSystemVTargetABIsScheme extends SPARCTargetABIsScheme {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> javaRegisterRoleAssignment() {
         return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> javaJitRegisterRoleAssignment() {
         return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, L6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCSystemVTargetABIsScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration,
               createSPARC64TargetABI(javaJitRegisterRoleAssignment(), CallEntryPoint.JIT_ENTRY_POINT, incomingIntegerparameterregisters(), outgoingIntegerParameterRegisters(), floatingPointParameterRegisters(), false, false),

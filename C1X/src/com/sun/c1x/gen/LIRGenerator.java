@@ -36,7 +36,7 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.XirAssembler.*;
+import com.sun.c1x.xir.CiXirAssembler.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -68,7 +68,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final C1XCompilation compilation;
-    protected final XirGenerator xir;
+    protected final RiXirGenerator xir;
 
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
@@ -654,6 +654,23 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitLoadRegister(LoadRegister x) {
+        LIROperand reg = rlockResult(x);
+        lir.move(LIROperandFactory.singleLocation(x.type(), x.register()), reg);
+    }
+
+    @Override
+    public void visitLoadPointer(LoadPointer x) {
+        CiKind kind = x.type();
+        CodeEmitInfo info = maybeStateFor(x);
+        LIRItem pointer = new LIRItem(x.pointer(), this);
+        // TODO: recognize more complex addressing modes
+        pointer.loadItem();
+        LIROperand reg = rlockResult(x);
+        lir.load(new LIRAddress((LIRLocation) pointer.result(), 0, kind), reg, info);
+    }
+
+    @Override
     public void visitLoadField(LoadField x) {
         RiField field = x.field();
         boolean needsPatching = x.needsPatching();
@@ -972,6 +989,24 @@ public abstract class LIRGenerator extends ValueVisitor {
                 (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
                 info, method);
         return operands[resultOperand.index];
+    }
+
+    @Override
+    public void visitStoreRegister(StoreRegister x) {
+        LIROperand reg = LIROperandFactory.singleLocation(x.type(), x.register());
+        LIRItem src = new LIRItem(x.value(), this);
+        lir.move(src.result(), reg);
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer x) {
+        CodeEmitInfo info = maybeStateFor(x);
+        LIRItem pointer = new LIRItem(x.pointer(), this);
+        LIRItem value = new LIRItem(x.value(), this);
+        // TODO: recognize more complex addressing modes
+        value.loadItem();
+        pointer.loadItem();
+        lir.store(value.result(), new LIRAddress((LIRLocation) pointer.result(), 0, x.type()), info);
     }
 
     @Override

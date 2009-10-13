@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
  * DIR blocks are not attached to the enclosing {@link DirMethod} instance until the DIR compilation has completed.
  *
  * <p>
- * To enable DIR tracing during compilation at prototyping time or in the target, pass the following system property:
+ * To enable DIR tracing during compilation while bootstrapping or in the target, pass the following system property:
  * <p>
  *
  * <pre>

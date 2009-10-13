@@ -417,12 +417,12 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (runtimeVisibleAnnotationsBytes != null) {
                         final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                         for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                             final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                            if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                            if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
                                 continue nextField;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
                                 assert !Actor.isFinal(flags) :
@@ -799,9 +799,9 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (isClinit) {
-                        // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
+                        // Class initializer's for all Maxine class are run while bootstrapping and do not need to be in the boot image.
                         // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
                         if (MaxineVM.isMaxineClass(classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
                             continue nextMethod;
@@ -824,7 +824,7 @@ public final class ClassfileReader {
                     final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
                     for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
                         final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                        if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                        if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
                             continue nextMethod;
                         }
                         flags = setVmFlags(name, descriptor, genericSignature, flags, info);
@@ -890,7 +890,7 @@ public final class ClassfileReader {
                 classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
                 classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);
 
-                if (MaxineVM.isPrototyping() && substituteeIndex != -1) {
+                if (MaxineVM.isHosted() && substituteeIndex != -1) {
                     methodActors[substituteeIndex] = methodActor;
                 } else {
                     if (methodActorSet.add(methodActor) != null) {
@@ -918,8 +918,6 @@ public final class ClassfileReader {
             flags |= NO_SAFEPOINTS;
         } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
             flags |= BUILTIN | UNSAFE;
-        } else if (annotationTypeDescriptor.equals(forJavaClass(WRAPPER.class))) {
-            flags |= WRAPPER;
         } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
             flags |= TEMPLATE | UNSAFE;
         } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {
@@ -955,7 +953,6 @@ public final class ClassfileReader {
             boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
             ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);
             ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method: " + memberString(name, descriptor));
-            ProgramError.check(!isNative(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to native method: " + memberString(name, descriptor));
             ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method: " + memberString(name, descriptor));
             flags |= JNI_FUNCTION;
             flags |= C_FUNCTION;
@@ -1221,12 +1218,12 @@ public final class ClassfileReader {
         // Ensure there are no trailing bytes
         classfileStream.checkEndOfFile();
 
-        if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
+        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
                     classFlags |= TEMPLATE;
-                } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(PROTOTYPE_ONLY.class))) {
+                } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
                     ProgramError.unexpected("Trying to load a prototype only class " + name);
                 }
             }
@@ -1273,7 +1270,7 @@ public final class ClassfileReader {
             superClassActor.checkAccessBy(classActor);
         }
 
-        if (MaxineVM.isPrototyping() && runtimeVisibleAnnotationsBytes != null) {
+        if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(METHOD_SUBSTITUTIONS.class))) {

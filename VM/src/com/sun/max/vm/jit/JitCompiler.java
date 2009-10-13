@@ -37,7 +37,7 @@ import com.sun.max.vm.compiler.target.*;
  */
 public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCompilerScheme {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private boolean isInitialized;
 
     protected JitCompiler(VMConfiguration vmConfiguration) {
@@ -48,12 +48,12 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
 
-        if (MaxineVM.isPrototyping() && phase == MaxineVM.Phase.CREATING_COMPILED_PROTOTYPE) {
+        if (MaxineVM.isHosted() && phase == MaxineVM.Phase.COMPILING) {
             init();
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void init() {
         synchronized (this) {
             if (!isInitialized) {
@@ -70,13 +70,13 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
     }
 
     public JitTargetMethod compile(ClassMethodActor classMethodActor) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             init();
         }
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         try {
             final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(targetMethod.classMethodActor(), directCalls, virtualCalls, interfaceCalls);

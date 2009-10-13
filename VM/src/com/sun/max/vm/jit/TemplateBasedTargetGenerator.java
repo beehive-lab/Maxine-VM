@@ -58,7 +58,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         initializeTemplateTable(new TemplateTable(templateSources));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void initialize() {
         try {
             // Don't want any hardcoded symbolic references to template source classes, so we use reflection to obtain the list of templates.
@@ -128,7 +128,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.adapterReturnPosition(),
                         codeGenerator.targetABI());
 
-        if (!MaxineVM.isPrototyping()) {
+        if (!MaxineVM.isHosted()) {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls();
         }

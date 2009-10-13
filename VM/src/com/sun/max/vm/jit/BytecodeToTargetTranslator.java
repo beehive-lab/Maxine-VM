@@ -665,7 +665,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         if (referenceLiterals.isEmpty()) {
             return null;
         }
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Sequence.Static.toArray(referenceLiterals, Object.class);
         }
         // Must not cause checkcast here, since some reference literals may be static tuples.
@@ -2144,7 +2144,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * @param assembler the assembler
      * @return the machine code returned by the assembler
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected static byte[] toByteArrayAndReset(Assembler assembler) {
         try {
             final byte[] code = assembler.toByteArray();
@@ -2161,7 +2161,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * @param label the label
      * @return the position for the label
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected static int toPosition(Label label) {
         try {
             return label.position();

@@ -102,7 +102,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static byte getByte(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final byte[] byteArray = (byte[]) array;
             return byteArray[index];
         }
@@ -118,7 +118,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setByte(Object array, int index, byte value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final byte[] byteArray = (byte[]) array;
             byteArray[index] = value;
             return;
@@ -135,7 +135,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static boolean getBoolean(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final boolean[] booleanArray = (boolean[]) array;
             return booleanArray[index];
         }
@@ -151,7 +151,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setBoolean(Object array, int index, boolean value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final boolean[] booleanArray = (boolean[]) array;
             booleanArray[index] = value;
             return;
@@ -168,7 +168,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static short getShort(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final short[] shortArray = (short[]) array;
             return shortArray[index];
         }
@@ -184,7 +184,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setShort(Object array, int index, short value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final short[] shortArray = (short[]) array;
             shortArray[index] = value;
             return;
@@ -201,7 +201,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static char getChar(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final char[] charArray = (char[]) array;
             return charArray[index];
         }
@@ -217,7 +217,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setChar(Object array, int index, char value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final char[] charArray = (char[]) array;
             charArray[index] = value;
             return;
@@ -234,7 +234,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static int getInt(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final int[] intArray = (int[]) array;
             return intArray[index];
         }
@@ -250,7 +250,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setInt(Object array, int index, int value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final int[] intArray = (int[]) array;
             intArray[index] = value;
             return;
@@ -267,7 +267,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static float getFloat(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final float[] floatArray = (float[]) array;
             return floatArray[index];
         }
@@ -283,7 +283,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setFloat(Object array, int index, float value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final float[] floatArray = (float[]) array;
             floatArray[index] = value;
             return;
@@ -300,7 +300,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static long getLong(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final long[] longArray = (long[]) array;
             return longArray[index];
         }
@@ -316,7 +316,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setLong(Object array, int index, long value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final long[] longArray = (long[]) array;
             longArray[index] = value;
             return;
@@ -333,7 +333,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static double getDouble(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final double[] doubleArray = (double[]) array;
             return doubleArray[index];
         }
@@ -349,7 +349,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setDouble(Object array, int index, double value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final double[] doubleArray = (double[]) array;
             doubleArray[index] = value;
             return;
@@ -366,7 +366,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static Word getWord(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final Word[] wordArray = (Word[]) array;
             return WordArray.get(wordArray, index);
         }
@@ -382,7 +382,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setWord(Object array, int index, Word value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final Word[] wordArray = (Word[]) array;
             WordArray.set(wordArray, index, value);
             return;
@@ -399,7 +399,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static Object getObject(Object array, int index) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final Object[] objectArray = (Object[]) array;
             return objectArray[index];
         }
@@ -415,7 +415,7 @@ public final class ArrayAccess {
      */
     @INLINE
     public static void setObject(Object array, int index, Object value) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final Object[] objectArray = (Object[]) array;
             objectArray[index] = value;
             return;

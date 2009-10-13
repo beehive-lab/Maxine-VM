@@ -25,11 +25,9 @@ import java.io.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
 
 /**
  * Manages a cache of information about target routines (methods and native routines) in the {@link CodeManager} in the {@link TeleVM}.
@@ -42,7 +40,6 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
         super(teleVM);
         Trace.begin(1, tracePrefix() + " initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        TeleObject.copyStaticFields(teleVM, JniFunctionWrapper.class);
         Trace.end(1, tracePrefix() + " initializing", startTimeMillis);
     }
 

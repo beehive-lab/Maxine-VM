@@ -74,7 +74,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // If snippet compilation has not been completed, snippets are still in unoptimized form.
             // Thus builtins can hide behind higher level calls.
             // So here we first need to compile the tuple offset snippet down to builtin calls to reveal all its builtins.
@@ -109,7 +109,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
             if (fieldActor.isConstantWhenNotZero()) {
                 if (isConstantArgument(arguments, FieldReadParameter.tuple)) {
                     final Value tuple = getConstantArgumentValue(arguments, FieldReadParameter.tuple);
-                    final Value value = MaxineVM.isPrototyping() ? HostTupleAccess.readValue(tuple.asObject(), fieldActor) : fieldActor.readValue(tuple.asReference());
+                    final Value value = MaxineVM.isHosted() ? HostTupleAccess.readValue(tuple.asObject(), fieldActor) : fieldActor.readValue(tuple.asReference());
                     if (!value.isZero()) {
                         return super.fold(cirOptimizer, arguments);
                     }

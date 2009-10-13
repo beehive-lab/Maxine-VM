@@ -128,7 +128,7 @@ public class JTGenerator {
         final JTGenerator gen = new JTGenerator(writer);
         gen.genClassList(cases);
         writer.close();
-        return Files.updateGeneratedContent(configFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST CLASS LIST", "// END GENERATED TEST CLASS LIST");
+        return Files.updateGeneratedContent(configFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST CLASS LIST", "// END GENERATED TEST CLASS LIST", false);
     }
 
     private static boolean generateTestRunsContent(final File testRunsFile, final LinkedList<JavaTestCase> cases) throws IOException {
@@ -137,7 +137,7 @@ public class JTGenerator {
         gen.genRunMethod(cases);
         gen.genTestRuns(cases);
         writer.close();
-        return Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS");
+        return Files.updateGeneratedContent(testRunsFile, ReadableSource.Static.fromString(writer.toString()), "// GENERATED TEST RUNS", "// END GENERATED TEST RUNS", false);
     }
 
     private static LinkedList<JavaExecHarness.JavaTestCase> extractJavaTests(final TestEngine engine) {

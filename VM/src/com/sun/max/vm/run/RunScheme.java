@@ -41,16 +41,16 @@ public interface RunScheme extends VMScheme {
     void run();
 
     /**
-     * While prototyping, gather static native methods in JDK classes that need to be re-executed at target startup.
+     * While bootstrapping, gather static native methods in JDK classes that need to be re-executed at target startup.
      * Typically, such are methods called "initIDs" in JDK classes and
      * they assign JNI method and field IDs to static C/C++ variables.
      *
-     * Note that this method may be called numerous times during the prototyping phase and so the data structure
+     * Note that this method may be called numerous times during the bootstrapping phase and so the data structure
      * maintained by this run scheme to record the methods should take this into account.
      *
      * @return the set of methods gathered
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods();
 
     /**

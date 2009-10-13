@@ -45,7 +45,7 @@ import com.sun.max.vm.template.*;
  *
  * @author Laurent Daynes
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public class BytecodeTemplateGenerator extends TemplateGenerator {
 
     public BytecodeTemplateGenerator() {

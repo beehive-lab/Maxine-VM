@@ -87,6 +87,7 @@ typedef struct image_Header {
     jint FORWARD_LINK;
     jint BACKWARD_LINK;
     jint ID;
+    jint JNI_ENV;
     jint LAST_JAVA_FRAME_ANCHOR;
     jint TRAP_NUMBER;
     jint TRAP_INSTRUCTION_POINTER;

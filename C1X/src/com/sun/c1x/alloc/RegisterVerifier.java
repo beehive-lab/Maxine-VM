@@ -41,7 +41,7 @@ final class RegisterVerifier {
 
     // simplified access to methods of LinearScan
     C1XCompilation compilation() {
-        return allocator.compilation();
+        return allocator.compilation;
     }
 
     Interval intervalAt(int regNum) {
@@ -54,7 +54,7 @@ final class RegisterVerifier {
 
     // currently, only registers are processed
     int stateSize() {
-        return allocator.nofRegs;
+        return allocator.allocatableRegisters.nofRegs;
     }
 
     // accessors

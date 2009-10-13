@@ -210,7 +210,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static byte[] buildLookupSwitchTemplate(SPARCAssembler asm, Label branchToDefaultTarget) {
         final GPR keyRegister = GPR.O0;
         final GPR indexRegister = GPR.O1; // initialized to index of the last match.
@@ -255,7 +255,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         return toByteArrayAndReset(asm);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static byte[] buildTableSwitchTemplate(SPARCAssembler asm, Label branchToDefaultTarget, boolean adjustTag) {
         asm.reset();
         final GPR scratchRegister = TARGET_ABI.scratchRegister();

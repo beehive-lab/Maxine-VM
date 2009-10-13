@@ -101,7 +101,7 @@ public class TargetExceptionHandler {
             declaredExceptionResolutionGuard.value = constantPool.classAt(index).resolve(constantPool, index);
         }
         final ClassActor declaredExceptionClassActor = (ClassActor) declaredExceptionResolutionGuard.value;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return declaredExceptionClassActor.toJava().isInstance(throwable);
         }
         return declaredExceptionClassActor.isInstance(throwable);

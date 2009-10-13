@@ -18,16 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-
-import java.lang.annotation.*;
-
-/**
- * 
- * @see WRAPPED
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; 1 = 2
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface WRAPPER {
+package jtt.except;
+
+public class Except_Synchronized05 {
+
+    Object field;
+
+    public static int test(int arg) {
+        Except_Synchronized05 obj = new Except_Synchronized05();
+        int a = obj.bar(arg) != null ? 1 : 0;
+        int b = obj.baz(arg) != null ? 1 : 0;
+        return a + b;
+    }
+
+    public synchronized Object bar(int arg) {
+        try {
+            String f = foo1(arg);
+            if (f == null) {
+                field = new Object();
+            }
+        } catch (NullPointerException e) {
+            // do nothing
+        }
+        return field;
+    }
+
+    public Object baz(int arg) {
+        synchronized (this) {
+            try {
+                String f = foo1(arg);
+                if (f == null) {
+                    field = new Object();
+                }
+            } catch (NullPointerException e) {
+                // do nothing
+            }
+            return field;
+        }
+    }
+
+    private String foo1(int arg) {
+        if (arg == 0) {
+            throw null;
+        }
+        return null;
+    }
 }

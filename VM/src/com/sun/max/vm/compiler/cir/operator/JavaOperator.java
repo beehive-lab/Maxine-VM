@@ -35,6 +35,7 @@ import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -125,9 +126,11 @@ public abstract class JavaOperator extends CirOperator {
                 if (constant.isResolved() || constant.isResolvableWithoutClassLoading(constantPool)) {
                     try {
                         resolve();
-                    } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
+                    } catch (HostOnlyFieldError error) {
                         // Suppress: will have to be dealt with when 'resolve()' is called
-                    } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+                    } catch (HostOnlyMethodError error) {
+                        // Suppress: will have to be dealt with when 'resolve()' is called
+                    } catch (OmittedClassError error) {
                         // Suppress: will have to be dealt with when 'resolve()' is called
                     }
                 }

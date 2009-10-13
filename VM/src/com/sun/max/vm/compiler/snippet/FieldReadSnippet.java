@@ -62,7 +62,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static byte readByte(Object tuple, FieldActor byteFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readByte(tuple, byteFieldActor);
             }
             return TupleAccess.readByte(tuple, byteFieldActor.offset());
@@ -79,7 +79,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static boolean readBoolean(Object tuple, FieldActor booleanFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readBoolean(tuple, booleanFieldActor);
             }
             return TupleAccess.readBoolean(tuple, booleanFieldActor.offset());
@@ -96,7 +96,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static short readShort(Object tuple, FieldActor shortFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readShort(tuple, shortFieldActor);
             }
             return TupleAccess.readShort(tuple, shortFieldActor.offset());
@@ -113,7 +113,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static char readChar(Object tuple, FieldActor charFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readChar(tuple, charFieldActor);
             }
             return TupleAccess.readChar(tuple, charFieldActor.offset());
@@ -130,7 +130,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static int readInt(Object tuple, FieldActor intFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readInt(tuple, intFieldActor);
             }
             return TupleAccess.readInt(tuple, intFieldActor.offset());
@@ -147,7 +147,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static float readFloat(Object tuple, FieldActor floatFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readFloat(tuple, floatFieldActor);
             }
             return TupleAccess.readFloat(tuple, floatFieldActor.offset());
@@ -164,7 +164,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static long readLong(Object tuple, FieldActor longFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readLong(tuple, longFieldActor);
             }
             return TupleAccess.readLong(tuple, longFieldActor.offset());
@@ -181,7 +181,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static double readDouble(Object tuple, FieldActor doubleFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readDouble(tuple, doubleFieldActor);
             }
             return TupleAccess.readDouble(tuple, doubleFieldActor.offset());
@@ -198,7 +198,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static Word readWord(Object tuple, FieldActor wordFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readWord(tuple, wordFieldActor);
             }
             return TupleAccess.readWord(tuple, wordFieldActor.offset());
@@ -215,7 +215,7 @@ public class FieldReadSnippet extends BuiltinsSnippet {
         @SNIPPET
         @INLINE
         public static Object readReference(Object tuple, FieldActor referenceFieldActor) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 return HostTupleAccess.readObject(tuple, referenceFieldActor);
             }
             return TupleAccess.readObject(tuple, referenceFieldActor.offset());
