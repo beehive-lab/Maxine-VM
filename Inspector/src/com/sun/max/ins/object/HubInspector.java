@@ -26,7 +26,6 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -55,8 +54,6 @@ public final class HubInspector extends ObjectInspector {
     private ObjectScrollPane mTablePane;
     private ObjectScrollPane refMapPane;
 
-    private final InspectorMenuItems classMethodInspectorMenuItems;
-
     HubInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
         teleHub = (TeleHub) teleObject;
@@ -69,14 +66,27 @@ public final class HubInspector extends ObjectInspector {
         showMTables = globalHubPreferences.showMTables;
         showRefMaps = globalHubPreferences.showRefMaps;
 
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.
-            classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
-            getMenu(DEFAULT_INSPECTOR_MENU).add(classMethodInspectorMenuItems);
-        } else {
-            classMethodInspectorMenuItems = null;
+            final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
+            debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
+            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
+
+            final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
+            objectMenu.add(actions().inspectObject(teleClassMethodActor, teleClassMethodActor.classActorForType().simpleName()));
+            final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
+            objectMenu.add(actions().inspectObject(teleClassActor, teleClassActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+            objectMenu.addSeparator();
+            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
+
+            final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
+            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
+            codeMenu.addSeparator();
+            codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
         }
     }
 
@@ -188,9 +198,6 @@ public final class HubInspector extends ObjectInspector {
         }
         if (refMapPane != null) {
             refMapPane.refresh(force);
-        }
-        if (classMethodInspectorMenuItems != null) {
-            classMethodInspectorMenuItems.refresh(force);
         }
         super.refreshView(force);
         return true;

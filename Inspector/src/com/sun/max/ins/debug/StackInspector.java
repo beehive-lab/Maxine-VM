@@ -256,9 +256,22 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         viewPreferences = JavaStackFrameViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        createFrame(null);
-        getMenu(DEFAULT_INSPECTOR_MENU).addSeparator();
-        getMenu(DEFAULT_INSPECTOR_MENU).add(copyStackToClipboardAction);
+        final InspectorFrame frame = createFrame();
+
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(copyStackToClipboardAction);
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectSelectedThreadMemoryWords("Inspect memory for thread"));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }

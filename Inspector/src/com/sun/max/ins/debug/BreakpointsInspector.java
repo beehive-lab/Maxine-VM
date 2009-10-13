@@ -68,8 +68,30 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        createFrame(null);
-        getMenu(DEFAULT_INSPECTOR_MENU).add(new BreakpointFrameMenuItems());
+        final InspectorFrame frame = createFrame();
+
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(inspection().actions().removeSelectedBreakpoint());
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
+        debugMenu.addSeparator();
+        debugMenu.add(actions().genericBreakpointMenuItems());
+        if (maxVM().watchpointsEnabled()) {
+            debugMenu.add(actions().genericWatchpointMenuItems());
+            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
+            viewWatchpointsMenuItem.setText("View Watchpoints");
+            debugMenu.add(viewWatchpointsMenuItem);
+        }
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -112,35 +134,6 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    /**
-     * Menu items not dependent on mouse location, suitable for the frame.
-     */
-    private final class BreakpointFrameMenuItems implements InspectorMenuItems {
-
-        public void addTo(InspectorMenu menu) {
-            final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-            methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
-            methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
-            methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
-            menu.add(methodEntryBreakpoints);
-            menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
-            menu.addSeparator();
-            menu.add(inspection().actions().removeSelectedBreakpoint());
-            menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
-            menu.add(inspection().actions().removeAllBytecodeBreakpoints());
-        }
-
-        public Inspection inspection() {
-            return BreakpointsInspector.this.inspection();
-        }
-
-        public void refresh(boolean force) {
-        }
-
-        public void redisplay() {
-        }
     }
 
     @Override

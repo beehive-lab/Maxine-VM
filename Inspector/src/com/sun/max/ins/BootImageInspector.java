@@ -22,6 +22,8 @@ package com.sun.max.ins;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
@@ -62,7 +64,16 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         Trace.end(1, tracePrefix() + "initializing");
     }
 

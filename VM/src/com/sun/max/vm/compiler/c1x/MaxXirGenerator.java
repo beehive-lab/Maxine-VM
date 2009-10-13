@@ -24,7 +24,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
-import com.sun.c1x.xir.XirAssembler.*;
+import com.sun.c1x.xir.CiXirAssembler.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.target.x86.X86;
 import com.sun.max.vm.layout.Layout;
@@ -63,7 +63,7 @@ import java.util.HashMap;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class MaxXirGenerator extends XirGenerator {
+public class MaxXirGenerator extends RiXirGenerator {
 
     private static final CiKind[] kindMapping;
     private static final Kind[] ciKindMapping;
@@ -160,10 +160,10 @@ public class MaxXirGenerator extends XirGenerator {
         this.offsetOfFirstArrayElement = Layout.byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
     }
 
-    private XirAssembler asm;
+    private CiXirAssembler asm;
 
     @Override
-    public void buildTemplates(XirAssembler asm) {
+    public void buildTemplates(CiXirAssembler asm) {
         CiKind[] kinds = CiKind.values();
 
         this.asm = asm;
@@ -481,7 +481,7 @@ public class MaxXirGenerator extends XirGenerator {
         return finishTemplate(asm, "resolveClassObject");
     }
 
-    private void resolve(XirAssembler asm, String string, XirVariable result, XirParameter... guard) {
+    private void resolve(CiXirAssembler asm, String string, XirVariable result, XirParameter... guard) {
         callRuntimeThroughStub(asm, string, result, guard);
     }
 
@@ -499,7 +499,7 @@ public class MaxXirGenerator extends XirGenerator {
         return finishTemplate(asm, "arraylength");
     }
 
-    private XirTemplate buildArrayStore(CiKind kind, XirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
+    private XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
         XirParameter value = asm.createInputParameter("value", kind);
@@ -549,7 +549,7 @@ public class MaxXirGenerator extends XirGenerator {
         return finishTemplate(asm, "arraystore<" + kind + ">");
     }
 
-    private XirTemplate buildArrayLoad(CiKind kind, XirAssembler asm, boolean genBoundsCheck) {
+    private XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
         XirVariable length = asm.createTemp("length", CiKind.Int);
@@ -1130,7 +1130,7 @@ public class MaxXirGenerator extends XirGenerator {
 
 
 
-    private XirTemplate finishTemplate(XirAssembler asm, String name) {
+    private XirTemplate finishTemplate(CiXirAssembler asm, String name) {
         final XirTemplate result = asm.finishTemplate(name);
         if (C1XOptions.PrintXirTemplates) {
             result.print(System.out);
@@ -1138,7 +1138,7 @@ public class MaxXirGenerator extends XirGenerator {
         return result;
     }
 
-    private void addWriteBarrier(XirAssembler asm, XirVariable object, XirVariable value) {
+    private void addWriteBarrier(CiXirAssembler asm, XirVariable object, XirVariable value) {
         // XXX: add write barrier mechanism
     }
 
@@ -1146,7 +1146,7 @@ public class MaxXirGenerator extends XirGenerator {
         return kindMapping[k.asEnum.ordinal()];
     }
 
-    private void callRuntimeThroughStub(XirAssembler asm, String method, XirVariable result, XirVariable... args) {
+    private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirVariable result, XirVariable... args) {
         XirTemplate stub = runtimeCallStubs.get(method);
         if (stub == null) {
             // search for the runtime call and create the stub
@@ -1164,7 +1164,7 @@ public class MaxXirGenerator extends XirGenerator {
                     }
 
                     assert signature.numberOfParameters() == args.length : "parameter mismatch in call to " + method;
-                    XirAssembler stubAsm = asm.copy();
+                    CiXirAssembler stubAsm = asm.copy();
                     stubAsm.restart(toCiKind(signature.resultKind()));
 
                     XirParameter[] rtArgs = new XirParameter[signature.numberOfParameters()];

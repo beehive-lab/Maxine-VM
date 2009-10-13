@@ -27,6 +27,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.memory.*;
@@ -63,23 +64,119 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     private static final int TRACE_VALUE = 2;
 
     private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(16, 16);
-    public static final String DEFAULT_INSPECTOR_MENU = "Default";
-    public static final String VIEW_INSPECTOR_MENU = "View";
-    public static final String METHOD_INSPECTOR_MENU = "Method";
 
-    public InspectorMenu createDefaultMenu() {
-        final InspectorMenu menu = new InspectorMenu(Inspector.DEFAULT_INSPECTOR_MENU);
-        menu.add(getViewOptionsAction());
-        menu.add(getRefreshAction());
-        menu.addSeparator();
-        menu.add(getCloseAction());
-        menu.add(getCloseOtherInspectorsAction());
-        menu.addSeparator();
-        menu.add(getPrintAction());
+
+    public enum MenuKind {
+        // Standard menu, of which every menu bar will have a subset.
+        // They should be created in this order for consistency, as that
+        // is the order in which they will appear.
+        DEFAULT_MENU(""),
+        EDIT_MENU("Edit"),
+        MEMORY_MENU("Memory"),
+        OBJECT_MENU("Object"),
+        CODE_MENU("Code "),
+        DEBUG_MENU("Debug"),
+         VIEW_MENU("View"),
+        HELP_MENU("Help");
+
+        private final String label;
+
+        private MenuKind(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public static final IndexedSequence<MenuKind> VALUES = new ArraySequence<MenuKind>(values());
+    }
+
+    protected InspectorMenu createBasicFrameMenu() {
+        final InspectorMenu menu = new InspectorMenu(MenuKind.DEFAULT_MENU.label());
+        menu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         menu.setText(null);
         menu.setIcon(FRAME_ICON);
         return menu;
     }
+
+    protected InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
+
+        switch(menuKind) {
+            case DEFAULT_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+                    @Override
+                    public void addTo(InspectorMenu menu) {
+                        menu.add(getCloseAction());
+                        menu.add(getCloseOtherInspectorsAction());
+                        menu.addSeparator();
+                        menu.add(getPrintAction());
+                    }
+                };
+            case EDIT_MENU:
+                break;
+            case MEMORY_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+                    @Override
+                    public void addTo(InspectorMenu menu) {
+                        menu.addSeparator();
+                        menu.add(actions().genericMemoryMenuItems());
+                    }
+                };
+            case OBJECT_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+
+                    public void addTo(InspectorMenu menu) {
+                        menu.addSeparator();
+                        menu.add(actions().genericObjectMenuItems());
+                    }
+                };
+            case CODE_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+
+                    public void addTo(InspectorMenu menu) {
+                        menu.addSeparator();
+                        menu.add(actions().genericCodeMenuItems());
+                    }
+                };
+            case DEBUG_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+
+                    public void addTo(InspectorMenu menu) {
+                        menu.addSeparator();
+                        menu.add(actions().genericBreakpointMenuItems());
+                        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
+                        viewBreakpointsMenuItem.setText("View Breakpoints");
+                        menu.add(viewBreakpointsMenuItem);
+                        if (maxVM().watchpointsEnabled()) {
+                            menu.add(actions().genericWatchpointMenuItems());
+                            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
+                            viewWatchpointsMenuItem.setText("View Watchpoints");
+                            menu.add(viewWatchpointsMenuItem);
+                        }
+                    }
+                };
+            case VIEW_MENU:
+                return new AbstractInspectorMenuItems(inspection()) {
+
+                    public void addTo(InspectorMenu menu) {
+                        menu.add(getViewOptionsAction());
+                        menu.add(getRefreshAction());
+                        menu.addSeparator();
+                        menu.add(actions().genericViewMenuItems());
+                    }
+                };
+            case HELP_MENU:
+                break;
+        }
+        // Empty set of menu items
+        return new AbstractInspectorMenuItems(inspection()) {
+
+            public void addTo(InspectorMenu menu) {
+            }
+        };
+    }
+
 
     private InspectorFrame frame;
 
@@ -169,10 +266,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
      * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
      *
-     * @param menu  optional menu to replace the default frame menu
      */
-    protected void createFrame(InspectorMenu menu) {
-        frame = new InspectorFrame(this, menu);
+    protected InspectorFrame createFrame() {
+        frame = new InspectorFrame(this);
         updateFrameTitle();
         createView();
         frame.pack();
@@ -183,6 +279,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
         }
+        return frame;
     }
 
     /**
@@ -214,10 +311,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected InspectorTable getTable() {
         return null;
-    }
-
-    protected InspectorMenu getMenu(String menuName) {
-        return frame.getMenu(menuName);
     }
 
     public void vmStateChanged(boolean force) {

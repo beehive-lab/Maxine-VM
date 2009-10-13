@@ -70,7 +70,7 @@ public class X86Backend extends Backend {
     }
 
     @Override
-    public XirAssembler newXirAssembler() {
+    public CiXirAssembler newXirAssembler() {
         return new X86XirAssembler();
     }
 

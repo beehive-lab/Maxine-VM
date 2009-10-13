@@ -21,9 +21,13 @@
 package com.sun.max.ins;
 
 import java.io.*;
+import java.math.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
+import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -31,11 +35,14 @@ import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
+import com.sun.max.io.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -43,9 +50,11 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
@@ -112,6 +121,10 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Aritra Bandyopadhyay
  */
+/**
+ * @author Michael Van De Vanter
+ *
+ */
 public class InspectionActions extends AbstractInspectionHolder implements Prober{
 
     private static final int TRACE_VALUE = 2;
@@ -149,8 +162,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "About";
 
-        AboutAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        AboutAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -176,8 +189,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Preferences";
 
-        PreferencesAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        PreferencesAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -203,8 +216,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Refresh all views";
 
-        RefreshAllAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RefreshAllAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -216,7 +229,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction refreshAll = new RefreshAllAction(null);
 
     /**
-     * @return an Action that updates all displayed information read from the VM.
+     * @return singleton Action that updates all displayed information read from the VM.
      */
     public final InspectorAction refreshAll() {
         return refreshAll;
@@ -231,8 +244,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final Predicate<Inspector> predicate;
 
-        CloseViewsAction(Predicate<Inspector> predicate, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        CloseViewsAction(Predicate<Inspector> predicate, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.predicate = predicate;
         }
 
@@ -244,11 +257,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param predicate a predicate that returns true for all Inspectors to be closed.
-     * @param title a string name for the Action, uses default name if null.
+     * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will close views.
      */
-    public final InspectorAction closeViews(Predicate<Inspector> predicate, String title) {
-        return new CloseViewsAction(predicate, title);
+    public final InspectorAction closeViews(Predicate<Inspector> predicate, String actionTitle) {
+        return new CloseViewsAction(predicate, actionTitle);
     }
 
 
@@ -259,8 +272,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Close all views";
 
-        CloseAllViewsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        CloseAllViewsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -269,13 +282,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction closeAll = new CloseAllViewsAction(null);
+    private final InspectorAction closeAllAction = new CloseAllViewsAction(null);
 
     /**
-     * @return an Action that closes all open inspectors.
+     * @return Singleton Action that closes all open inspectors.
      */
     public final InspectorAction closeAllViews() {
-        return closeAll;
+        return closeAllAction;
     }
 
 
@@ -286,8 +299,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Quit Inspector";
 
-        QuitAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        QuitAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -296,13 +309,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction quit = new QuitAction(null);
+    private final InspectorAction quitAction = new QuitAction(null);
 
     /**
-     * @return an Action that quits the VM inspection session.
+     * @return Singleton Action that quits the VM inspection session.
      */
     public final InspectorAction quit() {
-        return quit;
+        return quitAction;
     }
 
 
@@ -314,8 +327,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Relocate Boot Image";
 
-        RelocateBootImageAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RelocateBootImageAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -329,14 +342,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction relocateBootImage = new RelocateBootImageAction(null);
+    private final InspectorAction relocateBootImageAction = new RelocateBootImageAction(null);
 
     /**
-     * @return an Action that relocates the boot image, assuming that the inspector was invoked
+     * @return Singleton Action that relocates the boot image, assuming that the inspector was invoked
      * with the option {@link MaxineInspector#suspendingBeforeRelocating()} set.
      */
     public final InspectorAction relocateBootImage() {
-        return relocateBootImage;
+        return relocateBootImageAction;
     }
 
 
@@ -347,8 +360,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Set Inspector trace level...";
 
-        SetInspectorTraceLevelAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetInspectorTraceLevelAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -367,13 +380,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction setInspectorTraceLevel = new SetInspectorTraceLevelAction(null);
+    private final InspectorAction setInspectorTraceLevelAction = new SetInspectorTraceLevelAction(null);
 
     /**
-     * @return an interactive Action that permits setting the level of inspector {@link Trace} output.
+     * @return Singleton interactive Action that permits setting the level of inspector {@link Trace} output.
      */
     public final InspectorAction setInspectorTraceLevel() {
-        return setInspectorTraceLevel;
+        return setInspectorTraceLevelAction;
     }
 
 
@@ -385,8 +398,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Change Interpreter use level...";
 
-        ChangeInterpreterUseLevelAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ChangeInterpreterUseLevelAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -411,14 +424,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction changeInterpreterUseLevel = new ChangeInterpreterUseLevelAction(null);
+    private final InspectorAction changeInterpreterUseLevelAction = new ChangeInterpreterUseLevelAction(null);
 
     /**
-     * @return an interactive action that permits changing the level at which the interpreter
+     * @return Singleton interactive action that permits changing the level at which the interpreter
      * will be used when communicating with the VM.
      */
     public final InspectorAction changeInterpreterUseLevel() {
-        return changeInterpreterUseLevel;
+        return changeInterpreterUseLevelAction;
     }
 
 
@@ -430,8 +443,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Set transport debug level...";
 
-        SetTransportDebugLevelAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetTransportDebugLevelAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -456,13 +469,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction setTransportDebugLevel = new SetTransportDebugLevelAction(null);
+    private final InspectorAction setTransportDebugLevelAction = new SetTransportDebugLevelAction(null);
 
     /**
-     * @return an interactive action that permits setting the debugging level for transport.
+     * @return Singleton interactive action that permits setting the debugging level for transport.
      */
     public final InspectorAction setTransportDebugLevel() {
-        return setTransportDebugLevel;
+        return setTransportDebugLevelAction;
     }
 
 
@@ -484,13 +497,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction runFileCommands = new RunFileCommandsAction();
+    private final InspectorAction runFileCommandsAction = new RunFileCommandsAction();
 
     /**
-     * @return an interactive Action that will run Inspector commands from a specified file.
+     * @return Singleton interactive Action that will run Inspector commands from a specified file.
      */
     public final InspectorAction runFileCommands() {
-        return runFileCommands;
+        return runFileCommandsAction;
     }
 
 
@@ -502,8 +515,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Rescan class path for types";
 
-        UpdateClasspathTypesAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        UpdateClasspathTypesAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -512,14 +525,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction updateClasspathTypes = new UpdateClasspathTypesAction(null);
+    private final InspectorAction updateClasspathTypesAction = new UpdateClasspathTypesAction(null);
 
     /**
-     * @return an Action that updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * @return Singleton Action that updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
      */
     public final InspectorAction updateClasspathTypes() {
-        return updateClasspathTypes;
+        return updateClasspathTypesAction;
     }
 
 
@@ -530,8 +543,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Set VM trace level";
 
-        SetVMTraceLevelAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetVMTraceLevelAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -573,8 +586,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Set VM trace threshold";
 
-        SetVMTraceThresholdAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetVMTraceThresholdAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -616,8 +629,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Boot image info";
 
-        ViewBootImageAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewBootImageAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -643,8 +656,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Breakpoints";
 
-        ViewBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -670,47 +683,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible and highlights the {@link WatchpointsInspector}.
-     */
-    final class ViewWatchpointsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Watchpoints";
-
-        ViewWatchpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            refreshableActions.append(this);
-        }
-
-        @Override
-        protected void procedure() {
-            WatchpointsInspector.make(inspection()).highlight();
-        }
-
-        @Override
-        public void refresh(boolean force) {
-            setEnabled(maxVM().watchpointsEnabled());
-        }
-    }
-
-    private InspectorAction viewWatchpoints = new ViewWatchpointsAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link WatchpointsInspector}.
-     */
-    public final InspectorAction viewWatchpoints() {
-        return viewWatchpoints;
-    }
-
-
-    /**
      * Action:  makes visible and highlights the {@link MemoryRegionsInspector}.
      */
     final class ViewMemoryRegionsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Memory regions";
 
-        ViewMemoryRegionsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewMemoryRegionsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -742,8 +722,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Method code";
 
-        ViewMethodCodeAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewMethodCodeAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -771,8 +751,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Registers";
 
-        ViewRegistersAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewRegistersAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -804,8 +784,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Stack";
 
-        ViewStackAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewStackAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -837,8 +817,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Threads";
 
-        ViewThreadsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewThreadsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -870,8 +850,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "VM thread locals";
 
-        ViewVmThreadLocalsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewVmThreadLocalsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -897,6 +877,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  makes visible and highlights the {@link WatchpointsInspector}.
+     */
+    final class ViewWatchpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Watchpoints";
+
+        ViewWatchpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            WatchpointsInspector.make(inspection()).highlight();
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(maxVM().watchpointsEnabled());
+        }
+    }
+
+    private InspectorAction viewWatchpoints = new ViewWatchpointsAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link WatchpointsInspector}.
+     */
+    public final InspectorAction viewWatchpoints() {
+        return viewWatchpoints;
+    }
+
+
+    /**
      * Action:  copies a hex string version of a {@link Word} to the system clipboard.
      */
     final class CopyWordAction extends InspectorAction {
@@ -904,8 +917,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Copy word to clipboard";
         private final Word word;
 
-        private CopyWordAction(Word word, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        private CopyWordAction(Word word, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.word = word;
         }
 
@@ -917,26 +930,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param a {@link Word} from the VM.
-     * @param title a string to use as the title of the action, uses default name if null.
+     * @param actionTitle a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard
      */
-    public final InspectorAction copyWord(Word word, String title) {
-        return new CopyWordAction(word, title);
+    public final InspectorAction copyWord(Word word, String actionTitle) {
+        return new CopyWordAction(word, actionTitle);
     }
 
     /**
      * @param a {@link Word} wrapped as a {@link Value} from the VM.
-     * @param title a string to use as the title of the action, uses default name if null.
+     * @param actionTitle a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard,
      * null if not a word.
      */
-    public final InspectorAction copyValue(Value value, String title) {
+    public final InspectorAction copyValue(Value value, String actionTitle) {
         Word word = Word.zero();
         try {
             word = value.asWord();
         } catch (Throwable throwable) {
         }
-        final InspectorAction action = new CopyWordAction(word, title);
+        final InspectorAction action = new CopyWordAction(word, actionTitle);
         if (word.isZero()) {
             action.setEnabled(false);
         }
@@ -960,14 +973,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             refreshableActions.append(this);
         }
 
-        InspectMemoryBytesAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectMemoryBytesAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
             this.teleObject = null;
         }
 
-        InspectMemoryBytesAction(TeleObject teleObject, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectMemoryBytesAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = null;
             this.teleObject = teleObject;
         }
@@ -992,7 +1005,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction inspectMemoryBytesAction = new InspectMemoryBytesAction();
 
     /**
-     * @return an interactive Action that will create a Memory Inspector
+     * @return Singleton interactive Action that will create a Memory Inspector
      */
     public final InspectorAction inspectMemoryBytes() {
         return inspectMemoryBytesAction;
@@ -1000,11 +1013,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param address a valid memory {@link Address} in the VM
-     * @param title a string name for the action, uses default name if null
+     * @param actionTitle a string name for the action, uses default name if null
      * @return an interactive Action that will create a Memory Inspector at the address
      */
-    public final InspectorAction inspectMemoryBytes(Address address, String title) {
-        return new InspectMemoryBytesAction(address, title);
+    public final InspectorAction inspectMemoryBytes(Address address, String actionTitle) {
+        return new InspectMemoryBytesAction(address, actionTitle);
     }
 
 
@@ -1022,8 +1035,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.address = null;
         }
 
-        InspectMemoryWordsAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectMemoryWordsAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
         }
 
@@ -1048,22 +1061,68 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction inspectMemoryWordsAction = new InspectMemoryWordsAction();
 
     /**
-     * @return an interactive Action that will create a MemoryWords Inspector
+     * @return Singleton interactive Action that will create a MemoryWords Inspector
      */
     public final InspectorAction inspectMemoryWords() {
         return inspectMemoryWordsAction;
     }
 
+    /**
+     * @param address a valid memory {@link Address} in the VM
+     * @param actionTitle a name for the action
+     * @return an Action that will create a Memory Words Inspector at the address
+     */
+    public final InspectorAction inspectMemoryWords(Address address, String actionTitle) {
+        return new InspectMemoryWordsAction(address, actionTitle);
+    }
 
     /**
      * @param address a valid memory {@link Address} in the VM
-     * @param title a name for the action
      * @return an Action that will create a Memory Words Inspector at the address
      */
-    public final InspectorAction inspectMemoryWords(Address address, String title) {
-        return new InspectMemoryWordsAction(address, title);
+    public final InspectorAction inspectMemoryWords(Address address) {
+        return new InspectMemoryWordsAction(address, null);
     }
 
+
+    /**
+     * Menu: display a sub-menu of commands to inspect the basic allocation
+     * regions of the VM.
+     */
+    final class InspectMemoryRegionsMenu extends JMenu {
+        public InspectMemoryRegionsMenu() {
+            super("Inspect memory region");
+            addMenuListener(new MenuListener() {
+
+                public void menuCanceled(MenuEvent e) {
+                }
+
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                public void menuSelected(MenuEvent e) {
+                    removeAll();
+                    for (MemoryRegion memoryRegion : maxVM().allocatedMemoryRegions()) {
+                        //System.out.println(memoryRegion.toString());
+                        add(actions().inspectRegionMemoryWords(memoryRegion, memoryRegion.description(), memoryRegion.description()));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Creates a menu of actions to inspect memory regions.
+     * <br>
+     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
+     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
+     *
+     * @return a dynamically populated menu that contains an action to inspect each currently allocated
+     * region of memory in the VM.
+     */
+    public final JMenu inspectMemoryRegionsMenu() {
+        return new InspectMemoryRegionsMenu();
+    }
 
     /**
      * Action: inspects memory occupied by an object.
@@ -1074,8 +1133,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Inspect memory";
         private final TeleObject teleObject;
 
-        InspectObjectMemoryWordsAction(TeleObject teleObject, String title) {
-            super(inspection(), (title == null) ? DEFAULT_TITLE : title);
+        InspectObjectMemoryWordsAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), (actionTitle == null) ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
         }
 
@@ -1088,11 +1147,140 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param teleObject a surrogate for a valid object in the VM
-     * @param title a name for the action
+     * @param actionTitle a name for the action
      * @return an Action that will create a Memory Words Inspector at the address
      */
-    public final InspectorAction inspectObjectMemoryWords(TeleObject teleObject, String title) {
-        return new InspectObjectMemoryWordsAction(teleObject, title);
+    public final InspectorAction inspectObjectMemoryWords(TeleObject teleObject, String actionTitle) {
+        return new InspectObjectMemoryWordsAction(teleObject, actionTitle);
+    }
+
+    /**
+     * @param teleObject a surrogate for a valid object in the VM
+     * @return an Action that will create a Memory Words Inspector at the address
+     */
+    public final InspectorAction inspectObjectMemoryWords(TeleObject teleObject) {
+        return new InspectObjectMemoryWordsAction(teleObject, null);
+    }
+
+
+    /**
+     * Action:  inspect the memory holding a block of target code.
+     */
+    final class InspectTargetRegionMemoryWordsAction extends InspectorAction {
+
+        private static final String  DEFAULT_TITLE = "Inspect Target Code memory region";
+        private final TeleTargetRoutine teleTargetRoutine;
+
+        private InspectTargetRegionMemoryWordsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleTargetRoutine = teleTargetRoutine;
+        }
+
+        @Override
+        protected void procedure() {
+            final String description;
+            if (teleTargetRoutine instanceof TeleTargetMethod) {
+                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
+                description = "Target Method " + inspection().nameDisplay().shortName(teleTargetMethod);
+            } else {
+                description = "Native Target Method: " + teleTargetRoutine.getName();
+            }
+            actions().inspectRegionMemoryWords(teleTargetRoutine.targetCodeRegion(), description).perform();
+        }
+    }
+
+    /**
+     * Creates an action that will inspect memory containing a block of target code.
+     *
+     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @param actionTitle a name for the action
+     * @return an Action that will create a Memory Words Inspector for the code
+     */
+    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, actionTitle);
+    }
+
+    /**
+     * Creates an action that will inspect memory containing a block of target code.
+     *
+     * @param teleTargetRoutine a block of target code in the VM, either a Java method or native
+     * @return an Action that will create a Memory Words Inspector for the code
+     */
+    public final InspectorAction inspectTargetRegionMemoryWords(TeleTargetRoutine teleTargetRoutine) {
+        return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, null);
+    }
+
+
+    /**
+     *Action:  inspect the memory allocated to the currently selected thread.
+     */
+    final class InspectSelectedThreadMemoryWordsAction extends InspectorAction {
+
+        public InspectSelectedThreadMemoryWordsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory for selected thread" : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stack(), "Thread " + thread.toShortString());
+                inspector.highlight();
+            } else {
+                gui().errorMessage("no thread selected");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasThread());
+        }
+    }
+
+    /**
+     * @param actionTitle title for the action, uses a default if null
+     * @return an action that will create a memory words inspector
+     * for memory allocated by the currently selected thread
+     */
+    public final InspectorAction inspectSelectedThreadMemoryWords(String actionTitle) {
+        return new InspectSelectedThreadMemoryWordsAction(actionTitle);
+    }
+
+
+    /**
+     *Action:  inspect the memory allocated to the currently selected memory watchpoint.
+     */
+    final class InspectSelectedMemoryWatchpointWordsAction extends InspectorAction {
+
+        public InspectSelectedMemoryWatchpointWordsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? "Inspect memory at selected watchpoint" : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxWatchpoint watchpoint = focus().watchpoint();
+            if (watchpoint != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), watchpoint, "Watchpoint " + watchpoint.description());
+                inspector.highlight();
+            } else {
+                gui().errorMessage("no watchpoint selected");
+            }
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasWatchpoint());
+        }
+    }
+
+    private final InspectorAction inspectSelectedMemoryWatchpointWordsAction = new InspectSelectedMemoryWatchpointWordsAction(null);
+
+    /**
+     * @return Singleton action that will create a memory words inspector
+     * for memory allocated by the currently selected thread
+     */
+    public final InspectorAction inspectSelectedMemoryWatchpointWordsAction() {
+        return inspectSelectedMemoryWatchpointWordsAction;
     }
 
 
@@ -1140,11 +1328,27 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an Action that will create a MemoryWords Inspector for a named region of memory.
+     * Creates a MemoryWords Inspector for a named region of memory.
+     *
+     * @param memoryRegion a region of memory in the VM
+     * @param regionName the name of the region to display
+     * @param actionTitle the name of the action that will create the display, default title if null
+     * @return an action that will create a Memory Words Inspector for the region
      */
     public final InspectorAction inspectRegionMemoryWords(MemoryRegion memoryRegion, String regionName, String actionTitle) {
         final String title = (actionTitle == null) ? ("Inspect memory region \"" + regionName + "\"") : actionTitle;
         return new InspectRegionMemoryWordsAction(memoryRegion, regionName, title);
+    }
+
+    /**
+     * Creates a MemoryWords Inspector for a named region of memory.
+     *
+     * @param memoryRegion a region of memory in the VM
+     * @param regionName the name of the region to display
+     * @return an action that will create a Memory Words Inspector for the region
+     */
+    public final InspectorAction inspectRegionMemoryWords(MemoryRegion memoryRegion, String regionName) {
+        return new InspectRegionMemoryWordsAction(memoryRegion, regionName, null);
     }
 
 
@@ -1152,8 +1356,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Action:  creates a memory inspector for the currently selected memory region, if any.
      */
 
-    private final class InspectSelectedMemoryRegionWordsAction extends InspectorAction {
+    final class InspectSelectedMemoryRegionWordsAction extends InspectorAction {
+
         private static final String DEFAULT_TITLE = "Inspect selected memory region";
+
         InspectSelectedMemoryRegionWordsAction() {
             super(inspection(), DEFAULT_TITLE);
             refreshableActions.append(this);
@@ -1178,11 +1384,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction inspectSelectedMemoryRegionWordsAction = new InspectSelectedMemoryRegionWordsAction();
 
     /**
-     * @return an Action that will create a Memory inspector for the currently selected region of memory
+     * @return Singleton Action that will create a Memory inspector for the currently selected region of memory
      */
     public final InspectorAction inspectSelectedMemoryRegionWords() {
         return inspectSelectedMemoryRegionWordsAction;
     }
+
 
     /**
      * Action: sets inspection focus to specified {@link MemoryRegion}.
@@ -1192,8 +1399,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final MemoryRegion memoryRegion;
         private static final String DEFAULT_TITLE = "Select memory region";
 
-        SelectMemoryRegionAction(String title, MemoryRegion memoryRegion) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SelectMemoryRegionAction(MemoryRegion memoryRegion, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = memoryRegion;
         }
 
@@ -1207,8 +1414,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @return an Action that will create a Memory Inspector at the start of the boot code
      */
     public final InspectorAction selectMemoryRegion(MemoryRegion memoryRegion) {
-        final String title = "Select memory region \"" + memoryRegion.description() + "\"";
-        return new SelectMemoryRegionAction(title, memoryRegion);
+        final String actionTitle = "Select memory region \"" + memoryRegion.description() + "\"";
+        return new SelectMemoryRegionAction(memoryRegion, actionTitle);
     }
 
 
@@ -1217,15 +1424,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectObjectAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect heap object at address...";
+        private static final String DEFAULT_TITLE = "Inspect object at address...";
 
-        InspectObjectAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectObjectAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), maxVM().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
+            new AddressInputDialog(inspection(), maxVM().teleBootHeapRegion().start(), "Inspect object at address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
@@ -1242,13 +1449,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectObject = new InspectObjectAction(null);
+    private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
 
     /**
-     * @return an Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
+     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
      */
     public final InspectorAction inspectObject() {
-        return inspectObject;
+        return inspectObjectAction;
     }
 
 
@@ -1260,8 +1467,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Inspect object";
         final TeleObject teleObject;
 
-        InspectSpecifiedObjectAction(TeleObject teleObject, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectSpecifiedObjectAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
         }
 
@@ -1273,11 +1480,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param surrogate for a heap object in the VM.
-     * @param title a string name for the Action, uses default name if null
+     * @param actionTitle a string name for the Action, uses default name if null
      * @return an Action that will create an Object Inspector
      */
-    public final InspectorAction inspectObject(TeleObject teleObject, String title) {
-        return new InspectSpecifiedObjectAction(teleObject, title);
+    public final InspectorAction inspectObject(TeleObject teleObject, String actionTitle) {
+        return new InspectSpecifiedObjectAction(teleObject, actionTitle);
     }
 
 
@@ -1286,15 +1493,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectObjectByIDAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Inspect heap object by ID...";
+        private static final String DEFAULT_TITLE = "Inspect object by ID...";
 
-        InspectObjectByIDAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectObjectByIDAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
         protected void procedure() {
-            final String input = gui().inputDialog("Inspect heap object by ID..", "");
+            final String input = gui().inputDialog("Inspect object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
                 final TeleObject teleObject = maxVM().findObjectByOID(oid);
@@ -1309,14 +1516,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectObjectByID = new InspectObjectByIDAction(null);
+    private final InspectorAction inspectObjectByIDAction = new InspectObjectByIDAction(null);
 
     /**
-     * @return an Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
+     * @return Singleton Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
      */
     public final InspectorAction inspectObjectByID() {
-        return inspectObjectByID;
+        return inspectObjectByIDAction;
     }
+
 
     /**
      * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
@@ -1325,8 +1533,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect boot class registry";
 
-        InspectBootClassRegistryAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectBootClassRegistryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1336,13 +1544,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectBootClassRegistry = new InspectBootClassRegistryAction(null);
+    private final InspectorAction inspectBootClassRegistryAction = new InspectBootClassRegistryAction(null);
 
     /**
-     * @return an action that will create an Object Inspector for the boot {@link ClassRegistry} in the VM.
+     * @return Singleton action that will create an Object Inspector for the boot {@link ClassRegistry} in the VM.
      */
     public final InspectorAction inspectBootClassRegistry() {
-        return inspectBootClassRegistry;
+        return inspectBootClassRegistryAction;
     }
 
 
@@ -1354,8 +1562,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect ClassActor by name...";
 
-        InspectClassActorByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectClassActorByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1367,15 +1575,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectClassActorByName = new InspectClassActorByNameAction(null);
+    private final InspectorAction inspectClassActorByNameAction = new InspectClassActorByNameAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class name.
      */
     public final InspectorAction inspectClassActorByName() {
-        return inspectClassActorByName;
+        return inspectClassActorByNameAction;
     }
+
 
     /**
      * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
@@ -1385,8 +1594,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Inspect ClassActor by ID (Hex) ...";
 
-        InspectClassActorByHexIdAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectClassActorByHexIdAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1408,14 +1617,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction inspectClassActorByHexId = new InspectClassActorByHexIdAction(null);
+    private final InspectorAction inspectClassActorByHexIdAction = new InspectClassActorByHexIdAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in hex.
      */
     public final InspectorAction inspectClassActorByHexId() {
-        return inspectClassActorByHexId;
+        return inspectClassActorByHexIdAction;
     }
 
 
@@ -1426,8 +1635,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class InspectClassActorByDecimalIdAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Inspect ClassActor by ID (decimal) ...";
-        InspectClassActorByDecimalIdAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectClassActorByDecimalIdAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1448,14 +1657,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
         }
     }
-    private final InspectorAction inspectClassActorByDecimalId = new InspectClassActorByDecimalIdAction(null);
+
+    private final InspectorAction inspectClassActorByDecimalIdAction = new InspectClassActorByDecimalIdAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
+     * @return Singleton interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in decimal.
      */
     public final InspectorAction inspectClassActorByDecimalId() {
-        return inspectClassActorByDecimalId;
+        return inspectClassActorByDecimalIdAction;
     }
 
 
@@ -1464,10 +1674,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class InspectMethodActorByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE =  "Inspect MethodActor...";
+        private static final String DEFAULT_TITLE =  "Inspect MethodActor by name...";
 
-        InspectMethodActorByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectMethodActorByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1493,16 +1703,143 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
+
+    /**
+     * Action:  inspects the class actor from which a method was substituted.
+     */
+    final class InspectSubstitutionSourceClassActorAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE =  "Method substitution source";
+
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        private InspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodActor;
+            setEnabled(teleClassMethodActor.isSubstituted());
+        }
+
+        @Override
+        public void procedure() {
+            if (teleClassMethodActor != null) {
+                inspection().focus().setHeapObject(teleClassMethodActor.teleClassActorSubstitutedFrom());
+            }
+        }
+    }
+
+    /**
+     * Creates an action to inspect the class actor from which a method was substituted.
+     *
+     * @param teleClassMethodActor representation of a class method in the VM
+     * @param actionTitle name of the action
+     * @return an action that will inspect the class actor, if any, from which the method was substituted
+     */
+    public final InspectorAction inspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new InspectSubstitutionSourceClassActorAction(teleClassMethodActor, actionTitle);
+    }
+
+    /**
+     * Creates an action to inspect the class actor from which a method was substituted.
+     *
+     * @param teleClassMethodActor representation of a class method in the VM
+     * @return an action that will inspect the class actor, if any, from which the method was substituted
+     */
+    public final InspectorAction inspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor) {
+        return new InspectSubstitutionSourceClassActorAction(teleClassMethodActor, null);
+    }
+
+
+/**
+     * Menu: contains actions to inspect each of the compilations of a target method.
+     */
+    final class InspectTargetMethodCompilationsMenu extends InspectorMenu {
+
+        private static final String DEFAULT_TITLE = "Compilations";
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        public InspectTargetMethodCompilationsMenu(TeleClassMethodActor teleClassMethodactor, String actionTitle) {
+            super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodactor;
+            refresh(true);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            if (getMenuComponentCount() < teleClassMethodActor.numberOfCompilations()) {
+                for (int index = getMenuComponentCount(); index < teleClassMethodActor.numberOfCompilations(); index++) {
+                    final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
+                    final StringBuilder name = new StringBuilder();
+                    name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
+                    name.append("  ");
+                    name.append(teleTargetMethod.classActorForType().simpleName());
+                    add(inspection().actions().inspectObject(teleTargetMethod, name.toString()));
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a menu containing actions to inspect all compilations of a method, dynamically updated
+     * as compilations are added.
+     *
+     * @param teleClassMethodActor representation of a Java method in the VM
+     * @param actionTitle name of the action to appear on button or menu
+     * @return a dynamically refreshed menu that contains actions to inspect each of the compilations of a method.
+     */
+    public InspectorMenu inspectTargetMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new InspectTargetMethodCompilationsMenu(teleClassMethodActor, actionTitle);
+    }
+
+    /**
+     * Creates a menu containing actions to inspect all compilations of a method, dynamically updated
+     * as compilations are added.
+     *
+     * @param teleClassMethodActor representation of a Java method in the VM
+     * @return a dynamically refreshed menu that contains actions to inspect each of the compilations of a method.
+     */
+    public InspectorMenu inspectTargetMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor) {
+        return new InspectTargetMethodCompilationsMenu(teleClassMethodActor, null);
+    }
+
+    /**
+     * Action:  displays Java source for a specified method.
+     */
+    final class ViewJavaSourceAction extends InspectorAction {
+
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        public ViewJavaSourceAction(TeleClassMethodActor teleClassMethodActor) {
+            super(inspection(), "View Java Source (external)");
+            this.teleClassMethodActor = teleClassMethodActor;
+        }
+
+        @Override
+        public void procedure() {
+            inspection().viewSourceExternally(new BytecodeLocation(teleClassMethodActor.classMethodActor(), 0));
+        }
+    }
+
+    /**
+     * Creates an action that will produce an external view of method source code.
+     *
+     * @param teleClassMethodActor surrogate of a Java method in the VM.
+     * @return an action that creates an external of the Java source for the method.
+     */
+    public InspectorAction viewJavaSource(TeleClassMethodActor teleClassMethodActor) {
+        return new ViewJavaSourceAction(teleClassMethodActor);
+    }
+
+
     /**
      * Action:  displays in the {@MethodInspector} the method whose target code contains
      * an interactively specified address.
      */
     final class ViewMethodCodeByAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View method code containing target code address...";
+        private static final String DEFAULT_TITLE = "Target method by address...";
 
-        public ViewMethodCodeByAddressAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public ViewMethodCodeByAddressAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1525,24 +1862,69 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewMethodCodeByAddress = new ViewMethodCodeByAddressAction(null);
+    private final InspectorAction viewMethodCodeByAddressAction = new ViewMethodCodeByAddressAction(null);
 
     /**
-     * @return an interactive action that displays in the {@link MethodInspector} the method whose
+     * @return Singleton interactive action that displays in the {@link MethodInspector} the method whose
      * target code contains the specified address in the VM.
      */
     public final InspectorAction viewMethodCodeByAddress() {
-        return viewMethodCodeByAddress;
+        return viewMethodCodeByAddressAction;
     }
+
+    /**
+     * @param actionTitle name of the action to appear in menu or button, uses default if null
+     * @return an interactive action that displays in the {@link MethodInspector} the method whose
+     * target code contains the specified address in the VM.
+     */
+    public final InspectorAction viewMethodCodeByAddress(String actionTitle) {
+        return new ViewMethodCodeByAddressAction(actionTitle);
+    }
+
+
+    /**
+     * Action:  displays in the {@MethodInspector} the method code containing an address.
+     */
+    final class ViewMethodCodeAtAddressAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View code at an address";
+        private final Address address;
+
+        public ViewMethodCodeAtAddressAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.address = address;
+            refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setCodeLocation(maxVM().createCodeLocation(address), true);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(focus().hasThread());
+        }
+    }
+
+
+    /**
+     * @return an Action that displays in the {@link MethodInspector} the method
+     * containing the current instruction pointer.
+     */
+    public final InspectorAction viewMethodCodeAtAddress(Address address, String actionTitle) {
+        return new ViewMethodCodeAtAddressAction(address, actionTitle);
+    }
+
 
     /**
      * Action:  displays in the {@MethodInspector} the method code containing the current code selection.
      */
     final class ViewMethodCodeAtSelectionAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View method code at current selection";
-        public ViewMethodCodeAtSelectionAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        private static final String DEFAULT_TITLE = "View code at current selection";
+        public ViewMethodCodeAtSelectionAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -1561,7 +1943,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final ViewMethodCodeAtSelectionAction viewMethodCodeAtSelection = new ViewMethodCodeAtSelectionAction(null);
 
     /**
-     * @return an action that displays in the {@link MethodInspector} the method code
+     * @return Singleton action that displays in the {@link MethodInspector} the method code
      * containing the current code selection.
      */
     public final InspectorAction viewMethodCodeAtSelection() {
@@ -1574,9 +1956,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodCodeAtIPAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View method code at IP";
-        public ViewMethodCodeAtIPAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        private static final String DEFAULT_TITLE = "View code at current IP";
+        public ViewMethodCodeAtIPAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -1595,7 +1977,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final ViewMethodCodeAtIPAction viewMethodCodeAtIP = new ViewMethodCodeAtIPAction(null);
 
     /**
-     * @return an Action that displays in the {@link MethodInspector} the method
+     * @return Singleton Action that displays in the {@link MethodInspector} the method
      * containing the current instruction pointer.
      */
     public final InspectorAction viewMethodCodeAtIP() {
@@ -1604,14 +1986,57 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  displays in the {@MethodInspector} the bytecode for a specified method.
+     */
+    final class ViewMethodBytecodeAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View bytecode...";
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        public ViewMethodBytecodeAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodActor;
+            setEnabled(teleClassMethodActor.hasCodeAttribute());
+        }
+
+        @Override
+        protected void procedure() {
+            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
+            inspection().focus().setCodeLocation(teleCodeLocation, false);
+        }
+    }
+
+    /**
+     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * for a selected method.
+     */
+    public final InspectorAction viewMethodBytecode(TeleClassMethodActor teleClassMethodActor) {
+        return new ViewMethodBytecodeAction(teleClassMethodActor, null);
+    }
+
+
+    /**
+     * Creates an action to view the bytecodes (if they exist) for a Java method.
+     *
+     * @param teleClassMethodActor
+     * @param actionTitle name of the action to appear in menu or button
+     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * for a selected method.
+     */
+    public final InspectorAction viewMethodBytecode(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new ViewMethodBytecodeAction(teleClassMethodActor, actionTitle);
+    }
+
+
+    /**
      * Action:  displays in the {@MethodInspector} the bytecode for an interactively specified method.
      */
     final class ViewMethodBytecodeByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View method bytecode...";
+        private static final String DEFAULT_TITLE = "View bytecode...";
 
-        public ViewMethodBytecodeByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public ViewMethodBytecodeByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1633,14 +2058,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewMethodBytecodeByName = new ViewMethodBytecodeByNameAction(null);
+    private final InspectorAction viewMethodBytecodeByNameAction = new  ViewMethodBytecodeByNameAction(null);
 
     /**
      * @return an interactive Action that displays bytecode in the {@link MethodInspector}
      * for a selected method.
      */
     public final InspectorAction viewMethodBytecodeByName() {
-        return viewMethodBytecodeByName;
+        return viewMethodBytecodeByNameAction;
+    }
+
+
+    /**
+     * @param actionTitle name of the action to appear in menu or button
+     * @return an interactive Action that displays bytecode in the {@link MethodInspector}
+     * for a selected method.
+     */
+    public final InspectorAction viewMethodBytecodeByName(String actionTitle) {
+        return new ViewMethodBytecodeByNameAction(actionTitle);
     }
 
 
@@ -1649,10 +2084,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodTargetCodeByNameAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View method target code...";
+        private static final String DEFAULT_TITLE = "View target code...";
 
-        public ViewMethodTargetCodeByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public ViewMethodTargetCodeByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1667,14 +2102,76 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewMethodTargetCodeByName = new ViewMethodTargetCodeByNameAction(null);
+    private final InspectorAction viewMethodTargetCodeByNameAction = new ViewMethodTargetCodeByNameAction(null);
 
     /**
-     * @return an interactive Action that displays target code in the {@link MethodInspector}
+     * @return Singleton interactive Action that displays target code in the {@link MethodInspector}
      * for a selected method.
      */
     public final InspectorAction viewMethodTargetCodeByName() {
-        return viewMethodTargetCodeByName;
+        return viewMethodTargetCodeByNameAction;
+    }
+
+    /**
+     * @param actionTitle name of the action to appear in menu or button
+     * @return an interactive Action that displays target code in the {@link MethodInspector}
+     * for a selected method.
+     */
+    public final InspectorAction viewMethodTargetCodeByName(String actionTitle) {
+        return new ViewMethodTargetCodeByNameAction(actionTitle);
+    }
+
+
+    /**
+     * Menu: contains actions to view code for each of the compilations of a target method.
+     */
+    final class ViewTargetMethodCodeMenu extends InspectorMenu {
+
+        private static final String DEFAULT_TITLE = "View compilations";
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        public ViewTargetMethodCodeMenu(TeleClassMethodActor teleClassMethodactor, String actionTitle) {
+            super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodactor;
+            refresh(true);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            if (getMenuComponentCount() < teleClassMethodActor.numberOfCompilations()) {
+                for (int index = getMenuComponentCount(); index < teleClassMethodActor.numberOfCompilations(); index++) {
+                    final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getJavaTargetMethod(index);
+                    final StringBuilder name = new StringBuilder();
+                    name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
+                    name.append("  ");
+                    name.append(teleTargetMethod.classActorForType().simpleName());
+                    add(inspection().actions().viewMethodCodeAtAddress(teleTargetMethod.callEntryPoint(), name.toString()));
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a menu containing actions to inspect the target code for all compilations of a method, dynamically updated
+     * as compilations are added.
+     *
+     * @param teleClassMethodActor representation of a Java method in the VM
+     * @param actionTitle name of the action to appear on button or menu
+     * @return a dynamically refreshed menu that contains actions to view code for each of the compilations of a method.
+     */
+    public InspectorMenu viewTargetMethodCodeMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new ViewTargetMethodCodeMenu(teleClassMethodActor, actionTitle);
+    }
+
+    /**
+     * Creates a menu containing actions to inspect the target code for all compilations of a method, dynamically updated
+     * as compilations are added.
+     *
+     * @param teleClassMethodActor representation of a Java method in the VM
+     * @return a dynamically refreshed menu that contains actions to view code for each of the compilations of a method.
+     */
+    public InspectorMenu viewTargetMethodCodeMenu(TeleClassMethodActor teleClassMethodActor) {
+        return new ViewTargetMethodCodeMenu(teleClassMethodActor, null);
     }
 
 
@@ -1697,7 +2194,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewRunMethodCodeInBootImage =
+    private final InspectorAction viewRunMethodCodeInBootImageAction =
         new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
 
     /**
@@ -1705,10 +2202,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * the {@link MaxineVM#run()} method in the boot image.
      */
     public final InspectorAction viewRunMethodCodeInBootImage() {
-        return viewRunMethodCodeInBootImage;
+        return viewRunMethodCodeInBootImageAction;
     }
 
-    private final InspectorAction viewThreadRunMethodCodeInBootImage =
+    private final InspectorAction viewThreadRunMethodCodeInBootImageAction =
         new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
                     Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
 
@@ -1717,10 +2214,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * the {@link VmThread#run()} method in the boot image.
      */
     public final InspectorAction viewThreadRunMethodCodeInBootImage() {
-        return viewThreadRunMethodCodeInBootImage;
+        return viewThreadRunMethodCodeInBootImageAction;
     }
 
-    private final InspectorAction viewSchemeRunMethodCodeInBootImage =
+    private final InspectorAction viewSchemeRunMethodCodeInBootImageAction =
             new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage.schemeTypeToImplementation(RunScheme.class), "run");
 
     /**
@@ -1728,7 +2225,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * the {@link RunScheme#run()} method in the boot image.
      */
     public final InspectorAction viewSchemeRunMethodCodeInBootImage() {
-        return viewSchemeRunMethodCodeInBootImage;
+        return viewSchemeRunMethodCodeInBootImageAction;
     }
 
 
@@ -1738,10 +2235,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewNativeCodeByAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "View native code containing  address...";
+        private static final String DEFAULT_TITLE = "Native method by address...";
 
-        public ViewNativeCodeByAddressAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public ViewNativeCodeByAddressAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -1760,16 +2257,83 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction viewNativeCodeByAddress = new ViewNativeCodeByAddressAction(null);
+    private final InspectorAction viewNativeCodeByAddressAction = new ViewNativeCodeByAddressAction(null);
 
     /**
-     * @return an interactive action that displays in the {@link MethodInspector} a body of native code whose
+      * @return Singleton interactive action that displays in the {@link MethodInspector} a body of native code whose
      * location contains the specified address in the VM.
      */
     public final InspectorAction viewNativeCodeByAddress() {
-        return viewNativeCodeByAddress;
+        return viewNativeCodeByAddressAction;
     }
 
+    /**
+     * @param actionTitle name of the action, as it will appear on a menu or button, default name if null
+     * @return an interactive action that displays in the {@link MethodInspector} a body of native code whose
+     * location contains the specified address in the VM.
+     */
+    public final InspectorAction viewNativeCodeByAddress(String actionTitle) {
+        return new ViewNativeCodeByAddressAction(actionTitle);
+    }
+
+
+    /**
+     * Action:  copies to the system clipboard a textual representation of the
+     * disassembled target code for a compiled method.
+     */
+    final class CopyTargetMethodCodeToClipboardAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Copy disassembled target code to clipboard";
+
+        private final TeleTargetMethod teleTargetMethod;
+
+        /**
+         * @param teleTargetMethod
+         */
+        private CopyTargetMethodCodeToClipboardAction(TeleTargetMethod teleTargetMethod, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleTargetMethod = teleTargetMethod;
+        }
+
+        @Override
+        public void procedure() {
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+            writer.println("target method: " + teleTargetMethod.classMethodActor().format("%H.%n(%p)"));
+            writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(teleTargetMethod) + "  " + teleTargetMethod.classActorForType().simpleName());
+            teleTargetMethod.disassemble(writer);
+            writer.flush();
+            final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
+            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+            final Pointer startAddress = teleTargetMethod.getCodeStart();
+            final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+                @Override
+                protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                    final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                    if (string.startsWith("call ")) {
+                        final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                        if (bytecodeLocation != null) {
+                            final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                            if (methodRef != null) {
+                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
+                                return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                            }
+                        }
+                    }
+                    return string;
+                }
+            };
+            Disassemble.disassemble(byteArrayOutputStream, teleTargetMethod.getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            inspection().gui().postToClipboard(byteArrayOutputStream.toString());
+        }
+    }
+
+    /**
+     * @return an Action that copies to the system clipboard a textual disassembly of a method's target code.
+     */
+    public InspectorAction copyTargetMethodCodeToClipboard(TeleTargetMethod teleTargetMethod, String actionTitle) {
+        return new CopyTargetMethodCodeToClipboardAction(teleTargetMethod, actionTitle);
+    }
 
    /**
      * Action:  removes the currently selected breakpoint from the VM.
@@ -1778,15 +2342,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove selected breakpoint";
 
-        RemoveSelectedBreakpointAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            refreshableActions.append(this);
+        RemoveSelectedBreakpointAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
                     refresh(false);
                 }
             });
+            refresh(false);
         }
 
         @Override
@@ -1825,8 +2389,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         final TeleBreakpoint teleBreakpoint;
 
-        RemoveBreakpointAction(TeleBreakpoint teleBreakpoint, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleBreakpoint = teleBreakpoint;
         }
 
@@ -1841,11 +2405,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param surrogate for a breakpoint in the VM.
-     * @param title a string name for the Action, uses default name if null.
+     * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will remove the breakpoint
      */
-    public final InspectorAction removeBreakpoint(TeleBreakpoint teleBreakpoint, String title) {
-        return new RemoveBreakpointAction(teleBreakpoint, title);
+    public final InspectorAction removeBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        return new RemoveBreakpointAction(teleBreakpoint, actionTitle);
     }
 
 
@@ -1856,8 +2420,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove all breakpoints";
 
-        RemoveAllBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveAllBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
@@ -1902,8 +2466,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Enable breakpoint";
         final TeleBreakpoint teleBreakpoint;
 
-        EnableBreakpointAction(TeleBreakpoint teleBreakpoint, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        EnableBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleBreakpoint = teleBreakpoint;
         }
 
@@ -1926,11 +2490,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param surrogate for a breakpoint in the VM.
-     * @param title a string name for the Action, uses default name if null.
+     * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will enable the breakpoint
      */
-    public final InspectorAction enableBreakpoint(TeleBreakpoint teleBreakpoint, String title) {
-        return new EnableBreakpointAction(teleBreakpoint, title);
+    public final InspectorAction enableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        return new EnableBreakpointAction(teleBreakpoint, actionTitle);
     }
 
 
@@ -1943,8 +2507,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         final TeleBreakpoint teleBreakpoint;
 
-        DisableBreakpointAction(TeleBreakpoint teleBreakpoint, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DisableBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleBreakpoint = teleBreakpoint;
         }
 
@@ -1960,11 +2524,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @param surrogate for a breakpoint in the VM.
-     * @param title a string name for the Action, uses default name if null.
+     * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will disable the breakpoint
      */
-    public final InspectorAction disableBreakpoint(TeleBreakpoint teleBreakpoint, String title) {
-        return new DisableBreakpointAction(teleBreakpoint, title);
+    public final InspectorAction disableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        return new DisableBreakpointAction(teleBreakpoint, actionTitle);
     }
 
 
@@ -1977,8 +2541,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final Address address;
 
-        public SetTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public SetTargetCodeBreakpointAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
             refresh(true);
         }
@@ -2000,8 +2564,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    public final InspectorAction setTargetCodeBreakpoint(Address address, String title) {
-        return new SetTargetCodeBreakpointAction(address, title);
+    public final InspectorAction setTargetCodeBreakpoint(Address address, String actionTitle) {
+        return new SetTargetCodeBreakpointAction(address, actionTitle);
     }
 
 
@@ -2014,8 +2578,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final Address address;
 
-        public RemoveTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        public RemoveTargetCodeBreakpointAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
             refresh(true);
         }
@@ -2035,8 +2599,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    public final InspectorAction removeTargetCodeBreakpoint(Address address, String title) {
-        return new RemoveTargetCodeBreakpointAction(address, title);
+    public final InspectorAction removeTargetCodeBreakpoint(Address address, String actionTitle) {
+        return new RemoveTargetCodeBreakpointAction(address, actionTitle);
     }
 
 
@@ -2050,8 +2614,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final Address address;
 
-        ToggleTargetCodeBreakpointAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ToggleTargetCodeBreakpointAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = null;
             refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
@@ -2063,8 +2627,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             refresh(true);
         }
 
-        ToggleTargetCodeBreakpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ToggleTargetCodeBreakpointAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
         }
 
@@ -2103,39 +2667,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param title string that identifies the action
+     * @param actionTitle string that identifies the action
      * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
      */
-    public final InspectorAction toggleTargetCodeBreakpoint(String title) {
-        return new ToggleTargetCodeBreakpointAction(title);
+    public final InspectorAction toggleTargetCodeBreakpoint(String actionTitle) {
+        return new ToggleTargetCodeBreakpointAction(actionTitle);
     }
 
     /**
      * @param address code location
-     * @param title string that identifies the action
+     * @param actionTitle string that identifies the action
      * @return an Action that will toggle on/off a breakpoint at the specified target code location.
      */
-    public final InspectorAction toggleTargetCodeBreakpoint(Address address, String title) {
-        return new ToggleTargetCodeBreakpointAction(address, title);
+    public final InspectorAction toggleTargetCodeBreakpoint(Address address, String actionTitle) {
+        return new ToggleTargetCodeBreakpointAction(address, actionTitle);
     }
 
 
     /**
      * Action:  sets a  breakpoint at the target code location specified interactively..
      */
-    final class SetCustomTargetCodeBreakpointAction extends InspectorAction {
+    final class SetTargetCodeBreakpointAtAddressAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Set custom target code breakpoint...";
+        private static final String DEFAULT_TITLE = "At address...";
 
-        SetCustomTargetCodeBreakpointAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetTargetCodeBreakpointAtAddressAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             refresh(true);
         }
 
         @Override
         protected void procedure() {
-            new NativeLocationInputDialog(inspection(), "Set breakpoint at address...", maxVM().bootImageStart(), "") {
+            new NativeLocationInputDialog(inspection(), "Break at target code address...", maxVM().bootImageStart(), "") {
                 @Override
                 public void entered(Address address, String description) {
                     if (!address.isZero()) {
@@ -2160,107 +2724,79 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private InspectorAction setCustomTargetCodeBreakpoint = new SetCustomTargetCodeBreakpointAction(null);
+    private InspectorAction setTargetCodeBreakpointAtAddressAction = new SetTargetCodeBreakpointAtAddressAction(null);
 
     /**
      * @return an Action that will toggle on/off a breakpoint at the target code location of the current focus.
      */
-    public final InspectorAction setCustomTargetCodeBreakpoint() {
-        return setCustomTargetCodeBreakpoint;
+    public final InspectorAction setTargetCodeBreakpointAtAddress() {
+        return setTargetCodeBreakpointAtAddressAction;
     }
 
 
     /**
-     * Action:  sets a breakpoint at every label in the target method containing the current code location focus.
+     * Action:  sets a breakpoint at every label in a target method.
      */
     final class SetTargetCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set breakpoint at every target code label";
+        private final TeleTargetRoutine teleTargetRoutine;
 
-        SetTargetCodeLabelBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            refreshableActions.append(this);
-            focus().addListener(new InspectionFocusAdapter() {
-                @Override
-                public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(false);
-                }
-            });
+        SetTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleTargetRoutine = teleTargetRoutine;
+            refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddress();
-            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
-            if (teleTargetRoutine != null) {
-                teleTargetRoutine.setTargetCodeLabelBreakpoints();
-            } else {
-                gui().errorMessage("Unable to find target method in which to set breakpoints");
-            }
+            teleTargetRoutine.setTargetCodeLabelBreakpoints();
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && teleTargetRoutine != null);
         }
     }
 
-    private InspectorAction setTargetCodeLabelBreakpoints = new SetTargetCodeLabelBreakpointsAction(null);
-
     /**
-     * @return an Action that will set a breakpoint at every label in the target method containing the current code location focus.
+     * @return an Action that will set a breakpoint at every label in a target routine
      */
-    public final InspectorAction setTargetCodeLabelBreakpoints() {
-        return setTargetCodeLabelBreakpoints;
+    public final InspectorAction setTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        return new SetTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
     }
 
 
     /**
-     * Action:  removes any breakpoints at labels in the target method containing the current code location focus.
+     * Action:  removes any breakpoints at labels in a target method.
      */
     final class RemoveTargetCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove breakpoint at every target code label";
+        private final TeleTargetRoutine teleTargetRoutine;
 
-        RemoveTargetCodeLabelBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            refreshableActions.append(this);
-            focus().addListener(new InspectionFocusAdapter() {
-                @Override
-                public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(false);
-                }
-            });
-            inspection().addInspectionListener(new InspectionListenerAdapter() {
-                @Override
-                public void breakpointStateChanged() {
-                    refresh(true);
-                }
-            });
+        RemoveTargetCodeLabelBreakpointsAction(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleTargetRoutine = teleTargetRoutine;
+            refresh(true);
         }
 
         @Override
         protected void procedure() {
-            final Address address = focus().codeLocation().targetCodeInstructionAddress();
-            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
-            if (teleTargetRoutine != null) {
-                teleTargetRoutine.removeTargetCodeLabelBreakpoints();
-            }
+            teleTargetRoutine.removeTargetCodeLabelBreakpoints();
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0 && teleTargetRoutine != null);
         }
     }
 
-    private InspectorAction removeTargetCodeLabelBreakpoints = new RemoveTargetCodeLabelBreakpointsAction(null);
-
     /**
-     * @return an Action that will remove any breakpoints labels in the target method containing the current code location focus.
+     * @return an Action that will remove any breakpoints labels in a target method.
      */
-    public final InspectorAction removeTargetCodeLabelBreakpoints() {
-        return removeTargetCodeLabelBreakpoints;
+    public final InspectorAction removeTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
+        return new RemoveTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
     }
 
 
@@ -2271,8 +2807,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove all target code breakpoints";
 
-        RemoveAllTargetCodeBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveAllTargetCodeBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
@@ -2307,14 +2843,54 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Action:  sets target code breakpoints at  a specified method entry.
+     */
+    final class SetTargetCodeBreakpointAtMethodEntryAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set target code breakpoint at method entry";
+        private final TeleTargetMethod teleTargetMethod;
+        SetTargetCodeBreakpointAtMethodEntryAction(TeleTargetMethod teleTargetMethod, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleTargetMethod = teleTargetMethod;
+            refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            TeleTargetBreakpoint teleTargetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
+            focus().setBreakpoint(teleTargetBreakpoint);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess());
+        }
+    }
+
+    /**
+     * @return an interactive Action that sets a target code breakpoint at  a method entry
+     */
+    public final InspectorAction setTargetCodeBreakpointAtMethodEntry(TeleTargetMethod teleTargetMethod, String actionTitle) {
+        return new  SetTargetCodeBreakpointAtMethodEntryAction(teleTargetMethod, actionTitle);
+    }
+
+    /**
+     * @return an interactive Action that sets a target code breakpoint at  a method entry
+     */
+    public final InspectorAction setTargetCodeBreakpointAtMethodEntry(TeleTargetMethod teleTargetMethod) {
+        return new  SetTargetCodeBreakpointAtMethodEntryAction(teleTargetMethod, null);
+    }
+
+
+    /**
      * Action:  sets target code breakpoints at  method entries to be selected interactively by name.
      */
     final class SetTargetCodeBreakpointAtMethodEntriesByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Compiled methods...";
 
-        SetTargetCodeBreakpointAtMethodEntriesByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetTargetCodeBreakpointAtMethodEntriesByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -2340,14 +2916,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final SetTargetCodeBreakpointAtMethodEntriesByNameAction setTargetCodeBreakpointAtMethodEntriesByName =
+    private final SetTargetCodeBreakpointAtMethodEntriesByNameAction setTargetCodeBreakpointAtMethodEntriesByNameAction =
         new SetTargetCodeBreakpointAtMethodEntriesByNameAction(null);
 
     /**
-     * @return an interactive Action that sets a target code breakpoint at  a method entry to be selected by name.
+     * @return Singleton interactive Action that sets a target code breakpoint at  a method entry to be selected by name.
      */
     public final InspectorAction setTargetCodeBreakpointAtMethodEntriesByName() {
-        return setTargetCodeBreakpointAtMethodEntriesByName;
+        return setTargetCodeBreakpointAtMethodEntriesByNameAction;
     }
 
 
@@ -2356,16 +2932,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class SetTargetCodeBreakpointAtObjectInitializerAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Break in compiled object initializers of class...";
+        private static final String DEFAULT_TITLE = "Object initializers of class...";
 
-        SetTargetCodeBreakpointAtObjectInitializerAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetTargetCodeBreakpointAtObjectInitializerAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Break in Object Initializers of Class...", "Set Breakpoint");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Add breakpoint in Object Initializers of Class...", "Set Breakpoint");
             if (teleClassActor != null) {
                 final ClassActor classActor = teleClassActor.classActor();
                 if (classActor.localVirtualMethodActors() != null) {
@@ -2412,8 +2988,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Toggle bytecode breakpoint";
 
-        ToggleBytecodeBreakpointAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ToggleBytecodeBreakpointAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
@@ -2453,6 +3029,48 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
+    /**
+     * Action: sets a bytecode breakpoint at a specified method entry.
+     */
+    final class SetBytecodeBreakpointAtMethodEntryAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Method on classpath";
+        private final TeleClassMethodActor teleClassMethodActor;
+
+        SetBytecodeBreakpointAtMethodEntryAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor = teleClassMethodActor;
+            refreshableActions.append(this);
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            final MethodActorKey methodKey = new MethodActorKey(teleClassMethodActor.methodActor());
+            maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess() && maxVM().activateMessenger() && teleClassMethodActor.hasCodeAttribute());
+        }
+    }
+
+    /**
+     * @return an Action  that will set a target code breakpoint at  a method entrye.
+     */
+    public final InspectorAction setBytecodeBreakpointAtMethodEntry(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new SetBytecodeBreakpointAtMethodEntryAction(teleClassMethodActor, actionTitle);
+    }
+
+    /**
+     * @return an Action  that will set a target code breakpoint at  a method entry.
+     */
+    public final InspectorAction setBytecodeBreakpointAtMethodEntry(TeleClassMethodActor teleClassMethodActor) {
+        return new SetBytecodeBreakpointAtMethodEntryAction(teleClassMethodActor, null);
+    }
+
+
      /**
      * Action: sets a bytecode breakpoint at a method entry specified interactively by name.
      */
@@ -2460,8 +3078,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Method on classpath, by name...";
 
-        SetBytecodeBreakpointAtMethodEntryByNameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -2482,14 +3100,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final SetBytecodeBreakpointAtMethodEntryByNameAction setBytecodeBreakpointAtMethodEntryByName =
+    private final SetBytecodeBreakpointAtMethodEntryByNameAction setBytecodeBreakpointAtMethodEntryByNameAction =
         new SetBytecodeBreakpointAtMethodEntryByNameAction(null);
 
     /**
-     * @return an interactive Action  that will set a target code breakpoint at  a method entry to be selected by name.
+     * @return Singleton interactive Action  that will set a target code breakpoint at  a method entry to be selected by name.
      */
     public final InspectorAction setBytecodeBreakpointAtMethodEntryByName() {
-        return setBytecodeBreakpointAtMethodEntryByName;
+        return setBytecodeBreakpointAtMethodEntryByNameAction;
     }
 
 
@@ -2500,8 +3118,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Method matched by key...";
 
-        SetBytecodeBreakpointAtMethodEntryByKeyAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetBytecodeBreakpointAtMethodEntryByKeyAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -2519,14 +3137,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final SetBytecodeBreakpointAtMethodEntryByKeyAction setBytecodeBreakpointAtMethodEntryByKey =
+    private final SetBytecodeBreakpointAtMethodEntryByKeyAction setBytecodeBreakpointAtMethodEntryByKeyAction =
         new SetBytecodeBreakpointAtMethodEntryByKeyAction(null);
 
     /**
-     * @return an interactive Action  that will set a target code breakpoint at  a method entry to be selected by name.
+     * @return Singleton interactive Action  that will set a target code breakpoint at  a method entry to be selected by name.
      */
     public final InspectorAction setBytecodeBreakpointAtMethodEntryByKey() {
-        return setBytecodeBreakpointAtMethodEntryByKey;
+        return setBytecodeBreakpointAtMethodEntryByKeyAction;
     }
 
 
@@ -2537,8 +3155,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove all bytecode breakpoints";
 
-        RemoveAllBytecodeBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveAllBytecodeBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
@@ -2586,8 +3204,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             setEnabled(true);
         }
 
-        SetWordWatchpointAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetWordWatchpointAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = new MemoryWordRegion(address, 1, maxVM().wordSize());
             setEnabled(maxVM().findWatchpoints(memoryRegion).isEmpty());
         }
@@ -2632,7 +3250,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final SetWordWatchpointAction setWordWatchpointAction = new SetWordWatchpointAction();
 
     /**
-     * @return an interactive Action that will create a memory word watchpoint in the VM.
+     * @return Singleton interactive Action that will create a memory word watchpoint in the VM.
      */
     public final InspectorAction setWordWatchpoint() {
         return setWordWatchpointAction;
@@ -2642,7 +3260,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will create a memory word watchpoint.
      *
      * @param address a memory location in the VM
-     * @param string a title for the action, use default name if null
      * @return an Action that will set a memory watchpoint at the address.
      */
     public final InspectorAction setWordWatchpoint(Address address, String string) {
@@ -2667,8 +3284,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             setEnabled(true);
         }
 
-        SetRegionWatchpointAction(MemoryRegion memoryRegion, String title, String regionDescription) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetRegionWatchpointAction(MemoryRegion memoryRegion, String actionTitle, String regionDescription) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionDescription = regionDescription == null ? DEFAULT_REGION_DESCRIPTION : regionDescription;
             setEnabled(maxVM().findWatchpoints(memoryRegion).isEmpty());
@@ -2712,10 +3329,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final SetRegionWatchpointAction setRegionWatchpointAction = new SetRegionWatchpointAction();
+    private final InspectorAction setRegionWatchpointAction = new SetRegionWatchpointAction();
 
     /**
-     * @return an interactive Action that will create a memory  watchpoint in the VM.
+     * @return Singleton interactive Action that will create a memory  watchpoint in the VM.
      */
     public final InspectorAction setRegionWatchpoint() {
         return setRegionWatchpointAction;
@@ -2725,12 +3342,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will create a memory watchpoint.
      *
      * @param memoryRegion an area of memory in the VM
-     * @param title a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @param regionDescription a description that will be attached to the watchpoint for viewing purposes, default if null.
      * @return an Action that will set a memory watchpoint at the address.
      */
-    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String title, String regionDescription) {
-        return new SetRegionWatchpointAction(memoryRegion, title, regionDescription);
+    public final InspectorAction setRegionWatchpoint(MemoryRegion memoryRegion, String actionTitle, String regionDescription) {
+        return new SetRegionWatchpointAction(memoryRegion, actionTitle, regionDescription);
     }
 
 
@@ -2743,8 +3360,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final TeleObject teleObject;
         private final MemoryRegion memoryRegion;
 
-        SetObjectWatchpointAction(TeleObject teleObject, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetObjectWatchpointAction(TeleObject teleObject, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
             this.memoryRegion = teleObject.getCurrentMemoryRegion();
             refresh(true);
@@ -2781,11 +3398,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will create an object memory watchpoint.
      *
      * @param teleObject a heap object in the VM
-     * @param string a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object field watchpoint.
      */
-    public final InspectorAction setObjectWatchpoint(TeleObject teleObject, String string) {
-        return new SetObjectWatchpointAction(teleObject, string);
+    public final InspectorAction setObjectWatchpoint(TeleObject teleObject, String actionTitle) {
+        return new SetObjectWatchpointAction(teleObject, actionTitle);
     }
 
 
@@ -2799,8 +3416,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final FieldActor fieldActor;
         private final MemoryRegion memoryRegion;
 
-        SetFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetFieldWatchpointAction(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
             this.fieldActor = fieldActor;
             this.memoryRegion = teleObject.getCurrentMemoryRegion(fieldActor);
@@ -2839,11 +3456,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *
      * @param teleObject a heap object in the VM
      * @param fieldActor description of a field in the class type of the heap object
-     * @param string a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object field watchpoint.
      */
-    public final InspectorAction setFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String string) {
-        return new SetFieldWatchpointAction(teleObject, fieldActor, string);
+    public final InspectorAction setFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
+        return new SetFieldWatchpointAction(teleObject, fieldActor, actionTitle);
     }
 
 
@@ -2860,8 +3477,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final String indexPrefix;
         private final MemoryRegion memoryRegion;
 
-        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetArrayElementWatchpointAction(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
             this.elementKind = elementKind;
             this.arrayOffsetFromOrigin = arrayOffsetFromOrigin;
@@ -2907,11 +3524,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param arrayOffsetFromOrigin offset in bytes from the object origin of element 0
      * @param index index into the array
      * @param indexPrefix  text to prepend to the displayed name(index) of each element.
-     * @param string a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an array element watchpoint.
      */
-    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String string) {
-        return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, string);
+    public final InspectorAction setArrayElementWatchpoint(TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, String indexPrefix, String actionTitle) {
+        return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, actionTitle);
     }
 
 
@@ -2925,8 +3542,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final HeaderField headerField;
         private final MemoryRegion memoryRegion;
 
-        SetHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String title)  {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetHeaderWatchpointAction(TeleObject teleObject, HeaderField headerField, String actionTitle)  {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
             this.headerField = headerField;
             this.memoryRegion = teleObject.getCurrentMemoryRegion(headerField);
@@ -2964,11 +3581,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *
      * @param teleObject a heap object in the VM
      * @param headerField identification of an object header field
-     * @param title a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @return an Action that will set an object header watchpoint
      */
-    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String title) {
-        return new SetHeaderWatchpointAction(teleObject, headerField, title);
+    public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String actionTitle) {
+        return new SetHeaderWatchpointAction(teleObject, headerField, actionTitle);
     }
 
 
@@ -2982,8 +3599,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private final int index;
         private final MemoryRegion memoryRegion;
 
-        SetThreadLocalWatchpointAction(TeleThreadLocalValues teleThreadLocalValues, int index, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        SetThreadLocalWatchpointAction(TeleThreadLocalValues teleThreadLocalValues, int index, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleThreadLocalValues = teleThreadLocalValues;
             this.index = index;
             this.memoryRegion = teleThreadLocalValues.getMemoryRegion(index);
@@ -3025,11 +3642,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *
      * @param teleThreadLocalValues the set of thread local variables containing the variable
      * @param index index of the variable to watch
-     * @param string a title for the action, use default name if null
+     * @param actionTitle a name for the action, use default name if null
      * @return an action that will create a thread local variable watchpoint
      */
-    public final InspectorAction setThreadLocalWatchpoint(TeleThreadLocalValues teleThreadLocalValues, int index, String string) {
-        return new SetThreadLocalWatchpointAction(teleThreadLocalValues, index, string);
+    public final InspectorAction setThreadLocalWatchpoint(TeleThreadLocalValues teleThreadLocalValues, int index, String actionTitle) {
+        return new SetThreadLocalWatchpointAction(teleThreadLocalValues, index, actionTitle);
     }
 
 
@@ -3041,8 +3658,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Remove memory watchpoint";
         private final MaxWatchpoint watchpoint;
 
-        RemoveWatchpointAction(MaxWatchpoint watchpoint, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveWatchpointAction(MaxWatchpoint watchpoint, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.watchpoint = watchpoint;
         }
 
@@ -3061,11 +3678,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Creates an action that will remove a watchpoint.
      *
      * @param watchpoint an existing VM memory watchpoint
-     * @param title a title for the action, use default name if null
+     * @param actionTitle a title for the action, use default name if null
      * @return an Action that will remove a watchpoint, if present at memory location.
      */
-    public final InspectorAction removeWatchpoint(MaxWatchpoint watchpoint, String title) {
-        return new RemoveWatchpointAction(watchpoint, title);
+    public final InspectorAction removeWatchpoint(MaxWatchpoint watchpoint, String actionTitle) {
+        return new RemoveWatchpointAction(watchpoint, actionTitle);
     }
 
 
@@ -3076,15 +3693,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove selected watchpoint";
 
-        RemoveSelectedWatchpointAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-            refreshableActions.append(this);
+        RemoveSelectedWatchpointAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void watchpointFocusSet(MaxWatchpoint oldWatchpoint, MaxWatchpoint watchpoint) {
                     refresh(false);
                 }
             });
+            refresh(false);
         }
 
         @Override
@@ -3125,8 +3742,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Remove watchpoints";
         private final Sequence<MaxWatchpoint> watchpoints;
 
-        RemoveWatchpointsAction(Sequence<MaxWatchpoint> watchpoints, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveWatchpointsAction(Sequence<MaxWatchpoint> watchpoints, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.watchpoints = watchpoints;
         }
 
@@ -3152,8 +3769,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     /**
      * @return an Action that will remove all watchpoints in the VM.
      */
-    public final InspectorAction removeWatchpoints(Sequence<MaxWatchpoint> watchpoints, String title) {
-        return new RemoveWatchpointsAction(watchpoints, title);
+    public final InspectorAction removeWatchpoints(Sequence<MaxWatchpoint> watchpoints, String actionTitle) {
+        return new RemoveWatchpointsAction(watchpoints, actionTitle);
     }
 
 
@@ -3164,8 +3781,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove all watchpoints";
 
-        RemoveAllWatchpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        RemoveAllWatchpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
@@ -3208,8 +3825,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Pause process";
 
-        DebugPauseAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugPauseAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3228,10 +3845,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final DebugPauseAction debugPause = new DebugPauseAction(null);
+    private final InspectorAction debugPauseAction = new DebugPauseAction(null);
 
-    public final DebugPauseAction debugPause() {
-        return debugPause;
+    /**
+     * @return Singleton Action that will pause execution of theVM.
+     */
+    public final InspectorAction debugPause() {
+        return debugPauseAction;
     }
 
 
@@ -3242,8 +3862,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Resume";
 
-        DebugResumeAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugResumeAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3263,13 +3883,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugResume = new DebugResumeAction(null);
+    private final InspectorAction debugResumeAction = new DebugResumeAction(null);
 
      /**
-     * @return an Action that will resume full execution of theVM.
+     * @return Singleton Action that will resume full execution of theVM.
      */
     public final InspectorAction debugResume() {
-        return debugResume;
+        return debugResumeAction;
     }
 
 
@@ -3281,8 +3901,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Return from frame (ignoring breakpoints)";
 
-        DebugReturnFromFrameAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugReturnFromFrameAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3304,14 +3924,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugReturnFromFrame = new DebugReturnFromFrameAction(null);
+    private final InspectorAction debugReturnFromFrameAction = new DebugReturnFromFrameAction(null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
+     * @return Singleton Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread
      */
     public final InspectorAction debugReturnFromFrame() {
-        return debugReturnFromFrame;
+        return debugReturnFromFrameAction;
     }
 
 
@@ -3323,8 +3943,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Return from frame";
 
-        DebugReturnFromFrameWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugReturnFromFrameWithBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3346,14 +3966,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugReturnFromFrameWithBreakpoints = new DebugReturnFromFrameWithBreakpointsAction(null);
+    private final InspectorAction debugReturnFromFrameWithBreakpointsAction = new DebugReturnFromFrameWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
+     * @return Singleton Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread, or at a breakpoint, whichever comes first.
      */
     public final InspectorAction debugReturnFromFrameWithBreakpoints() {
-        return debugReturnFromFrameWithBreakpoints;
+        return debugReturnFromFrameWithBreakpointsAction;
     }
 
 
@@ -3367,8 +3987,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final Address address;
 
-        DebugRunToInstructionAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugRunToInstructionAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
             refreshableActions.append(this);
             refresh(true);
@@ -3394,24 +4014,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugRunToSelectedInstruction = new DebugRunToInstructionAction(null, null);
+    private final InspectorAction debugRunToSelectedInstructionAction = new DebugRunToInstructionAction(null, null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the the currently
+     * @return Singleton Action that will resume execution in the VM, stopping at the the currently
      * selected instruction, ignoring breakpoints.
      */
     public final InspectorAction debugRunToSelectedInstruction() {
-        return debugRunToSelectedInstruction;
+        return debugRunToSelectedInstructionAction;
     }
 
     /**
      * @param address a code location in the VM
-     * @param title string that describes the action
+     * @param actionTitle string that describes the action
      * @return an Action that will resume execution in the VM, stopping at the specified
      * code location, ignoring breakpoints.
      */
-    public final InspectorAction debugRunToInstruction(Address address, String title) {
-        return new DebugRunToInstructionAction(address, title);
+    public final InspectorAction debugRunToInstruction(Address address, String actionTitle) {
+        return new DebugRunToInstructionAction(address, actionTitle);
     }
 
 
@@ -3425,8 +4045,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         final Address address;
 
-        DebugRunToInstructionWithBreakpointsAction(Address address, String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugRunToInstructionWithBreakpointsAction(Address address, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
             refreshableActions.append(this);
         }
@@ -3451,25 +4071,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugRunToSelectedInstructionWithBreakpoints = new DebugRunToInstructionWithBreakpointsAction(null, null);
+    private final InspectorAction debugRunToSelectedInstructionWithBreakpointsAction = new DebugRunToInstructionWithBreakpointsAction(null, null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the selected instruction
+     * @return Singleton Action that will resume execution in the VM, stopping at the selected instruction
      * or a breakpoint, whichever comes first..
      */
     public final InspectorAction debugRunToSelectedInstructionWithBreakpoints() {
-        return debugRunToSelectedInstructionWithBreakpoints;
+        return debugRunToSelectedInstructionWithBreakpointsAction;
     }
 
     /**
      * @param address a code location in the VM
-     * @param title string that identifies the action
+     * @param actionTitle string that identifies the action
      * @return an Action that will resume execution in the VM, stopping at the specified instruction
      * or a breakpoint, whichever comes first..
      */
-    public final InspectorAction debugRunToInstructionWithBreakpoints(Address address, String title) {
-        return new DebugRunToInstructionWithBreakpointsAction(address, title);
+    public final InspectorAction debugRunToInstructionWithBreakpoints(Address address, String actionTitle) {
+        return new DebugRunToInstructionWithBreakpointsAction(address, actionTitle);
     }
+
 
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the next call instruction,
@@ -3479,8 +4100,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Run to next call instruction (ignoring breakpoints)";
 
-        DebugRunToNextCallAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugRunToNextCallAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3506,14 +4127,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugRunToNextCall = new DebugRunToNextCallAction(null);
+    private final InspectorAction debugRunToNextCallAction = new DebugRunToNextCallAction(null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the next call instruction,
+     * @return Singleton Action that will resume execution in the VM, stopping at the next call instruction,
      * ignoring breakpoints; fails if there is no known call in the method containing the IP.
      */
     public final InspectorAction debugRunToNextCall() {
-        return debugRunToNextCall;
+        return debugRunToNextCallAction;
     }
 
 
@@ -3525,8 +4146,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Run to next call instruction";
 
-        DebugRunToNextCallWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugRunToNextCallWithBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3552,14 +4173,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugNextRunToCallWithBreakpoints = new DebugRunToNextCallWithBreakpointsAction(null);
+    private final InspectorAction debugNextRunToCallWithBreakpointsAction = new DebugRunToNextCallWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
+     * @return Singleton Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread, or at a breakpoint, whichever comes first.
      */
     public final InspectorAction debugRunToNextCallWithBreakpoints() {
-        return debugNextRunToCallWithBreakpoints;
+        return debugNextRunToCallWithBreakpointsAction;
     }
 
 
@@ -3570,8 +4191,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Single instruction step";
 
-        DebugSingleStepAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugSingleStepAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3591,13 +4212,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugSingleStep = new DebugSingleStepAction(null);
+    private final InspectorAction debugSingleStepAction = new DebugSingleStepAction(null);
 
     /**
-     * @return an action that will single step the currently selected thread in the VM
+     * @return Singleton action that will single step the currently selected thread in the VM
      */
     public final InspectorAction debugSingleStep() {
-        return debugSingleStep;
+        return debugSingleStepAction;
     }
 
 
@@ -3609,8 +4230,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Step over (ignoring breakpoints)";
 
-        DebugStepOverAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugStepOverAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3630,14 +4251,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugStepOver = new DebugStepOverAction(null);
+    private final InspectorAction debugStepOverAction = new DebugStepOverAction(null);
 
     /**
-     * @return an Action that will resume execution of the VM, stopping at the one immediately after the current
+     * @return Singleton Action that will resume execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread
      */
     public final InspectorAction debugStepOver() {
-        return debugStepOver;
+        return debugStepOverAction;
     }
 
 
@@ -3649,8 +4270,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Step over";
 
-        DebugStepOverWithBreakpointsAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        DebugStepOverWithBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
         }
 
@@ -3670,14 +4291,80 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction debugStepOverWithBreakpoints = new DebugStepOverWithBreakpointsAction(null);
+    private final InspectorAction debugStepOverWithBreakpointsAction = new DebugStepOverWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution of the VM, stopping at the one immediately after the current
+     * @return Singleton Action that will resume execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread
      */
     public final InspectorAction debugStepOverWithBreakpoints() {
-        return debugStepOverWithBreakpoints;
+        return debugStepOverWithBreakpointsAction;
+    }
+
+
+    /**
+     * Action:  interactively invoke a method.
+     */
+    private class DebugInvokeMethodAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Invoke method";
+        private final TeleClassMethodActor teleClassMethodActor;
+
+
+        public DebugInvokeMethodAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.teleClassMethodActor =  teleClassMethodActor;
+        }
+
+
+        @Override
+        public void procedure() {
+            ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
+            ReferenceValue receiver = null;
+
+            if (classMethodActor instanceof VirtualMethodActor) {
+                final String input = inspection().gui().inputDialog("Argument 0 (receiver, must be a reference to a " + classMethodActor.holder() + " or subclass, origin address in hex):", "");
+                if (input == null) {
+                    // User clicked cancel.
+                    return;
+                }
+                receiver = maxVM().createReferenceValue(maxVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
+                final ClassActor dynamicClass = receiver.getClassActor();
+                classMethodActor = dynamicClass.findClassMethodActor(classMethodActor);
+            }
+            final Value[] arguments = MethodArgsDialog.getArgs(inspection(), classMethodActor, receiver);
+            if (arguments == null) {
+                // User clicked cancel.
+                return;
+            }
+            try {
+                final Value returnValue = maxVM().interpretMethod(classMethodActor, arguments);
+                inspection().gui().informationMessage("Method " + classMethodActor.name + " returned " + returnValue.toString());
+            } catch (TeleInterpreterException teleInterpreterException) {
+                throw new InspectorError(teleInterpreterException);
+            }
+        }
+    }
+
+    /**
+     * Creates an action that lets the user invoke a method interactively.
+     *
+     * @param teleClassMethodActor representation of a method in the VM
+     * @param actionTitle name of the action for display on menu or button
+     * @return an interactive action for method invocation
+     */
+    public InspectorAction debugInvokeMethod(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        return new DebugInvokeMethodAction(teleClassMethodActor, actionTitle);
+    }
+
+    /**
+     * Creates an action that lets the user invoke a method interactively.
+     *
+     * @param teleClassMethodActor representation of a method in the VM
+     * @return an interactive action for method invocation
+     */
+    public InspectorAction debugInvokeMethod(TeleClassMethodActor teleClassMethodActor) {
+        return new DebugInvokeMethodAction(teleClassMethodActor, null);
     }
 
 
@@ -3689,8 +4376,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private TargetJavaFrameDescriptor targetJavaFrameDescriptor;
         private TargetABI abi;
 
-        InspectJavaFrameDescriptorAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        InspectJavaFrameDescriptorAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
@@ -3757,8 +4444,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "View User Focus";
 
-        ViewFocusAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ViewFocusAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -3784,8 +4471,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "List VM state history";
 
-        ListVMStateHistoryAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ListVMStateHistoryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -3811,8 +4498,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "List code registry contents";
 
-        ListCodeRegistryAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ListCodeRegistryAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -3838,8 +4525,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "List code registry contents to a file...";
 
-        ListCodeRegistryToFileAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        ListCodeRegistryToFileAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
         @Override
@@ -3874,4 +4561,133 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return listCodeRegistryToFile;
     }
 
+    /**
+     * @return menu items for memory-related actions that are independent of context
+     */
+    public InspectorMenuItems genericMemoryMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+                menu.add(inspectMemoryRegionsMenu());
+                menu.add(inspectMemoryWords());
+                menu.add(inspectMemoryBytes());
+            }
+        };
+    }
+
+    /**
+     * @return menu items for code-related actions that are independent of context
+     */
+    public InspectorMenuItems genericCodeMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+                menu.add(actions().viewMethodCodeAtSelection());
+                menu.add(actions().viewMethodCodeAtIP());
+                final JMenu methodSub = new JMenu("View method code by name");
+                methodSub.add(actions().viewMethodBytecodeByName());
+                methodSub.add(actions().viewMethodTargetCodeByName());
+                menu.add(methodSub);
+                final JMenu bootMethodSub = new JMenu("View boot image method code");
+                bootMethodSub.add(actions().viewRunMethodCodeInBootImage());
+                bootMethodSub.add(actions().viewThreadRunMethodCodeInBootImage());
+                bootMethodSub.add(actions().viewSchemeRunMethodCodeInBootImage());
+                menu.add(bootMethodSub);
+                final JMenu byAddressSub = new JMenu("View target code by address");
+                byAddressSub.add(actions().viewMethodCodeByAddress());
+                byAddressSub.add(actions().viewNativeCodeByAddress());
+                menu.add(byAddressSub);
+            }
+        };
+    }
+
+    /**
+     * @return menu items for breakpoint-related actions that are independent of context
+     */
+    public InspectorMenuItems genericBreakpointMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+
+                final InspectorMenu methodEntryBreakpoints = new InspectorMenu("Break at method entry");
+                methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
+                methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByName());
+                methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByKey());
+                menu.add(methodEntryBreakpoints);
+
+                final InspectorMenu breakAt = new InspectorMenu("Break at target code");
+                breakAt.add(actions().setTargetCodeBreakpointAtAddress());
+                breakAt.add(actions().setTargetCodeBreakpointAtObjectInitializer());
+                menu.add(breakAt);
+
+                final InspectorMenu removeBreakpoints = new InspectorMenu("Remove breakpoints");
+                removeBreakpoints.add(actions().removeAllTargetCodeBreakpoints());
+                removeBreakpoints.add(actions().removeAllBytecodeBreakpoints());
+                removeBreakpoints.add(actions().removeAllBreakpoints());
+                menu.add(removeBreakpoints);
+            }
+        };
+    }
+
+    /**
+     * @return menu items for watchpoint-related actions that are independent of context
+     */
+    public InspectorMenuItems genericWatchpointMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+                menu.add(actions().setWordWatchpoint());
+                menu.add(actions().removeAllWatchpoints());
+            }
+        };
+    }
+
+    /**
+     * @return menu items for object-related actions that are independent of context
+     */
+    public InspectorMenuItems genericObjectMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+
+                final JMenu methodActorMenu = new JMenu("Inspect method actor");
+                methodActorMenu.add(inspectMethodActorByName());
+                menu.add(methodActorMenu);
+
+                final JMenu classActorMenu = new JMenu("Inspect class actor");
+                classActorMenu.add(inspectClassActorByName());
+                classActorMenu.add(inspectClassActorByHexId());
+                classActorMenu.add(inspectClassActorByDecimalId());
+                classActorMenu.add(inspectBootClassRegistry());
+                menu.add(classActorMenu);
+
+                final JMenu objectMenu = new JMenu("Inspect object");
+                objectMenu.add(inspectObject());
+                objectMenu.add(inspectObjectByID());
+                menu.add(objectMenu);
+            }
+        };
+    }
+
+    /**
+     * @return menu items for view-related actions that are independent of context
+     */
+    public InspectorMenuItems genericViewMenuItems() {
+        return new AbstractInspectorMenuItems(inspection()) {
+            @Override
+            public void addTo(InspectorMenu menu) {
+                menu.add(actions().viewBootImage());
+                menu.add(actions().viewBreakpoints());
+                menu.add(actions().viewMemoryRegions());
+                menu.add(actions().viewMethodCode());
+                menu.add(actions().viewRegisters());
+                menu.add(actions().viewStack());
+                menu.add(actions().viewThreads());
+                menu.add(actions().viewVmThreadLocals());
+                if (maxVM().watchpointsEnabled()) {
+                    menu.add(actions().viewWatchpoints());
+                }
+            }
+        };
+    }
 }
