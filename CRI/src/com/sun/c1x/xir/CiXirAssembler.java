@@ -35,7 +35,7 @@ import com.sun.c1x.ci.CiRegister;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public abstract class XirAssembler {
+public abstract class CiXirAssembler {
 
 	protected XirVariable resultOperand;
 
@@ -513,5 +513,5 @@ public abstract class XirAssembler {
 
 
     protected abstract XirTemplate buildTemplate(String name, boolean isStub);
-    public abstract XirAssembler copy();
+    public abstract CiXirAssembler copy();
 }

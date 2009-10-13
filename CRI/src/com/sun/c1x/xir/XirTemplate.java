@@ -22,12 +22,12 @@ package com.sun.c1x.xir;
 
 import java.io.PrintStream;
 
-import com.sun.c1x.xir.XirAssembler.XirConstant;
-import com.sun.c1x.xir.XirAssembler.XirInstruction;
-import com.sun.c1x.xir.XirAssembler.XirLabel;
-import com.sun.c1x.xir.XirAssembler.XirParameter;
-import com.sun.c1x.xir.XirAssembler.XirTemp;
-import com.sun.c1x.xir.XirAssembler.XirVariable;
+import com.sun.c1x.xir.CiXirAssembler.XirConstant;
+import com.sun.c1x.xir.CiXirAssembler.XirInstruction;
+import com.sun.c1x.xir.CiXirAssembler.XirLabel;
+import com.sun.c1x.xir.CiXirAssembler.XirParameter;
+import com.sun.c1x.xir.CiXirAssembler.XirTemp;
+import com.sun.c1x.xir.CiXirAssembler.XirVariable;
 
 /**
  * This class represents a completed template of XIR code that has been first assembled by
@@ -48,18 +48,18 @@ public class XirTemplate {
 
     public final String name;
     public final XirVariable resultOperand;
-    public final XirAssembler.XirInstruction[] fastPath;
-    public final XirAssembler.XirInstruction[] slowPath;
+    public final CiXirAssembler.XirInstruction[] fastPath;
+    public final CiXirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
     public final boolean[] parameterDestroyed;
-    public final XirAssembler.XirTemp[] temps;
-    public final XirAssembler.XirConstant[] constants;
+    public final CiXirAssembler.XirTemp[] temps;
+    public final CiXirAssembler.XirConstant[] constants;
     public final int variableCount;
 
     public int flags;
 
-    public XirTemplate(String name, int variableCount, XirVariable resultOperand, XirAssembler.XirInstruction[] fastPath, XirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
+    public XirTemplate(String name, int variableCount, XirVariable resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
     	this.name = name;
     	this.variableCount = variableCount;
     	this.resultOperand = resultOperand;
