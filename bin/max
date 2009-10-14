@@ -1089,6 +1089,9 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     to why any given object is in the image. This is useful when trying to reduce
     the size of the image.
 
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+    
     Use \"max objecttree -help\" to see what other options this command accepts."
     
 function run_objecttree() {
@@ -1106,6 +1109,9 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     to why any given method is (or isn't) in the image. This is useful when
     trying to reduce the size of the image.
 
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+    
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
