@@ -148,7 +148,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void opcodeDecoded() {
                     final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
                     bytecodePositions.append(bytecodePosition);
-                    referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
+                    referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals, codeAttribute.maxStack);
                 }
             };
             new BytecodeScanner(bytecodeAdapter).scan(classMethodActor);
@@ -282,8 +282,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         }
 
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int maxLocals = codeAttribute.maxLocals();
-        final int maxStack = codeAttribute.maxStack();
+        final int maxLocals = codeAttribute.maxLocals;
+        final int maxStack = codeAttribute.maxStack;
         final int codeLength = codeAttribute.code().length;
 
         final InterpreterMapMaker interpreterMapMaker = new InterpreterMapMaker(method);

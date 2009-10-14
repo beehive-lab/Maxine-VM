@@ -51,8 +51,8 @@ public class ActorIrMethod extends AbstractIrMethod {
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         if (codeAttribute != null) {
             writer.indent();
-            writer.println("maxStack: " + codeAttribute.maxStack());
-            writer.println("maxLocals: " + codeAttribute.maxLocals());
+            writer.println("maxStack: " + codeAttribute.maxStack);
+            writer.println("maxLocals: " + codeAttribute.maxLocals);
             writer.outdent();
             final ConstantPool constantPool = codeAttribute.constantPool();
             writer.print(BytecodePrinter.toString(constantPool, new BytecodeBlock(codeAttribute.code())));

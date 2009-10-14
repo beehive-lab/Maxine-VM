@@ -36,11 +36,12 @@ import com.sun.c1x.value.*;
 public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
-    private final IRScope scope;
-    private List<ExceptionHandler> exceptionHandlers;
     public OopMap oopMap;
+    public final IRScope scope;
+    public final int bci;
+
+    private List<ExceptionHandler> exceptionHandlers;
     private final ValueStack stack; // used by deoptimization (contains also monitors
-    private final int bci;
 
     public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> exceptionHandlers) {
         this.scope = state.scope();
@@ -74,7 +75,7 @@ public class CodeEmitInfo {
     }
 
     FrameMap frameMap() {
-        return scope.compilation().frameMap();
+        return scope.compilation.frameMap();
     }
 
     /**
@@ -86,29 +87,12 @@ public class CodeEmitInfo {
         return scopeDebugInfo;
     }
 
-    // accessors
-    public OopMap oopMap() {
-        return oopMap;
-    }
-
-    public void setOopMap(OopMap oopMap) {
-        this.oopMap = oopMap;
-    }
-
-    public IRScope scope() {
-        return scope;
-    }
-
     public List<ExceptionHandler> exceptionHandlers() {
         return exceptionHandlers;
     }
 
     public ValueStack stack() {
         return stack;
-    }
-
-    public int bci() {
-        return bci;
     }
 
     public void addRegisterOop(LIROperand opr) {
@@ -120,7 +104,6 @@ public class CodeEmitInfo {
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-
         // TODO: (tw) Check where to generate the oopMap!
         if (oopMap == null) {
             return;

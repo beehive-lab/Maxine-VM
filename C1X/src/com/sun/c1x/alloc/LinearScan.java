@@ -2593,7 +2593,7 @@ public class LinearScan {
         }
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
-        IRScope innermostScope = info.scope();
+        IRScope innermostScope = info.scope;
         ValueStack innermostState = info.stack();
 
         assert innermostScope != null && innermostState != null : "why is it missing?";
@@ -2603,10 +2603,10 @@ public class LinearScan {
 
         if (info.scopeDebugInfo == null) {
             // compute debug information
-            info.scopeDebugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci(), stackEnd, locksEnd);
+            info.scopeDebugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd);
         } else {
             // debug information already set. Check that it is correct from the current point of view
-            assertEqual(info.scopeDebugInfo, computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci(), stackEnd, locksEnd));
+            assertEqual(info.scopeDebugInfo, computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd));
         }
     }
 

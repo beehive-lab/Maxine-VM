@@ -39,7 +39,9 @@ public final class CodeAttribute {
     public static final Sequence<ExceptionHandlerEntry> NO_EXCEPTION_HANDLER_TABLE = Sequence.Static.empty(ExceptionHandlerEntry.class);
 
     @INSPECTED
-    private final ConstantPool constantPool;
+    public final ConstantPool constantPool;
+    public final char maxStack;
+    public final char maxLocals;
 
     @INSPECTED
     private final byte[] code;
@@ -49,8 +51,6 @@ public final class CodeAttribute {
     private final int exceptionHandlerTableOffset;
     private final int lineNumberTableOffset;
     private final int localVariableTableOffset;
-    private final char maxStack;
-    private final char maxLocals;
 
     public CodeAttribute(ConstantPool constantPool,
                     byte[] code,
@@ -130,23 +130,6 @@ public final class CodeAttribute {
 
     public byte[] encodedData() {
         return encodedData;
-    }
-
-    /**
-     * Gets the maximum depth of the operand stack of this method at any point during execution of the method.
-     */
-    public int maxStack() {
-        return maxStack;
-    }
-
-    /**
-     * Gets the number of local variables in the local variable array allocated upon invocation of this method,
-     * including the local variables used to pass parameters to the method on its invocation. The greatest local
-     * variable index for a value of type {@code long} or {@code double} is {@code maxLocals() - 2}. The greatest local
-     * variable index for a value of any other type is {@code maxLocals() - 1}.
-     */
-    public int maxLocals() {
-        return maxLocals;
     }
 
     private DataInputStream encodedData(int offset) {

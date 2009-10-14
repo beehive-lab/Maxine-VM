@@ -565,8 +565,8 @@ public class ClassfileWriter {
         protected void writeData(ClassfileWriter cf) throws IOException {
             final CodeAttribute codeAttributeCopy = this.codeAttribute;
             final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttributeCopy.exceptionHandlerTable();
-            cf.writeUnsigned2(codeAttributeCopy.maxStack());
-            cf.writeUnsigned2(codeAttributeCopy.maxLocals());
+            cf.writeUnsigned2(codeAttributeCopy.maxStack);
+            cf.writeUnsigned2(codeAttributeCopy.maxLocals);
             final byte[] code = standardizeCode(codeAttributeCopy, cf);
             cf.writeUnsigned4(code.length);
             cf.writeUnsigned1Array(code);

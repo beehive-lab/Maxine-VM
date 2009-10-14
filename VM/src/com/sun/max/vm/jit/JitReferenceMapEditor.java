@@ -171,7 +171,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                         Log.print('*');
                     }
                     Log.print(", locals={");
-                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
+                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
                         final int fpRelativeIndex = stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
                         if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
                             Log.print(' ');
@@ -183,7 +183,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     }
                     Log.print(" }");
                     Log.print(", stack={");
-                    for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack(); ++operandStackIndex) {
+                    for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
                         final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
                         if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
                             Log.print(' ');
