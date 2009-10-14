@@ -38,7 +38,7 @@ import com.sun.max.vm.classfile.constant.*;
  * map is attached to the method's IR as it is transformed by the compiler and ends up as metadata of the machine
  * code emitted by the compiler backend.
  * <p>
- * 
+ *
  * <pre>
  *  1:   void f() {
  *  2:       a();
@@ -79,13 +79,13 @@ import com.sun.max.vm.classfile.constant.*;
  *           // [14] - { Dispatcher2 }
  * 23:   }
  * </pre>
- * 
+ *
  * If a dispatcher does not match the exception object to a handler and it is the last dispatcher in a dispatcher
  * chain, then it simply rethrows the exception.
  * <p>
  * Note that the dispatcher for the outer try/catch block unconditionally goes to the handler for Throwable. This is
  * an optimization reflecting the fact that all exceptions subclass Throwable.
- * 
+ *
  * @author Doug Simon
  * @author Bernd Mathiske
  */
@@ -95,7 +95,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
     private final CodeAttribute result;
 
     public ExceptionDispatchingPreprocessor(ConstantPoolEditor constantPoolEditor, CodeAttribute codeAttribute) {
-        super(constantPoolEditor, codeAttribute.code().length, codeAttribute.maxStack(), codeAttribute.maxLocals());
+        super(constantPoolEditor, codeAttribute.code().length, codeAttribute.maxStack, codeAttribute.maxLocals);
 
         codeStream = new SeekableByteArrayOutputStream();
 

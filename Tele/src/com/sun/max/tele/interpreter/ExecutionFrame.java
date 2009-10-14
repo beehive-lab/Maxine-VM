@@ -48,7 +48,7 @@ class ExecutionFrame {
 
     public ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
         this.method = method;
-        this.locals = new Value[method.codeAttribute().maxLocals()];
+        this.locals = new Value[method.codeAttribute().maxLocals];
         this.operands = new Stack<Value>();
         this.callersFrame = callersFrame;
         this.code = method.codeAttribute().code();

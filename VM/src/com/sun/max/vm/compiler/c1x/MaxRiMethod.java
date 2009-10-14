@@ -138,7 +138,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxLocals() {
-        return asClassMethodActor("maxLocals()").originalCodeAttribute().maxLocals();
+        return asClassMethodActor("maxLocals()").originalCodeAttribute().maxLocals;
     }
 
     /**
@@ -147,7 +147,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxStackSize() {
-        return asClassMethodActor("maxStackSize()").originalCodeAttribute().maxStack();
+        return asClassMethodActor("maxStackSize()").originalCodeAttribute().maxStack;
     }
 
     /**

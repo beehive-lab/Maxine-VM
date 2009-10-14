@@ -32,7 +32,6 @@ import com.sun.c1x.util.*;
  */
 public class OopMap {
 
-
     private final int frameSize;
     private final CiTarget target;
     private final FrameMap frameMap;
