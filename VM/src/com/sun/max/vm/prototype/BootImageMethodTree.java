@@ -289,7 +289,13 @@ public final class BootImageMethodTree {
         }
         Trace.on(TRACE.getValue());
 
-        final InputStream inputStream = new FileInputStream(INPUT_FILE.getValue());
+        final InputStream inputStream = openInputFile();
+        if (inputStream == null) {
+            System.err.println("Cannot find input file " + INPUT_FILE.getValue().getAbsolutePath());
+            System.err.println("The input tree file is only created if the -tree option is used when creating the boot image.");
+            System.exit(1);
+        }
+
         final DataInputStream dataInputStream = new DataInputStream(new BufferedInputStream(inputStream));
         final Set<Node> roots = loadTree(dataInputStream);
         inputStream.close();
@@ -335,5 +341,13 @@ public final class BootImageMethodTree {
         }
         printWriter.close();
         Trace.end(1, "writing boot image method tree text file: " + outputFile.getAbsolutePath());
+    }
+
+    private static FileInputStream openInputFile() {
+        try {
+            return new FileInputStream(INPUT_FILE.getValue());
+        } catch (FileNotFoundException e) {
+            return null;
+        }
     }
 }
