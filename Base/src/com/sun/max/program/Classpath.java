@@ -311,6 +311,9 @@ public class Classpath {
      */
     public static Classpath bootClassPath() {
         final String value = System.getProperty("sun.boot.class.path");
+        if (value == null) {
+            return new Classpath(Sequence.Static.empty(Entry.class));
+        }
         return new Classpath(value.split(File.pathSeparator));
     }
 
