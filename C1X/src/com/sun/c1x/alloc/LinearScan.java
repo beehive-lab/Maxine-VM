@@ -1921,7 +1921,7 @@ public class LinearScan {
             }
             if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
                 // unpinned constants may have no register, so add mapping from constant to interval
-                moveResolver.addMapping(LIROperandFactory.basicType(con), toInterval);
+                moveResolver.addMapping(LIROperandFactory.constant(con), toInterval);
             } else {
                 // search split child at the throwing opId
                 Interval fromInterval = intervalAtOpId(fromValue.operand().vregNumber(), throwingOpId);
@@ -2429,7 +2429,7 @@ public class LinearScan {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand
-                opr = LIROperandFactory.basicType(con);
+                opr = LIROperandFactory.constant(con);
             }
             assert opr.isVirtual() || opr.isConstant() : "other cases not allowed here";
 
@@ -2606,16 +2606,11 @@ public class LinearScan {
             if (op.infoCount() > 0) {
                 // exception handling
                 if (compilation.hasExceptionHandlers()) {
-                    List<ExceptionHandler> xhandlers = op.exceptionEdges();
-                    int n = xhandlers.size();
-                    for (int k = 0; k < n; k++) {
-                        ExceptionHandler handler = xhandlers.get(k);
+                    for (ExceptionHandler handler : op.exceptionEdges()) {
                         if (handler.entryCode() != null) {
                             assignRegNum(handler.entryCode().instructionsList(), null);
                         }
                     }
-                } else {
-                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
 
                 // compute oop map
@@ -2637,7 +2632,8 @@ public class LinearScan {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.operand();
                 LIROperand dst = move.result();
-                if (dst == src || !dst.isLocation() && !src.isLocation() && src.equals(dst)) {
+                if (dst == src || src.equals(dst)) {
+                    // TODO: what about o.f = o.f and exceptions?
                     instructions.set(j, null);
                     hasDead = true;
                 }
@@ -2663,10 +2659,7 @@ public class LinearScan {
     void assignRegNum() {
         // TIMELINEARSCAN(timerAssignRegNum);
         IntervalWalker iw = initComputeOopMaps();
-
-        int numBlocks = blockCount();
-        for (int i = 0; i < numBlocks; i++) {
-            BlockBegin block = blockAt(i);
+        for (BlockBegin block : cachedBlocks) {
             assignRegNum(block.lir().instructionsList(), iw);
         }
     }

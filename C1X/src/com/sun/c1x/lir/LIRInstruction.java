@@ -394,8 +394,8 @@ public abstract class LIRInstruction {
     public void printInstruction(LogStream out) {
 
         out.printf("%s = (", result.get(this), this.code.name());
-        for (int i = 0; i < operandSlots.length; i++) {
-            out.printf("%s ", operandSlots[i].get(this));
+        for (OperandSlot operandSlot : operandSlots) {
+            out.printf("%s ", operandSlot.get(this));
         }
         out.print(")");
     }
@@ -403,7 +403,7 @@ public abstract class LIRInstruction {
     /**
      * Prints information common to all LIR instruction.
      *
-     * @param stream the LogStream to print into.
+     * @param st the LogStream to print into.
      */
     public void printOn(LogStream st) {
         if (id() != -1 || C1XOptions.PrintCFGToFile) {
@@ -418,6 +418,7 @@ public abstract class LIRInstruction {
             st.printf(" [bci:%d]", info.bci);
         }
     }
+
     public boolean verify() {
         return true;
     }
