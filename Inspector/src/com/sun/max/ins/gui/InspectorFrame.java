@@ -35,7 +35,14 @@ import com.sun.max.ins.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class InspectorFrame extends JInternalFrame implements Prober {
+final class InspectorFrame extends JInternalFrame implements Prober {
+
+    // TODO (mlvdv) Generalize Inspector Frame so that it doesn't have to be a JInternal Frame, for
+    // example when adding to Tabbed Containers.  In that case, a JRootPane would do.
+    // What would be missing, if this happened?  no title,
+    // pack() could be implemented as in JInternalFrame:
+    // setSize(getPreferredSize());
+    // validate();
 
     private final Inspector inspector;
 

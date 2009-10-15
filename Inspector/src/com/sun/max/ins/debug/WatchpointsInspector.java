@@ -79,7 +79,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     protected void createView() {
         table = new WatchpointsTable(inspection(), viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
+        setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

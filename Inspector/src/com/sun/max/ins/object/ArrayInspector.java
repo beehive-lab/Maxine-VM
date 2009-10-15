@@ -43,7 +43,7 @@ public final class ArrayInspector extends ObjectInspector {
         super.createView();
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
-        frame().getContentPane().add(elementsPane);
+        getContentPane().add(elementsPane);
     }
 
     @Override

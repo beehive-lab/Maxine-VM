@@ -213,7 +213,7 @@ public class InspectionSettings {
 
         final Inspector inspector = saveSettingsListener.inspector();
         if (inspector != null) {
-            inspector.component().addComponentListener(new ComponentListener() {
+            inspector.getJComponent().addComponentListener(new ComponentListener() {
                 public void componentHidden(ComponentEvent e) {
                 }
                 public void componentMoved(ComponentEvent e) {
@@ -242,7 +242,7 @@ public class InspectionSettings {
      */
     private void repositionInspectorFromSettings(SaveSettingsListener saveSettingsListener) {
         final Inspector inspector = saveSettingsListener.inspector();
-        final Rectangle oldBounds = inspector.component().getBounds();
+        final Rectangle oldBounds = inspector.getJComponent().getBounds();
         Rectangle newBounds = saveSettingsListener.defaultBounds();
         if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
             newBounds = new Rectangle(
@@ -252,7 +252,7 @@ public class InspectionSettings {
                 get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
         }
         if (newBounds != null && !newBounds.equals(oldBounds)) {
-            inspector.component().setBounds(newBounds);
+            inspector.getJComponent().setBounds(newBounds);
         }
         inspection.gui().moveToMiddleIfNotVisble(inspector);
     }
@@ -357,7 +357,7 @@ public class InspectionSettings {
             saveSettingsListener.saveSettings(saveSettingsEvent);
             final Inspector inspector = saveSettingsListener.inspector();
             if (inspector != null) {
-                final Rectangle bounds = inspector.component().getBounds();
+                final Rectangle bounds = inspector.getJComponent().getBounds();
                 saveSettingsEvent.save(COMPONENT_X_KEY, bounds.x);
                 saveSettingsEvent.save(COMPONENT_Y_KEY, bounds.y);
                 saveSettingsEvent.save(COMPONENT_WIDTH_KEY, bounds.width);

@@ -74,7 +74,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     @Override
     protected void createView() {
         table = new BootImageTable(inspection(), viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
+        setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

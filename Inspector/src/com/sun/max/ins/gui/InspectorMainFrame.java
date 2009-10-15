@@ -184,9 +184,9 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public void addInspector(Inspector inspector) {
-        final InspectorFrame inspectorFrame = inspector.frame();
-        desktopPane.add(inspectorFrame);
-        inspectorFrame.setVisible(true);
+        final JComponent component = inspector.getJComponent();
+        desktopPane.add(component);
+        component.setVisible(true);
         repaint();
     }
 
@@ -278,12 +278,12 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     public void moveToMiddle(Inspector inspector) {
-        final InspectorFrame frame = inspector.frame();
-        frame.setLocation(getMiddle(frame));
+        final JComponent component = inspector.getJComponent();
+        component.setLocation(getMiddle(component));
     }
 
     public void moveToMiddleIfNotVisble(Inspector inspector) {
-        if (!contains(inspector.component().getLocation())) {
+        if (!contains(inspector.getJComponent().getLocation())) {
             moveToMiddle(inspector);
         }
     }
@@ -337,7 +337,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         final Point origin = getContentPane().getLocationOnScreen();
         final Point location = new Point(locationOnScreen.x - origin.x, locationOnScreen.y - origin.y);
         final Rectangle r = getBounds();
-        final InspectorFrame frame = inspector.frame();
+        final JComponent frame = inspector.getJComponent();
 
         if (frame.getWidth() > r.width) {
             frame.setSize(r.width, frame.getHeight());

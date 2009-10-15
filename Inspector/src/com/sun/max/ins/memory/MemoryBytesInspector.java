@@ -199,7 +199,7 @@ public final class MemoryBytesInspector extends Inspector {
         getMenu(DEFAULT_INSPECTOR_MENU).add(actions().closeViews(allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
 
         contentPane = new InspectorPanel(inspection());
-        frame().setContentPane(contentPane);
+        setContentPane(contentPane);
         contentPane.removeAll();
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
         contentPane.add(createController());
@@ -266,7 +266,7 @@ public final class MemoryBytesInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle() + " - process terminated");
+        Trace.line(1, tracePrefix() + " closing for " + getTitle() + " - process terminated");
         super.inspectorClosing();
     }
 

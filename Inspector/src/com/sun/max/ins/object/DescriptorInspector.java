@@ -80,7 +80,7 @@ public class DescriptorInspector extends ObjectInspector {
                 prober.refresh(true);
             }
         });
-        frame().getContentPane().add(tabbedPane);
+        getContentPane().add(tabbedPane);
     }
 
     @Override

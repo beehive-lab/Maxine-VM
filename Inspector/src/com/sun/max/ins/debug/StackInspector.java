@@ -339,7 +339,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
             contentPane.add(splitPane, BorderLayout.CENTER);
         }
-        frame().setContentPane(contentPane);
+        setContentPane(contentPane);
         refreshView(true);
         // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
         updateFocusSelection(inspection().focus().stackFrame());
@@ -439,7 +439,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
-        updateFrameTitle();
+        setTitle();
         return true;
     }
 

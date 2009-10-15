@@ -225,14 +225,12 @@ public class JavaMethodInspector extends MethodInspector {
                 // final InspectorFrame newInspectorFrame = newInspector;
                 // final Component newComponent = (Component) newInspectorFrame;
                 if (codeViewerCount() == 0) {
-                    frame().getContentPane().add(newViewer);
-                    frame().pack();
-                    frame().invalidate();
-                    frame().repaint();
+                    getContentPane().add(newViewer);
+                    pack();
                 } else if (codeViewerCount() == 1) {
                     final CodeViewer oldInspector = firstViewer();
                     // final Component oldComponent = (Component) oldInspector.frame();
-                    frame().getContentPane().remove(oldInspector);
+                    getContentPane().remove(oldInspector);
                     if (oldInspector.codeKind().ordinal() < newViewer.codeKind().ordinal()) {
                         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, oldInspector, newViewer);
                     } else {
@@ -240,10 +238,8 @@ public class JavaMethodInspector extends MethodInspector {
                     }
                     splitPane.setOneTouchExpandable(true);
                     splitPane.setResizeWeight(0.5);
-                    frame().getContentPane().add(splitPane);
-                    frame().pack();
-                    frame().invalidate();
-                    frame().repaint();
+                    getContentPane().add(splitPane);
+                    pack();
                 }
                 codeViewers.put(kind, newViewer);
             }
@@ -262,17 +258,17 @@ public class JavaMethodInspector extends MethodInspector {
             if (keepComponent == deleteComponent) {
                 keepComponent = splitPane.getRightComponent();
             }
-            frame().getContentPane().remove(splitPane);
-            frame().getContentPane().add(keepComponent);
+            Container contentPane = getContentPane();
+            contentPane.remove(splitPane);
+            contentPane.add(keepComponent);
             codeViewers.remove(viewer.codeKind());
-            frame().pack();
-            frame().repaint();
+            pack();
         }
     }
 
     @Override
     protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+        if (getJComponent().isShowing() || force) {
             if (teleClassMethodActor != null) {
                 teleClassMethodActor.refreshView();
             }

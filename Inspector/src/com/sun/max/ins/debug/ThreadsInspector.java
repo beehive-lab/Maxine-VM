@@ -92,7 +92,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     public void createView() {
         table = new ThreadsTable(inspection(), viewPreferences);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
-        frame().setContentPane(scrollPane);
+        setContentPane(scrollPane);
     }
 
     @Override

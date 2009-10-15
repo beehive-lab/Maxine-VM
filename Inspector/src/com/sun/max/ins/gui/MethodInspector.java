@@ -267,7 +267,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                 closeOthers();
             }
         });
-        frame().replaceFrameCloseAction(new InspectorAction(inspection(), "Close Method Inspector") {
+        replaceFrameCloseAction(new InspectorAction(inspection(), "Close Method Inspector") {
             @Override
             public void procedure() {
                 close();
@@ -348,7 +348,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         super.inspectorClosing();
     }
 
