@@ -107,7 +107,7 @@ public final class ExceptionDispatchingPreprocessor extends BytecodeAssembler {
         final byte[] originalCode = codeAttribute.code();
         final byte[] code = Arrays.copyOf(originalCode, originalCode.length + codeStream.size());
         codeStream.copyTo(0, code, originalCode.length, codeStream.size());
-        result = new CodeAttribute(codeAttribute.constantPool(),
+        result = new CodeAttribute(codeAttribute.constantPool,
                                     code,
                                     (char) maxStack(),
                                     (char) maxLocals(),

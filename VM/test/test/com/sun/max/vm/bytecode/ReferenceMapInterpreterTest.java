@@ -319,13 +319,13 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             final int bytecodePosition = interpreterMapMaker.blockStartBytecodePosition(blockIndex);
             if (blockIndex != 0) {
                 final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex - 1), bytecodePosition - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool(), bytecodeBlock, "        ", "\n", 0);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
             annotatedDisassembly.append(String.format("      %s%n", framesAsStrings[blockIndex]));
             if (blockIndex == numberOfBlocks - 1) {
                 final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex), codeLength - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool(), bytecodeBlock, "        ", "\n", 0);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
         }

@@ -655,7 +655,7 @@ public class LinearScan {
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack();
+                    ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
@@ -1377,7 +1377,7 @@ public class LinearScan {
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
                     CodeEmitInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack();
+                    ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
@@ -2292,7 +2292,7 @@ public class LinearScan {
             CodeEmitInfo info = op.infoAt(i);
             OopMap oopMap = firstOopMap;
 
-            if (info.stack().locksSize() != firstInfo.stack().locksSize()) {
+            if (info.stack.locksSize() != firstInfo.stack.locksSize()) {
                 // this info has a different number of locks then the precomputed oop map
                 // (possible for lock and unlock instructions) . compute oop map with
                 // correct lock information
@@ -2350,7 +2350,7 @@ public class LinearScan {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIx();
             //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SpillSlotSize, false);
+            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
 //            if (isOop) {
 //                oopValues.add(location);
@@ -2380,7 +2380,7 @@ public class LinearScan {
             if (opr.isDoubleStack()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SpillSlotSize * 2, false);
+                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SPILL_SLOT_SIZE * 2, false);
                 } else {
                     Util.shouldNotReachHere();
                 }
@@ -2559,7 +2559,7 @@ public class LinearScan {
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
         IRScope innermostScope = info.scope;
-        ValueStack innermostState = info.stack();
+        ValueStack innermostState = info.stack;
 
         assert innermostScope != null && innermostState != null : "why is it missing?";
 

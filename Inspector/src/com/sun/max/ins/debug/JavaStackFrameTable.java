@@ -273,7 +273,7 @@ public class JavaStackFrameTable extends InspectorTable {
                         if (getOffset(row).equals(localVariableOffset)) {
                             final Entry entry = codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);
                             if (entry != null) {
-                                return entry.name(codeAttribute.constantPool()).string;
+                                return entry.name(codeAttribute.constantPool).string;
                             }
                         }
                     }

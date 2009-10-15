@@ -134,7 +134,7 @@ public class TirPrintSink extends TirBufferedSink {
             final ClassMethodActor classMethodActor = tree.classMethodActor();
             final LocalVariableTable localVariableTable = classMethodActor.codeAttribute().localVariableTable();
             final Entry entry = localVariableTable.findLocalVariable(instruction.slot(), tree.anchor().position());
-            final String variableName = entry == null ? "?" : entry.name(classMethodActor.codeAttribute().constantPool()).toString();
+            final String variableName = entry == null ? "?" : entry.name(classMethodActor.codeAttribute().constantPool).toString();
             return Color.color(NameMap.LOCAL_COLOR, "(" + variableName + ")");
         }
 

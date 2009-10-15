@@ -45,7 +45,7 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
                     AppendableSequence<MethodActor> virtualCalls,
                     AppendableSequence<MethodActor> interfaceCalls) {
         this.classMethodActor = classMethodActor;
-        this.constantPool = classMethodActor.codeAttribute().constantPool();
+        this.constantPool = classMethodActor.codeAttribute().constantPool;
         this.directCalls = directCalls;
         this.virtualCalls = virtualCalls;
         this.interfaceCalls = interfaceCalls;

@@ -105,8 +105,12 @@ public class JTMaxine {
             List<ClassMethodActor> methods = new ArrayList<ClassMethodActor>(100);
             addMethods(methods, jtclasses.testRunClass);
             ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+            if (verboseOption.getValue() == 3) {
+                printer.setVerbose(2);
+            }
             System.out.println("Compiling caller methods with " + callerCompiler.getClass() + "...");
             for (ClassMethodActor method : methods) {
+                printer.begin(method.toString());
                 VMConfiguration.target().compilationScheme().synchronousCompile(method, callerCompiler);
                 printer.pass();
             }
@@ -117,8 +121,12 @@ public class JTMaxine {
                 addMethods(methods, c);
             }
             ProgressPrinter printer = new ProgressPrinter(System.out, methods.size(), 1, false);
+            if (verboseOption.getValue() == 3) {
+                printer.setVerbose(2);
+            }
             System.out.println("Compiling callee methods with " + calleeCompiler.getClass() + "...");
             for (ClassMethodActor method : methods) {
+                printer.begin(method.toString());
                 VMConfiguration.target().compilationScheme().synchronousCompile(method, calleeCompiler);
                 printer.pass();
             }

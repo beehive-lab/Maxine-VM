@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import java.util.*;
 
-import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
@@ -35,15 +34,15 @@ import com.sun.c1x.value.*;
  */
 public class CodeEmitInfo {
 
+    public final ValueStack stack;
+    public final int bci;
+    public final List<ExceptionHandler> exceptionHandlers;
+
     public IRScopeDebugInfo scopeDebugInfo;
     public OopMap oopMap;
     public final IRScope scope;
-    public final int bci;
 
-    private List<ExceptionHandler> exceptionHandlers;
-    private final ValueStack stack;
-
-    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> exceptionHandlers) {
+    public CodeEmitInfo(ValueStack state, int bci, List<ExceptionHandler> exceptionHandlers) {
         this.scope = state.scope();
         this.bci = bci;
         this.scopeDebugInfo = null;
@@ -55,7 +54,6 @@ public class CodeEmitInfo {
     // make a copy
     private CodeEmitInfo(CodeEmitInfo info) {
         this.scope = info.scope;
-        this.exceptionHandlers = null;
         this.bci = info.bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
@@ -67,6 +65,8 @@ public class CodeEmitInfo {
             for (ExceptionHandler h : info.exceptionHandlers) {
                 this.exceptionHandlers.add(new ExceptionHandler(h));
             }
+        } else {
+            this.exceptionHandlers = null;
         }
     }
 
@@ -76,29 +76,6 @@ public class CodeEmitInfo {
 
     FrameMap frameMap() {
         return scope.compilation.frameMap();
-    }
-
-    /**
-     * Gets the scopeDebugInfo of this class.
-     *
-     * @return the scopeDebugInfo
-     */
-    public IRScopeDebugInfo scopeDebugInfo() {
-        return scopeDebugInfo;
-    }
-
-    public List<ExceptionHandler> exceptionHandlers() {
-        return exceptionHandlers;
-    }
-
-    public ValueStack stack() {
-        return stack;
-    }
-
-    public void addRegisterOop(LIROperand opr) {
-        assert oopMap != null :  "oop map must already exist";
-        assert opr.isSingleCpu() :  "should not call otherwise";
-        oopMap.setOop(opr.asRegister());
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {

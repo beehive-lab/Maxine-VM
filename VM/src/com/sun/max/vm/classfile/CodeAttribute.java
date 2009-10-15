@@ -51,6 +51,7 @@ public final class CodeAttribute {
     private final int exceptionHandlerTableOffset;
     private final int lineNumberTableOffset;
     private final int localVariableTableOffset;
+    private LineNumberTable lineNumberTable;
 
     public CodeAttribute(ConstantPool constantPool,
                     byte[] code,
@@ -116,14 +117,6 @@ public final class CodeAttribute {
         return buf;
     }
 
-    /**
-     * Gets the constant pool that must be used when processing the code in this CodeAttribute. This is required as one
-     * CodeAttribute may replace another whenever {@linkplain METHOD_SUBSTITUTIONS method substitution} occurs.
-     */
-    public ConstantPool constantPool() {
-        return constantPool;
-    }
-
     public byte[] code() {
         return code;
     }
@@ -145,11 +138,15 @@ public final class CodeAttribute {
     }
 
     public LineNumberTable lineNumberTable() {
-        try {
-            return lineNumberTableOffset == -1 ? LineNumberTable.EMPTY : LineNumberTable.decode(encodedData(lineNumberTableOffset));
-        } catch (IOException e) {
-            throw ProgramError.unexpected(e);
+        if (lineNumberTable == null) {
+            // cache the line number table
+            try {
+                lineNumberTable = lineNumberTableOffset == -1 ? LineNumberTable.EMPTY : LineNumberTable.decode(encodedData(lineNumberTableOffset));
+            } catch (IOException e) {
+                throw ProgramError.unexpected(e);
+            }
         }
+        return lineNumberTable;
     }
 
     public LocalVariableTable localVariableTable() {

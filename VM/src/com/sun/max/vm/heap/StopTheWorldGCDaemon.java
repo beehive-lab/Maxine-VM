@@ -367,7 +367,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
      * Set the daemon without initial GC logic. First request must be executed using the {@link #execute(Runnable)} method.
      *
      * @param name name of the daemon
-     * @param collector initial GC logic
      */
     public StopTheWorldGCDaemon(String name) {
         super(name);

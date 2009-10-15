@@ -535,14 +535,14 @@ public abstract class LIRInstruction {
 
         int i;
         for (i = 0; i < infoCount(); i++) {
-            if (infoAt(i).exceptionHandlers() != null) {
-                result = infoAt(i).exceptionHandlers();
+            if (infoAt(i).exceptionHandlers != null) {
+                result = infoAt(i).exceptionHandlers;
                 break;
             }
         }
 
         for (i = 0; i < infoCount(); i++) {
-            assert infoAt(i).exceptionHandlers() == null || infoAt(i).exceptionHandlers() == result : "only one xhandler list allowed per LIR-operation";
+            assert infoAt(i).exceptionHandlers == null || infoAt(i).exceptionHandlers == result : "only one xhandler list allowed per LIR-operation";
         }
 
         if (result != null) {

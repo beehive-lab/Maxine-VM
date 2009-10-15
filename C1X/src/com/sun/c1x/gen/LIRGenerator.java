@@ -171,7 +171,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // Emit moves from physical registers / stack slots to virtual registers
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
+        incrementInvocationCounter(new CodeEmitInfo(compilation.hir().startBlock.stateBefore(), 0, null), false);
 
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state at the safepoint.
@@ -1139,7 +1139,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
-        if (info.exceptionHandlers().size() == 0) {
+        if (info.exceptionHandlers.size() == 0) {
             // this throw is not inside an xhandler
             unwind = true;
         } else {
@@ -2232,7 +2232,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
-        return new CodeEmitInfo(x.bci(), state, ignoreXhandler ? null : x.exceptionHandlers());
+        return new CodeEmitInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
     List<LIRItem> visitInvokeArguments(Invoke x) {

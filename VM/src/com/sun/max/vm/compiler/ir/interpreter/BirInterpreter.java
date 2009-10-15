@@ -537,7 +537,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
 
         @Override
         protected ConstantPool constantPool() {
-            return state.last().method().compilee().codeAttribute().constantPool();
+            return state.last().method().compilee().codeAttribute().constantPool;
         }
 
         protected ClassActor classActor() {
