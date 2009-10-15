@@ -203,9 +203,9 @@ fi
 # gets the destination for classes for the project
 function get_project_dest() {
 	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
-		echo ${maxine_dir}/out/production/$1
+		echo ${project_dir_parent}/out/production/$1
 	else
-		echo ${maxine_dir}/$1/bin
+		echo ${project_dir_parent}/$1/bin
 	fi
 }
 
@@ -409,8 +409,8 @@ function run_build() {
         if [ $project_build_match -eq 0 ] ; then
             continue
         fi
-	project_dest=$(get_project_dest ${project_dir})
         set_project_dir_parent ${project}
+	project_dest=$(get_project_dest ${project_dir})
         if $clean ; then
             run rm -rf ${project_dest}
         fi
@@ -469,6 +469,7 @@ function run_clean() {
 
     for project in ${projects[@]}; do
 	project_dir=${project/:*/}
+        set_project_dir_parent ${project}
 	project_cp=$(get_project_dest ${project_dir})
 	if [ "x$project_cp" != "x" ]; then
 	    echo Removing $project_cp...
