@@ -41,6 +41,9 @@
 
 #include "jni.h"
 
+#ifndef  JNI_VERSION_1_6
+#error The version of jni.h being included must define the JNI_VERSION_1_6 macro
+#endif
 static jint CurrentVersion = JNI_VERSION_1_6;
 
 /**
