@@ -40,7 +40,7 @@ public class NewObjectArrayStub extends CodeStub {
      * @param result
      * @param info
      */
-    public NewObjectArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, CodeEmitInfo info) {
+    public NewObjectArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
         super(info, result);
         this.setOperands(0, 0, klassReg, length);
 

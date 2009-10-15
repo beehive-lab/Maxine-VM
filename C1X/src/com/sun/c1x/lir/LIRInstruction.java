@@ -42,7 +42,7 @@ public abstract class LIRInstruction {
     private OperandSlot result;
 
     // used to emit debug information
-    public final CodeEmitInfo info;
+    public final LIRDebugInfo info;
 
     // value id for register allocation
     private int id;
@@ -136,7 +136,7 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
+    public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
 
         this.code = opcode;
         this.info = info;
@@ -552,7 +552,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public CodeEmitInfo infoAt(int k) {
+    public LIRDebugInfo infoAt(int k) {
         if (k == 1) {
             return stub.info;
         } else {
