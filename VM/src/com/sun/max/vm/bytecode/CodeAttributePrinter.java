@@ -66,7 +66,7 @@ public final class CodeAttributePrinter {
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
         printWriter.println("Stack=" + codeAttribute.maxStack + ", Locals=" + codeAttribute.maxLocals);
-        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool());
+        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
             bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));
@@ -106,7 +106,7 @@ public final class CodeAttributePrinter {
                     catchType = "*any*";
                 } else {
                     try {
-                        catchType = codeAttribute.constantPool().classAt(catchTypeIndex).typeDescriptor().toJavaString();
+                        catchType = codeAttribute.constantPool.classAt(catchTypeIndex).typeDescriptor().toJavaString();
                     } catch (ClassFormatError classFormatError) {
                         catchType = "*ERROR[cpi=" + catchTypeIndex + "]*";
                     }
@@ -130,7 +130,7 @@ public final class CodeAttributePrinter {
     public static void printStackMapTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final StackMapTable stackMapTable = codeAttribute.stackMapTable();
         if (stackMapTable != null) {
-            final Verifier verifier = new Verifier(codeAttribute.constantPool());
+            final Verifier verifier = new Verifier(codeAttribute.constantPool);
             final StackMapFrame[] frames = stackMapTable.getFrames(verifier);
             printWriter.println("StackMapTable: number of entries = " + frames.length);
             int previousFrameOffset = -1;
@@ -180,7 +180,7 @@ public final class CodeAttributePrinter {
         if (!localVariableTable.isEmpty()) {
             printWriter.println("LocalVariableTable:");
             printWriter.println("  Start Length Slot Name               Descriptor            Generic-signature");
-            final ConstantPool cp = codeAttribute.constantPool();
+            final ConstantPool cp = codeAttribute.constantPool;
             for (LocalVariableTable.Entry entry : localVariableTable.entries()) {
                 final int signatureIndex = entry.signatureIndex();
                 final String name = utf8At(cp, entry.nameIndex());

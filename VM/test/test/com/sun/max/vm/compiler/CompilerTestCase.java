@@ -639,10 +639,10 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                         CodeAttribute codeAttribute = method.classMethodActor().codeAttribute();
                         ProgramWarning.message("Failed " + boxing + " stub execution or result comparison for " + classMethodActor);
                         System.err.println("original method:");
-                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool(), new BytecodeBlock(codeAttribute.code())));
+                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool, new BytecodeBlock(codeAttribute.code())));
                         codeAttribute = stub.classMethodActor().codeAttribute();
                         System.err.println("stub: " + stub.classMethodActor());
-                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool(), new BytecodeBlock(codeAttribute.code())));
+                        System.err.println(BytecodePrinter.toString(codeAttribute.constantPool, new BytecodeBlock(codeAttribute.code())));
                         System.err.println("stub IR:");
                         System.err.println(stub.traceToString());
                         e.printStackTrace();

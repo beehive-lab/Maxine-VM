@@ -234,7 +234,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             if (bytecodePosition != -1) {
                 final Entry entry = localVariableTable.findLocalVariable(localVarIndex, bytecodePosition);
                 if (entry != null) {
-                    indexLabel = new JLabel(entry.name(codeAttribute.constantPool()).string);
+                    indexLabel = new JLabel(entry.name(codeAttribute.constantPool).string);
                 }
             }
             if (addReceiverToolTip) {

@@ -295,7 +295,6 @@ public class JTConfig {
         jtt.except.Throw_Synchronized03.class,
         jtt.except.Throw_Synchronized04.class,
         jtt.except.Throw_Synchronized05.class,
-        jtt.gc.ObjectStackParams01.class,
         jtt.hotpath.HP_allocate01.class,
         jtt.hotpath.HP_allocate02.class,
         jtt.hotpath.HP_allocate03.class,

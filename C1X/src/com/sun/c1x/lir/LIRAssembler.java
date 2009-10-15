@@ -259,8 +259,8 @@ public abstract class LIRAssembler {
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
         info.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
-        if (info.exceptionHandlers() != null) {
-            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
+        if (info.exceptionHandlers != null) {
+            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers);
         }
     }
 
@@ -274,8 +274,8 @@ public abstract class LIRAssembler {
         }
 
         // TODO: record debug info for call
-        if (cinfo.exceptionHandlers() != null) {
-            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
+        if (cinfo.exceptionHandlers != null) {
+            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
         }
     }
 

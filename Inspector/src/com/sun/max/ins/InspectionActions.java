@@ -2315,7 +2315,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         if (bytecodeLocation != null) {
                             final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                             if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
+                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
                                 return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                             }
                         }

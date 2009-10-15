@@ -547,7 +547,7 @@ public class ClassfileWriter {
                 @Override
                 protected void callnative(int nativeFunctionDescriptorIndex) {
                     final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
-                    final ConstantPool pool = codeAttribute.constantPool();
+                    final ConstantPool pool = codeAttribute.constantPool;
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);

@@ -137,7 +137,7 @@ class ExecutionFrame {
     }
 
     public ConstantPool constantPool() {
-        return method.codeAttribute().constantPool();
+        return method.codeAttribute().constantPool;
     }
 
     public ClassMethodActor method() {

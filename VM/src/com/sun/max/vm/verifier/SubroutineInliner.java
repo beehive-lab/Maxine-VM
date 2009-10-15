@@ -71,7 +71,7 @@ public class SubroutineInliner {
 
         final CodeAttribute oldCodeAttribute = verifier.codeAttribute();
         final CodeAttribute newCodeAttribute = new CodeAttribute(
-            oldCodeAttribute.constantPool(),
+                oldCodeAttribute.constantPool,
             newCode,
             (char) oldCodeAttribute.maxStack,
             (char) oldCodeAttribute.maxLocals,
