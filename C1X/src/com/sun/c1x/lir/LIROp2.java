@@ -44,7 +44,7 @@ public class LIROp2 extends LIRInstruction {
      * @param opr2 the second input operand
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, CodeEmitInfo info) {
+    public LIROp2(LIROpcode opcode, LIRCondition condition, LIROperand opr1, LIROperand opr2, LIRDebugInfo info) {
         super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr1, opr2);
         this.type = CiKind.Illegal;
         this.condition = condition;
@@ -77,7 +77,7 @@ public class LIROp2 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      * @param type
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info, CiKind type, boolean hasCall) {
+    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIRDebugInfo info, CiKind type, boolean hasCall) {
         super(opcode, result, info, hasCall, null, 0, 0, opr1, opr2);
         this.type = type;
         this.condition = LIRCondition.Unknown;
@@ -93,7 +93,7 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, CodeEmitInfo info) {
+    public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result, LIRDebugInfo info) {
         this(opcode, opr1, opr2, result, info, CiKind.Illegal, false);
     }
 
@@ -106,7 +106,7 @@ public class LIROp2 extends LIRInstruction {
      * @param result the operand that holds the result of this instruction
      */
     public LIROp2(LIROpcode opcode, LIROperand opr1, LIROperand opr2, LIROperand result) {
-        this(opcode, opr1, opr2, result, (CodeEmitInfo) null);
+        this(opcode, opr1, opr2, result, (LIRDebugInfo) null);
     }
 
     /**

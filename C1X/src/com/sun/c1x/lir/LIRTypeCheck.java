@@ -57,8 +57,8 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledMethod
      * @param profiledBci
      */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, CodeEmitInfo infoForException,
-                        CodeEmitInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,
+                        LIRDebugInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
         super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
@@ -83,7 +83,7 @@ public class LIRTypeCheck extends LIRInstruction {
      */
     public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
                         LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
-                        CodeEmitInfo infoForException, RiMethod profiledMethod, int profiledBci) {
+                        LIRDebugInfo infoForException, RiMethod profiledMethod, int profiledBci) {
         super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;

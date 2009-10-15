@@ -654,7 +654,7 @@ public class LinearScan {
                 // Add uses of live locals from interpreter's point of view for proper debug information generation
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = op.infoAt(k);
+                    LIRDebugInfo info = op.infoAt(k);
                     ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
@@ -1376,7 +1376,7 @@ public class LinearScan {
                 // to a call site, the value would be in a register at the call otherwise)
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = op.infoAt(k);
+                    LIRDebugInfo info = op.infoAt(k);
                     ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
@@ -2220,7 +2220,7 @@ public class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, CodeEmitInfo info, boolean isCallSite) {
+    OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
         // Util.traceLinearScan(3, "creating oop map at opId %d", op.id());
 
         // walk before the current operation . intervals that start at
@@ -2285,11 +2285,11 @@ public class LinearScan {
 
         // compute oopMap only for first CodeEmitInfo
         // because it is (in most cases) equal for all other infos of the same operation
-        CodeEmitInfo firstInfo = op.infoAt(0);
+        LIRDebugInfo firstInfo = op.infoAt(0);
         OopMap firstOopMap = computeOopMap(iw, op, firstInfo, op.hasCall());
 
         for (int i = 0; i < op.infoCount(); i++) {
-            CodeEmitInfo info = op.infoAt(i);
+            LIRDebugInfo info = op.infoAt(i);
             OopMap oopMap = firstOopMap;
 
             if (info.stack.locksSize() != firstInfo.stack.locksSize()) {
@@ -2548,30 +2548,31 @@ public class LinearScan {
                 monitors.add(locationForMonitorIndex(i));
             }
         }
-
-        return new IRScopeDebugInfo(curScope, curBci, locals, expressions, monitors, callerDebugInfo);
+        return null;
+        // TODO:
     }
 
-    void computeDebugInfo(CodeEmitInfo info, int opId) {
+    void computeDebugInfo(LIRDebugInfo info, int opId) {
         if (!compilation.needsDebugInformation()) {
             return;
         }
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
-        IRScope innermostScope = info.scope;
         ValueStack innermostState = info.stack;
+        IRScope innermostScope = innermostState.scope();
 
         assert innermostScope != null && innermostState != null : "why is it missing?";
 
         int stackEnd = innermostState.stackSize();
         int locksEnd = innermostState.locksSize();
 
+        IRScopeDebugInfo debugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd);
         if (info.scopeDebugInfo == null) {
             // compute debug information
-            info.scopeDebugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd);
+            info.scopeDebugInfo = debugInfo;
         } else {
             // debug information already set. Check that it is correct from the current point of view
-            assertEqual(info.scopeDebugInfo, computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd));
+            assertEqual(info.scopeDebugInfo, debugInfo);
         }
     }
 

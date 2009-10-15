@@ -26,13 +26,12 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>CodeEmitInfo</code> class definition.
+ * This class represents debugging and deoptimization information attached to a LIR instruction.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
-public class CodeEmitInfo {
+public class LIRDebugInfo {
 
     public final ValueStack stack;
     public final int bci;
@@ -40,10 +39,8 @@ public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
     public OopMap oopMap;
-    public final IRScope scope;
 
-    public CodeEmitInfo(ValueStack state, int bci, List<ExceptionHandler> exceptionHandlers) {
-        this.scope = state.scope();
+    public LIRDebugInfo(ValueStack state, int bci, List<ExceptionHandler> exceptionHandlers) {
         this.bci = bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
@@ -52,8 +49,7 @@ public class CodeEmitInfo {
     }
 
     // make a copy
-    private CodeEmitInfo(CodeEmitInfo info) {
-        this.scope = info.scope;
+    private LIRDebugInfo(LIRDebugInfo info) {
         this.bci = info.bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
@@ -70,12 +66,8 @@ public class CodeEmitInfo {
         }
     }
 
-    public CodeEmitInfo copy() {
-        return new CodeEmitInfo(this);
-    }
-
-    FrameMap frameMap() {
-        return scope.compilation.frameMap();
+    public LIRDebugInfo copy() {
+        return new LIRDebugInfo(this);
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {

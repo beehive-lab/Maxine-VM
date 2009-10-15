@@ -44,7 +44,7 @@ public class LIRRTCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRRTCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
+    public LIRRTCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(LIROpcode.RtCall, null, result, LIROperandFactory.IllegalLocation, arguments, info, calleeSaved);
         this.calleeSaved = calleeSaved;
         this.runtimeEntry = entry;
