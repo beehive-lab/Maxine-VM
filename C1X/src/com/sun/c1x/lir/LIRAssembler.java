@@ -269,18 +269,17 @@ public abstract class LIRAssembler {
     }
 
     public void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
-
         if (cinfo == null) {
             return;
         }
 
-        cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
+        // TODO: record debug info for call
         if (cinfo.exceptionHandlers() != null) {
             compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
         }
     }
 
-    static ValueStack debugInfo(Value ins) {
+    static ValueStack stateBefore(Value ins) {
         if (ins instanceof Instruction) {
             return ((Instruction) ins).stateBefore();
         }
@@ -288,38 +287,37 @@ public abstract class LIRAssembler {
     }
 
     void processDebugInfo(LIRInstruction op) {
-        Value src = op.source();
-        if (src == null) {
+        Value ins = op.source();
+        if (ins == null) {
             return;
         }
         int pcOffset = codeOffset();
-        if (pendingNonSafepoint == src) {
+        if (pendingNonSafepoint == ins) {
             pendingNonSafepointOffset = pcOffset;
             return;
         }
-        ValueStack vstack = debugInfo(src);
-        if (vstack == null) {
-            return;
-        }
-        if (pendingNonSafepoint != null) {
-            // Got some old debug info. Get rid of it.
-            if (!(pendingNonSafepoint instanceof Instruction) || !(src instanceof Instruction)) {
-                // TODO: wtf to do about non instructions?
-                return;
+        ValueStack stateBefore = stateBefore(ins);
+        if (stateBefore != null) {
+            if (pendingNonSafepoint != null) {
+                // Got some old debug info. Get rid of it.
+                if (!(pendingNonSafepoint instanceof Instruction) || !(ins instanceof Instruction)) {
+                    // TODO: wtf to do about non instructions?
+                    return;
+                }
+                if (((Instruction) pendingNonSafepoint).bci() == ((Instruction) ins).bci() && stateBefore(pendingNonSafepoint) == stateBefore) {
+                    pendingNonSafepointOffset = pcOffset;
+                    return;
+                }
+                if (pendingNonSafepointOffset < pcOffset) {
+                    recordNonSafepointDebugInfo();
+                }
+                pendingNonSafepoint = null;
             }
-            if (((Instruction) pendingNonSafepoint).bci() == ((Instruction) src).bci() && debugInfo(pendingNonSafepoint) == vstack) {
+            // Remember the debug info.
+            if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
+                pendingNonSafepoint = ins;
                 pendingNonSafepointOffset = pcOffset;
-                return;
             }
-            if (pendingNonSafepointOffset < pcOffset) {
-                recordNonSafepointDebugInfo();
-            }
-            pendingNonSafepoint = null;
-        }
-        // Remember the debug info.
-        if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
-            pendingNonSafepoint = src;
-            pendingNonSafepointOffset = pcOffset;
         }
     }
 
@@ -349,28 +347,7 @@ public abstract class LIRAssembler {
     }
 
     void recordNonSafepointDebugInfo() {
-        int pcOffset = pendingNonSafepointOffset;
-        ValueStack vstack = debugInfo(pendingNonSafepoint);
-        // TODO: what should the bci be for a phi or local?
-        int bci = pendingNonSafepoint instanceof Instruction ? ((Instruction) pendingNonSafepoint).bci() : -1;
-
-        DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
-        assert debugInfo.recordingNonSafepoints() : "sanity";
-
-        debugInfo.addNonSafepoint(pcOffset);
-
-        // Visit scopes from oldest to youngest.
-        for (int n = 0;; n++) {
-            int[] sBci = {bci};
-            ValueStack s = nthOldest(vstack, n, sBci);
-            if (s == null) {
-                break;
-            }
-            IRScope scope = s.scope();
-            debugInfo.describeScope(pcOffset, scope.method, sBci);
-        }
-
-        debugInfo.endNonSafepoint(pcOffset);
+        // TODO
     }
 
     protected void addDebugInfoForNullCheckHere(CodeEmitInfo cinfo) {
@@ -397,12 +374,6 @@ public abstract class LIRAssembler {
 
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info);
-
-        // TODO (tw) check if this is necessary and how to do it properly!
-        if (compilation.runtime.isMP()) {
-            // must align calls sites, otherwise they can't be updated atomically on MP hardware
-            //alignCall(op.code());
-        }
 
         switch (op.code) {
             case StaticCall:

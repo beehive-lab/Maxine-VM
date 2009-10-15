@@ -44,7 +44,7 @@ public final class CodeAttributePrinter {
 
     /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print stream.
-     * 
+     *
      * @param stream
      *                where to print the contents
      * @param codeAttribute
@@ -57,7 +57,7 @@ public final class CodeAttributePrinter {
 
     /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print writer.
-     * 
+     *
      * @param _stream
      *                where to print the contents
      * @param codeAttribute
@@ -65,7 +65,7 @@ public final class CodeAttributePrinter {
      */
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
-        printWriter.println("Stack=" + codeAttribute.maxStack() + ", Locals=" + codeAttribute.maxLocals());
+        printWriter.println("Stack=" + codeAttribute.maxStack + ", Locals=" + codeAttribute.maxLocals);
         final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool());
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
@@ -88,7 +88,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#exceptionHandlerTable() exception table} in a given
      * code attribute object to a given print writer. This method outputs nothing to {@code printWriter} if the exception
      * table is empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) exception table
      * @param printWriter
@@ -121,7 +121,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#stackMapTable() stack map table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the stack map table is
      * empty or does not exist.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly null) stack map table
      * @param printWriter
@@ -148,7 +148,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#lineNumberTable() line number table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the line number table is
      * empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) line number table
      * @param printWriter
@@ -169,7 +169,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#localVariableTable() local variable table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the local variable table is
      * empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) local variable table
      * @param printWriter
@@ -195,7 +195,7 @@ public final class CodeAttributePrinter {
     /**
      * Gets a UTF8 string from a given constant pool. If a {@code ClassFormatError} occurs while retrieving the UTF8
      * value, then the result of calling {@link ClassFormatError#toString()} on the error object is return instead.
-     * 
+     *
      * @param constantPool
      * @param index
      * @return the string version of the UTF8 at {@code index} in {@code constantPool}

@@ -415,7 +415,7 @@ public abstract class LIRInstruction {
         st.print(" ");
         printInstruction(st);
         if (info != null) {
-            st.printf(" [bci:%d]", info.bci());
+            st.printf(" [bci:%d]", info.bci);
         }
     }
     public boolean verify() {

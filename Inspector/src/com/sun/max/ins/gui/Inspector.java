@@ -105,7 +105,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         switch(menuKind) {
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
-                    @Override
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseAction());
                         menu.add(getCloseOtherInspectorsAction());
@@ -117,7 +116,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
                 break;
             case MEMORY_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
-                    @Override
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericMemoryMenuItems());

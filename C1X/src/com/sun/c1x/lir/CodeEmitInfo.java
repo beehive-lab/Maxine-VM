@@ -36,11 +36,12 @@ import com.sun.c1x.value.*;
 public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
-    private final IRScope scope;
-    private List<ExceptionHandler> exceptionHandlers;
     public OopMap oopMap;
-    private final ValueStack stack; // used by deoptimization (contains also monitors
-    private final int bci;
+    public final IRScope scope;
+    public final int bci;
+
+    private List<ExceptionHandler> exceptionHandlers;
+    private final ValueStack stack;
 
     public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> exceptionHandlers) {
         this.scope = state.scope();
@@ -58,13 +59,13 @@ public class CodeEmitInfo {
         this.bci = info.bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
-        stack = info.stack;
+        this.stack = info.stack;
 
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
-            exceptionHandlers = new ArrayList<ExceptionHandler>();
+            this.exceptionHandlers = new ArrayList<ExceptionHandler>();
             for (ExceptionHandler h : info.exceptionHandlers) {
-                exceptionHandlers.add(new ExceptionHandler(h));
+                this.exceptionHandlers.add(new ExceptionHandler(h));
             }
         }
     }
@@ -74,7 +75,7 @@ public class CodeEmitInfo {
     }
 
     FrameMap frameMap() {
-        return scope.compilation().frameMap();
+        return scope.compilation.frameMap();
     }
 
     /**
@@ -86,19 +87,6 @@ public class CodeEmitInfo {
         return scopeDebugInfo;
     }
 
-    // accessors
-    public OopMap oopMap() {
-        return oopMap;
-    }
-
-    public void setOopMap(OopMap oopMap) {
-        this.oopMap = oopMap;
-    }
-
-    public IRScope scope() {
-        return scope;
-    }
-
     public List<ExceptionHandler> exceptionHandlers() {
         return exceptionHandlers;
     }
@@ -107,30 +95,13 @@ public class CodeEmitInfo {
         return stack;
     }
 
-    public int bci() {
-        return bci;
-    }
-
     public void addRegisterOop(LIROperand opr) {
         assert oopMap != null :  "oop map must already exist";
         assert opr.isSingleCpu() :  "should not call otherwise";
-
-        CiLocation name = frameMap().regname(opr);
-        oopMap.setOop(name);
+        oopMap.setOop(opr.asRegister());
     }
 
     public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-
         // TODO: (tw) Check where to generate the oopMap!
-        if (oopMap == null) {
-            return;
-        }
-
-        // record the safepoint before recording the debug info for enclosing scopes
-        recorder.addSafepoint(pcOffset, oopMap.deepCopy());
-        if (scopeDebugInfo != null) {
-            scopeDebugInfo.recordDebugInfo(recorder, pcOffset);
-        }
-        recorder.endSafepoint(pcOffset);
     }
 }

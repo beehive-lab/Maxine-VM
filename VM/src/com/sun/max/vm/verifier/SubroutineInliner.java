@@ -73,8 +73,8 @@ public class SubroutineInliner {
         final CodeAttribute newCodeAttribute = new CodeAttribute(
             oldCodeAttribute.constantPool(),
             newCode,
-            (char) oldCodeAttribute.maxStack(),
-            (char) oldCodeAttribute.maxLocals(),
+            (char) oldCodeAttribute.maxStack,
+            (char) oldCodeAttribute.maxLocals,
             exceptionHandlerTable,
             lineNumberTable,
             localVariableTable,

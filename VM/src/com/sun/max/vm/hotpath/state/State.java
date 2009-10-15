@@ -147,7 +147,7 @@ public abstract class State<Element_Type extends Classifiable> {
     }
 
     public Element_Type [] getLocalSlots() {
-        final int numberOfLocalSlots = last().method().codeAttribute().maxLocals();
+        final int numberOfLocalSlots = last().method().codeAttribute().maxLocals;
         return getSlots(0, numberOfLocalSlots);
     }
 
@@ -157,7 +157,7 @@ public abstract class State<Element_Type extends Classifiable> {
     }
 
     public Element_Type [] getStackSlots() {
-        final int numberOfLocalSlots = last().method().codeAttribute().maxLocals();
+        final int numberOfLocalSlots = last().method().codeAttribute().maxLocals;
         final int numberOfStackSlots = last().stackHeight() - numberOfLocalSlots;
         return getSlots(numberOfLocalSlots, numberOfStackSlots);
     }
@@ -271,8 +271,8 @@ public abstract class State<Element_Type extends Classifiable> {
         last().sp -= method.numberOfParameterSlots();
         last().pc = returnPc;
         frame.lp = length();
-        frame.sp = frame.lp + method.codeAttribute().maxLocals();
-        for (int i = method.numberOfParameterSlots(); i < method.codeAttribute().maxLocals(); i++) {
+        frame.sp = frame.lp + method.codeAttribute().maxLocals;
+        for (int i = method.numberOfParameterSlots(); i < method.codeAttribute().maxLocals; i++) {
             setOne(frame.lp + i, undefined());
         }
         frames.append(frame);

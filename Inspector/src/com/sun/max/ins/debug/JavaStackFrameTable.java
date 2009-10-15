@@ -268,7 +268,7 @@ public class JavaStackFrameTable extends InspectorTable {
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                 CodeAttribute codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
                 if (bytecodePosition != -1 && codeAttribute != null) {
-                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals(); ++localVariableIndex) {
+                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
                         final int localVariableOffset = jitLayout.localVariableOffset(localVariableIndex);
                         if (getOffset(row).equals(localVariableOffset)) {
                             final Entry entry = codeAttribute.localVariableTable().findLocalVariable(localVariableIndex, bytecodePosition);

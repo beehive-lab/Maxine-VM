@@ -197,7 +197,7 @@ public class LIRTypeCheck extends LIRInstruction {
         }
         super.printInstruction(out);
         if (info != null) {
-            out.printf(" [bci:%d]", info.bci());
+            out.printf(" [bci:%d]", info.bci);
         }
     }
 }

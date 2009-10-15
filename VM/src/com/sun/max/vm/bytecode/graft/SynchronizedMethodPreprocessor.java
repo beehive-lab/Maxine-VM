@@ -35,7 +35,7 @@ s */
 public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
 
     public SynchronizedMethodPreprocessor(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor, CodeAttribute codeAttribute) {
-        super(constantPoolEditor, 0, codeAttribute.maxStack(), codeAttribute.maxLocals());
+        super(constantPoolEditor, 0, codeAttribute.maxStack, codeAttribute.maxLocals);
 
         codeStream = new SeekableByteArrayOutputStream();
 

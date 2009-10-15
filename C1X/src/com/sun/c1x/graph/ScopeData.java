@@ -198,7 +198,7 @@ public class ScopeData {
             if (block == null) {
                 BlockBegin p = this.parent.blockAt(bci);
                 if (p != null) {
-                    BlockBegin newBlock = new BlockBegin(p.bci(), scope.compilation().hir().nextBlockNumber());
+                    BlockBegin newBlock = new BlockBegin(p.bci(), scope.compilation.hir().nextBlockNumber());
                     newBlock.setDepthFirstNumber(p.depthFirstNumber());
                     newBlock.copyBlockFlags(p);
                     jsrDuplicatedBlocks[bci] = newBlock;
