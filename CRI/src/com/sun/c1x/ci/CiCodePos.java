@@ -23,22 +23,22 @@ package com.sun.c1x.ci;
 import com.sun.c1x.ri.RiMethod;
 
 /**
- * This class represents a code site (i.e. a chain of inlined methods with bytecode
- * locations) that is communicated from the compiler to the runtime system. A code site
+ * This class represents a code position (i.e. a chain of inlined methods with bytecode
+ * locations) that is communicated from the compiler to the runtime system. A code position
  * can be used by the runtime system to reconstruct a source-level stack trace
  * for exceptions and to create stack frames for deoptimization (switching from
  * optimized code to interpreted code).
  *
  * @author Ben L. Titzer
  */
-public class CiCodeSite {
+public class CiCodePos {
     /**
-     * The site where this site has been inlined, {@code null} if none.
+     * The position where this position has been called, {@code null} if none.
      */
-    public final CiCodeSite parent;
+    public final CiCodePos caller;
 
     /**
-     * The runtime interface method for this site.
+     * The runtime interface method for this position.
      */
     public final RiMethod method;
 
@@ -50,21 +50,21 @@ public class CiCodeSite {
     public final int bci;
 
     /**
-     * Constructs a new site with the given site as the parent, the given method, and the given
+     * Constructs a new position with the given position as the parent, the given method, and the given
      * bytecode index.
-     * @param parent the parent site
+     * @param caller the parent position
      * @param method the method
      * @param bci the bytecode index within the method
      */
-    public CiCodeSite(CiCodeSite parent, RiMethod method, int bci) {
-        this.parent = parent;
+    public CiCodePos(CiCodePos caller, RiMethod method, int bci) {
+        this.caller = caller;
         this.method = method;
         this.bci = bci;
     }
 
     /**
-     * Converts this code site to a string representation.
-     * @return a string representation of this code site
+     * Converts this code position to a string representation.
+     * @return a string representation of this code position
      */
     @Override
     public String toString() {
@@ -72,8 +72,8 @@ public class CiCodeSite {
     }
 
     private StringBuilder append(StringBuilder buf) {
-        if (parent != null) {
-            parent.append(buf);
+        if (caller != null) {
+            caller.append(buf);
             buf.append(" -> ");
         }
         buf.append(method);
