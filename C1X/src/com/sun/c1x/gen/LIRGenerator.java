@@ -371,7 +371,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             LIROperand res = x.operand();
             if (!(!res.isIllegal())) {
-                res = LIROperandFactory.basicType(x);
+                res = LIROperandFactory.constant(x);
             }
             if (res.isConstant()) {
                 LIROperand reg = rlockResult(x);
@@ -1406,7 +1406,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        return loadConstant((LIRConstant) LIROperandFactory.basicType(x));
+        return loadConstant((LIRConstant) LIROperandFactory.constant(x));
     }
 
     protected LIROperand loadConstant(LIRConstant c) {
@@ -2091,7 +2091,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
-                x.setOperand(LIROperandFactory.basicType(x));
+                x.setOperand(LIROperandFactory.constant(x));
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi

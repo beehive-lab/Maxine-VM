@@ -345,6 +345,7 @@ public class X86LIRAssembler extends LIRAssembler {
             case Boolean:
             case Byte:
             case Char:
+            case Jsr:
             case Int: {
                 masm().movl(dest.asRegister(), c.value.asInt());
                 break;
