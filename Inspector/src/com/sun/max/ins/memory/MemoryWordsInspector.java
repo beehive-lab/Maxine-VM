@@ -377,7 +377,7 @@ public final class MemoryWordsInspector extends Inspector {
 
         scrollPane = new SizedScrollPane(inspection(), table);
         panel.add(scrollPane, BorderLayout.CENTER);
-        frame().setContentPane(panel);
+        setContentPane(panel);
         // Force everything into consistency with the current view mode.
         updateViewMode();
 
@@ -490,7 +490,7 @@ public final class MemoryWordsInspector extends Inspector {
             default:
                 ProgramError.unknownCase();
         }
-        updateFrameTitle();
+        setTitle();
     }
 
     @Override
@@ -539,9 +539,9 @@ public final class MemoryWordsInspector extends Inspector {
         setViewMode(originalViewMode);
         table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
         table.scrollToBeginning();
-        frame().pack();
+        pack();
         regionName = originalRegionName;
-        updateFrameTitle();
+        setTitle();
     }
 
     /**
@@ -610,7 +610,7 @@ public final class MemoryWordsInspector extends Inspector {
         table.scrollToBeginning();
         // User model policy:  any adjustment to the region drops into generic word mode
         clearViewMode();
-        updateFrameTitle();
+        setTitle();
     }
 
     /**
@@ -623,7 +623,7 @@ public final class MemoryWordsInspector extends Inspector {
         table.scrollToEnd();
         // User model policy:  any adjustment to the region drops into generic word mode
         clearViewMode();
-        updateFrameTitle();
+        setTitle();
     }
 
     private void moveToCurrentObject() {
@@ -636,7 +636,7 @@ public final class MemoryWordsInspector extends Inspector {
             setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
             setOrigin(teleObject.getCurrentOrigin());
             table.scrollToOrigin();
-            updateFrameTitle();
+            setTitle();
         } else {
             moveToPreviousObject();
         }
@@ -652,7 +652,7 @@ public final class MemoryWordsInspector extends Inspector {
             setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
             setOrigin(teleObject.getCurrentOrigin());
             table.scrollToOrigin();
-            updateFrameTitle();
+            setTitle();
         }
     }
 
@@ -672,7 +672,7 @@ public final class MemoryWordsInspector extends Inspector {
             setOrigin(teleObject.getCurrentOrigin());
             // Scroll so that whole object is visible if possible
             table.scrollToRange(origin, objectMemoryRegion.end().minus(wordSize));
-            updateFrameTitle();
+            setTitle();
         }
     }
 
@@ -685,7 +685,7 @@ public final class MemoryWordsInspector extends Inspector {
         setOrigin(newOrigin);
         setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
-        updateFrameTitle();
+        setTitle();
     }
 
     private void moveToNextPage() {
@@ -697,7 +697,7 @@ public final class MemoryWordsInspector extends Inspector {
         setOrigin(nextOrigin);
         setMemoryRegion(new MemoryWordRegion(nextOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
-        updateFrameTitle();
+        setTitle();
     }
 
     private void moveToPreviousPage() {
@@ -705,7 +705,7 @@ public final class MemoryWordsInspector extends Inspector {
         setOrigin(newOrigin);
         setMemoryRegion(new MemoryWordRegion(newOrigin, wordsInPage, wordSize));
         table.scrollToBeginning();
-        updateFrameTitle();
+        setTitle();
     }
 
     @Override
@@ -733,7 +733,7 @@ public final class MemoryWordsInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         super.inspectorClosing();
     }
 

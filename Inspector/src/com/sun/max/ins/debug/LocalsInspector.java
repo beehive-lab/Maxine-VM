@@ -107,7 +107,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     @Override
     protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+        if (getJComponent().isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
             final Sequence<StackFrame> frames = thread.frames();
@@ -292,7 +292,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         mainPanel.add(localsPanel);
         mainPanel.add(stackPanel);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), mainPanel);
-        frame().setContentPane(scrollPane);
+        setContentPane(scrollPane);
     }
 
 }

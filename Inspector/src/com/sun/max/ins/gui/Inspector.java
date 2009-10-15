@@ -41,7 +41,7 @@ import com.sun.max.vm.stack.*;
 
 /**
  * <p>
- * An inspector combines an aggregation of {@link Prober}s in a frame.</p>
+ * An inspector combines an aggregation of {@link Prober}s in a displayed frame.</p>
  * <p>
  * <b>Event Notification</b>:
  * This abstract class ensures that very Inspector listens for {@linkplain InspectionListener Inspection Events}
@@ -49,16 +49,12 @@ import com.sun.max.vm.stack.*;
  * that wishes to receive such notifications must do so by overriding the appropriate
  * methods in interfaces {@link InspectionListener} and {@link ViewFocusListener},
  * for which empty methods are provided in this abstract class.</p>
- *<p>
- * <b>Implementation notes</b>:  for historical reasons an {@link Inspector} <i>has a</i> Frame,
- * rather than being a specialized subclass of Frame.  This creates a number of
- * awkward interfaces, which may be cleaned up in the fullness of time. (mlvdv May '09)</p>
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  *
  */
-public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
+public abstract class Inspector extends AbstractInspectionHolder implements RootPaneContainer, InspectionListener, ViewFocusListener {
 
     private static final int TRACE_VALUE = 2;
 
@@ -66,6 +62,17 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     public static final String DEFAULT_INSPECTOR_MENU = "Default";
     public static final String VIEW_INSPECTOR_MENU = "View";
     public static final String METHOD_INSPECTOR_MENU = "Method";
+
+    private InspectorFrame frame;
+
+    protected Inspector(Inspection inspection) {
+        super(inspection);
+    }
+
+    /**
+     * Populates the inspector's frame, already created, with components that make up the Inspector's view.
+     */
+    protected abstract void createView();
 
     public InspectorMenu createDefaultMenu() {
         final InspectorMenu menu = new InspectorMenu(Inspector.DEFAULT_INSPECTOR_MENU);
@@ -81,19 +88,14 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return menu;
     }
 
-    private InspectorFrame frame;
-
-    /**
-     * @return the inspector frame in which the Inspector displays its view.
-     */
-    public final InspectorFrame frame() {
-        return frame;
+    protected InspectorMenu getMenu(String menuName) {
+        return frame.getMenu(menuName);
     }
 
     /**
-     * @return the window system component in which the Inspector displays its view.
+     * @return the component in which the Inspector displays its view.
      */
-    public final Component component() {
+    public final JComponent getJComponent() {
         return frame;
     }
 
@@ -135,30 +137,38 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return a short string suitable for appearing in the window frame of an inspector.
-     * If this text is expected to change dynamically, a call to {@link #updateFrameTitle()}
-     * will cause this to be called again and the result assigned to the frame.
-     */
-    public abstract String getTextForTitle();
-
-    /**
      * @return the string currently appearing in the title of the Inspector's window frame
      */
-    protected final String getCurrentTitle() {
-        return frame().getTitle();
-    }
-
-    protected Inspector(Inspection inspection) {
-        super(inspection);
+    public final String getTitle() {
+        return frame.getTitle();
     }
 
     /**
-     * Populates the inspector's frame, already created, with components that make up the Inspector's view.
+     * Gets from subclasses the currently appropriate title for this inspector's display frame.
+     *
+     * @return a short string suitable for appearing in the window frame of an inspector.
+     * If this text is expected to change dynamically, a call to {@link #setTitle()}
+     * will cause this to be called again and the result assigned to the frame.
      */
-    protected abstract void createView();
+    protected abstract String getTextForTitle();
 
-    protected final void updateFrameTitle() {
-        frame().setTitle(getTextForTitle());
+
+    /**
+     * Sets the display frame title for this inspector to the string provided by
+     * the abstract method {@link #getTextForTitle()}.
+     */
+    protected final void setTitle() {
+        setTitle(null);
+    }
+
+    /**
+     * Sets the display frame title for this inspector.
+     *
+     * @param title a string to display.  If null, uses the string provided by
+     * the abstract method {@link #getTextForTitle()}.
+     */
+    protected final void setTitle(String title) {
+        frame.setTitle(title == null ? getTextForTitle() : title);
     }
 
     /**
@@ -173,7 +183,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected void createFrame(InspectorMenu menu) {
         frame = new InspectorFrame(this, menu);
-        updateFrameTitle();
+        setTitle();
         createView();
         frame.pack();
         gui().addInspector(this);
@@ -206,7 +216,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         final Dimension size = frame.getSize();
         createView();
         frame.setPreferredSize(size);
-        frame().pack();
+        frame.pack();
     }
 
     /**
@@ -216,8 +226,109 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return null;
     }
 
-    protected InspectorMenu getMenu(String menuName) {
-        return frame.getMenu(menuName);
+    public JRootPane getRootPane() {
+        return frame.getRootPane();
+    }
+
+    public void setContentPane(Container contentPane) {
+        frame.setContentPane(contentPane);
+    }
+
+    public Container getContentPane() {
+        return frame.getContentPane();
+    }
+
+    public void setLayeredPane(JLayeredPane layeredPane) {
+        frame.setLayeredPane(layeredPane);
+    }
+
+    public JLayeredPane getLayeredPane() {
+        return frame.getLayeredPane();
+    }
+
+    public void setGlassPane(Component glassPane) {
+        frame.setGlassPane(glassPane);
+    }
+
+    public Component getGlassPane() {
+        return frame.getGlassPane();
+    }
+
+    protected void moveToFront() {
+        frame.moveToFront();
+    }
+
+    protected boolean isSelected() {
+        return frame.isSelected();
+    }
+
+    protected void setSelected() {
+        frame.setSelected();
+    }
+
+    public void pack() {
+        frame.pack();
+    }
+
+    public void flash() {
+        frame.flash(style().frameBorderFlashColor());
+    }
+
+    /**
+     * Calls this inspector to the users attention:  move to front, select, and flash.
+     */
+    public void highlight() {
+        frame.moveToFront();
+        setSelected();
+        flash();
+    }
+
+    /**
+     * If not already visible and selected, calls this inspector to the users attention:  move to front, select, and flash.
+     */
+    protected void highlightIfNotVisible() {
+        frame.moveToFront();
+        if (!isSelected()) {
+            setSelected();
+            frame.flash(style().frameBorderFlashColor());
+        }
+    }
+
+    /**
+     * Explicitly closes a particular Inspector, but
+     * many are closed implicitly by a window system
+     * event on the frame.
+     */
+    public void dispose() {
+        frame.dispose();
+    }
+
+    public void replaceFrameCloseAction(InspectorAction action) {
+        frame.replaceFrameCloseAction(action);
+    }
+
+    /**
+     * Receives notification that the the frame has acquired focus in the window system.
+     */
+    protected void inspectorGetsWindowFocus() {
+    }
+
+    /**
+     * Receives notification that the the frame has acquired focus in the window system.
+     */
+    protected void inspectorLosesWindowFocus() {
+    }
+
+    /**
+     * Receives notification that the window system is closing this inspector.
+     */
+    protected void inspectorClosing() {
+        inspection().removeInspectionListener(this);
+        inspection().focus().removeListener(this);
+        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
+        if (saveSettingsListener != null) {
+            inspection().settings().removeSaveSettingsListener(saveSettingsListener);
+        }
     }
 
     public void vmStateChanged(boolean force) {
@@ -258,78 +369,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-    }
-
-    /**
-     * @return whether the inspector's view can be seen on the screen.
-     */
-    protected final boolean isShowing() {
-        return frame.isShowing();
-    }
-
-    protected void moveToFront() {
-        frame.moveToFront();
-    }
-
-    protected boolean isSelected() {
-        return frame.isSelected();
-    }
-
-    protected void setSelected() {
-        frame.setSelected();
-    }
-
-    /**
-     * Calls this inspector to the users attention:  move to front, select, and flash.
-     */
-    public void highlight() {
-        moveToFront();
-        setSelected();
-        frame.flash(style().frameBorderFlashColor());
-    }
-
-    /**
-     * If not already visible and selected, calls this inspector to the users attention:  move to front, select, and flash.
-     */
-    protected void highlightIfNotVisible() {
-        moveToFront();
-        if (!isSelected()) {
-            setSelected();
-            frame.flash(style().frameBorderFlashColor());
-        }
-    }
-
-    /**
-     * Explicitly closes a particular Inspector, but
-     * many are closed implicitly by a window system
-     * event on the frame.
-     */
-    public void dispose() {
-        frame.dispose();
-    }
-
-    /**
-     * Receives notification that the the frame has acquired focus in the window system.
-     */
-    protected void inspectorGetsWindowFocus() {
-    }
-
-    /**
-     * Receives notification that the the frame has acquired focus in the window system.
-     */
-    protected void inspectorLosesWindowFocus() {
-    }
-
-    /**
-     * Receives notification that the window system is closing this inspector.
-     */
-    protected void inspectorClosing() {
-        inspection().removeInspectionListener(this);
-        inspection().focus().removeListener(this);
-        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
-        if (saveSettingsListener != null) {
-            inspection().settings().removeSaveSettingsListener(saveSettingsListener);
-        }
     }
 
     /**

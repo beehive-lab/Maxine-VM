@@ -103,8 +103,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                 }
             });
         }
-        frame().setContentPane(tabbedPane);
-        updateFrameTitle();
+        setContentPane(tabbedPane);
+        setTitle();
     }
 
     @Override
@@ -190,7 +190,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
-        updateFrameTitle();
+        setTitle();
 
         return true;
     }

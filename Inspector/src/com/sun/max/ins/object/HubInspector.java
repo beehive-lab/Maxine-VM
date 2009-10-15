@@ -171,7 +171,7 @@ public final class HubInspector extends ObjectInspector {
             panel.add(refMapPane);
         }
 
-        frame().getContentPane().add(panel);
+        getContentPane().add(panel);
     }
 
     @Override

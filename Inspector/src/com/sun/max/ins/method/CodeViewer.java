@@ -169,7 +169,7 @@ public abstract class CodeViewer extends InspectorPanel {
         if (searchToolBar == null) {
             searchToolBar = new RowTextSearchToolBar(inspection(), searchListener, getRowTextSearcher());
             toolBarPanel.add(searchToolBar);
-            parent().frame().pack();
+            parent().pack();
             searchToolBar.getFocus();
         }
     }
@@ -177,7 +177,7 @@ public abstract class CodeViewer extends InspectorPanel {
     private void closeSearch() {
         Trace.line(TRACE_VALUE, "search:  closing");
         toolBarPanel.remove(searchToolBar);
-        parent().frame().pack();
+        parent().pack();
         searchToolBar = null;
         searchMatchingRows = null;
     }
@@ -290,7 +290,7 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void flash() {
-        parent.frame().flash(style().frameBorderFlashColor());
+        parent.flash();
     }
 
 

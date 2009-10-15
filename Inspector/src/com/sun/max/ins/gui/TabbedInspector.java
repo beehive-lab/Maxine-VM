@@ -103,17 +103,17 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     public void setSelected(Inspector_Type inspector) {
         moveToFront();
-        tabbedPane.setSelectedComponent(inspector.frame());
+        tabbedPane.setSelectedComponent(inspector.getJComponent());
     }
 
     public boolean isSelected(Inspector_Type inspector) {
-        return inspector.frame() ==  tabbedPane.getSelectedComponent();
+        return inspector.getJComponent() ==  tabbedPane.getSelectedComponent();
     }
 
     public Inspector_Type getSelected() {
         final Component component =  tabbedPane.getSelectedComponent();
         for (Inspector_Type  inspector : this) {
-            if (inspector.frame() == component) {
+            if (inspector.getJComponent() == component) {
                 return inspector;
             }
         }
@@ -121,7 +121,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     }
 
     public void add(Inspector_Type inspector) {
-        add(inspector, inspector.frame().getTitle());
+        add(inspector, inspector.getTitle());
     }
 
     public void add(Inspector_Type inspector, String tabTitle) {
@@ -129,22 +129,22 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     }
 
     public void add(Inspector_Type inspector, String tabTitle, String tabToolTipText) {
-        final InspectorFrame inspectorFrame = inspector.frame();
-        tabbedPane.addTab(tabTitle, inspectorFrame);
+        final JComponent component = inspector.getJComponent();
+        tabbedPane.addTab(tabTitle, component);
         if (tabToolTipText != null) {
-            final int index = tabbedPane.indexOfComponent(inspectorFrame);
+            final int index = tabbedPane.indexOfComponent(component);
             tabbedPane.setToolTipTextAt(index, tabToolTipText);
         }
     }
 
     public void add(Inspector_Type inspector, String tabTitle, String tabToolTipText, String frameTitle) {
-        final InspectorFrame inspectorFrame = inspector.frame();
-        tabbedPane.addTab(tabTitle, inspectorFrame);
+        final JComponent component = inspector.getJComponent();
+        tabbedPane.addTab(tabTitle, component);
         if (tabToolTipText != null) {
-            tabbedPane.setToolTipTextAt(tabbedPane.indexOfComponent(inspectorFrame), tabToolTipText);
+            tabbedPane.setToolTipTextAt(tabbedPane.indexOfComponent(component), tabToolTipText);
         }
         if (frameTitle != null) {
-            inspectorFrame.setTitle(frameTitle);
+            inspector.setTitle(frameTitle);
         }
     }
 
@@ -154,7 +154,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
      * tabbed frames.
      */
     public void addCloseIconToTab(Inspector_Type inspector) {
-        final int index = tabbedPane.indexOfComponent(inspector.frame());
+        final int index = tabbedPane.indexOfComponent(inspector.getJComponent());
         tabbedPane.setTabComponentAt(index, new ButtonTabComponent(inspection(), this, inspector, tabbedPane));
     }
 
@@ -164,7 +164,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     @Override
     public void createView() {
-        frame().setContentPane(tabbedPane);
+        setContentPane(tabbedPane);
     }
 
     public void viewConfigurationChanged() {

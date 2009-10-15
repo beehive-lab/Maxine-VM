@@ -77,7 +77,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     @Override
     protected void createView() {
         table = new MemoryRegionsTable(inspection(), viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
+        setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

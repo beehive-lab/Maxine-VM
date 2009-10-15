@@ -65,12 +65,12 @@ public class TupleInspector extends ObjectInspector {
         super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
-        frame().getContentPane().add(fieldsPane);
+        getContentPane().add(fieldsPane);
     }
 
     @Override
     protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+        if (getJComponent().isShowing() || force) {
             fieldsPane.refresh(force);
             if (classMethodInspectorMenuItems != null) {
                 classMethodInspectorMenuItems.refresh(force);

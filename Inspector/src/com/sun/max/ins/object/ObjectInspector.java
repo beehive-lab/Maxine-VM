@@ -123,7 +123,7 @@ public abstract class ObjectInspector extends Inspector {
             // Will add without column headers
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
-        frame().setContentPane(panel);
+        setContentPane(panel);
     }
 
     @Override
@@ -178,7 +178,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         if (teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
@@ -213,7 +213,7 @@ public abstract class ObjectInspector extends Inspector {
         final Pointer newOrigin = teleObject.getCurrentOrigin();
         if (!teleObject.isLive()) {
             setWarning();
-            updateFrameTitle();
+            setTitle();
             return false;
         }
         if (!newOrigin.equals(currentObjectOrigin)) {
@@ -225,7 +225,7 @@ public abstract class ObjectInspector extends Inspector {
                 objectHeaderTable.refresh(force);
             }
         }
-        updateFrameTitle();
+        setTitle();
         super.refreshView(force);
 
         return true;

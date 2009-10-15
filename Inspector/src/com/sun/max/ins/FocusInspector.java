@@ -89,7 +89,7 @@ public final class FocusInspector extends Inspector {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(table.getTableHeader(), BorderLayout.NORTH);
         panel.add(table, BorderLayout.CENTER);
-        frame().setContentPane(panel);
+        setContentPane(panel);
         focus().addListener(table);
     }
 

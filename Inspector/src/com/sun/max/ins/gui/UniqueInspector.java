@@ -294,8 +294,8 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
     }
 
-    private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(InspectorFrame inspectorFrame, Key<UniqueInspector_Type> key) {
-        final Inspector inspector = inspectorFrame.inspector();
+    private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(Inspector inspector, Key<UniqueInspector_Type> key) {
+       // final Inspector inspector = inspectorFrame.inspector();
         if (key != null && key.type().isInstance(inspector)) {
             final UniqueInspector_Type uniqueInspector = key.type().cast(inspector);
             if (uniqueInspector.key().equals(key)) {
@@ -308,7 +308,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
     public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, final Key<UniqueInspector_Type> key) {
         final Predicate<Inspector> predicate = new Predicate<Inspector>() {
             public boolean evaluate(Inspector inspector) {
-                return match(inspector.frame(), key) != null;
+                return match(inspector, key) != null;
             }
         };
         final Inspector inspector =  inspection.gui().findInspector(predicate);

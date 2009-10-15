@@ -73,15 +73,13 @@ public final class NativeMethodInspector extends MethodInspector {
     @Override
     public void createView() {
         targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, teleTargetRoutine);
-        frame().getContentPane().add(targetCodeViewer);
-        frame().pack();
-        frame().invalidate();
-        frame().repaint();
+        getContentPane().add(targetCodeViewer);
+        pack();
     }
 
     @Override
     protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+        if (getJComponent().isShowing() || force) {
             targetCodeViewer.refresh(force);
         }
         return true;

@@ -81,7 +81,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     @Override
     protected void createView() {
         table = new BreakpointsTable(inspection(), viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
+        setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override

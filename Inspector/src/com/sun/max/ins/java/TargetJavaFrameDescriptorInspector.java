@@ -158,7 +158,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
                 panel.add(createDescriptorPanel(descriptor), 0);
                 descriptor = descriptor.parent();
             } while (descriptor != null);
-            frame().setContentPane(panel);
+            setContentPane(panel);
         }
     }
 
