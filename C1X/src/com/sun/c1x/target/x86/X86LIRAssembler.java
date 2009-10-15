@@ -41,7 +41,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
     private static final CiRegister ICKlass = X86.rax;
-    //private static final Register SYNCHeader = X86.rax;
     private static final CiRegister SHIFTCount = X86.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
@@ -182,58 +181,6 @@ public class X86LIRAssembler extends LIRAssembler {
         return offset;
     }
 
-
-    // TODO: Check why this is not used!
-    /*
-    private void monitorexit(LIROperand objOpr, LIROperand lockOpr, Register newHdr, int monitorNo, Register exception) {
-        if (exception.isValid()) {
-            // preserve exception
-            // note: the monitorExit runtime call is a leaf routine
-            // and cannot block => no GC can happen
-            // The slow case (MonitorAccessStub) uses the first two stack slots
-            // ([esp+0] and [esp+4]), therefore we store the exception at [esp+8]
-            masm().movptr(new Address(X86.rsp, 2 * compilation.target.arch.wordSize), exception);
-        }
-
-        Register objReg = objOpr.asRegister();
-        Register lockReg = lockOpr.asRegister();
-
-        // setup registers (lockReg must be rax, for lockObject)
-        assert objReg != SYNCHeader && lockReg != SYNCHeader : "rax :  must be available here";
-        Register hdr = lockReg;
-        assert newHdr == SYNCHeader : "wrong register";
-        lockReg = newHdr;
-        // compute pointer to BasicLock
-        int lockAddr = frameMap().addressForMonitorLock(monitorNo);
-        masm().movl(lockReg, lockAddr);
-        // unlock object
-        MonitorAccessStub slowCase = new MonitorExitStub(lockOpr, true, monitorNo);
-        // slowCaseStubs.append(slowCase);
-        // temporary fix: must be created after exceptionhandler, therefore as call stub
-        slowCaseStubs.add(slowCase);
-        if (C1XOptions.UseFastLocking) {
-            // try inlined fast unlocking first, revert to slow locking if it fails
-            // note: lockReg points to the displaced header since the displaced header offset is 0!
-            assert compilation.runtime.basicLockDisplacedHeaderOffsetInBytes() == 0 : "lockReg must point to the displaced header";
-            masm().unlockObject(compilation.runtime, hdr, objReg, lockReg, slowCase.entry);
-        } else {
-            // always do slow unlocking
-            // note: the slow unlocking code could be inlined here, however if we use
-            // slow unlocking, speed doesn't matter anyway and this solution is
-            // simpler and requires less duplicated code - additionally, the
-            // slow unlocking code is the same in either case which simplifies
-            // debugging
-            masm().jmp(slowCase.entry);
-        }
-        // done
-        masm().bind(slowCase.continuation);
-
-        if (exception.isValid()) {
-            // restore exception
-            masm().movptr(exception, new Address(X86.rsp, 2 * compilation.target.arch.wordSize));
-        }
-    }*/
-
     @Override
     protected int initialFrameSizeInBytes() {
         // if rounding, must let FrameMap know!
@@ -246,68 +193,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
         return frameMap().frameSize();
     }
-/*
-    @Override
-    public void emitExceptionHandler() {
-        // if the last instruction is a call (typically to do a throw which
-        // is coming at the end after block reordering) the return address
-        // must still point into the code area in order to avoid assert on
-        // failures when searching for the corresponding bci => add a nop
-        // (was bug 5/14/1999 - gri)
-
-        masm().nop();
-
-        // generate code for exception handler
-        // TODO: Check with what to replace this!
-// Pointer handlerBase = masm().startAStub(exceptionHandlerSize);
-// if (handlerBase == null) {
-// // not enough space left for the handler
-// throw new Bailout("exception handler overflow");
-// }
-
-        int offset = codeOffset();
-
-        compilation.offsets().setValue(CodeOffsets.Entries.Exceptions, codeOffset());
-
-        // if the method does not have an exception handler : then there is
-        // no reason to search for one
-        if (compilation.hasExceptionHandlers() || compilation.runtime.jvmtiCanPostExceptions()) {
-            // the exception oop and pc are in rax : and rdx
-            // no other registers need to be preserved : so invalidate them
-            masm().invalidateRegisters(false, true, true, false, true, true);
-
-            // check that there is really an exception
-            masm().verifyNotNullOop(X86.rax);
-
-            // search an exception handler (rax: exception oop, rdx: throwing pc)
-            masm().callRuntime(CiRuntimeCall.HandleException);
-
-            // if the call returns here : then the exception handler for particular
-            // exception doesn't exist . unwind activation and forward exception to caller
-        }
-
-        // the exception oop is in rax :
-        // no other registers need to be preserved : so invalidate them
-        masm().invalidateRegisters(false, true, true, true, true, true);
-
-        // check that there is really an exception
-        masm().verifyNotNullOop(X86.rax);
-
-        // unlock the receiver/klass if necessary
-        // rax : : exception
-        RiMethod method = compilation.method();
-        if (method.isSynchronized() && C1XOptions.GenerateSynchronizationCode) {
-            monitorexit(X86FrameMap.rbxOopOpr, X86FrameMap.rcxOpr, SYNCHeader, 0, X86.rax);
-        }
-
-        // unwind activation and forward exception to caller
-        // rax : : exception
-        masm().callRuntime(CiRuntimeCall.UnwindException);
-
-        assert codeOffset() - offset <= exceptionHandlerSize : "overflow";
-
-        // masm().endAStub();
-    }*/
 
     @Override
     protected void returnOp(LIROperand result) {
@@ -2934,15 +2819,14 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitXir(LIRXirInstruction instruction) {
         XirSnippet snippet = instruction.snippet;
-        Label[] labels = new Label[snippet.template.labels.length];
+        emitXirInstructions(instruction, snippet.template.fastPath, snippet.template.labels, instruction.getOperands());
+    }
+
+    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, XirLabel[] xirLabels, LIROperand[] ops) {
+        Label[] labels = new Label[xirLabels.length];
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new Label();
         }
-
-        emitXirInstructions(instruction, snippet.template.fastPath, labels, instruction.getOperands());
-    }
-
-    private void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, LIROperand[] ops) {
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
                 case Add:
@@ -3073,6 +2957,16 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case CallStub:
+                    XirTemplate stubId = (XirTemplate) inst.extra;
+                    CiRegister result = CiRegister.None;
+                    if (inst.result != null) {
+                        result = ops[inst.result.index].asRegister();
+                    }
+                    RegisterOrConstant[] args = new RegisterOrConstant[inst.arguments.length];
+                    for (int i=0; i<args.length; i++) {
+                        args[i] = asRegisterOrConstant(ops[inst.arguments[i].index]);
+                    }
+                    masm.callGlobalStub(stubId, xir.info, result, args);
                     break;
 
                 case CallRuntime:

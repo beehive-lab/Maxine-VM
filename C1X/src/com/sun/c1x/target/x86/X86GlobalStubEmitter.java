@@ -26,8 +26,11 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.X86Assembler.*;
+import com.sun.c1x.xir.*;
+import com.sun.c1x.xir.CiXirAssembler.*;
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
@@ -48,6 +51,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
 
+    private List<CiRegister> allocatableRegisters = new ArrayList<CiRegister>();
+
     public X86GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
         this.target = compiler.target;
@@ -60,6 +65,112 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     public CiTargetMethod emit(GlobalStub stub) {
         return emitHelper(stub, null);
+    }
+
+    private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
+        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
+    }
+
+
+    private LIROperand allocateResultOperand(XirResult result) {
+        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(0), result.kind);
+    }
+
+    private LIROperand allocateOperand(XirTemp temp) {
+        if (temp instanceof XirFixed) {
+            XirFixed fixed = (XirFixed) temp;
+            return CallingConvention.locationToOperand(fixed.location);
+        }
+
+        return newRegister(temp.kind);
+    }
+
+    private LIROperand newRegister(CiKind kind) {
+        assert kind != CiKind.Float && kind != CiKind.Double;
+        assert allocatableRegisters.size() > 0;
+        return LIROperandFactory.singleLocation(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
+    }
+
+    @Override
+    public CiTargetMethod emit(XirTemplate template) {
+        this.frameSize = 0;
+        this.registerRestoreEpilogueOffset = -1;
+
+        C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
+        X86LIRAssembler assembler = new X86LIRAssembler(compilation);
+        asm = assembler.masm;
+
+        for (CiRegister reg : compiler.target.allocatableRegisters) {
+            if (reg.isCpu()) {
+                allocatableRegisters.add(reg);
+            }
+        }
+
+        for (XirTemp t : template.temps) {
+            if (t instanceof XirFixed) {
+                final XirFixed fixed = (XirFixed) t;
+                if (fixed.location.isRegister()) {
+                    allocatableRegisters.remove(fixed.location.first);
+                    if (fixed.location.isDoubleRegister()) {
+                        allocatableRegisters.remove(fixed.location.second);
+                    }
+                }
+            }
+        }
+
+        prologue(true);
+
+        LIROperand[] operands = new LIROperand[template.variableCount];
+
+
+        XirVariable resultOperand = template.resultOperand;
+
+        if (resultOperand instanceof XirResult) {
+            LIROperand outputOperand = LIROperandFactory.IllegalLocation;
+            // This snippet has a result that must be separately allocated
+            // Otherwise it is assumed that the result is part of the inputs
+            if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
+                outputOperand = allocateResultOperand((XirResult) resultOperand);
+                assert operands[resultOperand.index] == null;
+            }
+            operands[resultOperand.index] = outputOperand;
+        }
+
+        for (XirParameter param : template.parameters) {
+            assert !param.isConstant() : "constant parameters not supported for stubs";
+            LIROperand op = allocateOperand(param, param.parameterIndex);
+            assert operands[param.index] == null;
+
+            // Is the value destroyed?
+            if (template.isParameterDestroyed(param.parameterIndex)) {
+                LIROperand newOp = newRegister(op.kind);
+                assembler.moveOp(op, newOp, op.kind, null, false);
+                operands[param.index] = newOp;
+            } else {
+                operands[param.index] = op;
+            }
+        }
+
+        for (XirConstant c : template.constants) {
+            assert operands[c.index] == null;
+            operands[c.index] = LIROperandFactory.constant(c.value);
+        }
+
+        for (XirTemp t : template.temps) {
+            LIROperand op = allocateOperand(t);
+            assert operands[t.index] == null;
+            operands[t.index] = op;
+        }
+
+
+        for (LIROperand operand : operands) {
+            assert operand != null;
+        }
+
+
+        assembler.emitXirInstructions(null, template.fastPath, template.labels, operands);
+        epilogue();
+        return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
     }
 
     public CiTargetMethod emitHelper(GlobalStub stub, CiRuntimeCall runtimeCall) {
@@ -291,7 +402,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         this.registersSaved = registersToSave;
 
-        this.frameSize = (target.arch.wordSize + ReservedArgumentSlots) * registersToSave.length;
+        this.frameSize = target.arch.wordSize * (registersToSave.length + ReservedArgumentSlots);
 
         asm.makeOffset(runtime.codeOffset());
 

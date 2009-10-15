@@ -47,6 +47,7 @@ public final class ResolutionGuard {
     public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
         this.constantPool = constantPool;
         this.constantPoolIndex = constantPoolIndex;
+        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
     }
 
     /**

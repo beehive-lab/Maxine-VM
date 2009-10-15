@@ -48,13 +48,14 @@ import com.sun.max.unsafe.UnsafeCast;
 import com.sun.max.unsafe.WordArray;
 import com.sun.max.program.ProgramError;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
 import com.sun.max.annotate.INLINE;
 import com.sun.max.annotate.UNSAFE;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Array;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * This class implements the VM interface for generating XIR snippets that express
@@ -139,6 +140,8 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirPair instanceofForClassTemplate;
     private XirPair instanceofForInterfaceTemplate;
 
+    List<XirTemplate> stubs = new ArrayList<XirTemplate>();
+
     final int offsetOfFirstArrayElement;
     final int hubOffset;
     final int hub_mTableLength;
@@ -163,7 +166,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private CiXirAssembler asm;
 
     @Override
-    public void buildTemplates(CiXirAssembler asm) {
+    public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
         CiKind[] kinds = CiKind.values();
 
         this.asm = asm;
@@ -243,6 +246,8 @@ public class MaxXirGenerator extends RiXirGenerator {
         instanceofForLeafTemplate = buildInstanceofForLeaf(false);
         instanceofForClassTemplate = buildInstanceofForInterface(false); // XXX: more efficient template for class checks
         instanceofForInterfaceTemplate = buildInstanceofForInterface(false);
+
+        return stubs;
     }
 
     @Override
@@ -1182,6 +1187,8 @@ public class MaxXirGenerator extends RiXirGenerator {
                     runtimeCallStubs.put(method, stub);
                 }
             }
+
+            stubs.add(stub);
         }
         if (stub == null) {
             throw ProgramError.unexpected("could not find runtime call: " + method);

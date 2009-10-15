@@ -27,6 +27,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.xir.*;
 
 /**
  * This class implements the X86-specific portion of the macro assembler.
@@ -69,6 +70,11 @@ public class X86MacroAssembler extends X86Assembler {
         emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
     }
 
+    public final void callGlobalStub(XirTemplate stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+    }
+
     public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
         callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
@@ -101,7 +107,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    private int calcGlobalStubParameterOffset(int index) {
+    public int calcGlobalStubParameterOffset(int index) {
         assert index >= 0 : "invalid offset from rsp";
         return -(index + 2) * target.arch.wordSize;
     }

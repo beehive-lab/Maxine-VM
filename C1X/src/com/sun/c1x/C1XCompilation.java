@@ -231,6 +231,10 @@ public class C1XCompilation {
     }
 
     public AbstractAssembler masm() {
+        if (assembler == null) {
+            assembler = compiler.backend.newAssembler(this.frameMap == null ? -1 : this.frameMap.frameSize());
+            assert assembler != null;
+        }
         return assembler;
     }
 
@@ -319,7 +323,6 @@ public class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = compiler.backend.newAssembler(this.frameMap.frameSize());
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
@@ -331,7 +334,7 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            CiTargetMethod targetMethod = assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
 
             if (C1XOptions.PrintCFGToFile) {
                 cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));

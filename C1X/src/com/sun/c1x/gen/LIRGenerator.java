@@ -927,7 +927,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert operands[param.index] == null;
             operands[param.index] = op;
 
-            // TODO: Determine if inputs are also used as temp?
             if (op.isRegister()) {
 
                 if (snippet.template.isParameterDestroyed(parameterIndex)) {
@@ -935,13 +934,13 @@ public abstract class LIRGenerator extends ValueVisitor {
                     lir.move(op, newOp);
                     inputTempOperands.add(newOp);
                     inputTempOperandsIndices.add(param.index);
+                    operands[param.index] = newOp;
                 } else {
                     inputOperands.add(op);
                     inputOperandsIndices.add(param.index);
                 }
             }
 
-            parameterIndex++;
         }
 
         for (XirConstant c : snippet.template.constants) {

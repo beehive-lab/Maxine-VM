@@ -37,7 +37,7 @@ import com.sun.c1x.xir.*;
  */
 public class C1XCompiler extends CiCompiler {
 
-    private final Map<GlobalStub, Object> map = new HashMap<GlobalStub, Object>();
+    private final Map<Object, Object> map = new HashMap<Object, Object>();
     private final Map<CiRuntimeCall, Object> runtimeCallStubs = new HashMap<CiRuntimeCall, Object>();
 
     /**
@@ -85,9 +85,17 @@ public class C1XCompiler extends CiCompiler {
 
     private void init() {
 
-        xir.buildTemplates(backend.newXirAssembler());
+        List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
 
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
+
+        for (XirTemplate t : globalStubs) {
+            final CiTargetMethod targetMethod = emitter.emit(t);
+            Object result = runtime.registerTargetMethod(targetMethod, t.name);
+            map.put(t, result);
+
+        }
+
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);
             Object result = runtime.registerTargetMethod(targetMethod, globalStub.toString());
@@ -95,7 +103,7 @@ public class C1XCompiler extends CiCompiler {
         }
     }
 
-    public Object lookupGlobalStub(GlobalStub stub) {
+    public Object lookupGlobalStub(Object stub) {
         assert map.containsKey(stub);
         return map.get(stub);
     }

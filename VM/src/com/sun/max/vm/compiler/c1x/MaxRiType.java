@@ -54,12 +54,12 @@ public class MaxRiType implements RiType {
      * @param constantPool the constant pool
      * @param classActor the class actor
      */
-    public MaxRiType(MaxRiConstantPool constantPool, ClassActor classActor) {
+    public MaxRiType(MaxRiConstantPool constantPool, ClassActor classActor, int cpi) {
         this.constantPool = constantPool;
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
-        this.cpi = 0;
+        this.cpi = cpi;
     }
 
     /**
@@ -73,6 +73,7 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = classRef.typeDescriptor();
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
+        assert cpi >= 0 : "must have valid cpi for resolution";
     }
 
     /**
@@ -91,6 +92,7 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
+        assert classActor != null || cpi >= 0 : "must have valid cpi for resolution";
     }
 
     /**
@@ -223,11 +225,11 @@ public class MaxRiType implements RiType {
     public RiType componentType() {
         if (classActor instanceof ArrayClassActor) {
             // the type is already resolved
-            return constantPool.runtime.canonicalRiType(classActor.componentClassActor(), constantPool);
+            return constantPool.runtime.canonicalRiType(classActor.componentClassActor(), constantPool, -1);
         }
         // the type is not resolved, but we can get the type of the elements
         // TODO: what type to use for an unresolved component type?
-        return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor(), 0);
+        return new MaxRiType(constantPool, typeDescriptor.componentTypeDescriptor(), -1);
     }
 
     /**
@@ -259,10 +261,10 @@ public class MaxRiType implements RiType {
                     return ArrayClassActor.forComponentClassActor(classActor);
                 }
             });
-            return constantPool.runtime.canonicalRiType(arrayClassActor, constantPool);
+            return constantPool.runtime.canonicalRiType(arrayClassActor, constantPool, -1);
         }
         // TODO: what cpi to use for an unresolved constant?
-        return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), 0);
+        return new MaxRiType(constantPool, JavaTypeDescriptor.getArrayDescriptorForDescriptor(typeDescriptor, 1), -1);
     }
 
     /**
@@ -280,13 +282,13 @@ public class MaxRiType implements RiType {
             InterfaceMethodActor interfaceActor = (InterfaceMethodActor) methodActor;
             final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceActor.holder().id) - classActor.dynamicHub().iTableStartIndex;
             final VirtualMethodActor implementation = classActor.getVirtualMethodActorByIIndex(interfaceIIndex + interfaceActor.iIndexInInterface());
-            return constantPool.runtime.canonicalRiMethod(implementation, constantPool);
+            return constantPool.runtime.canonicalRiMethod(implementation, constantPool, -1);
         } else if (methodActor instanceof VirtualMethodActor) {
 
             // resolve the actual method implementation in this class
             final int index = ((VirtualMethodActor) methodActor).vTableIndex();
             final VirtualMethodActor implementation = resolvedClassActor.getVirtualMethodActorByVTableIndex(index);
-            return constantPool.runtime.canonicalRiMethod(implementation, constantPool);
+            return constantPool.runtime.canonicalRiMethod(implementation, constantPool, -1);
         } else {
             assert methodActor.isFinal() || methodActor.isPrivate();
             return method;

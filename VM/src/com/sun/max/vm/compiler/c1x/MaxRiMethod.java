@@ -54,11 +54,11 @@ public class MaxRiMethod implements RiMethod {
      * @param constantPool the constant pool
      * @param methodActor the method actor
      */
-    public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor) {
+    public MaxRiMethod(MaxRiConstantPool constantPool, MethodActor methodActor, int cpi) {
         this.constantPool = constantPool;
         this.methodActor = methodActor;
         this.methodRef = null;
-        this.cpi = 0;
+        this.cpi = cpi;
         if (methodActor instanceof ClassMethodActor && ((ClassMethodActor) methodActor).isDeclaredFoldable()) {
             C1XIntrinsic.registerFoldableMethod(this, methodActor.toJava());
         }
@@ -94,10 +94,10 @@ public class MaxRiMethod implements RiMethod {
      */
     public RiType holder() {
         if (methodActor != null) {
-            return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool);
+            return constantPool.runtime.canonicalRiType(methodActor.holder(), constantPool, -1);
         }
         // TODO: get the correct CPI of the holder
-        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), 0);
+        return new MaxRiType(constantPool, methodRef.holder(constantPool.constantPool), -1);
     }
 
     /**
