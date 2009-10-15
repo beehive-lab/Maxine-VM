@@ -106,12 +106,32 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         final Kind[] parameterKinds = IrValue.Static.toKinds(dirMethod.parameters());
         parameterEirLocations = abi.getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
 
+        Map<EirVariable, EirVariable> refParamToLocalMoves = null;
+
         eirParameters = new EirVariable[parameterEirLocations.length];
         for (int i = 0; i < parameterEirLocations.length; i++) {
-            eirParameters[i] = dirToEirVariable(dirMethod.parameters()[i]);
+            EirVariable eirParameter = dirToEirVariable(dirMethod.parameters()[i]);
             if (parameterEirLocations[i] instanceof EirRegister) {
+                eirParameters[i] = eirParameter;
                 final EirRegister eirRegister = (EirRegister) parameterEirLocations[i];
-                sharedEirVariables[eirRegister.serial()] = eirParameters[i];
+                sharedEirVariables[eirRegister.serial()] = eirParameter;
+            } else {
+                eirParameters[i] = eirParameter;
+                DirVariable dirParameter = dirMethod.parameters()[i];
+                // Reference parameters passed via the stack must be copied to local
+                // stack locations as the GC refmaps do not cover the parameter stack locations.
+                // Normally this is ok as the parameter stack locations are in the frame
+                // of the caller which will have them covered by a stack reference map.
+                // However, if there is an adapter frame in between, then the parameter
+                // stack locations are in a frame covered by no reference map.
+                if (dirParameter.kind() == Kind.REFERENCE) {
+                    EirVariable stackReferenceParameter = createEirVariable(Kind.REFERENCE);
+                    eirParameters[i] = stackReferenceParameter;
+                    if (refParamToLocalMoves == null) {
+                        refParamToLocalMoves = new IdentityHashMap<EirVariable, EirVariable>();
+                    }
+                    refParamToLocalMoves.put(stackReferenceParameter, eirParameter);
+                }
             }
         }
 
@@ -149,6 +169,14 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         prologueBlock.appendInstruction(prologue);
         for (int i = 0; i < calleeSavedEirRegisters.length; i++) {
             prologueBlock.appendInstruction(createAssignment(prologueBlock, calleeSavedEirRegisters[i].kind(), calleeRepositoryEirVariables[i], calleeSavedEirVariables[i]));
+        }
+
+        if (refParamToLocalMoves != null) {
+            for (Map.Entry<EirVariable, EirVariable> entry : refParamToLocalMoves.entrySet()) {
+                EirVariable localReferenceParameter = entry.getValue();
+                EirVariable stackReferenceParameter = entry.getKey();
+                prologueBlock.appendInstruction(createAssignment(prologueBlock, Kind.REFERENCE, localReferenceParameter, stackReferenceParameter));
+            }
         }
 
         final Class<PoolSet<EirRegister>> type = null;
