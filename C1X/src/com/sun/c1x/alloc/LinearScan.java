@@ -82,7 +82,7 @@ public class LinearScan {
         this.unusedSpillSlot = -1;
         this.newIntervalsFromAllocation = new ArrayList<Interval>();
         this.cachedBlocks = ir.linearScanOrder().toArray(new BlockBegin[ir.linearScanOrder().size()]);
-        this.allocatableRegisters = compilation.target.allocatableRegisters2;
+        this.allocatableRegisters = compilation.target.registerConfig;
         this.numRegs = allocatableRegisters.nofRegs;
     }
 
@@ -2200,45 +2200,7 @@ public class LinearScan {
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
-        assert d1.scope() == d2.scope() : "not equal";
-        assert d1.bci() == d2.bci() : "not equal";
-
-        if (d1.locals() != null) {
-            assert d1.locals() != null && d2.locals() != null : "not equal";
-            assert d1.locals().size() == d2.locals().size() : "not equal";
-            for (int i = 0; i < d1.locals().size(); i++) {
-                assertEqual(d1.locals().get(i), d2.locals().get(i));
-            }
-        } else {
-            assert d1.locals() == null && d2.locals() == null : "not equal";
-        }
-
-        if (d1.expressions() != null) {
-            assert d1.expressions() != null && d2.expressions() != null : "not equal";
-            assert d1.expressions().size() == d2.expressions().size() : "not equal";
-            for (int i = 0; i < d1.expressions().size(); i++) {
-                assertEqual(d1.expressions().get(i), d2.expressions().get(i));
-            }
-        } else {
-            assert d1.expressions() == null && d2.expressions() == null : "not equal";
-        }
-
-        if (d1.monitors() != null) {
-            assert d1.monitors() != null && d2.monitors() != null : "not equal";
-            assert d1.monitors().size() == d2.monitors().size() : "not equal";
-            for (int i = 0; i < d1.monitors().size(); i++) {
-                assertEqual(d1.monitors().get(i), d2.monitors().get(i));
-            }
-        } else {
-            assert d1.monitors() == null && d2.monitors() == null : "not equal";
-        }
-
-        if (d1.caller() != null) {
-            assert d1.caller() != null && d2.caller() != null : "not equal";
-            assertEqual(d1.caller(), d2.caller());
-        } else {
-            assert d1.caller() == null && d2.caller() == null : "not equal";
-        }
+        // TODO:
     }
 
     IntervalWalker initComputeOopMaps() {
@@ -2510,6 +2472,9 @@ public class LinearScan {
     }
 
     IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, ValueStack curState, ValueStack innermostState, int curBci, int stackEnd, int locksEnd) {
+        if (true) {
+            return null;
+        }
         IRScopeDebugInfo callerDebugInfo = null;
         int stackBegin;
         int locksBegin;
