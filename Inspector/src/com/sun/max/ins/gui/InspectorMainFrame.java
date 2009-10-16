@@ -194,8 +194,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         for (int i = desktopPane.getComponentCount() - 1; i >= 0; i--) {
             // Delete backwards so that the indices don't change
             final Component component = desktopPane.getComponent(i);
-            if (component instanceof InspectorFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) component;
+            if (component instanceof InspectorInternalFrame) {
+                final InspectorFrameInterface inspectorFrame = (InspectorFrameInterface) component;
                 final Inspector inspector = inspectorFrame.inspector();
                 if (predicate.evaluate(inspector)) {
                     inspector.dispose();
@@ -208,8 +208,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         final int componentCount = desktopPane.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
             final Component component = desktopPane.getComponent(i);
-            if (component instanceof InspectorFrame) {
-                final InspectorFrame inspectorFrame = (InspectorFrame) component;
+            if (component instanceof InspectorInternalFrame) {
+                final InspectorFrameInterface inspectorFrame = (InspectorFrameInterface) component;
                 final Inspector inspector = inspectorFrame.inspector();
                 if (predicate.evaluate(inspector)) {
                     return inspector;
@@ -316,7 +316,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         return point;
     }
 
-    private Point getMiddle(InspectorFrame frame) {
+    private Point getMiddle(InspectorInternalFrame frame) {
         final Point point = new Point((getWidth() / 2) - (frame.getWidth() / 2), (getHeight() / 2) - (frame.getHeight() / 2));
         if (point.y < 0) {
             point.y = 0;

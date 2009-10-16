@@ -85,8 +85,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     public Inspector_Type inspectorAt(int i) {
         final Component component = tabbedPane.getComponentAt(i);
-        if (component instanceof InspectorFrame) {
-            final InspectorFrame inspectorFrame = (InspectorFrame) component;
+        if (component instanceof InspectorInternalFrame) {
+            final InspectorFrameInterface inspectorFrame = (InspectorFrameInterface) component;
             final Class<Inspector_Type> type = null;
             return StaticLoophole.cast(type, inspectorFrame.inspector());
         }

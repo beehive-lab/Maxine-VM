@@ -35,7 +35,7 @@ import com.sun.max.ins.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-final class InspectorFrame extends JInternalFrame implements Prober {
+final class InspectorInternalFrame extends JInternalFrame implements InspectorFrameInterface {
 
     // TODO (mlvdv) Generalize Inspector Frame so that it doesn't have to be a JInternal Frame, for
     // example when adding to Tabbed Containers.  In that case, a JRootPane would do.
@@ -53,7 +53,7 @@ final class InspectorFrame extends JInternalFrame implements Prober {
      * @param inspector
      * @param menu an optional menu, replaces default inspector menu if non-null
      */
-    public InspectorFrame(Inspector inspector, InspectorMenu menu) {
+    public InspectorInternalFrame(Inspector inspector, InspectorMenu menu) {
         this.inspector = inspector;
 
         menuBar = new InspectorMenuBar(inspector.inspection());
@@ -69,16 +69,19 @@ final class InspectorFrame extends JInternalFrame implements Prober {
 
             @Override
             public void internalFrameActivated(InternalFrameEvent e) {
-                InspectorFrame.this.inspector.inspectorGetsWindowFocus();
+                InspectorInternalFrame.this.inspector.inspectorGetsWindowFocus();
             }
 
             @Override
             public void internalFrameDeactivated(InternalFrameEvent e) {
-                InspectorFrame.this.inspector.inspectorLosesWindowFocus();
+                InspectorInternalFrame.this.inspector.inspectorLosesWindowFocus();
             }
         });
     }
 
+    public JComponent getJComponent() {
+        return this;
+    }
 
     public void refresh(boolean force) {
         menuBar.refresh(force);

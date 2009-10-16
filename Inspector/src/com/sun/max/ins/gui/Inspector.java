@@ -54,7 +54,7 @@ import com.sun.max.vm.stack.*;
  * @author Michael Van De Vanter
  *
  */
-public abstract class Inspector extends AbstractInspectionHolder implements RootPaneContainer, InspectionListener, ViewFocusListener {
+public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
     private static final int TRACE_VALUE = 2;
 
@@ -63,7 +63,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Root
     public static final String VIEW_INSPECTOR_MENU = "View";
     public static final String METHOD_INSPECTOR_MENU = "Method";
 
-    private InspectorFrame frame;
+    private InspectorFrameInterface frame;
+    //private InspectorInternalFrame frame;
 
     protected Inspector(Inspection inspection) {
         super(inspection);
@@ -96,7 +97,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Root
      * @return the component in which the Inspector displays its view.
      */
     public final JComponent getJComponent() {
-        return frame;
+        return frame.getJComponent();
     }
 
     /**
@@ -182,7 +183,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Root
      * @param menu  optional menu to replace the default frame menu
      */
     protected void createFrame(InspectorMenu menu) {
-        frame = new InspectorFrame(this, menu);
+        frame = new InspectorInternalFrame(this, menu);
         setTitle();
         createView();
         frame.pack();
