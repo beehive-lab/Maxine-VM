@@ -111,9 +111,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         eirParameters = new EirVariable[parameterEirLocations.length];
         for (int i = 0; i < parameterEirLocations.length; i++) {
             EirVariable eirParameter = dirToEirVariable(dirMethod.parameters()[i]);
-            if (parameterEirLocations[i] instanceof EirRegister) {
+            EirLocation parameterEirLocation = parameterEirLocations[i];
+            if (parameterEirLocation instanceof EirRegister) {
                 eirParameters[i] = eirParameter;
-                final EirRegister eirRegister = (EirRegister) parameterEirLocations[i];
+                final EirRegister eirRegister = (EirRegister) parameterEirLocation;
                 sharedEirVariables[eirRegister.serial()] = eirParameter;
             } else {
                 eirParameters[i] = eirParameter;
@@ -124,7 +125,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                 // of the caller which will have them covered by a stack reference map.
                 // However, if there is an adapter frame in between, then the parameter
                 // stack locations are in a frame covered by no reference map.
-                if (dirParameter.kind() == Kind.REFERENCE) {
+                if (dirParameter.kind() == Kind.REFERENCE && parameterEirLocation instanceof EirStackSlot) {
                     EirVariable stackReferenceParameter = createEirVariable(Kind.REFERENCE);
                     eirParameters[i] = stackReferenceParameter;
                     if (refParamToLocalMoves == null) {
