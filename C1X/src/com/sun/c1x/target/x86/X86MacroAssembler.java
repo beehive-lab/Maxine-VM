@@ -21,6 +21,7 @@
 package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
+import com.sun.c1x.xir.XirTemplate;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
@@ -63,6 +64,11 @@ public class X86MacroAssembler extends X86Assembler {
             rc[i] = new RegisterOrConstant(args[i]);
         }
         return callRuntimeCalleeSaved(stub, info, result, rc);
+    }
+
+    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info) {
@@ -136,26 +142,6 @@ public class X86MacroAssembler extends X86Assembler {
         assert o.basicType == CiKind.Object;
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
         movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
-    }
-
-    void inlineCacheCheck(CiRegister receiver, CiRegister iCache) {
-        // TODO: Implement this method or throw away the IC-cache facilities...
-//        assert verifyOop(receiver);
-//        // explicit null check not needed since load from [klassOffset] causes a trap
-//        // check against inline cache
-//        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes()) : "must add explicit null check";
-//        //int startOffset = offset();
-//        cmpptr(iCache, new Address(receiver, compilation.runtime.klassOffsetInBytes()));
-//        // if icache check fails, then jump to runtime routine
-//        // Note: RECEIVER must still contain the receiver!
-//        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.IcMiss));
-
-        // TODO: Check why the size is 9
-//        int icCmpSize = 10;
-//        if (target.arch.is32bit()) {
-//            icCmpSize = 9;
-//        }
-//        assert offset() - startOffset == icCmpSize : "check alignment in emitMethodEntry";
     }
 
     void increment(CiRegister reg, int value /* = 1 */) {

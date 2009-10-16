@@ -18,19 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.globalstub;
+package jtt.except;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.xir.*;
-
-/**
- * An interface to represent the entity that generates stubs.
- *
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: (true, -2) = 5; (true, -1) = !java.lang.ArrayIndexOutOfBoundsException;
+ * @Runs: (true, 0) = 0; (true, 1) = 1; (true, 2) = 2; (true, 3) = !java.lang.ArrayIndexOutOfBoundsException;
+ * @Runs: (false, 0) = !java.lang.ArrayStoreException; (false, 1) = 1; (false, 2) = 2; (false, 3) = !java.lang.ArrayIndexOutOfBoundsException
  */
-public interface GlobalStubEmitter {
+public class BC_aastore1 {
+    static Object[] param = {new Object(), null, "h"};
+    static Object[] arr = {null, null, null};
+    static String[] arr2 = {null, null, null};
 
-    CiTargetMethod emit(GlobalStub stub);
-    CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall);
-    CiTargetMethod emit(XirTemplate t);
+    public static int test(boolean a, int indx) {
+        try {
+            Object[] array = a ? arr : arr2;
+            Object val;
+            if (indx == -2) {
+                array = null;
+                val = null;
+            } else {
+                val = param[indx];
+            }
+            array[indx] = val;
+            return indx;
+        } catch (NullPointerException e) {
+            return 5;
+        }
+    }
+
 }

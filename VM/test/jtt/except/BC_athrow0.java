@@ -24,7 +24,7 @@
  */
 package jtt.except;
 
-public class BC_athrow {
+public class BC_athrow0 {
     static Throwable throwable = new Throwable();
 
     public static int test(int arg) throws Throwable {
