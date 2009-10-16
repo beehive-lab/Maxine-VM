@@ -2297,7 +2297,7 @@ public class LinearScan {
                 // because interval splitting can occur anywhere between two instructions
                 // and so the oop maps must be different
                 // . check if the already set oopMap is exactly the one calculated for this operation
-                assert info.oopMap == oopMap : "same CodeEmitInfo used for multiple LIR instructions";
+                assert info.oopMap == oopMap : "same LIRDebugInfo used for multiple LIR instructions";
             }
         }
     }
