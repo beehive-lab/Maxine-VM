@@ -38,13 +38,6 @@ import com.sun.max.ins.gui.Inspector.*;
  */
 final class InspectorInternalFrame extends JInternalFrame implements InspectorFrameInterface {
 
-    // TODO (mlvdv) Generalize Inspector Frame so that it doesn't have to be a JInternal Frame, for
-    // example when adding to Tabbed Containers.  In that case, a JRootPane would do.
-    // What would be missing, if this happened?  no title,
-    // pack() could be implemented as in JInternalFrame:
-    // setSize(getPreferredSize());
-    // validate();
-
     private final Inspector inspector;
 
     private final InspectorMenuBar menuBar;
