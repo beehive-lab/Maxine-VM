@@ -18,31 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: (true, -2) = !java.lang.NullPointerException; (true, -1) = !java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (true, 0) = 0; (true, 1) = 1; (true, 2) = 2; (true, 3) = !java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (false, 0) = !java.lang.ArrayStoreException; (false, 1) = 1; (false, 2) = 2; (false, 3) = !java.lang.ArrayIndexOutOfBoundsException
- */
 package jtt.except;
 
-public class BC_aastore {
 
-    static Object[] param = {new Object(), null, "h"};
-    static Object[] arr = {null, null, null};
-    static String[] arr2 = {null, null, null};
+/*
+ * @Harness: java
+ * @Runs: -2 = null; -1 = !java.lang.ArrayIndexOutOfBoundsException; 0 = null
+ */
+public class BC_aaload1 {
 
-    public static int test(boolean a, int indx) {
-        Object[] array = a ? arr : arr2;
-        Object val;
-        if (indx == -2) {
-            array = null;
-            val = null;
-        } else {
-            val = param[indx];
+    static Object[] array = {null, null, ""};
+
+    public static Object test(int arg) {
+        final Object[] obj = arg == -2 ? null : array;
+        try {
+            return obj[arg];
+        } catch (NullPointerException e) {
+            return null;
         }
-        array[indx] = val;
-        return indx;
     }
-
 }

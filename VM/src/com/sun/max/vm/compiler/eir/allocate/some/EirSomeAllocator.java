@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A medium speed, medium quality register allocator.
@@ -295,6 +296,22 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         assert !acquirer.isInterferingWith(acquiree);
         if (isUnallocatableRegister(acquirer.location()) || acquiree.isLocationFixed() || !acquirer.isReferenceCompatibleWith(acquiree)) {
             return false;
+        }
+
+        if (acquirer.kind() == Kind.REFERENCE && acquiree.location() instanceof EirStackSlot && acquirer.location() instanceof EirStackSlot) {
+            EirStackSlot s1 = (EirStackSlot) acquiree.location();
+            EirStackSlot s2 = (EirStackSlot) acquirer.location();
+            if (s1.purpose != s2.purpose) {
+                // Reference parameters passed via the stack are copied to local
+                // stack locations as the GC refmaps do not cover the parameter stack locations.
+                // Normally this is ok as the parameter stack locations are in the frame
+                // of the caller which will have them covered by a stack reference map.
+                // However, if there is an adapter frame in between, then the parameter
+                // stack locations are in a frame covered by no reference map.
+                // This test prevents coalescing the copy of a parameter stack slot to
+                // a local stack slot.
+                return false;
+            }
         }
 
         // Make a copy of acquiree's current interfering variables as this set is potentially modified by the following loop

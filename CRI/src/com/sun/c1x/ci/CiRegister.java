@@ -129,6 +129,7 @@ public final class CiRegister {
     }
 
     public static class AllocationSet {
+        public final CiRegister[] allocatableRegisters;
         public final CiRegister[] registerMapping;
         public final boolean[] allocatableRegister;
         public final int[] referenceMapIndex;
@@ -143,7 +144,9 @@ public final class CiRegister {
         public final int pdFirstXmmReg;
         public final int pdLastXmmReg;
 
-        AllocationSet(CiRegister[] registers, CiRegister[] referenceMapTemplate) {
+        AllocationSet(CiRegister[] allocatableRegisters, CiRegister[] referenceMapTemplate) {
+            this.allocatableRegisters = allocatableRegisters;
+
             int cpuCnt = 0;
             int cpuFirst = Integer.MAX_VALUE;
             int cpuLast = Integer.MIN_VALUE;
@@ -154,7 +157,7 @@ public final class CiRegister {
             int xmmFirst = Integer.MAX_VALUE;
             int xmmLast = Integer.MIN_VALUE;
 
-            for (CiRegister r : registers) {
+            for (CiRegister r : allocatableRegisters) {
                 if (r.isCpu()) {
                     cpuCnt++;
                     cpuFirst = Math.min(cpuFirst, r.number);
@@ -180,7 +183,7 @@ public final class CiRegister {
             registerMapping = new CiRegister[maxReg + 1];
             referenceMapIndex = new int[maxReg + 1];
             allocatableRegister = new boolean[maxReg + 1];
-            for (CiRegister r : registers) {
+            for (CiRegister r : allocatableRegisters) {
                 assert registerMapping[r.number] == null : "duplicate register!";
                 registerMapping[r.number] = r;
                 allocatableRegister[r.number] = true;

@@ -52,6 +52,7 @@ public class HIRTestExecutor implements Executor {
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
         final CiTarget target = createTarget();
         final C1XCompiler compiler = new C1XCompiler(runtime, target, null);
+        compiler.init();
 
         // create MaxineRuntime
         generator = new HIRGenerator(runtime, target, compiler);

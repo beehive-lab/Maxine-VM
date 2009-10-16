@@ -21,6 +21,7 @@
 package test.com.sun.max.vm.jtrun.all;
 
 import test.com.sun.max.vm.jtrun.*;
+import jtt.except.*;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list
@@ -222,11 +223,13 @@ public class JTConfig {
         jtt.bytecode.BC_tableswitch4.class,
         jtt.bytecode.BC_wide01.class,
         jtt.bytecode.BC_wide02.class,
-        jtt.except.BC_aaload.class,
-        jtt.except.BC_aastore.class,
+        jtt.except.BC_aaload0.class,
+        jtt.except.BC_aaload1.class,
+        jtt.except.BC_aastore0.class,
+        jtt.except.BC_aastore1.class,
         jtt.except.BC_anewarray.class,
         jtt.except.BC_arraylength.class,
-        jtt.except.BC_athrow.class,
+        jtt.except.BC_athrow0.class,
         jtt.except.BC_athrow1.class,
         jtt.except.BC_athrow2.class,
         jtt.except.BC_athrow3.class,

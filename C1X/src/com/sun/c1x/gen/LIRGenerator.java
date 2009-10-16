@@ -763,11 +763,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIRDebugInfo rangeCheckInfo = stateFor(x);
-        LIRDebugInfo nullCheckInfo = null;
-        if (x.needsNullCheck()) {
-            // TODO (tw) Check why we need to duplicate the code emit info!
-            nullCheckInfo = stateFor(x);
-        }
+        LIRDebugInfo nullCheckInfo = x.needsNullCheck() ? stateFor(x) : null;
 
         // emit array address setup early so it schedules better
         LIRAddress arrayAddr = genArrayAddress((LIRLocation) array.result(), index.result(), x.elementKind(), false);
@@ -779,7 +775,6 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.branch(LIRCondition.BelowEqual, CiKind.Int, new RangeCheckStub(rangeCheckInfo, index.result()));
             } else {
                 // The range check performs the null check, so clear it out for the load
-                nullCheckInfo = null;
                 arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo);
             }
         }
@@ -919,7 +914,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         final List<LIROperand> inputTempOperands = new ArrayList<LIROperand>();
         final List<Integer> inputTempOperandsIndices = new ArrayList<Integer>();
 
-        int parameterIndex = 0;
         for (XirParameter param : snippet.template.parameters) {
             int paramIndex = param.parameterIndex;
             XirArgument arg = snippet.arguments[paramIndex];
@@ -927,21 +921,20 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert operands[param.index] == null;
             operands[param.index] = op;
 
-            // TODO: Determine if inputs are also used as temp?
             if (op.isRegister()) {
 
-                if (snippet.template.isParameterDestroyed(parameterIndex)) {
+                if (snippet.template.isParameterDestroyed(paramIndex)) {
                     LIROperand newOp = newRegister(op.kind);
                     lir.move(op, newOp);
                     inputTempOperands.add(newOp);
                     inputTempOperandsIndices.add(param.index);
+                    operands[param.index] = newOp;
                 } else {
                     inputOperands.add(op);
                     inputOperandsIndices.add(param.index);
                 }
             }
 
-            parameterIndex++;
         }
 
         for (XirConstant c : snippet.template.constants) {
@@ -1788,7 +1781,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             genCmpMemInt(LIRCondition.BelowEqual, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
             lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub); // forward branch
         } else {
-            genCmpRegMem(LIRCondition.AboveEqual, (LIRLocation) index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
+            genCmpRegMem(LIRCondition.AboveEqual, index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
             lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub); // forward branch
         }
     }

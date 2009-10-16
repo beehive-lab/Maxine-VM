@@ -18,19 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.globalstub;
-
-import com.sun.c1x.ci.*;
-import com.sun.c1x.xir.*;
-
-/**
- * An interface to represent the entity that generates stubs.
- *
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: -2 = !java.lang.NullPointerException; -1 = !java.lang.ArrayIndexOutOfBoundsException; 0 = null
  */
-public interface GlobalStubEmitter {
+package jtt.except;
 
-    CiTargetMethod emit(GlobalStub stub);
-    CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall);
-    CiTargetMethod emit(XirTemplate t);
+
+public class BC_aaload0 {
+
+    static Object[] array = {null, null, ""};
+
+    public static Object test(int arg) {
+        final Object[] obj = arg == -2 ? null : array;
+        return obj[arg];
+    }
 }

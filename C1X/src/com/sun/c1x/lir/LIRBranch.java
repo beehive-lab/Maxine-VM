@@ -158,7 +158,7 @@ public class LIRBranch extends LIRInstruction {
     public void emitCode(LIRAssembler masm) {
         masm.emitBranch(this);
         if (stub() != null) {
-            masm.emitCodeStub(stub());
+            masm.addCodeStub(stub());
         }
     }
 
