@@ -55,7 +55,11 @@ public class FrameMap {
 
         assert monitors >= 0 : "not set";
         monitorCount = monitors;
-        incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false);
+        if (method == null) {
+            incomingArguments = new CallingConvention(new CiLocation[0]);
+        } else {
+            incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false);
+        }
     }
 
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
@@ -127,8 +131,11 @@ public class FrameMap {
     }
 
     public int frameSize() {
-        assert frameSize != -1 : "hasn't been calculated";
         return frameSize;
+    }
+
+    public void setFrameSize(int frameSize) {
+        this.frameSize = frameSize;
     }
 
     public void finalizeFrame(int spillSlotCount) {

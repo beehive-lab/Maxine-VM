@@ -91,7 +91,7 @@ public class LIRLock extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitLock(this);
-        masm.emitCodeStub(stub);
+        masm.addCodeStub(stub);
     }
 
     /**

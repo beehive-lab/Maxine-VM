@@ -69,7 +69,6 @@ public class C1XCompiler extends CiCompiler {
         // TODO: Remove this fixed wiring to X86
         assert target.arch instanceof AMD64;
         this.backend = new X86Backend(this);
-        init();
     }
 
     @Override
@@ -83,7 +82,7 @@ public class C1XCompiler extends CiCompiler {
         return compilation.compile();
     }
 
-    private void init() {
+    public void init() {
 
         List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
 

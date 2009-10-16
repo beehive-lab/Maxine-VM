@@ -363,20 +363,20 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(result.kind, XirOp.Xor, result, a, b));
     }
 
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer) {
-        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer));
+    public void pload(CiKind kind, XirVariable result, XirVariable pointer, boolean canTrap) {
+        append(new XirInstruction(kind, canTrap, XirOp.PointerLoad, result, pointer));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable value) {
-        append(new XirInstruction(kind, XirOp.PointerStore, (XirVariable) null, pointer, value));
+    public void pstore(CiKind kind, XirVariable pointer, XirVariable value, boolean canTrap) {
+        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, (XirVariable) null, pointer, value));
     }
 
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp) {
-        append(new XirInstruction(kind, XirOp.PointerLoadDisp, result, pointer, disp));
+    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, boolean canTrap) {
+        append(new XirInstruction(kind, canTrap, XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value) {
-        append(new XirInstruction(kind, XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, boolean canTrap) {
+        append(new XirInstruction(kind, canTrap, XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
     }
 
     public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
@@ -408,7 +408,7 @@ public abstract class CiXirAssembler {
     }
 
     public void jugteq(XirLabel l, XirVariable a, XirVariable b) {
-        jcc(XirOp.Jgteq, l, a, b);
+        jcc(XirOp.Jugteq, l, a, b);
     }
 
     public void jlt(XirLabel l, XirVariable a, XirVariable b) {

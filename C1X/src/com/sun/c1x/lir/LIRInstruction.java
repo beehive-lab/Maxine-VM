@@ -60,7 +60,7 @@ public abstract class LIRInstruction {
         TempMode
     }
 
-    private OperandSlot[] operandSlots;
+    protected OperandSlot[] operandSlots;
     private int outputCount;
     private int allocatorInputCount;
     private int allocatorTempCount;
@@ -149,8 +149,8 @@ public abstract class LIRInstruction {
             stub.setResultSlot(addOutput(stub.originalResult()));
         }
 
-        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
         id = -1;
+        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
     }
 
     private OperandSlot addOutput(LIROperand output) {
