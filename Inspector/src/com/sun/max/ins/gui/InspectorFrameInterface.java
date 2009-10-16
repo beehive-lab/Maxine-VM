@@ -61,6 +61,19 @@ public interface InspectorFrameInterface extends RootPaneContainer, Prober {
     String getTitle();
 
     /**
+     * Gets a specific menu from the menu bar, creating one if
+     * needed.
+     * <br>
+     * <strong>Note:</strong>menus appear on the bar in the order
+     * they were created, left to right.
+     *
+     * @param menuKind the particular menu from the menu bar
+     * @return the specified menu from the menu bar, newly created
+     * if it didn't yet exist.
+     */
+    InspectorMenu makeMenu(MenuKind menuKind);
+
+    /**
      * Makes this frame the one currently selected in the window system.
      */
     void setSelected();
@@ -133,7 +146,5 @@ public interface InspectorFrameInterface extends RootPaneContainer, Prober {
      * Removes this frame and the view state associated with it.
      */
     void dispose();
-
-    InspectorMenu makeMenu(MenuKind defaultMenu);
 
 }
