@@ -203,9 +203,9 @@ fi
 # gets the destination for classes for the project
 function get_project_dest() {
 	if [ "x$MAXINE_IDE" = "xINTELLIJ" ]; then
-		echo ${maxine_dir}/out/production/$1
+		echo ${project_dir_parent}/out/production/$1
 	else
-		echo ${maxine_dir}/$1/bin
+		echo ${project_dir_parent}/$1/bin
 	fi
 }
 
@@ -409,8 +409,8 @@ function run_build() {
         if [ $project_build_match -eq 0 ] ; then
             continue
         fi
-	project_dest=$(get_project_dest ${project_dir})
         set_project_dir_parent ${project}
+	project_dest=$(get_project_dest ${project_dir})
         if $clean ; then
             run rm -rf ${project_dest}
         fi
@@ -469,6 +469,7 @@ function run_clean() {
 
     for project in ${projects[@]}; do
 	project_dir=${project/:*/}
+        set_project_dir_parent ${project}
 	project_cp=$(get_project_dest ${project_dir})
 	if [ "x$project_cp" != "x" ]; then
 	    echo Removing $project_cp...
@@ -501,6 +502,28 @@ function run_jttgen() {
         -scenario=target -run-scheme-package=all -native-tests $(echo jtt/* | sed 's:jtt/fail::g')  
     result=$?
     popd >/dev/null
+    exit $result
+}
+
+#=======================================
+# 'jnigen' command
+#=======================================
+
+jnigen_help="(re)generate content in JniFunctions.java from JniFunctionsSource.java
+
+    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+    
+    The exit code is non-zero if JniFunctions.java was modified."
+
+function run_jnigen() {
+    if [ $# -ne 0 ]; then
+        run_help jnigen
+        exit 1
+    fi
+    
+    run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) com.sun.max.vm.jni.JniFunctionsGenerator
+    result=$?
     exit $result
 }
 
@@ -1067,6 +1090,9 @@ objecttree_help="print the causality spanning-tree of the object graph in the bo
     to why any given object is in the image. This is useful when trying to reduce
     the size of the image.
 
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+    
     Use \"max objecttree -help\" to see what other options this command accepts."
     
 function run_objecttree() {
@@ -1084,6 +1110,9 @@ methodtree_help="print the causality spanning-tree of the method graph in the bo
     to why any given method is (or isn't) in the image. This is useful when
     trying to reduce the size of the image.
 
+    This tool requires an input *.tree file which is produced by specifying the
+    -tree option when building the boot image.
+    
     Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {

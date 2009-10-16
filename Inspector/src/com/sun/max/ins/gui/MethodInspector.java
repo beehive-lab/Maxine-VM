@@ -244,24 +244,19 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     @Override
-    public void createFrame(InspectorMenu menu) {
-        final InspectorMenu methodMenu = new InspectorMenu(METHOD_INSPECTOR_MENU);
-        super.createFrame(methodMenu);
-        methodMenu.add(getViewOptionsAction());
-        methodMenu.add(new InspectorAction(inspection(), "Refresh") {
-            @Override
-            public void procedure() {
-                refreshView(true);
-                Trace.line(TRACE_VALUE, tracePrefix() + "Refreshing view: " + getTextForTitle());
-            }
-        });
-        methodMenu.add(new InspectorAction(inspection(), "Close tab") {
+    public InspectorFrameInterface createFrame() {
+
+        final InspectorFrameInterface frame = super.createFrame();
+
+        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+
+        defaultMenu.add(new InspectorAction(inspection(), "Close tab") {
             @Override
             protected void procedure() {
                 close();
             }
         });
-        methodMenu.add(new InspectorAction(inspection(), "Close all other tabs") {
+        defaultMenu.add(new InspectorAction(inspection(), "Close all other tabs") {
             @Override
             public void procedure() {
                 closeOthers();
@@ -273,6 +268,24 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                 close();
             }
         });
+
+        frame.makeMenu(MenuKind.EDIT_MENU);
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectTargetRegionMemoryWords(teleTargetRoutine()));
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.OBJECT_MENU);
+
+        frame.makeMenu(MenuKind.CODE_MENU);
+
+        frame.makeMenu(MenuKind.DEBUG_MENU);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        return frame;
     }
 
 

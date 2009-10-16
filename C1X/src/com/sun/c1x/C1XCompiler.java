@@ -53,7 +53,7 @@ public class C1XCompiler extends CiCompiler {
     /**
      * The XIR generator that lowers Java operations to machine operations.
      */
-    public final XirGenerator xir;
+    public final RiXirGenerator xir;
 
     /**
      * The backend that this compiler has been configured for.
@@ -61,7 +61,7 @@ public class C1XCompiler extends CiCompiler {
     public final Backend backend;
 
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target, XirGenerator xirGen) {
+    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen) {
         this.runtime = runtime;
         this.target = target;
         this.xir = xirGen;
@@ -73,12 +73,12 @@ public class C1XCompiler extends CiCompiler {
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, XirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
         return compileMethod(method, -1, xirGenerator);
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
         C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
         return compilation.compile();
     }

@@ -35,7 +35,6 @@ import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
-import com.sun.max.vm.jni.*;
 
 public class BirToCirTranslator extends CirGenerator {
 
@@ -47,7 +46,6 @@ public class BirToCirTranslator extends CirGenerator {
 
     CirClosure translateMethod(BirMethod birMethod, CirMethod cirMethod, CirVariableFactory variableFactory) {
         final BirToCirMethodTranslation methodTranslation = new BirToCirMethodTranslation(birMethod, variableFactory, this);
-        final ClassMethodActor classMethodActor = birMethod.classMethodActor();
 
         timer.start();
 
@@ -99,10 +97,6 @@ public class BirToCirTranslator extends CirGenerator {
         HCirToLCirTranslation.apply(methodTranslation);
         notifyAfterTransformation(cirMethod, cirClosure, HCIR_TO_LCIR);
 
-        if (MaxineVM.isHosted()) {
-            cirClosure = applyWrapping(classMethodActor, cirClosure);
-        }
-
         notifyBeforeTransformation(cirMethod, cirClosure, LCIR_FREE_VARIABLE_CAPTURING);
         freeVariableCapturing = new FreeVariableCapturing(methodTranslation);
         freeVariableCapturing.run();
@@ -118,38 +112,6 @@ public class BirToCirTranslator extends CirGenerator {
 
         timer.stop();
 
-        return cirClosure;
-    }
-
-    /**
-     * Performs wrapping of a method annotated by {@link WRAPPED} (explicitly or {@linkplain JNI_FUNCTION implicitly}).
-     * Note that this transformation is only performed during {@linkplain MaxineVM#isHosted() bootstrapping}.
-     *
-     * @param classMethodActor a method being compiled
-     * @param cirClosure the initial CIR graph for {@code classMethodActor}
-     * @return the closure for {@code classMethodActor} after any relevant wrapping transformation has been applied
-     */
-    @HOSTED_ONLY
-    private CirClosure applyWrapping(final ClassMethodActor classMethodActor, final CirClosure cirClosure) {
-        if (!classMethodActor.isInitializer()) {
-            Class wrapperHolder = null;
-            if (classMethodActor.isJniFunction()) {
-                wrapperHolder = JniFunctionWrapper.class;
-            } else {
-                final WRAPPED wrapped = classMethodActor.getAnnotation(WRAPPED.class);
-                if (wrapped != null) {
-                    wrapperHolder = wrapped.value();
-                }
-            }
-            if (wrapperHolder != null) {
-                final ClassMethodActor wrapperClassMethodActor = (ClassMethodActor) MethodActor.fromJava(WRAPPED.Static.getWrapper(classMethodActor, wrapperHolder));
-                final CirMethod wrapperCirMethod = makeIrMethod(wrapperClassMethodActor);
-                notifyBeforeTransformation(wrapperCirMethod, null, WRAPPER_APPLICATION);
-                final CirClosure wrappedCirClosure = CirWrapping.apply(wrapperCirMethod, cirClosure);
-                notifyAfterTransformation(wrapperCirMethod, wrappedCirClosure, WRAPPER_APPLICATION);
-                return wrappedCirClosure;
-            }
-        }
         return cirClosure;
     }
 

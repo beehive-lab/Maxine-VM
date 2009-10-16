@@ -244,16 +244,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
     }
 
     /**
-     * Exposed bug in removal of "unreachable" exception handling code.
-     */
-    public void test_JniFunctions_reserved() {
-        compileMethod(getClassMethodActor(JniFunctions.class, "reserved0", SignatureDescriptor.create(Void.TYPE, Pointer.class)));
-        compileMethod(getClassMethodActor(JniFunctions.class, "reserved1", SignatureDescriptor.create(Void.TYPE, Pointer.class)));
-        compileMethod(getClassMethodActor(JniFunctions.class, "reserved2", SignatureDescriptor.create(Void.TYPE, Pointer.class)));
-        compileMethod(getClassMethodActor(JniFunctions.class, "reserved3", SignatureDescriptor.create(Void.TYPE, Pointer.class)));
-    }
-
-    /**
      * Exposed bug in AMD64 backend caused by inlining of a block that takes the address of a local variable (i.e.
      * creates a stack handle). The aliasing between handles and the original local variables assumed that there would
      * never be more than one alias for a variable which is not true when blocks are inlined.

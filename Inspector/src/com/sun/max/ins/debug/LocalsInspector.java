@@ -85,7 +85,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         stackPanel.setBackground(InspectorStyle.SunYellow2);
         stackDepth = 0;
         showAll = true;
-        createFrame(null);
+        final InspectorFrameInterface frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     public void itemStateChanged(ItemEvent e) {

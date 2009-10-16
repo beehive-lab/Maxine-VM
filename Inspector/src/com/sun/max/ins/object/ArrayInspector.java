@@ -35,7 +35,7 @@ public final class ArrayInspector extends ObjectInspector {
 
     ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        createFrame(null);
+        createFrame();
     }
 
     @Override

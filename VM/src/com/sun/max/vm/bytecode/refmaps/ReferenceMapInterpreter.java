@@ -58,7 +58,9 @@ public abstract class ReferenceMapInterpreter {
         final int maxLocals = codeAttribute.maxLocals();
         final ReferenceMapInterpreter interpreter;
         if (maxStack <= CompactReferenceMapInterpreter.MAX_STACK && (maxStack + maxLocals) < CompactReferenceMapInterpreter.MAX_SLOTS) {
-            interpreter = VmThread.current().compactReferenceMapInterpreter();
+            // Cannot use the shared thread-local compact reference map interpreter (i.e. VmThread.current().compactReferenceMapInterpreter())
+            // here as a GC may be triggered while initializing the frames.
+            interpreter = new CompactReferenceMapInterpreter();
         } else {
             interpreter = new StandardReferenceMapInterpreter();
         }

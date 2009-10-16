@@ -133,13 +133,13 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         setJMenuBar(menuBar);
 
         desktopMenu.add(actions.viewBootImage());
+        desktopMenu.add(actions.viewBreakpoints());
+        desktopMenu.add(actions.viewMethodCode());
         desktopMenu.add(actions.viewMemoryRegions());
-        desktopMenu.add(actions.viewThreads());
-        desktopMenu.add(actions.viewVmThreadLocals());
         desktopMenu.add(actions.viewRegisters());
         desktopMenu.add(actions.viewStack());
-        desktopMenu.add(actions.viewMethodCode());
-        desktopMenu.add(actions.viewBreakpoints());
+        desktopMenu.add(actions.viewThreads());
+        desktopMenu.add(actions.viewVmThreadLocals());
         if (inspection.maxVM().watchpointsEnabled()) {
             desktopMenu.add(actions.viewWatchpoints());
         }

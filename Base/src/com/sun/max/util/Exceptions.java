@@ -35,15 +35,6 @@ public final class Exceptions {
     }
 
     /**
-     * Tests a given exception to see if it is an instance of a given exception type, casting and throwing it if true.
-     */
-    public static <Exception_Type extends Throwable> void throwIfInstanceOf(Class<Exception_Type> exceptionType,  Exception exception) throws Exception_Type {
-        if (exceptionType.isInstance(exception)) {
-            throw exceptionType.cast(exception);
-        }
-    }
-
-    /**
      * Tests a given exception to see if it is an instance of a given exception type, casting and throwing it if so.
      * Otherwise if the exception is an unchecked exception (i.e. an instance of a {@link RuntimeException} or
      * {@link Error}) then it is cast to the appropriate unchecked exception type and thrown. Otherwise, it is wrapped
@@ -55,32 +46,6 @@ public final class Exceptions {
     public static <Exception_Type extends Throwable> Exception_Type cast(Class<Exception_Type> exceptionType,  Throwable exception) throws Exception_Type {
         if (exceptionType.isInstance(exception)) {
             throw exceptionType.cast(exception);
-        }
-        if (exception instanceof Error) {
-            throw (Error) exception;
-        }
-        if (exception instanceof RuntimeException) {
-            throw (RuntimeException) exception;
-        }
-        throw ProgramError.unexpected(exception);
-    }
-
-    /**
-     * Tests a given exception to see if it is an instance of either two given exception types, casting and throwing it
-     * if so. Otherwise if the exception is an unchecked exception (i.e. an instance of a {@link RuntimeException} or
-     * {@link Error}) then it is cast to the appropriate unchecked exception type and thrown. Otherwise, it is wrapped
-     * in a {@link ProgramError} and thrown.
-     *
-     * This method declares a return type simply so that a call to this method can be the expression to a throw
-     * instruction.
-     */
-    public static <Exception_Type1 extends Throwable, Exception_Type2 extends Throwable>
-    Exception_Type1 cast(Class<Exception_Type1> exceptionType1, Class<Exception_Type2> exceptionType2,  Throwable exception) throws Exception_Type1, Exception_Type2 {
-        if (exceptionType1.isInstance(exception)) {
-            throw exceptionType1.cast(exception);
-        }
-        if (exceptionType2.isInstance(exception)) {
-            throw exceptionType2.cast(exception);
         }
         if (exception instanceof Error) {
             throw (Error) exception;

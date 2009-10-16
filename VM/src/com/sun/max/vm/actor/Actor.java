@@ -102,7 +102,6 @@ public abstract class Actor {
     public static final int INITIALIZER       =    0x00400000;
     public static final int JNI_FUNCTION =         0x00800000;
     public static final int C_FUNCTION =           0x01000000;
-    public static final int WRAPPER =              0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
@@ -392,11 +391,6 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isWrapper(int flags) {
-        return (flags & WRAPPER) != 0;
-    }
-
-    @INLINE
     public static boolean isUnsafe(int flags) {
         return (flags & UNSAFE) != 0;
     }
@@ -545,7 +539,6 @@ public abstract class Actor {
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
         appendFlag(sb, isBuiltin(flags), "builtin ");
         appendFlag(sb, isLocalSubstitute(flags), "substitute ");
-        appendFlag(sb, isWrapper(flags), "wrapper ");
         appendFlag(sb, isReset(flags), "reset ");
 
         if (sb.length() > 0) {

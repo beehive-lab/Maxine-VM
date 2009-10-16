@@ -66,7 +66,6 @@ public abstract class MethodActor extends MemberActor {
         VirtualTrampoline,
         InterfaceTrampoline,
         UnsafeCast,
-        Wrapper,
         Initializer,
         C_Function,
         JNI_Function,
@@ -165,11 +164,6 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
-    public final boolean isWrapper() {
-        return isWrapper(flags());
-    }
-
-    @INLINE
     public final boolean isUnsafe() {
         return isUnsafe(flags());
     }
@@ -210,7 +204,7 @@ public abstract class MethodActor extends MemberActor {
     }
 
     public final boolean isApplicationVisible() {
-        return !(isNative() || isWrapper() || holder().isGenerated());
+        return !(isNative() || holder().isGenerated());
     }
 
     /**
