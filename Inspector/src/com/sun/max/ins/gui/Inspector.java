@@ -253,10 +253,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected abstract void createView();
 
-    protected final void updateFrameTitle() {
-        frame.setTitle(getTextForTitle());
-    }
-
     /**
      * Creates a frame for the inspector
      * calls {@link createView()} to populate it; adds the inspector to the update
@@ -268,7 +264,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected InspectorFrameInterface createFrame() {
         frame = new InspectorInternalFrame(this);
-        updateFrameTitle();
+        setTitle();
         createView();
         frame.pack();
         gui().addInspector(this);
