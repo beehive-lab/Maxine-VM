@@ -49,56 +49,56 @@ public class X86MacroAssembler extends X86Assembler {
         wordSize = this.target.arch.wordSize;
     }
 
-    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callGlobalStub(stub, info, result, rc);
+        return callGlobalStub(stub, info, result, rc);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
+    public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callRuntimeCalleeSaved(stub, info, result, rc);
+        return callRuntimeCalleeSaved(stub, info, result, rc);
     }
 
-    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info) {
-        emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info) {
+        return emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
     }
 
-    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    private void callGlobalStubHelper(Object stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+    private int callGlobalStubHelper(Object stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
         }
 
         emitGlobalStubCall(stub, info);
+        int pos = this.codeBuffer.position();
 
         if (result != CiRegister.None) {
-
             this.loadResult(result, 0);
         }
 
         // Clear out parameters
         if (C1XOptions.GenerateAssertionCode) {
-
             for (index = 0; index < args.length; index++) {
                 storeParameter(0, index++);
             }
         }
+        return pos;
     }
 
     private int calcGlobalStubParameterOffset(int index) {

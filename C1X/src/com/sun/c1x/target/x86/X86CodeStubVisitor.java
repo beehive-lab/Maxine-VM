@@ -104,8 +104,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowArrayStoreException, stub.info);
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayStoreException, stub.info);
+        ce.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
@@ -121,8 +121,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowDiv0Exception, stub.info);
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callGlobalStub(GlobalStub.ThrowDiv0Exception, stub.info);
+        ce.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
@@ -135,8 +135,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.ThrowNullPointerException, stub.info);
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callGlobalStub(GlobalStub.ThrowNullPointerException, stub.info);
+        ce.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
@@ -148,8 +148,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
-        masm.callGlobalStub(GlobalStub.MonitorEnter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callGlobalStub(GlobalStub.MonitorEnter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        ce.addCallInfo(infoPos, stub.info);
         ce.verifyOopMap(stub.info);
         masm.jmp(stub.continuation);
     }
@@ -162,15 +162,16 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
 
-        masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        int infoPos = masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        // TODO: do we need to add call info?
         masm.jmp(stub.continuation);
     }
 
     public void visitNewInstanceStub(NewInstanceStub stub) {
         masm.bind(stub.entry);
-        ce.addCallInfoHere(stub.info);
         ce.verifyOopMap(stub.info);
-        masm.callGlobalStub(stub.stubId, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
+        int infoPos = masm.callGlobalStub(stub.stubId, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
+        ce.addCallInfo(infoPos, stub.info);
         masm.jmp(stub.continuation);
     }
 
@@ -178,8 +179,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
+        ce.addCallInfo(infoPos, stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
@@ -189,8 +190,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
         assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
-        ce.addCallInfoHere(stub.info);
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
+        ce.addCallInfo(infoPos, stub.info);
         ce.verifyOopMap(stub.info);
         assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
@@ -206,15 +207,16 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         LIROperand index = stub.index();
+        int infoPos;
         if (index.isRegister()) {
-            masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
+            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
         } else {
             assert index.isConstant();
             LIRConstant constantIndex = (LIRConstant) index;
-            masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
+            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
         }
 
-        ce.addCallInfoHere(stub.info);
+        ce.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
@@ -226,12 +228,13 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
         masm.bind(stub.entry);
+        int infoPos;
         if (stub.obj().isIllegal()) {
-            masm.callGlobalStub(stub.stub, stub.info);
+            infoPos = masm.callGlobalStub(stub.stub, stub.info);
         } else {
-            masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
+            infoPos = masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
         }
-        ce.addCallInfoHere(stub.info);
+        ce.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
