@@ -88,14 +88,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         public static final IndexedSequence<MenuKind> VALUES = new ArraySequence<MenuKind>(values());
     }
 
-    protected InspectorMenu createBasicFrameMenu() {
-        final InspectorMenu menu = new InspectorMenu(MenuKind.DEFAULT_MENU.label());
-        menu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-        menu.setText(null);
-        menu.setIcon(FRAME_ICON);
-        return menu;
-    }
-
     protected InspectorMenuItems defaultMenuItems(MenuKind menuKind) {
 
         switch(menuKind) {
