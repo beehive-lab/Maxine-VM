@@ -2264,15 +2264,6 @@ public class LinearScan {
             }
         }
 
-        // add oops from lock stack
-        // TODO: check what to do here!
-        /*
-        assert info.stack() != null : "CodeEmitInfo must always have a stack";
-        int locksCount = info.stack().locksSize();
-        for (int i = 0; i < locksCount; i++) {
-            map.setOop(frameMap().monitorObjectRegname(i));
-        }*/
-
         return map;
     }
 

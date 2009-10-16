@@ -24,8 +24,6 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.ValueStack;
 import com.sun.c1x.ir.Value;
 
-import java.util.IdentityHashMap;
-
 /**
  * This class is responsible for collecting the debug information while compilation in order
  * to produce a {@link com.sun.c1x.ci.CiDebugInfo} instance which can be passed back through
