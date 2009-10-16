@@ -763,7 +763,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIRDebugInfo rangeCheckInfo = stateFor(x);
-        LIRDebugInfo nullCheckInfo = x.needsNullCheck() ? stateFor(x) : null;
+        LIRDebugInfo nullCheckInfo = x.needsNullCheck() ? rangeCheckInfo.copy() : null;
 
         // emit array address setup early so it schedules better
         LIRAddress arrayAddr = genArrayAddress((LIRLocation) array.result(), index.result(), x.elementKind(), false);
@@ -779,7 +779,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        lir.move(arrayAddr, rlockResult(x, x.elementKind()), nullCheckInfo);
+        lir.move(arrayAddr, rlockResult(x, x.elementKind()), null);
     }
 
     @Override
