@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.type.*;
@@ -123,7 +124,14 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
                     TargetBreakpoint.make(jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(bytecodePosition)));
                 }
             } else {
-                // TODO: trigger deoptimization
+                for (Integer bytecodePosition : bytecodePositions) {
+                    if (bytecodePosition == 0) {
+                        CallEntryPoint callEntryPoint = targetMethod.abi().callEntryPoint();
+                        TargetBreakpoint.make(targetMethod.getEntryPoint(callEntryPoint).asAddress());
+                    } else {
+                        // TODO: trigger deoptimization
+                    }
+                }
             }
         }
     }
