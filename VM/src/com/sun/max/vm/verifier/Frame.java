@@ -52,8 +52,8 @@ public class Frame implements FrameModel {
         this.methodVerifier = methodVerifier;
 
         final CodeAttribute codeAttribute = methodVerifier.codeAttribute();
-        final int maxLocals = codeAttribute.maxLocals();
-        final int maxStack = codeAttribute.maxStack();
+        final int maxLocals = codeAttribute.maxLocals;
+        final int maxStack = codeAttribute.maxStack;
 
         this.locals = new VerificationType[maxLocals];
         this.stack = new VerificationType[maxStack];

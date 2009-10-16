@@ -96,7 +96,7 @@ public final class LIRInsertionBuffer {
         return ops.get(i);
     }
 
-    void move(int index, LIROperand src, LIROperand dst, CodeEmitInfo info) {
+    void move(int index, LIROperand src, LIROperand dst, LIRDebugInfo info) {
         append(index, new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 

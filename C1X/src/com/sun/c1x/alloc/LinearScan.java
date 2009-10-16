@@ -82,7 +82,7 @@ public class LinearScan {
         this.unusedSpillSlot = -1;
         this.newIntervalsFromAllocation = new ArrayList<Interval>();
         this.cachedBlocks = ir.linearScanOrder().toArray(new BlockBegin[ir.linearScanOrder().size()]);
-        this.allocatableRegisters = compilation.target.allocatableRegisters2;
+        this.allocatableRegisters = compilation.target.registerConfig;
         this.numRegs = allocatableRegisters.nofRegs;
     }
 
@@ -654,8 +654,8 @@ public class LinearScan {
                 // Add uses of live locals from interpreter's point of view for proper debug information generation
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack();
+                    LIRDebugInfo info = op.infoAt(k);
+                    ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
@@ -1376,8 +1376,8 @@ public class LinearScan {
                 // to a call site, the value would be in a register at the call otherwise)
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
-                    CodeEmitInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack();
+                    LIRDebugInfo info = op.infoAt(k);
+                    ValueStack stack = info.stack;
                     for (Value value : stack.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.noUse);
                     }
@@ -1921,7 +1921,7 @@ public class LinearScan {
             }
             if (con != null && (con.operand().isIllegal() || con.operand().isConstant())) {
                 // unpinned constants may have no register, so add mapping from constant to interval
-                moveResolver.addMapping(LIROperandFactory.basicType(con), toInterval);
+                moveResolver.addMapping(LIROperandFactory.constant(con), toInterval);
             } else {
                 // search split child at the throwing opId
                 Interval fromInterval = intervalAtOpId(fromValue.operand().vregNumber(), throwingOpId);
@@ -2200,45 +2200,7 @@ public class LinearScan {
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
-        assert d1.scope() == d2.scope() : "not equal";
-        assert d1.bci() == d2.bci() : "not equal";
-
-        if (d1.locals() != null) {
-            assert d1.locals() != null && d2.locals() != null : "not equal";
-            assert d1.locals().size() == d2.locals().size() : "not equal";
-            for (int i = 0; i < d1.locals().size(); i++) {
-                assertEqual(d1.locals().get(i), d2.locals().get(i));
-            }
-        } else {
-            assert d1.locals() == null && d2.locals() == null : "not equal";
-        }
-
-        if (d1.expressions() != null) {
-            assert d1.expressions() != null && d2.expressions() != null : "not equal";
-            assert d1.expressions().size() == d2.expressions().size() : "not equal";
-            for (int i = 0; i < d1.expressions().size(); i++) {
-                assertEqual(d1.expressions().get(i), d2.expressions().get(i));
-            }
-        } else {
-            assert d1.expressions() == null && d2.expressions() == null : "not equal";
-        }
-
-        if (d1.monitors() != null) {
-            assert d1.monitors() != null && d2.monitors() != null : "not equal";
-            assert d1.monitors().size() == d2.monitors().size() : "not equal";
-            for (int i = 0; i < d1.monitors().size(); i++) {
-                assertEqual(d1.monitors().get(i), d2.monitors().get(i));
-            }
-        } else {
-            assert d1.monitors() == null && d2.monitors() == null : "not equal";
-        }
-
-        if (d1.caller() != null) {
-            assert d1.caller() != null && d2.caller() != null : "not equal";
-            assertEqual(d1.caller(), d2.caller());
-        } else {
-            assert d1.caller() == null && d2.caller() == null : "not equal";
-        }
+        // TODO:
     }
 
     IntervalWalker initComputeOopMaps() {
@@ -2258,7 +2220,7 @@ public class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, CodeEmitInfo info, boolean isCallSite) {
+    OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
         // Util.traceLinearScan(3, "creating oop map at opId %d", op.id());
 
         // walk before the current operation . intervals that start at
@@ -2323,14 +2285,14 @@ public class LinearScan {
 
         // compute oopMap only for first CodeEmitInfo
         // because it is (in most cases) equal for all other infos of the same operation
-        CodeEmitInfo firstInfo = op.infoAt(0);
+        LIRDebugInfo firstInfo = op.infoAt(0);
         OopMap firstOopMap = computeOopMap(iw, op, firstInfo, op.hasCall());
 
         for (int i = 0; i < op.infoCount(); i++) {
-            CodeEmitInfo info = op.infoAt(i);
+            LIRDebugInfo info = op.infoAt(i);
             OopMap oopMap = firstOopMap;
 
-            if (info.stack().locksSize() != firstInfo.stack().locksSize()) {
+            if (info.stack.locksSize() != firstInfo.stack.locksSize()) {
                 // this info has a different number of locks then the precomputed oop map
                 // (possible for lock and unlock instructions) . compute oop map with
                 // correct lock information
@@ -2388,7 +2350,7 @@ public class LinearScan {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIx();
             //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SpillSlotSize, false);
+            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
 //            if (isOop) {
 //                oopValues.add(location);
@@ -2418,7 +2380,7 @@ public class LinearScan {
             if (opr.isDoubleStack()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SpillSlotSize * 2, false);
+                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SPILL_SLOT_SIZE * 2, false);
                 } else {
                     Util.shouldNotReachHere();
                 }
@@ -2467,7 +2429,7 @@ public class LinearScan {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand
-                opr = LIROperandFactory.basicType(con);
+                opr = LIROperandFactory.constant(con);
             }
             assert opr.isVirtual() || opr.isConstant() : "other cases not allowed here";
 
@@ -2510,6 +2472,9 @@ public class LinearScan {
     }
 
     IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, ValueStack curState, ValueStack innermostState, int curBci, int stackEnd, int locksEnd) {
+        if (true) {
+            return null;
+        }
         IRScopeDebugInfo callerDebugInfo = null;
         int stackBegin;
         int locksBegin;
@@ -2583,30 +2548,31 @@ public class LinearScan {
                 monitors.add(locationForMonitorIndex(i));
             }
         }
-
-        return new IRScopeDebugInfo(curScope, curBci, locals, expressions, monitors, callerDebugInfo);
+        return null;
+        // TODO:
     }
 
-    void computeDebugInfo(CodeEmitInfo info, int opId) {
+    void computeDebugInfo(LIRDebugInfo info, int opId) {
         if (!compilation.needsDebugInformation()) {
             return;
         }
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
-        IRScope innermostScope = info.scope();
-        ValueStack innermostState = info.stack();
+        ValueStack innermostState = info.stack;
+        IRScope innermostScope = innermostState.scope();
 
         assert innermostScope != null && innermostState != null : "why is it missing?";
 
         int stackEnd = innermostState.stackSize();
         int locksEnd = innermostState.locksSize();
 
+        IRScopeDebugInfo debugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci, stackEnd, locksEnd);
         if (info.scopeDebugInfo == null) {
             // compute debug information
-            info.scopeDebugInfo = computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci(), stackEnd, locksEnd);
+            info.scopeDebugInfo = debugInfo;
         } else {
             // debug information already set. Check that it is correct from the current point of view
-            assertEqual(info.scopeDebugInfo, computeDebugInfoForScope(opId, innermostScope, innermostState, innermostState, info.bci(), stackEnd, locksEnd));
+            assertEqual(info.scopeDebugInfo, debugInfo);
         }
     }
 
@@ -2640,16 +2606,11 @@ public class LinearScan {
             if (op.infoCount() > 0) {
                 // exception handling
                 if (compilation.hasExceptionHandlers()) {
-                    List<ExceptionHandler> xhandlers = op.exceptionEdges();
-                    int n = xhandlers.size();
-                    for (int k = 0; k < n; k++) {
-                        ExceptionHandler handler = xhandlers.get(k);
+                    for (ExceptionHandler handler : op.exceptionEdges()) {
                         if (handler.entryCode() != null) {
                             assignRegNum(handler.entryCode().instructionsList(), null);
                         }
                     }
-                } else {
-                    assert op.exceptionEdges().size() == 0 : "missed exception handler";
                 }
 
                 // compute oop map
@@ -2671,7 +2632,8 @@ public class LinearScan {
                 LIROp1 move = (LIROp1) op;
                 LIROperand src = move.operand();
                 LIROperand dst = move.result();
-                if (dst == src || !dst.isLocation() && !src.isLocation() && src.equals(dst)) {
+                if (dst == src || src.equals(dst)) {
+                    // TODO: what about o.f = o.f and exceptions?
                     instructions.set(j, null);
                     hasDead = true;
                 }
@@ -2697,10 +2659,7 @@ public class LinearScan {
     void assignRegNum() {
         // TIMELINEARSCAN(timerAssignRegNum);
         IntervalWalker iw = initComputeOopMaps();
-
-        int numBlocks = blockCount();
-        for (int i = 0; i < numBlocks; i++) {
-            BlockBegin block = blockAt(i);
+        for (BlockBegin block : cachedBlocks) {
             assignRegNum(block.lir().instructionsList(), iw);
         }
     }

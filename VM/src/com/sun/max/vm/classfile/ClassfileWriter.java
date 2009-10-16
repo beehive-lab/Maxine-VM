@@ -547,7 +547,7 @@ public class ClassfileWriter {
                 @Override
                 protected void callnative(int nativeFunctionDescriptorIndex) {
                     final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
-                    final ConstantPool pool = codeAttribute.constantPool();
+                    final ConstantPool pool = codeAttribute.constantPool;
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);
@@ -565,8 +565,8 @@ public class ClassfileWriter {
         protected void writeData(ClassfileWriter cf) throws IOException {
             final CodeAttribute codeAttributeCopy = this.codeAttribute;
             final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttributeCopy.exceptionHandlerTable();
-            cf.writeUnsigned2(codeAttributeCopy.maxStack());
-            cf.writeUnsigned2(codeAttributeCopy.maxLocals());
+            cf.writeUnsigned2(codeAttributeCopy.maxStack);
+            cf.writeUnsigned2(codeAttributeCopy.maxLocals);
             final byte[] code = standardizeCode(codeAttributeCopy, cf);
             cf.writeUnsigned4(code.length);
             cf.writeUnsigned1Array(code);

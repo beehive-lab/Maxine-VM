@@ -44,7 +44,7 @@ public final class CodeAttributePrinter {
 
     /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print stream.
-     * 
+     *
      * @param stream
      *                where to print the contents
      * @param codeAttribute
@@ -57,7 +57,7 @@ public final class CodeAttributePrinter {
 
     /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print writer.
-     * 
+     *
      * @param _stream
      *                where to print the contents
      * @param codeAttribute
@@ -65,8 +65,8 @@ public final class CodeAttributePrinter {
      */
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
-        printWriter.println("Stack=" + codeAttribute.maxStack() + ", Locals=" + codeAttribute.maxLocals());
-        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool());
+        printWriter.println("Stack=" + codeAttribute.maxStack + ", Locals=" + codeAttribute.maxLocals);
+        final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
             bytecodeScanner.scan(new BytecodeBlock(codeAttribute.code()));
@@ -88,7 +88,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#exceptionHandlerTable() exception table} in a given
      * code attribute object to a given print writer. This method outputs nothing to {@code printWriter} if the exception
      * table is empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) exception table
      * @param printWriter
@@ -106,7 +106,7 @@ public final class CodeAttributePrinter {
                     catchType = "*any*";
                 } else {
                     try {
-                        catchType = codeAttribute.constantPool().classAt(catchTypeIndex).typeDescriptor().toJavaString();
+                        catchType = codeAttribute.constantPool.classAt(catchTypeIndex).typeDescriptor().toJavaString();
                     } catch (ClassFormatError classFormatError) {
                         catchType = "*ERROR[cpi=" + catchTypeIndex + "]*";
                     }
@@ -121,7 +121,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#stackMapTable() stack map table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the stack map table is
      * empty or does not exist.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly null) stack map table
      * @param printWriter
@@ -130,7 +130,7 @@ public final class CodeAttributePrinter {
     public static void printStackMapTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final StackMapTable stackMapTable = codeAttribute.stackMapTable();
         if (stackMapTable != null) {
-            final Verifier verifier = new Verifier(codeAttribute.constantPool());
+            final Verifier verifier = new Verifier(codeAttribute.constantPool);
             final StackMapFrame[] frames = stackMapTable.getFrames(verifier);
             printWriter.println("StackMapTable: number of entries = " + frames.length);
             int previousFrameOffset = -1;
@@ -148,7 +148,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#lineNumberTable() line number table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the line number table is
      * empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) line number table
      * @param printWriter
@@ -169,7 +169,7 @@ public final class CodeAttributePrinter {
      * Prints the contents of the {@linkplain CodeAttribute#localVariableTable() local variable table} in a given code attribute
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the local variable table is
      * empty.
-     * 
+     *
      * @param codeAttribute
      *                a code attribute that contains a (possibly empty) local variable table
      * @param printWriter
@@ -180,7 +180,7 @@ public final class CodeAttributePrinter {
         if (!localVariableTable.isEmpty()) {
             printWriter.println("LocalVariableTable:");
             printWriter.println("  Start Length Slot Name               Descriptor            Generic-signature");
-            final ConstantPool cp = codeAttribute.constantPool();
+            final ConstantPool cp = codeAttribute.constantPool;
             for (LocalVariableTable.Entry entry : localVariableTable.entries()) {
                 final int signatureIndex = entry.signatureIndex();
                 final String name = utf8At(cp, entry.nameIndex());
@@ -195,7 +195,7 @@ public final class CodeAttributePrinter {
     /**
      * Gets a UTF8 string from a given constant pool. If a {@code ClassFormatError} occurs while retrieving the UTF8
      * value, then the result of calling {@link ClassFormatError#toString()} on the error object is return instead.
-     * 
+     *
      * @param constantPool
      * @param index
      * @return the string version of the UTF8 at {@code index} in {@code constantPool}

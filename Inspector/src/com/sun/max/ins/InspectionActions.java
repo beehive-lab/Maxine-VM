@@ -2315,7 +2315,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         if (bytecodeLocation != null) {
                             final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                             if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool();
+                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
                                 return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
                             }
                         }
@@ -4566,7 +4566,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericMemoryMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
                 menu.add(inspectMemoryRegionsMenu());
                 menu.add(inspectMemoryWords());
@@ -4580,7 +4579,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericCodeMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().viewMethodCodeAtSelection());
                 menu.add(actions().viewMethodCodeAtIP());
@@ -4606,7 +4604,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericBreakpointMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
 
                 final InspectorMenu methodEntryBreakpoints = new InspectorMenu("Break at method entry");
@@ -4634,7 +4631,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericWatchpointMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().setWordWatchpoint());
                 menu.add(actions().removeAllWatchpoints());
@@ -4647,7 +4643,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericObjectMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
 
                 final JMenu methodActorMenu = new JMenu("Inspect method actor");
@@ -4674,7 +4669,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public InspectorMenuItems genericViewMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
-            @Override
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().viewBootImage());
                 menu.add(actions().viewBreakpoints());

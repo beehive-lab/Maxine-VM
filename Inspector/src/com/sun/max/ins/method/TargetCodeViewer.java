@@ -128,7 +128,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
             bytecodes = teleCodeAttribute.readBytecodes();
             teleConstantPool = teleCodeAttribute.getTeleConstantPool();
             ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-            localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool();
+            localConstantPool = classMethodActor == null ? null : classMethodActor.codeAttribute().constantPool;
         } else {  // native method
             bytecodes = null;
             teleConstantPool = null;

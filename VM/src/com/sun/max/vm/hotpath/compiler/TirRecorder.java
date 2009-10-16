@@ -528,7 +528,7 @@ public class TirRecorder {
 
         @Override
         protected ConstantPool constantPool() {
-            return method.codeAttribute().constantPool();
+            return method.codeAttribute().constantPool;
         }
 
         protected ClassActor classActor() {

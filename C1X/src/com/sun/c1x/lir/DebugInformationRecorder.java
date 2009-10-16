@@ -55,28 +55,6 @@ public class DebugInformationRecorder {
 
     /**
      * @param pcOffset
-     * @param method
-     * @param bci
-     * @param locvals
-     * @param expvals
-     * @param monvals
-     */
-    public void describeScope(int pcOffset, RiMethod method, int bci, long locvals, long expvals, long monvals) {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * @param pcOffset
-     * @param deepCopy
-     */
-    public void addSafepoint(int pcOffset, OopMap deepCopy) {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * @param pcOffset
      */
     public void endSafepoint(int pcOffset) {
         // TODO Auto-generated method stub

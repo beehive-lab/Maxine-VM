@@ -78,8 +78,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         this.thread = thread;
         this.jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
-        locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
-        stack =  new WordValueLabel[classMethodActor.codeAttribute().maxStack()];
+        locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals];
+        stack =  new WordValueLabel[classMethodActor.codeAttribute().maxStack];
         localsPanel = new InspectorPanel(inspection, new SpringLayout());
         stackPanel = new InspectorPanel(inspection, new SpringLayout());
         stackPanel.setBackground(InspectorStyle.SunYellow2);
@@ -234,7 +234,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             if (bytecodePosition != -1) {
                 final Entry entry = localVariableTable.findLocalVariable(localVarIndex, bytecodePosition);
                 if (entry != null) {
-                    indexLabel = new JLabel(entry.name(codeAttribute.constantPool()).string);
+                    indexLabel = new JLabel(entry.name(codeAttribute.constantPool).string);
                 }
             }
             if (addReceiverToolTip) {

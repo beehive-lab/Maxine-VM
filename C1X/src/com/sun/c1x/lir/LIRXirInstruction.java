@@ -35,7 +35,7 @@ public class LIRXirInstruction extends LIRInstruction {
     public final int tempCount;
     public final int inputCount;
 
-    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, CodeEmitInfo info, RiMethod method) {
+    public LIRXirInstruction(XirSnippet snippet, LIROperand[] originalOperands, LIROperand outputOperand, int inputTempCount, int tempCount, LIROperand[] operands, int[] operandIndices, int outputOperandIndex, LIRDebugInfo info, RiMethod method) {
         super(LIROpcode.Xir, outputOperand, info, false, null, inputTempCount, tempCount, operands);
         this.method = method;
         this.snippet = snippet;

@@ -259,7 +259,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     @Override
     protected void performJsr(int offset) {
         final int subroutineEntryPosition = currentOpcodePosition() + offset;
-        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals());
+        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals);
 
         final int returnPosition = scanner.currentBytePosition();
         final boolean firstVisit = !subroutine.containsRetTarget(returnPosition);

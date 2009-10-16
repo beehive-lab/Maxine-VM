@@ -49,8 +49,8 @@ public class ActorToBirTranslator extends BirGenerator {
 
         birMethod.setGenerated(
                         codeAttribute.code(),
-                        codeAttribute.maxStack(),
-                        codeAttribute.maxLocals(),
+                        codeAttribute.maxStack,
+                        codeAttribute.maxLocals,
                         blocks,
                         blockMap,
                         codeAttribute.exceptionHandlerTable());

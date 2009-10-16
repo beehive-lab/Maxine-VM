@@ -148,7 +148,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
                 protected void opcodeDecoded() {
                     final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
                     bytecodePositions.append(bytecodePosition);
-                    referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
+                    referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals, codeAttribute.maxStack);
                 }
             };
             new BytecodeScanner(bytecodeAdapter).scan(classMethodActor);
@@ -282,8 +282,8 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         }
 
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int maxLocals = codeAttribute.maxLocals();
-        final int maxStack = codeAttribute.maxStack();
+        final int maxLocals = codeAttribute.maxLocals;
+        final int maxStack = codeAttribute.maxStack;
         final int codeLength = codeAttribute.code().length;
 
         final InterpreterMapMaker interpreterMapMaker = new InterpreterMapMaker(method);
@@ -319,13 +319,13 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             final int bytecodePosition = interpreterMapMaker.blockStartBytecodePosition(blockIndex);
             if (blockIndex != 0) {
                 final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex - 1), bytecodePosition - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool(), bytecodeBlock, "        ", "\n", 0);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
             annotatedDisassembly.append(String.format("      %s%n", framesAsStrings[blockIndex]));
             if (blockIndex == numberOfBlocks - 1) {
                 final BytecodeBlock bytecodeBlock = new BytecodeBlock(codeAttribute.code(), interpreterMapMaker.blockStartBytecodePosition(blockIndex), codeLength - 1);
-                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool(), bytecodeBlock, "        ", "\n", 0);
+                final String disassembly = BytecodePrinter.toString(codeAttribute.constantPool, bytecodeBlock, "        ", "\n", 0);
                 annotatedDisassembly.append(disassembly);
             }
         }

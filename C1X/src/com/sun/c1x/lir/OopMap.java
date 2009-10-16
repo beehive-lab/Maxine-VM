@@ -32,7 +32,6 @@ import com.sun.c1x.util.*;
  */
 public class OopMap {
 
-
     private final int frameSize;
     private final CiTarget target;
     private final FrameMap frameMap;
@@ -50,7 +49,7 @@ public class OopMap {
     private void initMaps() {
         assert frameSize % target.arch.wordSize == 0 : "must be aligned";
         stackMap = new BitMap(frameSize / target.arch.wordSize);
-        registerMap = new BitMap(target.registerReferenceMapTemplate.length);
+        registerMap = new BitMap(target.registerConfig.registerRefMapSize);
     }
 
     public void setOop(CiLocation location) {
@@ -61,13 +60,15 @@ public class OopMap {
             stackMap.set(stackMapIndex);
         } else {
             assert location.isSingleRegister() : "objects can only be in a single register";
-            for (int i = 0; i < target.registerReferenceMapTemplate.length; i++) {
-                if (target.registerReferenceMapTemplate[i] == location.first) {
-                    assert !registerMap.get(i) : "bit already set";
-                    registerMap.set(i);
-                }
-            }
+            setOop(location.first);
         }
+    }
+
+    public void setOop(CiRegister register) {
+        int index = target.registerConfig.referenceMapIndex[register.number];
+        assert index >= 0 : "object cannot be in non-object register " + register;
+        assert !registerMap.get(index) : "bit already set";
+        registerMap.set(index);
     }
 
     public OopMap deepCopy() {

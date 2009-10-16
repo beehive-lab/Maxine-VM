@@ -107,11 +107,11 @@ public class Frame {
     }
 
     public void empty() {
-        sp = lp + method.codeAttribute().maxLocals();
+        sp = lp + method.codeAttribute().maxLocals;
     }
 
     public boolean isEmpty() {
-        return sp == lp + method.codeAttribute().maxLocals();
+        return sp == lp + method.codeAttribute().maxLocals;
     }
 
     public BytecodeLocation location() {

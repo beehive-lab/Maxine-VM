@@ -33,11 +33,11 @@ public class DivByZeroStub extends CodeStub {
 
     public final int offset;
 
-    public DivByZeroStub(CodeEmitInfo info) {
+    public DivByZeroStub(LIRDebugInfo info) {
         this(-1, info);
     }
 
-    public DivByZeroStub(int offset, CodeEmitInfo info) {
+    public DivByZeroStub(int offset, LIRDebugInfo info) {
         super(info);
         this.offset = offset;
     }

@@ -38,7 +38,7 @@ public class MonitorEnterStub extends CodeStub {
      * @param lockReg the lock register
      * @param info the debug information for this code stub
      */
-    public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, CodeEmitInfo info) {
+    public MonitorEnterStub(LIROperand objReg, LIROperand lockReg, LIRDebugInfo info) {
         super(info);
         assert !objReg.isIllegal() : "cannot be illegal";
         setOperands(0, 0, objReg, lockReg);

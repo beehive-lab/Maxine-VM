@@ -153,7 +153,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         array.loadItem();
         LIROperand reg = rlockResult(x);
 
-        CodeEmitInfo info = null;
+        LIRDebugInfo info = null;
         if (x.needsNullCheck()) {
             NullCheck nc = x.explicitNullCheck();
             if (nc == null) {
@@ -171,7 +171,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // Emit moves from physical registers / stack slots to virtual registers
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new CodeEmitInfo(0, compilation.hir().startBlock.stateBefore(), null), false);
+        incrementInvocationCounter(new LIRDebugInfo(compilation.hir().startBlock.stateBefore(), 0, null), false);
 
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state at the safepoint.
@@ -371,7 +371,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             LIROperand res = x.operand();
             if (!(!res.isIllegal())) {
-                res = LIROperandFactory.basicType(x);
+                res = LIROperandFactory.constant(x);
             }
             if (res.isConstant()) {
                 LIROperand reg = rlockResult(x);
@@ -414,7 +414,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, state));
 
-            CodeEmitInfo safepointInfo = stateFor(x, state);
+            LIRDebugInfo safepointInfo = stateFor(x, state);
             lir.safepoint(safepointPollRegister(), safepointInfo);
         }
 
@@ -546,7 +546,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitInvoke(Invoke x) {
         RiMethod target = x.target();
 
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
 
         XirSnippet snippet = null;
         LIROperand destinationAddress = null;
@@ -662,7 +662,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLoadPointer(LoadPointer x) {
         CiKind kind = x.type();
-        CodeEmitInfo info = maybeStateFor(x);
+        LIRDebugInfo info = maybeStateFor(x);
         LIRItem pointer = new LIRItem(x.pointer(), this);
         // TODO: recognize more complex addressing modes
         pointer.loadItem();
@@ -677,7 +677,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         boolean isVolatile = x.isVolatile();
         CiKind fieldType = field.kind();
 
-        CodeEmitInfo info = null;
+        LIRDebugInfo info = null;
         if (needsPatching || x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore());
         }
@@ -762,8 +762,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             index.loadItem();
         }
 
-        CodeEmitInfo rangeCheckInfo = stateFor(x);
-        CodeEmitInfo nullCheckInfo = null;
+        LIRDebugInfo rangeCheckInfo = stateFor(x);
+        LIRDebugInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
             // TODO (tw) Check why we need to duplicate the code emit info!
             nullCheckInfo = stateFor(x);
@@ -828,7 +828,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // TODO: this is suboptimal because it may result in an unnecessary move
         value.loadItem();
         if (x.canTrap()) {
-            CodeEmitInfo info = stateFor(x);
+            LIRDebugInfo info = stateFor(x);
             lir.nullCheck(value.result(), info);
         }
         x.setOperand(value.result());
@@ -897,7 +897,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    LIROperand emitXir(XirSnippet snippet, Instruction x, CodeEmitInfo info, RiMethod method) {
+    LIROperand emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method) {
 
         final LIROperand[] operands = new LIROperand[snippet.template.variableCount];
 
@@ -1000,7 +1000,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStorePointer(StorePointer x) {
-        CodeEmitInfo info = maybeStateFor(x);
+        LIRDebugInfo info = maybeStateFor(x);
         LIRItem pointer = new LIRItem(x.pointer(), this);
         LIRItem value = new LIRItem(x.value(), this);
         // TODO: recognize more complex addressing modes
@@ -1016,7 +1016,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         boolean isVolatile = x.isVolatile();
         CiKind fieldType = field.kind();
 
-        CodeEmitInfo info = null;
+        LIRDebugInfo info = null;
         if (needsPatching || x.needsNullCheck()) {
             info = stateFor(x, x.stateBefore());
         }
@@ -1135,11 +1135,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         exception.loadItem();
         setNoResult(x);
         LIROperand exceptionOpr = exception.result();
-        CodeEmitInfo info = stateFor(x, x.stateAfter());
+        LIRDebugInfo info = stateFor(x, x.stateAfter());
 
         // check if the instruction has an xhandler in any of the nested scopes
         boolean unwind = false;
-        if (info.exceptionHandlers().size() == 0) {
+        if (info.exceptionHandlers.size() == 0) {
             // this throw is not inside an xhandler
             unwind = true;
         } else {
@@ -1406,7 +1406,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        return loadConstant((LIRConstant) LIROperandFactory.basicType(x));
+        return loadConstant((LIRConstant) LIROperandFactory.constant(x));
     }
 
     protected LIROperand loadConstant(LIRConstant c) {
@@ -1523,7 +1523,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         receiver.loadItem();
         List<LIROperand> args = new ArrayList<LIROperand>();
         args.add(receiver.result());
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
         callRuntime(BASIC_TYPES_OBJECT, args, CiRuntimeCall.RegisterFinalizer, CiKind.Void, info);
 
         setNoResult(x);
@@ -1707,7 +1707,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, CodeEmitInfo info) {
+    protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, LIRDebugInfo info) {
         LIROperand tmpOp = LIROperandFactory.IllegalLocation;
         LIROperand resultOp = result;
         LIROperand leftOp = left;
@@ -1780,7 +1780,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void arrayRangeCheck(LIROperand array, LIROperand index, CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
+    protected void arrayRangeCheck(LIROperand array, LIROperand index, LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo) {
         assert nullCheckInfo != rangeCheckInfo;
         CodeStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
@@ -1793,7 +1793,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected final LIROperand callRuntime(CiKind[] signature, List<? extends LIROperand> args, CiRuntimeCall l, CiKind resultType, CodeEmitInfo info) {
+    protected final LIROperand callRuntime(CiKind[] signature, List<? extends LIROperand> args, CiRuntimeCall l, CiKind resultType, LIRDebugInfo info) {
         // get a result register
         LIROperand physReg = LIROperandFactory.IllegalLocation;
         LIROperand result = LIROperandFactory.IllegalLocation;
@@ -1917,11 +1917,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         return instr.checkFlag(Value.Flag.LiveValue);
     }
 
-    protected void incrementBackedgeCounter(CodeEmitInfo info) {
+    protected void incrementBackedgeCounter(LIRDebugInfo info) {
         incrementInvocationCounter(info, true);
     }
 
-    void incrementInvocationCounter(CodeEmitInfo info, boolean backedge) {
+    void incrementInvocationCounter(LIRDebugInfo info, boolean backedge) {
         if (C1XOptions.ProfileInlinedCalls) {
             // TODO: For tiered compilation C1X has code here, probably not necessary.
         }
@@ -1992,7 +1992,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, CodeEmitInfo infoForException, CodeEmitInfo info) {
+    protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, LIRDebugInfo infoForException, LIRDebugInfo info) {
         if (C1XOptions.GenerateSynchronizationCode) {
             // for slow path, use debug info for state after successful locking
             CodeStub slowPath = new MonitorEnterStub(object, lock, info);
@@ -2091,7 +2091,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
-                x.setOperand(LIROperandFactory.basicType(x));
+                x.setOperand(LIROperandFactory.constant(x));
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
@@ -2115,7 +2115,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void postBarrier(LIROperand addr, LIROperand newVal) {
     }
 
-    protected void preBarrier(LIROperand addrOpr, boolean patch, CodeEmitInfo info) {
+    protected void preBarrier(LIROperand addrOpr, boolean patch, LIRDebugInfo info) {
     }
 
     protected void setNoResult(Instruction x) {
@@ -2218,21 +2218,21 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected CodeEmitInfo maybeStateFor(Instruction x) {
+    protected LIRDebugInfo maybeStateFor(Instruction x) {
         return stateFor(x, x.stateBefore());
     }
 
-    protected CodeEmitInfo stateFor(Instruction x) {
+    protected LIRDebugInfo stateFor(Instruction x) {
         assert x.stateBefore() != null : "must have state before instruction for " + x;
         return stateFor(x, x.stateBefore());
     }
 
-    protected CodeEmitInfo stateFor(Instruction x, ValueStack state) {
+    protected LIRDebugInfo stateFor(Instruction x, ValueStack state) {
         return stateFor(x, state, false);
     }
 
-    protected CodeEmitInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
-        return new CodeEmitInfo(x.bci(), state, ignoreXhandler ? null : x.exceptionHandlers());
+    protected LIRDebugInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
+        return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
     List<LIRItem> visitInvokeArguments(Invoke x) {
@@ -2335,9 +2335,9 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type);
 
-    protected abstract void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, CodeEmitInfo info);
+    protected abstract void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info);
 
-    protected abstract void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, CodeEmitInfo info);
+    protected abstract void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info);
 
     protected abstract LIRAddress genArrayAddress(LIRLocation arrayOpr, LIROperand indexOpr, CiKind type, boolean needsCardMark);
 
@@ -2353,9 +2353,9 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected abstract void genMathIntrinsic(Intrinsic x);
 
-    protected abstract void genVolatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info);
+    protected abstract void genVolatileFieldLoad(LIRAddress address, LIROperand result, LIRDebugInfo info);
 
-    protected abstract void genVolatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info);
+    protected abstract void genVolatileFieldStore(LIROperand value, LIRAddress address, LIRDebugInfo info);
 
     protected abstract void genMonitorEnter(MonitorEnter x);
 

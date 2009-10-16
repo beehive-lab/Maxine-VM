@@ -42,8 +42,8 @@ public final class LocalsPanel extends InspectorPanel {
     public LocalsPanel(Inspection inspection, JavaStackFrame javaStackFrame) {
         super(inspection, new SpringLayout());
         final ClassMethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
-        maxLocals = classMethodActor.codeAttribute().maxLocals();
-        maxStacks = classMethodActor.codeAttribute().maxStack();
+        maxLocals = classMethodActor.codeAttribute().maxLocals;
+        maxStacks = classMethodActor.codeAttribute().maxStack;
         numArguments = classMethodActor.numberOfParameterSlots();
     }
 

@@ -50,7 +50,7 @@ public abstract class LIRCall extends LIRInstruction {
      * @param entry
      * @param arguments
      */
-    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved) {
+    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
         this.addr = entry;
         this.arguments = arguments;

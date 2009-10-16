@@ -30,7 +30,7 @@ import com.sun.c1x.lir.*;
  */
 public class ArrayStoreExceptionStub extends CodeStub {
 
-    public ArrayStoreExceptionStub(CodeEmitInfo info) {
+    public ArrayStoreExceptionStub(LIRDebugInfo info) {
         super(info);
     }
 

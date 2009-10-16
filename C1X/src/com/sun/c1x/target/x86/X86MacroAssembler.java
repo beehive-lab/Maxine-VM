@@ -49,7 +49,7 @@ public class X86MacroAssembler extends X86Assembler {
         wordSize = this.target.arch.wordSize;
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
+    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
@@ -57,7 +57,7 @@ public class X86MacroAssembler extends X86Assembler {
         callGlobalStub(stub, info, result, rc);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
+    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
@@ -65,21 +65,21 @@ public class X86MacroAssembler extends X86Assembler {
         callRuntimeCalleeSaved(stub, info, result, rc);
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info) {
+    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info) {
         emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
         callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
         callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    private void callGlobalStubHelper(Object stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant... args) {
+    private void callGlobalStubHelper(Object stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
@@ -1386,7 +1386,7 @@ public class X86MacroAssembler extends X86Assembler {
         stop("should not reach here");
     }
 
-    public void safepoint(CodeEmitInfo info) {
+    public void safepoint(LIRDebugInfo info) {
         CiRegister safepointRegister = compiler.runtime.getSafepointRegister();
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));

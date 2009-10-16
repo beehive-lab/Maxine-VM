@@ -170,7 +170,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
             // Now re-scan and print the code stream in bytecode blocks:
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
-            final ConstantPool constantPool = codeAttribute.constantPool();
+            final ConstantPool constantPool = codeAttribute.constantPool;
             for (CodeTranslation codeTranslation : codeTranslations) {
                 final BytecodeBlock bytecodeBlock = codeTranslation.toBytecodeBlock(codeAttribute.code());
 

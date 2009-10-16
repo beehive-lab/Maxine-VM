@@ -255,32 +255,31 @@ public abstract class LIRAssembler {
         return true;
     }
 
-    protected void addDebugInfoForBranch(CodeEmitInfo info) {
+    protected void addDebugInfoForBranch(LIRDebugInfo info) {
         int pcOffset = codeOffset();
         flushDebugInfo(pcOffset);
         info.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
-        if (info.exceptionHandlers() != null) {
-            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers());
+        if (info.exceptionHandlers != null) {
+            compilation.addExceptionHandlersForPco(pcOffset, info.exceptionHandlers);
         }
     }
 
-    public void addCallInfoHere(CodeEmitInfo cinfo) {
+    public void addCallInfoHere(LIRDebugInfo cinfo) {
         addCallInfo(codeOffset(), cinfo);
     }
 
-    public void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
-
+    public void addCallInfo(int pcOffset, LIRDebugInfo cinfo) {
         if (cinfo == null) {
             return;
         }
 
-        cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
-        if (cinfo.exceptionHandlers() != null) {
-            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
+        // TODO: record debug info for call
+        if (cinfo.exceptionHandlers != null) {
+            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
         }
     }
 
-    static ValueStack debugInfo(Value ins) {
+    static ValueStack stateBefore(Value ins) {
         if (ins instanceof Instruction) {
             return ((Instruction) ins).stateBefore();
         }
@@ -288,38 +287,37 @@ public abstract class LIRAssembler {
     }
 
     void processDebugInfo(LIRInstruction op) {
-        Value src = op.source();
-        if (src == null) {
+        Value ins = op.source();
+        if (ins == null) {
             return;
         }
         int pcOffset = codeOffset();
-        if (pendingNonSafepoint == src) {
+        if (pendingNonSafepoint == ins) {
             pendingNonSafepointOffset = pcOffset;
             return;
         }
-        ValueStack vstack = debugInfo(src);
-        if (vstack == null) {
-            return;
-        }
-        if (pendingNonSafepoint != null) {
-            // Got some old debug info. Get rid of it.
-            if (!(pendingNonSafepoint instanceof Instruction) || !(src instanceof Instruction)) {
-                // TODO: wtf to do about non instructions?
-                return;
+        ValueStack stateBefore = stateBefore(ins);
+        if (stateBefore != null) {
+            if (pendingNonSafepoint != null) {
+                // Got some old debug info. Get rid of it.
+                if (!(pendingNonSafepoint instanceof Instruction) || !(ins instanceof Instruction)) {
+                    // TODO: wtf to do about non instructions?
+                    return;
+                }
+                if (((Instruction) pendingNonSafepoint).bci() == ((Instruction) ins).bci() && stateBefore(pendingNonSafepoint) == stateBefore) {
+                    pendingNonSafepointOffset = pcOffset;
+                    return;
+                }
+                if (pendingNonSafepointOffset < pcOffset) {
+                    recordNonSafepointDebugInfo();
+                }
+                pendingNonSafepoint = null;
             }
-            if (((Instruction) pendingNonSafepoint).bci() == ((Instruction) src).bci() && debugInfo(pendingNonSafepoint) == vstack) {
+            // Remember the debug info.
+            if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
+                pendingNonSafepoint = ins;
                 pendingNonSafepointOffset = pcOffset;
-                return;
             }
-            if (pendingNonSafepointOffset < pcOffset) {
-                recordNonSafepointDebugInfo();
-            }
-            pendingNonSafepoint = null;
-        }
-        // Remember the debug info.
-        if (pcOffset > compilation.debugInfoRecorder().lastPcOffset()) {
-            pendingNonSafepoint = src;
-            pendingNonSafepointOffset = pcOffset;
         }
     }
 
@@ -349,41 +347,20 @@ public abstract class LIRAssembler {
     }
 
     void recordNonSafepointDebugInfo() {
-        int pcOffset = pendingNonSafepointOffset;
-        ValueStack vstack = debugInfo(pendingNonSafepoint);
-        // TODO: what should the bci be for a phi or local?
-        int bci = pendingNonSafepoint instanceof Instruction ? ((Instruction) pendingNonSafepoint).bci() : -1;
-
-        DebugInformationRecorder debugInfo = compilation.debugInfoRecorder();
-        assert debugInfo.recordingNonSafepoints() : "sanity";
-
-        debugInfo.addNonSafepoint(pcOffset);
-
-        // Visit scopes from oldest to youngest.
-        for (int n = 0;; n++) {
-            int[] sBci = {bci};
-            ValueStack s = nthOldest(vstack, n, sBci);
-            if (s == null) {
-                break;
-            }
-            IRScope scope = s.scope();
-            debugInfo.describeScope(pcOffset, scope.method, sBci);
-        }
-
-        debugInfo.endNonSafepoint(pcOffset);
+        // TODO
     }
 
-    protected void addDebugInfoForNullCheckHere(CodeEmitInfo cinfo) {
+    protected void addDebugInfoForNullCheckHere(LIRDebugInfo cinfo) {
         addDebugInfoForNullCheck(codeOffset(), cinfo);
     }
 
-    protected void addDebugInfoForNullCheck(int pcOffset, CodeEmitInfo cinfo) {
+    protected void addDebugInfoForNullCheck(int pcOffset, LIRDebugInfo cinfo) {
         //ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
         //emitCodeStub(stub);
         addCallInfo(pcOffset, cinfo);
     }
 
-    protected void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {
+    protected void addDebugInfoForDiv0(int pcOffset, LIRDebugInfo cinfo) {
         //DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
         //emitCodeStub(stub);
         addCallInfo(pcOffset, cinfo);
@@ -393,16 +370,10 @@ public abstract class LIRAssembler {
         rtCall(op.result(), op.runtimeEntry, op.arguments(), op.info, op.calleeSaved);
     }
 
-    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, CodeEmitInfo info, boolean calleeSaved);
+    protected abstract void rtCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved);
 
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info);
-
-        // TODO (tw) check if this is necessary and how to do it properly!
-        if (compilation.runtime.isMP()) {
-            // must align calls sites, otherwise they can't be updated atomically on MP hardware
-            //alignCall(op.code());
-        }
 
         switch (op.code) {
             case StaticCall:
@@ -434,15 +405,15 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void xirIndirectCall(RiMethod method, CodeEmitInfo info);
+    protected abstract void xirIndirectCall(RiMethod method, LIRDebugInfo info);
 
-    protected abstract void xirDirectCall(RiMethod method, CodeEmitInfo info);
+    protected abstract void xirDirectCall(RiMethod method, LIRDebugInfo info);
 
-    protected abstract void directCall(RiMethod ciMethod, CiRuntimeCall addr, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
+    protected abstract void directCall(RiMethod ciMethod, CiRuntimeCall addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void interfaceCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
+    protected abstract void interfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
 
-    protected abstract void virtualCall(RiMethod ciMethod, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool);
+    protected abstract void virtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void alignCall(LIROpcode code);
 
@@ -520,13 +491,13 @@ public abstract class LIRAssembler {
 
     protected abstract void monitorAddress(int asInt, LIROperand result);
 
-    protected abstract void safepointPoll(LIROperand inOpr, CodeEmitInfo info);
+    protected abstract void safepointPoll(LIROperand inOpr, LIRDebugInfo info);
 
     protected abstract void returnOp(LIROperand inOpr);
 
     protected abstract void prefetchr(LIROperand inOpr);
 
-    protected abstract void volatileMoveOp(LIROperand inOpr, LIROperand result, CiKind type, CodeEmitInfo info);
+    protected abstract void volatileMoveOp(LIROperand inOpr, LIROperand result, CiKind type, LIRDebugInfo info);
 
     protected abstract void emitPrologue();
 
@@ -673,13 +644,13 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void throwOp(LIROperand inOpr1, LIROperand inOpr2, CodeEmitInfo info, boolean b);
+    protected abstract void throwOp(LIROperand inOpr1, LIROperand inOpr2, LIRDebugInfo info, boolean b);
 
     protected abstract void logicOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
 
     protected abstract void intrinsicOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
 
-    protected abstract void arithOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, CodeEmitInfo info);
+    protected abstract void arithOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIRDebugInfo info);
 
     protected abstract void shiftOp(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROperand tmpOpr);
 
@@ -699,9 +670,9 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
 
-    protected abstract void resolve(CiRuntimeCall stub, CodeEmitInfo info, LIROperand dest, LIROperand index, LIROperand cp);
+    protected abstract void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp);
 
-    public void moveOp(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned) {
+    public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
         if (src.isRegister()) {
             if (dest.isRegister()) {
                 assert info == null : "no patching and info allowed here";
@@ -755,15 +726,15 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned);
+    protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned);
+    protected abstract void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned);
 
-    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info);
+    protected abstract void const2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info);
 
     protected abstract void const2stack(LIROperand src, LIROperand dest);
 
-    protected abstract void const2reg(LIROperand src, LIROperand dest, CodeEmitInfo info);
+    protected abstract void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info);
 
     protected abstract void mem2stack(LIROperand src, LIROperand dest, CiKind type);
 
@@ -775,7 +746,7 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 
-    public void verifyOopMap(CodeEmitInfo info) {
+    public void verifyOopMap(LIRDebugInfo info) {
         if (C1XOptions.VerifyOopMaps || C1XOptions.VerifyOops) {
             // TODO: verify oops
         }
