@@ -97,6 +97,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         this.registerRestoreEpilogueOffset = -1;
 
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
+        compilation.initFrameMap(0);
         X86LIRAssembler assembler = new X86LIRAssembler(compilation);
         asm = assembler.masm;
 
@@ -119,6 +120,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         }
 
         prologue(true);
+        saveRegisters();
 
         LIROperand[] operands = new LIROperand[template.variableCount];
 
@@ -168,7 +170,13 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         }
 
 
-        assembler.emitXirInstructions(null, template.fastPath, template.labels, operands);
+        Label[] labels = new Label[template.labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = new Label();
+        }
+
+        compilation.frameMap().setFrameSize(this.frameSize);
+        assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
         return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
     }

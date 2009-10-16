@@ -87,7 +87,11 @@ public class LIRXirInstruction extends LIRInstruction {
 
         int z = 0;
 
-        for (LIROperand op : getOperands()) {
+        sb.append(result().toString() + " = ");
+
+        for (OperandSlot opSlot : super.operandSlots) {
+
+            LIROperand op = opSlot.get(this);
 
             if (op != null) {
                 sb.append(" ");

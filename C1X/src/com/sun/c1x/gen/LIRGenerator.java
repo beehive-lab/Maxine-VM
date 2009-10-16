@@ -919,7 +919,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         final List<LIROperand> inputTempOperands = new ArrayList<LIROperand>();
         final List<Integer> inputTempOperandsIndices = new ArrayList<Integer>();
 
-        int parameterIndex = 0;
         for (XirParameter param : snippet.template.parameters) {
             int paramIndex = param.parameterIndex;
             XirArgument arg = snippet.arguments[paramIndex];
@@ -929,7 +928,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             if (op.isRegister()) {
 
-                if (snippet.template.isParameterDestroyed(parameterIndex)) {
+                if (snippet.template.isParameterDestroyed(paramIndex)) {
                     LIROperand newOp = newRegister(op.kind);
                     lir.move(op, newOp);
                     inputTempOperands.add(newOp);

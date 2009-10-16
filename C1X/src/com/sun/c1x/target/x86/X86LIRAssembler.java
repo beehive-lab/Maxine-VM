@@ -539,6 +539,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().movl(asAddress(toAddr), src.asRegister());
                 break;
 
+            case Word:
             case Long: {
                 CiRegister fromLo = src.asRegisterLo();
                 CiRegister fromHi = src.asRegisterHi();
@@ -2819,14 +2820,25 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void emitXir(LIRXirInstruction instruction) {
         XirSnippet snippet = instruction.snippet;
-        emitXirInstructions(instruction, snippet.template.fastPath, snippet.template.labels, instruction.getOperands());
-    }
 
-    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, XirLabel[] xirLabels, LIROperand[] ops) {
-        Label[] labels = new Label[xirLabels.length];
+        Label[] labels = new Label[snippet.template.labels.length];
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new Label();
         }
+        emitXirInstructions(instruction, snippet.template.fastPath, labels, instruction.getOperands());
+        if (snippet.template.slowPath != null) {
+            addSlowPath(new SlowPath(instruction, labels));
+        }
+    }
+
+    @Override
+    protected void emitSlowPath(SlowPath sp) {
+        emitXirInstructions(sp.instruction, sp.instruction.snippet.template.slowPath, sp.labels, sp.instruction.getOperands());
+        masm.nop();
+    }
+
+    public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, LIROperand[] ops) {
+
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
                 case Add:
@@ -2884,6 +2896,11 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case PointerLoad: {
+
+                    if (((Boolean)inst.extra).booleanValue() && xir.info != null) {
+                        addCallInfoHere(xir.info);
+                    }
+
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
                     pointer = assureInRegister(pointer);
@@ -2893,6 +2910,11 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case PointerStore: {
+
+                    if (((Boolean)inst.extra).booleanValue() && xir.info != null) {
+                        addCallInfoHere(xir.info);
+                    }
+
                     LIROperand value = ops[inst.y().index];
                     LIROperand pointer = ops[inst.x().index];
                     assert pointer.isRegister();
@@ -2901,6 +2923,11 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case PointerLoadDisp: {
+
+                    if (((Boolean)inst.extra).booleanValue() && xir.info != null) {
+                        addCallInfoHere(xir.info);
+                    }
+
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
                     LIROperand displacement = ops[inst.y().index];
@@ -2921,6 +2948,11 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
 
                 case PointerStoreDisp: {
+
+                    if (((Boolean)inst.extra).booleanValue() && xir.info != null) {
+                        addCallInfoHere(xir.info);
+                    }
+
                     LIROperand value = ops[inst.z().index];
                     LIROperand pointer = ops[inst.x().index];
                     LIROperand displacement = ops[inst.y().index];
@@ -2966,10 +2998,30 @@ public class X86LIRAssembler extends LIRAssembler {
                     for (int i=0; i<args.length; i++) {
                         args[i] = asRegisterOrConstant(ops[inst.arguments[i].index]);
                     }
-                    masm.callGlobalStub(stubId, xir.info, result, args);
+                    masm.callGlobalStub(stubId, this.compilation, xir.info, result, args);
                     break;
 
                 case CallRuntime:
+                    CiKind[] signature = new CiKind[inst.arguments.length];
+                    for (int i=0; i<signature.length; i++) {
+                        signature[i] = inst.arguments[i].kind;
+                    }
+
+                    CallingConvention cc = this.frameMap().runtimeCallingConvention(signature);
+                    for (int i=0; i<inst.arguments.length; i++) {
+                        LIROperand argumentLocation = cc.arguments().get(i);
+                        LIROperand argumentSourceLocation = ops[inst.arguments[i].index];
+                        // TODO: Check for equality of the locations
+                        moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
+                    }
+
+                    RiMethod method = (RiMethod) inst.extra;
+                    masm.call(method, new boolean[this.frameMap().frameSize() / compilation.target.arch.wordSize]);
+
+                    if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
+                        LIROperand resultLocation = LIROperandFactory.singleLocation(inst.result.kind, this.compilation.runtime.returnRegister(inst.result.kind));
+                        moveOp(resultLocation, ops[inst.result.index], inst.result.kind, null, false);
+                    }
                     break;
 
                 case Jmp: {
@@ -3002,7 +3054,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 case Jugteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, LIRCondition.GreaterEqual, Condition.greaterEqual, ops, label);
+                    emitXirCompare(inst, LIRCondition.AboveEqual, Condition.aboveEqual, ops, label);
                     break;
                 }
 

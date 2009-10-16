@@ -45,6 +45,7 @@ public abstract class LIRAssembler {
     public final AbstractAssembler asm;
     protected CodeStub adapterFrameStub;
     protected List<CodeStub> slowCaseStubs;
+    protected List<SlowPath> xirSlowPath = new ArrayList<SlowPath>();
     public final C1XCompilation compilation;
     private FrameMap frameMap;
     private BlockBegin currentBlock;
@@ -52,6 +53,16 @@ public abstract class LIRAssembler {
     private Value pendingNonSafepoint;
     private int pendingNonSafepointOffset;
 
+
+    protected static class SlowPath {
+        public final LIRXirInstruction instruction;
+        public final Label[] labels;
+
+        public SlowPath(LIRXirInstruction instruction, Label[] labels) {
+            this.instruction = instruction;
+            this.labels = labels;
+        }
+    }
     // Assert only:
     protected List<BlockBegin> branchTargetBlocks;
 
@@ -77,17 +88,18 @@ public abstract class LIRAssembler {
         this.compilation = compilation;
         this.asm = compilation.masm();
 
-        // TODO: Assign barrier set
-        // bs =
         this.frameMap = compilation.frameMap();
         slowCaseStubs = new ArrayList<CodeStub>();
-
         branchTargetBlocks = new ArrayList<BlockBegin>();
     }
 
-    protected void emitCodeStub(CodeStub stub) {
+    protected void addCodeStub(CodeStub stub) {
         assert stub != null;
         slowCaseStubs.add(stub);
+    }
+
+    protected void addSlowPath(SlowPath sp) {
+        xirSlowPath.add(sp);
     }
 
     void emitStubs(List<CodeStub> stubList) {
@@ -104,13 +116,19 @@ public abstract class LIRAssembler {
     protected abstract void emitCode(CodeStub s);
 
     public void emitSlowCaseStubs() {
+
         emitStubs(slowCaseStubs);
+
+        for (SlowPath sp : xirSlowPath) {
+            emitSlowPath(sp);
+        }
 
         // Adapter frame stub must come last!
         if (adapterFrameStub != null) {
             emitCode(adapterFrameStub);
         }
 
+        // No more code may be emitted after this point
     }
 
     boolean needsIcache(RiMethod method) {
@@ -120,6 +138,8 @@ public abstract class LIRAssembler {
     protected int codeOffset() {
         return asm.codeBuffer.position();
     }
+
+    protected abstract void emitSlowPath(SlowPath sp);
 
     public void emitExceptionEntries(List<ExceptionInfo> infoList) {
         if (infoList == null) {
@@ -265,20 +285,9 @@ public abstract class LIRAssembler {
     }
 
     public void addCallInfoHere(CodeEmitInfo cinfo) {
-        addCallInfo(codeOffset(), cinfo);
+        compilation.addCallInfo(codeOffset(), cinfo);
     }
 
-    public void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
-
-        if (cinfo == null) {
-            return;
-        }
-
-        cinfo.recordDebugInfo(compilation.debugInfoRecorder(), pcOffset);
-        if (cinfo.exceptionHandlers() != null) {
-            compilation.addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
-        }
-    }
 
     static ValueStack debugInfo(Value ins) {
         if (ins instanceof Instruction) {
@@ -380,13 +389,13 @@ public abstract class LIRAssembler {
     protected void addDebugInfoForNullCheck(int pcOffset, CodeEmitInfo cinfo) {
         //ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
         //emitCodeStub(stub);
-        addCallInfo(pcOffset, cinfo);
+        compilation.addCallInfo(pcOffset, cinfo);
     }
 
     protected void addDebugInfoForDiv0(int pcOffset, CodeEmitInfo cinfo) {
         //DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
         //emitCodeStub(stub);
-        addCallInfo(pcOffset, cinfo);
+        compilation.addCallInfo(pcOffset, cinfo);
     }
 
     void emitRtcall(LIRRTCall op) {

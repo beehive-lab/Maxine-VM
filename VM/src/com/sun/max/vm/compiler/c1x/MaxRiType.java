@@ -73,7 +73,6 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = classRef.typeDescriptor();
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
-        assert cpi >= 0 : "must have valid cpi for resolution";
     }
 
     /**
@@ -92,7 +91,6 @@ public class MaxRiType implements RiType {
         this.typeDescriptor = typeDescriptor;
         this.basicType = kindToBasicType(typeDescriptor.toKind());
         this.cpi = cpi;
-        assert classActor != null || cpi >= 0 : "must have valid cpi for resolution";
     }
 
     /**
