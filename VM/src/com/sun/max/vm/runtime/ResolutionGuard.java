@@ -47,6 +47,13 @@ public final class ResolutionGuard {
     public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
         this.constantPool = constantPool;
         this.constantPoolIndex = constantPoolIndex;
+        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
+    }
+
+    public ResolutionGuard(Actor value) {
+        this.value = value;
+        this.constantPool = null;
+        this.constantPoolIndex = -1;
     }
 
     /**
@@ -58,6 +65,11 @@ public final class ResolutionGuard {
 
     @Override
     public String toString() {
+
+        if (value != null) {
+            return getClass().getSimpleName() + "[" + value + "]";
+        }
+
         return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool) + "]";
     }
 }

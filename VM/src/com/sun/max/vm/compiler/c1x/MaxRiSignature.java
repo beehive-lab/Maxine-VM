@@ -145,7 +145,7 @@ public class MaxRiSignature implements RiSignature {
 
     private MaxRiType descriptorToRiType(TypeDescriptor typeDescriptor) {
          // TODO: resolve the descriptor if possible in the constant pool
-        return new MaxRiType(constantPool, typeDescriptor, 0);
+        return new MaxRiType(constantPool, typeDescriptor, -1);
     }
 
 }

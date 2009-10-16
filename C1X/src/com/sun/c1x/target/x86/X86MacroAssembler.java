@@ -27,6 +27,7 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.xir.*;
 
 /**
  * This class implements the X86-specific portion of the macro assembler.
@@ -69,23 +70,32 @@ public class X86MacroAssembler extends X86Assembler {
         emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
     }
 
+    public final void callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, info, result, args);
+    }
+
     public final void callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, info, result, args);
     }
 
     public final void callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, info, result, args);
     }
 
-    private void callGlobalStubHelper(Object stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+    private void callGlobalStubHelper(Object stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
         }
 
         emitGlobalStubCall(stub, info);
+
+        if (info != null && compilation != null) {
+            compilation.addCallInfo(codeBuffer.position(), info);
+        }
 
         if (result != CiRegister.None) {
 
@@ -101,7 +111,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    private int calcGlobalStubParameterOffset(int index) {
+    public int calcGlobalStubParameterOffset(int index) {
         assert index >= 0 : "invalid offset from rsp";
         return -(index + 2) * target.arch.wordSize;
     }

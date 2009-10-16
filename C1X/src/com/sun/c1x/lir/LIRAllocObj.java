@@ -125,7 +125,7 @@ public class LIRAllocObj extends LIRInstruction {
     @Override
     public void emitCode(LIRAssembler masm) {
         masm.emitAllocObj(this);
-        masm.emitCodeStub(stub);
+        masm.addCodeStub(stub);
     }
 
      /**

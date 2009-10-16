@@ -231,6 +231,10 @@ public class C1XCompilation {
     }
 
     public AbstractAssembler masm() {
+        if (assembler == null) {
+            assembler = compiler.backend.newAssembler(this.frameMap.frameSize());
+            assert assembler != null;
+        }
         return assembler;
     }
 
@@ -292,13 +296,19 @@ public class C1XCompilation {
         return hir;
     }
 
+    public void initFrameMap(int numberOfLocks) {
+
+        frameMap = this.compiler.backend.newFrameMap(method, numberOfLocks);
+    }
+
     private void emitLIR() {
         if (C1XOptions.GenerateLIR) {
             if (C1XOptions.PrintTimers) {
                 C1XTimers.LIR_CREATE.start();
             }
 
-            frameMap = this.compiler.backend.newFrameMap(method, hir.topScope.numberOfLocks());
+            initFrameMap(hir.topScope.numberOfLocks());
+
             final LIRGenerator lirGenerator = compiler.backend.newLIRGenerator(this);
             for (BlockBegin begin : hir.linearScanOrder()) {
                 lirGenerator.doBlock(begin);
@@ -319,7 +329,6 @@ public class C1XCompilation {
 
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
-            assembler = compiler.backend.newAssembler(this.frameMap.frameSize());
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
@@ -331,7 +340,7 @@ public class C1XCompilation {
 
             lirAssembler.emitDeoptHandler();
 
-            CiTargetMethod targetMethod = assembler.finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
 
             if (C1XOptions.PrintCFGToFile) {
                 cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
@@ -366,5 +375,18 @@ public class C1XCompilation {
     public void recordImplicitException(int offset, int offset2) {
         // TODO move to CiTargetMethod?
 
+    }
+
+
+    public void addCallInfo(int pcOffset, LIRDebugInfo cinfo) {
+
+        if (cinfo == null) {
+            return;
+        }
+
+        cinfo.recordDebugInfo(debugInfoRecorder(), pcOffset);
+        if (cinfo.exceptionHandlers != null) {
+            addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
+        }
     }
 }

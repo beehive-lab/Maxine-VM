@@ -147,15 +147,25 @@ public class C1XTest {
         // create MaxineRuntime
         final CiTarget target = createTarget();
         final MaxRiRuntime runtime = new MaxRiRuntime();
-        final RiXirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target);
+        final RiXirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target, runtime);
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        final CiCompiler compiler = c1xOption.getValue() ? new C1XCompiler(runtime, target, xirGenerator) : new C0XCompiler(runtime, target);
+        CiCompiler compiler = null;
+
+        if (c1xOption.getValue()) {
+            C1XCompiler c1xCompiler = new C1XCompiler(runtime, target, xirGenerator);
+            c1xCompiler.init();
+            compiler = c1xCompiler;
+        } else {
+            compiler = new C0XCompiler(runtime, target);
+        }
+
+        final CiCompiler finalCompiler = compiler;
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                doWarmup(compiler, runtime, xirGenerator, methods);
-                doCompile(compiler, runtime, xirGenerator, methods, progress);
+                doWarmup(finalCompiler, runtime, xirGenerator, methods);
+                doCompile(finalCompiler, runtime, xirGenerator, methods, progress);
             }
         });
 

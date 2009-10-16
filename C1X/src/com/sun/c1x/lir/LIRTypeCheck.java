@@ -177,7 +177,7 @@ public class LIRTypeCheck extends LIRInstruction {
     public void emitCode(LIRAssembler masm) {
         masm.emitTypeCheck(this);
         if (stub != null) {
-            masm.emitCodeStub(stub);
+            masm.addCodeStub(stub);
         }
     }
 
