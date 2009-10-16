@@ -50,7 +50,7 @@ public class LIRJavaCall extends LIRCall {
      * @param arguments
      * @param info
      */
-    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         super(opcode, address, result, receiver, arguments, info, false);
         this.method = method;
         this.cpi = cpi;

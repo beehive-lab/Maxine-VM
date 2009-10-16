@@ -39,7 +39,7 @@ public class SimpleExceptionStub extends CodeStub {
      * @param stub
      * @param info
      */
-    public SimpleExceptionStub(LIROperand obj, GlobalStub stub, CodeEmitInfo info) {
+    public SimpleExceptionStub(LIROperand obj, GlobalStub stub, LIRDebugInfo info) {
         super(info);
         this.setOperands(0, 0, obj);
         this.stub = stub;

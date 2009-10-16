@@ -68,7 +68,7 @@ public class GraphIrObserver extends IrObserverAdapter {
     private void setInputMethodObject(final GraphWriter.Group group, final IrMethod irMethod) {
         final byte[] bytecodes = irMethod.classMethodActor().codeAttribute().code();
         final BytecodeBlock bytecodeBlock = new BytecodeBlock(bytecodes, 0, bytecodes.length - 1);
-        String bytecodesAsString = BytecodePrinter.toString(irMethod.classMethodActor().codeAttribute().constantPool(), bytecodeBlock);
+        String bytecodesAsString = BytecodePrinter.toString(irMethod.classMethodActor().codeAttribute().constantPool, bytecodeBlock);
         bytecodesAsString = bytecodesAsString.replace(":", "");
         final String methodName = irMethod.classMethodActor().format("%H.%n(%p)");
         final String shortName = irMethod.classMethodActor().simpleName();

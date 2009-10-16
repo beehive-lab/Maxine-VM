@@ -51,31 +51,4 @@ public class IRScopeDebugInfo {
         this.caller = caller;
     }
 
-    public IRScope scope() {
-        return scope;
-    }
-
-    public int bci() {
-        return bci;
-    }
-
-    public List<CiValue> locals() {
-        return locals;
-    }
-
-    public List<CiValue> expressions() {
-        return expressions;
-    }
-
-    public List<CiLocation> monitors() {
-        return monitors;
-    }
-
-    public IRScopeDebugInfo caller() {
-        return caller;
-    }
-
-    public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-        // TODO : Need to define the implementation of DebugInformationRecorder
-    }
 }

@@ -172,7 +172,6 @@ public class LIROperand {
         if (this == LIROperandFactory.IllegalLocation) {
             return CiRegister.None;
         }
-
         throw Util.shouldNotReachHere();
     }
 

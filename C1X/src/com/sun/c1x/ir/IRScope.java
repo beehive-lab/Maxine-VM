@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.CiCodePos;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
@@ -38,9 +39,10 @@ public class IRScope {
     public final IRScope caller;
     public final RiMethod method;
     public final int level;
+    public final C1XCompilation compilation; // TODO: remove this field
 
-    final C1XCompilation compilation; // TODO: remove this field
     final int callerBCI;
+    CiCodePos parentCodePos;
     final List<IRScope> callees;
 
     ValueStack callerState;
@@ -174,10 +176,11 @@ public class IRScope {
         return lockStackSize;
     }
 
-    /**
-     * @return the compilation
-     */
-    public C1XCompilation compilation() {
-        return compilation;
+    public CiCodePos toCodeSite(int bci) {
+        // create a new code site
+        if (caller != null && parentCodePos == null) {
+            parentCodePos = caller.toCodeSite(callerBCI);
+        }
+        return new CiCodePos(parentCodePos, method, bci);
     }
 }

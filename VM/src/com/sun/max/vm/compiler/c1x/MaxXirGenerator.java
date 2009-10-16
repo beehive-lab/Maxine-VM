@@ -1163,7 +1163,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
 
                 if (MaxineVM.isHosted()) {
-                    System.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
+                    // System.out.println("Registered critical method: " + m.getName() + " / " + SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()).toString());
                     new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
                 }
             }

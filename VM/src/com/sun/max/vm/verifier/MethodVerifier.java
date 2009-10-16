@@ -50,7 +50,7 @@ public abstract class MethodVerifier {
         this.classVerifier = classVerifier;
         this.codeAttribute = codeAttribute;
         this.classMethodActor = classMethodActor;
-        this.constantPool = codeAttribute.constantPool();
+        this.constantPool = codeAttribute.constantPool;
         this.classLoader = constantPool.classLoader();
         if (classVerifier.verbose) {
             this.verbose = true;

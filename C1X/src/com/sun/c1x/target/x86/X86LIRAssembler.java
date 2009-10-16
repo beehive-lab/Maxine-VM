@@ -206,7 +206,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void safepointPoll(LIROperand tmp, CodeEmitInfo info) {
+    protected void safepointPoll(LIROperand tmp, LIRDebugInfo info) {
         masm().safepoint(info);
     }
 
@@ -221,7 +221,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void const2reg(LIROperand src, LIROperand dest, CodeEmitInfo info) {
+    protected void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info) {
         assert src.isConstant() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
         LIRConstant c = (LIRConstant) src;
@@ -230,6 +230,7 @@ public class X86LIRAssembler extends LIRAssembler {
             case Boolean:
             case Byte:
             case Char:
+            case Jsr:
             case Int: {
                 masm().movl(dest.asRegister(), c.value.asInt());
                 break;
@@ -316,7 +317,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void const2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info) {
+    protected void const2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info) {
         assert src.isConstant() : "should not call otherwise";
         assert dest.isAddress() : "should not call otherwise";
         LIRConstant c = (LIRConstant) src;
@@ -497,7 +498,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned) {
+    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
         LIRAddress toAddr = (LIRAddress) dest;
 
         if (type == CiKind.Object) {
@@ -710,7 +711,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info, boolean unaligned) {
+    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
         assert src.isAddress() : "should not call otherwise";
         assert dest.isRegister() : "should not call otherwise";
 
@@ -1537,7 +1538,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void arithOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dest, CodeEmitInfo info) {
+    protected void arithOp(LIROpcode code, LIROperand left, LIROperand right, LIROperand dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
 
         if (left.isSingleCpu()) {
@@ -1991,7 +1992,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     // we assume that rax, and rdx can be overwritten
-    void arithmeticIdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand temp, LIROperand result, CodeEmitInfo info) {
+    void arithmeticIdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand temp, LIROperand result, LIRDebugInfo info) {
 
         assert left.isSingleCpu() : "left must be register";
         assert right.isSingleCpu() || right.isConstant() : "right must be register or constant";
@@ -2270,19 +2271,19 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void xirIndirectCall(RiMethod method, CodeEmitInfo info) {
+    protected void xirIndirectCall(RiMethod method, LIRDebugInfo info) {
         masm().call(compilation.target.scratchRegister, method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 
     @Override
-    protected void xirDirectCall(RiMethod method, CodeEmitInfo info) {
+    protected void xirDirectCall(RiMethod method, LIRDebugInfo info) {
         masm.call(method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 
     @Override
-    protected void directCall(RiMethod method, CiRuntimeCall entry, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    protected void directCall(RiMethod method, CiRuntimeCall entry, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         if (method.isLoaded()) {
             masm.call(method, info.oopMap.stackMap());
         } else {
@@ -2297,7 +2298,7 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of a vtable call (C1 does always do a resolving runtime call).
      */
     @Override
-    protected void virtualCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    protected void virtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
 
         Address callAddress;
         if (method.vtableIndex() >= 0) {
@@ -2329,7 +2330,7 @@ public class X86LIRAssembler extends LIRAssembler {
      * (tw) Tentative implementation of an interface call.
      */
     @Override
-    protected void interfaceCall(RiMethod method, LIROperand receiver, CodeEmitInfo info, char cpi, RiConstantPool constantPool) {
+    protected void interfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         assert receiver != null : "Invalid receiver!";
         assert receiver.isRegister() : "Receiver must be in a register";
 
@@ -2355,7 +2356,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, CodeEmitInfo info, boolean unwind) {
+    protected void throwOp(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info, boolean unwind) {
 
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
@@ -2591,7 +2592,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, CodeEmitInfo info, boolean calleeSaved) {
+    protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIRDebugInfo info, boolean calleeSaved) {
 
 
         if (calleeSaved) {
@@ -2624,7 +2625,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void volatileMoveOp(LIROperand src, LIROperand dest, CiKind type, CodeEmitInfo info) {
+    protected void volatileMoveOp(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info) {
         assert type == CiKind.Long : "only for volatile long fields";
 
         if (info != null) {
@@ -2812,7 +2813,7 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void resolve(CiRuntimeCall stub, CodeEmitInfo info, LIROperand dest, LIROperand index, LIROperand cp) {
+    protected void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp) {
         masm.callRuntimeCalleeSaved(stub, info, dest.asRegister(), asRegisterOrConstant(index), asRegisterOrConstant(cp));
     }
 

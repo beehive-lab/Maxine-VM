@@ -759,7 +759,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (entry == null) {
                 return LongValue.from(0xbadbabe);
             }
-            final TypeDescriptor descriptor = entry.descriptor(classMethodActor.codeAttribute().constantPool());
+            final TypeDescriptor descriptor = entry.descriptor(classMethodActor.codeAttribute().constantPool);
             final Kind kind = descriptor.toKind();
 
             if (l instanceof LocalStackSlot) {

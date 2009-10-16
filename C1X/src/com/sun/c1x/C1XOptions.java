@@ -61,10 +61,13 @@ public class C1XOptions {
     public static int     SSEVersion                         = 2;
     public static boolean RoundFPResults                     = ____;
 
+    // debugging and printing settings
     public static boolean IRChecking                         = ____;
     public static boolean PinAllInstructions                 = ____;
     public static boolean TestPatching                       = ____;
     public static boolean TestSlowPath                       = ____;
+    public static boolean VerifyOopMaps                      = ____;
+    public static boolean VerifyOops                         = ____;
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
@@ -79,6 +82,8 @@ public class C1XOptions {
     public static boolean PrintAssembly                      = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
     public static int     TraceLinearScanLevel               = 0;
+    public static boolean TraceRelocation                    = ____;
+    public static boolean TraceLIRVisit                      = ____;
     public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings
@@ -178,8 +183,6 @@ public class C1XOptions {
     public static boolean GenerateAssembly                   = true;
     public static boolean CommentedAssembly                  = ____;
     public static boolean PrintLIRWithAssembly               = ____;
-    public static boolean VerifyOopMaps                      = ____;
-    public static boolean VerifyOops                         = ____;
     public static int     Atomics                            = 0;
     public static boolean UseNormalNop                       = true;
     public static boolean UseAddressNop                      = true;
@@ -187,8 +190,6 @@ public class C1XOptions {
     public static boolean UseXmmLoadAndClearUpper            = ____;
     public static boolean UseXmmRegToRegMoveAll              = ____;
     public static boolean GenerateAssertionCode              = ____;
-    public static boolean TraceRelocation                    = ____;
-    public static boolean TraceLIRVisit                      = ____;
 
     public static void setOptimizationLevel(int level) {
         if (level <= 0) {

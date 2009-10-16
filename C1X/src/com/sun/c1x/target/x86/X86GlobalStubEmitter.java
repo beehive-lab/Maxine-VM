@@ -91,7 +91,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         return LIROperandFactory.singleLocation(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
     }
 
-    @Override
     public CiTargetMethod emit(XirTemplate template) {
         this.frameSize = 0;
         this.registerRestoreEpilogueOffset = -1;
@@ -101,7 +100,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         X86LIRAssembler assembler = new X86LIRAssembler(compilation);
         asm = assembler.masm;
 
-        for (CiRegister reg : compiler.target.allocatableRegisters) {
+        for (CiRegister reg : compiler.target.registerConfig.allocatableRegisters) {
             if (reg.isCpu()) {
                 allocatableRegisters.add(reg);
             }

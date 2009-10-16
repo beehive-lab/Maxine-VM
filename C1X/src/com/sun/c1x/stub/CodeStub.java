@@ -34,7 +34,7 @@ import com.sun.c1x.lir.*;
  */
 public abstract class CodeStub {
 
-    public CodeEmitInfo info;
+    public LIRDebugInfo info;
     public final Label entry = new Label();            // label at the stub entry point
     public final Label continuation = new Label();     // label where stub continues, if any
 
@@ -47,11 +47,11 @@ public abstract class CodeStub {
     protected int tempCount;
     protected int tempInputCount;
 
-    public CodeStub(CodeEmitInfo info) {
+    public CodeStub(LIRDebugInfo info) {
         this(info, LIROperandFactory.IllegalLocation);
     }
 
-    public CodeStub(CodeEmitInfo info, LIROperand result) {
+    public CodeStub(LIRDebugInfo info, LIROperand result) {
         this.info = info;
         this.result = result;
     }

@@ -43,7 +43,7 @@ public class NewInstanceStub extends CodeStub {
      * @param info
      * @param stubId
      */
-    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, CodeEmitInfo info, GlobalStub stubId) {
+    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, LIRDebugInfo info, GlobalStub stubId) {
         super(info, result);
         this.klass = klass;
         this.stubId = stubId;

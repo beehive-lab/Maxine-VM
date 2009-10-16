@@ -378,15 +378,15 @@ public class C1XCompilation {
     }
 
 
-    public void addCallInfo(int pcOffset, CodeEmitInfo cinfo) {
+    public void addCallInfo(int pcOffset, LIRDebugInfo cinfo) {
 
         if (cinfo == null) {
             return;
         }
 
         cinfo.recordDebugInfo(debugInfoRecorder(), pcOffset);
-        if (cinfo.exceptionHandlers() != null) {
-            addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers());
+        if (cinfo.exceptionHandlers != null) {
+            addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
         }
     }
 }

@@ -622,6 +622,11 @@ public class ValueStack {
         return maxLocals + stackIndex;
     }
 
+    public int callerStackSize() {
+        ValueStack callerState = scope().callerState();
+        return callerState == null ? 0 : callerState.stackSize();
+    }
+
     public void checkPhis(BlockBegin block, ValueStack other) {
         checkSize(other);
         final int max = valuesSize();

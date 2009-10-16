@@ -617,7 +617,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private void prepareTrampolineFrameForJITCaller(JitTargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
         final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
         final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
-        final ConstantPool constantPool = codeAttribute.constantPool();
+        final ConstantPool constantPool = codeAttribute.constantPool;
         final byte[] code = codeAttribute.code();
         final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));
         final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecode.INVOKESTATIC.ordinal();

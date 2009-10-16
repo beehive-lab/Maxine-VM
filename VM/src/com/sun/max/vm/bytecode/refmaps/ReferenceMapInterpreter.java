@@ -54,8 +54,8 @@ public abstract class ReferenceMapInterpreter {
     public static Object createFrames(ReferenceMapInterpreterContext context) {
         final ClassMethodActor classMethodActor = context.classMethodActor();
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int maxStack = codeAttribute.maxStack();
-        final int maxLocals = codeAttribute.maxLocals();
+        final int maxStack = codeAttribute.maxStack;
+        final int maxLocals = codeAttribute.maxLocals;
         final ReferenceMapInterpreter interpreter;
         if (maxStack <= CompactReferenceMapInterpreter.MAX_STACK && (maxStack + maxLocals) < CompactReferenceMapInterpreter.MAX_SLOTS) {
             // Cannot use the shared thread-local compact reference map interpreter (i.e. VmThread.current().compactReferenceMapInterpreter())
@@ -89,11 +89,11 @@ public abstract class ReferenceMapInterpreter {
     private ReferenceMapInterpreterContext context;
 
     protected int maxStack() {
-        return codeAttribute.maxStack();
+        return codeAttribute.maxStack;
     }
 
     protected int maxLocals() {
-        return codeAttribute.maxLocals();
+        return codeAttribute.maxLocals;
     }
 
     /**
@@ -156,7 +156,7 @@ public abstract class ReferenceMapInterpreter {
     protected void resetInterpreter(ReferenceMapInterpreterContext context) {
         this.classMethodActor = context.classMethodActor();
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        this.constantPool = codeAttribute.constantPool();
+        this.constantPool = codeAttribute.constantPool;
         this.codeAttribute = codeAttribute;
         this.code = codeAttribute.code();
         this.context = context;
