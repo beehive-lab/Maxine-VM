@@ -1153,6 +1153,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm().jcc(Condition.notEqual, endLabel);
                 masm().callGlobalStub(GlobalStub.f2i, null, dest.asRegister(), srcRegister);
+                // cannot cause an exception
                 masm().bind(endLabel);
                 break;
 
@@ -1162,6 +1163,7 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm().jcc(Condition.notEqual, endLabel);
                 masm().callGlobalStub(GlobalStub.d2i, null, dest.asRegister(), srcRegister);
+                // cannot cause an exception
                 masm().bind(endLabel);
                 break;
 
