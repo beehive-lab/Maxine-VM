@@ -22,6 +22,8 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -66,8 +68,26 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         Trace.begin(TRACE_VALUE,  tracePrefix() + " initializing");
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
-        createFrame(null);
-        getMenu(DEFAULT_INSPECTOR_MENU).add(new WatchpointFrameMenuItems());
+
+        final InspectorFrameInterface frame = createFrame();
+
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+
+        final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
+        editMenu.add(actions().setWordWatchpoint());
+        editMenu.addSeparator();
+        editMenu.add(actions().removeSelectedWatchpoint());
+        editMenu.add(actions().removeAllWatchpoints());
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectSelectedMemoryWatchpointWordsAction());
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         Trace.end(TRACE_VALUE,  tracePrefix() + " initializing");
     }
 
@@ -110,29 +130,6 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     public InspectorAction getPrintAction() {
         return getDefaultPrintAction();
-    }
-
-    /**
-     * Menu items not dependent on mouse location, suitable for the frame.
-     */
-    private final class WatchpointFrameMenuItems implements InspectorMenuItems {
-        // TODO (mlvdv) add watchpoint frame menu items
-        public void addTo(InspectorMenu menu) {
-            menu.add(actions().setWordWatchpoint());
-            menu.addSeparator();
-            menu.add(actions().removeSelectedWatchpoint());
-            menu.add(actions().removeAllWatchpoints());
-        }
-
-        public Inspection inspection() {
-            return WatchpointsInspector.this.inspection();
-        }
-
-        public void refresh(boolean force) {
-        }
-
-        public void redisplay() {
-        }
     }
 
     @Override

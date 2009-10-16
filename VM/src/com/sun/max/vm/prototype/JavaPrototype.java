@@ -224,13 +224,8 @@ public class JavaPrototype extends Prototype {
             // Don't want the static Map fields initialized
             PrototypeClassLoader.omitClass(java.lang.reflect.Proxy.class);
 
-            try {
-                //
-                PrototypeClassLoader.omitClass(Class.forName(File.class.getName() + "$LazyInitialization", false, File.class.getClassLoader()));
-            } catch (ClassNotFoundException classNotFoundException) {
-                // This just means that this class is not present in the host JDK
-            }
-
+            PrototypeClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
+            PrototypeClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
 
             // LogManager and FileSystemPreferences have many side effects
             // that we do not wish to account for before running the target VM.
@@ -256,6 +251,7 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
         loadClass(java.util.concurrent.atomic.AtomicLong.class);
+        loadClass(java.security.ProtectionDomain.class);
 
         // Necessary for Java Run Scheme to initialize the System class:
         loadClass(sun.misc.Version.class);

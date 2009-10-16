@@ -52,7 +52,7 @@ public class TypeLabel extends InspectorLabel {
                 case MouseEvent.BUTTON1: {
                     if (teleClassActor != null) {
                         if (mouseEvent.isControlDown()) {
-                            actions().inspectObjectMemoryWords(teleClassActor, null).perform();
+                            actions().inspectObjectMemoryWords(teleClassActor).perform();
                         } else {
                             inspection().focus().setHeapObject(teleClassActor);
                         }

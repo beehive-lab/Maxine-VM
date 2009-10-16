@@ -52,7 +52,7 @@ public final class NativeMethodInspector extends MethodInspector {
             shortName = teleTargetRoutine.getName();
             longName = shortName;
         }
-        createFrame(null);
+        createFrame();
     }
 
     @Override

@@ -918,8 +918,6 @@ public final class ClassfileReader {
             flags |= NO_SAFEPOINTS;
         } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
             flags |= BUILTIN | UNSAFE;
-        } else if (annotationTypeDescriptor.equals(forJavaClass(WRAPPER.class))) {
-            flags |= WRAPPER;
         } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
             flags |= TEMPLATE | UNSAFE;
         } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {

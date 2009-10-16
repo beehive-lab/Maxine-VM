@@ -45,5 +45,5 @@ public abstract class Backend {
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
     public abstract AbstractAssembler newAssembler(int frameSize);
     public abstract GlobalStubEmitter newGlobalStubEmitter();
-    public abstract XirAssembler newXirAssembler();
+    public abstract CiXirAssembler newXirAssembler();
 }

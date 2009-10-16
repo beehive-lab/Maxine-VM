@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,16 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package jtt.gc;
 
-import java.lang.annotation.*;
+import com.sun.max.annotate.*;
 
 /**
- * 
- * @see WRAPPED
- * @author Doug Simon
+ * Tests that object parameters passed on the stack are not trashed by a GC.
+ * That is, they are either protected by a GC refmap or are never live when
+ * a GC can occur.
+ *
+ * @Harness: java
+ * @Runs: (1) = true
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface WRAPPER {
+public class ObjectStackParams01 {
+    // JIT Method
+    public static boolean test(int ignore) {
+        String obj = new String("Hello World");
+        Object result = objStackParams(16, null, null, null, null, null, obj);
+        return result.equals(obj);
+    }
+
+    /**
+     * Method that will be passed some object parameters via the stack.
+     */
+    @UNSAFE
+    private static Object objStackParams(int depth, Object a, Object b, Object c, Object
+                    d, Object e, Object f) {
+        if (depth > 0) {
+            System.gc();
+            return objStackParams(depth - 1, a, b, c, d, e, f);
+        }
+        return f;
+    }
 }

@@ -741,7 +741,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().actions().inspectMemoryWords(address, null);
+                    action = inspection().actions().inspectMemoryWords(address);
                     break;
                 }
                 case OBJECT_REFERENCE:
@@ -749,7 +749,7 @@ public class WordValueLabel extends ValueLabel {
                     if (teleObject != null) {
                         action = inspection().actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
-                        action = inspection().actions().inspectMemoryWords(address, null);
+                        action = inspection().actions().inspectMemoryWords(address);
                     }
                     break;
                 }
@@ -764,7 +764,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (maxVM().contains(address)) {
-                        action = inspection().actions().inspectMemoryWords(address, null);
+                        action = inspection().actions().inspectMemoryWords(address);
                     }
                     break;
                 }

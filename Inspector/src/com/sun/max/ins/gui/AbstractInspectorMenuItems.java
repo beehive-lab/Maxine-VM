@@ -20,75 +20,32 @@
  */
 package com.sun.max.ins.gui;
 
-import javax.swing.*;
-
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.tele.*;
 
 
 /**
- * A menu bar specialized for use in the Maxine Inspector.
- * <br>
- * Instances of {@link InspectorMenu} can be added, and they can be retrieved by name.
+ * A default implementation of menu items that makes unnecessary some of the methods
+ * that are seldom needed.
  *
  * @author Michael Van De Vanter
  */
-public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
+public abstract class AbstractInspectorMenuItems implements InspectorMenuItems, InspectionHolder {
 
-    private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(12, 14);
+    private Inspection inspection;
 
-    private final Inspection inspection;
+    private final String tracePrefix;
 
-    private final AppendableSequence<InspectorMenu> menus = new ArrayListSequence<InspectorMenu>(10);
-
-    /**
-     * Creates a new {@JMenuBar}, specialized for use in the Maxine Inspector.
-     */
-    protected InspectorMenuBar(Inspection inspection) {
+    protected AbstractInspectorMenuItems(Inspection inspection) {
         this.inspection = inspection;
-        setOpaque(true);
-    }
-
-    public void add(InspectorMenu inspectorMenu) {
-        assert inspectorMenu.getMenuName() != null;
-        super.add(inspectorMenu);
-        menus.append(inspectorMenu);
-    }
-
-    private InspectorMenu findMenu(String name) {
-        for (InspectorMenu inspectorMenu : menus) {
-            if (inspectorMenu.getMenuName().equals(name)) {
-                return inspectorMenu;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @param name a menu name
-     * @return the menu in the menu bar with that name, or
-     * a new empty one if it doesn't already exist.
-     */
-    public InspectorMenu makeMenu(MenuKind menuKind) {
-        InspectorMenu menu = findMenu(menuKind.label());
-        if (menu != null) {
-            return menu;
-        }
-        menu = new InspectorMenu(menuKind.label());
-        if (menuKind == MenuKind.DEFAULT_MENU) {
-            menu.setIcon(FRAME_ICON);
-        }
-        add(menu);
-        return menu;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final Inspection inspection() {
         return inspection;
     }
 
-    public MaxVM maxVM() {
+    public final MaxVM maxVM() {
         return inspection.maxVM();
     }
 
@@ -108,16 +65,20 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return inspection.focus();
     }
 
-    public InspectionActions actions() {
+    public final InspectionActions actions() {
         return inspection.actions();
+    }
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
     }
 
     public void redisplay() {
     }
 
     public void refresh(boolean force) {
-        for (InspectorMenu menu : menus) {
-            menu.refresh(force);
-        }
     }
 }
