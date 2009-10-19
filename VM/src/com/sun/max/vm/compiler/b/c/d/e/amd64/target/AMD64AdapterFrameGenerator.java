@@ -129,7 +129,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
      * @return
      */
     public static int jitToOptimizingAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
-        final int instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0) & 0xff;
+        final byte instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0);
         if (instruction == ENTER) {
             final int lo = stackFrameWalker.readByte(adapterFirstInstruction, 1) & 0xff;
             final int hi = stackFrameWalker.readByte(adapterFirstInstruction, 2) & 0xff;
