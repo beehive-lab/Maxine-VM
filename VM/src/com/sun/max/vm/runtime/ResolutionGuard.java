@@ -41,6 +41,8 @@ public final class ResolutionGuard {
 
     public final int constantPoolIndex;
 
+    public final boolean arrayActor;
+
     @CONSTANT_WHEN_NOT_ZERO
     public Actor value;
 
@@ -48,12 +50,21 @@ public final class ResolutionGuard {
         this.constantPool = constantPool;
         this.constantPoolIndex = constantPoolIndex;
         assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
+        arrayActor = false;
+    }
+
+    public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex, boolean arrayActor) {
+        this.constantPool = constantPool;
+        this.constantPoolIndex = constantPoolIndex;
+        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
+        this.arrayActor = arrayActor;
     }
 
     public ResolutionGuard(Actor value) {
         this.value = value;
         this.constantPool = null;
         this.constantPoolIndex = -1;
+        arrayActor = false;
     }
 
     /**
