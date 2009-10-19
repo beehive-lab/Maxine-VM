@@ -24,7 +24,6 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -53,6 +52,13 @@ import com.sun.max.vm.thread.*;
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
 
+    public static final String FROM_REGION_NAME = "Heap-From";
+    public static final String TO_REGION_NAME = "Heap-To";
+    public static final String FROM_GROW_REGION_NAME = "Heap-From-Grow";
+    public static final String TO_GROW_REGION_NAME = "Heap-To-Grow";
+    public static final String LINEAR_GROW_POLICY_NAME = "Linear";
+    public static final String DOUBLE_GROW_POLICY_NAME = "Double";
+
     /**
      * A VM option for specifying how heap memory is to be allocated.
      */
@@ -72,7 +78,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             "is the maximum of this option's value and the size of a TLAB."), MaxineVM.Phase.PRISTINE);
 
     private static final VMStringOption growPolicyOption =
-        register(new VMStringOption("-XX:HeapGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
+        register(new VMStringOption("-XX:HeapGrowPolicy=", false, DOUBLE_GROW_POLICY_NAME, "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
     /**
      * Procedure used to update a grip so that it points to an object in 'toSpace'.
@@ -116,12 +122,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion("Heap-From-Grow");
+    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion(FROM_GROW_REGION_NAME);
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion("Heap-To-Grow");
+    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion(TO_GROW_REGION_NAME);
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -180,8 +186,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             try {
                 Heap.enableImmortalMemoryAllocation();
-                fromSpace = new RuntimeMemoryRegion("Heap-From");
-                toSpace = new RuntimeMemoryRegion("Heap-To");
+                fromSpace = new RuntimeMemoryRegion(FROM_REGION_NAME);
+                toSpace = new RuntimeMemoryRegion(TO_REGION_NAME);
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }
@@ -208,9 +214,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
-            if (growPolicy.equals("Double")) {
+            if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {
                 this.growPolicy = new DoubleGrowPolicy();
-            } else if (growPolicy.equals("Linear")) {
+            } else if (growPolicy.equals(LINEAR_GROW_POLICY_NAME)) {
                 this.growPolicy = new LinearGrowPolicy(growPolicy);
             } else {
                 Log.print("Unknown heap growth policy, using default policy");
