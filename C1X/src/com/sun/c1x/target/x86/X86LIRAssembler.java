@@ -464,8 +464,10 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (src.isSingleCpu()) {
             Address dst = frameMap().addressForSlot(dest.singleStackIx());
-            if (type == CiKind.Object) {
-                masm().verifyOop(src.asRegister());
+            if (type == CiKind.Object || type == CiKind.Word) {
+                if (type == CiKind.Object) {
+                    masm().verifyOop(src.asRegister());
+                }
                 masm().movptr(dst, src.asRegister());
             } else {
                 masm().movl(dst, src.asRegister());
@@ -528,6 +530,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             case Jsr: // fall through
             case Object: // fall through
+            case Word:
                 if (compilation.target.arch.is64bit()) {
                     masm().movptr(asAddress(toAddr), src.asRegister());
                 } else {
@@ -539,7 +542,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().movl(asAddress(toAddr), src.asRegister());
                 break;
 
-            case Word:
             case Long: {
                 CiRegister fromLo = src.asRegisterLo();
                 CiRegister fromHi = src.asRegisterHi();
@@ -596,9 +598,11 @@ public class X86LIRAssembler extends LIRAssembler {
         assert dest.isRegister() : "should not call otherwise";
 
         if (dest.isSingleCpu()) {
-            if (type == CiKind.Object) {
+            if (type == CiKind.Object || type == CiKind.Word) {
                 masm().movptr(dest.asRegister(), frameMap().addressForSlot(src.singleStackIx()));
-                masm().verifyOop(dest.asRegister());
+                if (type == CiKind.Object) {
+                    masm().verifyOop(dest.asRegister());
+                }
             } else {
                 masm().movl(dest.asRegister(), frameMap().addressForSlot(src.singleStackIx()));
             }
@@ -628,7 +632,7 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void mem2mem(LIROperand src, LIROperand dest, CiKind type) {
         if (dest.kind.isSingleWord()) {
             assert src.kind.isSingleWord();
-            if (type == CiKind.Object) {
+            if (type == CiKind.Object || type == CiKind.Word) {
                 masm().pushptr(asAddress((LIRAddress) src));
                 masm().popptr(asAddress((LIRAddress) dest));
             } else {
@@ -656,7 +660,7 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2stack(LIROperand src, LIROperand dest, CiKind type) {
         if (dest.isSingleStack()) {
-            if (type == CiKind.Object) {
+            if (type == CiKind.Object || type == CiKind.Word) {
                 masm().pushptr(asAddress((LIRAddress) src));
                 masm().popptr(frameMap().addressForSlot(dest.singleStackIx()));
             } else {
@@ -685,7 +689,7 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void stack2stack(LIROperand src, LIROperand dest, CiKind type) {
         if (src.isSingleStack()) {
-            if (type == CiKind.Object) {
+            if (type == CiKind.Object || type == CiKind.Word) {
                 masm().pushptr(frameMap().addressForSlot(src.singleStackIx()));
                 masm().popptr(frameMap().addressForSlot(dest.singleStackIx()));
             } else {
@@ -2058,15 +2062,15 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isSingleCpu()) {
                 // cpu register - cpu register
-                if (opr1.kind == CiKind.Object) {
+                if (opr1.kind == CiKind.Object || opr1.kind == CiKind.Word) {
                     masm().cmpptr(reg1, opr2.asRegister());
                 } else {
-                    assert opr2.kind != CiKind.Object : "cmp int :  oop?";
+                    assert opr2.kind != CiKind.Object && opr2.kind != CiKind.Word : "cmp int :  oop?";
                     masm().cmpl(reg1, opr2.asRegister());
                 }
             } else if (opr2.isStack()) {
                 // cpu register - stack
-                if (opr1.kind == CiKind.Object) {
+                if (opr1.kind == CiKind.Object || opr1.kind == CiKind.Word) {
                     masm().cmpptr(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
                 } else {
                     masm().cmpl(reg1, frameMap().addressForSlot(opr2.singleStackIx()));
@@ -2191,7 +2195,7 @@ public class X86LIRAssembler extends LIRAssembler {
             LIRAddress addr = (LIRAddress) opr1;
             if (c.kind == CiKind.Int) {
                 masm().cmpl(asAddress(addr), c.asInt());
-            } else if (c.kind == CiKind.Object) {
+            } else if (c.kind == CiKind.Object || c.kind == CiKind.Word) {
                 if (compilation.target.arch.is64bit()) {
                     // %%% Make this explode if addr isn't reachable until we figure out a
                     // better strategy by giving X86.noreg as the temp for asAddress
@@ -3021,8 +3025,11 @@ public class X86LIRAssembler extends LIRAssembler {
                     masm.call(method, new boolean[this.frameMap().frameSize() / compilation.target.arch.wordSize]);
 
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
-                        LIROperand resultLocation = LIROperandFactory.singleLocation(inst.result.kind, this.compilation.runtime.returnRegister(inst.result.kind));
-                        moveOp(resultLocation, ops[inst.result.index], inst.result.kind, null, false);
+                        // (tw) remove this hack!
+                        CiKind kind = CiKind.Long;
+                        CiRegister register = this.compilation.runtime.returnRegister(inst.result.kind);
+                        LIROperand resultLocation = LIROperandFactory.doubleLocation(kind, register, register);
+                        moveOp(resultLocation, ops[inst.result.index], kind, null, false);
                     }
                     break;
 

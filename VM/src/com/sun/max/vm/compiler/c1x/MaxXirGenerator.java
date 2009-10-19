@@ -362,16 +362,19 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType arrayType) {
+    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
         XirPair pair = newArrayTemplates[elementKind.ordinal()];
         Object hub = arrayHubs[elementKind.ordinal()];
         if (elementKind == CiKind.Object && arrayType.isLoaded()) {
             hub = hubFor(arrayType);
+        } else if (elementKind == CiKind.Object) {
+            hub = null;
         }
+
         if (hub != null) {
             return new XirSnippet(pair.resolved, XirArgument.forObject(hub), length);
         }
-        XirArgument guard = XirArgument.forObject(guardFor(arrayType));
+        XirArgument guard = XirArgument.forObject(guardForComponentType(componentType));
         return new XirSnippet(pair.unresolved, guard, length);
     }
 
@@ -473,6 +476,12 @@ public class MaxXirGenerator extends RiXirGenerator {
         // XXX: cache resolution guards
         MaxRiMethod m = (MaxRiMethod) method;
         return new ResolutionGuard(m.constantPool.constantPool, m.cpi);
+    }
+
+    private ResolutionGuard guardForComponentType(RiType type) {
+        // XXX: cache resolution guards
+        MaxRiType m = (MaxRiType) type;
+        return new ResolutionGuard(m.constantPool.constantPool, m.cpi, true);
     }
 
     private ResolutionGuard guardFor(RiType type) {
@@ -708,8 +717,8 @@ public class MaxXirGenerator extends RiXirGenerator {
         {
             // unresolved invokevirtual template
             asm.restart();
-            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
+            XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
             XirVariable vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
             resolve(asm, "resolveVirtualMethod", vtableOffset, guard);
             XirVariable hub = asm.createTemp("hub", CiKind.Object);
@@ -770,6 +779,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             }
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
             callRuntimeThroughStub(asm, "allocateMultiArray" + rank, asm.getResultOperand(), Arrays.prepend(lengths, hub));
+            asm.end();
             resolved = finishTemplate(asm, "multianewarray<" + rank + ">");
         }
 
@@ -786,6 +796,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pstore(CiKind.Int, lengthArray, asm.i(offsetOfFirstArrayElement + i * target.sizeInBytes(CiKind.Int)), lengths[i], false);
         }
         callRuntimeThroughStub(asm, "allocateMultiArrayN", asm.getResultOperand(), guard, lengthArray);
+        asm.end();
         unresolved = finishTemplate(asm, "multianewarray-complex<" + rank + ">");
 
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
@@ -887,6 +898,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             if (genWriteBarrier) {
                 addWriteBarrier(asm, tuple, value);
             }
+            asm.end();
             resolved = finishTemplate(asm, "putstatic<" + kind + ", " + genWriteBarrier + ">");
         }
         {
@@ -1130,12 +1142,13 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jeq(fail, object, asm.o(null));
         }
         callRuntimeThroughStub(asm, "unresolvedInstanceOf", asm.getResultOperand(), object, guard);
-        asm.end();
         if (!nonnull) {
             // null check failed
+            XirLabel pass = asm.createInlineLabel("pass");
+            asm.jmp(pass);
             asm.bindInline(fail);
             asm.mov(asm.getResultOperand(), asm.b(false));
-            asm.end();
+            asm.bindInline(pass);
         }
         asm.end();
         unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
@@ -1263,7 +1276,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
 
         public static int resolveVirtualMethod(ResolutionGuard guard) {
-            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex();
+            return ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard).vTableIndex() * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
         }
 
         @UNSAFE
