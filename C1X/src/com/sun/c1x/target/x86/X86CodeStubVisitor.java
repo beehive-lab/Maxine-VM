@@ -104,7 +104,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayStoreException, stub.info);
+        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowArrayStoreException, stub.info, CiRegister.None);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -121,7 +121,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStub(GlobalStub.ThrowDiv0Exception, stub.info);
+        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowDiv0Exception, stub.info, CiRegister.None);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -135,7 +135,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStub(GlobalStub.ThrowNullPointerException, stub.info);
+        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowNullPointerException, stub.info, CiRegister.None);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -162,8 +162,8 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
 
-        int infoPos = masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
-        // TODO: do we need to add call info?
+        masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        // TODO: do we need to add call info? (tw) No, if stub.info not null, then the call automatically adds it to the correct position
         masm.jmp(stub.continuation);
     }
 
@@ -230,7 +230,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         int infoPos;
         if (stub.obj().isIllegal()) {
-            infoPos = masm.callGlobalStub(stub.stub, stub.info);
+            infoPos = masm.callGlobalStubNoArgs(stub.stub, stub.info, CiRegister.None);
         } else {
             infoPos = masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
         }

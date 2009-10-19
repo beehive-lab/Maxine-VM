@@ -394,14 +394,14 @@ public class MaxXirGenerator extends RiXirGenerator {
                 template = checkcastForInterfaceTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
             } else if (type.isFinal()) {
                 template = checkcastForLeafTemplate.resolved;
             } else {
                 template = checkcastForClassTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
             }
             XirArgument hub = XirArgument.forObject(hubFor(type));
             return new XirSnippet(template, receiver, hub);
@@ -418,7 +418,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 template = instanceofForInterfaceTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
             }
 
             XirArgument hub = XirArgument.forObject(hubFor(type));
@@ -428,7 +428,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 template = instanceofForClassTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
             }
             return new XirSnippet(template, receiver, hub);
         }
@@ -989,6 +989,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.restart(CiKind.Object);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
+            XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
             XirVariable hub = asm.createTemp("hub", CiKind.Object);
             XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
             XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
@@ -1001,6 +1002,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 asm.jeq(pass, object, asm.o(null));
             }
             asm.pload(CiKind.Object, hub, object, asm.i(hubOffset), !nonnull);
+            asm.jeq(pass, hub, checkedHub);
             asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength), false);
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
@@ -1081,6 +1083,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirVariable result = asm.getResultOperand();
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
+            XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
             XirVariable hub = asm.createTemp("hub", CiKind.Object);
             XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
             XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
@@ -1094,6 +1097,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                 asm.jeq(fail, object, asm.o(null));
             }
             asm.pload(CiKind.Object, hub, object, asm.i(hubOffset), !nonnull);
+            asm.jeq(pass, hub, checkedHub);
             asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength), false);
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
