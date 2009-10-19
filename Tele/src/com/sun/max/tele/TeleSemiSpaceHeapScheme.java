@@ -23,6 +23,7 @@ package com.sun.max.tele;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.runtime.*;
 
@@ -60,8 +61,9 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
                 }
                 for (TeleNativeThread teleNativeThread : teleVM().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
                     TeleThreadLocalValues teleThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
-                    if (!teleThreadLocalValues.getWord("_TLAB_DISABLED").equals(Word.zero())) {
-                        if (address.greaterEqual(teleThreadLocalValues.getWord("_TLAB_MARK").asAddress()) && teleThreadLocalValues.getWord("_TLAB_TOP").asAddress().greaterThan(address)) {
+                    if (!teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
+                        if (address.greaterEqual(teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME).asAddress())
+                                        && teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME).asAddress().greaterThan(address)) {
                             return false;
                         }
                     }
