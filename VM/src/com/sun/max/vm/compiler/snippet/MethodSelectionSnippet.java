@@ -56,7 +56,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
             return classActor.getVirtualMethodActorByVTableIndex(declaredMethod.vTableIndex());
         }
 
-        @INLINE(afterSnippetsAreCompiled = true)
+        @INLINE
         public static Word selectNonPrivateVirtualMethod(Object receiver, VirtualMethodActor declaredMethod) {
             final Hub hub = ObjectAccess.readHub(receiver);
             return hub.getWord(declaredMethod.vTableIndex());
