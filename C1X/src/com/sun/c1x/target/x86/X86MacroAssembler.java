@@ -68,13 +68,14 @@ public class X86MacroAssembler extends X86Assembler {
 
     public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
-    }
-
-    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
-        assert args.length == stub.parameters.length;
         return callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, stub.resultOperand.kind, info, result, args);
     }
+
+    public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
+        assert 0 == stub.arguments.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result);
+    }
+
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;

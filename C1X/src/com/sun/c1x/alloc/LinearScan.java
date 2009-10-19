@@ -2555,9 +2555,11 @@ public class LinearScan {
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
         ValueStack innermostState = info.stack;
+        assert innermostState != null : "why is it missing?";
+
         IRScope innermostScope = innermostState.scope();
 
-        assert innermostScope != null && innermostState != null : "why is it missing?";
+        assert innermostScope != null : "why is it missing?";
 
         int stackEnd = innermostState.stackSize();
         int locksEnd = innermostState.locksSize();
