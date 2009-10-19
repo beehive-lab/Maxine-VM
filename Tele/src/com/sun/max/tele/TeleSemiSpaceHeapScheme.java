@@ -23,36 +23,36 @@ package com.sun.max.tele;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.runtime.*;
 
 /**
+ * Implementation details about the heap in the VM, specialized
+ * for the semi-space implementation.
  *
  * @author Hannes Payer
- *
+ * @author Michael Van De Vanter
+ * @see SemiSpaceHeapScheme
  */
-public final class TeleSemiSpaceHeapManager extends TeleHeapManager{
+public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
 
-    private TeleSemiSpaceHeapManager(TeleVM teleVM) {
+    TeleSemiSpaceHeapScheme(TeleVM teleVM) {
         super(teleVM);
     }
 
-    public static TeleHeapManager make(TeleVM teleVM) {
-        if (teleHeapManager ==  null) {
-            teleHeapManager = new TeleSemiSpaceHeapManager(teleVM);
-        }
-        return teleHeapManager;
+    public Class heapSchemeClass() {
+        return SemiSpaceHeapScheme.class;
     }
 
-    @Override
     public boolean isInLiveMemory(Address address) {
 
         if (teleVM().isInGC()) { // this assumption needs to be proofed; basically it means that during GC both heaps are valid
             return true;
         }
 
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
+        for (TeleRuntimeMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
             if (teleHeapRegion.contains(address)) {
-                if (teleHeapRegion.description().equals("Heap-From")) { // everything in from-space is dead
+                if (teleHeapRegion.description().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
                     return false;
                 }
                 if (address.greaterEqual(teleHeapRegion.mark())) { // everything in to-space after the global allocation mark is dead
