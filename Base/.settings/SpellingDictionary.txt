@@ -53,6 +53,7 @@ classloader
 classpath
 clipboard
 com
+compaction
 deactivate
 deactivated
 deactivates
