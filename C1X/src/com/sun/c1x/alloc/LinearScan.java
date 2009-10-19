@@ -2059,6 +2059,12 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(CiKind.Object, toRegister(assignedReg));
                 }
 
+                case Word: {
+                    assert isCpu(assignedReg) : "no cpu register";
+                    assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
+                    return LIROperandFactory.singleLocation(CiKind.Word, toRegister(assignedReg));
+                }
+
                 case Byte:
                 case Char:
                 case Short:
@@ -2068,7 +2074,6 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
-                case Word:
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";

@@ -71,21 +71,22 @@ public class X86MacroAssembler extends X86Assembler {
         return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
     }
 
-    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info) {
-        return emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
+    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, stub.resultOperand.kind, info, result, args);
     }
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
     }
 
-    private int callGlobalStubHelper(Object stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+    private int callGlobalStubHelper(Object stub, C1XCompilation compilation, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
@@ -95,7 +96,7 @@ public class X86MacroAssembler extends X86Assembler {
         int pos = this.codeBuffer.position();
 
         if (result != CiRegister.None) {
-            this.loadResult(result, 0);
+            this.loadResult(result, 0, resultKind);
         }
 
         // Clear out parameters
@@ -112,9 +113,15 @@ public class X86MacroAssembler extends X86Assembler {
         return -(index + 2) * target.arch.wordSize;
     }
 
-    void loadResult(CiRegister r, int index) {
+    void loadResult(CiRegister r, int index, CiKind kind) {
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
-        movptr(r, new Address(X86.rsp, offsetFromRspInBytes));
+        if (kind == CiKind.Int || kind == CiKind.Boolean) {
+            movl(r, new Address(X86.rsp, offsetFromRspInBytes));
+        } else {
+            assert kind == CiKind.Long || kind == CiKind.Object || kind == CiKind.Word || kind == CiKind.Illegal;
+            assert target.arch.is64bit();
+            movq(r, new Address(X86.rsp, offsetFromRspInBytes));
+        }
     }
 
     void storeParameter(CiRegister r, int index) {
