@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jtrun.all;
 
 import test.com.sun.max.vm.jtrun.*;
-import jtt.except.*;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list

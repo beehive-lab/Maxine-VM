@@ -2059,6 +2059,12 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(CiKind.Object, toRegister(assignedReg));
                 }
 
+                case Word: {
+                    assert isCpu(assignedReg) : "no cpu register";
+                    assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
+                    return LIROperandFactory.singleLocation(CiKind.Word, toRegister(assignedReg));
+                }
+
                 case Byte:
                 case Char:
                 case Short:
@@ -2068,7 +2074,6 @@ public class LinearScan {
                     return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
                 }
 
-                case Word:
                 case Long: {
                     int assignedRegHi = interval.assignedRegHi();
                     assert isCpu(assignedReg) : "no cpu register";
@@ -2550,9 +2555,11 @@ public class LinearScan {
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
         ValueStack innermostState = info.stack;
+        assert innermostState != null : "why is it missing?";
+
         IRScope innermostScope = innermostState.scope();
 
-        assert innermostScope != null && innermostState != null : "why is it missing?";
+        assert innermostScope != null : "why is it missing?";
 
         int stackEnd = innermostState.stackSize();
         int locksEnd = innermostState.locksSize();
