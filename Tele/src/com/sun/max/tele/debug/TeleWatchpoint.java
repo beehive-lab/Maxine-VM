@@ -854,6 +854,20 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
                         }
                     }
                     Trace.line(TRACE_VALUE, "Failed to relocate watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                } else if (teleObject.isObsolete()) {
+                    Address newAddress = teleObject.getForwardedMemoryRegion().start().plus(teleWatchpoint.getTeleObjectStartAddressOffset());
+
+                    if (removeWatchpoint(teleWatchpoint)) {
+                        teleWatchpoint.setStart(newAddress);
+                        if (addWatchpoint(teleWatchpoint) != null) {
+                            return true;
+                        } else {
+                            // Can't store relocated watchpoint in watchpoints list.
+                            Trace.line(TRACE_VALUE, "Failed to store relocated watchpoint in watchpoints list start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                        }
+                    }
+                    Trace.line(TRACE_VALUE, "Failed to relocate watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+
                 } else {
                     if (removeWatchpoint(teleWatchpoint)) {
                         TeleWatchpoint teleRegionWatchpoint = setRegionWatchpoint("RegionWatchpoint - GC removed corresponding Object", new FixedMemoryRegion(teleWatchpoint.start(), teleWatchpoint.size(), "Old memory location of watched object"),
