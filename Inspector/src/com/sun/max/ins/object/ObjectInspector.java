@@ -33,6 +33,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -46,7 +47,9 @@ public abstract class ObjectInspector extends Inspector {
 
     private final ObjectInspectorFactory factory;
 
-    private final TeleObject teleObject;
+    private TeleObject teleObject;
+
+    private boolean followingTeleObject = true;
 
     /**
      * @return local surrogate for the object being inspected in the VM
@@ -83,6 +86,7 @@ public abstract class ObjectInspector extends Inspector {
         this.factory = factory;
         this.teleObject = teleObject;
         this.currentObjectOrigin = teleObject().getCurrentOrigin();
+        this.title = "";
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
             protected void setShowHeader(boolean showHeader) {
@@ -153,9 +157,16 @@ public abstract class ObjectInspector extends Inspector {
             Pointer pointer = teleObject.getCurrentOrigin();
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
             return title;
+        } else if (teleObject.isObsolete()) {
+            if (title.startsWith("OBSOLETE")) {
+                return title;
+            }
+            return "OBSOLETE: " + title;
         }
-        // Use the last good title
-        return title + " - collected by GC";
+        if (title.startsWith("DEAD")) {
+            return title;
+        }
+        return "DEAD: " + title;
     }
 
     @Override
@@ -231,12 +242,25 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     protected boolean refreshView(boolean force) {
-        final Pointer newOrigin = teleObject.getCurrentOrigin();
-        if (!teleObject.isLive()) {
-            setWarning();
-            updateFrameTitle();
-            return false;
+        if (teleObject.isObsolete() && followingTeleObject) {
+            Log.println("FORWARDED: " + teleObject.reference().grip().getForwardedTeleGrip().toOrigin());
+            TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
+            if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().grip().makeOID())) {
+                followingTeleObject = false;
+                setWarning();
+                updateFrameTitle();
+                return false;
+            }
+            factory.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
+            teleObject = forwardedTeleObject;
+            currentObjectOrigin = teleObject.getCurrentOrigin();
+            reconstructView();
+            if (objectHeaderTable != null) {
+                objectHeaderTable.refresh(force);
+            }
         }
+
+        final Pointer newOrigin = teleObject.getCurrentOrigin();
         if (!newOrigin.equals(currentObjectOrigin)) {
             // The object has been relocated in memory
             currentObjectOrigin = newOrigin;
@@ -248,7 +272,6 @@ public abstract class ObjectInspector extends Inspector {
         }
         updateFrameTitle();
         super.refreshView(force);
-
         return true;
     }
 
