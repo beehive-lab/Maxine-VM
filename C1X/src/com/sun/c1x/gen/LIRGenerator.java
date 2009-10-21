@@ -189,7 +189,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand src = args.at(i);
             assert !src.isIllegal() : "check";
 
-            LIROperand dest = newRegister(src.kind);
+            LIROperand dest = newRegister(src.kind.stackType());
             lir.move(src, dest);
 
             // Assign new location to Local instruction for this local
@@ -1405,6 +1405,10 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIROperand loadConstant(LIRConstant c) {
+
+        if (c.kind == CiKind.Jsr) {
+            final int x = 0;
+        }
         CiKind t = c.kind;
         for (int i = 0; i < constants.size(); i++) {
             // XXX: linear search might be kind of slow for big basic blocks
@@ -1481,7 +1485,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRLocation reg;
         switch (type) {
 
-            // TODO (tw): Check why we need char here too?
+            // TODO (tw): Check why we need char and short here too?
+            case Short:
             case Char:
             case Byte:
             case Boolean:
@@ -2074,9 +2079,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRLocation newRegister(CiKind type) {
         int vreg = virtualRegisterNumber++;
-        if (type == CiKind.Jsr) {
-            type = CiKind.Int;
-        }
         return LIROperandFactory.virtualRegister(vreg, type);
     }
 
@@ -2250,6 +2252,11 @@ public abstract class LIRGenerator extends ValueVisitor {
                 operandForPhi((Phi) instr);
             }
         }
+
+        if (instr instanceof Constant) {
+            operandForInstruction(instr);
+        }
+
         // the value must be a constant or have a valid operand
         assert instr instanceof Constant || !instr.operand().isIllegal() : "this root has not been visited yet";
     }
