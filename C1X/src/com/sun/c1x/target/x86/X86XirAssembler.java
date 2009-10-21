@@ -22,11 +22,52 @@ package com.sun.c1x.target.x86;
 
 import java.util.*;
 
+import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.xir.*;
 
-
+/**
+ * X86 specific preprocessing of XIR.
+ *
+ * @author Thomas Wuerthinger
+ *
+ */
 public class X86XirAssembler extends CiXirAssembler {
+
+    /**
+     * Class that represents an X86 displacement when loading a pointer.
+     * It represents the value variable * multi + add.
+     */
+    public static class Displacement {
+        public XirVariable variable;
+        public Address.ScaleFactor multi;
+        public List<XirVariable> added = new ArrayList<XirVariable>();
+    }
+
+
+    private void optimize() {
+
+        Displacement[] displacements = new Displacement[variableCount];
+
+        for (int i=0; i<instructions.size(); i++) {
+
+            XirInstruction inst = instructions.get(i);
+
+            switch (inst.op) {
+
+                case Add:
+                    break;
+
+                case Bind:
+                    // We cannot handle control flow => clear all information
+                    for (int j=0; j<displacements.length; j++) {
+                        displacements[j] = null;
+                    }
+                    break;
+
+            }
+        }
+    }
 
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
@@ -41,14 +82,22 @@ public class X86XirAssembler extends CiXirAssembler {
 
         ArrayList<XirInstruction> currentList = fastPath;
 
+        optimize();
+
         XirVariable divModTemp = null;
         XirVariable divModLeftInput = null;
 
         for (XirInstruction i : instructions) {
             boolean appended = false;
             switch (i.op) {
+
+                case Nop:
+                    appended = true;
+                    break;
+
                 case Mov:
                     break;
+
                 case Add:
                 case Sub:
                 case Div:
@@ -101,6 +150,7 @@ public class X86XirAssembler extends CiXirAssembler {
                     }
 
                     break;
+
                 case PointerLoad:
                 case PointerStore:
                 case PointerLoadDisp:

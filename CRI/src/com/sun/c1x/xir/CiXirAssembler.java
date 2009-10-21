@@ -196,6 +196,8 @@ public abstract class CiXirAssembler {
         temps.clear();
         constants.clear();
     }
+    
+    protected final XirInstruction NOP = new XirInstruction(CiKind.Illegal, XirOp.Nop, null);
 
     public class XirInstruction {
         public final CiKind kind;
@@ -270,6 +272,7 @@ public abstract class CiXirAssembler {
     }
 
     public enum XirOp {
+    	Nop,
         Mov,
         Add,
         Sub,
