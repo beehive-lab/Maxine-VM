@@ -97,7 +97,7 @@ public final class BytecodeScanner {
     }
 
     /**
-     * Gets a decription of the current scan location in a string that resembles a line in a standard stack trace.
+     * Gets a description of the current scan location in a string that resembles a line in a standard stack trace.
      *
      * @param classMethodActor the context of the bytecode being scanned
      */
