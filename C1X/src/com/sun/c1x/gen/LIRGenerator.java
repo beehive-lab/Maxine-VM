@@ -1401,14 +1401,11 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        return loadConstant((LIRConstant) LIROperandFactory.constant(x));
+        return loadConstant((LIRConstant) LIROperandFactory.constant(x), x.kind);
     }
 
-    protected LIROperand loadConstant(LIRConstant c) {
+    protected LIROperand loadConstant(LIRConstant c, CiKind kind) {
 
-        if (c.kind == CiKind.Jsr) {
-            final int x = 0;
-        }
         CiKind t = c.kind;
         for (int i = 0; i < constants.size(); i++) {
             // XXX: linear search might be kind of slow for big basic blocks
@@ -1440,7 +1437,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        LIROperand result = newRegister(t);
+        LIROperand result = newRegister(kind);
         lir.move(c, result);
         constants.add(c);
         regForConstants.add(result);
