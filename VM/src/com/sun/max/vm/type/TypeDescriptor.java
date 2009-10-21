@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.type;
 
-import java.util.*;
-
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -208,19 +206,13 @@ public abstract class TypeDescriptor extends Descriptor {
     }
 
     /**
-     * This just reduces repetition of identical warning messages.
-     */
-    @PROTOTYPE_ONLY
-    private static Map<ClassActor, Set<TypeDescriptor>> suspiciousReferencesByHolder;
-
-    /**
      * Determines if this constant can be resolved without causing class loading.
      *
      * @param holder the class that contains this type descriptor as a reference to another class
      */
     public boolean isResolvableWithoutClassLoading(final ClassActor holder, final ClassLoader classLoader) {
         TypeDescriptor typeDescriptor = this;
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // When running the compiler in a prototype environment (e.g. for JUnit testing), it's
             // desirable to minimize the startup time of the compiler. That is, we do not want to
             // eagerly load all the classes normally loaded in a JavaPrototype. However, these
@@ -237,44 +229,38 @@ public abstract class TypeDescriptor extends Descriptor {
                 return true;
             }
 
+            final Class<?> javaClass;
             // Don't trigger class initialization
-            final boolean initialize = false;
-            final Class<?> javaClass = Classes.forName(typeDescriptor.toJavaString(), initialize, getClass().getClassLoader());
+            javaClass = Classes.forName(typeDescriptor.toJavaString(), false, getClass().getClassLoader());
             if (javaClass.getPackage().getName().equals("java.lang")) {
                 return true;
             }
 
-            final boolean result = !MaxineVM.isPrototypeOnly(javaClass) &&
-                                   MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass));
-//            if (!result) {
-//                if (com.sun.max.Package.contains(javaClass)) {
-//                    if (_suspiciousReferencesByHolder == null) {
-//                        _suspiciousReferencesByHolder = new HashMap<ClassActor, Set<TypeDescriptor>>();
-//                    }
-//                    Set<TypeDescriptor> suspiciousReferences = _suspiciousReferencesByHolder.get(holder);
-//                    if (suspiciousReferences == null) {
-//                        suspiciousReferences = new HashSet<TypeDescriptor>();
-//                        _suspiciousReferencesByHolder.put(holder, suspiciousReferences);
-//                    }
-//                    if (!suspiciousReferences.contains(this)) {
-//                        suspiciousReferences.add(this);
-//                        ProgramWarning.message("Code in " + holder + " refers to a MaxineVM class (" + javaClass.getName() + ") that is not included in the VM: missing \"VM.isPrototyping()\" guard?");
-//                    }
-//                }
-//            }
-            return result;
+            if (MaxineVM.isHostedOnly(javaClass)) {
+                return false;
+            }
+
+            if (PrototypeClassLoader.isOmittedType(typeDescriptor)) {
+                return false;
+            }
+
+            if (MaxineVM.target().configuration.isMaxineVMPackage(MaxPackage.fromClass(javaClass))) {
+                return true;
+            }
+
+            return false;
         }
         return ClassRegistry.get(classLoader, typeDescriptor, true) != null;
     }
 
     public ClassActor resolve(final ClassLoader classLoader) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return resolveInPrototype(classLoader);
         }
         return ClassActor.fromJava(resolveType(classLoader));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private ClassActor resolveInPrototype(final ClassLoader classLoader) {
         Classes.initialize(PrimitiveClassActor.class);
         return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(this);

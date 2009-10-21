@@ -75,6 +75,9 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
+    private static final Option<Integer> jtLoadTimeOutOption = options.newIntegerOption("jtload-timeout", 30,
+                    "The maximum number of seconds to wait for the target VM to complete before " +
+                    "timing out and killing it when the JTLoad tester.");
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 10,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
@@ -82,7 +85,7 @@ public class MaxineTester {
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> skipImageGenOption = options.newBooleanOption("skip-image-gen", false,
                     "Skip the generation of the image, which is useful for testing the Maxine tester itself.");
-    private static final Option<List<String>> javaTesterConfigsOption = options.newStringListOption("java-tester-configs",
+    private static final Option<List<String>> jtImageConfigsOption = options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<List<String>> testsOption = options.newStringListOption("tests", "junit,output,javatester",
@@ -98,7 +101,7 @@ public class MaxineTester {
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
-    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "optopt",
+    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "cpscps",
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +
@@ -158,8 +161,11 @@ public class MaxineTester {
                     // run the Output tests
                     new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeOutputTests, test.substring("output:".length()).split("\\+"))).run();
                 } else if ("javatester".equals(test)) {
-                    // run the JavaTester tests
-                    new JavaTesterHarness().run();
+                    // run the JTImage tests
+                    new JTImageHarness().run();
+                } else if ("jtload".equals(test)) {
+                    // run the JTLoad tests
+                    new JTLoadHarness().run();
                 } else if ("dacapo".equals(test)) {
                     // run the DaCapo tests
                     new DaCapoHarness(MaxineTesterConfiguration.zeeDacapoTests).run();
@@ -193,7 +199,6 @@ public class MaxineTester {
 
 
     private static Iterable<String> filterTestsBySubstrings(Iterable<String> tests, String[] substrings) {
-
         final List<String> list = new ArrayList<String>();
         for (String substring : substrings) {
             for (String test : tests) {
@@ -206,7 +211,6 @@ public class MaxineTester {
     }
 
     private static Iterable<Class> filterTestClassesBySubstrings(Iterable<Class> tests, String[] substrings) {
-
         final List<Class> list = new ArrayList<Class>();
         for (String substring : substrings) {
             for (Class test : tests) {
@@ -566,11 +570,11 @@ public class MaxineTester {
         return Strings.padLengthWithSpaces(16, str);
     }
 
-    static class JavaTesterResult {
+    static class JTResult {
         final String summary;
         final String nextTestOption;
 
-        JavaTesterResult(String summary, String nextTestOption) {
+        JTResult(String summary, String nextTestOption) {
             this.nextTestOption = nextTestOption;
             this.summary = summary;
         }
@@ -1145,26 +1149,26 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a test harness that builds a Maxine VM image and then runs
-     * the JavaTester with that VM in a remote process.
+     * This class implements a test harness that builds the JTT tests into a Maxine VM image and then
+     * runs the JavaTester with that VM in a remote process.
      *
      * @author Ben L. Titzer
      * @author Doug Simon
      */
-    public static class JavaTesterHarness implements Harness {
+    public static class JTImageHarness implements Harness {
         private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
         public boolean run() {
-            final List<String> javaTesterConfigs = javaTesterConfigsOption.getValue();
+            final List<String> javaTesterConfigs = jtImageConfigsOption.getValue();
             for (final String config : javaTesterConfigs) {
                 if (!stopTesting() && MaxineTesterConfiguration.isSupported(config)) {
-                    JavaTesterHarness.runJavaTesterTests(config);
+                    JTImageHarness.runJavaTesterTests(config);
                 }
             }
             return true;
         }
 
-        private static JavaTesterResult parseJavaTesterOutputFile(String config, File outputFile) {
+        private static JTResult parseJavaTesterOutputFile(String config, File outputFile) {
             String nextTestOption = null;
             String lastTest = null;
             String lastTestNumber = null;
@@ -1179,7 +1183,7 @@ public class MaxineTester {
                             break;
                         }
 
-                        Matcher matcher = JavaTesterHarness.TEST_BEGIN_LINE.matcher(line);
+                        Matcher matcher = JTImageHarness.TEST_BEGIN_LINE.matcher(line);
                         if (matcher.matches()) {
                             if (lastTest != null) {
                                 addTestResult(lastTest, null);
@@ -1211,7 +1215,7 @@ public class MaxineTester {
                             // found the terminating line indicating how many tests passed
                             if (failedLines.isEmpty()) {
                                 assert nextTestOption == null;
-                                return new JavaTesterResult(line, null);
+                                return new JTResult(line, null);
                             }
                             break;
                         }
@@ -1221,18 +1225,18 @@ public class MaxineTester {
                         failedLines.append("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
-                        return new JavaTesterResult("no failures", nextTestOption);
+                        return new JTResult("no failures", nextTestOption);
                     }
                     StringBuffer buffer = new StringBuffer("failures: ");
                     for (String failed : failedLines) {
                         buffer.append("\n").append(failed);
                     }
-                    return new JavaTesterResult(buffer.toString(), nextTestOption);
+                    return new JTResult(buffer.toString(), nextTestOption);
                 } finally {
                     reader.close();
                 }
             } catch (IOException e) {
-                return new JavaTesterResult("could not open file: " + outputFile.getPath(), null);
+                return new JTResult("could not open file: " + outputFile.getPath(), null);
             }
         }
 
@@ -1249,7 +1253,7 @@ public class MaxineTester {
                     JavaCommand command = new JavaCommand((Class) null);
                     command.addArgument(nextTestOption);
                     int exitValue = runMaxineVM(command, imageDir, null, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
-                    JavaTesterResult result = JavaTesterHarness.parseJavaTesterOutputFile(config, logs.get(STDOUT));
+                    JTResult result = JTImageHarness.parseJavaTesterOutputFile(config, logs.get(STDOUT));
                     String summary = result.summary;
                     nextTestOption = result.nextTestOption;
                     out.print("Java tester: Stopped " + config + " - ");
@@ -1272,6 +1276,42 @@ public class MaxineTester {
                 out.println("  -> see: " + fileRef(logs.get(STDOUT)));
                 out.println("  -> see: " + fileRef(logs.get(STDERR)));
             }
+        }
+    }
+
+    /**
+     * This class implements a harness that runs the JTT tests on the Maxine VM by running the
+     * {@link test.com.sun.max.vm.jtrun.JTMaxine} class on the "java" Maxine VM configuration.
+     * {@link test.com.sun.max.vm.jtrun.JTMaxine} dynamically loads and compiles all the tests.
+     */
+    public static class JTLoadHarness implements Harness {
+        public boolean run() {
+            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File imageDir = generateJavaRunSchemeImage();
+            if (imageDir != null) {
+                final PrintStream out = out();
+                for (String run : MaxineTesterConfiguration.jtLoadParams.keySet()) {
+                    out.println("JTLoad: Started " + run);
+
+                    JavaCommand javaCommand = new JavaCommand(test.com.sun.max.vm.jtrun.JTMaxine.class);
+                    javaCommand.addArgument("-native-tests");
+                    javaCommand.addArguments(MaxineTesterConfiguration.jtLoadParams.get(run));
+                    javaCommand.addClasspath(System.getProperty("java.class.path"));
+
+                    Logs logs = new Logs(outputDir, "JTLoad_" + run, "std");
+                    ExternalCommand extCommand = createMaxvmCommand("std", imageDir, javaCommand, outputDir, null, logs);
+                    ExternalCommand.Result result = extCommand.exec(false, jtLoadTimeOutOption.getValue());
+
+                    if (!result.completed() || result.exitValue != 0) {
+                        out.println("(JTLoad " + run + " failed )");
+                        out.println("  -> see: " + fileRef(logs.get(STDOUT)));
+                        out.println("  -> see: " + fileRef(logs.get(STDERR)));
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
     }
 

@@ -33,7 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.dir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
@@ -59,7 +59,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         dirGeneratorScheme.compileSnippets();
         generator = dirGeneratorScheme.dirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

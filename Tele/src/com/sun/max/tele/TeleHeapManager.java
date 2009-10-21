@@ -284,7 +284,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
             return teleImmortalHeapRegion;
         }
         for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
-            if (teleHeapRegion.contains(address)) {
+            // TODO (mlvdv) there is a race that sometimes causes us to get a null element; we should fix the race.
+            if (teleHeapRegion != null && teleHeapRegion.contains(address)) {
                 return teleHeapRegion;
             }
         }

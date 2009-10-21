@@ -183,9 +183,6 @@ public final class MemoryWordsInspector extends Inspector {
     private final InspectorButton prefsButton;
     private final InspectorButton homeButton;
     private final InspectorButton cloneButton;
-
-    private final InspectorMenuItems frameMenuItems;
-
     private final MemoryWordsViewPreferences instanceViewPreferences;
 
     private MemoryWordsInspector(Inspection inspection, final MemoryRegion memoryRegion, String regionName, Address origin, ViewMode viewMode, MemoryWordsViewPreferences instanceViewPreferences) {
@@ -216,8 +213,6 @@ public final class MemoryWordsInspector extends Inspector {
         this.originalViewMode = viewMode;
 
         this.origin = originalOrigin;
-
-        frameMenuItems = new MemoryWordsFrameMenuItems();
 
         originField = new AddressInputField.Hex(inspection, this.origin) {
             @Override
@@ -309,9 +304,26 @@ public final class MemoryWordsInspector extends Inspector {
         cloneButton.setToolTipText("Create a cloned copy of this memory inspector");
         cloneButton.setIcon(style().generalCopyIcon());
 
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(actions().closeViews(otherMemoryWordsInspectorsPredicate, "Close other memory inspectors"));
+        defaultMenu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory inspectors"));
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        setOriginAction.refresh(true);
+        memoryMenu.add(setOriginAction);
+        memoryMenu.add(inspectBytesAction);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-        getMenu(DEFAULT_INSPECTOR_MENU).add(frameMenuItems);
+
 
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
@@ -518,7 +530,6 @@ public final class MemoryWordsInspector extends Inspector {
     @Override
     protected boolean refreshView(boolean force) {
         table.refresh(force);
-        frameMenuItems.refresh(force);
         super.refreshView(force);
         return true;
     }
@@ -771,44 +782,24 @@ public final class MemoryWordsInspector extends Inspector {
         }
     };
 
-
-    private final class MemoryWordsFrameMenuItems implements InspectorMenuItems {
-
-        private InspectorAction setOriginAction = new InspectorAction(inspection(), "Set Origin to selected location") {
-            @Override
-            protected void procedure() {
-                setOrigin(focus().address());
-                MemoryWordsInspector.this.refreshView(true);
-            }
-
-            @Override
-            public void refresh(boolean force) {
-                setEnabled(memoryWordRegion.contains(focus().address()));
-            }
-        };
-
-        private InspectorAction inspectBytesAction = new InspectorAction(inspection(), "Inspect memory at origin as bytes") {
-            @Override
-            protected void procedure() {
-                MemoryBytesInspector.create(inspection(), origin);
-            }
-        };
-
-        public void addTo(InspectorMenu menu) {
-            setOriginAction.refresh(true);
-            menu.add(setOriginAction);
-            menu.add(inspectBytesAction);
-            menu.addSeparator();
-            menu.add(actions().closeViews(otherMemoryWordsInspectorsPredicate, "Close other memory inspectors"));
-            menu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory inspectors"));
+    private InspectorAction setOriginAction = new InspectorAction(inspection(), "Set Origin to selected location") {
+        @Override
+        protected void procedure() {
+            setOrigin(focus().address());
+            MemoryWordsInspector.this.refreshView(true);
         }
 
-        public void redisplay() {
-        }
-
+        @Override
         public void refresh(boolean force) {
-            setOriginAction.refresh(force);
+            setEnabled(memoryWordRegion.contains(focus().address()));
         }
-    }
+    };
+
+    private InspectorAction inspectBytesAction = new InspectorAction(inspection(), "Inspect memory at Origin as bytes") {
+        @Override
+        protected void procedure() {
+            MemoryBytesInspector.create(inspection(), origin);
+        }
+    };
 
 }

@@ -49,10 +49,10 @@ public abstract class AbstractAssembler {
     public void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
-            Util.guarantee(l.loc() == codeBuffer.position(), "attempt to redefine label");
+            Util.guarantee(l.position() == codeBuffer.position(), "attempt to redefine label");
             return;
         }
-        l.bindLoc(codeBuffer.position());
+        l.bind(codeBuffer.position());
         l.patchInstructions(this);
     }
 
@@ -65,7 +65,7 @@ public abstract class AbstractAssembler {
         C1XMetrics.TargetMethods++;
 
         // Install code, data and frame size
-        targetMethod.setTargetCode(codeBuffer.finished());
+        targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
         // Record exception handlers if existant
@@ -81,7 +81,7 @@ public abstract class AbstractAssembler {
         }
 
         if (C1XOptions.PrintMetrics) {
-            C1XMetrics.CodeBytesEmitted += targetMethod.targetCode().length;
+            C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize();
             C1XMetrics.SafepointsEmitted += targetMethod.safepoints.size();
             C1XMetrics.DirectCallSitesEmitted += targetMethod.directCalls.size();
             C1XMetrics.IndirectCallSitesEmitted += targetMethod.indirectCalls.size();
@@ -96,10 +96,10 @@ public abstract class AbstractAssembler {
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
-            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCode().length, C1XOptions.PrintAssemblyBytesPerLine);
+            Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCode().length)));
+            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {
@@ -144,11 +144,9 @@ public abstract class AbstractAssembler {
     }
 
     private void verifyReferenceMap() {
-
     }
 
     protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-
         assert pos >= 0 && globalStubCall != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -180,7 +178,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -192,7 +189,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
-
         assert pos >= 0 && call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
@@ -215,7 +211,6 @@ public abstract class AbstractAssembler {
     }
 
     public Address recordDataReferenceInCode(CiConstant data) {
-
         assert data != null;
 
         int pos = codeBuffer.position();
@@ -235,7 +230,7 @@ public abstract class AbstractAssembler {
     protected int target(Label l) {
         int branchPc = codeBuffer.position();
         if (l.isBound()) {
-            return l.loc();
+            return l.position();
         } else {
             l.addPatchAt(branchPc);
             // Need to return a pc, doesn't matter what it is since it will be
@@ -262,8 +257,6 @@ public abstract class AbstractAssembler {
     public abstract void buildFrame(int initialFrameSizeInBytes);
 
     public abstract void align(int codeEntryAlignment);
-
-    public abstract void makeOffset(int offset);
 
     public abstract void patchJumpTarget(int branch, int target);
 }

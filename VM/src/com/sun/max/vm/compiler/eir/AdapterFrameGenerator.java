@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
@@ -91,7 +90,7 @@ public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
      * @return
      */
     protected static boolean isDynamicTrampoline(MethodActor methodActor) {
-        return methodActor instanceof TrampolineMethodActor && ((TrampolineMethodActor) methodActor).invocation() != TRAMPOLINE.Invocation.STATIC;
+        return methodActor.isVirtualTrampoline() || methodActor.isInterfaceTrampoline();
     }
 
     protected  EirStackSlot.Purpose adapterArgumentPurpose() {

@@ -33,7 +33,7 @@ public class BC_arraylength {
 
     public static int test(int arg) {
         if (arg == 0) {
-            final int[] array = null;
+            int[] array = null;
             return array.length;
         }
         if (arg == 1) {

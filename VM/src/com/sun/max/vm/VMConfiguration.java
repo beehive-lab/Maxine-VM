@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -62,6 +63,7 @@ public final class VMConfiguration {
     public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
     public final Safepoint safepoint;
+    public final InterpreterStubCompiler interpreterStubCompiler;
     public final TrapStateAccess trapStateAccess;
     private final int[] offsetsToCallEntryPoints;
     private final int[] offsetsToCalleeEntryPoints;
@@ -107,11 +109,9 @@ public final class VMConfiguration {
         this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create(this);
+        this.interpreterStubCompiler = InterpreterStubCompiler.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
         // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-        // It is useful for now to build a VM with a single compiler, where the JIT and optimizing compiler are the same.
-        // The CallEntryPoint enum gets the value of the call entry point offset from offsetToCallEntryPoints()
-        // Ideally, we would want to get it from adapterFrameScheme().offsetToCallEntryPoints()
         if (this.jitPackage == null || this.jitPackage.equals(this.compilerPackage)) {
             // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
             this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
@@ -267,8 +267,6 @@ public final class VMConfiguration {
         for (int i = 0; i < vmSchemes.length(); i++) {
             vmSchemes.get(i).initialize(phase);
         }
-
-        // TODO: Inform the C1X-scheme...!
     }
 
     public void finalizeSchemes(MaxineVM.Phase phase) {

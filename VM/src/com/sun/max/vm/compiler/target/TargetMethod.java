@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.io.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -32,8 +31,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -47,7 +48,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion {
+public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
 
     /**
      * The compiler scheme that produced this target method.
@@ -80,7 +81,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     protected byte[] scalarLiterals;
 
     @INSPECTED
-    private Object[] referenceLiterals;
+    protected Object[] referenceLiterals;
 
     @INSPECTED
     protected byte[] code;
@@ -207,7 +208,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         return codeStart;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final void setCodeStart(Pointer codeStart) {
         this.codeStart = codeStart;
     }
@@ -300,23 +301,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
-    /**
-     * Traces the {@linkplain #referenceLiterals() reference literals} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (referenceLiterals != null) {
-            writer.println("References: ");
-            writer.indent();
-            for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
-            }
-            writer.outdent();
-        }
-    }
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
     }
@@ -376,7 +360,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      *
      * @return true if all the direct callees in this target method's prologue were linked to a resolved target method
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final boolean linkDirectCallsInPrologue() {
         boolean linkedAll = true;
         final Object[] directCallees = directCallees();
@@ -397,7 +381,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         return linkedAll;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected boolean isDirectCalleeInPrologue(int directCalleeIndex) {
         return false;
     }
@@ -461,7 +445,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param virtualCalls a sequence of virtual calls to which this method should append
      * @param interfaceCalls a sequence of interface calls to which this method should append
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
 
     @Override
@@ -476,5 +460,37 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     protected final void setABI(TargetABI abi) {
         this.abi = abi;
+    }
+
+
+    public void cleanup() {
+    }
+
+    public boolean contains(Builtin builtin, boolean defaultResult) {
+        return false;
+    }
+
+    public int count(Builtin builtin, int defaultResult) {
+        return 0;
+    }
+
+    public Class<? extends IrTraceObserver> irTraceObserverType() {
+        return null;
+    }
+
+    public boolean isGenerated() {
+        return false;
+    }
+
+    public boolean isNative() {
+        return false;
+    }
+
+    public String name() {
+        return description();
+    }
+
+    public String traceToString() {
+        return description();
     }
 }

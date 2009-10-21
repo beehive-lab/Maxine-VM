@@ -67,22 +67,19 @@ public final class Inspection {
     }
 
     /**
-     * Initializes the UI system to meet current requirements such as the requirement that the L&F for {@link InspectorFrame}s
-     * renders a "frame icon" at the top left of a frame's title bar. Using the Metal L&F is the mechanism currently employed
-     * for meeting this requirement.
+     * Initializes the UI system to a specified L&F.
      */
     public static void initializeSwing() {
+        final String lookAndFeelName = "javax.swing.plaf.metal.MetalLookAndFeel";
+//        final String lookAndFeelName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+//        final String lookAndFeelName = "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+//        final String lookAndFeelName = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
+        Trace.line(TRACE_VALUE, "[Inspection]  setting Look & Feel:  " + lookAndFeelName);
         try {
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
-//            UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-//            System.out.println("L&F=" + UIManager.getLookAndFeel());
-//            System.out.println("Theme=" + MetalLookAndFeel.getCurrentTheme());
+            UIManager.setLookAndFeel(lookAndFeelName);
         } catch (Exception e) {
-            ProgramError.unexpected("Could not set L&F to MetalLookAndFeel");
+            ProgramError.unexpected("Failed to set L&F:  " + lookAndFeelName);
         }
-
         //System.setProperty("apple.laf.useScreenMenuBar", "true");
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
@@ -616,9 +613,9 @@ public final class Inspection {
         if (preferences.externalViewerType() == ExternalViewerType.NONE) {
             return false;
         }
-        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
+        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition());
+        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition);
         if (lineNumber == -1) {
             return false;
         }

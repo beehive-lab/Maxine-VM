@@ -116,7 +116,6 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     }
 
     public void test() throws Exception {
-        verify("sun.net.www.protocol.jar.URLJarFile", true);
         verify("java.lang.Class", true);
         verify(JdtBadStackMapTable.class.getName(), true);
 

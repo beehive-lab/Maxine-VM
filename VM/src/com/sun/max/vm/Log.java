@@ -80,6 +80,9 @@ public final class Log {
     @C_FUNCTION
     private static native void log_unlock();
 
+    @C_FUNCTION
+    private static native void log_flush();
+
     /**
      * The singleton VM log output stream.
      *
@@ -111,7 +114,7 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#print(String...)} on {@link #out}.
+     * Equivalent to calling {@link com.sun.max.vm.Log.LogPrintStream#printf(String, Object[])} on {@link #out}.
      */
     public static void print(String... arr) {
         for (String s : arr) {
@@ -138,6 +141,10 @@ public final class Log {
      */
     public static void print(Object object) {
         out.print(object);
+    }
+
+    public static void flush() {
+        out.flush();
     }
 
     /**
@@ -281,38 +288,45 @@ public final class Log {
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printFieldActor(FieldActor, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printField(FieldActor, boolean)} on {@link #out}.
      */
     public static void printFieldActor(FieldActor fieldActor, boolean withNewline) {
-        out.printFieldActor(fieldActor, withNewline);
+        out.printField(fieldActor, withNewline);
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printMethodActor(MethodActor, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printMethod(MethodActor, boolean)} on {@link #out}.
      */
-    public static void printMethodActor(MethodActor methodActor, boolean withNewline) {
+    public static void printMethod(MethodActor methodActor, boolean withNewline) {
         if (methodActor == null) {
             out.print("<no method actor>");
             if (withNewline) {
                 out.println();
             }
         } else {
-            out.printMethodActor(methodActor, withNewline);
+            out.printMethod(methodActor, withNewline);
         }
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printVmThread(VmThread, boolean)} on {@link #out}.
+     * Prints the current VM thread via a call to {@link LogPrintStream#printThread(VmThread, boolean)} on {@link #out}.
      */
-    public static void printVmThread(VmThread vmThread, boolean withNewline) {
-        out.printVmThread(vmThread, withNewline);
+    public static void printCurrentThread(boolean withNewline) {
+        out.printThread(VmThread.current(), withNewline);
     }
 
     /**
-     * Equivalent to calling {@link LogPrintStream#printVmThreadLocals(Pointer, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#printThread(VmThread, boolean)} on {@link #out}.
      */
-    public static void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
-        out.printVmThreadLocals(vmThreadLocals, all);
+    public static void printThread(VmThread vmThread, boolean withNewline) {
+        out.printThread(vmThread, withNewline);
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printThreadLocals(Pointer, boolean)} on {@link #out}.
+     */
+    public static void printThreadLocals(Pointer vmThreadLocals, boolean all) {
+        out.printThreadLocals(vmThreadLocals, all);
     }
 
     private static final class LogOutputStream extends OutputStream {
@@ -323,8 +337,8 @@ public final class Log {
         private LogOutputStream() {
         }
 
-        @PROTOTYPE_ONLY
-        private static final OutputStream prototypeOutputStream;
+        @HOSTED_ONLY
+        private static final OutputStream hostedOutputStream;
         static {
             // Use the same environment variable as used by the native code - see Native/share/debug.c
             String path = System.getenv("MAXINE_LOG_FILE");
@@ -332,12 +346,12 @@ public final class Log {
                 path = "stdout";
             }
             if (path.equals("stdout")) {
-                prototypeOutputStream = System.out;
+                hostedOutputStream = System.out;
             } else if (path.equals("stderr")) {
-                prototypeOutputStream = System.err;
+                hostedOutputStream = System.err;
             } else {
                 try {
-                    prototypeOutputStream = new FileOutputStream(path);
+                    hostedOutputStream = new FileOutputStream(path);
                 } catch (FileNotFoundException fileNotFoundException) {
                     throw ProgramError.unexpected("Could not open file for VM output stream: " + path, fileNotFoundException);
                 }
@@ -346,10 +360,10 @@ public final class Log {
 
         @Override
         public void write(int b) throws IOException {
-            if (MaxineVM.isPrototyping()) {
-                prototypeOutputStream.write(b);
+            if (MaxineVM.isHosted()) {
+                hostedOutputStream.write(b);
                 if (b == '\n') {
-                    prototypeOutputStream.flush();
+                    hostedOutputStream.flush();
                 }
             } else {
                 log_print_char(b);
@@ -358,11 +372,11 @@ public final class Log {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            if (MaxineVM.isPrototyping()) {
-                prototypeOutputStream.write(b, off, len);
+            if (MaxineVM.isHosted()) {
+                hostedOutputStream.write(b, off, len);
                 for (int i = (off + len) - 1; i >= off; --i) {
                     if (b[i] == '\n') {
-                        prototypeOutputStream.flush();
+                        hostedOutputStream.flush();
                         break;
                     }
                 }
@@ -413,6 +427,15 @@ public final class Log {
             super(output);
         }
 
+        @Override
+        public void flush() {
+            if (MaxineVM.isHosted()) {
+                super.flush();
+            } else {
+                log_flush();
+            }
+        }
+
         public void print(String s, boolean withNewline) {
             if (withNewline) {
                 println(s);
@@ -456,7 +479,7 @@ public final class Log {
 
         @Override
         public void print(String s) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(s);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -466,7 +489,7 @@ public final class Log {
         }
         @Override
         public void print(Object object) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(object);
             } else {
                 final String string = String.valueOf(object);
@@ -477,7 +500,7 @@ public final class Log {
         }
         @Override
         public void print(int i) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(i);
             } else {
                 // locking is not really necessary for primitives
@@ -486,7 +509,7 @@ public final class Log {
         }
         @Override
         public void print(long i) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(i);
             } else {
                 // locking is not really necessary for primitives
@@ -495,7 +518,7 @@ public final class Log {
         }
         @Override
         public void print(char c) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(c);
             } else {
                 // locking is not really necessary for primitives
@@ -504,7 +527,7 @@ public final class Log {
         }
         @Override
         public void print(boolean b) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(b);
             } else {
                 // locking is not really necessary for primitives
@@ -513,7 +536,7 @@ public final class Log {
         }
         @Override
         public void print(double d) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(d);
             } else {
                 // locking is not really necessary for primitives
@@ -522,7 +545,7 @@ public final class Log {
         }
         @Override
         public void print(float f) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(f);
             } else {
                 // locking is not really necessary for primitives
@@ -531,7 +554,7 @@ public final class Log {
         }
         @Override
         public void print(char[] c) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(c);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -540,7 +563,7 @@ public final class Log {
             }
         }
         public void print(Word word) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.print(word.toHexString());
             } else {
                 // locking is not really necessary for primitives
@@ -549,7 +572,7 @@ public final class Log {
         }
         @Override
         public void println(String s) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(s);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -560,7 +583,7 @@ public final class Log {
         }
         @Override
         public void println() {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println();
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -570,7 +593,7 @@ public final class Log {
         }
         @Override
         public void println(int i) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(i);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -581,7 +604,7 @@ public final class Log {
         }
         @Override
         public void println(long i) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(i);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -592,7 +615,7 @@ public final class Log {
         }
         @Override
         public void println(char c) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(c);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -603,7 +626,7 @@ public final class Log {
         }
         @Override
         public void println(boolean b) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(b);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -614,7 +637,7 @@ public final class Log {
         }
         @Override
         public void println(double d) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(d);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -625,7 +648,7 @@ public final class Log {
         }
         @Override
         public void println(float f) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(f);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -636,7 +659,7 @@ public final class Log {
         }
         @Override
         public void println(char[] c) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(c);
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -647,7 +670,7 @@ public final class Log {
         }
         @Override
         public void println(Object object) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(object);
             } else {
                 final String string = String.valueOf(object);
@@ -659,7 +682,7 @@ public final class Log {
         }
 
         public void println(Word word) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 super.println(word.toHexString());
             } else {
                 final boolean lockDisabledSafepoints = Log.lock();
@@ -684,9 +707,9 @@ public final class Log {
          * @param fieldActor the field actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the field actor
          */
-        public void printFieldActor(FieldActor fieldActor, boolean withNewline) {
+        public void printField(FieldActor fieldActor, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 lockDisabledSafepoints = lock();
             }
             print(fieldActor.holder().name.string);
@@ -694,7 +717,7 @@ public final class Log {
             print(fieldActor.name.string);
             print(":");
             print(fieldActor.descriptor().string, withNewline);
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
             }
         }
@@ -714,16 +737,16 @@ public final class Log {
          * @param methodActor the method actor to print
          * @param withNewline specifies if a newline should be appended to the stream after the method actor
          */
-        public void printMethodActor(MethodActor methodActor, boolean withNewline) {
+        public void printMethod(MethodActor methodActor, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 lockDisabledSafepoints = lock();
             }
             print(methodActor.holder().name.string);
             print('.');
             print(methodActor.name.string);
             print(methodActor.descriptor().string, withNewline);
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
             }
         }
@@ -743,9 +766,9 @@ public final class Log {
          * @param vmThread the thread to print
          * @param withNewline specifies if a newline should be appended to the stream after the thread
          */
-        public void printVmThread(VmThread vmThread, boolean withNewline) {
+        public void printThread(VmThread vmThread, boolean withNewline) {
             boolean lockDisabledSafepoints = false;
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 lockDisabledSafepoints = lock();
             }
             print(vmThread == null ? "<null thread>" : vmThread.getName());
@@ -756,7 +779,7 @@ public final class Log {
                 print(vmThread.id());
             }
             print("]", withNewline);
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
             }
         }
@@ -767,9 +790,9 @@ public final class Log {
          * @param vmThreadLocals a pointer to VM thread locals
          * @param all specifies if all 3 {@linkplain VmThreadLocal TLS} areas are to be printed
          */
-        public void printVmThreadLocals(Pointer vmThreadLocals, boolean all) {
+        public void printThreadLocals(Pointer vmThreadLocals, boolean all) {
             boolean lockDisabledSafepoints = false;
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 lockDisabledSafepoints = lock();
             }
             if (!all) {
@@ -804,7 +827,7 @@ public final class Log {
                     println();
                 }
             }
-            if (!MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
             }
         }
@@ -847,7 +870,7 @@ public final class Log {
     static {
         ProgramWarning.setHandler(new Handler() {
             public void handle(String message) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     System.err.println(message);
                 } else {
                     Log.println(message);
@@ -857,6 +880,7 @@ public final class Log {
 
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
+        new CriticalNativeMethod(Log.class, "log_flush");
 
         new CriticalNativeMethod(Log.class, "log_print_buffer");
         new CriticalNativeMethod(Log.class, "log_print_boolean");

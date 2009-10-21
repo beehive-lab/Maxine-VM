@@ -35,7 +35,7 @@ import com.sun.max.vm.tele.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayBA2Collector extends BeltwayCollector {
+public abstract class BeltwayBA2Collector extends BeltwayCollector {
     @CONSTANT_WHEN_NOT_ZERO
     protected Belt nurserySpace;
     @CONSTANT_WHEN_NOT_ZERO
@@ -45,7 +45,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         super(collectorName);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void initialize(BeltwayHeapScheme heapScheme) {
         super.initialize(heapScheme);
@@ -66,7 +66,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
         verifyBelt(matureSpace);
     }
 
-    static class FullGCCollector extends BeltwayBA2Collector implements Runnable {
+    static class FullGCCollector extends BeltwayBA2Collector {
         /**
          * A temporary virtual belt used to represent the mature space's reserve.
          */
@@ -78,7 +78,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             matureSpaceReserve.resetAllocationMark();
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             prologue();
             if (heapScheme.verifyBeforeGC()) {
                 verifyHeap("Before full GC");
@@ -108,6 +109,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 printBeltInfo("matureSpaceReserve", matureSpaceReserve);
             }
             evacuateFollowers(matureSpaceBeforeAllocation, matureSpaceReserve);
+
+            heapScheme.processDiscoveredSpecialReferences(matureSpaceBeforeAllocation);
 
             if (heapScheme.verifyAfterGC()) {
                 verifyHeap("After full GC");
@@ -144,6 +147,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 }
 
                 evacuateFollowers(matureSpaceReserve, matureSpace);
+                heapScheme.processDiscoveredSpecialReferences(matureSpaceReserve);
 
                 heapScheme.sideTable.restoreAllChunkSlots();
 
@@ -179,7 +183,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             // beltwayHeapSchemeBA2.fillLastTLAB(); FIXME: do we need this ?
         }
 
-        public void run() {
+        @Override
+        protected void collect(int invocationCount) {
             prologue();
             matureSpace.setAllocationMarkSnapshot();
 
@@ -205,6 +210,8 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Log.println("Evacuate Followers");
             }
             evacuateFollowers();
+
+            heapScheme.processDiscoveredSpecialReferences(nurserySpace);
 
             heapScheme.sideTable.restoreAllChunkSlots();
 

@@ -20,23 +20,140 @@
  */
 package com.sun.c1x.xir;
 
-import com.sun.c1x.xir.XirAssembler.XirLabel;
-import com.sun.c1x.xir.XirAssembler.XirParameter;
+import java.io.PrintStream;
 
+import com.sun.c1x.xir.CiXirAssembler.XirConstant;
+import com.sun.c1x.xir.CiXirAssembler.XirInstruction;
+import com.sun.c1x.xir.CiXirAssembler.XirLabel;
+import com.sun.c1x.xir.CiXirAssembler.XirParameter;
+import com.sun.c1x.xir.CiXirAssembler.XirTemp;
+import com.sun.c1x.xir.CiXirAssembler.XirVariable;
+
+/**
+ * This class represents a completed template of XIR code that has been first assembled by
+ * the runtime, and then verified and preprocessed by the compiler.
+ */
 public class XirTemplate {
 
-    public final XirAssembler.XirInstruction[] instructions;
+    public enum GlobalFlags {
+    	HAS_JAVA_CALL,
+    	HAS_STUB_CALL,
+    	HAS_RUNTIME_CALL,
+    	HAS_CONTROL_FLOW,
+    	GLOBAL_STUB;
+
+    	public final int mask = 1 << ordinal();
+
+    }
+
+    public final String name;
+    public final XirVariable resultOperand;
+    public final CiXirAssembler.XirInstruction[] fastPath;
+    public final CiXirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
+    public final boolean[] parameterDestroyed;
+    public final CiXirAssembler.XirTemp[] temps;
+    public final CiXirAssembler.XirConstant[] constants;
+    public final int variableCount;
 
+    public int flags;
 
-    XirTemplate(XirAssembler.XirInstruction[] instructions, XirLabel[] labels, XirParameter[] parameters) {
-        this.instructions = instructions;
+    public XirTemplate(String name, int variableCount, XirVariable resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
+    	this.name = name;
+    	this.variableCount = variableCount;
+    	this.resultOperand = resultOperand;
+        this.fastPath = fastPath;
+        this.slowPath = slowPath;
         this.labels = labels;
         this.parameters = parameters;
+        this.flags = flags;
+        this.temps = temps;
+        this.constants = constants;
+
+        assert fastPath != null;
+        assert labels != null;
+        assert parameters != null;
+
+        parameterDestroyed = new boolean[parameters.length];
+        for (int i=0; i<parameters.length; i++) {
+        	for (XirInstruction ins : fastPath) {
+        		if (ins.result == parameters[i]) {
+        			parameterDestroyed[i] = true;
+        			break;
+        		}
+        	}
+
+        	if (slowPath != null && !parameterDestroyed[i]) {
+        		for (XirInstruction ins : slowPath) {
+            		if (ins.result == parameters[i]) {
+            			parameterDestroyed[i] = true;
+            		}
+            	}
+        	}
+        }
     }
 
-    public int getResultParameterIndex() {
-        return 1;
+    public boolean isParameterDestroyed(int index) {
+    	return parameterDestroyed[index];
     }
+
+    @Override
+    public String toString() {
+    	return name;
+    }
+
+    public void print(PrintStream p) {
+
+    	final String indent = "   ";
+
+    	p.println();
+    	p.println("Template " + name);
+
+
+    	p.print("Param:");
+    	for (XirParameter param : parameters) {
+        	p.print(" " + param.detailedToString());
+    	}
+    	p.println();
+
+    	if (temps.length > 0) {
+	    	p.print("Temps:");
+	    	for (XirTemp temp : temps) {
+	    		p.print(" " + temp.detailedToString());
+	    	}
+	    	p.println();
+    	}
+
+    	if (constants.length > 0) {
+	    	p.print("Constants:");
+	    	for (XirConstant c : constants) {
+	    		p.print(" " + c.detailedToString());
+	    	}
+	    	p.println();
+    	}
+
+    	if (flags != 0) {
+	    	p.print("Flags:");
+	    	for (XirTemplate.GlobalFlags flag : XirTemplate.GlobalFlags.values()) {
+	    		if ((this.flags & flag.mask) != 0) {
+	    			p.print(" " + flag.name());
+	    		}
+	    	}
+	    	p.println();
+    	}
+
+    	p.println("Fast path:");
+    	for (XirInstruction i : fastPath) {
+    		p.println(indent + i.toString());
+    	}
+
+    	if (slowPath != null) {
+    		p.println("Slow path:");
+    		for (XirInstruction i : slowPath) {
+    			p.println(indent + i.toString());
+    		}
+    	}
+    }
+
 }

@@ -234,7 +234,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return accessor.compareAndSwapReference(hubOffset, suspectedGrip.toReference(), forwardGrip.marked().toReference()).toGrip();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
         final int origin = hub.specificLayout.headerSize();
@@ -242,7 +242,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         visitor.visitHeaderField(origin + miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(gripScheme().vmConfiguration().monitorScheme().createMisc(object)));
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
         if (offset == hubOffset) {
             return mirror.readHub();
@@ -254,7 +254,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return null;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
         if (offset == hubOffset) {
             mirror.writeHub(value);

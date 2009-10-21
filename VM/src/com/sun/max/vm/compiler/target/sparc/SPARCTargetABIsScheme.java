@@ -36,29 +36,29 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> nativeRegisterRoleAssignment() {
         return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7, O7);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected static IndexedSequence<GPR> incomingIntegerparameterregisters() {
         return new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected static IndexedSequence<GPR> outgoingIntegerParameterRegisters() {
         return new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected static IndexedSequence<FPR> floatingPointParameterRegisters() {
         return new ArraySequence<FPR>(
                         F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
                         F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<GPR> integerIncomingParameterRegisters,
                     IndexedSequence<GPR> integerOutgoingParameterRegisters,
@@ -69,7 +69,7 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                         SPARCStackFrameLayout.STACK_FRAME_ALIGNMENT, SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
         return createSPARC64TargetABI(
@@ -82,7 +82,7 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                         callPushesReturnAddress);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCTargetABIsScheme(
                     VMConfiguration vmConfiguration,
                     TargetABI<GPR, FPR> jitABI,
@@ -94,6 +94,6 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
                                         incomingIntegerparameterregisters(),
                                         outgoingIntegerParameterRegisters(),
                                         null, false, false),
-                                        jitABI, optimizedJavaABI, null);
+                                        jitABI, optimizedJavaABI);
     }
 }

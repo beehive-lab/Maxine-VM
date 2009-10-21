@@ -315,6 +315,14 @@ public final class BreakpointsTable extends InspectorTable {
 
     }
 
+    /**
+     * @return color the text specially in the row where a triggered breakpoint is displayed
+     */
+    private Color getRowTextColor(int row) {
+        return (tableModel.get(row).triggerThread() == null) ? null : inspection().style().debugIPTagColor();
+    }
+
+
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
@@ -324,8 +332,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
+            setIcon((breakpointData.triggerThread() == null) ? null : inspection().style().debugIPTagIcon());
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -341,6 +351,7 @@ public final class BreakpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -357,6 +368,7 @@ public final class BreakpointsTable extends InspectorTable {
             final BreakpointData breakpointData = tableModel.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -373,6 +385,7 @@ public final class BreakpointsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setToolTipText(tableModel.get(row).conditionStatus());
             final JComponent component = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return component;
         }
@@ -401,6 +414,7 @@ public final class BreakpointsTable extends InspectorTable {
                 setText("");
                 setToolTipText("No Thread stopped at this breakpoint");
             }
+            setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
         }
@@ -565,26 +579,18 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleRuntimeStub teleRuntimeStub = maxVM().makeTeleRuntimeStub(address);
-                if (teleRuntimeStub != null) {
-                    codeStart = teleRuntimeStub.runtimeStub().start();
-                    location = address.minus(codeStart).toInt();
-                    shortName = "runtime stub[0x" + codeStart + "]";
-                    longName = shortName;
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
+                if (teleNativeTargetRoutine != null) {
+                    codeStart = teleNativeTargetRoutine.getCodeStart();
+                    location = address.minus(codeStart.asAddress()).toInt();
+                    shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                    longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
                 } else {
-                    final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
-                    if (teleNativeTargetRoutine != null) {
-                        codeStart = teleNativeTargetRoutine.getCodeStart();
-                        location = address.minus(codeStart.asAddress()).toInt();
-                        shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
-                        longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
-                    } else {
-                        // Must be an address in an unknown area of native code
-                        shortName = "0x" + address.toHexString();
-                        longName = "unknown native code at 0x" + address.toHexString();
-                        codeStart = address;
-                        location = 0;
-                    }
+                    // Must be an address in an unknown area of native code
+                    shortName = "0x" + address.toHexString();
+                    longName = "unknown native code at 0x" + address.toHexString();
+                    codeStart = address;
+                    location = 0;
                 }
             }
         }

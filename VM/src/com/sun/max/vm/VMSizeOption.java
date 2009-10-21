@@ -44,7 +44,7 @@ public class VMSizeOption extends VMOption {
      * @param defaultValue the default size for this option when it is not present on the command line
      * @param help the help text to report for this option
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VMSizeOption(String prefix, Size defaultValue, String help) {
         super(prefix, help);
         value = defaultValue;
@@ -60,10 +60,11 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        value = Size.fromLong(VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0));
-        if (value.lessThan(0)) {
+        long value = VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0);
+        if (value < 0) {
             return false;
         }
+        this.value = Size.fromLong(value);
         return true;
     }
 

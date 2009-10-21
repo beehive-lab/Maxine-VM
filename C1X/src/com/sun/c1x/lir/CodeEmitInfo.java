@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
@@ -37,21 +36,19 @@ import com.sun.c1x.value.*;
 public class CodeEmitInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
-    private IRScope scope;
+    private final IRScope scope;
     private List<ExceptionHandler> exceptionHandlers;
     public OopMap oopMap;
-    private ValueStack stack; // used by deoptimization (contains also monitors
-    private int bci;
+    private final ValueStack stack; // used by deoptimization (contains also monitors
+    private final int bci;
 
-    // use scope from ValueStack
-    public CodeEmitInfo(int bci, ValueStack stack, List<ExceptionHandler> exceptionHandlers) {
-        this.scope = stack.scope();
+    public CodeEmitInfo(int bci, ValueStack state, List<ExceptionHandler> exceptionHandlers) {
+        this.scope = state.scope();
         this.bci = bci;
         this.scopeDebugInfo = null;
         this.oopMap = null;
-        this.stack = stack;
+        this.stack = state;
         this.exceptionHandlers = exceptionHandlers;
-        assert this.stack != null : "must be non null";
     }
 
     // make a copy
@@ -100,10 +97,6 @@ public class CodeEmitInfo {
 
     public IRScope scope() {
         return scope;
-    }
-
-    public RiMethod method() {
-        return scope.method;
     }
 
     public List<ExceptionHandler> exceptionHandlers() {

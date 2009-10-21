@@ -313,7 +313,7 @@ public final class VmThreadMap {
     /**
      * The {@code IDMap} class manages thread ids and a mapping between thread ids and
      * the corresponding {@code VmThread} instance.
-     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockWord64}).
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
      *
      * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
      * during thread tear down.

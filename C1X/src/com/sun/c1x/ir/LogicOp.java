@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import com.sun.c1x.bytecode.*;
 
 /**
  * The <code>LogicOp</code> class definition.
@@ -37,14 +36,6 @@ public class LogicOp extends Op2 {
      */
     public LogicOp(int opcode, Value x, Value s) {
         super(x.type(), opcode, x, s);
-    }
-
-    /**
-     * Checks whether this operation is commutative.
-     * @return <code>true</code> if this operation is commutative
-     */
-    public boolean isCommutative() {
-        return Bytecodes.isCommutative(opcode);
     }
 
     /**

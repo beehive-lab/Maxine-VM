@@ -43,14 +43,13 @@ public abstract class DataLabel extends InspectorLabel {
         setToolTipText(toolTipText);
     }
 
-    public final void refresh(boolean force) {
+    public void refresh(boolean force) {
         // Values don't change unless explicitly set
     }
 
     public void redisplay() {
         // Default styles
         setFont(style().primitiveDataFont());
-        setForeground(style().primitiveDataColor());
     }
 
     /**
@@ -74,7 +73,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -89,7 +87,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
     }
 
@@ -109,7 +106,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -149,7 +145,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -191,7 +186,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -227,7 +221,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -244,7 +237,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().charDataFont());
-            setForeground(style().charDataColor());
         }
     }
 
@@ -260,7 +252,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -277,10 +268,14 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
             redisplay();
         }
+
+        public IntAsDecimal(Inspection inspection) {
+            this(inspection, 0);
+        }
+
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
 
         protected void setValue(int n) {
@@ -310,7 +305,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         protected void setValue(int n) {
@@ -337,9 +331,8 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color for floats
+            // TODO: define a font for floats
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         protected void updateText() {
@@ -364,7 +357,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
         }
     }
 
@@ -379,7 +371,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
     }
 
@@ -395,9 +386,8 @@ public abstract class DataLabel extends InspectorLabel {
 
         @Override
         public void redisplay() {
-            // TODO: define a font, color, for doubles
+            // TODO: define a font for doubles
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
         }
 
         private void updateText() {
@@ -434,7 +424,7 @@ public abstract class DataLabel extends InspectorLabel {
                         case MouseEvent.BUTTON3: {
                             final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(inspection().actions().copyWord(address, "Copy address to clipboard"));
-                            menu.add(inspection().actions().inspectMemoryWords(address, null));
+                            menu.add(inspection().actions().inspectMemoryWords(address));
                             if (maxVM().watchpointsEnabled()) {
                                 menu.add(inspection().actions().setWordWatchpoint(address, null));
                             }
@@ -463,7 +453,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().hexDataFont());
-            setForeground(style().hexDataColor());
             updateText();
         }
 
@@ -489,13 +478,18 @@ public abstract class DataLabel extends InspectorLabel {
         }
     }
 
-    public static final class BiasedStackAddressAsHex extends AddressAsHex {
+    public static class BiasedStackAddressAsHex extends AddressAsHex {
         boolean biased;
         final StackBias bias;
+
         public BiasedStackAddressAsHex(Inspection inspection, Address address, StackBias bias) {
             super(inspection, address, null);
             this.bias = bias;
             biased = true;
+        }
+
+        public BiasedStackAddressAsHex(Inspection inspection, StackBias bias) {
+            this(inspection, Address.zero(), bias);
         }
 
         private boolean useBias() {
@@ -552,7 +546,6 @@ public abstract class DataLabel extends InspectorLabel {
         @Override
         public void redisplay() {
             setFont(style().decimalDataFont());
-            setForeground(style().decimalDataColor());
             updateText();
         }
 

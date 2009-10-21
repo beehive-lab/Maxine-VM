@@ -43,7 +43,7 @@ public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             final String qty = System.getProperty(JavaMonitorManager.UNBOUNDLIST_IMAGE_QTY_PROPERTY);
             if (qty == null) {
                 System.setProperty(JavaMonitorManager.UNBOUNDLIST_IMAGE_QTY_PROPERTY, "2000");
@@ -53,10 +53,10 @@ public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
     }
 
     @Override
-    public ModalLockWordDecoder getModalLockWordDecoder() {
-        return new ModalLockWordDecoder() {
-            public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
-                return mode == InflatedMonitorLockWord64.class;
+    public ModalLockwordDecoder getModalLockwordDecoder() {
+        return new ModalLockwordDecoder() {
+            public boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode) {
+                return mode == InflatedMonitorLockword64.class;
             }
         };
     }

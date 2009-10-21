@@ -44,7 +44,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class IrRoutine {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected MethodActor getFoldingMethodActor(Class holder, String name, boolean fatalIfMissing) {
         final String className = Strings.firstCharToUpperCase(name);
         final String methodName = Strings.firstCharToLowerCase(className);
@@ -55,7 +55,7 @@ public abstract class IrRoutine {
                 return MethodActor.fromJava(method);
             }
             if (method.getName().equals(methodName) && method.isAnnotationPresent(SNIPPET.class)) {
-                assert !method.isAnnotationPresent(SURROGATE.class);
+                assert !method.isAnnotationPresent(LOCAL_SUBSTITUTION.class);
                 return MethodActor.fromJava(method);
             }
         }
@@ -75,7 +75,7 @@ public abstract class IrRoutine {
      */
     private static final Map<Class<? extends IrRoutine>, IrRoutine> singletonInstances = new HashMap<Class<? extends IrRoutine>, IrRoutine>();
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected IrRoutine(Class foldingMethodHolder) {
         name = getClass().getSimpleName();
         if (foldingMethodHolder != null) {

@@ -51,7 +51,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The prototyping phase responsible for compiling and linking methods in the target.
+ * The bootstrapping phase responsible for compiling and linking methods in the target.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -228,7 +228,7 @@ public class CompiledPrototype extends Prototype {
 
 
     private void gatherNewAnonymousClass(final LinkSequence<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
-        if (!MaxineVM.isPrototypeOnly(enclosingMethod)) {
+        if (!MaxineVM.isHostedOnly(enclosingMethod)) {
             final MethodActor methodActor = MethodActor.fromJava(enclosingMethod);
             if (methodActor != null) {
                 getAnonymousClasses(methodActor).add(classActor);
@@ -301,8 +301,8 @@ public class CompiledPrototype extends Prototype {
                         if (resolvable.isResolvableWithoutClassLoading(pool)) {
                             try {
                                 guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
-                            } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
-                            } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+                            } catch (HostOnlyFieldError prototypeOnlyFieldError) {
+                            } catch (HostOnlyMethodError prototypeOnlyMethodError) {
                             }
                         }
                     }
@@ -341,7 +341,7 @@ public class CompiledPrototype extends Prototype {
 
     CompiledPrototype(JavaPrototype javaPrototype, int numberCompilerThreads) {
         super(javaPrototype.vmConfiguration());
-        this.vmConfiguration().initializeSchemes(Phase.CREATING_COMPILED_PROTOTYPE);
+        this.vmConfiguration().initializeSchemes(Phase.COMPILING);
         numberOfCompilerThreads = numberCompilerThreads;
         Trace.line(1, "# compiler threads:" + numberOfCompilerThreads);
     }
@@ -474,7 +474,6 @@ public class CompiledPrototype extends Prototype {
         add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
-        addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, imageMethodActors, vmEntryPoint);
         // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
         try {
@@ -604,7 +603,9 @@ public class CompiledPrototype extends Prototype {
     public void compileUnsafeMethods() {
         Trace.begin(1, "compiling unsafe methods");
         for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            worklist.add(classMethodActor);
+            if (!(classMethodActor.isNative() && classMethodActor.isJniFunction())) {
+                worklist.add(classMethodActor);
+            }
         }
         compileWorklist();
         Trace.end(1, "compiling unsafe methods");

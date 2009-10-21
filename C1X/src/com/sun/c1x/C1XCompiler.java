@@ -30,8 +30,10 @@ import com.sun.c1x.target.x86.*;
 import com.sun.c1x.xir.*;
 
 /**
+ * This class implements the compiler interface for C1X.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class C1XCompiler extends CiCompiler {
 
@@ -49,14 +51,20 @@ public class C1XCompiler extends CiCompiler {
     public final RiRuntime runtime;
 
     /**
+     * The XIR generator that lowers Java operations to machine operations.
+     */
+    public final RiXirGenerator xir;
+
+    /**
      * The backend that this compiler has been configured for.
      */
     public final Backend backend;
 
 
-    public C1XCompiler(RiRuntime runtime, CiTarget target) {
+    public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen) {
         this.runtime = runtime;
         this.target = target;
+        this.xir = xirGen;
 
         // TODO: Remove this fixed wiring to X86
         assert target.arch instanceof AMD64;
@@ -65,17 +73,20 @@ public class C1XCompiler extends CiCompiler {
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, XirGenerator xirGenerator) {
+    public CiResult compileMethod(RiMethod method, RiXirGenerator xirGenerator) {
         return compileMethod(method, -1, xirGenerator);
     }
 
     @Override
-    public CiResult compileMethod(RiMethod method, int osrBCI, XirGenerator xirGenerator) {
-        C1XCompilation compilation = new C1XCompilation(this, target, runtime, xirGenerator, method, osrBCI);
+    public CiResult compileMethod(RiMethod method, int osrBCI, RiXirGenerator xirGenerator) {
+        C1XCompilation compilation = new C1XCompilation(this, target, runtime, method, osrBCI);
         return compilation.compile();
     }
 
     private void init() {
+
+        xir.buildTemplates(backend.newXirAssembler());
+
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
         for (GlobalStub globalStub : GlobalStub.values()) {
             final CiTargetMethod targetMethod = emitter.emit(globalStub);

@@ -168,41 +168,6 @@ static void* loadSymbol(void* handle, const char* symbol) {
     return result;
 }
 
-typedef jint (JNICALL *JNI_OnLoad_t)(JavaVM *, void *);
-
-jint JNICALL fake_JavaVM_GetEnv(JavaVM *javaVM, void **penv, jint version) {
-	*penv = (*javaVM)->reserved0;
-	return version;
-}
-jint JNICALL fake_JavaVM_DestroyJavaVM(JavaVM *vm) {
-	return c_UNIMPLEMENTED();
-}
-
-jint JNICALL fake_JavaVM_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
-	return c_UNIMPLEMENTED();
-}
-
-jint JNICALL fake_JavaVM_DetachCurrentThread(JavaVM *vm) {
-	return c_UNIMPLEMENTED();
-}
-
-jint JNICALL fake_JavaVM_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args) {
-	return c_UNIMPLEMENTED();
-}
-
-JNIEXPORT jint JNICALL
-Java_com_sun_max_vm_jni_DynamicLinker_invokeJNIOnLoad(JNIEnv *env, jclass c, JNI_OnLoad_t JNI_OnLoad) {
-	 struct JNIInvokeInterface_ jni;
-	 JavaVM jvmp = (JavaVM) &jni;
-	 jni.reserved0 = env;
-	 jni.GetEnv = fake_JavaVM_GetEnv;
-	 jni.DestroyJavaVM = fake_JavaVM_DestroyJavaVM;
-	 jni.AttachCurrentThread = fake_JavaVM_AttachCurrentThread;
-	 jni.DetachCurrentThread = fake_JavaVM_DetachCurrentThread;
-	 jni.AttachCurrentThreadAsDaemon = fake_JavaVM_AttachCurrentThreadAsDaemon;
-	 return (*JNI_OnLoad)((JavaVM *) &jvmp, NULL);
-}
-
 #if os_DARWIN || os_SOLARIS || os_LINUX
 
 #include <netinet/in.h>
@@ -292,6 +257,13 @@ void debugger_initialize() {
 #endif
 
 /**
+ * Gets a pointer to the global JNI function table.
+ *
+ * Defined in Native/substrate/jni.c
+ */
+extern JNIEnv jniEnv();
+
+/**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
@@ -300,6 +272,7 @@ typedef jint (*VMRunMethod)(
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
                 char *dlerror(void),
+                JNIEnv jniEnv,
                 int argc,
                 char *argv[]);
 
@@ -348,7 +321,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
-    threadLocals_initialize(image_header()->threadLocalsSize);
+    threadLocals_initialize(image_header()->threadLocalsSize, image_header()->javaFrameAnchorSize);
 
     debugger_initialize();
 
@@ -357,20 +330,20 @@ int maxine(int argc, char *argv[], char *executablePath) {
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
-    ThreadLocals primordial_tl = (ThreadLocals) alloca(threadLocalsSize() + sizeof(Address));
+    ThreadLocals primordial_threadLocalsAndAnchor = (ThreadLocals) alloca(threadLocalsSize() + javaFrameAnchorSize() + sizeof(Address));
 
     // Align primordial VM thread locals to Word boundary:
-    primordial_tl = (ThreadLocals) wordAlign(primordial_tl);
+    primordial_threadLocalsAndAnchor = (ThreadLocals) wordAlign(primordial_threadLocalsAndAnchor);
 
     // Initialize all primordial VM thread locals to 0/null:
-    memset((char *) primordial_tl, 0, threadLocalsSize());
+    memset((char *) primordial_threadLocalsAndAnchor, 0, threadLocalsSize() + javaFrameAnchorSize());
 
-    image_write_value(ThreadLocals, primordialThreadLocalsOffset, primordial_tl);
+    image_write_value(ThreadLocals, primordialThreadLocalsOffset, primordial_threadLocalsAndAnchor);
 
-    threads_initialize(primordial_tl);
+    threads_initialize(primordial_threadLocalsAndAnchor);
 
 #if log_LOADER
-    log_println("primordial VM thread locals allocated at: %p", primordial_tl);
+    log_println("primordial VM thread locals allocated at: %p", primordial_threadLocalsAndAnchor);
 #endif
 
     Address auxiliarySpace = 0;
@@ -387,10 +360,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM::run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, argc=%d, argv=%p)",
-                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
+    log_println("entering Java by calling MaxineVM::run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, argc=%d, argv=%p)",
+                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
 #endif
-    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
+    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

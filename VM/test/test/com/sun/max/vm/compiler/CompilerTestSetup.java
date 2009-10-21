@@ -42,14 +42,14 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 
-public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends TestSetup {
+public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 
     private static CompilerTestSetup compilerTestSetup = null;
 
@@ -167,7 +167,7 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);
 
-    protected IrInterpreter<Method_Type> createInterpreter() {
+    protected IrInterpreter<? extends IrMethod> createInterpreter() {
         return null;
     }
 

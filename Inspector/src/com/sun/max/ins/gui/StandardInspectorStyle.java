@@ -116,20 +116,13 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Font decimalDataFont() {
         return defaultFont();
     }
-    @Override
-    public Color decimalDataColor() {
-        return defaultTextColor();
-    }
 
     // Defaults for integers displayed in hex
     @Override
     public Font hexDataFont() {
         return defaultMonospacedFont();
     }
-    @Override
-    public Color hexDataColor() {
-        return defaultTextColor();
-    }
+
 
     // Special styles for interpreted data values
     private Color nullDataColor = InspectorStyle.SaddleBrown;
@@ -147,10 +140,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Font wordDataFont() {
         return hexDataFont();
     }
-    @Override
-    public Color wordDataColor() {
-        return hexDataColor();
-    }
+
     @Override
     public Color wordNullDataColor() {
         return nullDataColor;
@@ -219,10 +209,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Font javaNameFont() {
         return defaultFont();
     }
-    @Override
-    public Font javaClassNameFont() {
-        return defaultBoldFont();
-    }
 
     @Override
     public Color javaUnresolvedNameColor() {
@@ -232,11 +218,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // default display of any kind of code
     private final Color codeAlternateBackgroundColor = paleBlue;
     private final Color codeStopBackgroundColor = paleGray;
-    @Override
-    public Font defaultCodeFont() {
-        return defaultFont();
-    }
-    @Override
+
     public Color defaultCodeAlternateBackgroundColor() {
         return codeAlternateBackgroundColor;
     }
@@ -274,19 +256,15 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     private static final Color vmTerminatedBackgroundColor = InspectorStyle.LightCoral;
 
-    @Override
     public Color vmStoppedBackgroundColor() {
         return InspectorStyle.SunBlue3;
     }
-    @Override
     public Color vmStoppedinGCBackgroundColor() {
         return InspectorStyle.SunYellow3;
     }
-    @Override
     public Color vmRunningBackgroundColor() {
         return InspectorStyle.SunGreen3;
     }
-    @Override
     public Color vmTerminatedBackgroundColor() {
         return vmTerminatedBackgroundColor;
     }

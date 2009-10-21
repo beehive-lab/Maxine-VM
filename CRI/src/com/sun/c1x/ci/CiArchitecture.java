@@ -22,15 +22,15 @@ package com.sun.c1x.ci;
 
 
 /**
- * The <code>Architecture</code> class represents a CPU architecture that is supported by
- * the backend of C1X.
+ * Thhis class represents a CPU architecture, including information such as its endianness, CPU
+ * registers, word width, etc.
  *
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
 public abstract class CiArchitecture {
 
-    public static enum BitOrdering{
+    public static enum BitOrdering {
         LittleEndian,
         BigEndian
     }
@@ -75,16 +75,11 @@ public abstract class CiArchitecture {
      */
     public final int machineCodeCallDisplacementOffset;
 
-    /**
-     * Size in bytes of a move instruction.
-     */
-    public final int machineCodeMoveConstInstructionSize;
-
     private final String name;
 
     /**
      * Reflectively instantiates an architecture given its name.
-     * 
+     *
      * @param name
      *            the name of the wanted architecture
      * @return the newly created architecture object
@@ -112,7 +107,6 @@ public abstract class CiArchitecture {
         this.bitOrdering = bitOrdering;
         this.framePadding = framePadding;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
-        this.machineCodeMoveConstInstructionSize = nativeMoveConstInstructionSize;
         switch (bitOrdering) {
             case LittleEndian:
                 lowWordOffset = 0;

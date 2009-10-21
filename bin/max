@@ -505,6 +505,28 @@ function run_jttgen() {
 }
 
 #=======================================
+# 'jnigen' command
+#=======================================
+
+jnigen_help="(re)generate content in JniFunctions.java from JniFunctionsSource.java
+
+    Run JniFunctionsGenerator.java to update the methods in JniFunctions.java by adding
+    a prologue and epilogue to the @JNI_FUNCTION annotated methods in JniFunctionsSource.java.
+    
+    The exit code is non-zero if JniFunctions.java was modified."
+
+function run_jnigen() {
+    if [ $# -ne 0 ]; then
+        run_help jnigen
+        exit 1
+    fi
+    
+    run ${jvm_exe} -cp $(get_project_cp Base):$(get_project_cp VM) com.sun.max.vm.jni.JniFunctionsGenerator
+    result=$?
+    exit $result
+}
+
+#=======================================
 # 'check' command
 #=======================================
 
@@ -705,9 +727,9 @@ function run_javadoc() {
 image_configs=( \
     java:-run=java \
     c1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.c1x \
-    optopt:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
-    optjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
-    jitopt:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
+    cpscps:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
+    cpsjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
+    jitcps:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
     jitjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
 )
 
@@ -894,7 +916,7 @@ function run_javap() {
 #=======================================
 
 dis_usage="[options] classes..."
-dis_help="preprocess class files with the Maxine VM and disassembles the result with javap
+dis_help="preprocess class files with the Maxine VM and disassemble the result with javap
 
     Run Maxine in boot image building mode to load one or more classes (which performs
     preprocessing of the bytecode in the classes for implementing JNI stubs, exception
@@ -1123,7 +1145,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-maxvm-config-alias=optopt -fail-fast"
+gate_presets="-maxvm-config-alias=cpscps -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in
@@ -1138,59 +1160,6 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
 function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -refvm="${jvm}" "-refvm-args=${jvm_args}" ${gate_presets} "$@"
-}
-
-#=======================================
-# 'xref' command
-#=======================================
-
-xref_usage="[options]"
-xref_help="run Sorcerer to produce a HTML cross-reference of the Java source files
-
-    Run Sorcerer (https://sorcerer.dev.java.net/) to produce a HTML cross-reference of
-    the Java source files. The cross reference is written to the following directory:
-    
-        $maxine_dir/xref
-    
-options:
- -exe       path to the Sorcerer executable (default: sorcerer)
- -htm       modify generated files to use an '.htm' extension instead of '.html'"
-    
-function run_xref() {
-    projects_to_xref=""
-    for project in ${projects[@]}; do
-        project_dir=${project/:*/}
-        projects_to_xref="$projects_to_xref $maxine_dir/$project_dir"
-    done
-    sorcerer="sorcerer"
-    htm=false
-    while [ "$1" != "" ]; do
-        case $1 in
-            -exe )
-                shift
-                sorcerer=$1
-                ;;
-            -htm )
-                htm=true
-                ;;
-            * )
-                echo "unknown option '$1'"
-                run_help xref
-                exit 1
-                ;;
-        esac
-        shift
-    done
-    run $sorcerer -cp $JUNIT4_CP -d $maxine_dir/xref -auto $projects_to_xref 2>&1 |\
-        grep -v 'is Sun proprietary API'
-
-    if $htm ; then
-        for html in $maxine_dir/xref/*.html; do
-            cat $html | \
-                sed 's:\(src="[^"]*\).html":\1.htm":g' | \
-                sed 's:source-view.html:source-view.htm:g' > $maxine_dir/xref/$(basename $html .html).htm
-        done
-    fi    
 }
 
 #=======================================

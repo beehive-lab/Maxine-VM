@@ -21,8 +21,8 @@
 /**
  * Boxed versions of the extra "primitive types" declared in com.sun.max.unsafe.
  * These boxed implementations are used on any non-MaxineVM VM,
- * especially the host VM for prototyping/bootstrapping.
- * 
+ * especially the host VM for bootstrapping.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.unsafe.box;

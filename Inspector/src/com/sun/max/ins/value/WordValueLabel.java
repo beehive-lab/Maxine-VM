@@ -354,14 +354,14 @@ public class WordValueLabel extends ValueLabel {
         switch (displayMode) {
             case WORD: {
                 setFont(style().wordDataFont());
-                setForeground(value.isZero() ? style().wordNullDataColor() : style().wordDataColor());
+                setForeground(value.isZero() ? style().wordNullDataColor() : null);
                 setText(hexString);
                 setToolTipText("Int: " + (value.isZero() ? 0 : Long.toString(value.toLong())));
                 break;
             }
             case UNCHECKED_WORD: {
                 setFont(style().wordDataFont());
-                setForeground(value.isZero() ? style().wordNullDataColor() : style().wordDataColor());
+                setForeground(value.isZero() ? style().wordNullDataColor() : null);
                 setText(hexString);
                 setToolTipText("Unchecked word");
                 break;
@@ -484,7 +484,7 @@ public class WordValueLabel extends ValueLabel {
             }
             case CLASS_ACTOR_ID: {
                 setFont(style().wordDataFont());
-                setForeground(style().wordDataColor());
+                setForeground(null);
                 setText(Long.toString(value.asWord().asAddress().toLong()));
                 if (teleClassActor != null) {
                     setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
@@ -494,8 +494,6 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CLASS_ACTOR: {
-                setFont(style().javaClassNameFont());
-                setForeground(style().javaNameColor());
                 setText(teleClassActor.classActor().simpleName());
                 setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
                 break;
@@ -527,28 +525,28 @@ public class WordValueLabel extends ValueLabel {
             }
             case FLAGS: {
                 setFont(style().wordFlagsFont());
-                setForeground(style().wordDataColor());
+                setForeground(null);
                 setText(maxVM().visualizeStateRegister(value.toLong()));
                 setToolTipText("Flags 0x" + hexString);
                 break;
             }
             case DECIMAL: {
                 setFont(style().decimalDataFont());
-                setForeground(style().wordDataColor());
+                setForeground(null);
                 setText(Integer.toString(value.toInt()));
                 setToolTipText("0x" + hexString);
                 break;
             }
             case FLOAT: {
                 setFont(style().wordAlternateTextFont());
-                setForeground(style().wordDataColor());
+                setForeground(null);
                 setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))));
                 setToolTipText("0x" + hexString);
                 break;
             }
             case DOUBLE: {
                 setFont(style().wordAlternateTextFont());
-                setForeground(style().wordDataColor());
+                setForeground(null);
                 setText(Double.toString(Double.longBitsToDouble(value.toLong())));
                 setToolTipText("0x" + hexString);
                 break;
@@ -743,7 +741,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().actions().inspectMemoryWords(address, null);
+                    action = inspection().actions().inspectMemoryWords(address);
                     break;
                 }
                 case OBJECT_REFERENCE:
@@ -751,7 +749,7 @@ public class WordValueLabel extends ValueLabel {
                     if (teleObject != null) {
                         action = inspection().actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
-                        action = inspection().actions().inspectMemoryWords(address, null);
+                        action = inspection().actions().inspectMemoryWords(address);
                     }
                     break;
                 }
@@ -766,7 +764,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (maxVM().contains(address)) {
-                        action = inspection().actions().inspectMemoryWords(address, null);
+                        action = inspection().actions().inspectMemoryWords(address);
                     }
                     break;
                 }

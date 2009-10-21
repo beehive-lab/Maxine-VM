@@ -43,7 +43,7 @@ public @interface BUILTIN {
      */
     Class<? extends Builtin> builtinClass();
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static final class Static {
         private Static() {
         }

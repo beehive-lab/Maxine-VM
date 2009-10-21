@@ -26,7 +26,46 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
 /**
-  * Utility class that provides functionality common to all SPARC stack frame layout.
+ * Utility class that provides functionality common to all SPARC stack frame layout.
+ *
+ * The layout of the stack is as follows:
+ * <p>
+ * <pre>
+ *   Base     Offset       Contents
+ *   ----------------+--------------------------------+----------------
+ *                   |                                |
+ *                   :    blocks allocated by the     :
+ *                   :    StackAllocate builtin       :
+ *                   |                                |
+ *                   +--------------------------------+
+ *                   |                                |
+ *                   :  outgoing arguments (6 .. n)   :
+ *                   :    and register allocator      :
+ *                   :         spill area             :
+ *                   |                                |
+ *   %sp*       +176 +--------------------------------+   ---
+ *                   | outgoing argument 5            |    ^
+ *                   |     ...                        |    |
+ *                   | outgoing argument 0            |    |
+ *   %sp*       +128 +--------------------------------+    |
+ *                   | save slot for %i7              | MIN_STACK_FRAME_SIZE (176)
+ *                   |     ...                        |    |
+ *                   | save slot for %i0              |    |
+ *                   | save slot for %l7              |    |
+ *                   |     ...                        |    |
+ *                   | save slot for %l0              |    v
+ *   %sp*       +0   +--------------------------------+   ---
+ *                   |                                |    ^
+ *                   |                                |    |
+ *                   |                                | STACK_BIAS (2047)
+ *                   |                                |    |
+ *                   |                                |    v
+ *   %sp --->        +--------------------------------+   ---
+ *
+ *
+ *
+ * Note: %sp* == %sp + STACK_BIAS
+ * </pre>
  *
  * @author Laurent Daynes
  * @author Paul Caprioli
@@ -86,20 +125,21 @@ public final class SPARCStackFrameLayout {
      * @param slotOffset offset of the stack slot.
      * @return
      */
-    public static int slotOffsetFromFrame(int frameSize, int slotOffset) {
-        return STACK_BIAS - frameSize + slotOffset;
+    public static Offset slotOffsetFromFrame(int frameSize, Offset slotOffset) {
+        return slotOffset.plus(STACK_BIAS).minus(frameSize);
     }
 
     /**
      * Computes the offset of a local stack slot relative to the frame pointer register (%fp).
      * The offset of the local slot is computed by the EIR from the top of the stack.
-     * The Eir is oblivious to the details of the stack frame layout (stack bias, register window saving area, etc...).
-     * These needs to be accounted for when computing a offset from the frame pointer register.
-     * @see  offsetToFirstFreeSlotFromStackPointer
+     * EIR is oblivious to the details of the stack frame layout (stack bias, register window saving area, etc...).
+     * These need to be accounted for when computing an offset from the frame pointer register.
      *
      * @param frameSize size of the stack frame where the slot resides.
      * @param slotOffset offset of the stack slot.
      * @return an offset in bytes relative to the frame pointer register
+     *
+     * @see #OFFSET_FROM_SP_TO_FIRST_SLOT
      */
     public static int localSlotOffsetFromFrame(int frameSize,  int slotOffset) {
         return OFFSET_FROM_SP_TO_FIRST_SLOT - frameSize + slotOffset;
@@ -145,20 +185,20 @@ public final class SPARCStackFrameLayout {
         return getCallerFramePointer(stackFrameWalker, unbias(stackFrameWalker.framePointer()));
     }
 
-    public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer registerWindow) {
-        return stackFrameWalker.readWord(registerWindow, offset_in_saved_window(GPR.I6)).asPointer();
+    public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer unbiasedFramePointer) {
+        return stackFrameWalker.readWord(unbiasedFramePointer, offset_in_saved_window(GPR.I6)).asPointer();
     }
 
-    public static void setRegisterInSavedWindow(Pointer framePointer, GPR register, Word data) {
-        unbias(framePointer).writeWord(offset_in_saved_window(register), data);
+    public static void setRegisterInSavedWindow(Pointer stackPointer, GPR register, Word data) {
+        unbias(stackPointer).writeWord(offset_in_saved_window(register), data);
     }
 
-    public static Word getRegisterInSavedWindow(Pointer framePointer, GPR register) {
-        return unbias(framePointer).readWord(offset_in_saved_window(register));
+    public static Word getRegisterInSavedWindow(Pointer stackPointer, GPR register) {
+        return unbias(stackPointer).readWord(offset_in_saved_window(register));
     }
 
-    public static void setCallerFramePointer(Pointer framePointer, Pointer callerFramePointer) {
-        unbias(framePointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
+    public static void setCallerFramePointer(Pointer stackPointer, Pointer callerFramePointer) {
+        unbias(stackPointer).writeWord(offset_in_saved_window(GPR.I6), callerFramePointer);
     }
 
     private SPARCStackFrameLayout() {

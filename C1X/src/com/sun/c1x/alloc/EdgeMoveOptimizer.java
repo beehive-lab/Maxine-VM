@@ -23,7 +23,6 @@ package com.sun.c1x.alloc;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 
@@ -101,7 +100,7 @@ final class EdgeMoveOptimizer {
 
     private boolean operationsDifferent(LIRInstruction op1, LIRInstruction op2) {
         if (op1 == null || op2 == null) {
-            // at least one block is already empty . no optimization possible
+            // at least one block is already empty. no optimization possible
             return true;
         }
 
@@ -110,7 +109,7 @@ final class EdgeMoveOptimizer {
             assert op2 instanceof LIROp1 : "move must be LIROp1";
             LIROp1 move1 = (LIROp1) op1;
             LIROp1 move2 = (LIROp1) op2;
-            if (move1.info == move2.info && move1.inOpr() == move2.inOpr() && move1.resultOpr() == move2.resultOpr()) {
+            if (move1.info == move2.info && move1.operand() == move2.operand() && move1.result() == move2.result()) {
                 // these moves are exactly equal and can be optimized
                 return false;
             }
@@ -122,8 +121,6 @@ final class EdgeMoveOptimizer {
     }
 
     private void optimizeMovesAtBlockEnd(BlockBegin block) {
-        // Util.traceLinearScan(4, "optimizing moves at end of block B%d", block.blockID);
-
         if (block.isPredecessor(block)) {
             // currently we can't handle this correctly.
             return;
@@ -172,11 +169,6 @@ final class EdgeMoveOptimizer {
                 }
             }
 
-            if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.print("found instruction that is equal in all %d predecessors: ", numPreds);
-                op.printOn(TTY.out);
-            }
-
             // insert the instruction at the beginning of the current block
             block.lir().insertBefore(1, op);
 
@@ -188,8 +180,6 @@ final class EdgeMoveOptimizer {
     }
 
     private void optimizeMovesAtBlockBegin(BlockBegin block) {
-        // Util.traceLinearScan(4, "optimization moves at begin of block B%d", block.blockID);
-
         initInstructions();
         int numSux = block.numberOfSux();
 
@@ -222,7 +212,7 @@ final class EdgeMoveOptimizer {
             for (i = insertIdx - 1; i >= 0; i--) {
                 LIRInstruction op = curInstructions.get(i);
                 if ((op.code == LIROpcode.Branch || op.code == LIROpcode.CondFloatBranch) && ((LIRBranch) op).block() != null) {
-                    assert false : "block with two successors can have only two branch instructions";
+                    throw new Error("block with two successors can have only two branch instructions");
                 }
             }
         }
@@ -255,11 +245,6 @@ final class EdgeMoveOptimizer {
                     // no further optimization possible
                     return;
                 }
-            }
-
-            if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.print("----- found instruction that is equal in all %d successors: ", numSux);
-                op.printOn(TTY.out);
             }
 
             // insert instruction at end of current block

@@ -23,13 +23,11 @@ package com.sun.max.vm.compiler.cir;
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
-import com.sun.max.util.timer.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -60,7 +58,7 @@ public interface CirRoutine extends Stoppable {
         private Static() {
         }
 
-        public static Value[] cirArgumentsToValues(CirValue[] cirArguments) {
+        public static Value[] cirArgumentsToValues(CirValue[] cirArguments, MethodActor methodActor) {
             final int numberOfArguments = cirArguments.length - 2; // clip the continuations
             final Value[] values = new Value[numberOfArguments];
             for (int i = 0; i < numberOfArguments; i++) {
@@ -80,8 +78,6 @@ public interface CirRoutine extends Stoppable {
             return new CirCall(exceptionContinuation, CirConstant.fromObject(throwable));
         }
 
-        private static final TimerMetric timer = GlobalMetrics.newTimer("CIRRoutine.evaluate", Clock.SYSTEM_MILLISECONDS);
-
         /**
          * Invokes a given method or constructor with a given set of CIR values as the arguments.
          *
@@ -98,25 +94,22 @@ public interface CirRoutine extends Stoppable {
          */
         public static Value evaluate(MethodActor methodActor, CirValue[] cirArguments) throws CirFoldingException {
             try {
-                timer.start();
                 if (methodActor.isInstanceInitializer()) {
                     final CirValue[] constructorArguments = Arrays.subArray(cirArguments, 1);
                     final Object uninitializedObject = cirArguments[0].value().asObject();
                     try {
-                        final Object initializedObject = methodActor.invokeConstructor(cirArgumentsToValues(constructorArguments)).asObject();
+                        final Object initializedObject = methodActor.invokeConstructor(cirArgumentsToValues(constructorArguments, methodActor)).asObject();
                         Objects.copy(initializedObject, uninitializedObject);
                         return VoidValue.VOID;
                     } catch (InstantiationException instantiationException) {
                         throw ProgramError.unexpected("could not instantiate an instance of " + uninitializedObject);
                     }
                 }
-                return methodActor.invoke(cirArgumentsToValues(cirArguments));
+                return methodActor.invoke(cirArgumentsToValues(cirArguments, methodActor));
             } catch (InvocationTargetException invocationTargetException) {
                 throw new CirFoldingException(invocationTargetException.getCause());
             } catch (IllegalAccessException illegalAccessException) {
                 throw ProgramError.unexpected("could not access method for invocation: " + methodActor);
-            } finally {
-                timer.stop();
             }
         }
 

@@ -71,7 +71,7 @@ public final class AMD64Safepoint extends Safepoint {
      */
     public static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public AMD64Safepoint(VMConfiguration vmConfiguration) {
     }
 
@@ -80,7 +80,7 @@ public final class AMD64Safepoint extends Safepoint {
         return LATCH_REGISTER;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
         final AMD64Assembler asm = new AMD64Assembler(0L);

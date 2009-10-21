@@ -102,11 +102,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public boolean isThreadInNative() {
-        return teleEnabledVmThreadLocalValues != null && !teleEnabledVmThreadLocalValues.isInJavaCode();
-    }
-
-    @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
         final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
         if (teleTargetMethod != null) {
@@ -115,14 +110,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         return null;
     }
 
-    @Override
-    protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
-        final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM, instructionPointer);
-        if (teleRuntimeStub != null) {
-            return teleRuntimeStub.runtimeStub();
-        }
-        return null;
-    }
     @Override
     public byte readByte(Address address, int offset) {
         return teleVM.dataAccess().readByte(address, offset);

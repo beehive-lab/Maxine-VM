@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 
 
 /**
- * The <code>RiField</code> interface represents a reference to a field, including both
+ * This interface represents a reference to a field, including both
  * resolved and unresolved fields. Fields, like methods and types, are resolved through
  * {@link RiConstantPool constant pools}, and their actual implementation is provided
  * by the {@link RiRuntime runtime} to the compiler. Note that some operations are only
@@ -46,10 +46,10 @@ public interface RiField {
     RiType type();
 
     /**
-     * Gets the basic type of this field.
+     * Gets the kind of this field.
      * @return the basic type
      */
-    CiKind basicType();
+    CiKind kind();
 
     /**
      * Gets the holder of this field as a compiler interface type.

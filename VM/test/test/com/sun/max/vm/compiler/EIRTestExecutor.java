@@ -35,8 +35,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
-import com.sun.max.vm.interpreter.eir.*;
-import com.sun.max.vm.interpreter.eir.amd64.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.*;
+import com.sun.max.vm.compiler.ir.interpreter.eir.amd64.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
@@ -62,7 +62,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
         final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.eirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

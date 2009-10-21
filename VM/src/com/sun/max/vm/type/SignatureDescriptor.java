@@ -107,7 +107,7 @@ public abstract class SignatureDescriptor extends Descriptor {
         return signatureDescriptorEntry;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static int totalNumberOfDescriptors() {
         return canonicalSignatureDescriptors.length();
     }

@@ -154,7 +154,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         ownerThread = owner;
         recursionCount = lockQty;
         ownerAcquired = false;
-        bindingProtection = BindingProtection.PROTECTED;
+        setBindingProtection(BindingProtection.PROTECTED);
     }
 
     @Override
@@ -162,7 +162,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         ownerThread = null;
         recursionCount = 0;
         ownerAcquired = true;
-        bindingProtection = BindingProtection.UNPROTECTED;
+        setBindingProtection(BindingProtection.UNPROTECTED);
     }
 
     @Override
@@ -179,8 +179,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     }
 
     @Override
-    public void dump() {
-        super.dump();
+    public void log() {
+        super.log();
         Log.print(" ownerAcquired=");
         Log.print(ownerAcquired);
         Log.print(" proxyMutex=");

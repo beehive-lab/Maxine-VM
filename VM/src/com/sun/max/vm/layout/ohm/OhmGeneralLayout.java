@@ -217,7 +217,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return Grip.fromOrigin(accessor.compareAndSwapWord(hubOffset, suspectedGrip.toOrigin(), forwardGrip.marked().toOrigin()).asPointer());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
         visitor.visitHeaderField(hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
@@ -228,7 +228,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return hubOffset;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected Value readHeaderValue(ObjectMirror mirror, int offset) {
         if (offset == hubOffset) {
             return mirror.readHub();
@@ -238,7 +238,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return null;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected boolean writeHeaderValue(ObjectMirror mirror, int offset, Value value) {
         if (offset == hubOffset) {
             mirror.writeHub(value);

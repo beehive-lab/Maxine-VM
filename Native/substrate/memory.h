@@ -28,8 +28,4 @@
 #ifndef MEMORY_H_
 #define MEMORY_H_
 
-extern long total_memory;
-extern long max_memory;
-extern long free_memory;
-
 #endif /* MEMORY_H_ */

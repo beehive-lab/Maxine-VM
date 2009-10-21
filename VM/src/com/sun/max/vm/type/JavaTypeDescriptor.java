@@ -259,8 +259,8 @@ public final class JavaTypeDescriptor {
         if (dimensions > 0) {
             final TypeDescriptor elementDescriptor = TypeDescriptor.makeTypeDescriptor(string.substring(dimensions, string.length()));
             final Class elementClass = resolveToJavaClass(elementDescriptor, classLoader);
-            if (MaxineVM.isPrototyping()) {
-                // in prototyping mode, we must use java reflection.
+            if (MaxineVM.isHosted()) {
+                // in bootstrapping mode, we must use java reflection.
                 Class resultClass = elementClass;
                 while (dimensions > 0) {
                     // Reflectively create an instance of the array here and get its class
@@ -330,7 +330,7 @@ public final class JavaTypeDescriptor {
      * @return a reference to a canonical type descriptor for the specified Java class
      */
     public static TypeDescriptor forJavaClass(Class javaClass) {
-        if (VOID == null || MaxineVM.isPrototyping()) {
+        if (VOID == null || MaxineVM.isHosted()) {
             if (javaClass.isArray()) {
                 return getArrayDescriptorForComponent(javaClass.getComponentType());
             }

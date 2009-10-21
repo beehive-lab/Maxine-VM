@@ -41,22 +41,22 @@ public final class ClassID {
     /**
      * Inspector support.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static interface Mapping {
         ClassActor idToClassActor(int id);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static Mapping mapping;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setMapping(Mapping map) {
         mapping = map;
     }
 
     public static synchronized ClassActor toClassActor(int id) {
         try {
-            if (MaxineVM.isPrototyping() && mapping != null) {
+            if (MaxineVM.isHosted() && mapping != null) {
                 final ClassActor classActor = mapping.idToClassActor(id);
                 if (classActor != null) {
                     return classActor;

@@ -44,8 +44,44 @@ public final class Layout {
         return layoutScheme().generalLayout;
     }
 
-    public enum HeaderField {
-        HUB, MISC, LENGTH;
+    /**
+     * A descriptor for a word-sized slot in an object's header. All that the descriptor
+     * encapsulates is the name of a slot in a header. The offset of the
+     * slots is {@linkplain GeneralLayout#getOffsetFromOrigin(HeaderField) determined}
+     * by the configured layout.
+     *
+     * @author Doug Simon
+     */
+    public static class HeaderField {
+
+        /**
+         * The header word from which the hub of an object can be found.
+         */
+        public static final HeaderField HUB = new HeaderField("HUB");
+
+        /**
+         * The header word in which the monitor and hash code details of an object are encoded.
+         */
+        public static final HeaderField MISC = new HeaderField("MISC");
+
+        /**
+         * The header word in which the length of an array object is encoded.
+         */
+        public static final HeaderField LENGTH = new HeaderField("LENGTH");
+
+        /**
+         * The name of this header field.
+         */
+        public final String name;
+
+        public HeaderField(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     public enum Category {

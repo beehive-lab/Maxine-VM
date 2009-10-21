@@ -20,15 +20,11 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-import java.util.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
@@ -182,8 +178,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         TargetJavaFrameDescriptor targetJavaFrameDescriptor = eirToTargetJavaFrameDescriptor.get(eirJavaFrameDescriptor);
         if (targetJavaFrameDescriptor == null) {
             targetJavaFrameDescriptor = new TargetJavaFrameDescriptor(eirToTargetJavaFrameDescriptor(eirJavaFrameDescriptor.parent()),
-                                                                      eirJavaFrameDescriptor.classMethodActor(),
-                                                                      eirJavaFrameDescriptor.bytecodePosition(),
+                                                                      eirJavaFrameDescriptor.classMethodActor,
+                                                                      eirJavaFrameDescriptor.bytecodePosition,
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.locals),
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.stackSlots));
             eirToTargetJavaFrameDescriptor.put(eirJavaFrameDescriptor, targetJavaFrameDescriptor);
@@ -281,7 +277,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : directCallLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
@@ -289,7 +285,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         }
         for (Label label : safepointLabels) {
             if (!assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind, startAddress, InlineDataDecoder.createFrom(inlineDataRecorder), null);
                 }
                 return false;
@@ -313,28 +309,6 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     protected abstract void setStartAddress(Address address);
 
     protected abstract void fixLabel(Label label, Address address);
-
-    private Map<StackVariable, Integer> namedStackVariables;
-
-    /**
-     * See {@link StackVariable#create(String)} for an explanation as to why this can only be called while prototyping.
-     */
-    public void recordStackVariableOffset(StackVariable key, int offset) {
-        ProgramError.check(MaxineVM.isPrototyping());
-        if (namedStackVariables == null) {
-            namedStackVariables = new HashMap<StackVariable, Integer>();
-        }
-        final Integer old = namedStackVariables.put(key, offset);
-        assert old == null;
-    }
-
-    public Iterable<Map.Entry<StackVariable, Integer>> namedStackVariableOffsets() {
-        if (namedStackVariables == null) {
-            return Iterables.empty();
-        }
-        return namedStackVariables.entrySet();
-    }
-
 
     private Label markerLabel = new Label();
 

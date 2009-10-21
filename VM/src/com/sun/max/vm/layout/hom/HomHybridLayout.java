@@ -73,7 +73,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         return headerSize + fieldActor.offset();
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;
@@ -89,7 +89,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
@@ -104,7 +104,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         return tupleLayout.readValue(kind, mirror, offset);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {

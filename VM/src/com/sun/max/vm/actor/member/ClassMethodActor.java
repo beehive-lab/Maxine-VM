@@ -35,8 +35,7 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.TargetState;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -115,7 +114,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredInline(BootstrapCompilerScheme compilerScheme) {
         if (compilee().isInline()) {
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 if (compilee().isInlineAfterSnippetsAreCompiled()) {
                     return compilerScheme.areSnippetsCompiled();
                 }
@@ -176,7 +175,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
                     }
-                    if (MaxineVM.isPrototyping()) {
+                    if (MaxineVM.isHosted()) {
                         validateInlineAnnotation(compilee);
                     }
                 }
@@ -188,7 +187,7 @@ public abstract class ClassMethodActor extends MethodActor {
                 codeAttribute = processedCodeAttribute;
 
                 final ClassActor holder = compilee.holder();
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     if (holder.kind != Kind.WORD) {
                         // We simply verify all methods during boot image build time as the overhead should be acceptable.
                         verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
@@ -213,7 +212,15 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (verifier != null && codeAttribute != null && !compilee.holder().isGenerated()) {
-                    codeAttribute = verifier.verify(compilee, codeAttribute);
+                    if (MaxineVM.isHosted()) {
+                        try {
+                            codeAttribute = verifier.verify(compilee, codeAttribute);
+                        } catch (OmittedClassError e) {
+                            // Ignore: assume all classes being loaded during boot imaging are verifiable.
+                        }
+                    } else {
+                        codeAttribute = verifier.verify(compilee, codeAttribute);
+                    }
                 }
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
@@ -267,7 +274,7 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * @see InliningAnnotationsValidator#apply(ClassMethodActor)
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void validateInlineAnnotation(ClassMethodActor compilee) {
         if (!compilee.holder().isGenerated()) {
             try {

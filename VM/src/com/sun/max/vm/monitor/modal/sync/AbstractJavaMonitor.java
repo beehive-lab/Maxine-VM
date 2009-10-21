@@ -28,10 +28,11 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Base class for <code>JavaMonitor</code>'s managed by <code>JavaMonitorManager</code>.
+ * Base class for {@code JavaMonitor}'s managed by {@code JavaMonitorManager}.
  *
  * @author Simon Wilkinson
  */
@@ -43,7 +44,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     private final AtomicWord displacedMiscWord = new AtomicWord();
 
     protected BindingProtection bindingProtection;
-    private Word preGCLockWord;
+    private Word preGCLockword;
 
     // Support for direct linked lists of JavaMonitors.
     private ManagedMonitor next;
@@ -74,8 +75,8 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         return displacedMiscWord.get();
     }
 
-    public final void setDisplacedMisc(Word lockWord) {
-        displacedMiscWord.set(lockWord);
+    public final void setDisplacedMisc(Word lockword) {
+        displacedMiscWord.set(lockword);
     }
 
     public final Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue) {
@@ -87,7 +88,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         ownerThread = null;
         recursionCount = 0;
         displacedMiscWord.set(Word.zero());
-        preGCLockWord = Word.zero();
+        preGCLockword = Word.zero();
         bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
@@ -104,27 +105,38 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final boolean isHardBound() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockWord64.boundFromMonitor(this));
+        return isBound() && ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this));
     }
 
     public final void preGCPrepare() {
-        preGCLockWord = InflatedMonitorLockWord64.boundFromMonitor(this);
+        preGCLockword = InflatedMonitorLockword64.boundFromMonitor(this);
     }
 
     public final boolean requiresPostGCRefresh() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(preGCLockWord);
+        return isBound() && ObjectAccess.readMisc(boundObject).equals(preGCLockword);
     }
 
     public final void refreshBoundObject() {
-        ObjectAccess.writeMisc(boundObject, InflatedMonitorLockWord64.boundFromMonitor(this));
+        ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
     }
 
     public final BindingProtection bindingProtection() {
+        checkProtection();
         return bindingProtection;
     }
 
-    public final void setBindingProtection(BindingProtection deflationState) {
-        bindingProtection = deflationState;
+    public final void setBindingProtection(BindingProtection bindingProtection) {
+        this.bindingProtection = bindingProtection;
+        checkProtection();
+    }
+
+    private void checkProtection() {
+        if (bindingProtection != BindingProtection.PROTECTED && ownerThread != null) {
+            Log.print("Unprotected monitor with non-null owner thread: ");
+            log();
+            Log.println();
+            FatalError.unexpected("Monitor cannot be unprotected if it is held by a thread");
+        }
     }
 
     @INLINE
@@ -137,7 +149,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         this.next = next;
     }
 
-    public void dump() {
+    public void log() {
         Log.print(ObjectAccess.readClassActor(this).name.string);
         Log.print(" boundTo=");
         Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name.string);
@@ -155,7 +167,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Acquiring monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -167,7 +179,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Acquired monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -179,7 +191,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Releasing monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -191,7 +203,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Released monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -203,7 +215,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Start wait on monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -215,7 +227,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("End wait on monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             if (interrupted) {
                 Log.print(" *interrupted*");
             } else if (timedOut) {
@@ -232,7 +244,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("End notify monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -244,7 +256,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             Log.print("Start notify monitor for ");
             Log.print(currentThread.getName());
             Log.print(" [");
-            dump();
+            log();
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }

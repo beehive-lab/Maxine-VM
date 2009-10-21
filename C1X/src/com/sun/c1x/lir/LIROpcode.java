@@ -30,11 +30,10 @@ package com.sun.c1x.lir;
 
 // Checkstyle: stop
 public enum LIROpcode {
-    None
-    , BeginOp0
+    BeginOp0
         , Label
-        , BackwardBranchTarget
-        , StdEntry
+        ,
+    StdEntry
         , OsrEntry
         , RtCall
         , Membar
@@ -55,8 +54,8 @@ public enum LIROpcode {
         , Convert
         , AllocObject
         , Monaddr
-        , Roundfp
-        , Safepoint
+        ,
+    Safepoint
     , EndOp1
     , BeginOp2
         , Cmp
@@ -96,33 +95,24 @@ public enum LIROpcode {
         , Idiv
         , Irem
     , EndOp3
-    , BeginOpJavaCall
         , StaticCall
         , OptVirtualCall
-        , IcVirtualCall
         , InterfaceCall
         , VirtualCall
-    , EndOpJavaCall
-    , BeginOpArrayCopy
-        , ArrayCopy
-    , EndOpArrayCopy
-    , BeginopLock
-        , Lock
+        , XirDirectCall
+        , XirIndirectCall
+    ,
+    Lock
         , Unlock
-    , EndOpLock
-    , BeginOpTypeCheck
-        , InstanceOf
+    ,
+    InstanceOf
         , CheckCast
         , StoreCheck
-    , EndOpTypeCheck
-    , BeginOpCompareAndSwap
-        , CasLong
+    ,
+    CasLong
         , CasObj
         , CasInt
-    , EndOpCompareAndSwap
-        , BeginOpMDOProfile
-        , ProfileCall
-    , EndOpMDOProfile,
+    ,
     Xir
 
    // Checkstyle: resume

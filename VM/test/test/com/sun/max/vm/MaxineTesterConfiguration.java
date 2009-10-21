@@ -29,7 +29,7 @@ import test.com.sun.max.vm.compiler.bytecode.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-
+import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -64,18 +64,19 @@ public class MaxineTesterConfiguration {
     static final Map<String, Expectation[]> resultMap = new HashMap<String, Expectation[]>();
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
     static final Map<String, String[]> imageParams = new HashMap<String, String[]>();
+    static final Map<String, String[]> jtLoadParams = new HashMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     static {
-        output(test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL);
-        output(test.output.JavacTest.class,                FAIL_SPARC, RAND_LINUX);
+        output(test.output.AWTFont.class,                  FAIL_DARWIN);
+        output(test.output.JavacTest.class,                RAND_LINUX);
         output(test.output.CatchOutOfMemory.class);
         output(test.output.PrintDate.class);
         output(test.output.HelloWorld.class);
         output(test.output.HelloWorldGC.class);
         output(test.output.ExitCode.class);
         output(test.output.FloatNanTest.class);
-        output(test.output.GetResource.class,              FAIL_SPARC);
+        output(test.output.GetResource.class);
         output(test.output.SafepointWhileInNative.class);
         output(test.output.SafepointWhileInJava.class);
         output(test.output.BlockingQueue.class);
@@ -98,142 +99,25 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class,             RAND_SPARC);
+        output(test.output.MegaThreads.class);
 
-        jtt(jtt.threads.Thread_isInterrupted02.class,                  FAIL_LINUX);
-        jtt(jtt.jdk.EnumMap01.class,                                   RAND_ALL);
-        jtt(jtt.jdk.EnumMap02.class,                                   RAND_ALL);
-        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:                   @jitopt, @optopt
-        jtt(jtt.except.Catch_StackOverflowError_01.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_02.class, RAND_SPARC);  // Fails: @jitjit, @optjit, @jitopt
-        jtt(jtt.except.Catch_StackOverflowError_03.class, RAND_SPARC);  // Fails: @jitjit, @optjit
-        jtt(jtt.lang.ClassLoader_loadClass01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.lang.Class_asSubclass01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.lang.Class_cast01.class,                  RAND_SPARC);  // Fails: @jitjit           @jitopt
-        jtt(jtt.lang.Class_forName01.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
-        jtt(jtt.lang.Class_forName02.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
-        jtt(jtt.lang.Class_forName03.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
-        jtt(jtt.lang.Class_forName04.class,               RAND_SPARC);  // Fails: @jitjit           @jitopt
-        jtt(jtt.lang.Object_clone01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.lang.Object_notify01.class,               RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.lang.Object_notifyAll01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.lang.Object_wait01.class,                 RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_get01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_get02.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_get03.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getBoolean01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getByte01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getChar01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getDouble01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getFloat01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getInt01.class,             RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getLength01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getLong01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_getShort01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_set01.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_set02.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_set03.class,                RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setBoolean01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setByte01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setChar01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setDouble01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setFloat01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setInt01.class,             RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setLong01.class,            RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Array_setShort01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getDeclaredField01.class,   RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getDeclaredMethod01.class,  RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getField01.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getField02.class,           RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getMethod01.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_getMethod02.class,          RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_newInstance02.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_newInstance03.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_newInstance06.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.reflect.Class_newInstance07.class,        RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.threads.Thread_holdsLock01.class,         RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.threads.Thread_setPriority01.class,       RAND_SPARC);  // Fails: @jitjit,          @jitopt
-        jtt(jtt.bytecode.BC_iadd2.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_iadd3.class,                  RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_wide01.class,                 RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_wide02.class,                 RAND_SPARC);  // Fails:          @optjit
-        jtt(jtt.bytecode.BC_athrow.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_aaload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_aastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_anewarray.class,                RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_arraylength.class,              RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_athrow.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_athrow1.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_athrow2.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_athrow3.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_baload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_bastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_caload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_castore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_checkcast.class,                RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_checkcast1.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_checkcast2.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_daload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_dastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_fastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_getfield.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_iaload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_iastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_idiv.class,                     RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_invokevirtual01.class,          RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_irem.class,                     RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_laload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_lastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_ldiv.class,                     RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_lrem.class,                     RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_monitorenter.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_multianewarray.class,           RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_newarray.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_putfield.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_saload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_sastore.class,                  RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.BC_faload.class,                   RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_InCatch01.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_InCatch02.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_InCatch03.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_NPE_01.class,                RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_Synchronized01.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_Synchronized02.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_Synchronized03.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_Synchronized04.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.except.Throw_Synchronized05.class,        RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.lang.Object_toString02.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_String01.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_boolean01.class,            RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_byte01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_char01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_float01.class,              RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_double01.class,             RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_int01.class,                RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_long01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.micro.VarArgs_short01.class,              RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.optimize.Fold_Cast01.class,               RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.optimize.VN_Cast01.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.optimize.VN_Cast02.class,                 RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.optimize.VN_Field01.class,                RAND_SPARC);  // Fails:                   @jitopt
-        jtt(jtt.optimize.VN_Field02.class,                RAND_SPARC);  // Fails:                   @jitopt
+        jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
+        jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
+        jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
+        jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps
+        jtt(jtt.hotpath.HP_array02.class,                 RAND_SPARC);  // Fails:  @jitcps, @cpscps
 
-        dacapo("antlr",              FAIL_SPARC);
-        dacapo("bloat",              FAIL_SPARC);
-        dacapo("xalan",              FAIL_SPARC);
-        dacapo("hsqldb",   FAIL_ALL, FAIL_SPARC);
-        dacapo("luindex",            FAIL_SPARC);
-        dacapo("lusearch",           FAIL_SPARC);
-        dacapo("jython",             FAIL_SPARC);
-        dacapo("chart",    FAIL_ALL, FAIL_SPARC);
-        dacapo("eclipse",  FAIL_ALL, FAIL_SPARC);
-        dacapo("fop",                FAIL_SPARC);
-        dacapo("pmd",                FAIL_SPARC);
+        dacapo("antlr");
+        dacapo("bloat");
+        dacapo("xalan",    FAIL_ALL);
+        dacapo("hsqldb");
+        dacapo("luindex");
+        dacapo("lusearch", FAIL_ALL);
+        dacapo("jython",   FAIL_ALL);
+        dacapo("chart",    FAIL_ALL);
+        dacapo("eclipse",  FAIL_ALL);
+        dacapo("fop");
+        dacapo("pmd");
 
         specjvm98("_201_compress");
         specjvm98("_202_jess");
@@ -300,17 +184,29 @@ public class MaxineTesterConfiguration {
         auto("test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
         auto("test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
+        auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
-        imageConfig("optopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        imageConfig("optjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        imageConfig("jitopt", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
-        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        imageConfig("optc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
-        imageConfig("java", "-run=com.sun.max.vm.run.java");
+        jtImageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        jtImageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        jtImageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        jtImageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        jtImageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
+        jtImageConfig("java", "-run=com.sun.max.vm.run.java");
+
+        String c1xClass = C1XCompilerScheme.class.getName();
+
+        jtLoadConfig("cpscps", "-caller=cps", "-callee=cps");
+        jtLoadConfig("cpsjit", "-caller=cps", "-callee=jit");
+        jtLoadConfig("cpsc1x", "-caller=cps", "-callee=" + c1xClass);
+        jtLoadConfig("jitcps", "-caller=jit", "-callee=cps");
+        jtLoadConfig("jitjit", "-caller=jit", "-callee=jit");
+        jtLoadConfig("jitc1x", "-caller=jit", "-callee=" + c1xClass);
+        jtLoadConfig("c1xcps", "-caller=" + c1xClass, "-callee=cps");
+        jtLoadConfig("c1xc1x", "-caller=" + c1xClass, "-callee=jit");
+        jtLoadConfig("c1xjit", "-caller=" + c1xClass, "-callee=" + c1xClass);
 
         maxvmConfig("std");
         maxvmConfig("jit", "-Xjit");
-        maxvmConfig("pgi", "-XX:+PGI");
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
 
@@ -345,12 +241,16 @@ public class MaxineTesterConfiguration {
         addExpectedResults(name, results);
     }
 
-    private static void imageConfig(String name, String... params) {
+    private static void jtImageConfig(String name, String... params) {
         zeeImageConfigs.add(name);
         imageParams.put(name, params);
     }
 
-    private static void imageConfig(String name, Expectation result, String... params) {
+    private static void jtLoadConfig(String name, String... params) {
+        jtLoadParams.put(name, params);
+    }
+
+    private static void jtImageConfig(String name, Expectation result, String... params) {
         zeeImageConfigs.add(name);
         configResultMap.put(name, new Expectation[]{result});
         imageParams.put(name, params);
@@ -374,13 +274,12 @@ public class MaxineTesterConfiguration {
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.host();
         if (platform.processorKind.processorModel == ProcessorModel.SPARCV9) {
-            return "optopt,optjit";
+            return "cpscps,cpsjit,jitcps,jitjit";
         }
-        return "optc1x,optopt,jitopt,optjit,jitjit";
+        return "cpsc1x,cpscps,jitcps,cpsjit,jitjit";
     }
 
     public static boolean isSupported(String config) {
-
         Expectation[] expect = configResultMap.get(config);
         if (expect != null) {
             final Platform platform = Platform.host();
@@ -468,7 +367,7 @@ public class MaxineTesterConfiguration {
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
      * These tests are omitted by the MaxineTester unless the
      * @param testCase the test case
-     * @return <code>true</code> if the test is probably slow
+     * @return {@code true} if the test is probably slow
      */
     public static boolean isSlowAutoTestCase(TestCase testCase) {
         for (Class<?> c : slowAutoTestClasses) {

@@ -98,7 +98,6 @@ public abstract class ObjectInspector extends Inspector {
             }
         };
         instanceViewPreferences.addListener(new TableColumnViewPreferenceListener() {
-            @Override
             public void tableColumnViewPreferencesChanged() {
                 reconstructView();
             }
@@ -107,16 +106,37 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public void createFrame(InspectorMenu menu) {
-        super.createFrame(menu);
+    public InspectorFrame createFrame() {
+        final InspectorFrame frame = super.createFrame();
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
-        final InspectorMenu frameMenu = getMenu(DEFAULT_INSPECTOR_MENU);
-        frameMenu.addSeparator();
-        frameMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect object's memory"));
-        frameMenu.add(actions().setObjectWatchpoint(teleObject, "Watch object's memory"));
-        frameMenu.addSeparator();
-        frameMenu.add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
-        frameMenu.add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
+
+        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
+        defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        defaultMenu.addSeparator();
+        defaultMenu.add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
+        defaultMenu.add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
+
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
+        if (maxVM().watchpointsEnabled()) {
+            memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
+        }
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+        if (teleObject.getTeleClassMethodActorForObject() != null) {
+            frame.makeMenu(MenuKind.OBJECT_MENU);
+            frame.makeMenu(MenuKind.CODE_MENU);
+        }
+
+        if (teleObject.getTeleClassMethodActorForObject() != null || TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {
+            frame.makeMenu(MenuKind.DEBUG_MENU);
+        }
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
+        return frame;
     }
 
     @Override

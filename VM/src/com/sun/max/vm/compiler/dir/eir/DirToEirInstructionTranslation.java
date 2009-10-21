@@ -50,7 +50,7 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     }
 
     public final EirABI abi() {
-        return methodTranslation.eirMethod().abi();
+        return methodTranslation.eirMethod().abi;
     }
 
     public final void addInstruction(EirInstruction instruction) {

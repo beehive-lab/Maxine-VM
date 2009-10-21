@@ -37,21 +37,6 @@ public abstract class CompilerTest_coreJava<Method_Type extends IrMethod> extend
 
     }
 
-    /*
-    public void test_send() {
-        final Class c = Class.forName("java.net.SocketInputStream");
-        CompilerTestSetup.prototypeClassLoader().loadClass(c.getName());
-        compileMethod(c, "read", SignatureDescriptor.create(int.class, byte[].class, int.class, int.class));
-    }
-    */
-
-    /*
-    public void test_class() {
-        //Trace.on(5);
-        compileClass(Character.UnicodeBlock.class);
-    }
-    */
-
     /**
      * Stub testing takes too long when compiling so many classes which prevents the auto-tests from completing in a timely manner.
      */

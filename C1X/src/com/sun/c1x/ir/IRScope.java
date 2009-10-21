@@ -140,15 +140,6 @@ public class IRScope {
         return callees.size();
     }
 
-    /**
-     * Gets the callee at the specified position.
-     * @param i the index of the callee
-     * @return the callee at the specified index
-     */
-    public final IRScope calleeAt(int i) {
-        return callees.get(i);
-    }
-
     @Override
     public String toString() {
         if (caller == null) {
@@ -156,19 +147,6 @@ public class IRScope {
         } else {
             return "inline-scope @ " + callerBCI + ": " + method;
         }
-    }
-
-    /**
-     * Gets the caller bytecode index of the top scope.
-     * @return the bytecode index of the caller of the top scope
-     */
-    public final int topScopeBCI() {
-        assert caller != null;
-        IRScope scope = this;
-        while (scope.caller != null) {
-            scope = scope.caller;
-        }
-        return scope.callerBCI;
     }
 
     /**
@@ -194,21 +172,6 @@ public class IRScope {
     public int lockStackSize() {
         assert lockStackSize >= 0;
         return lockStackSize;
-    }
-
-    /**
-     * Gets the maximum stack size of this scope including the max stack size of its callees.
-     * @return the maximum stack size
-     */
-    public int maxStack() {
-        int myMax = method.maxStackSize();
-        int calleeMax = 0;
-        for (int i = 0; i < numberOfCallees(); i++) {
-            for (IRScope callee : callees) {
-                calleeMax = Math.max(calleeMax, callee.maxStack());
-            }
-        }
-        return myMax + calleeMax;
     }
 
     /**

@@ -71,7 +71,7 @@ public class OmittedBitRange extends ContiguousBitRange {
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof OmittedBitRange)) {
-            throw new Error("Invalid argument type\n");
+            throw new IllegalArgumentException("Invalid argument type");
         }
         final OmittedBitRange omittedBitRange = (OmittedBitRange) other;
         return width == omittedBitRange.width;

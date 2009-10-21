@@ -24,10 +24,12 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -50,7 +52,7 @@ public class ExceptionDispatcher {
     /**
      * Thread local for passing the exception when interpreting with an {@link IrInterpreter}.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static final ThreadLocal<Throwable> INTERPRETER_EXCEPTION = new ThreadLocal<Throwable>() {
         @Override
         public void set(Throwable value) {
@@ -69,7 +71,7 @@ public class ExceptionDispatcher {
      */
     @NEVER_INLINE
     public static Throwable safepointAndLoadExceptionObject() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return prototypeSafepointAndLoadExceptionObject();
         }
         Safepoint.safepoint();
@@ -78,7 +80,7 @@ public class ExceptionDispatcher {
         return exception;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Throwable prototypeSafepointAndLoadExceptionObject() {
         Throwable throwable = INTERPRETER_EXCEPTION.get();
         INTERPRETER_EXCEPTION.set(null);
@@ -86,13 +88,27 @@ public class ExceptionDispatcher {
     }
 
     private boolean isThrowable(BytecodeAssembler assembler, int classConstantIndex) {
-        try {
-            final TypeDescriptor type = assembler.constantPool().classAt(classConstantIndex).typeDescriptor();
-            return type.equals(JavaTypeDescriptor.forJavaClass(Throwable.class));
-        } catch (LinkageError e) {
-            // Defer linkage errors until the dispatcher is actually run or compiled
-            return false;
+        ClassConstant classRef = assembler.constantPool().classAt(classConstantIndex);
+        final TypeDescriptor type = classRef.typeDescriptor();
+        if (type.equals(JavaTypeDescriptor.THROWABLE)) {
+            return true;
         }
+
+        // Prevent loading types during image building: can safely assume that the type
+        // in an exception handler is indeed a subclass of Throwable.
+        ClassActor catchType = null;
+        if (MaxineVM.isHosted()) {
+            if (classRef.isResolvableWithoutClassLoading(assembler.constantPool())) {
+                catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
+            }
+        } else {
+            catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
+        }
+
+        if (catchType != null && !ClassRegistry.javaLangThrowableActor().isAssignableFrom(catchType)) {
+            throw ErrorContext.verifyError("Catch type is not a subclass of Throwable in handler");
+        }
+        return false;
     }
 
 

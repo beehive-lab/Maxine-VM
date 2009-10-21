@@ -34,7 +34,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -60,7 +60,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
     }
 
     @Override
-    public Value execute(ActorIrMethod method, Value... arguments) throws InvocationTargetException {
+    public Value execute(IrMethod method, Value... arguments) throws InvocationTargetException {
         return run(method.classMethodActor(), arguments);
     }
 

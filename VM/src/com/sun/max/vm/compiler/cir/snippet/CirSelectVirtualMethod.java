@@ -53,7 +53,7 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
 
     @Override
     public boolean mustNotInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
                 final MethodActor declaredMethod = (MethodActor) getConstantArgumentValue(arguments, Parameter.declaredVirtualMethodActor).asObject();
                 // Inlining of method selection for methods with accessor arguments must never be attempted:

@@ -41,7 +41,7 @@ final class RegisterVerifier {
 
     // simplified access to methods of LinearScan
     C1XCompilation compilation() {
-        return allocator.compilation();
+        return allocator.compilation;
     }
 
     Interval intervalAt(int regNum) {
@@ -54,7 +54,7 @@ final class RegisterVerifier {
 
     // currently, only registers are processed
     int stateSize() {
-        return allocator.nofRegs;
+        return allocator.allocatableRegisters.nofRegs;
     }
 
     // accessors
@@ -247,7 +247,7 @@ final class RegisterVerifier {
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.InputMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.InputMode, allocator);
                     }
 
                     assert checkState(inputState, interval.assignedReg(), interval.splitParent());
@@ -276,7 +276,7 @@ final class RegisterVerifier {
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.TempMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.TempMode, allocator);
                     }
 
                     statePut(inputState, interval.assignedReg(), interval.splitParent());
@@ -291,7 +291,7 @@ final class RegisterVerifier {
                 if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id() != -1) {
-                        interval = interval.splitChildAtOpId(op.id(), LIRInstruction.OperandMode.OutputMode, allocator);
+                        interval = interval.getSplitChildAtOpId(op.id(), LIRInstruction.OperandMode.OutputMode, allocator);
                     }
 
                     statePut(inputState, interval.assignedReg(), interval.splitParent());

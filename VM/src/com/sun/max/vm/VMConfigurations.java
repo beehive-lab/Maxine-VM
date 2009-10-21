@@ -33,7 +33,7 @@ import com.sun.max.vm.trampoline.template.Package;
  *
  * @author Mick Jordan
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class VMConfigurations {
 
     private VMConfigurations() {
@@ -121,6 +121,24 @@ public final class VMConfigurations {
             defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
+    }
+
+    public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform, VMPackage jitPackage) {
+        return new VMConfiguration(buildLevel, platform,
+            defaultGripScheme(),
+            defaultReferenceScheme(),
+            defaultLayoutScheme(platform),
+            defaultHeapScheme(),
+            defaultMonitorScheme(),
+            defaultCompilerScheme(platform),
+            jitPackage,
+            defaultTrampolineScheme(),
+            defaultTargetABIsScheme(platform),
+            defaultRunScheme());
+    }
+
+    public static VMPackage defaultMonitorPackage() {
+        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
     }
 
     public static VMConfiguration createStandardInterpreter(BuildLevel buildLevel, Platform platform) {

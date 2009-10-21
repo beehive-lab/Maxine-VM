@@ -229,7 +229,7 @@ public class SpecialReferenceManager {
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static FieldActor getReferenceClassField(String name) {
         final ClassActor referenceClass = ClassActor.fromJava(java.lang.ref.Reference.class);
         FieldActor fieldActor = referenceClass.findLocalStaticFieldActor(name);

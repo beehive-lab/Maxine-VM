@@ -20,18 +20,16 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
+import static com.sun.max.vm.VMOptions.*;
 
-import static com.sun.max.vm.VMOptions.verboseOption;
+import java.util.*;
+import java.util.concurrent.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.annotate.INSPECTED;
-
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.List;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * This class represents an ongoing or completed compilation.
@@ -176,7 +174,6 @@ public class Compilation implements Future<TargetMethod> {
         }
 
         if (error != null) {
-
             logCompilationError(error, compiler, targetMethod, methodString);
 
             throw new RuntimeException(error);
@@ -187,7 +184,7 @@ public class Compilation implements Future<TargetMethod> {
 
     private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": " + compiler.name() + ": Compilation failed  " + methodString + " @ ");
             Log.print(error.toString());
             error.printStackTrace(Log.out);
@@ -199,7 +196,7 @@ public class Compilation implements Future<TargetMethod> {
         String methodString = null;
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println(": " + compiler.name() + ": Compiling " + methodString);
         }
         return methodString;
@@ -207,7 +204,7 @@ public class Compilation implements Future<TargetMethod> {
 
     private void logAfterCompilation(RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.print(": " + compiler.name() + ": Compiled  " + methodString + " @ ");
             Log.print(targetMethod.codeStart());
             Log.print(" {code length=" + targetMethod.codeLength() + "}");

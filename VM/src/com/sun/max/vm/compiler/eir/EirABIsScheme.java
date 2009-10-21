@@ -65,7 +65,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      * @param templateABI
      * @param treeABI abi for tree calls.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     protected EirABIsScheme(VMConfiguration vmConfiguration,
                             EirABI<EirRegister_Type> javaABI,
                             EirABI<EirRegister_Type> nativeABI,
@@ -103,7 +103,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         if (compilee.isTemplate()) {
             return templateABI;
         }
-        if (compilee instanceof TrampolineMethodActor) {
+        if (compilee.isTrampoline()) {
             return trampolineABI;
         }
         return javaABI;

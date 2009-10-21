@@ -44,7 +44,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
     }
 
     public ReferenceValue readInjectedValue(Reference reference) {
-        throw ProgramError.unexpected(this + " cannot be read while prototyping");
+        throw ProgramError.unexpected(this + " cannot be read while bootstrapping");
     }
 
     private final TypeDescriptor holder;
@@ -55,7 +55,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
      * @param holder the class into which the field is injected
      * @param fieldType the type of the field (the name of the field is derived from this value)
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public InjectedReferenceFieldActor(Class holder, Class<T> fieldType) {
         super(Kind.REFERENCE,
               SymbolTable.makeSymbol("_$injected$" + fieldType.getSimpleName()),

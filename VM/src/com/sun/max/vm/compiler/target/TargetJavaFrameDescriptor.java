@@ -64,7 +64,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         for (TargetJavaFrameDescriptor descriptor : javaFrameDescriptors) {
             if (descriptor != null) {
                 gatherParents(descriptor.parent(), parents);
-                methods.add(descriptor.classMethodActor());
+                methods.add(descriptor.classMethodActor);
                 maxSlots = Math.max(maxSlots, descriptor.maxSlots());
             }
         }
@@ -72,7 +72,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         final GrowableMapping<JavaFrameDescriptor, Integer> descriptorToSerial = HashMapping.createIdentityMapping();
         int parentSerial = FIRST_SERIAL;
         for (TargetJavaFrameDescriptor parent : parents) {
-            methods.add(parent.classMethodActor());
+            methods.add(parent.classMethodActor);
             maxSlots = Math.max(maxSlots, parent.maxSlots());
             descriptorToSerial.put(parent, parentSerial);
             parentSerial++;
@@ -104,7 +104,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         }
 
         final byte[] compressedJavaFrameDescriptors = byteArrayOutputStream.toByteArray();
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             testInflation(javaFrameDescriptors, compressedJavaFrameDescriptors);
         }
 
@@ -125,7 +125,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         descriptors.add(descriptor);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void testInflation(Sequence<TargetJavaFrameDescriptor> original, byte[] compressedJavaFrameDescriptors) {
         try {
             final Sequence<TargetJavaFrameDescriptor> inflated = inflate(compressedJavaFrameDescriptors);
@@ -255,7 +255,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
      * Gets the cell size for a given object.
      */
     private static Size getSize(Object object) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Size.zero();
         }
         return ObjectAccess.size(object);
@@ -326,9 +326,9 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 writeSerial(descriptorToSerial.get(descriptor.parent()));
             }
 
-            final int methodSerial = methodToSerial.get(descriptor.classMethodActor());
+            final int methodSerial = methodToSerial.get(descriptor.classMethodActor);
             writeSerial(methodSerial);
-            stream.writeShort(descriptor.bytecodePosition());
+            stream.writeShort(descriptor.bytecodePosition);
             writeTargetLocations(stream, descriptor.locals);
             writeTargetLocations(stream, descriptor.stackSlots);
         }

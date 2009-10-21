@@ -34,10 +34,11 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.xir.*;
 
 /**
+ * This class represents a list of LIR instructions and contains factory methods for
+ * creating and appending LIR instructions to this list.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class LIRList {
 
@@ -107,8 +108,12 @@ public class LIRList {
         append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, null, arguments, info, cpi, constantPool));
     }
 
-    public void getThread(LIROperand result) {
-        append(new LIROp0(LIROpcode.GetThread, result));
+    public void callXirDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.XirDirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
+    }
+
+    public void callXirIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, CodeEmitInfo info) {
+        append(new LIRJavaCall(LIROpcode.XirIndirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
     }
 
     public void membar() {
@@ -145,11 +150,11 @@ public class LIRList {
     }
 
     public void unalignedMove(LIRAddress src, LIROperand dst) {
-        append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, null, LIROp1.LIRMoveKind.Unaligned));
+        append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, dst.kind, null));
     }
 
     public void unalignedMove(LIROperand src, LIRAddress dst) {
-        append(new LIROp1(LIROpcode.Move, src, dst, src.kind, null, LIROp1.LIRMoveKind.Unaligned));
+        append(new LIROp1(LIROp1.LIRMoveKind.Unaligned, src, dst, src.kind, null));
     }
 
     public void move(LIRAddress src, LIROperand dst, CodeEmitInfo info) {
@@ -165,7 +170,7 @@ public class LIRList {
     }
 
     public void volatileMove(LIROperand src, LIROperand dst, CiKind type, CodeEmitInfo info) {
-        append(new LIROp1(LIROpcode.Move, src, dst, type, info, LIROp1.LIRMoveKind.Volatile));
+        append(new LIROp1(LIROp1.LIRMoveKind.Volatile, src, dst, type, info));
     }
 
     public void oop2reg(Object o, LIROperand reg) {
@@ -353,14 +358,6 @@ public class LIRList {
 
     public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
-    }
-
-    public void arraycopy(LIROperand src, LIROperand srcPos, LIROperand dst, LIROperand dstPos, LIROperand length, LIROperand tmp, RiType expectedType, int flags, CodeEmitInfo info) {
-        append(new LIRArrayCopy(src, srcPos, dst, dstPos, length, tmp, expectedType, flags, info));
-    }
-
-    public void profileCall(RiMethod method, int bci, LIROperand mdo, LIROperand recv, LIROperand t1, RiType chaKlass) {
-        append(new LIRProfileCall(LIROpcode.ProfileCall, method, bci, mdo, recv, t1, chaKlass));
     }
 
     public void prefetch(LIRAddress addr, boolean isStore) {
@@ -573,7 +570,7 @@ public class LIRList {
         operations.add(i, op);
     }
 
-    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands) {
-        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands));
+    public void xir(XirSnippet snippet, LIROperand[] operands, LIROperand outputOperand, int tempInputCount, int tempCount, LIROperand[] inputOperands, int[] operandIndices, int outputOperandIndex, CodeEmitInfo info, RiMethod method) {
+        append(new LIRXirInstruction(snippet, operands, outputOperand, tempInputCount, tempCount, inputOperands, operandIndices, outputOperandIndex, info, method));
     }
 }

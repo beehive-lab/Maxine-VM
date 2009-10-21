@@ -27,6 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>IRChecker</code> class walks over the IR graph and checks
@@ -220,7 +221,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitNegateOp(NegateOp i) {
-        assertBasicType(i, i.x().type().basicType);
+        assertBasicType(i, i.x().type());
     }
 
     /**
@@ -267,10 +268,10 @@ public class IRChecker extends ValueVisitor {
         }
 
         assertLegal(i);
-        if (i.x().type().basicType != i.y().type().basicType) {
+        if (i.x().type() != i.y().type()) {
             fail("Operands to IfOp do not have the same basic type");
         }
-        assertBasicType(i, i.trueValue().type().meet(i.falseValue().type()).basicType);
+        assertBasicType(i, i.trueValue().type().meet(i.falseValue().type()));
     }
 
     /**
@@ -391,7 +392,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitLoadField(LoadField i) {
-        assertBasicType(i, i.field().basicType().stackType());
+        assertBasicType(i, i.field().kind().stackType());
         Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);
@@ -408,7 +409,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitStoreField(StoreField i) {
-        assertBasicType(i.value(), i.field().basicType().stackType());
+        assertBasicType(i.value(), i.field().kind().stackType());
         Value object = i.object();
         if (object != null) {
             assertBasicType(object, CiKind.Object);
@@ -427,7 +428,7 @@ public class IRChecker extends ValueVisitor {
     public void visitLoadIndexed(LoadIndexed i) {
         assertBasicType(i.array(), CiKind.Object);
         assertBasicType(i.index(), CiKind.Int);
-        assertBasicType(i, i.elementType().stackType());
+        assertBasicType(i, i.elementKind().stackType());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -440,8 +441,8 @@ public class IRChecker extends ValueVisitor {
     public void visitStoreIndexed(StoreIndexed i) {
         assertBasicType(i.array(), CiKind.Object);
         assertBasicType(i.index(), CiKind.Int);
-        assertBasicType(i.value(), i.elementType().stackType());
-        assertBasicType(i, i.elementType().stackType());
+        assertBasicType(i.value(), i.elementKind().stackType());
+        assertBasicType(i, i.elementKind().stackType());
         assertArrayType(i.array().exactType());
         assertArrayType(i.array().declaredType());
     }
@@ -464,6 +465,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitConstant(Constant i) {
+        // do nothing.
     }
 
     /**
@@ -519,33 +521,7 @@ public class IRChecker extends ValueVisitor {
             fail("Phi refers to an invalid local variable");
         }
         for (int j = 0; j < i.operandCount(); j++) {
-            assertBasicType(i.operandAt(j), i.type().basicType);
-        }
-    }
-
-    /**
-     * Typechecks a ProfileCall instruction.
-     * @param i the ProfileCall instruction to be verified
-     */
-    @Override
-    public void visitProfileCall(ProfileCall i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.method(), "Method being profiled must not be null");
-        if (i.bci() < 0) {
-            fail("Illegal bci in ProfileCall instruction");
-        }
-    }
-
-    /**
-     * Typechecks a ProfileCounter instruction.
-     * @param i the ProfileCounter instruction to be verified
-     */
-    @Override
-    public void visitProfileCounter(ProfileCounter i) {
-        assertBasicType(i, CiKind.Void);
-        assertNonNull(i.mdo(), "Value that produces the method data object must not be null");
-        if (i.increment() > 0) {
-            fail("Increment must be greater than zero");
+            assertBasicType(i.operandAt(j), i.type());
         }
     }
 
@@ -555,7 +531,7 @@ public class IRChecker extends ValueVisitor {
      */
     @Override
     public void visitRoundFP(RoundFP i) {
-        switch (i.type().basicType) {
+        switch (i.type()) {
             case Float:
                 assertBasicType(i.value(), CiKind.Float);
                 break;
@@ -651,7 +627,7 @@ public class IRChecker extends ValueVisitor {
     @Override
     public void visitIf(If i) {
         assertBasicType(i, CiKind.Illegal);
-        if (!Value.sameBasicType(i.x(), i.y())) {
+        if (!Util.equalKinds(i.x(), i.y())) {
             fail("Operands of If instruction must have same type");
         }
         if (i.successors().size() != 2) {
@@ -705,11 +681,11 @@ public class IRChecker extends ValueVisitor {
             if (retType == CiKind.Void) {
                 fail("Must not return value from void method");
             }
-            if (i.type().basicType == CiKind.Void) {
+            if (i.type() == CiKind.Void) {
                 fail("Return instruction must not be of type void if method returns a value");
             }
             assertBasicType(result, retType.stackType());
-            if (i.type().basicType != retType.stackType()) {
+            if (i.type() != retType.stackType()) {
                 fail("Return value type does not match the method's return type");
             }
         }
@@ -863,7 +839,7 @@ public class IRChecker extends ValueVisitor {
     public void visitNewTypeArray(NewTypeArray i) {
         assertBasicType(i, CiKind.Object);
         assertBasicType(i.length(), CiKind.Int);
-        assertPrimitive(i.elementType());
+        assertPrimitive(i.elementKind());
     }
 
     /**
@@ -956,14 +932,14 @@ public class IRChecker extends ValueVisitor {
 
     private void assertBasicType(Value i, CiKind basicType) {
         assertNonNull(i, "Value should not be null");
-        if (i.type().basicType != basicType) {
+        if (i.type() != basicType) {
             fail("Type mismatch: " + i + " should be of type " + basicType);
         }
     }
 
     private void assertLegal(Value i) {
         assertNonNull(i, "Value should not be null");
-        if (i.type().basicType == CiKind.Illegal) {
+        if (i.type() == CiKind.Illegal) {
             fail("Type mismatch: " + i + " should not be illegal");
         }
     }

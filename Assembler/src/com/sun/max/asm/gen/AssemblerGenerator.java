@@ -472,7 +472,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                         ", instruction templates=" + templateList.length() + ", max templates per description=" + maxTemplatesPerDescription +
                         "]");
 
-        return Files.updateGeneratedContent(sourceFile, charArrayWriter, "// START GENERATED RAW ASSEMBLER METHODS", "// END GENERATED RAW ASSEMBLER METHODS");
+        return Files.updateGeneratedContent(sourceFile, charArrayWriter, "// START GENERATED RAW ASSEMBLER METHODS", "// END GENERATED RAW ASSEMBLER METHODS", false);
     }
 
     /**
@@ -735,7 +735,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                       ", total line count=" + writer.lineCount() +
                       ", method count=" + templates().length() + ")");
 
-        return Files.updateGeneratedContent(sourceFile, charArrayWriter, "// START GENERATED LABEL ASSEMBLER METHODS", "// END GENERATED LABEL ASSEMBLER METHODS");
+        return Files.updateGeneratedContent(sourceFile, charArrayWriter, "// START GENERATED LABEL ASSEMBLER METHODS", "// END GENERATED LABEL ASSEMBLER METHODS", false);
     }
 
     protected void emitByte(IndentWriter writer, String byteValue) {

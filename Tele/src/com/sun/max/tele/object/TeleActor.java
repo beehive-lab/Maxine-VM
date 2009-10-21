@@ -154,13 +154,9 @@ public abstract class TeleActor extends TeleTupleObject {
             // 0x00200000
             sb.append("TEMPLATE, ");
         }
-        if ((flagsValue & Actor.CLASS_INITIALIZER) != 0) {
+        if ((flagsValue & Actor.INITIALIZER) != 0) {
             // 0x00400000, doubly defined
-            sb.append("CLASS_INITIALIZER/GENERATED, ");
-        }
-        if ((flagsValue & Actor.INSTANCE_INITIALIZER) != 0) {
-            // 0x00800000
-            sb.append("INSTANCE_INITIALIZER, ");
+            sb.append("INITIALIZER/GENERATED, ");
         }
         if ((flagsValue & Actor.C_FUNCTION) != 0) {
             // 0x01000000
@@ -178,9 +174,9 @@ public abstract class TeleActor extends TeleTupleObject {
             // 0x08000000
             sb.append("BUILTIN, ");
         }
-        if ((flagsValue & Actor.SURROGATE) != 0) {
+        if ((flagsValue & Actor.LOCAL_SUBSTITUTE) != 0) {
             // 0x10000000
-            sb.append("SURROGATE, ");
+            sb.append("SUBSTITUTE, ");
         }
         if ((flagsValue & Actor.UNSAFE) != 0) {
             // 0x20000000

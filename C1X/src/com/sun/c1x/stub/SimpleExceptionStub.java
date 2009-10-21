@@ -29,7 +29,6 @@ import com.sun.c1x.lir.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class SimpleExceptionStub extends CodeStub {
 

@@ -169,15 +169,6 @@ public class LIRTypeCheck extends LIRInstruction {
     }
 
     /**
-     * Gets the profiledBci of this type check instruction.
-     *
-     * @return the profiledBci
-     */
-    public int profiledBci() {
-        return profiledBci;
-    }
-
-    /**
      * Emits target assembly code for this instruction.
      *
      * @param masm the target assembler

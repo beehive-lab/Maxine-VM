@@ -21,7 +21,7 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>CiResult</code> class represents the result of compiling a method. The result
+ * This class represents the result of compiling a method. The result
  * can include a target method with machine code and metadata, and/or statistics. If the
  * compiler bailed out due to malformed bytecode, an internal error, or other cause,
  * it will supply the bailout object.
@@ -33,12 +33,24 @@ public class CiResult {
     private final CiBailout bailout;
     private final CiStatistics stats;
 
+    /**
+     * Creates a new compilation result.
+     * @param targetMethod the method that was produced, if any
+     * @param bailout the bailout condition that occurred
+     * @param stats statistics about the compilation
+     */
     public CiResult(CiTargetMethod targetMethod, CiBailout bailout, CiStatistics stats) {
         this.targetMethod = targetMethod;
         this.bailout = bailout;
         this.stats = stats;
     }
 
+    /**
+     * Gets the target method that was produced by this compilation. If no target method was
+     * produced, but a bailout occured, then the bailout exception will be thrown at this point.
+     * @return the target method produced
+     * @throws CiBailout if a bailout occurred
+     */
     public CiTargetMethod targetMethod() {
         if (bailout != null) {
             throw bailout;
@@ -46,10 +58,18 @@ public class CiResult {
         return targetMethod;
     }
 
+    /**
+     * Returns the statistics about the compilation that were produced, if any.
+     * @return the statistics
+     */
     public CiStatistics statistics() {
         return stats;
     }
 
+    /**
+     * Returns the bailout condition that occurred for this compilation, if any.
+     * @return the bailout
+     */
     public CiBailout bailout() {
         return bailout;
     }

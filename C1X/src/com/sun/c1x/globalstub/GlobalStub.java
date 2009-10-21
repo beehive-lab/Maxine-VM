@@ -25,13 +25,12 @@ import static com.sun.c1x.ci.CiKind.*;
 import com.sun.c1x.ci.*;
 
 /**
+ * A global stub is a shared routine that performs an operation on behalf of compiled code.
+ * Typically the routine is too large to inline or requires runtime support.
  *
  * @author Thomas Wuerthinger
- *
  */
 public enum GlobalStub {
-
-
     ThrowRangeCheckFailed(Void, Int),
     ThrowIndexException(Void, Int),
     ThrowDiv0Exception(Void),
@@ -53,7 +52,6 @@ public enum GlobalStub {
     ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
     ArithmeticDrem(Double, Double);
-
 
     public final CiKind resultType;
     public final CiKind[] arguments;

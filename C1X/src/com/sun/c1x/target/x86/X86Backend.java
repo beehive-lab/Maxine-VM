@@ -27,10 +27,11 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.*;
+import com.sun.c1x.xir.*;
 
 /**
  * The <code>X86Backend</code> class represents the backend for the x86 architectures,
- * i.e. {@link com.sun.c1x.ci.CiArchitecture#AMD64} and {@link com.sun.c1x.ci.CiArchitecture#IA32}.
+ * i.e. {@link AMD64}.
  *
  * @author Ben L. Titzer
  */
@@ -61,11 +62,16 @@ public class X86Backend extends Backend {
 
     @Override
     public FrameMap newFrameMap(RiMethod method, int numberOfLocks) {
-        return new FrameMap(compiler, method, numberOfLocks);
+        return new FrameMap(compiler, method, numberOfLocks, compiler.target.arch.wordSize);
     }
     @Override
     public AbstractAssembler newAssembler(int frameSize) {
         return new X86MacroAssembler(compiler, compiler.target, frameSize);
+    }
+
+    @Override
+    public CiXirAssembler newXirAssembler() {
+        return new X86XirAssembler();
     }
 
     @Override

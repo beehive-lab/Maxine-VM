@@ -24,12 +24,12 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * This class implements access routines that are used when running in prototyping mode.
+ * This class implements access routines that are used when running in bootstrapping mode.
  * They use the underlying VM's reflective mechanisms to implement array accesses.
  * 
  * @author Bernd Mathiske
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class HostArrayAccess {
     private HostArrayAccess() {
     }

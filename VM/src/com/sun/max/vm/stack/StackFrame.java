@@ -79,9 +79,9 @@ public abstract class StackFrame {
      * @param offset a offset relative to the address of the stack pointer
      * @return the biased offset, relative to the frame pointer register.
      */
-    public int biasedFPOffset(int offset) {
+    public Offset biasedFPOffset(Offset offset) {
         if (targetMethod() != null) {
-            return targetMethod().frameSize() - offset;
+            return offset.minus(targetMethod().frameSize());
         }
         return offset;
     }

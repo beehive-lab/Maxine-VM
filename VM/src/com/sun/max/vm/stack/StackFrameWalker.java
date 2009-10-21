@@ -21,7 +21,6 @@
 package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.jni.JniFunctionWrapper.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -49,7 +48,6 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public abstract class StackFrameWalker {
-
 
     /**
      * A VM option for enabling stack frame walk tracing.
@@ -111,6 +109,7 @@ public abstract class StackFrameWalker {
     private Purpose purpose = null;
     private Pointer stackPointer = Pointer.zero();
     private Pointer framePointer;
+    private Pointer currentAnchor;
     private Pointer instructionPointer;
     private Pointer calleeStackPointer = Pointer.zero();
     private Pointer calleeFramePointer;
@@ -149,24 +148,28 @@ public abstract class StackFrameWalker {
         this.instructionPointer = instructionPointer;
         this.framePointer = framePointer;
         this.stackPointer = stackPointer;
+        this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
-        boolean inNative = isThreadInNative();
+        boolean inNative = !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         TargetMethod lastJavaCallee = null;
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
         Pointer lastJavaCalleeFramePointer = Pointer.zero();
 
-
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
-            if (targetMethod != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
+            if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+
+                if (inNative) {
+                    inNative = false;
+                }
 
                 if (traceStackWalk) {
                     Log.print("StackFrameWalk: Frame for ");
                     if (targetMethod.classMethodActor() == null) {
                         Log.print(targetMethod.description());
                     } else {
-                        Log.printMethodActor(targetMethod.classMethodActor(), false);
+                        Log.printMethod(targetMethod.classMethodActor(), false);
                     }
                     Log.print(" [IP=");
                     Log.print(this.instructionPointer);
@@ -195,84 +198,59 @@ public abstract class StackFrameWalker {
                     trapState = Pointer.zero();
                 }
             } else {
-                final RuntimeStub stub = runtimeStubFor(this.instructionPointer);
                 if (traceStackWalk) {
-                    if (stub != null) {
-                        Log.print("StackFrameWalk: Frame for stub ");
-                        Log.print(stub.description());
-                        Log.print(" [IP=");
-                        Log.println(this.instructionPointer);
-                        Log.println(']');
-                    } else {
-                        Log.print("StackFrameWalk: Frame for native function [IP=");
-                        Log.print(this.instructionPointer);
-                        Log.println(']');
-                    }
+                    Log.print("StackFrameWalk: Frame for native function [IP=");
+                    Log.print(this.instructionPointer);
+                    Log.println(']');
                 }
-                if (stub != null && (!inNative || purpose == INSPECTING || purpose == RAW_INSPECTING)) {
-                    if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
+                if (purpose == INSPECTING) {
+                    final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
+                    if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
                         break;
                     }
+                } else if (purpose == RAW_INSPECTING) {
+                    final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+                    final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
+                    if (!stackFrameVisitor.visitFrame(null, this.instructionPointer, this.framePointer, this.stackPointer, flags)) {
+                        break;
+                    }
+                }
+
+                if (inNative) {
+                    inNative = false;
+                    advanceFrameInNative(purpose);
                 } else {
-                    if (purpose == INSPECTING) {
-                        final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                        if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
-                            break;
-                        }
-                    } else if (purpose == RAW_INSPECTING) {
-                        final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                        final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                        if (!stackFrameVisitor.visitFrame(null, this.instructionPointer, this.framePointer, this.stackPointer, flags)) {
-                            break;
-                        }
+                    if (lastJavaCallee == null) {
+                        // This is the native thread start routine (i.e. VmThread.run())
+                        break;
                     }
 
-                    if (inNative) {
-                        inNative = false;
-                        advanceFrameInNative(purpose);
-                    } else {
-                        if (stub != null) {
-                            if (!stub.walkFrame(this, isTopFrame, purpose, context)) {
-                                break;
-                            }
-                        } else {
-                            if (lastJavaCallee == null) {
-                                // This is the native thread start routine (i.e. VmThread.run())
-                                break;
-                            }
-
-                            final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-                            if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isCFunction()) {
-                                if (lastJavaCalleeMethodActor.isTrapStub()) {
-                                    // This can only occur in the inspector and implies that execution is in the platform specific
-                                    // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
-                                    // particular, the return instruction pointer slot has not been updated with the instruction
-                                    // pointer at which the fault occurred.
-                                    break;
-                                }
-                                if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                                    break;
-                                }
-                            } else if (lastJavaCalleeMethodActor == null) {
-                                FatalError.unexpected("Unrecognized target method without a class method actor!");
-                            } else {
-                                Log.print("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point: ");
-                                Log.print(lastJavaCalleeMethodActor.name.string);
-                                Log.print(lastJavaCalleeMethodActor.descriptor().string);
-                                Log.print(" in ");
-                                Log.println(lastJavaCalleeMethodActor.holder().name.string);
-                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
-                            }
+                    final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
+                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isCFunction()) {
+                        if (lastJavaCalleeMethodActor.isTrapStub()) {
+                            // This can only occur in the inspector and implies that execution is in the platform specific
+                            // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                            // particular, the return instruction pointer slot has not been updated with the instruction
+                            // pointer at which the fault occurred.
+                            break;
                         }
+                        if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
+                            break;
+                        }
+                    } else if (lastJavaCalleeMethodActor == null) {
+                        FatalError.unexpected("Unrecognized target method without a class method actor!");
+                    } else {
+                        Log.print("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point: ");
+                        Log.print(lastJavaCalleeMethodActor.name.string);
+                        Log.print(lastJavaCalleeMethodActor.descriptor().string);
+                        Log.print(" in ");
+                        Log.println(lastJavaCalleeMethodActor.holder().name.string);
+                        FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
                     }
                 }
                 lastJavaCallee = null;
             }
             isTopFrame = false;
-        }
-
-        if (traceStackWalk) {
-            Log.println("Finished walking the stack, returning! ");
         }
     }
 
@@ -308,10 +286,10 @@ public abstract class StackFrameWalker {
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
         if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isJniFunction()) {
-            final Pointer namedVariablesBasePointer = compilerScheme.namedVariablesBasePointer(lastJavaCalleeStackPointer, lastJavaCalleeFramePointer);
-            final Word lastJavaCallerInstructionPointer = readWord(savedLastJavaCallerInstructionPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
-            final Word lastJavaCallerStackPointer = readWord(savedLastJavaCallerStackPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
-            final Word lastJavaCallerFramePointer = readWord(savedLastJavaCallerFramePointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
+            Pointer anchor = nextAnchor();
+            final Word lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset);
+            final Word lastJavaCallerStackPointer = readWord(anchor, JavaFrameAnchor.SP.offset);
+            final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
             advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
                     lastJavaCallerFramePointer);
@@ -320,35 +298,33 @@ public abstract class StackFrameWalker {
         if (!isRunMethod(lastJavaCalleeMethodActor)) {
             FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
         }
-
         return false;
     }
 
     /**
      * Advances this walker past the first frame encountered when walking the stack of a thread that is executing
-     * {@linkplain VmThread#isInNative() in native} code.
+     * in native code.
      */
     private void advanceFrameInNative(Purpose purpose) {
-        Pointer lastJavaCallerInstructionPointer = readPointer(LAST_JAVA_CALLER_INSTRUCTION_POINTER);
-        final Word lastJavaCallerStackPointer;
-        final Word lastJavaCallerFramePointer;
-        if (!lastJavaCallerInstructionPointer.isZero()) {
-            lastJavaCallerStackPointer = readPointer(LAST_JAVA_CALLER_STACK_POINTER);
-            lastJavaCallerFramePointer = readPointer(LAST_JAVA_CALLER_FRAME_POINTER);
-        } else {
-            FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
-            // This code is currently only used by the inspector. The inspector might pause a thread when it is
-            // in a C function. We use the LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C in a VM thread's locals
-            // to display the Java stack
-            lastJavaCallerInstructionPointer = readPointer(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C);
-            lastJavaCallerStackPointer = readPointer(LAST_JAVA_CALLER_STACK_POINTER_FOR_C);
-            lastJavaCallerFramePointer = readPointer(LAST_JAVA_CALLER_FRAME_POINTER_FOR_C);
-
+        Pointer anchor = nextAnchor();
+        Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
+        if (lastJavaCallerInstructionPointer.isZero()) {
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
         advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING && purpose != RAW_INSPECTING),
-                lastJavaCallerStackPointer,
-                lastJavaCallerFramePointer);
+            readWord(anchor, JavaFrameAnchor.SP.offset),
+            readWord(anchor, JavaFrameAnchor.FP.offset));
+    }
+
+    private Pointer nextAnchor() {
+        FatalError.check(!currentAnchor.isZero(), "No more anchors");
+        if (readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero()) {
+            currentAnchor = readWord(currentAnchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+        }
+        FatalError.check(!readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero(), "Encountered anchor with zero PC");
+        Pointer anchor = this.currentAnchor;
+        this.currentAnchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+        return anchor;
     }
 
     private void checkPurpose(Purpose purpose, Object context) {
@@ -390,15 +366,15 @@ public abstract class StackFrameWalker {
                 // native function call. This makes it match the pattern expected by the
                 // StackReferenceMapPreparer where the instruction pointer in all but the
                 // top frame is past the address of the call.
-//                if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
-//                    Log.print("IP for stack prep: ");
-//                    Log.print(nativeStubTargetMethod.name());
-//                    Log.print(" [");
-//                    Log.print(nativeStubTargetMethod.codeStart());
-//                    Log.print("+");
-//                    Log.print(nativeFunctionCallPosition + 1);
-//                    Log.println(']');
-//                }
+                if (TRACE_STACK_WALK.getValue() && purpose == Purpose.REFERENCE_MAP_PREPARING) {
+                    Log.print("IP for stack frame preparation of stub for native method ");
+                    Log.print(nativeStubTargetMethod.name());
+                    Log.print(" [");
+                    Log.print(nativeStubTargetMethod.codeStart());
+                    Log.print("+");
+                    Log.print(nativeFunctionCallPosition + 1);
+                    Log.println(']');
+                }
                 return nativeFunctionCall.plus(1);
             }
         }
@@ -413,7 +389,7 @@ public abstract class StackFrameWalker {
                 Log.print(instructionPointer.minus(nativeStubTargetMethod.codeStart()).toLong());
                 Log.print(" in ");
                 if (nativeStubTargetMethod.classMethodActor() != null) {
-                    Log.printMethodActor(nativeStubTargetMethod.classMethodActor(), true);
+                    Log.printMethod(nativeStubTargetMethod.classMethodActor(), true);
                 } else {
                     Log.println("<no method actor>");
                 }
@@ -458,7 +434,7 @@ public abstract class StackFrameWalker {
      * Walks a thread's stack for the purpose of raising an exception.
      */
     public final void unwind(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Throwable throwable) {
-        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, framePointer, throwable));
+        walk(instructionPointer, stackPointer, framePointer, EXCEPTION_HANDLING, new StackUnwindingContext(stackPointer, throwable));
     }
 
     /**
@@ -494,15 +470,8 @@ public abstract class StackFrameWalker {
         return calleeStackFrame;
     }
 
-    /**
-     * Determines if the thread is executing in native code based on the
-     * value of {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}.
-     */
-    public abstract boolean isThreadInNative();
-
     public abstract TargetMethod targetMethodFor(Pointer instructionPointer);
 
-    protected abstract RuntimeStub runtimeStubFor(Pointer instructionPointer);
 
     /**
      * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown as part of exception handling.
@@ -518,7 +487,6 @@ public abstract class StackFrameWalker {
 
     @INLINE
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
-
         this.calleeInstructionPointer = this.instructionPointer;
         this.calleeFramePointer = this.framePointer;
         this.calleeStackPointer = this.stackPointer;
@@ -561,7 +529,8 @@ public abstract class StackFrameWalker {
     /**
      * Collects a sequence of stack frames, beginning a stack walk at the specified instruction pointer, stack pointer,
      * and frame pointer. This method will return all stack frames, including native frames, adapter frames, and
-     * non-application visible stack frames. This method accepts an appendable sequence of stack frames
+     * non-application visible stack frames. This method accepts an appendable sequence of stack frames in
+     * which to store the result.
      *
      * @param stackFrames an appendable sequence of stack frames to collect the results; if {@code null}, this method
      * will create a new appendable sequence for collecting the result
@@ -592,9 +561,8 @@ public abstract class StackFrameWalker {
      * @param topFrame true if this method should include the ClassMethodActor of the top frame
      * @param adapterFrames true if adapter frames should be reported
      * @param invisibleFrames true if application invisible frames should be reported
-     * @param ignoreUntilNativeFrame TODO
      * @param ignoreUntilNativeFrame true if all frames before the first native frame are to be ignored
-     * @return
+     * @return a sequence of class method actors representing the call stack
      */
     public static Sequence<ClassMethodActor> extractClassMethodActors(Iterable<StackFrame> stackFrames, boolean topFrame, boolean adapterFrames, boolean invisibleFrames, boolean ignoreUntilNativeFrame) {
         final LinkSequence<ClassMethodActor> result = new LinkSequence<ClassMethodActor>();
@@ -631,12 +599,36 @@ public abstract class StackFrameWalker {
         return result;
     }
 
+    public static ClassMethodActor getCallerClassMethodActor(Iterable<StackFrame> stackFrames, boolean invisibleFrames) {
+        boolean top = true;
+        for (StackFrame stackFrame : stackFrames) {
+            if (top) {
+                top = false;
+                continue;
+            }
+            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer);
+            if (targetMethod == null) {
+                // ignore native frame
+                continue;
+            }
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
+            if (bytecodeLocations == null) {
+                if (targetMethod.classMethodActor() != null) {
+                    return targetMethod.classMethodActor();
+                }
+            } else {
+                return bytecodeLocations.next().classMethodActor;
+            }
+        }
+        return null;
+    }
+
     private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<? extends BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
         // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
         if (bytecodeLocations.hasNext()) {
             final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
             appendCallers(result, bytecodeLocations, invisibleFrames);
-            appendClassMethodActor(result, bytecodeLocation.classMethodActor(), invisibleFrames);
+            appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
         }
     }
 
@@ -677,4 +669,5 @@ public abstract class StackFrameWalker {
      * @param targetABI
      */
     public abstract void useABI(TargetABI targetABI);
+
 }

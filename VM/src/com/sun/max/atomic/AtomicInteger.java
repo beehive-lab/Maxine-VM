@@ -80,7 +80,7 @@ public class AtomicInteger {
      */
     @INLINE
     public final boolean compareAndSet(int expect, int update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect == value) {
                     value = update;
@@ -102,7 +102,7 @@ public class AtomicInteger {
      */
     @INLINE
     public final int compareAndSwap(int expect, int update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect == value) {
                     value = update;

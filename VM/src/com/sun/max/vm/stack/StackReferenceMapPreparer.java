@@ -104,7 +104,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private Pointer trampolineRefmapPointer;
 
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
         assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
         for (VmThreadLocal tl : vmThreadLocals) {
@@ -356,7 +356,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
             Log.print("Preparing stack reference map for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
             Log.print(highestStackSlot);
@@ -374,7 +374,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print(referenceMapBitIndex(lowestStackSlot));
             Log.println("]");
             Log.print("  Current thread is ");
-            Log.printVmThread(VmThread.current(), true);
+            Log.printCurrentThread(true);
         }
 
         // prepare references for each of the vm thread locals copies
@@ -397,20 +397,21 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     /**
      * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
-     * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub
-     * that enters into the native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. This method
-     * completes this part of the threads stack reference map.
+     * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub that
+     * enters into the native code for blocking on the global {@linkplain VmThreadMap#ACTIVE thread lock} is not yet
+     * prepared. This method completes this part of the threads stack reference map.
      *
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
-     * @param instructionPointer the execution point in the JNI stub that called into native function on which the
-     *            thread is blocked. This value was read from {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}.
-     * @param stackPointer the stack pointer for the JNI stub frame. This value was read from
-     *            {@link VmThreadLocal#LAST_JAVA_CALLER_STACK_POINTER}.
-     * @param framePointer the frame pointer for the JNI stub frame. This value was read from
-     *            {@link VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER}.
      */
-    public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public void completeStackReferenceMap(Pointer vmThreadLocals) {
         FatalError.check(!ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
+        Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
+        Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
+        if (instructionPointer.isZero()) {
+            FatalError.unexpected("A mutator thread in Java at safepoint should be blocked on a monitor");
+        }
         timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
@@ -429,7 +430,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
             Log.print("Completing preparation of stack reference map for thread ");
-            Log.printVmThread(vmThread, false);
+            Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
             Log.print(highestSlot);
@@ -447,7 +448,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print(referenceMapBitIndex(lowestStackSlot));
             Log.println("]");
             Log.print("  Current thread is ");
-            Log.printVmThread(VmThread.current(), true);
+            Log.printCurrentThread(true);
         }
 
         // walk the stack and prepare references for each stack frame
@@ -483,13 +484,13 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
     public void prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
+        Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
         if (instructionPointer.isZero()) {
             FatalError.unexpected("Thread is not stopped");
         }
-
-        final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
@@ -540,7 +541,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             if (targetMethod instanceof JitTargetMethod) {
                 Log.print("JitTargetMethod ");
             }
-            Log.printMethodActor(targetMethod.classMethodActor(), false);
+            Log.printMethod(targetMethod.classMethodActor(), false);
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));
             Log.print("    Stop index: ");
@@ -722,15 +723,15 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     private void prepareTrampolineFrameForOptimizedCaller(TargetMethod caller, int callerStopIndex, int offsetToFirstParameter) {
         final ClassMethodActor callee;
-        final TrampolineMethodActor trampolineMethodActor = (TrampolineMethodActor) trampolineTargetMethod.classMethodActor();
-        if (trampolineMethodActor.invocation() == TRAMPOLINE.Invocation.STATIC) {
+        final ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
+        if (trampolineMethodActor.isStaticTrampoline()) {
             callee = (ClassMethodActor) caller.directCallees()[callerStopIndex];
         } else {
             final Object receiver = trampolineRefmapPointer.plus(offsetToFirstParameter).getReference().toJava();
             final ClassActor classActor = ObjectAccess.readClassActor(receiver);
             assert trampolineTargetMethod.referenceLiterals().length == 1;
             final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.invocation() == TRAMPOLINE.Invocation.VIRTUAL) {
+            if (trampolineMethodActor.isVirtualTrampoline()) {
                 callee = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex());
             } else {
                 callee = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex());
@@ -742,7 +743,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             printSlot(referenceMapBitIndex(trampolineRefmapPointer), Pointer.zero());
             Log.println();
             Log.print("    Callee: ");
-            Log.printMethodActor(callee, true);
+            Log.printMethod(callee, true);
         }
 
         final int framePointerSlotIndex = referenceMapBitIndex(trampolineRefmapPointer.plus(offsetToFirstParameter));
@@ -789,7 +790,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     public boolean prepareFrameReferenceMap(CPSTargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
 
-        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
+        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrampoline()) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
             // We need to find out what the actual callee is before preparing the trampoline frame reference map.
@@ -805,7 +806,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 Log.print("Could not find stop postion for instruction at position ");
                 Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print(" in ");
-                Log.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod.classMethodActor(), true);
                 throw FatalError.unexpected("Could not find stop position in target method");
             }
 
@@ -814,7 +815,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                     Log.print("  Preparing reference map for trampoline frame called by ");
                     Log.print((targetMethod instanceof JitTargetMethod) ? "JIT'ed" : "optimized");
                     Log.print(" caller ");
-                    Log.printMethodActor(targetMethod.classMethodActor(), true);
+                    Log.printMethod(targetMethod.classMethodActor(), true);
                 }
                 if (targetMethod instanceof JitTargetMethod) {
                     // This is a call from a JIT target method to a trampoline.

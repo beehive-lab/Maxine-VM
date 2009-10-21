@@ -30,7 +30,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
 import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
@@ -543,11 +542,10 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
     @Override
     public void visitMakeStackVariable(MakeStackVariable builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length <= 2;
+        assert dirArguments.length == 1;
         final EirVariable result = (EirVariable) dirToEirValue(dirResult);
         final EirValue value = dirToEirValue(dirArguments[0]);
 
-        final StackVariable stackVariableKey;
         final EirVariable stackSlot;
         if (value instanceof EirVariable) {
             stackSlot = (EirVariable) value;
@@ -556,21 +554,19 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
             assign(value.kind(), stackSlot, value);
         }
         result.setAliasedVariable(stackSlot);
-
-        if (dirArguments.length == 2) {
-            if (!(dirArguments[1] instanceof DirConstant)) {
-                ProgramError.check(dirArguments[1] instanceof DirConstant, "the " + StackVariable.class.getSimpleName() +
-                                " used with the " + MakeStackVariable.class.getSimpleName() + " built-in must be a compile-time constant");
-            }
-            final Object stackVariableKeyObject = ((DirConstant) dirArguments[1]).value().asObject();
-            stackVariableKey = (StackVariable) stackVariableKeyObject;
-        } else {
-            stackVariableKey = null;
-        }
         methodTranslation().addEpilogueStackSlotUse(stackSlot);
-        addInstruction(new SET_STACK_ADDRESS(eirBlock(), result, stackSlot, stackVariableKey));
+        addInstruction(new SET_STACK_ADDRESS(eirBlock(), result, stackSlot));
     }
 
+    @Override
+    public void visitStackAllocate(StackAllocate builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1;
+        assert dirArguments[0] instanceof DirConstant;
+        final int size = ((DirConstant) dirArguments[0]).value().asInt();
+        final int offset = methodTranslation().addStackAllocation(size);
+        final EirVariable result = (EirVariable) dirToEirValue(dirResult);
+        addInstruction(new STACK_ALLOCATE(eirBlock(), result, offset));
+    }
 
     private void integerToFloatingPointRegister(DirValue dirDestination, DirValue dirSource, Kind loadKind) {
         integerToFloatingPointRegister(dirToEirValue(dirDestination),  dirToEirValue(dirSource), loadKind);

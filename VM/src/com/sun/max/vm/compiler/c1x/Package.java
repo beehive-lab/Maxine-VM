@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.c1x;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.prototype.BootImageGenerator;
 import com.sun.max.vm.compiler.*;
 
 /**
@@ -31,12 +32,12 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        super();
+        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
         registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package().isPartOfMaxineVM(vmConfiguration);
+        return BootImageGenerator.calleeC1X;
     }
 }

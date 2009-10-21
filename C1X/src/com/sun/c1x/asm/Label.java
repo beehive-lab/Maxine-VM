@@ -22,79 +22,56 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-import com.sun.c1x.debug.*;
-
 
 /**
- * The <code>Label</code> class definition.
+ * This class represents a label within assembly code.
  *
  * @author Marcelo Cintra
  */
 public class Label {
 
-    private static int PATCHCACHESIZE = 4;
-
-    // locator encodes both the binding state (via its sign)
-    // and the binding locator (via its value) of a label.
-    // locator >= 0   bound label, locator() encodes the target (jump) position
-    // locator == -1  unbound label
-    // The locator encodes both offset and section
-    private int loc;
+    private int position = -1;
 
     // References to instructions that jump to this unresolved label.
     // These instructions need to be patched when the label is bound
     // using the platform-specific patchInstruction() method.
-    private List<Integer> patchOverflow;
+    private List<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
-     * Creates a new Label.
+     * Returns the position of this label in the code buffer.
+     * @return the position
      */
-    public Label() {
-        super();
-        patchOverflow = new ArrayList<Integer>(PATCHCACHESIZE);
-        this.loc = -1;
+    public final int position() {
+        assert position >= 0 : "Unbound label is being referenced";
+        return position;
     }
 
     /**
-     * Returns the position of the the Label in the code buffer.
-     * The position is a 'locator', which encodes both offset and section.
-     *
-     * @return locator
+     * Binds the label to the specified position.
+     * @param pos the position
      */
-    public int loc() {
-        assert loc >= 0 : "Unbounded label is being referenced";
-        return loc;
+    public final void bind(int pos) {
+        this.position = pos;
     }
 
-    public boolean isBound() {
-        return loc >= 0;
+    public final boolean isBound() {
+        return position >= 0;
     }
 
-    public boolean isUnbound() {
-        return loc == -1 && patchOverflow.size() > 0;
+    public final boolean isUnbound() {
+        return position == -1 && patchPositions.size() > 0;
     }
 
-    public boolean isUnused() {
-        return loc == -1 && patchOverflow.size() == 0;
+    public final void addPatchAt(int branchLocation) {
+        assert position == -1 : "Label is unbound";
+        patchPositions.add(branchLocation);
     }
 
-    public void addPatchAt(int branchLocator) {
-        assert loc == -1 : "Label is unbounded";
-        patchOverflow.add(branchLocator);
-      }
-
-    public void printInstruction(LogStream out) {
-    }
-
-    public void printInstructions(AbstractAssembler abstractAssembler) {
-    }
-
-    public void patchInstructions(AbstractAssembler masm) {
+    public final void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
-
-        int target = loc;
-        for (int branchLoc : patchOverflow) {
-            masm.patchJumpTarget(branchLoc, target);
+        int target = position;
+        for (int pos : patchPositions) {
+            masm.patchJumpTarget(pos, target);
         }
     }
 
@@ -103,7 +80,4 @@ public class Label {
         return "label";
     }
 
-    public void bindLoc(int codeOffset) {
-        this.loc = codeOffset;
-    }
 }

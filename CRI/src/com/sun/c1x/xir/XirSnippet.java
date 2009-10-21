@@ -21,9 +21,14 @@
 package com.sun.c1x.xir;
 
 import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.xir.XirAssembler.XirParameter;
+import com.sun.c1x.xir.CiXirAssembler.XirParameter;
 
 /**
+ * This class represents a {@link XirTemplate template of XIR} along with the
+ * {@link XirArgument arguments} to be passed to the template. The runtime generates
+ * such snippets for each bytecode being compiled at the request of the compiler,
+ * and the compiler can generate machine code for the XIR snippet.
+ *
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
@@ -60,4 +65,21 @@ public class XirSnippet {
 
     public final XirArgument[] arguments;
     public final XirTemplate template;
+
+    @Override
+    public String toString() {
+
+    	StringBuffer sb = new StringBuffer();
+
+    	sb.append(template.toString());
+    	sb.append("(");
+    	for (XirArgument a : arguments) {
+    		sb.append(" ");
+    		sb.append(a.toString());
+    	}
+
+    	sb.append(" )");
+
+    	return sb.toString();
+    }
 }

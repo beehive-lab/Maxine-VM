@@ -60,7 +60,7 @@ public interface HeapScheme extends VMScheme {
      * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
      * and pass to the target VM.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     int auxiliarySpaceSize(int bootImageSize);
 
     /**
@@ -170,6 +170,25 @@ public interface HeapScheme extends VMScheme {
      *          used by allocated objects, measured in bytes.
      */
     Size reportUsedSpace();
+
+    /**
+     * Returns the maximum <em>object-inspection age</em>, which is the number
+     * of real-time milliseconds that have elapsed since the
+     * least-recently-inspected heap object was last inspected by the garbage
+     * collector.
+     *
+     * <p> For simple stop-the-world collectors this value is just the time
+     * since the most recent collection.  For generational collectors it is the
+     * time since the oldest generation was most recently collected.  Other
+     * collectors are free to return a pessimistic estimate of the elapsed
+     * time, or simply the time since the last full collection was performed.
+     *
+     * <p> Note that in the presence of reference objects, a given object that
+     * is no longer strongly reachable may have to be inspected multiple times
+     * before it can be reclaimed.
+    * @return
+     */
+    long maxObjectInspectionAge();
 
     void runFinalization();
 

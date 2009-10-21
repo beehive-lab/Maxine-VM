@@ -23,10 +23,8 @@ package com.sun.max.ins;
 import java.awt.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.memory.*;
 
 /**
  * MenuBar for the Inspection; shows VM state with background color.
@@ -45,10 +43,9 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private void addMenus() {
         add(createInspectionMenu());
-        add(createClassMenu());
-        add(createObjectMenu());
         add(createMemoryMenu());
-        add(createMethodMenu());
+        add(createObjectMenu());
+        add(createCodeMenu());
         if (inspection().hasProcess()) {
             add(createDebugMenu());
         }
@@ -80,8 +77,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         setBackground(color);
     }
 
-    private JMenu createInspectionMenu() {
-        final JMenu menu = new JMenu("Inspector");
+    private InspectorMenu createInspectionMenu() {
+        final InspectorMenu menu = new InspectorMenu("Inspector");
         if (!maxVM().isBootImageRelocated()) {
             menu.add(actions.relocateBootImage());
             menu.addSeparator();
@@ -102,68 +99,29 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         return menu;
     }
 
-    private JMenu createClassMenu() {
-        final JMenu menu = new JMenu("Class");
-        menu.add(actions.inspectClassActorByName());
-        menu.add(actions.inspectClassActorByHexId());
-        menu.add(actions.inspectClassActorByDecimalId());
+    private InspectorMenu createObjectMenu() {
+        final InspectorMenu menu = new InspectorMenu("Object");
+        menu.add(actions.genericObjectMenuItems());
         return menu;
     }
 
-    private JMenu createObjectMenu() {
-        final JMenu menu = new JMenu("Object");
-        menu.add(actions.inspectBootClassRegistry());
-        menu.add(actions.inspectObject());
-        menu.add(actions.inspectObjectByID());
+    private InspectorMenu createMemoryMenu() {
+        final InspectorMenu menu = new InspectorMenu("Memory");
+        menu.add(actions.genericMemoryMenuItems());
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        menu.add(viewMemoryRegionsMenuItem);
         return menu;
     }
 
-    private JMenu createMemoryMenu() {
-        final JMenu menu = new JMenu("Memory");
-
-        final JMenu regionMenu = new JMenu("Inspect memory region");
-        regionMenu.addMenuListener(new MenuListener() {
-
-            public void menuCanceled(MenuEvent e) {
-            }
-
-            public void menuDeselected(MenuEvent e) {
-            }
-
-            public void menuSelected(MenuEvent e) {
-                regionMenu.removeAll();
-                for (MemoryRegion memoryRegion : maxVM().allocatedMemoryRegions()) {
-                    System.out.println(memoryRegion.toString());
-                    regionMenu.add(actions.inspectRegionMemoryWords(memoryRegion, memoryRegion.description(), memoryRegion.description()));
-                }
-            }
-        });
-        menu.add(regionMenu);
-        menu.add(actions.inspectMemoryWords());
-        menu.add(actions.inspectMemoryBytes());
+    private InspectorMenu createCodeMenu() {
+        final InspectorMenu menu = new InspectorMenu("Code");
+        menu.add(actions.genericCodeMenuItems());
         return menu;
     }
 
-    private JMenu createMethodMenu() {
-        final JMenu menu = new JMenu("Method");
-        menu.add(actions.inspectMethodActorByName());
-        menu.add(actions.viewMethodCodeAtSelection());
-        menu.add(actions.viewMethodCodeAtIP());
-        menu.add(actions.viewMethodBytecodeByName());
-        menu.add(actions.viewMethodTargetCodeByName());
-        final JMenu sub = new JMenu("View boot image method code");
-        sub.add(actions.viewRunMethodCodeInBootImage());
-        sub.add(actions.viewThreadRunMethodCodeInBootImage());
-        sub.add(actions.viewSchemeRunMethodCodeInBootImage());
-        menu.add(sub);
-        menu.add(actions.viewMethodCodeByAddress());
-        menu.add(actions.viewNativeCodeByAddress());
-        menu.add(actions.viewRuntimeStubByAddress());
-        return menu;
-    }
-
-    private JMenu createDebugMenu() {
-        final JMenu menu = new JMenu("Debug");
+    private InspectorMenu createDebugMenu() {
+        final InspectorMenu menu = new InspectorMenu("Debug");
         menu.add(actions.debugResume());
         menu.add(actions.debugSingleStep());
         menu.add(actions.debugStepOverWithBreakpoints());
@@ -175,55 +133,32 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.debugRunToNextCallWithBreakpoints());
         menu.add(actions.debugRunToNextCall());
         menu.add(actions.debugPause());
+
         menu.addSeparator();
-        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions.viewBreakpoints());
+        menu.add(actions.genericBreakpointMenuItems());
+        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
         viewBreakpointsMenuItem.setText("View Breakpoints");
         menu.add(viewBreakpointsMenuItem);
-        final JMenu methodEntryBreakpoints = new JMenu("Break at method entry");
-        methodEntryBreakpoints.add(actions.setTargetCodeBreakpointAtMethodEntriesByName());
-        methodEntryBreakpoints.add(actions.setBytecodeBreakpointAtMethodEntryByName());
-        methodEntryBreakpoints.add(actions.setBytecodeBreakpointAtMethodEntryByKey());
-        menu.add(methodEntryBreakpoints);
-        menu.add(actions.setTargetCodeBreakpointAtObjectInitializer());
-        menu.add(actions.removeAllBreakpoints());
-        menu.addSeparator();
-        menu.add(actions.toggleTargetCodeBreakpoint());
-        menu.add(actions.setCustomTargetCodeBreakpoint());
-        menu.add(actions.setTargetCodeLabelBreakpoints());
-        menu.add(actions.removeTargetCodeLabelBreakpoints());
-        menu.add(actions.removeAllTargetCodeBreakpoints());
-        menu.addSeparator();
-        menu.add(actions.toggleBytecodeBreakpoint());
-        menu.add(actions.removeAllBytecodeBreakpoints());
+
         if (maxVM().watchpointsEnabled()) {
-            menu.addSeparator();
+
+            menu.add(actions.genericWatchpointMenuItems());
             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions.viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");
             menu.add(viewWatchpointsMenuItem);
-            menu.add(actions.setWordWatchpoint());
         }
 
         return menu;
     }
 
-    public JMenu createViewMenu() {
-        final JMenu menu = new JMenu("View");
-        menu.add(actions.viewBootImage());
-        menu.add(actions.viewMemoryRegions());
-        menu.add(actions.viewThreads());
-        menu.add(actions.viewVmThreadLocals());
-        menu.add(actions.viewRegisters());
-        menu.add(actions.viewStack());
-        menu.add(actions.viewMethodCode());
-        menu.add(actions.viewBreakpoints());
-        if (maxVM().watchpointsEnabled()) {
-            menu.add(actions.viewWatchpoints());
-        }
+    public InspectorMenu createViewMenu() {
+        final InspectorMenu menu = new InspectorMenu("View");
+        menu.add(actions().genericViewMenuItems());
         return menu;
     }
 
-    private JMenu createJavaMenu() {
-        final JMenu menu = new JMenu("Java");
+    private InspectorMenu createJavaMenu() {
+        final InspectorMenu menu = new InspectorMenu("Java");
         menu.add(actions.setVMTraceLevel());
         menu.add(actions.setVMTraceThreshold());
         menu.addSeparator();
@@ -231,8 +166,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         return menu;
     }
 
-    private JMenu createTestMenu() {
-        final JMenu menu = new JMenu("Test");
+    private InspectorMenu createTestMenu() {
+        final InspectorMenu menu = new InspectorMenu("Test");
         menu.add(actions.viewFocus());
         menu.add(actions.listVMStateHistory());
         menu.add(actions.listCodeRegistry());
@@ -240,8 +175,8 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         return menu;
     }
 
-    private JMenu createHelpMenu() {
-        final JMenu menu = new JMenu("Help");
+    private InspectorMenu createHelpMenu() {
+        final InspectorMenu menu = new InspectorMenu("Help");
         menu.add(actions.about());
         return menu;
     }

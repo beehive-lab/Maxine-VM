@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Heap scheme for a semi-space beltway collector. Use two belts, each allocated half of the total heap space. The heap
  * scheme can use two collectors, a single-threaded one and a parallel one. An instance of each of these collectors is
- * created at prototyping time and their reference stored in static variable. Which of the two collector to use is
+ * created while bootstrapping and their reference stored in static variable. Which of the two collector to use is
  * decided at runtime. The rationale for doing this is that the collector objects are allocated in the boot region and
  * out of reach of the copying mechanism. This allows the collector objects to use their instance fields (including
  * references field, if they point to boot regions objects) at any time (included GC time).
@@ -77,7 +77,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         @INLINE
         @Override
         public boolean contains(Pointer origin) {
-            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin);
+            return inFromSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
@@ -107,19 +107,22 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             singleThreadedCollector.initialize(this);
             parallelCollector.initialize(this);
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getFromSpace();
             bssCollector = parallelScavenging ? parallelCollector : singleThreadedCollector;
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getFromSpace();
     }
 
     public Belt getFromSpace() {

@@ -28,7 +28,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
 import com.sun.max.vm.compiler.builtin.JavaBuiltin.*;
-import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
 import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
@@ -833,8 +832,17 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     private void read(Kind kind, final Kind offsetKind, DirValue dirResult, DirValue[] dirArguments) {
+        final EirValue pointer;
+        DirValue dirPointer = dirArguments[0];
+        if (dirPointer instanceof DirMethodValue) {
+            final EirValue constant = methodTranslation().makeEirConstant(dirPointer.value());
+            pointer = createEirVariable(constant.kind());
+            assign(constant.kind(), pointer, constant);
+        } else {
+            pointer = dirToEirValue(dirPointer);
+        }
+
         final EirValue result = dirToEirValue(dirResult);
-        final EirValue pointer = dirToEirValue(dirArguments[0]);
         final DirValue dirOffset = dirArguments[1];
         final AMD64EirLoad loadInstruction = dirOffset.isZeroConstant() ? new AMD64EirLoad(eirBlock(), kind, result, pointer) :
                                                                           new AMD64EirLoad(eirBlock(), kind, result, pointer, offsetKind, dirToEirValue(dirOffset));
@@ -1015,7 +1023,15 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     private void write(Kind kind, Kind offsetKind, DirValue[] dirArguments) {
-        final EirValue pointer = dirToEirValue(dirArguments[0]);
+        DirValue dirPointer = dirArguments[0];
+        final EirValue pointer;
+        if (dirPointer instanceof DirMethodValue) {
+            final EirValue constant = methodTranslation().makeEirConstant(dirPointer.value());
+            pointer = createEirVariable(constant.kind());
+            assign(constant.kind(), pointer, constant);
+        } else {
+            pointer = dirToEirValue(dirPointer);
+        }
         final DirValue dirOffset = dirArguments[1];
         final EirValue value = dirToEirValue(dirArguments[2]);
 
@@ -1357,11 +1373,10 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
     @Override
     public void visitMakeStackVariable(MakeStackVariable builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length <= 2;
+        assert dirArguments.length == 1;
         final EirVariable result = (EirVariable) dirToEirValue(dirResult);
         final EirValue value = dirToEirValue(dirArguments[0]);
 
-        final StackVariable stackVariableKey;
         final EirVariable stackSlot;
         if (value instanceof EirVariable) {
             stackSlot = (EirVariable) value;
@@ -1370,18 +1385,18 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             assign(value.kind(), stackSlot, value);
         }
         result.setAliasedVariable(stackSlot);
-
-        if (dirArguments.length == 2) {
-            if (!(dirArguments[1] instanceof DirConstant)) {
-                ProgramError.unexpected("the " + StackVariable.class.getSimpleName() + " used with the " + MakeStackVariable.class.getSimpleName() + " built-in must be a compile-time constant");
-            }
-            final Object stackVariableKeyObject = ((DirConstant) dirArguments[1]).value().asObject();
-            stackVariableKey = (StackVariable) stackVariableKeyObject;
-        } else {
-            stackVariableKey = null;
-        }
         methodTranslation().addEpilogueStackSlotUse(stackSlot);
-        addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot, stackVariableKey));
+        addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot));
+    }
+
+    @Override
+    public void visitStackAllocate(StackAllocate builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1;
+        assert dirArguments[0] instanceof DirConstant;
+        final int size = ((DirConstant) dirArguments[0]).value().asInt();
+        final int offset = methodTranslation().addStackAllocation(size);
+        final EirVariable result = (EirVariable) dirToEirValue(dirResult);
+        addInstruction(new STACK_ALLOCATE(eirBlock(), result, offset));
     }
 
     @Override

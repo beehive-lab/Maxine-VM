@@ -18,9 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- *
- */
 package test.com.sun.max.vm.compiler;
 
 import java.lang.reflect.*;
@@ -33,7 +30,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
@@ -59,7 +56,7 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
         final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.cirGenerator();
-        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually prototyping/bootstrapping
+        ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

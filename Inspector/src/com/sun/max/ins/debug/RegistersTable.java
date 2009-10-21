@@ -156,7 +156,7 @@ public final class RegistersTable extends InspectorTable {
             setValue(name, "Register " + name);
             final int age = registerInfo.age();
             if (age < 0 || age >= ageColors.length) {
-                setForeground(style().defaultTextColor());
+                setForeground(null);
             } else {
                 setForeground(ageColors[age]);
             }

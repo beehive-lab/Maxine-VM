@@ -140,15 +140,15 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 return classMethodActor;
             }
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
-            if (MaxineVM.isPrototyping()) {
+            if (MaxineVM.isHosted()) {
                 final Class<?> javaClass = classActor.toJava();
                 final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());
                 final AccessibleObject member = name.equals(SymbolTable.INIT) ?
                     Classes.getDeclaredConstructor(javaClass, parameterTypes) :
                     Classes.resolveMethod(javaClass, returnType, name.string, parameterTypes);
-                if (MaxineVM.isPrototypeOnly(member)) {
-                    throw new PrototypeOnlyMethodError(errorMessage);
+                if (MaxineVM.isHostedOnly(member)) {
+                    throw new HostOnlyMethodError(errorMessage);
                 }
             }
             throw new NoSuchMethodError(errorMessage);

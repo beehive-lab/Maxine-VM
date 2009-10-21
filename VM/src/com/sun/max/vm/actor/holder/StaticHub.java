@@ -36,9 +36,13 @@ public class StaticHub extends Hub {
     /**
      * Static Hub.
      */
-    StaticHub expand(TupleReferenceMap referenceMap) {
+    StaticHub expand(TupleReferenceMap referenceMap, int rootId) {
         final StaticHub hub = (StaticHub) expand();
         referenceMap.copyIntoHub(hub);
+        // static hubs have a very special i-table and m-table that make it appear
+        // as if it extends java.lang.Object (rootId)
+        hub.setWord(hub.iTableStartIndex, Address.fromInt(rootId));
+        hub.setInt(hub.mTableStartIndex, hub.iTableStartIndex);
         return hub;
     }
 

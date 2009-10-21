@@ -30,8 +30,8 @@ import java.lang.annotation.*;
  * because it is only initialized once and only inspected after proper initialization.
  * It is up to the programmer to maintain this invariant!
  * 
- * Note that reading the field's value can only occur AFTER prototyping.
- * Therefore, there is no constant folding during prototyping.
+ * Note that reading the field's value can only occur AFTER bootstrapping.
+ * Therefore, there is no constant folding during bootstrapping.
  *
  * @author Bernd Mathiske
  */

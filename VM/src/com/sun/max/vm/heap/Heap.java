@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * The dynamic Java object heap.
@@ -46,7 +45,7 @@ public final class Heap {
     private static final VMSizeOption initialHeapSizeOption = register(new InitialHeapSizeOption(), MaxineVM.Phase.PRISTINE);
 
     static class InitialHeapSizeOption extends VMSizeOption {
-        @PROTOTYPE_ONLY
+        @HOSTED_ONLY
         public InitialHeapSizeOption() {
             super("-Xms", Size.M.times(512), "The initial heap size.");
         }
@@ -64,6 +63,11 @@ public final class Heap {
 
     private static Size maxSize;
     private static Size initialSize;
+
+    // Note: Called via reflection from jvm.c
+    public static long maxSizeLong() {
+        return maxSize().toLong();
+    }
 
     public static Size maxSize() {
         if (maxSize.isZero()) {
@@ -268,7 +272,7 @@ public final class Heap {
     @NEVER_INLINE
     public static void traceCreateArray(DynamicHub hub, int length, final Object array) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Allocated array ");
         Log.print(hub.classActor.name.string);
         Log.print(" of length ");
@@ -293,7 +297,7 @@ public final class Heap {
     @NEVER_INLINE
     public static void traceCreateTuple(Hub hub, final Object object) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Allocated tuple ");
         Log.print(hub.classActor.name.string);
         Log.print(" at ");
@@ -316,7 +320,7 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Allocated hybrid ");
         Log.print(hub.classActor.name.string);
         Log.print(" at ");
@@ -339,7 +343,7 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceExpandHybrid(Hybrid hybrid, final Hybrid expandedHybrid) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Allocated expanded hybrid ");
         final Hub hub = ObjectAccess.readHub(hybrid);
         Log.print(hub.classActor.name.string);
@@ -363,7 +367,7 @@ public final class Heap {
     @NEVER_INLINE
     private static void traceClone(Object object, final Object clone) {
         final boolean lockDisabledSafepoints = Log.lock();
-        Log.printVmThread(VmThread.current(), false);
+        Log.printCurrentThread(false);
         Log.print(": Allocated cloned ");
         final Hub hub = ObjectAccess.readHub(object);
         Log.print(hub.classActor.name.string);
@@ -384,11 +388,11 @@ public final class Heap {
         long beforeFree = 0L;
         long beforeUsed = 0L;
         if (verbose()) {
-            beforeUsed = reportUsedSpace().toLong();
-            beforeFree = reportFreeSpace().toLong();
+            beforeUsed = reportUsedSpace();
+            beforeFree = reportFreeSpace();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println("--");
             Log.print("--Before GC   used: ");
             Log.print(beforeUsed);
@@ -399,11 +403,11 @@ public final class Heap {
         }
         final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
         if (verbose()) {
-            final long afterUsed = reportUsedSpace().toLong();
-            final long afterFree = reportFreeSpace().toLong();
+            final long afterUsed = reportUsedSpace();
+            final long afterFree = reportFreeSpace();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("--GC requested by thread ");
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println(" done--");
             Log.print("--After GC   used: ");
             Log.print(afterUsed);
@@ -422,12 +426,19 @@ public final class Heap {
         return freedEnough;
     }
 
-    public static Size reportFreeSpace() {
-        return heapScheme().reportFreeSpace();
+    // Note: Called via reflection from jvm.c
+    public static long reportFreeSpace() {
+        return heapScheme().reportFreeSpace().toLong();
     }
 
-    public static Size reportUsedSpace() {
-        return heapScheme().reportUsedSpace();
+    // Note: Called via reflection from jvm.c
+    public static long reportUsedSpace() {
+        return heapScheme().reportUsedSpace().toLong();
+    }
+
+    // Note: Called via reflection from jvm.c
+    public static long maxObjectInspectionAge() {
+        return heapScheme().maxObjectInspectionAge();
     }
 
     public static void runFinalization() {
@@ -452,7 +463,7 @@ public final class Heap {
     public static void enableImmortalMemoryAllocation() {
         heapScheme().enableImmortalMemoryAllocation();
         if (ImmortalHeap.traceAllocation()) {
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println(": immortal heap allocation enabled");
         }
     }
@@ -460,7 +471,7 @@ public final class Heap {
     public static void disableImmortalMemoryAllocation() {
         heapScheme().disableImmortalMemoryAllocation();
         if (ImmortalHeap.traceAllocation()) {
-            Log.printVmThread(VmThread.current(), false);
+            Log.printCurrentThread(false);
             Log.println(": immortal heap allocation disabled");
         }
     }

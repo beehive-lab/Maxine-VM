@@ -113,11 +113,6 @@ public final class LIRLocation extends LIROperand {
         return index;
     }
 
-    public int pregNumber() {
-        assert index < CiRegister.FirstVirtualRegisterNumber && index >= 0;
-        return index;
-    }
-
     @Override
     public boolean isSingleStack() {
         return isStack() && kind.sizeInSlots() == 1;

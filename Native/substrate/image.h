@@ -75,6 +75,9 @@ typedef struct image_Header {
     /* The storage size of one set of VM thread locals. */
     jint threadLocalsSize;
 
+    /* The storage size of a Java frame anchor. */
+    jint javaFrameAnchorSize;
+
     /* The indexes of the VM thread locals accessed directly by C code. */
     jint SAFEPOINT_LATCH;
     jint SAFEPOINTS_ENABLED_THREAD_LOCALS;
@@ -84,6 +87,8 @@ typedef struct image_Header {
     jint FORWARD_LINK;
     jint BACKWARD_LINK;
     jint ID;
+    jint JNI_ENV;
+    jint LAST_JAVA_FRAME_ANCHOR;
     jint TRAP_NUMBER;
     jint TRAP_INSTRUCTION_POINTER;
     jint TRAP_FAULT_ADDRESS;

@@ -80,7 +80,7 @@ public class AtomicWord {
      */
     @INLINE
     public final boolean compareAndSet(Word expect, Word update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect.equals(value)) {
                     value = update;
@@ -102,7 +102,7 @@ public class AtomicWord {
      */
     @INLINE
     public final Word compareAndSwap(Word expect, Word update) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             synchronized (this) {
                 if (expect.equals(value)) {
                     value = update;

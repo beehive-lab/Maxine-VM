@@ -77,7 +77,7 @@ public final class NativeMutex extends Mutex {
     private static native boolean nativeMutexLock(Pointer mutex);
 
     static void initialize() {
-        assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
+        assert MaxineVM.hostOrTarget().phase == MaxineVM.Phase.PRIMORDIAL;
         size = nativeMutexSize();
     }
 
@@ -86,7 +86,7 @@ public final class NativeMutex extends Mutex {
     }
 
     /**
-     * Performs native allocation for this <code>Mutex</code>.
+     * Performs native allocation for this {@code Mutex}.
      */
     @Override
     public Mutex init() {

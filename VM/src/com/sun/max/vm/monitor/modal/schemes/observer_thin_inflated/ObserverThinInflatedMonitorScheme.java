@@ -46,20 +46,20 @@ public class ObserverThinInflatedMonitorScheme extends ModalMonitorScheme {
     }
 
     @Override
-    public ModalLockWordDecoder getModalLockWordDecoder() {
-        return new ModalLockWordDecoder() {
-            public boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode) {
-                if (mode == ThinLockWord64.class) {
-                    return ThinLockWord64.isThinLockWord(modalLockWord);
-                } else if (mode == InflatedMonitorLockWord64.class) {
-                    return InflatedMonitorLockWord64.isInflatedMonitorLockWord(modalLockWord);
+    public ModalLockwordDecoder getModalLockwordDecoder() {
+        return new ModalLockwordDecoder() {
+            public boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode) {
+                if (mode == ThinLockword64.class) {
+                    return ThinLockword64.isThinLockword(modalLockword);
+                } else if (mode == InflatedMonitorLockword64.class) {
+                    return InflatedMonitorLockword64.isInflatedMonitorLockword(modalLockword);
                 }
                 return false;
             }
         };
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void attach(MonitorObserver observer) {
         final ObserverModeHandler observerModeHandler = (ObserverModeHandler) entryHandler();
         observerModeHandler.attach(observer);

@@ -36,7 +36,7 @@ import com.sun.max.vm.value.*;
  */
 public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> extends ClassActor {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     PrimitiveClassActor(Kind<Value_Type> kind) {
         super(kind,
               NO_SPECIFIC_LAYOUT,

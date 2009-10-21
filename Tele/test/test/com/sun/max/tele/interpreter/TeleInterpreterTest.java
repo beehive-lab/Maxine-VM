@@ -28,7 +28,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Prototyping tests for the Maxine Inspector's interpreter.
+ * Tests for the Maxine Inspector's interpreter.
  *
  * @author Athul Acharya
  */

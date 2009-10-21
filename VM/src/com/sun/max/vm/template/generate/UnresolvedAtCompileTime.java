@@ -31,7 +31,7 @@ import com.sun.max.vm.template.*;
  * 
  * @author Laurent Daynes
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public class UnresolvedAtCompileTime extends ResolvedAtCompileTime implements UnresolvedAtCompileTimeInterface {
     public static byte uninitializedMutableByteVar = 11;
     public static short uninitializedMutableShortVar = 22;

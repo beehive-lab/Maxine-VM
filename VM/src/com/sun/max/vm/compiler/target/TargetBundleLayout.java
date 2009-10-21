@@ -128,7 +128,7 @@ public final class TargetBundleLayout {
         cellOffsets = new Offset[numberOfFields];
         WordArray.fill(cellOffsets, INVALID_OFFSET);
 
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             bundleSize = Size.zero();
         }
 
@@ -221,8 +221,8 @@ public final class TargetBundleLayout {
      * Gets the address of the first element in the array in this target bundle referenced by a given field.
      *
      * @param start the start address of the target bundle
-     * @param field the field for which the cell end address is being requested
-     * @return the address of the end of the cell containing the array referenced {@code field}
+     * @param field the field for which the first element address is being requested
+     * @return the address of the first element of the array referenced by {@code field}
      * @throws IllegalArgumentException if no cell has been allocated for {@code field} in this target bundle
      */
     public Pointer firstElementPointer(Address start, ArrayField field) {

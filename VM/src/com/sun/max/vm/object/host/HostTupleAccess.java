@@ -38,7 +38,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Bernd Mathiske
  */
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class HostTupleAccess {
     private HostTupleAccess() {
     }

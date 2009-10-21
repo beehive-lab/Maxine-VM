@@ -68,7 +68,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     private boolean showSelectionWithBox = false;
 
-    private final Color selectedRowBackgroundColor;
 
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
@@ -83,7 +82,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         super(inspectorTableModel, inspectorTableColumnModel);
         this.showSelectionWithBox = true;
         this.inspection = inspection;
-        selectedRowBackgroundColor = inspection.style().darken2(getBackground());
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
@@ -93,7 +91,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
-        selectedRowBackgroundColor = inspection.style().darken2(getBackground());
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }

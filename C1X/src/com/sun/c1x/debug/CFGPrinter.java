@@ -350,16 +350,26 @@ public class CFGPrinter {
         end("cfg");
     }
 
-    public void printIntervals(LinearScan allocator, List<Interval> intervals, String name) {
+    public void printIntervals(LinearScan allocator, Interval[] intervals, String name) {
         begin("intervals");
         out.print(String.format("name \"%s\"", name));
 
-        for (int i = 0; i < intervals.size(); i++) {
-          if (intervals.get(i) != null) {
-            intervals.get(i).print(out, allocator);
-          }
+        for (Interval i : intervals) {
+            if (i != null) {
+                i.print(out, allocator);
+            }
         }
 
         end("intervals");
+    }
+
+    public void printMachineCode(String code) {
+        if (code.length() == 0) {
+            return;
+        }
+        begin("nmethod");
+        out.print(code);
+        out.println(" <|@");
+        end("nmethod");
     }
 }

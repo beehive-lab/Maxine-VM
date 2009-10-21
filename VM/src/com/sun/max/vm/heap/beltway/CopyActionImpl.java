@@ -41,17 +41,19 @@ public class CopyActionImpl implements Action {
 
     @CONSTANT_WHEN_NOT_ZERO
     protected BeltwayHeapScheme heapScheme;
+    protected HeapBoundChecker heapBound;
 
     protected Belt from;
     protected Belt to;
 
     /**
      * Initialize the heap scheme this closure is being used by.
-     * This needs to be decoupled from the constructor because the closure is typically created at prototyping time
+     * This needs to be decoupled from the constructor because the closure is typically created while bootstrapping
      * before the heap scheme might be created.
      */
     public void initialize(BeltwayHeapScheme heapScheme) {
         this.heapScheme = heapScheme;
+        heapBound = heapScheme.heapBoundChecker();
     }
 
     /**
@@ -70,7 +72,7 @@ public class CopyActionImpl implements Action {
             return;
         }
         final Pointer fromOrigin = origin.toOrigin();
-        if (!heapScheme.contains(fromOrigin)) {
+        if (!heapBound.contains(fromOrigin)) {
             Log.print("invalid grip: ");
             Log.println(fromOrigin.asAddress());
             FatalError.unexpected("invalid grip");

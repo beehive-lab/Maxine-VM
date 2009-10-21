@@ -246,17 +246,24 @@ public class TypeState extends Frame {
 
     public boolean mergeSubroutineFrames(TypeState fromTypeState) {
         final SubroutineFrame fromSubroutineFrame = fromTypeState.subroutineFrame;
-        if (fromSubroutineFrame.depth != subroutineFrame.depth) {
-            return false;
-        }
+        boolean changed = false;
 
-        final SubroutineFrame mergedSubroutineFrame = subroutineFrame.merge(fromSubroutineFrame);
-        if (mergedSubroutineFrame != subroutineFrame) {
-            subroutineFrame = mergedSubroutineFrame;
-            assert subroutineFrame != null;
-            return true;
+        // The subroutine depth this frame may be greater than the incoming frame
+        // if an exception handler covers a range of code that includes subroutines
+        // at different depths.
+        while (fromSubroutineFrame.depth < subroutineFrame.depth) {
+            subroutineFrame = subroutineFrame.parent();
+            changed = true;
         }
-        return false;
+        if (fromSubroutineFrame.depth == subroutineFrame.depth) {
+            final SubroutineFrame mergedSubroutineFrame = subroutineFrame.merge(fromSubroutineFrame);
+            if (mergedSubroutineFrame != subroutineFrame) {
+                subroutineFrame = mergedSubroutineFrame;
+                assert subroutineFrame != null;
+                return true;
+            }
+        }
+        return changed;
     }
 
     @Override

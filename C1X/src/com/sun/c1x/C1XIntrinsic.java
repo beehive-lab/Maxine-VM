@@ -27,8 +27,8 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>C1XIntrinsic</code> class represents an intrinsic, i.e. a library method that
- * is treated specially by the compiler. Note that the list includes more intrinsics
+ * This enum represents all of the intrinsics, i.e. a library methods that
+ * are treated specially by the compiler. Note that the list includes more intrinsics
  * than are currently handled by C1X.
  *
  * @author Ben L. Titzer

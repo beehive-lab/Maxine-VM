@@ -143,7 +143,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
     }
 
-/**
+    /**
      * Models the name/value pairs in a VM thread local storage area.
      * Each row displays a variable with index equal to the row number.
      */
@@ -221,7 +221,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
-        return style().defaultTextColor();
+        return null;
     }
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {

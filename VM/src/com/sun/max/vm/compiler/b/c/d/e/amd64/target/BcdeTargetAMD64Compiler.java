@@ -238,7 +238,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
 
-                assert targetMethod instanceof CPSTargetMethod;
                 final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
@@ -365,7 +364,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
             assert unwindMethod != null;
         }
@@ -435,10 +434,5 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
-    }
-
-    @Override
-    public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-        return stackPointer;
     }
 }

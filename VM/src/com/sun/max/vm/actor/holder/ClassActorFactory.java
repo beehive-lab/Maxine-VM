@@ -41,9 +41,9 @@ public final class ClassActorFactory {
     private ClassActorFactory() {
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     static ClassLoader prototypeClassLoader() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             // Shielded by this conditional, we can access the prototype class loader without it ending up in the boot image:
             return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
         }
@@ -158,18 +158,18 @@ public final class ClassActorFactory {
 
     @INLINE
     private static boolean isWord(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
-        return MaxineVM.isPrototyping() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.WORD, typeDescriptor, superClassActor);
+        return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.WORD, typeDescriptor, superClassActor);
     }
 
     @INLINE
     private static boolean isHybrid(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
-        return MaxineVM.isPrototyping() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
+        return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
     }
 
     /**
      * Creates a ClassActor for a primitive type.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClassActor(Kind<Value_Type> kind) {
         try {
             return ClassRegistry.put(prototypeClassLoader(), new PrimitiveClassActor<Value_Type>(kind));

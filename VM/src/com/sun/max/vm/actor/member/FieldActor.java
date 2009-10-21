@@ -51,6 +51,28 @@ import com.sun.max.vm.value.*;
  */
 public class FieldActor extends MemberActor {
 
+    /**
+     * Flags indicating special annotations applied to methods.
+     */
+    public enum VmFlag {
+        Injected,
+        Constant,
+        ConstantWhenNotZero,
+        Reset;
+
+        public final int mask;
+
+        VmFlag() {
+            assert ordinal() < 16 : "Too many VmFlags to fit into 16 bits";
+            mask = 1 << (ordinal() + 16);
+        }
+
+        @INLINE
+        public boolean check(FieldActor fieldActor) {
+            return (fieldActor.flags() & mask) != 0;
+        }
+    }
+
     public static final FieldActor[] NONE = {};
 
     public final Kind kind;
@@ -127,7 +149,7 @@ public class FieldActor extends MemberActor {
     }
 
     public Value readValue(Reference reference) {
-        if (MaxineVM.isPrototyping() && this instanceof InjectedFieldActor) {
+        if (MaxineVM.isHosted() && this instanceof InjectedFieldActor) {
             final InjectedFieldActor injectedFieldActor = StaticLoophole.cast(this);
             return injectedFieldActor.readInjectedValue(reference);
         }
@@ -140,7 +162,7 @@ public class FieldActor extends MemberActor {
     }
 
     public static FieldActor fromJava(Field javaField) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toFieldActor(javaField);
         }
         FieldActor fieldActor = (FieldActor) TupleAccess.readObject(javaField, Field_fieldActor.offset());
@@ -153,7 +175,7 @@ public class FieldActor extends MemberActor {
     }
 
     public Field toJava() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toJava(this);
         }
         final Class javaHolder = holder().toJava();
@@ -193,8 +215,8 @@ public class FieldActor extends MemberActor {
                     // default value for its type.
                     return true;
                 }
-                if (MaxineVM.isPrototyping() && MaxineVM.isMaxineClass(holder())) {
-                    // The class initializers of all Maxine classes are run while prototyping and
+                if (MaxineVM.isHosted() && MaxineVM.isMaxineClass(holder())) {
+                    // The class initializers of all Maxine classes are run while bootstrapping and
                     // the values they assign to static final fields are frozen in the boot image.
                     return true;
                 }
@@ -209,7 +231,7 @@ public class FieldActor extends MemberActor {
 
         if (isConstant(flags())) {
             assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
-            return MaxineVM.isPrototyping() || !isStatic() || holder.isInitialized();
+            return MaxineVM.isHosted() || !isStatic() || holder.isInitialized();
         }
         return false;
     }

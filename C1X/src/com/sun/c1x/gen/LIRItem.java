@@ -37,10 +37,6 @@ public class LIRItem {
     private boolean destroysRegister;
     private LIROperand newResult;
 
-    private LIRGenerator gen() {
-        return gen;
-    }
-
     public LIRItem(Value value, LIRGenerator gen) {
         this.gen = gen;
         setInstruction(value);
@@ -72,11 +68,19 @@ public class LIRItem {
             if (r.kind != reg.kind) {
                 // moves between different types need an intervening spill slot
                 LIROperand tmp = gen.forceToSpill(r, reg.kind);
-                lir().move(tmp, reg);
+                gen.lir.move(tmp, reg);
             } else {
-                lir().move(r, reg);
+                gen.lir.move(r, reg);
             }
             result = reg;
+        }
+    }
+
+    public void loadItem(CiKind type) {
+        if (type == CiKind.Byte || type == CiKind.Boolean) {
+            loadByteItem();
+        } else {
+            loadItem();
         }
     }
 
@@ -97,17 +101,13 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(value().type().basicType);
-                gen().lir().move(result, newResult);
+                newResult = gen.newRegister(value().type());
+                gen.lir.move(result, newResult);
             }
             return newResult;
         } else {
             return result;
         }
-    }
-
-    public void dontLoadItem() {
-        // do nothing
     }
 
     public void setDestroysRegister() {
@@ -126,10 +126,6 @@ public class LIRItem {
         return result.isRegister();
     }
 
-    public LIRList lir() {
-        return gen().lir();
-    }
-
     public void loadByteItem() {
         if (gen.compilation.target.arch.isX86()) {
             loadItem();
@@ -139,7 +135,7 @@ public class LIRItem {
                 // make sure that it is a byte register
                 assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
-                lir().move(res, reg);
+                gen.lir.move(res, reg);
                 result = reg;
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
@@ -189,8 +185,8 @@ public class LIRItem {
             result = value().operand();
         }
         if (!result().isRegister()) {
-            LIROperand reg = gen.newRegister(value().type().basicType);
-            lir().move(result(), reg);
+            LIROperand reg = gen.newRegister(value().type());
+            gen.lir.move(result(), reg);
             if (result().isConstant()) {
                 result = reg;
             } else {
@@ -199,27 +195,9 @@ public class LIRItem {
         }
     }
 
-    public Object asObject() {
-        assert value instanceof Constant : "must be a constant";
-        if (value().type().isObject()) {
-            return value().asConstant().asObject();
-        }
-        return null;
-    }
-
     public int asInt() {
         assert value instanceof Constant : "must be a constant";
         return value().asConstant().asInt();
-    }
-
-    public float asFloat() {
-        assert value instanceof Constant : "must be a constant";
-        return value().asConstant().asFloat();
-    }
-
-    public double asDouble() {
-        assert value instanceof Constant : "must be a constant";
-        return value().asConstant().asDouble();
     }
 
     public long asLong() {

@@ -64,14 +64,6 @@ public class CheckCast extends TypeCheck {
     }
 
     /**
-     * Checks whether profiling should be added to this instruction.
-     * @return <code>true</code> if profiling should be added to this instruction
-     */
-    public boolean shouldProfile() {
-        return profiledMethod != null;
-    }
-
-    /**
      * Sets the profiled method and bytecode index for this instruction.
      * @param method the profiled method
      * @param bci the bytecode index

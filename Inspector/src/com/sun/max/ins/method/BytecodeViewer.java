@@ -142,7 +142,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         int[] bytecodeToTargetCodePositionMap = null;
         if (teleTargetMethod != null) {
             targetCodeInstructions = teleTargetMethod.getInstructions();
-            bytecodeToTargetCodePositionMap = teleTargetMethod.bytecodeToTargetCodePositionMap();
+            bytecodeToTargetCodePositionMap = teleTargetMethod instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetMethod).bytecodeToTargetCodePositionMap() : null;
             // TODO (mlvdv) can only map bytecodes to JIT target code so far
             if (bytecodeToTargetCodePositionMap != null) {
                 haveTargetCodeAddresses = true;

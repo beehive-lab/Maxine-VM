@@ -22,8 +22,6 @@ package com.sun.max.ins.method;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
@@ -49,7 +47,6 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     private MethodInspectorContainer(Inspection inspection) {
         super(inspection, "methodsInspector");
-        getMenu(DEFAULT_INSPECTOR_MENU).add(new MethodsMenuItems());
     }
 
     @Override
@@ -91,36 +88,6 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         add(methodInspector, methodInspector.getTextForTitle(), longTitle, longTitle);
         addCloseIconToTab(methodInspector);
         methodInspector.highlight();
-    }
-
-    private final class MethodsMenuItems implements InspectorMenuItems {
-
-        public void addTo(InspectorMenu menu) {
-            menu.add(inspection().actions().inspectMethodActorByName());
-            menu.add(inspection().actions().viewMethodCodeAtSelection());
-            menu.add(inspection().actions().viewMethodCodeAtIP());
-            menu.add(inspection().actions().viewMethodBytecodeByName());
-            menu.add(inspection().actions().viewMethodTargetCodeByName());
-            final JMenu sub = new JMenu("View Boot Image Method Code");
-            sub.add(inspection().actions().viewRunMethodCodeInBootImage());
-            sub.add(inspection().actions().viewThreadRunMethodCodeInBootImage());
-            sub.add(inspection().actions().viewSchemeRunMethodCodeInBootImage());
-            menu.add(sub);
-            menu.add(inspection().actions().viewMethodCodeByAddress());
-            menu.add(inspection().actions().viewNativeCodeByAddress());
-            menu.add(inspection().actions().viewRuntimeStubByAddress());
-        }
-
-        public Inspection inspection() {
-            return MethodInspectorContainer.this.inspection();
-        }
-
-        public void refresh(boolean force) {
-        }
-
-        public void redisplay() {
-        }
-
     }
 
 }

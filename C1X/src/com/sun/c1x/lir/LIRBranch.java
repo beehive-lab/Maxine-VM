@@ -101,13 +101,6 @@ public class LIRBranch extends LIRInstruction {
         return cond;
     }
 
-    /**
-     * @return the type of this condition
-     */
-    CiKind type() {
-        return type;
-    }
-
     public Label label() {
         return label;
     }
@@ -183,7 +176,7 @@ public class LIRBranch extends LIRInstruction {
                 out.printf(" [bci:%d]", stub().info.bci());
             }
         } else {
-            out.printf("[label:0x%x] ", label().loc());
+            out.printf("[label:0x%x] ", label().position());
         }
         if (ublock() != null) {
             out.printf("unordered: [B%d] ", ublock().blockID);

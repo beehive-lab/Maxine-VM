@@ -149,7 +149,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return layoutFields(superClassActor, fieldActors, headerSize());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private void visitFields(ObjectCellVisitor visitor, Object tuple, FieldActor[] fieldActors) {
         for (FieldActor fieldActor : fieldActors) {
             final Value value = HostTupleAccess.readValue(tuple, fieldActor);
@@ -157,7 +157,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor;
@@ -171,13 +171,13 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
         visitFields(visitor, tuple);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public Value readValue(Kind kind, ObjectMirror mirror, int offset) {
         final Value value = readHeaderValue(mirror, offset);
         if (value != null) {
@@ -186,7 +186,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return mirror.readField(offset);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void writeValue(Kind kind, ObjectMirror mirror, int offset, Value value) {
         if (writeHeaderValue(mirror, offset, value)) {
             return;

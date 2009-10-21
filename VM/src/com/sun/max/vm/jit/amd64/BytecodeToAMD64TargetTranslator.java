@@ -531,7 +531,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         buildLookupSwitchTemplate(asm);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void buildTableSwitchTemplate(final AMD64Assembler asm) {
         for (int i = 0; i < tableSwitchTemplates.length; i++) {
             final Label indexTest = new Label();
@@ -547,7 +547,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         }
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static void buildLookupSwitchTemplate(final AMD64Assembler asm) {
         asm.reset();
         final Label branchToDefaultTarget = new Label();
@@ -590,7 +590,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         lookupswitchBranchToDefaultTargetModifier = new BranchTargetModifier(toPosition(branchToDefaultTarget), toPosition(found) - toPosition(branchToDefaultTarget), WordWidth.BITS_32);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static byte[] createTableSwitchTemplate(AMD64Assembler asm, int numBytesFromAlignment, Label indexAdjust, Label indexTest, Label branchToDefaultTarget, Label loadJumpTable) {
         asm.reset();
         final AMD64GeneralRegister32 indexRegister = AMD64GeneralRegister32.EAX;

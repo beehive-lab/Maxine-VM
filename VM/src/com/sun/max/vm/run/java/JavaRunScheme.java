@@ -76,11 +76,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private StaticMethodActor[] initIDMethods;
 
     /**
-     * At prototyping time, searches the class registry for non-Maxine classes that have methods called
+     * While bootstrapping, searches the class registry for non-Maxine classes that have methods called
      * "initIDs" with signature "()V". Such methods are typically used in the JDK to initialize JNI
      * identifiers for native code, and need to be re-executed upon startup.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
@@ -98,7 +98,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * Runs all the native initializer methods gathered at prototyping time.
+     * Runs all the native initializer methods gathered while bootstrapping.
      */
     public void runNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
@@ -126,8 +126,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     /**
-     * The initialization method of the Java run scheme runs at both prototyping time and startup.
-     * At prototyping time, it gathers the methods needed for native initialization, and at startup
+     * The initialization method of the Java run scheme runs at both bootstrapping and startup.
+     * While bootstrapping, it gathers the methods needed for native initialization, and at startup
      * it initializes basic VM services.
      */
     @Override
@@ -193,8 +193,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
-        MaxineVM.writeInitialVMParams();
-        MaxineVM.hostOrTarget().setPhase(MaxineVM.Phase.STARTING);
+        MaxineVM vm = MaxineVM.hostOrTarget();
+        vm.phase = MaxineVM.Phase.STARTING;
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
@@ -237,11 +237,15 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             error = true;
 
-            MaxineVM.host().setPhase(Phase.RUNNING);
+            MaxineVM vm = MaxineVM.host();
+            vm.phase = Phase.RUNNING;
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.RUNNING);
 
-            lookupAndInvokeMain(loadMainClass());
-            error = false;
+            Class<?> mainClass = loadMainClass();
+            if (mainClass != null) {
+                lookupAndInvokeMain(mainClass);
+                error = false;
+            }
 
         } catch (ClassNotFoundException classNotFoundException) {
             error = true;
@@ -303,7 +307,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             final JarFile jarFile = new JarFile(jarFileName);
             mainClassName = findMainClassNameInJarFile(jarFile);
             if (mainClassName == null) {
-                throw ProgramError.unexpected("could not find main class in jarfile: " + jarFileName);
+                Log.println("could not find main class in jarfile: " + jarFileName);
+                return null;
             }
         }
         return appClassLoader.loadClass(mainClassName);

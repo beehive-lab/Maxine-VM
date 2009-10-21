@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 
 
 /**
- * The <code>RiSignature</code> class represents a method signature.
+ * This interface represents a method signature provided by the runtime.
  *
  * @author Ben L. Titzer
  */

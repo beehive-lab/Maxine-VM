@@ -21,11 +21,10 @@
 package com.sun.c1x.ci;
 
 /**
- * The <code>Register</code> class definition.
+ * This class represents a machine register.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public final class CiRegister {
 
@@ -106,7 +105,7 @@ public final class CiRegister {
 
     /**
      * Utility function for asserting that the given registers are all different.
-     * 
+     *
      * @param registers
      *            an array of registers that should be checked for equal entries
      * @return false if an equal entry is found, true otherwise
@@ -125,5 +124,72 @@ public final class CiRegister {
         }
 
         return true;
+    }
+
+    public static class AllocationSet {
+        public final CiRegister[] registerMapping;
+        public final boolean[] allocatableRegister;
+
+        public final int nofRegs;
+
+        public final int pdFirstCpuReg;
+        public final int pdLastCpuReg;
+        public final int pdFirstByteReg;
+        public final int pdLastByteReg;
+        public final int pdFirstXmmReg;
+        public final int pdLastXmmReg;
+
+        public AllocationSet(CiRegister[] registers) {
+            int cpuCnt = 0;
+            int cpuFirst = Integer.MAX_VALUE;
+            int cpuLast = Integer.MIN_VALUE;
+            int byteCnt = 0;
+            int byteFirst = Integer.MAX_VALUE;
+            int byteLast = Integer.MIN_VALUE;
+            int xmmCnt = 0;
+            int xmmFirst = Integer.MAX_VALUE;
+            int xmmLast = Integer.MIN_VALUE;
+
+            for (CiRegister r : registers) {
+                if (r.isCpu()) {
+                    cpuCnt++;
+                    cpuFirst = Math.min(cpuFirst, r.number);
+                    cpuLast = Math.max(cpuLast, r.number);
+                }
+
+                if (r.isByte()) {
+                    byteCnt++;
+                    byteFirst = Math.min(byteFirst, r.number);
+                    byteLast = Math.max(byteLast, r.number);
+                }
+
+                if (r.isXMM()) {
+                    xmmCnt++;
+                    xmmFirst = Math.min(xmmFirst, r.number);
+                    xmmLast = Math.max(xmmLast, r.number);
+                }
+            }
+            assert xmmCnt > 0 && cpuCnt > 0 && byteCnt > 0 : "missing a register kind!";
+
+            int maxReg = Math.max(cpuLast, xmmLast);
+            registerMapping = new CiRegister[maxReg + 1];
+            allocatableRegister = new boolean[maxReg + 1];
+            for (CiRegister r : registers) {
+                assert registerMapping[r.number] == null : "duplicate register!";
+                registerMapping[r.number] = r;
+                allocatableRegister[r.number] = true;
+            }
+
+            pdFirstByteReg = byteFirst;
+            pdLastByteReg = byteLast;
+
+            pdFirstCpuReg = cpuFirst;
+            pdLastCpuReg = cpuLast;
+
+            pdFirstXmmReg = xmmFirst;
+            pdLastXmmReg = xmmLast;
+
+            nofRegs = registerMapping.length;
+        }
     }
 }

@@ -66,7 +66,7 @@ public final class SPARCSafepoint extends Safepoint {
 
     private final boolean is32Bit;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
         is32Bit = vmConfiguration.platform().processorKind.dataModel.wordWidth == WordWidth.BITS_32;
     }
@@ -81,7 +81,7 @@ public final class SPARCSafepoint extends Safepoint {
         return LATCH_REGISTER;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private SPARCAssembler createAssembler() {
         if (is32Bit) {
             return new SPARC32Assembler(0);
@@ -89,7 +89,7 @@ public final class SPARCSafepoint extends Safepoint {
         return new SPARC64Assembler(0);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
         final SPARCAssembler asm = createAssembler();

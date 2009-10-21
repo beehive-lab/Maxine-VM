@@ -55,7 +55,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
     protected Class initializeClassInTarget(final Class classToInitialize) {
         return MaxineVM.usingTarget(new Function<Class>() {
             public Class call() {
-                assert !MaxineVM.isPrototypeOnly(classToInitialize);
+                assert !MaxineVM.isHostedOnly(classToInitialize);
                 final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, classToInitialize.getName());
                 final ClassActor classActor = ClassActor.fromJava(targetClass);
                 MakeClassInitialized.makeClassInitialized(classActor);
@@ -120,7 +120,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
                 if (location != null) {
                     final BytecodeVisitor bytecodeVisitor = new BytecodeAdapter() {
                         private void addStaticCall(int index) {
-                            final ConstantPool pool = location.classMethodActor().codeAttribute().constantPool();
+                            final ConstantPool pool = location.classMethodActor.codeAttribute().constantPool();
                             final MethodActor methodActor = pool.classMethodAt(index).resolve(pool, index);
                             result.append(methodActor);
                         }
@@ -137,9 +137,9 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
 
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
                     try {
-                        final byte[] bytecode = location.classMethodActor().codeAttribute().code();
-                        if (bytecode != null && location.bytecodePosition() < bytecode.length) {
-                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition());
+                        final byte[] bytecode = location.classMethodActor.codeAttribute().code();
+                        if (bytecode != null && location.bytecodePosition < bytecode.length) {
+                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
                         }
                     } catch (Throwable throwable) {
                         ProgramError.unexpected("could not scan byte code", throwable);

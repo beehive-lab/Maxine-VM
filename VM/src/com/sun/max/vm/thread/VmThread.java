@@ -29,7 +29,6 @@ import java.lang.reflect.*;
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -38,7 +37,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -77,6 +75,8 @@ import com.sun.max.vm.type.*;
  *                       |               reference map area            |
  *                       |                                             |
  *                       +---------------------------------------------+  <-- referenceMap
+ *                       |               Java frame anchor             |
+ *                       +---------------------------------------------+  <-- initial Java frame anchor
  *                       |           thread locals (disabled)          |
  *                       +---------------------------------------------+  <-- disabledThreadLocals
  *                       |           thread locals (enabled)           |
@@ -114,7 +114,7 @@ public class VmThread {
 
     private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
-    private static final Size DEFAULT_STACK_SIZE = Size.M;
+    private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
 
     private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 
@@ -148,7 +148,7 @@ public class VmThread {
     /**
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
      *
-     * <b>This must only be used when {@linkplain Throw#raise(Object, Pointer, Pointer, Pointer) throwing an exception}
+     * <b>This must only be used when {@linkplain Throw#raise(Throwable, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer)} throwing an exception}
      * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
      * Allocation must not occur in these contexts.</b>
      */
@@ -178,8 +178,8 @@ public class VmThread {
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
-    @PROTOTYPE_ONLY
-    private static final ThreadLocal<CompactReferenceMapInterpreter> prototypeCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
+    @HOSTED_ONLY
+    private static final ThreadLocal<CompactReferenceMapInterpreter> hostedCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
 
         @Override
         protected CompactReferenceMapInterpreter initialValue() {
@@ -188,8 +188,8 @@ public class VmThread {
     };
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
-        if (MaxineVM.isPrototyping()) {
-            return prototypeCompactReferenceMapInterpreter.get();
+        if (MaxineVM.isHosted()) {
+            return hostedCompactReferenceMapInterpreter.get();
         }
         return compactReferenceMapInterpreter;
     }
@@ -203,7 +203,7 @@ public class VmThread {
     }
 
 
-    public Thread javaThread() {
+    public final Thread javaThread() {
         return javaThread;
     }
 
@@ -316,7 +316,7 @@ public class VmThread {
     }
 
     /**
-     * Bind the given @see java.lang.Thread to this VmThread.
+     * Bind the given {@code Thread} to this VmThread.
      * @param javaThread thread to be bound
      */
     public VmThread setJavaThread(Thread javaThread) {
@@ -347,11 +347,11 @@ public class VmThread {
     }
 
     /**
-     * This happens during prototyping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
+     * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
      * there is no 'Thread' constructor that we could call without a valid parent thread, we hereby clone the host VM's
      * main thread.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static VmThread createMain() {
         final Thread thread = HostObjectAccess.mainThread();
         final VmThread vmThread = VmThreadFactory.create(thread);
@@ -365,7 +365,7 @@ public class VmThread {
         return mainVMThread;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Size stackSize() {
         return DEFAULT_STACK_SIZE;
     }
@@ -383,10 +383,11 @@ public class VmThread {
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
-            nativeJoin(nativeThread);
+            nonJniNativeJoin(nativeThread);
         }
         // Drop back to PRIMORDIAL because we are now in the primordial thread
-        MaxineVM.host().setPhase(MaxineVM.Phase.PRIMORDIAL);
+        MaxineVM vm = MaxineVM.host();
+        vm.phase = MaxineVM.Phase.PRIMORDIAL;
     }
 
     /**
@@ -404,7 +405,7 @@ public class VmThread {
      * @return a value of C type JNIEnv*
      */
     public static Pointer currentJniEnvironmentPointer() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return Pointer.zero();
         }
         return JNI_ENV.pointer(currentVmThreadLocals());
@@ -412,7 +413,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread current() {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
@@ -463,7 +464,7 @@ public class VmThread {
         // Disable safepoints:
         Safepoint.setLatchRegister(disabledVmThreadLocals);
 
-        JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.pointer());
+        JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
 
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
@@ -475,6 +476,7 @@ public class VmThread {
         vmThread.nativeThread = nativeThread;
         vmThread.vmThreadLocals = enabledVmThreadLocals;
         vmThread.stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
+        vmThread.stackDumpStackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
 
         HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, stackEnd);
         LOWEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, triggeredVmThreadLocals.plus(Word.size()));
@@ -521,6 +523,7 @@ public class VmThread {
             final Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer refMapArea = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
             final Pointer stackYellowZone = guardPage.asPointer();
             final Pointer stackRedZone = stackYellowZone.minus(guardPageSize());
             final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
@@ -542,13 +545,14 @@ public class VmThread {
             lastRegionStart = traceStackRegion("Stack overflow guard (yellow zone)", stackBase, stackYellowZone, stackYellowZoneEnd, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Stack overflow guard (red zone)", stackBase, stackRedZone, stackYellowZone, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Reference map area", stackBase, refMapArea, stackRedZone, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion("Java frame anchor", stackBase, anchor, refMapArea, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Thread locals (disabled)", stackBase, disabledVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Thread locals (enabled)", stackBase, enabledVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Thread locals (triggered)", stackBase, triggeredVmThreadLocals, threadLocalStorageSize().toInt(), lastRegionStart, stackSize);
             if (stackBase.lessThan(triggeredVmThreadLocals)) {
                 lastRegionStart = traceStackRegion("Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
-            Log.printVmThreadLocals(vmThreadLocals, true);
+            Log.printThreadLocals(vmThreadLocals, true);
             Log.unlock(lockDisabledSafepoints);
         }
     }
@@ -631,30 +635,15 @@ public class VmThread {
         }
     }
 
-    /**
-     * Determines if this thread is in a state that implies it is executing native code. A thread is guaranteed to never
-     * mutate any object references when in this state. If this thread is in the 'in native' state (which is determined
-     * by the value of {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}), it is most likely actually
-     * executing native code. However, it may also be in Java code that is executing:
-     * <ul>
-     * <li>a {@linkplain NativeCallPrologue#nativeCallPrologue() native call prologue} and is after the instruction that
-     * sets the 'in native' flag.</li>
-     * <li>a {@linkplain NativeCallEpilogue#nativeCallEpilogue(Pointer) native call epilogue} and is before the
-     * instruction that resets the 'in native' flag.</li>
-     * <li>a {@linkplain JniFunctionWrapper JNI function wrapper} and is before the
-     * {@linkplain JniFunctionWrapper#reenterJavaFromNative(Pointer) instruction} that resets the 'in native' flag or after
-     * the {@linkplain JniFunctionWrapper#exitJavaToNative instruction} that sets the 'in native'
-     * flag.</li>
-     * </ul>
-     * <p>
+    /*
+     * This function exists for the benefit of the primordial thread, as per nonJniNativeSleep.
      */
-    @INLINE
-    public final boolean isInNative() {
-        MemoryBarrier.storeLoad();
-        return !vmThreadLocals.isZero() && LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
-    }
-
     @C_FUNCTION
+    private static native boolean nonJniNativeJoin(Word nativeThread);
+
+    /*
+     * This cannot be a C_FUNCTION as it blocks!
+     */
     private static native boolean nativeJoin(Word nativeThread);
 
     public boolean join() {
@@ -665,7 +654,7 @@ public class VmThread {
 
 
     // Only used by the EIR interpreter(s)
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public void setVmThreadLocals(Address address) {
         vmThreadLocals = address.asPointer();
     }
@@ -684,7 +673,7 @@ public class VmThread {
 
     @INLINE
     public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             return mainVMThread;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
@@ -694,7 +683,7 @@ public class VmThread {
         return JniHandles.createLocalHandle(jniHandles, object);
     }
 
-    public JniHandles jniHandles() {
+    public final JniHandles jniHandles() {
         return jniHandles;
     }
 

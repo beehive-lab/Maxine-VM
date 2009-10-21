@@ -74,10 +74,24 @@ public class IR {
      * Builds the graph, optimizes it, and computes the linear scan block order.
      */
     public void build() {
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.start();
+        }
+
         buildGraph();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_CREATE.stop();
+            C1XTimers.HIR_OPTIMIZE.start();
+        }
+
         optimize1();
         computeLinearScanOrder();
         optimize2();
+
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.HIR_OPTIMIZE.stop();
+        }
     }
 
     private void buildGraph() {
@@ -95,6 +109,10 @@ public class IR {
         if (C1XOptions.SimplifyPhis) {
             new PhiSimplifier(startBlock);
             verifyAndPrint("After phi simplification");
+        }
+        if (C1XOptions.DoLoopPeeling) {
+            LoopPeeler.peelLoops(this);
+            verifyAndPrint("After Loop peeling");
         }
         if (C1XOptions.DoNullCheckElimination) {
             new NullCheckEliminator(this);
@@ -144,6 +162,7 @@ public class IR {
             new LivenessMarker(this).removeDeadCode();
             verifyAndPrint("After dead code elimination 2");
         }
+
     }
 
     /**
@@ -245,7 +264,7 @@ public class IR {
             pred.end().substituteSuccessor(oldBlock, newBlock);
             // and add each predecessor to the successor
             newBlock.addPredecessor(pred);
-    }
+        }
         // this block is now disconnected; remove all its incoming and outgoing edges
         oldBlock.predecessors().clear();
         oldBlock.end().successors().clear();

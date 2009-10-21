@@ -52,7 +52,6 @@ public class BlockBegin extends Instruction {
         IsOnWorkList,
         WasVisited,
         DefaultExceptionHandler,
-        Merged,
         ParserLoopHeader,
         CriticalEdgeSplit,
         LinearScanLoopHeader,
@@ -232,15 +231,6 @@ public class BlockBegin extends Instruction {
                 s.addPredecessor(this);
             }
         }
-    }
-
-    /**
-     * Checks whether this block is an entrypoint, either as a standard entrypoint,
-     * subroutine entrypoint, or an exception handler.
-     * @return <code>true</code> if this block is an entrypoint
-     */
-    public boolean isEntryBlock() {
-        return (blockFlags & entryFlags) != 0;
     }
 
     /**
@@ -722,4 +712,11 @@ public class BlockBegin extends Instruction {
     public Iterable<Phi> allLivePhis() {
         return stateBefore.allLivePhis(this);
     }
+
+    public void addExceptionStates(List<ValueStack> exceptHandlerStates) {
+        for (ValueStack state : exceptHandlerStates) {
+            addExceptionState(state.copy());
+        }
+    }
+
 }

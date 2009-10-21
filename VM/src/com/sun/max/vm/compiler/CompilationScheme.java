@@ -35,7 +35,6 @@ import com.sun.max.vm.compiler.target.*;
  * @author Ben L. Titzer
  */
 public interface CompilationScheme extends VMScheme {
-
     /**
      * An enum that selects between different runtime behavior of the compilation scheme.
      */
@@ -44,10 +43,17 @@ public interface CompilationScheme extends VMScheme {
          * Use the JIT compiler only (except for unsafe code).
          */
         JIT,
+
+        /**
+         * Use the interpreter only (except for unsafe code).
+         */
+        INTERPRETED,
+
         /**
          * Use the optimizing compiler only (except for some invocation stubs).
          */
         OPTIMIZED,
+
         /**
          * Use both compilers according to dynamic feedback.
          */
@@ -74,8 +80,8 @@ public interface CompilationScheme extends VMScheme {
      * This method makes a target method for the specified method actor. If the method is already compiled, it will
      * return the current target method for the specified method. If the method is not compiled, it will perform
      * compilation according to this compilation scheme's internal policies and return the new target method. Note that
-     * this method may return {@code null} if the internal compilation policy rejects compilation of the method (e.g. at
-     * prototyping time or at runtime if there is an interpreter installed). This method is <i>synchronous</i> in the
+     * this method may return {@code null} if the internal compilation policy rejects compilation of the method (e.g. while
+     * bootstrapping or at runtime if there is an interpreter installed). This method is <i>synchronous</i> in the
      * sense that it will wait for compilation to complete if this compilation scheme uses multiple background
      * compilation threads.
      *
@@ -86,9 +92,11 @@ public interface CompilationScheme extends VMScheme {
      */
     TargetMethod synchronousCompile(ClassMethodActor classMethodActor);
 
+    TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler);
+
     /**
      * This method queries whether this compilation scheme is currently performing a compilation or has queued
-     * compilations. This is necessary, for example, during prototyping time to ensure that all compilations have
+     * compilations. This is necessary, for example, during bootstrapping to ensure that all compilations have
      * finished before proceeding to the next step in creating the image.
      *
      * @return true if there are any methods that are scheduled to be compiled that have not been completed yet
@@ -137,7 +145,7 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isPrototyping() && !TargetMethod.class.isAssignableFrom(VMConfiguration.target().compilerScheme().irGenerator().irMethodType)) {
+                if (MaxineVM.isHosted() && !TargetMethod.class.isAssignableFrom(VMConfiguration.target().compilerScheme().irGenerator().irMethodType)) {
                     return MethodID.fromMethodActor(classMethodActor).asAddress();
                 }
                 // slower path: method has not been compiled, or been compiled more than once

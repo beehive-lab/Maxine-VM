@@ -47,14 +47,15 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         if (javaFrameDescriptor == null) {
             return -1L;
         }
-        return (MethodID.fromMethodActor(javaFrameDescriptor.classMethodActor()).asAddress().toLong() << MAX_BYTE_CODE_BITS) | javaFrameDescriptor.bytecodePosition();
+        return (MethodID.fromMethodActor(javaFrameDescriptor.classMethodActor).asAddress().toLong() << MAX_BYTE_CODE_BITS) | javaFrameDescriptor.bytecodePosition;
     }
 
     private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
         super(inspection, LongValue.from(subject(javaFrameDescriptor)));
         this.javaFrameDescriptor = javaFrameDescriptor;
         framePointer = TeleIntegerRegisters.symbolizer(maxVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
     /**
@@ -71,7 +72,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
-        return bytecodeLocation.classMethodActor().name.toString() + " @ " + bytecodeLocation.bytecodePosition();
+        return bytecodeLocation.classMethodActor.name.toString() + " @ " + bytecodeLocation.bytecodePosition;
     }
 
     private String targetLocationToString(TargetLocation targetLocation) {
@@ -121,10 +122,10 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             panel.add(sourceLocationLabel);
         }
 
-        final CodeAttribute codeAttribute = bytecodeLocation.classMethodActor().codeAttribute();
+        final CodeAttribute codeAttribute = bytecodeLocation.classMethodActor.codeAttribute();
         for (int i = 0; i < descriptor.locals.length; i++) {
             String local = "local #" + i;
-            final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition());
+            final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition);
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool());
             }

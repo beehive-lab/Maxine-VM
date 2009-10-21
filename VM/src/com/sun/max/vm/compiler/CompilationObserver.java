@@ -42,7 +42,7 @@ public interface CompilationObserver {
      * This method allows an observer to be notified after the compilation of a method completes.
      * @param classMethodActor the method being compiled
      * @param compiler the compiler performing the compilation
-     * @param targetMethod the target method produced by the compilation; <code>null</code> if the compilation
+     * @param targetMethod the target method produced by the compilation; {@code null} if the compilation
      */
     void observeAfterCompilation(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler, TargetMethod targetMethod);
 }

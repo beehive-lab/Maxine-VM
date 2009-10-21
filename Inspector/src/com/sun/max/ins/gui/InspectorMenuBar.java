@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.tele.*;
 
 
@@ -35,6 +36,8 @@ import com.sun.max.tele.*;
  * @author Michael Van De Vanter
  */
 public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
+
+    private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(12, 14);
 
     private final Inspection inspection;
 
@@ -54,13 +57,31 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         menus.append(inspectorMenu);
     }
 
-    public InspectorMenu findMenu(String name) {
+    private InspectorMenu findMenu(String name) {
         for (InspectorMenu inspectorMenu : menus) {
             if (inspectorMenu.getMenuName().equals(name)) {
                 return inspectorMenu;
             }
         }
         return null;
+    }
+
+    /**
+     * @param name a menu name
+     * @return the menu in the menu bar with that name, or
+     * a new empty one if it doesn't already exist.
+     */
+    public InspectorMenu makeMenu(MenuKind menuKind) {
+        InspectorMenu menu = findMenu(menuKind.label());
+        if (menu != null) {
+            return menu;
+        }
+        menu = new InspectorMenu(menuKind.label());
+        if (menuKind == MenuKind.DEFAULT_MENU) {
+            menu.setIcon(FRAME_ICON);
+        }
+        add(menu);
+        return menu;
     }
 
     public final Inspection inspection() {
@@ -99,6 +120,4 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
             menu.refresh(force);
         }
     }
-
-
 }

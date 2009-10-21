@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -42,11 +45,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
         this.vmThreadLocals = vmThreadLocals;
     }
 
-    @Override
-    public boolean isThreadInNative() {
-        return !vmThreadLocals.isZero() && !VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
-    }
-
     public void setVmThreadLocals(Pointer vmThreadLocals) {
         assert this.vmThreadLocals.isZero();
         this.vmThreadLocals = vmThreadLocals;
@@ -55,11 +53,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     @Override
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
         return Code.codePointerToTargetMethod(instructionPointer);
-    }
-
-    @Override
-    protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
-        return Code.codePointerToRuntimeStub(instructionPointer);
     }
 
     @Override
@@ -101,5 +94,15 @@ public final class VmStackFrameWalker extends StackFrameWalker {
 
     @Override
     public void useABI(TargetABI targetABI) {
+    }
+
+    @INLINE
+    public static ClassMethodActor getCallerClassMethodActor() {
+        // TODO: a full stack walk is not necessary here.
+        LinkSequence<StackFrame> frames = new LinkSequence<StackFrame>();
+        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).frames(frames, VMRegister.getInstructionPointer(),
+                                                       VMRegister.getCpuStackPointer(),
+                                                       VMRegister.getCpuFramePointer());
+        return getCallerClassMethodActor(frames, false);
     }
 }

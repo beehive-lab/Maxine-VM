@@ -75,7 +75,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
      * @param callInstructionAddress
      * @param framelessCallInstructionAddress
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
                     IntegerRegister_Type cpuStackPointer,
                     IntegerRegister_Type cpuFramePointer,
@@ -110,7 +110,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
     }
 
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
                                   IntegerRegister_Type cpuStackPointer,
                                   IntegerRegister_Type cpuFramePointer,
@@ -133,7 +133,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
      * @param role the role to be modified in the derived role assignments
      * @param newIntegerRegister the register to be associated with {@code role} in the derived role assignments
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public RegisterRoleAssignment(RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> original,
                                   VMRegister.Role role, IntegerRegister_Type newIntegerRegister) {
         integerRegisters = original.integerRegisters.clone();

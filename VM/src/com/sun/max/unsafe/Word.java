@@ -39,7 +39,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * A machine word, opaque.
  *
- * Boxed while prototyping on a non-MaxineVM VM, but unboxed on a MaxineVM VM!!!
+ * Boxed while bootstrapping, but unboxed in the target VM!!!
  * As canonical "boxed Java value" type for this new "primitive" type, use 'WordValue'.
  *
  * @author Bernd Mathiske
@@ -51,7 +51,7 @@ public abstract class Word {
      */
     private static final String MAX_EXTEND_WORDTYPES_PROPERTY = "max.extend.wordtypes";
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Class[] getSubclasses() {
         final Class[] defaultClasses = new Class[]{
             Address.class, Offset.class, Pointer.class, Size.class, Word.class,
@@ -59,10 +59,10 @@ public abstract class Word {
             MemberID.class, FieldID.class, MethodID.class,
             BoxedFieldID.class, BoxedMethodID.class,
             JniHandle.class,
-            ModalLockWord64.class, HashableLockWord64.class, LightweightLockWord64.class, ThinLockWord64.class, BiasedLockWord64.class,
-            BoxedModalLockWord64.class, BoxedHashableLockWord64.class, BoxedLightweightLockWord64.class, BoxedThinLockWord64.class, BoxedBiasedLockWord64.class,
+            ModalLockword64.class, HashableLockword64.class, LightweightLockword64.class, ThinLockword64.class, BiasedLockword64.class,
+            BoxedModalLockword64.class, BoxedHashableLockword64.class, BoxedLightweightLockword64.class, BoxedThinLockword64.class, BoxedBiasedLockword64.class,
             BiasedLockEpoch.class, BoxedBiasedLockEpoch64.class,
-            InflatedMonitorLockWord64.class, BoxedInflatedMonitorLockWord64.class
+            InflatedMonitorLockword64.class, BoxedInflatedMonitorLockword64.class
         };
         final String p = System.getProperty(MAX_EXTEND_WORDTYPES_PROPERTY);
         if (p != null) {
@@ -90,7 +90,7 @@ public abstract class Word {
         return true;
     }
 
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @UNSAFE
     @FOLD
     public static boolean isBoxed_() {
@@ -172,7 +172,7 @@ public abstract class Word {
         return BoxedPointer.from(box.nativeWord());
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public final <Word_Type extends Word> Word_Type as(Class<Word_Type> wordType) {
         if (wordType.isInstance(this)) {
             return wordType.cast(this);

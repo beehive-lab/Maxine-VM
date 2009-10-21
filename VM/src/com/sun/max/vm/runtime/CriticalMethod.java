@@ -52,7 +52,7 @@ public class CriticalMethod {
      * @param methodSignature the signature of the method
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CriticalMethod(Class javaClass, String methodName, SignatureDescriptor methodSignature) {
         this(javaClass, methodName, methodSignature, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
@@ -67,7 +67,7 @@ public class CriticalMethod {
      * @param callEntryPoint the entrypoint in the method that is desired
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CriticalMethod(Class javaClass, String methodName, SignatureDescriptor methodSignature, CallEntryPoint callEntryPoint) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final Utf8Constant name = SymbolTable.makeSymbol(methodName);
@@ -89,7 +89,7 @@ public class CriticalMethod {
      * @param classMethodActor the method for which to create an entrypoint
      * @param callEntryPoint the call entrypoint of the method that is desired
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public CriticalMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         this.classMethodActor = classMethodActor;
         this.callEntryPoint = callEntryPoint;

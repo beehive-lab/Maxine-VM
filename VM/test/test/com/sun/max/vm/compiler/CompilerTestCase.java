@@ -57,8 +57,8 @@ import com.sun.max.vm.classfile.constant.ConstantPool;
 import com.sun.max.vm.classfile.create.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
@@ -175,7 +175,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 return new VirtualMethodActor(
                                 SymbolTable.INIT,
                                 SignatureDescriptor.fromJava(Void.TYPE),
-                                Modifier.PUBLIC | Actor.INSTANCE_INITIALIZER,
+                                Modifier.PUBLIC | Actor.INITIALIZER,
                                 codeAttribute);
             } catch (NoSuchMethodException e) {
                 return null;
@@ -398,7 +398,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
                 // Save the generated class file to the filesystem so that a generated stub for a method in the
                 // generated class can find the corresponding Class instance
-                if (MaxineVM.isPrototyping()) {
+                if (MaxineVM.isHosted()) {
                     VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(className, classfileBytes);
                 }
 
@@ -496,8 +496,8 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         return compilerTestSetup().createInterpreter() != null;
     }
 
-    protected IrInterpreter<Method_Type> createInterpreter() {
-        final IrInterpreter<Method_Type> interpreter = compilerTestSetup().createInterpreter();
+    protected IrInterpreter<? extends IrMethod> createInterpreter() {
+        final IrInterpreter<? extends IrMethod> interpreter = compilerTestSetup().createInterpreter();
         ProgramError.check(interpreter != null, "no interpreter available for this representation");
         return interpreter;
     }

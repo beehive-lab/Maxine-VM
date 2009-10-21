@@ -273,8 +273,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a call to a native function from a native stub.
      */
     private void verboseJniEntry() {
-        if (MaxineVM.isPrototyping()) {
-            // Stubs generated while prototyping need to test the "-verbose" VM program argument
+        if (MaxineVM.isHosted()) {
+            // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label noTracing = newLabel();
             ifeq(noTracing);
@@ -297,8 +297,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      * Generates the code to trace a return to a native stub from a native function.
      */
     private void verboseJniExit() {
-        if (MaxineVM.isPrototyping()) {
-            // Stubs generated while prototyping need to test the "-verbose" VM program argument
+        if (MaxineVM.isHosted()) {
+            // Stubs generated while bootstrapping need to test the "-verbose" VM program argument
             invokestatic(traceJNI, 0, 1);
             final Label notVerbose = newLabel();
             ifeq(notVerbose);

@@ -22,11 +22,8 @@ package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.runtime.*;
 
 
 /**
@@ -47,11 +44,7 @@ public final class NativeMethodInspector extends MethodInspector {
     public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent, null, teleTargetRoutine.teleRoutine());
         this.teleTargetRoutine = teleTargetRoutine;
-        if (teleTargetRoutine instanceof TeleRuntimeStub) {
-            final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) teleTargetRoutine;
-            shortName = Strings.capitalizeFirst(teleRuntimeStub.getName(), false);
-            longName = shortName;
-        } else if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
+        if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
             final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) teleTargetRoutine;
             shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
             longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
@@ -59,7 +52,7 @@ public final class NativeMethodInspector extends MethodInspector {
             shortName = teleTargetRoutine.getName();
             longName = shortName;
         }
-        createFrame(null);
+        createFrame();
     }
 
     @Override

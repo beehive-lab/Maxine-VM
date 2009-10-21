@@ -58,7 +58,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
                     }
                     case MouseEvent.BUTTON3: {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
-                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName, null));
+                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName));
                         menu.add(inspection().actions().selectMemoryRegion(memoryRegion));
                         menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
@@ -85,6 +85,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     @Override
     protected void updateText() {
+        memoryRegion = null;
         if (value() != null && !value().isZero()) {
             address = value().toWord().asAddress();
             memoryRegion = maxVM().memoryRegionContaining(address);
@@ -101,7 +102,6 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     public void redisplay() {
         setFont(style().javaNameFont());
-        setForeground(style().javaNameColor());
         updateText();
     }
 

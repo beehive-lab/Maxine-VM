@@ -56,7 +56,7 @@ public class VerboseVMOption extends VMOption {
      */
     public boolean verboseJNI;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public VerboseVMOption() {
         super("-verbose", "Enables verbose output. ");
     }

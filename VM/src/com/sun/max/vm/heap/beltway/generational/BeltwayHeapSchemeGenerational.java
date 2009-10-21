@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.generational.BeltwayGenerationalCollector.*;
 import com.sun.max.vm.heap.beltway.profile.*;
@@ -35,7 +36,7 @@ import com.sun.max.vm.reference.*;
  * Heap scheme for a three-generations generational collector. Configured with three belts: one for a nursery (the eden
  * space); one for a survivor space (to space); and one for the tenured generation (the mature space). The scheme uses a
  * specific collector for each belt when they fills up. There is a single-threaded and parallel version for each of
- * these collectors. An instance of each of these collector is created and initialized at prototyping time. What
+ * these collectors. An instance of each of these collector is created and initialized while bootstrapping. What
  * collectors to use (single-threaded vs parallel) is selected at runtime.
  *
  * The rationale for doing this is that the collector objects are allocated in the boot region and out of reach of the
@@ -102,25 +103,27 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         @INLINE(override = true)
         @Override
         public boolean contains(Pointer origin) {
-            return inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || inToSpace(origin) || inEdenSpace(origin);
+            return
+            inMatureSpace(origin) ||  Heap.bootHeapRegion.contains(origin) || Code.contains(origin) ||
+            inToSpace(origin) || inEdenSpace(origin) || ImmortalHeap.getImmortalHeap().contains(origin);
         }
     }
 
     final GenHeapBoundChecker genHeapBoundChecker;
 
-    private Runnable edenGC;
-    private Runnable toGC;
-    private Runnable majorGC;
+    private Collector edenGC;
+    private Collector toGC;
+    private Collector majorGC;
 
-    public Runnable getMinorGC() {
+    public Collector getMinorGC() {
         return edenGC;
     }
 
-    public Runnable getMajorGC() {
+    public Collector getMajorGC() {
         return majorGC;
     }
 
-    public Runnable getToGC() {
+    public Collector getToGC() {
         return toGC;
     }
 
@@ -147,7 +150,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             for (BeltwayGenerationalCollector collector : singleThreadedCollectors) {
                 collector.initialize(this);
             }
@@ -156,20 +159,22 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             }
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
-            // The following line enables allocation to take place.
-            tlabAllocationBelt = getEdenSpace();
-
             final BeltwayGenerationalCollector [] collectors = parallelScavenging ? parallelCollectors : singleThreadedCollectors;
 
-            edenGC = (Runnable) collectors[0];
-            toGC =  (Runnable) collectors[1];
-            majorGC = (Runnable) collectors[2];
+            edenGC = collectors[0];
+            toGC =  collectors[1];
+            majorGC = collectors[2];
 
         } else if (phase == MaxineVM.Phase.RUNNING) {
             if (Heap.verbose()) {
                 HeapTimer.initializeTimers(Clock.SYSTEM_MILLISECONDS, "TotalGC", "EdenGC", "ToSpaceGC", "MatureSpaceGC", "Clear", "RootScan", "BootHeapScan", "CodeScan", "CardScan", "Scavenge");
             }
         }
+    }
+
+    @Override
+    protected void initializeTlabAllocationBelt() {
+        tlabAllocationBelt = getEdenSpace();
     }
 
     @INLINE

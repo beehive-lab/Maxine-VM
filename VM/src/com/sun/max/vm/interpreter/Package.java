@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -20,14 +20,12 @@
  */
 package com.sun.max.vm.interpreter;
 
-import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
-public class Package extends MaxPackage {
+public class Package extends VMPackage {
     public Package() {
         super();
     }

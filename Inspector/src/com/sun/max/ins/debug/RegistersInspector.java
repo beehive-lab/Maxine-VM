@@ -22,6 +22,8 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -64,7 +66,16 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        createFrame(null);
+        final InspectorFrame frame = createFrame();
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+        final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
+        memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
+        final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
+        viewMemoryRegionsMenuItem.setText("View Memory Regions");
+        memoryMenu.add(viewMemoryRegionsMenuItem);
+
+
+        frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         refreshView(true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -79,10 +90,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         thread = inspection().focus().thread();
         if (thread == null) {
             table = null;
+            frame().setContentPane(new InspectorPanel(inspection(), new BorderLayout()));
         } else {
             table = new RegistersTable(inspection(), thread, viewPreferences);
+            frame().setContentPane(new InspectorScrollPane(inspection(), table));
         }
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
         updateFrameTitle();
     }
 

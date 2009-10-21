@@ -478,14 +478,6 @@ public interface MaxVM {
     TeleTargetMethod makeTeleTargetMethod(Address address);
 
     /**
-     * Get the TeleRuntimeStub, newly created if needed, that contains a given address in the VM.
-     *
-     * @param address address in target code memory in the VM
-     * @return a possibly newly created runtime stub whose code contains the address.
-     */
-    TeleRuntimeStub makeTeleRuntimeStub(Address address);
-
-    /**
      * Create a new TeleNativeTargetRoutine for a block of native code in the VM that has not yet been registered.
      *
      * @param codeStart starting address of the code in VM memory

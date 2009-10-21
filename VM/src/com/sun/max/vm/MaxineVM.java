@@ -24,6 +24,7 @@ import static com.sun.max.vm.VMOptions.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -50,7 +51,7 @@ import com.sun.max.vm.type.*;
  */
 public final class MaxineVM {
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static ThreadLocal<MaxineVM> hostOrTarget = new ThreadLocal<MaxineVM>() {
         @Override
         protected synchronized MaxineVM initialValue() {
@@ -67,20 +68,27 @@ public final class MaxineVM {
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
 
     /**
-     * The signature of {@link #run(Pointer, Pointer, Word, Word, Word, int, Pointer)}.
+     * The signature of {@link #run(com.sun.max.unsafe.Pointer,
+     *     com.sun.max.unsafe.Pointer,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Word,
+     *     com.sun.max.unsafe.Pointer,
+     *     int,
+     *     com.sun.max.unsafe.Pointer)}.
      */
     public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static final Class[] RUN_METHOD_PARAMETER_TYPES;
 
-    @PROTOTYPE_ONLY
-    private static final Map<Class, Boolean> PROTOTYPE_CLASSES = new HashMap<Class, Boolean>();
+    @HOSTED_ONLY
+    private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
     private static final VMOption EA_OPTION = register(new VMOption("-ea", "Enables assertions in user code.  Currently unimplemented."), MaxineVM.Phase.PRISTINE);
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     private static MaxineVM globalHostOrTarget = null;
 
     /**
@@ -108,19 +116,13 @@ public final class MaxineVM {
 
     private static int exitCode = 0;
 
-    public final VMConfiguration configuration;
-    private Phase phase = Phase.PROTOTYPING;
-
-
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
         MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
         final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
         if (p != null) {
             final String[] parts = p.split(",");
-            for (int i = 0; i < parts.length; i++) {
-                MAXINE_CODE_BASE_LIST.add(parts[i]);
-            }
+            MAXINE_CODE_BASE_LIST.addAll(Arrays.asList(parts));
         }
 
         Method runMethod = null;
@@ -138,12 +140,12 @@ public final class MaxineVM {
         /**
          * Running on a host VM in order to construct a target VM or to run tests.
          */
-        PROTOTYPING,
+        BOOTSTRAPPING,
 
         /**
-         * Creating the compiled prototype.
+         * Creating the compiled boot image.
          */
-        CREATING_COMPILED_PROTOTYPE,
+        COMPILING,
 
         /**
          * Executing target VM code, but many features do not work yet.
@@ -210,14 +212,7 @@ public final class MaxineVM {
         return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
     }
 
-    public static void writeInitialVMParams() {
-        native_writeMaxMemory(Heap.maxSize().toLong());
-        native_writeTotalMemory(Heap.maxSize().toLong());
-        // TODO: write a sensible value here, and keep native space up to date
-        native_writeFreeMemory(Heap.maxSize().toLong() >> 1);
-    }
-
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static boolean isHostInitialized() {
         return host != null;
     }
@@ -230,15 +225,15 @@ public final class MaxineVM {
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     private static MaxineVM host_() {
         return host;
     }
 
     /**
-     * This differs from 'host()' only while running the prototype generator.
+     * This differs from {@link #host()} only while running the prototype generator.
      *
-     * When prototyping return the VM that is being generated else return the new host VM (that has once been
+     * When bootstrapping, returns the VM that is being generated else returns the new host VM (that has once been
      * generated as a "target").
      *
      * @return the prototype generator's "target" VM
@@ -252,12 +247,12 @@ public final class MaxineVM {
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     private static MaxineVM target_() {
         return target;
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setTarget(MaxineVM vm) {
         target = vm;
     }
@@ -267,7 +262,7 @@ public final class MaxineVM {
      * configuration.
      */
     public static void usingTarget(Runnable runnable) {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             runnable.run();
@@ -282,7 +277,7 @@ public final class MaxineVM {
      * configuration.
      */
     public static <Result_Type> Result_Type usingTarget(Function<Result_Type> function) {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             try {
@@ -310,7 +305,7 @@ public final class MaxineVM {
      * Runs a given function that may throw a checked exception in the context of the target VM configuration.
      */
     public static <Result_Type> Result_Type usingTargetWithException(Function<Result_Type> function) throws Exception {
-        if (isPrototyping()) {
+        if (isHosted()) {
             final MaxineVM vm = hostOrTarget.get();
             hostOrTarget.set(target());
             try {
@@ -328,7 +323,7 @@ public final class MaxineVM {
      *
      * @param vm the global VM object that will be the answer to all subsequent requests for a hot or target VM context request
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void setGlobalHostOrTarget(MaxineVM vm) {
         globalHostOrTarget = vm;
     }
@@ -341,7 +336,7 @@ public final class MaxineVM {
     @UNSAFE
     @FOLD
     public static MaxineVM hostOrTarget() {
-        if (isPrototyping()) {
+        if (isHosted()) {
             if (globalHostOrTarget != null) {
                 return globalHostOrTarget;
             }
@@ -350,21 +345,26 @@ public final class MaxineVM {
         return host;
     }
 
-    // Substituted by isPrototyping_()
+    /**
+     * Determines if the current execution environment is hosted on another JVM.
+     *
+     * @return {@code true} if being executed on another JVM, {@code false} if executing the bootstrapped/target VM.
+     */
     @UNSAFE
-    public static boolean isPrototyping() {
+    public static boolean isHosted() {
         return true;
     }
 
     @UNSAFE
-    @SURROGATE
+    @LOCAL_SUBSTITUTION
     @FOLD
-    public static boolean isPrototyping_() {
+    public static boolean isHosted_() {
         return false;
     }
 
     /**
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
+     * @return {@code true} if this is a debug build
      */
     @UNSAFE
     @FOLD
@@ -373,36 +373,38 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given constructor, field or method exists only for prototyping purposes and should not be part of
-     * a generated target image.
+     * Determines if a given constructor, field or method exists only for hosted execution.
+     *
+     * @param member the member to check
+     * @return {@code true} if the member is only valid while executing hosted
      */
-    @PROTOTYPE_ONLY
-    public static boolean isPrototypeOnly(AccessibleObject member) {
-        if (member.getAnnotation(PROTOTYPE_ONLY.class) != null) {
-            return true;
-        }
-        return isPrototypeOnly(Classes.getDeclaringClass(member));
+    @HOSTED_ONLY
+    public static boolean isHostedOnly(AccessibleObject member) {
+        return member.getAnnotation(HOSTED_ONLY.class) != null || isHostedOnly(Classes.getDeclaringClass(member));
     }
 
     /**
-     * Determines if a given class exists only for prototyping purposes and should not be part
-     * of a generated target image. A class is determined to be a prototype-only class if any
+     * Determines if a given class exists only for hosted execution and should not be part
+     * of a generated target image. A class is determined to be a hosted-only class if any
      * of the following apply:
      *
-     * 1. It is annotated with {@link PROTOTYPE_ONLY}.
-     * 2. It is nested class in an {@linkplain Class#getEnclosingClass() enclosing} prototype-only class.
+     * 1. It is annotated with {@link HOSTED_ONLY}.
+     * 2. It is nested class in an {@linkplain Class#getEnclosingClass() enclosing} hosted-only class.
      * 3. It is in a {@linkplain MaxPackage#fromClass(Class) Maxine package} that is not a {@linkplain BasePackage base},
      *    {@linkplain AsmPackage assembler}, {@linkplain VMPackage VM} or test package.
+     *
+     * @param javaClass the class to check
+     * @return {@code true} if the class is only valid while bootstrapping
      */
-    @PROTOTYPE_ONLY
-    public static boolean isPrototypeOnly(Class<?> javaClass) {
-        final Boolean value = PROTOTYPE_CLASSES.get(javaClass);
+    @HOSTED_ONLY
+    public static boolean isHostedOnly(Class<?> javaClass) {
+        final Boolean value = HOSTED_CLASSES.get(javaClass);
         if (value != null) {
-            return value.booleanValue();
+            return value;
         }
 
-        if (javaClass.getAnnotation(PROTOTYPE_ONLY.class) != null) {
-            PROTOTYPE_CLASSES.put(javaClass, Boolean.TRUE);
+        if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }
 
@@ -410,18 +412,18 @@ public final class MaxineVM {
         if (maxPackage != null) {
             if (maxPackage.getClass().getSuperclass() == MaxPackage.class) {
                 final boolean isTestPackage = maxPackage.name().startsWith("test.com.sun.max.");
-                PROTOTYPE_CLASSES.put(javaClass, !isTestPackage);
+                HOSTED_CLASSES.put(javaClass, !isTestPackage);
                 return !isTestPackage;
             }
         }
 
         final Class<?> enclosingClass = javaClass.getEnclosingClass();
         if (enclosingClass != null) {
-            final boolean result = isPrototypeOnly(enclosingClass);
-            PROTOTYPE_CLASSES.put(javaClass, Boolean.valueOf(result));
+            final boolean result = isHostedOnly(enclosingClass);
+            HOSTED_CLASSES.put(javaClass, result);
             return result;
         }
-        PROTOTYPE_CLASSES.put(javaClass, Boolean.FALSE);
+        HOSTED_CLASSES.put(javaClass, Boolean.FALSE);
         return false;
     }
 
@@ -443,7 +445,7 @@ public final class MaxineVM {
     }
 
     public static boolean isRunning() {
-        return host().phase() == Phase.RUNNING;
+        return host().phase == Phase.RUNNING;
     }
 
     /**
@@ -451,8 +453,7 @@ public final class MaxineVM {
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        for (int i = 0; i < MAXINE_CODE_BASE_LIST.size(); i++) {
-            final String prefix = MAXINE_CODE_BASE_LIST.get(i);
+        for (final String prefix : MAXINE_CODE_BASE_LIST) {
             if (className.startsWith(prefix)) {
                 return true;
             }
@@ -478,7 +479,7 @@ public final class MaxineVM {
     /**
      * Used by the inspector only.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static Class[] runMethodParameterTypes() {
         return RUN_METHOD_PARAMETER_TYPES.clone();
     }
@@ -499,7 +500,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
+    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -524,11 +525,12 @@ public final class MaxineVM {
 
         ImmortalHeap.initialize();
 
-        JniNativeInterface.initialize();
+        JniNativeInterface.initialize(jniEnv);
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-        hostOrTarget().setPhase(MaxineVM.Phase.PRISTINE);
+        MaxineVM vm = hostOrTarget();
+        vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
             if (HELP_OPTION.isPresent()) {
@@ -551,7 +553,7 @@ public final class MaxineVM {
     /**
      * Request the given method to be statically compiled in the boot image.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void registerImageMethod(ClassMethodActor imageMethod) {
         CompiledPrototype.registerImageMethod(imageMethod);
     }
@@ -559,12 +561,12 @@ public final class MaxineVM {
     /**
      * Request the given method to be statically compiled in the boot image.
      */
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void registerImageInvocationStub(MethodActor imageMethodActorWithInvocationStub) {
         CompiledPrototype.registerImageInvocationStub(imageMethodActorWithInvocationStub);
     }
 
-    @PROTOTYPE_ONLY
+    @HOSTED_ONLY
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
         registerImageMethod(criticalEntryPoint.classMethodActor);
     }
@@ -572,7 +574,7 @@ public final class MaxineVM {
     /*
      * Global native functions: these functions implement a thin layer over basic native
      * services that are needed to implement higher-level Java VM services. Note that
-     * these native functions *ONLY* work on the target VM, not in prototyping or
+     * these native functions *ONLY* work on the target VM, not in bootstrapping or
      * inspecting modes.
      *
      * These service methods cannot block, and cannot use object references.
@@ -604,26 +606,11 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
 
-    @C_FUNCTION
-    public static native void native_writeMaxMemory(long maxMem);
-
-    @C_FUNCTION
-    public static native void native_writeTotalMemory(long totalMem);
-
-    @C_FUNCTION
-    public static native void native_writeFreeMemory(long freeMem);
-
+    public final VMConfiguration configuration;
+    public Phase phase = Phase.BOOTSTRAPPING;
 
     public MaxineVM(VMConfiguration vmConfiguration) {
         configuration = vmConfiguration;
-    }
-
-    public Phase phase() {
-        return phase;
-    }
-
-    public void setPhase(Phase phase) {
-        this.phase = phase;
     }
 
 }

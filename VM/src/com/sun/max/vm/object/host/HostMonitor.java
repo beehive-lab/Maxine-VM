@@ -27,7 +27,7 @@ import java.util.concurrent.locks.*;
 
 import com.sun.max.annotate.*;
 
-@PROTOTYPE_ONLY
+@HOSTED_ONLY
 public final class HostMonitor {
 
     private HostMonitor() {

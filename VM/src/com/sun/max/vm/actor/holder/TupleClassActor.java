@@ -92,7 +92,7 @@ public class TupleClassActor extends ReferenceClassActor {
      */
     @INLINE
     private static ClassActor getSuperClassActor(ClassActor superClassActor, Utf8Constant name) {
-        if (MaxineVM.isPrototyping()) {
+        if (MaxineVM.isHosted()) {
             if (JavaTypeDescriptor.WORD == JavaTypeDescriptor.getDescriptorForJavaString(name.toString())) {
                 return null;
             }

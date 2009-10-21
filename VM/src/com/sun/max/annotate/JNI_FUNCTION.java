@@ -21,20 +21,15 @@
 package com.sun.max.annotate;
 import java.lang.annotation.*;
 
-import com.sun.max.vm.jni.*;
-
 /**
  * This annotation instructs the compiler that a method needs to conform to the native ABI (e.g. implements callee saved
  * registers if necessary) so that it can be called as a C function pointer.
  * <p>
- * A method annotated with this annotation also has an implicit {@link WRAPPED} annotation with the
- * {@linkplain WRAPPED#value() value} of {@link JniFunctionWrapper JniFunctionWrapper.class}.
- * <p>
  * No parameter type or return type of an annotated method may refer to object references - only primitive Java values
  * and 'Word' values are allowed.
  * <p>
- * 
- * 
+ *
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */

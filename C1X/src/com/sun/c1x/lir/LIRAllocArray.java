@@ -107,16 +107,6 @@ public class LIRAllocArray extends LIRInstruction {
     }
 
     /**
-     * Gets the fourth temporary associated with this call instruction.
-     * TODO: what information does the tmp hold?
-     *
-     * @return the tmp4
-     */
-    public LIROperand tmp4() {
-        return operand(5);
-    }
-
-    /**
      * Gets the basic type of this instruction.
      *
      * @return the type

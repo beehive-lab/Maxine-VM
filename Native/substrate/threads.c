@@ -84,7 +84,7 @@ void freeThreadLocals(ThreadLocals tl) {
     }
 }
 
-void threads_initialize(ThreadLocals primordial_tl) {
+void threads_initialize(Address primordial_ThreadLocalsAndAnchor) {
 #if os_DARWIN || os_LINUX
     pthread_key_create(&theThreadLocalsKey, (ThreadLocalsDestructor) freeThreadLocals);
 #elif os_SOLARIS
@@ -94,6 +94,9 @@ void threads_initialize(ThreadLocals primordial_tl) {
 #else
     c_UNIMPLEMENTED();
 #endif
+
+    ThreadLocals primordial_tl = primordial_ThreadLocalsAndAnchor;
+    Address anchor = primordial_tl + threadLocalsSize();
 
     /* Create native thread locals for the primordial thread so that there's a better chance
      * of reporting something sensible if it takes a trap. This also enables its VM thread locals
@@ -107,6 +110,7 @@ void threads_initialize(ThreadLocals primordial_tl) {
     setThreadLocal(primordial_tl, SAFEPOINTS_ENABLED_THREAD_LOCALS, primordial_tl);
     setThreadLocal(primordial_tl, SAFEPOINTS_DISABLED_THREAD_LOCALS, primordial_tl);
     setThreadLocal(primordial_tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS, primordial_tl);
+    setThreadLocal(primordial_tl, LAST_JAVA_FRAME_ANCHOR, anchor);
     primordial_ntl->id = 0;
 
 #if os_SOLARIS
@@ -227,6 +231,7 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     stackBottom = virtualMemory_pageAlign(ntl->stackBase) + virtualMemory_getPageSize();
 #endif
     const int tlSize = threadLocalsSize();
+    const int jfaSize = javaFrameAnchorSize();
     Address current = stackBottom - sizeof(Address);
     Size refMapAreaSize = 1 + ntl->stackSize / sizeof(Address) / 8;
 
@@ -235,6 +240,8 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     ThreadLocals disabled_tl  = (ThreadLocals) (current + (tlSize * 2));
 
     current = (Address) disabled_tl + tlSize;
+    Address anchor = current;
+    current += jfaSize;
     ntl->refMapArea = current;
     current = virtualMemory_pageAlign(current + refMapAreaSize);
     ntl->stackRedZone = current;
@@ -247,6 +254,9 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     memset((void *) ((Address) triggered_tl + sizeof(Address)), 0, tlSize - sizeof(Address));
     memset((void *) enabled_tl, 0, tlSize);
     memset((void *) disabled_tl, 0, tlSize);
+
+    /* Clear the base anchor: */
+    memset((void *) anchor, 0, jfaSize);
 
     setThreadLocal(enabled_tl, SAFEPOINTS_ENABLED_THREAD_LOCALS, enabled_tl);
     setThreadLocal(enabled_tl, SAFEPOINTS_DISABLED_THREAD_LOCALS, disabled_tl);
@@ -266,6 +276,8 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     setConstantThreadLocal(enabled_tl, NATIVE_THREAD_LOCALS, ntl);
     setConstantThreadLocal(enabled_tl, ID, ntl->id);
 
+    setThreadLocal(enabled_tl, LAST_JAVA_FRAME_ANCHOR, anchor);
+
 #if log_THREADS
     int id = ntl->id;
     log_println("thread %3d: stackBase = %p", id, ntl->stackBase);
@@ -275,6 +287,7 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     log_println("thread %3d: triggeredVmThreadLocals = %p", id, triggered_tl);
     log_println("thread %3d: enabledVmThreadLocals   = %p", id, enabled_tl);
     log_println("thread %3d: disabledVmThreadLocals  = %p", id, disabled_tl);
+    log_println("thread %3d: anchor     = %p", id, anchor);
     log_println("thread %3d: refMapArea = %p", id, ntl->refMapArea);
     log_println("thread %3d: redZone    = %p", id, ntl->stackRedZone);
     log_println("thread %3d: yellowZone = %p", id, ntl->stackYellowZone);
@@ -474,7 +487,7 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  * Join a thread.
  * @C_FUNCTION - called from Java
  */
-jboolean nativeJoin(Address thread) {
+jboolean nonJniNativeJoin(Address thread) {
 #if log_THREADS
     log_println("BEGIN nativeJoin: %p", thread);
 #endif
@@ -486,6 +499,11 @@ jboolean nativeJoin(Address thread) {
     log_println("END nativeJoin: %p", thread);
 #endif
     return result;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_vm_thread_VmThread_nativeJoin(JNIEnv *env, jclass c, Address thread) {
+	return nonJniNativeJoin(thread);
 }
 
 JNIEXPORT void JNICALL
@@ -559,10 +577,9 @@ Java_com_sun_max_vm_thread_VmThread_nativeSleep(JNIEnv *env, jclass c, jlong num
 JNIEXPORT void JNICALL
 Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Address nativeThread, jint priority) {
 #if os_SOLARIS
-    int result = thr_setprio(nativeThread, priority);
-    if (result != 0) {
-        log_println("thread %p: nativeSetPriority %d failed [%s]", thread_current(), priority, strerror(result));
-    }
+    int err = thr_setprio(nativeThread, priority);
+    c_ASSERT(err != ESRCH);
+    c_ASSERT(err != EINVAL);
 #elif os_GUESTVMXEN
     guestvmXen_set_priority((void *) nativeThread, priority);
 #else
