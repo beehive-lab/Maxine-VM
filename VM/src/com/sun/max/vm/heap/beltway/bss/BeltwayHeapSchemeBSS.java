@@ -155,14 +155,17 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         // do nothing.
     }
 
-    @Override
-    public Pointer getForwardedObjectPointer(Pointer value) {
+    public boolean isForwardingPointer(Pointer pointer) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer value) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
-    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
         // TODO Auto-generated method stub
         return null;
     }

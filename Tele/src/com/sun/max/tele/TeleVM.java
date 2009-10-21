@@ -1011,7 +1011,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Reference wordToReference(Word word) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(getForwardedObjectPointer(word.asPointer())));
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(getTrueLocationFromPointer(word.asPointer())));
     }
 
     /**
@@ -1959,8 +1959,12 @@ public abstract class TeleVM implements MaxVM {
         registeredStepOutThread = teleNativeThread;
     }
 
-    public Pointer getForwardedObjectPointer(Pointer pointer) {
-        return VMConfiguration.hostOrTarget().heapScheme().getForwardedObjectPointer(pointer);
+    public boolean isForwardingPointer(Pointer pointer) {
+        return VMConfiguration.hostOrTarget().heapScheme().isForwardingPointer(pointer);
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return VMConfiguration.hostOrTarget().heapScheme().getTrueLocationFromPointer(pointer);
     }
 
     public Pointer getForwardedObject(Pointer pointer) {
