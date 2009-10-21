@@ -340,7 +340,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             final TeleHub teleHub = tableModel.teleHub();
-                                return teleHub == null ? WordValue.ZERO : WordValue.from(inspection().maxVM().readWord(teleObject.getCurrentOrigin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
+                            return teleHub == null ? WordValue.ZERO : WordValue.from(inspection().maxVM().readWord(teleObject.getCurrentOrigin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {
