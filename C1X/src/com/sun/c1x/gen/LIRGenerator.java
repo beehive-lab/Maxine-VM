@@ -685,7 +685,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (useXir(needsPatching)) {
             // XIR support for GETSTATIC and GETFIELD
             XirArgument receiver = toXirArgument(x.object());
-            XirSnippet snippet = x.isStatic() ? xir.genGetStatic(field) : xir.genGetField(receiver, field);
+            XirSnippet snippet = /*x.isStatic() ? xir.genGetStatic(field) :*/ xir.genGetField(receiver, field);
             if (snippet != null) {
                 emitXir(snippet, x, info, null);
                 return;
@@ -1020,7 +1020,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XIR support for PUTSTATIC and PUTFIELD
             XirArgument receiver = toXirArgument(x.object());
             XirArgument value = toXirArgument(x.value());
-            XirSnippet snippet = x.isStatic() ? xir.genPutStatic(value, field) : xir.genPutField(receiver, field, value);
+            XirSnippet snippet = /*x.isStatic() ? xir.genPutStatic(value, field) :*/ xir.genPutField(receiver, field, value);
             if (snippet != null) {
                 emitXir(snippet, x, info, null);
                 return;
