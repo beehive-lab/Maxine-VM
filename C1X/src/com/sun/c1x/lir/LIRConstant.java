@@ -113,6 +113,16 @@ public class LIRConstant extends LIROperand {
     }
 
     /**
+     * Gets the jsr referred to by this constant.
+     *
+     * @return the jsr
+     */
+    public Object asJsr() {
+        assertType(this, CiKind.Jsr);
+        return value.asJsr();
+    }
+
+    /**
      * Gets the low order 32 bits of this constant; The constant type must be long.
      *
      * @return the lower order 32 bits of this constant
@@ -214,6 +224,8 @@ public class LIRConstant extends LIROperand {
                 return String.format("dbl:%f", this.asDouble());
             case Object:
                 return String.format("obj:%s", this.asObject());
+            case Jsr:
+                return String.format("jsr:%s", this.asJsr());
             case Word:
                 return String.format("word:%d", this.asWord());
             default:

@@ -291,6 +291,7 @@ public abstract class Value {
      */
     public final void setOperand(LIROperand operand) {
         assert operand != null && !operand.isIllegal() : "operand must exist";
+        assert operand.kind == this.kind;
         lirOperand = operand;
     }
 

@@ -713,6 +713,10 @@ public class BlockBegin extends Instruction {
         return stateBefore.allLivePhis(this);
     }
 
+    public Iterable<Phi> allPhis() {
+        return stateBefore.allPhis(this);
+    }
+
     public void addExceptionStates(List<ValueStack> exceptHandlerStates) {
         for (ValueStack state : exceptHandlerStates) {
             addExceptionState(state.copy());

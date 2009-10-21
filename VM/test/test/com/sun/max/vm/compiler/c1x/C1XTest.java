@@ -250,8 +250,9 @@ public class C1XTest {
         }
         if (printBailout && result.bailout() != null) {
             out.println("");
+            out.println(method);
             if (printBailoutSizeOption.getValue()) {
-                out.println(method + " = " + result.statistics().byteCount + " bytes");
+                out.println(result.statistics().byteCount + " bytes");
             }
             result.bailout().printStackTrace();
         }
