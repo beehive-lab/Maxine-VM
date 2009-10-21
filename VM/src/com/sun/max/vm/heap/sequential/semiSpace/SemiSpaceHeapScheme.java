@@ -1145,26 +1145,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    public Pointer getForwardedObjectPointer(Pointer oldObject) {
-        if (oldObject.and(1).toLong() == 1) {
-            return oldObject.minus(1);
-        }
-        return oldObject;
+    public boolean isForwardingPointer(Pointer pointer) {
+        return (!pointer.isZero()) &&  pointer.and(1).toLong() == 1;
     }
 
-    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
-        if (!pointer.isZero()) {
-            Word word = dataAccess.readWord(pointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
-            if (word.asPointer().and(1).toLong() == 1) {
-                if (word.asPointer().minus(1).equals(Pointer.zero())) {
-                    return pointer;
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        if (!objectPointer.isZero()) {
+            Pointer pointer = dataAccess.readWord(objectPointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
+            if (isForwardingPointer(pointer)) {
+                final Pointer newPointer = getTrueLocationFromPointer(pointer);
+                if (!newPointer.isZero()) {
+                    return newPointer;
                 }
-                return word.asPointer().minus(1);
             }
         }
-        if (pointer.equals(Pointer.zero())) {
-            return pointer;
-        }
-        return pointer;
+        return objectPointer;
     }
 }

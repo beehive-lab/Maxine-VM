@@ -182,7 +182,7 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * A hint that the heap scheme can increase its memory usage.
-     * @param amount suggetsed amount to increase
+     * @param amount suggested amount to increase
      * @return true if can/will increase memory usage, false otherwise
      */
     boolean increaseMemory(Size amount);
@@ -240,18 +240,28 @@ public interface HeapScheme extends VMScheme {
     void disableImmortalMemoryAllocation();
 
     /**
-     * Get the pointer to the forwarded object if such an object exists.
-     * @param forwardingPointer forwardingPointer in old object location
-     * @return the forwarded object pointer, otherwise returns the given pointer
+     * Determines if a pointer is a GC forwarding pointer.
+     *
+     * @param pointer a pointer to VM memory
+     * @return true iff the pointer is a GC forwarding pointer
      */
-    Pointer getForwardedObjectPointer(Pointer forwardingPointer);
+    boolean isForwardingPointer(Pointer pointer);
 
     /**
-     * Returns the forwarded object to a given object, if given object got forwarded; otherwise
-     * it returns the old object pointer.
-     * @param pointer old object pointer
-     * @param dataAccess data access
-     * @return forwarded or old object
+     * Get where a pointer actually points, even if it is a forwarding pointer.
+     *
+     * @param forwardingPointer a pointer that might be a forwarding pointer
+     * @return where the pointers points, whether or not it is a forwarding pointer.
      */
-    Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess);
+    Pointer getTrueLocationFromPointer(Pointer pointer);
+
+    /**
+     * Returns the true location of an object that might have been forwarded, either
+     * the new location (if forwarded) or the same location (if not forwarded).
+     *
+     * @param objectPointer an object pointer
+     * @param dataAccess data access
+     * @return the current, possibly forwarded, location of the object
+     */
+    Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess);
 }
