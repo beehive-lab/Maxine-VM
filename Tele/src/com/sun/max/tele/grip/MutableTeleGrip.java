@@ -26,18 +26,50 @@ import com.sun.max.unsafe.*;
  * Raw bits may change due to tele GC.
  *
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 public final class MutableTeleGrip extends RemoteTeleGrip {
 
-    private final int index;
+    private int index;
+    private Address lastValidPointer = Address.zero();
 
     int index() {
+        if (forwardedTeleGrip != null) {
+            if (forwardedTeleGrip instanceof MutableTeleGrip) {
+                final MutableTeleGrip mutableTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
+                return mutableTeleGrip.index();
+            }
+        }
         return index;
     }
 
     @Override
+    public State getState() {
+        if (forwardedTeleGrip != null) {
+            MutableTeleGrip forwardedTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
+            if (forwardedTeleGrip.index() == -1) {
+                return State.DEAD;
+            }
+            return State.OBSOLETE;
+        }
+        if (index == -1) {
+            return State.DEAD;
+        }
+        return State.LIVE;
+    }
+
+    @Override
     public Address raw() {
-        return teleGripScheme().getRawGrip(this);
+        if (index == -1 || forwardedTeleGrip != null) {
+            return lastValidPointer;
+        }
+        Address tmp = teleGripScheme().getRawGrip(this);
+        if (!tmp.equals(Address.zero())) {
+            lastValidPointer = tmp;
+            return tmp;
+        }
+        index = -1;
+        return lastValidPointer;
     }
 
     MutableTeleGrip(TeleGripScheme teleGripScheme, int index) {
@@ -61,7 +93,9 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public void finalize() throws Throwable {
-        teleGripScheme().finalizeMutableTeleGrip(index);
+        if (getState() == State.LIVE) {
+            teleGripScheme().finalizeMutableTeleGrip(index);
+        }
         super.finalize();
     }
 

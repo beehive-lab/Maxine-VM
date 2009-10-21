@@ -931,6 +931,32 @@ public interface MaxVM {
      */
     void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException;
 
+    /**
+     * Determines if a pointer is a GC forwarding pointer.
+     *
+     * @param pointer a pointer to VM memory
+     * @return true iff the pointer is a GC forwarding pointer
+     */
+    boolean isForwardingPointer(Pointer pointer);
+
+    /**
+     * Get where a pointer actually points, even if it is a forwarding pointer.
+     *
+     * @param pointer a location in VM memory
+     * @return the forwarded object pointer, otherwise returns the given pointer
+     */
+    Pointer getTrueLocationFromPointer(Pointer pointer);
+
+    /**
+     * Returns the true location of an object that might have been forwarded, either
+     * the new location (if forwarded) or the same location (if not forwarded).
+     *
+     * @param pointer old object pointer
+     * @param dataAccess data access
+     * @return forwarded or old object
+     */
+    Pointer getForwardedObject(Pointer pointer);
+
 }
 
 

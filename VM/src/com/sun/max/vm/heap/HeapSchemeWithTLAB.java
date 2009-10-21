@@ -48,6 +48,10 @@ import com.sun.max.vm.type.*;
  */
 public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
+    public static final String TLAB_TOP_THREAD_LOCAL_NAME = "_TLAB_TOP";
+    public static final String TLAB_MARK_THREAD_LOCAL_NAME = "_TLAB_MARK";
+    public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "_TLAB_DISABLED";
+
     /**
      * A VM option for disabling use of TLABs.
      */
@@ -65,14 +69,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_TOP
-        = new VmThreadLocal("_TLAB_TOP", false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
+        = new VmThreadLocal(TLAB_TOP_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: top of current TLAB, zero if not used");
 
     /**
      * The allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}.
      */
     private static final VmThreadLocal TLAB_MARK
-        = new VmThreadLocal("_TLAB_MARK", false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal(TLAB_MARK_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: allocation mark of current TLAB, zero if not used");
 
     /**
      * The temporary top of the current thread-local allocation buffer. This will remain zero if TLABs are not
@@ -92,7 +96,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * Thread-local used to disable allocation per thread.
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
-        = new VmThreadLocal("_TLAB_DISABLED", false, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
+        = new VmThreadLocal(TLAB_DISABLED_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
 
     /**
      * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.

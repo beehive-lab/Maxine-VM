@@ -29,7 +29,7 @@ package com.sun.max.tele;
  */
 public abstract class AbstractTeleVMHolder implements TeleVMHolder {
 
-    private final TeleVM teleVM;
+    protected final TeleVM teleVM;
 
     public final TeleVM teleVM() {
         return teleVM;

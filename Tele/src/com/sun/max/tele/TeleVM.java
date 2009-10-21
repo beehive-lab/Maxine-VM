@@ -745,6 +745,10 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.dynamicHeapContains(address);
     }
 
+    public final boolean isInLiveMemory(Address address) {
+        return teleHeapManager.isInLiveMemory(address);
+    }
+
     public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
     }
@@ -856,6 +860,7 @@ public abstract class TeleVM implements MaxVM {
         if (origin.isZero()) {
             return false;
         }
+
         try {
             if (!containsInHeap(origin) && !containsInCode(origin)) {
                 return false;
@@ -881,14 +886,28 @@ public abstract class TeleVM implements MaxVM {
             // find the distinguished object with self-referential hub pointer:  the {@link DynamicHub} for
             // class {@link DynamicHub}.
             //          tuple -> dynamicHub of the tuple's class -> dynamicHub of DynamicHub
-            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
+
+            Pointer pointer = getForwardedObject(origin);
+            Word hubWord = layoutScheme().generalLayout.readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(pointer));
+            if (hubWord.equals(Word.zero())) {
+                return false;
+            }
+            Word clearedWord = getForwardedObject(hubWord.asPointer());
+            if (!hubWord.equals(clearedWord)) {
+                hubWord = clearedWord;
+            }
             for (int i = 0; i < 3; i++) {
                 final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
                 final Pointer hubOrigin = hubGrip.toOrigin();
                 if (!containsInHeap(hubOrigin) && !containsInCode(hubOrigin)) {
                     return false;
                 }
-                final Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubGrip);
+                Word nextHubWord = layoutScheme().generalLayout.readHubReferenceAsWord(hubGrip);
+                clearedWord = getForwardedObject(hubWord.asPointer());
+                if (!hubWord.equals(clearedWord)) {
+                    hubWord = clearedWord;
+                    //TODO: set status
+                }
                 if (nextHubWord.equals(hubWord)) {
                     // We arrived at a DynamicHub for the class DynamicHub
                     if (i < 2) {
@@ -955,13 +974,13 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private boolean isValidGrip(Grip grip) {
-        if (isInGC()) {
-            final TeleGrip teleGrip = (TeleGrip) grip;
-            if (teleGrip instanceof MutableTeleGrip) {
-                // Assume invalid during GC.
-                return false;
-            }
-        }
+//        if (isInGC()) {
+//            final TeleGrip teleGrip = (TeleGrip) grip;
+//            if (teleGrip instanceof MutableTeleGrip) {
+//                // Assume invalid during GC.
+//                return false;//TODO: check for forwarding pointer
+//            }
+//        }
         if (grip instanceof LocalTeleGrip) {
             return true;
         }
@@ -993,7 +1012,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Reference wordToReference(Word word) {
-        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(word.asPointer()));
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(getTrueLocationFromPointer(word.asPointer())));
     }
 
     /**
@@ -1547,11 +1566,10 @@ public abstract class TeleVM implements MaxVM {
         }
         refreshReferences();
         teleObjectFactory.refresh(processEpoch);
-        if (!isInGC()) {
-            // Only attempt to update state when not in a GC.
-            teleHeapManager.refresh(processEpoch);
-            teleClassRegistry.refresh(processEpoch);
-        }
+        //if (!isInGC()) { ATTETION: Could produce bugs.
+        teleHeapManager.refresh(processEpoch);
+        teleClassRegistry.refresh(processEpoch);
+        //}
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
 
@@ -1936,6 +1954,18 @@ public abstract class TeleVM implements MaxVM {
                     + registeredStepOutThread);
         }
         registeredStepOutThread = teleNativeThread;
+    }
+
+    public boolean isForwardingPointer(Pointer pointer) {
+        return VMConfiguration.hostOrTarget().heapScheme().isForwardingPointer(pointer);
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return VMConfiguration.hostOrTarget().heapScheme().getTrueLocationFromPointer(pointer);
+    }
+
+    public Pointer getForwardedObject(Pointer pointer) {
+        return VMConfiguration.hostOrTarget().heapScheme().getForwardedObject(pointer, teleProcess.dataAccess());
     }
 
     /**
