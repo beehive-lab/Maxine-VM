@@ -1,7 +1,9 @@
 Acharya
+Appel
 Aritra
 Athul
 Bandyopadhyay
+Beltway
 Ben
 Bernd
 Caprioli
@@ -20,11 +22,13 @@ Liu
 Ltd
 Marcelo
 Mathiske
+Matthew
 Maxine
 Michael
 Mick
 Microsystems
 Paul
+Seidl
 Simon
 Solaris
 Soman
@@ -40,6 +44,7 @@ accessor
 affordance
 affordances
 appendable
+beltway
 bytecode
 bytecodes
 callback
@@ -53,6 +58,7 @@ classloader
 classpath
 clipboard
 com
+compaction
 deactivate
 deactivated
 deactivates
@@ -151,5 +157,6 @@ uncompiled
 undock
 undockable
 unix
+viewport
 watchpoint
 watchpoints

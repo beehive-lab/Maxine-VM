@@ -322,7 +322,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (useXir()) {
             // XIR support for NEWARRAY
             XirArgument length = toXirArgument(x.length());
-            XirSnippet snippet = xir.genNewArray(length, x.elementKind(), null);
+            XirSnippet snippet = xir.genNewArray(length, x.elementKind(), null, null);
             if (snippet != null) {
                 emitXir(snippet, x, stateFor(x), null);
                 return;
@@ -336,7 +336,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (useXir()) {
             // XIR support for ANEWARRAY
             XirArgument length = toXirArgument(x.length());
-            XirSnippet snippet = xir.genNewArray(length, CiKind.Object, x.exactType());
+            XirSnippet snippet = xir.genNewArray(length, CiKind.Object, x.elementClass(), x.exactType());
             if (snippet != null) {
                 emitXir(snippet, x, stateFor(x), null);
                 return;
@@ -932,6 +932,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 } else {
                     inputOperands.add(op);
                     inputOperandsIndices.add(param.index);
+                    inputTempOperands.add(op);
+                    inputTempOperandsIndices.add(param.index);
                 }
             }
 

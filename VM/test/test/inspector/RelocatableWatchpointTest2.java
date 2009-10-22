@@ -35,11 +35,11 @@ public class RelocatableWatchpointTest2 {
     private static final int allocationSize = 20;
 
     public static SimpleObject getSimpleObject() {
-        return new SimpleObject(100, 200);
+        return new SimpleObject(100, 200, "live");
     }
 
     public static SimpleObject getGarbageSimpleObject() {
-        return new SimpleObject(10, 20);
+        return new SimpleObject(10, 20, "garbage");
     }
 
     public static void printMessage(SimpleObject simpleObject) {
@@ -53,6 +53,8 @@ public class RelocatableWatchpointTest2 {
         printMessage(test);
         System.gc();
         printMessage(test);
+        System.gc();
+        printMessage(test);
         System.out.println("program end");
     }
 
@@ -62,10 +64,10 @@ public class RelocatableWatchpointTest2 {
 
     private static class SimpleObject {
 
-        public SimpleObject(int value1, int value2) {
+        public SimpleObject(int value1, int value2, String text) {
             this.value1 = value1;
             this.value2 = value2;
-            this.string = new String("test " + value1);
+            this.string = text;
         }
 
         public int value1;

@@ -295,7 +295,7 @@ public class CompiledPrototype extends Prototype {
                 } else if (literal instanceof ResolutionGuard) {
                     // resolve any unresolved guards now if possible
                     final ResolutionGuard guard = (ResolutionGuard) literal;
-                    if (guard.value == null) {
+                    if (guard.value == null && !guard.arrayActor) {
                         final ConstantPool pool = guard.constantPool;
                         final ResolvableConstant resolvable = pool.resolvableAt(guard.constantPoolIndex);
                         if (resolvable.isResolvableWithoutClassLoading(pool)) {
