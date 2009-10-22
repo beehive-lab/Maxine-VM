@@ -29,6 +29,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.x86.X86Assembler.Condition;
@@ -2929,23 +2930,28 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 case PointerLoadDisp: {
 
-                    if ((Boolean) inst.extra && xir.info != null) {
+                    CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+
+                    if (addressInformation.canTrap && xir.info != null) {
                         addCallInfoHere(xir.info);
                     }
 
+                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.index]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.index]).asInt();
+
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
-                    LIROperand displacement = ops[inst.y().index];
+                    LIROperand index = ops[inst.y().index];
 
                     pointer = assureInRegister(pointer);
                     assert pointer.isRegister();
 
                     LIROperand src = null;
-                    if (displacement.isConstant() && displacement.kind == CiKind.Int) {
-                        LIRConstant constantDisplacement = (LIRConstant) displacement;
-                        src = new LIRAddress((LIRLocation) pointer, constantDisplacement.asInt(), inst.kind);
+                    if (index.isConstant() && index.kind == CiKind.Int) {
+                        LIRConstant constantDisplacement = (LIRConstant) index;
+                        src = new LIRAddress((LIRLocation) pointer, LIROperandFactory.IllegalLocation, scale, constantDisplacement.asInt() << scale.toInt() + displacement, inst.kind);
                     } else {
-                        src = new LIRAddress((LIRLocation) pointer, (LIRLocation) displacement, inst.kind);
+                        src = new LIRAddress((LIRLocation) pointer, (LIRLocation) index, scale, displacement, inst.kind);
                     }
 
                     moveOp(src, result, inst.kind, null, false);
@@ -2954,23 +2960,28 @@ public class X86LIRAssembler extends LIRAssembler {
 
                 case PointerStoreDisp: {
 
-                    if ((Boolean) inst.extra && xir.info != null) {
+                    CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
+
+                    if (addressInformation.canTrap && xir.info != null) {
                         addCallInfoHere(xir.info);
                     }
 
+                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.index]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.index]).asInt();
+
                     LIROperand value = ops[inst.z().index];
                     LIROperand pointer = ops[inst.x().index];
-                    LIROperand displacement = ops[inst.y().index];
+                    LIROperand index = ops[inst.y().index];
 
                     pointer = assureInRegister(pointer);
                     assert pointer.isRegister();
 
                     LIROperand dst;
-                    if (displacement.isConstant() && displacement.kind == CiKind.Int) {
-                        LIRConstant constantDisplacement = (LIRConstant) displacement;
-                        dst = new LIRAddress((LIRLocation) pointer, constantDisplacement.asInt(), inst.kind);
+                    if (index.isConstant() && index.kind == CiKind.Int) {
+                        LIRConstant constantDisplacement = (LIRConstant) index;
+                        dst = new LIRAddress((LIRLocation) pointer, LIROperandFactory.IllegalLocation, scale, constantDisplacement.asInt() << scale.toInt() + displacement, inst.kind);
                     } else {
-                        dst = new LIRAddress((LIRLocation) pointer, (LIRLocation) displacement, inst.kind);
+                        dst = new LIRAddress((LIRLocation) pointer, (LIRLocation) index, scale, displacement, inst.kind);
                     }
 
                     moveOp(value, dst, inst.kind, null, false);

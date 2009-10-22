@@ -44,6 +44,38 @@ public abstract class CiXirAssembler {
     protected final List<XirParameter> parameters = new ArrayList<XirParameter>();
     protected final List<XirTemp> temps = new ArrayList<XirTemp>();
     protected final List<XirConstant> constants = new ArrayList<XirConstant>();
+    
+
+    /**
+     * Class that represents additional address calculation information.
+     */
+    public static class AddressAccessInformation {
+    	
+    	public final XirVariable scaling;
+    	public final XirVariable offset;
+    	public final boolean canTrap;
+
+    	private AddressAccessInformation(boolean canTrap) {
+    		this.canTrap = canTrap;
+    		this.scaling = null;
+    		this.offset = null;
+    	}
+    	
+    	private AddressAccessInformation(boolean canTrap, XirVariable offset) {
+    		this.canTrap = canTrap;
+    		this.scaling = null;
+    		this.offset = offset;
+    		assert offset.isConstant();
+    	}
+    	
+    	private AddressAccessInformation(boolean canTrap, XirVariable offset, XirVariable scaling) {
+    		this.canTrap = canTrap;
+    		this.scaling = scaling;
+    		this.offset = offset;
+    		assert scaling.isConstant() && offset.isConstant();
+    	}
+    }
+
 
     protected int variableCount;
     protected boolean finished;
@@ -375,13 +407,29 @@ public abstract class CiXirAssembler {
     }
 
     public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerLoadDisp, result, pointer, disp));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
     public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
     }
 
+    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, XirVariable offset, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerLoadDisp, result, pointer, disp));
+    }
+
+    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, XirVariable offset, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    }
+    
+    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, XirVariable offset, XirVariable scaling,  boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerLoadDisp, result, pointer, disp));
+    }
+
+    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, XirVariable offset, XirVariable scaling, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    }
+    
     public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
         append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
     }

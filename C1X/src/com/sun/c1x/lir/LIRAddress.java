@@ -43,6 +43,10 @@ public class LIRAddress extends LIROperand {
             assert shift < Scale.values().length;
             return Scale.values()[shift];
         }
+
+        public int toInt() {
+            return ordinal();
+        }
     }
 
     public final LIRLocation base;
