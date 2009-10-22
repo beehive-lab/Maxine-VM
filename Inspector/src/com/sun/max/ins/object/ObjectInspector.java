@@ -266,6 +266,13 @@ public abstract class ObjectInspector extends Inspector {
             }
         }
         updateFrameTitle();
+        if (teleObject.isDead()) {
+            setStateColor(style().vmTerminatedBackgroundColor());
+        } else if (teleObject.isObsolete()) {
+            setStateColor(style().vmStoppedinGCBackgroundColor());
+        } else {
+            setStateColor(null);
+        }
         super.refreshView(force);
         return true;
     }
