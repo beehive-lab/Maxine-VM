@@ -842,3 +842,13 @@ const struct JNIInvokeInterface_ jni_InvokeInterface = {
 };
 
 struct JavaVM_ main_vm = {&jni_InvokeInterface};
+
+JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
+    if (vmBufLen <= 0) {
+        return JNI_ERR;
+    }
+    *vm = (JavaVM *) (&main_vm);
+    *nVMs = 1;
+    return JNI_OK;
+}
+
