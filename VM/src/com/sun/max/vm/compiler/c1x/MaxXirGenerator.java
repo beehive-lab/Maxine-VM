@@ -548,11 +548,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         asm.bindInline(store);
         int elemSize = target.sizeInBytes(kind);
-        if (elemSize > 1) {
-            asm.shl(index, index, asm.i(Util.log2(elemSize)));
-        }
-        asm.add(index, index, asm.i(offsetOfFirstArrayElement));
-        asm.pstore(kind, array, index, value, !genBoundsCheck && !genStoreCheck);
+        asm.pstore(kind, array, index, value, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
             addWriteBarrier(asm, array, value);
         }
@@ -582,11 +578,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jugteq(fail, index, length);
         }
         int elemSize = target.sizeInBytes(kind);
-        if (elemSize > 1) {
-            asm.shl(index, index, asm.i(Util.log2(elemSize)));
-        }
-        asm.add(index, index, asm.i(offsetOfFirstArrayElement));
-        asm.pload(kind, result, array, index, !genBoundsCheck);
+        asm.pload(kind, result, array, index, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck);
         asm.end();
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
@@ -657,13 +649,9 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.shl(a, a, asm.i(Util.log2(Ints.SIZE)));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Word, a, hub, a, false);
+            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
             asm.callJava(a);
             resolved = finishTemplate(asm, "invokeinterface<" + kind + ">");
         }
@@ -686,13 +674,9 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.shl(a, a, asm.i(Util.log2(Ints.SIZE)));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Word, a, hub, a, false);
+            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
             asm.callJava(a);
             unresolved = finishTemplate(asm, "invokeinterface<" + kind + ">-unresolved");
         }
@@ -1019,8 +1003,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(0), asm.i(Util.log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.mov(asm.getResultOperand(), object);
@@ -1114,8 +1097,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(0), asm.i(Util.log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));

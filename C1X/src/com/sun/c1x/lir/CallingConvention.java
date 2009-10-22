@@ -34,20 +34,23 @@ import com.sun.c1x.ci.*;
  */
 public class CallingConvention {
 
-    private int overflowArgumentsSize;
+    private final int overflowArgumentsSize;
     private List<LIROperand> arguments;
     private CiLocation[] locations;
 
     CallingConvention(CiLocation[] locations) {
         this.locations = locations;
         arguments = new ArrayList<LIROperand>(locations.length);
+        int curOverflowArgumentsSize = 0;
         for (CiLocation l : locations) {
             arguments.add(locationToOperand(l));
 
             if (l.isStackOffset()) {
-                overflowArgumentsSize = Math.max(overflowArgumentsSize, l.stackOffset + l.stackSize);
+                curOverflowArgumentsSize = Math.max(curOverflowArgumentsSize, l.stackOffset + l.stackSize);
             }
         }
+
+        overflowArgumentsSize = curOverflowArgumentsSize;
     }
 
     public static LIROperand locationToOperand(CiLocation location) {

@@ -22,7 +22,6 @@ package com.sun.c1x.target.x86;
 
 import java.util.*;
 
-import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.xir.*;
 
@@ -34,45 +33,11 @@ import com.sun.c1x.xir.*;
  */
 public class X86XirAssembler extends CiXirAssembler {
 
-    /**
-     * Class that represents an X86 displacement when loading a pointer.
-     * It represents the value variable * multi + add.
-     */
-    public static class Displacement {
-        public XirVariable variable;
-        public Address.ScaleFactor multi;
-        public List<XirVariable> added = new ArrayList<XirVariable>();
-    }
-
-
-    private void optimize() {
-
-        Displacement[] displacements = new Displacement[variableCount];
-
-        for (int i=0; i<instructions.size(); i++) {
-
-            XirInstruction inst = instructions.get(i);
-
-            switch (inst.op) {
-
-                case Add:
-                    break;
-
-                case Bind:
-                    // We cannot handle control flow => clear all information
-                    for (int j=0; j<displacements.length; j++) {
-                        displacements[j] = null;
-                    }
-                    break;
-
-            }
-        }
-    }
 
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
-        ArrayList<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
-        ArrayList<XirInstruction> slowPath = new ArrayList<XirInstruction>();
+        List<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
+        List<XirInstruction> slowPath = new ArrayList<XirInstruction>();
 
         int flags = 0;
 
@@ -80,9 +45,7 @@ public class X86XirAssembler extends CiXirAssembler {
             flags |= XirTemplate.GlobalFlags.GLOBAL_STUB.mask;
         }
 
-        ArrayList<XirInstruction> currentList = fastPath;
-
-        optimize();
+        List<XirInstruction> currentList = fastPath;
 
         XirVariable divModTemp = null;
         XirVariable divModLeftInput = null;

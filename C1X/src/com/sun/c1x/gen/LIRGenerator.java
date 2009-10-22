@@ -189,8 +189,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand src = args.at(i);
             assert !src.isIllegal() : "check";
 
-            LIROperand dest = newRegister(src.kind.stackType());
-            lir.move(src, dest);
+            LIROperand dest = rlock(src.kind.stackType());
+            lir.move(src, dest, src.kind);
 
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
@@ -578,7 +578,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true);
+        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
 
         List<LIROperand> argList = cc.arguments();
         List<LIRItem> args = visitInvokeArguments(x);
@@ -779,7 +779,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        lir.move(arrayAddr, rlockResult(x, x.elementKind()), null);
+        lir.move(arrayAddr, rlockResult(x, x.elementKind()), (LIRDebugInfo)null);
     }
 
     @Override
