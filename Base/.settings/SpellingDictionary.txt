@@ -3,7 +3,6 @@ Appel
 Aritra
 Athul
 Bandyopadhyay
-Beltway
 Ben
 Bernd
 Caprioli
@@ -79,6 +78,8 @@ hexadecimal
 hotspot
 iff
 initialize
+initialized
+initializer
 initializing
 inline
 inlined
@@ -137,7 +138,6 @@ semispace
 semispaces
 settable
 shootout
-solaris
 stderr
 stdout
 struct
