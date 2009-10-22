@@ -51,4 +51,24 @@ public class Unsigned {
     public static long ldiv(long dividend, long divisor) {
         return Address.fromLong(dividend).dividedBy(Address.fromLong(divisor)).toLong();
     }
+
+    /**
+     * Performs unsigned integer modulus.
+     */
+    @INLINE
+    @UNSAFE
+    public static int irem(int dividend, int divisor) {
+        return Address.fromUnsignedInt(dividend).remainder(divisor);
+    }
+
+    /**
+     * Performs unsigned long modulus.
+     */
+    @INLINE
+    @UNSAFE
+    public static long lrem(long dividend, long divisor) {
+        return Address.fromLong(dividend).remainder(Address.fromLong(divisor)).toLong();
+    }
+
+
 }
