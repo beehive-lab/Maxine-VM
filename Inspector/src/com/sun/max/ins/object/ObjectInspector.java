@@ -74,6 +74,7 @@ public abstract class ObjectInspector extends Inspector {
     /**
      * Cache of the most recent update to the frame title; needed
      * in situations where the frame becomes unavailable.
+     * This cache does not include the object state modifier.
      */
     private String title = null;
 
@@ -158,13 +159,7 @@ public abstract class ObjectInspector extends Inspector {
             title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
             return title;
         } else if (teleObject.isObsolete()) {
-            if (title.startsWith("OBSOLETE")) {
-                return title;
-            }
             return "OBSOLETE: " + title;
-        }
-        if (title.startsWith("DEAD")) {
-            return title;
         }
         return "DEAD: " + title;
     }
