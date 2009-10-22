@@ -22,11 +22,13 @@ Liu
 Ltd
 Marcelo
 Mathiske
+Matthew
 Maxine
 Michael
 Mick
 Microsystems
 Paul
+Seidl
 Simon
 Solaris
 Soman
@@ -42,6 +44,7 @@ accessor
 affordance
 affordances
 appendable
+beltway
 bytecode
 bytecodes
 callback
