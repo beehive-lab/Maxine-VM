@@ -47,16 +47,12 @@ public class X86XirAssembler extends CiXirAssembler {
 
         List<XirInstruction> currentList = fastPath;
 
-        XirVariable divModTemp = null;
-        XirVariable divModLeftInput = null;
+        XirOperand divModTemp = null;
+        XirOperand divModLeftInput = null;
 
         for (XirInstruction i : instructions) {
             boolean appended = false;
             switch (i.op) {
-
-                case Nop:
-                    appended = true;
-                    break;
 
                 case Mov:
                     break;
@@ -71,17 +67,15 @@ public class X86XirAssembler extends CiXirAssembler {
                 case And:
                 case Or:
                 case Xor:
-                    // Two operand form
-                    XirVariable xOp = i.x();
-
+                    // Convert to two operand form
+                    XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
-
+                        // Special treatment to make sure that the left input of % and / is in RAX
                         if (divModLeftInput == null) {
                             divModLeftInput = this.createRegister("divModLeftInput", CiKind.Int, X86.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, divModLeftInput, i.x()));
                         xOp = divModLeftInput;
-
                     } else {
                         if (i.result != i.x()) {
                             currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
@@ -89,13 +83,15 @@ public class X86XirAssembler extends CiXirAssembler {
                         }
                     }
 
-                    XirVariable yOp = i.y();
+                    XirOperand yOp = i.y();
                     if (i.op == XirOp.Shl || i.op == XirOp.Shr) {
-                        XirVariable fixedLocation = createRegister("fixedShiftCount", i.y().kind, X86.rcx);
+                        // Special treatment to make sure that the shift count is always in RCX
+                        XirOperand fixedLocation = createRegister("fixedShiftCount", i.y().kind, X86.rcx);
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedLocation, i.y()));
                         yOp = fixedLocation;
-                    } else if (i.op == XirOp.Mul && i.y().isConstant()) {
-                        XirVariable tempLocation = createTemp("mulTempLocation", i.y().kind);
+                    } else if (i.op == XirOp.Mul && (i.y() instanceof XirConstantOperand)) {
+                        // Cannot multiply directly with a constant, so introduce a new temporary variable
+                        XirOperand tempLocation = createTemp("mulTempLocation", i.y().kind);
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, tempLocation, i.y()));
                         yOp = tempLocation;
 
@@ -158,10 +154,6 @@ public class X86XirAssembler extends CiXirAssembler {
                     XirLabel label = (XirLabel) i.extra;
                     currentList = label.inline ? fastPath : slowPath;
                     break;
-                case Ret:
-            }
-            if (i.result != null) {
-                i.result.written = true;
             }
             if (!appended) {
                 currentList.add(i);
@@ -173,7 +165,7 @@ public class X86XirAssembler extends CiXirAssembler {
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
         XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
-        return new XirTemplate(name, this.variableCount, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
+        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
     }
 
     @Override

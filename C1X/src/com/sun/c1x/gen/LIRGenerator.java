@@ -144,7 +144,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument array = toXirArgument(x.array());
             XirSnippet snippet = xir.genArrayLength(array);
             if (snippet != null) {
-                emitXir(snippet, x, x.needsNullCheck() ? stateFor(x) : null, null);
+                emitXir(snippet, x, x.needsNullCheck() ? stateFor(x) : null, null, true);
                 return;
             }
         }
@@ -212,7 +212,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // Xir support for LDC of a class constant
             XirSnippet snippet = xir.genResolveClassObject(i.type);
             if (snippet != null) {
-                emitXir(snippet, i, stateFor(i), null);
+                emitXir(snippet, i, stateFor(i), null, true);
                 return;
             }
         }
@@ -238,7 +238,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genCheckCast(obj, toXirArgument(x.targetClassInstruction), x.targetClass());
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -252,7 +252,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genInstanceOf(obj, toXirArgument(x.targetClassInstruction), x.targetClass());
             if (snippet != null) {
-                emitXir(snippet, x, maybeStateFor(x), null);
+                emitXir(snippet, x, maybeStateFor(x), null, true);
                 return;
             }
         }
@@ -266,7 +266,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genMonitorEnter(obj);
             if (snippet != null) {
-                emitXir(snippet, x, maybeStateFor(x), null);
+                emitXir(snippet, x, maybeStateFor(x), null, true);
                 return;
             }
         }
@@ -280,7 +280,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument obj = toXirArgument(x.object());
             XirSnippet snippet = xir.genMonitorExit(obj);
             if (snippet != null) {
-                emitXir(snippet, x, maybeStateFor(x), null);
+                emitXir(snippet, x, maybeStateFor(x), null, true);
                 return;
             }
         }
@@ -297,7 +297,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument value = toXirArgument(x.value());
             XirSnippet snippet = xir.genArrayStore(array, index, length, value, x.elementKind(), null);
             if (snippet != null) {
-                emitXir(snippet, x, maybeStateFor(x), null);
+                emitXir(snippet, x, maybeStateFor(x), null, true);
                 return;
             }
         }
@@ -310,7 +310,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XIR support for NEW
             XirSnippet snippet = xir.genNewInstance(x.instanceClass());
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -324,7 +324,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument length = toXirArgument(x.length());
             XirSnippet snippet = xir.genNewArray(length, x.elementKind(), null, null);
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -338,7 +338,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument length = toXirArgument(x.length());
             XirSnippet snippet = xir.genNewArray(length, CiKind.Object, x.elementClass(), x.exactType());
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -357,7 +357,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             XirSnippet snippet = xir.genNewMultiArray(dims, x.elementKind);
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -466,7 +466,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
             XirSnippet snippet = xir.genIntrinsic(args, null);
             if (snippet != null) {
-                emitXir(snippet, x, x.stateBefore() == null ? null : stateFor(x), null);
+                emitXir(snippet, x, x.stateBefore() == null ? null : stateFor(x), null, true);
                 return;
             }
         }
@@ -574,7 +574,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
 
             if (snippet != null) {
-                destinationAddress = emitXir(snippet, x, info.copy(), x.target());
+                destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
             }
         }
 
@@ -687,7 +687,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument receiver = toXirArgument(x.object());
             XirSnippet snippet = x.isStatic() ? xir.genGetStatic(receiver, field) : xir.genGetField(receiver, field);
             if (snippet != null) {
-                emitXir(snippet, x, info, null);
+                emitXir(snippet, x, info, null, true);
                 return;
             }
         }
@@ -738,7 +738,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument length = toXirArgument(x.length());
             XirSnippet snippet = xir.genArrayLoad(array, index, length, x.elementKind(), null);
             if (snippet != null) {
-                emitXir(snippet, x, stateFor(x), null);
+                emitXir(snippet, x, stateFor(x), null, true);
                 return;
             }
         }
@@ -881,7 +881,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         return newRegister(temp.kind);
     }
 
-    private LIROperand allocateOperand(XirArgument arg, XirVariable var) {
+    private LIROperand allocateOperand(XirArgument arg, XirOperand var) {
         if (arg.constant != null) {
             return new LIRConstant(arg.constant);
         } else {
@@ -892,13 +892,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    LIROperand emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method) {
+    LIROperand emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
 
         final LIROperand[] operands = new LIROperand[snippet.template.variableCount];
 
-        XirVariable resultOperand = snippet.template.resultOperand;
+        XirOperand resultOperand = snippet.template.resultOperand;
 
-        if (resultOperand instanceof XirResult) {
+        if (snippet.template.allocateResultOperand) {
             LIROperand outputOperand = LIROperandFactory.IllegalLocation;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
@@ -979,6 +979,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (!allocatedResultOperand.isRegister()) {
             allocatedResultOperand = LIROperandFactory.IllegalLocation;
         }
+
+        if (setInstructionResult && !allocatedResultOperand.isIllegal()) {
+            x.setOperand(allocatedResultOperand);
+        }
+
         lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                 operandArray, operandIndicesArray,
                 (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
@@ -1022,7 +1027,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             XirArgument value = toXirArgument(x.value());
             XirSnippet snippet = x.isStatic() ? xir.genPutStatic(receiver, field, value) : xir.genPutField(receiver, field, value);
             if (snippet != null) {
-                emitXir(snippet, x, info, null);
+                emitXir(snippet, x, info, null, true);
                 return;
             }
         }
